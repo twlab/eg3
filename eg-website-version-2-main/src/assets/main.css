@@ -1,0 +1,120 @@
+body {
+  font-size: 1.5rem;
+
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: #e93b06 !important;
+  text-decoration: none !important;
+}
+
+.TouchRipple-root {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.Typography-root {
+  margin: 0;
+}
+.Typography-h3 {
+  font-size: 3rem;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  font-weight: 400;
+  line-height: 1.167;
+  letter-spacing: 0em;
+}
+
+.bottom-space {
+  margin-top: -7vh;
+  margin-bottom: 1vh;
+}
+
+.root-1 {
+  color: white;
+  height: 100%;
+  flex-grow: 1;
+  background: #141416;
+}
+
+.purple-text {
+  color: #b5765f !important;
+}
+
+.AppBar-root {
+  width: 100%;
+  display: flex;
+  z-index: 1100;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  flex-direction: column;
+}
+.AppBar-positionStatic {
+  position: static;
+}
+.AppBar-colorPrimary {
+  color: #fcfcfd;
+  background-color: #141416;
+}
+
+.Toolbar-root {
+  display: flex;
+  position: relative;
+  align-items: center;
+}
+.Toolbar-gutters {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+@media (min-width: 600px) {
+  .Toolbar-gutters {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+.app-root-1 {
+  flex-grow: 1;
+}
+.header-navButtons-3 {
+  color: #777e90;
+  font-size: 20px;
+  margin-right: 8px;
+  text-transform: none;
+}
+.header-left-4 {
+  margin-left: 16px;
+}
+.header-empty-6 {
+  flex-grow: 1;
+}
+.header-space-8 {
+  margin-right: 16px;
+}
+.header-vertical-9 {
+  height: 35px;
+  border-left: 0.5px solid #ffffff;
+  margin-right: 16px;
+}
+.header-logo-11 {
+  margin-right: 1px;
+  height: 50px;
+  width: 55px;
+}
+
+.header-appBar-13 {
+  height: 80px;
+  border-bottom: 0.4px solid #353945;
+}
