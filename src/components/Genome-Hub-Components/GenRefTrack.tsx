@@ -8,7 +8,7 @@ const cancelAnimationFrame = window.cancelAnimationFrame;
 
 function GenRefTrack(props) {
   //To-Do: need to move this part to initial render so this section only run once
-  const genome = props.currGenome;
+  let genome = props.currGenome;
 
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
@@ -23,7 +23,8 @@ function GenRefTrack(props) {
   const lastX = useRef(0);
   const dragX = useRef(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
+  const rightTrackGenes = useRef<Array<any>>([]);
+  const leftTrackGenes = useRef<Array<any>>([]);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -103,8 +104,41 @@ function GenRefTrack(props) {
       const result = await userRespond.json();
       setMaxBp(maxBp + bpRegionSize);
       const tempList: Array<any> = [];
+      const posList: Array<any> = [];
+      let currXoffset = 0;
+      if (result) {
+        posList.push([result[0].txStart, result[0].txEnd, [result[0]]]);
+        for (let i = 1; i < result.length; i++) {
+          let genomeObj = result[i];
+          let prev = posList[posList.length - 1];
+          let idx = posList.length - 1;
+          let highest = [
+            posList.length - 1,
+            posList[posList.length - 1][2].length,
+          ];
+          if (genomeObj.txStart <= prev[1]) {
+            posList[posList.length - 1][1] = genomeObj.txEnd;
+            while (idx >= 0 && genomeObj.txStart <= posList[idx][1]) {
+              if (posList[idx][2].length > highest[1]) {
+                highest = [idx, posList[idx][2].length];
+              }
+              idx--;
+            }
+            posList[highest[0]][2].push(result[i]);
+          } else {
+            posList.push([result[i].txStart, result[i].txEnd, [result[i]]]);
+          }
+        }
+      }
       tempList.push(result);
-      setGenRefDataRight((prev) => [...prev, ...tempList]);
+      // in case we need to the bp in a certain way
+      // result.sort(function (a, b) {
+      //   return a.txEnd - b.txEnd;
+      // })
+      let currTrack: Array<any> = [];
+      currTrack.push(posList);
+      console.log("level", posList);
+      setGenRefDataRight((prev) => [...prev, ...currTrack]);
     } else {
       const userRespond = await fetch(
         `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
@@ -112,10 +146,40 @@ function GenRefTrack(props) {
       );
       const result = await userRespond.json();
       const tempList: Array<any> = [];
-      setGenRefDataRight((prev) => [...prev, ...tempList]);
-      setGenRefDataLeft((prev) => [...prev, ...tempList]);
-      fetchGenomeData();
-      fetchGenomeData2();
+      const tempList2: Array<any> = [];
+      tempList.push(result);
+      tempList2.push(result);
+      const posList: Array<any> = [];
+      let currXoffset = 0;
+      if (result) {
+        posList.push([result[0].txStart, result[0].txEnd, [result[0]]]);
+        for (let i = 1; i < result.length; i++) {
+          let genomeObj = result[i];
+          let prev = posList[posList.length - 1];
+          let idx = posList.length - 1;
+          let highest = [
+            posList.length - 1,
+            posList[posList.length - 1][2].length,
+          ];
+          if (genomeObj.txStart <= prev[1]) {
+            posList[posList.length - 1][1] = genomeObj.txEnd;
+            while (idx >= 0 && genomeObj.txStart <= posList[idx][1]) {
+              if (posList[idx][2].length > highest[1]) {
+                highest = [idx, posList[idx][2].length];
+              }
+              idx--;
+            }
+            posList[highest[0]][2].push(result[i]);
+          } else {
+            posList.push([result[i].txStart, result[i].txEnd, [result[i]]]);
+          }
+        }
+      }
+      let currTrack: Array<any> = [];
+      currTrack.push(posList);
+      console.log("level", posList);
+      setGenRefDataRight((prev) => [...prev, ...currTrack]);
+      setGenRefDataLeft((prev) => [...prev, ...currTrack]);
     }
   }
   async function fetchGenomeData2() {
@@ -133,8 +197,92 @@ function GenRefTrack(props) {
     tempList.push(result);
     setGenRefDataLeft((prev) => [...prev, ...tempList]);
   }
+  function setStrand(strandPos: any) {
+    let yCoord = 50;
+    const strandList: Array<any> = [];
+    for (let i = 0; i < strandPos.length; i++) {
+      let strandHtml: Array<any> = [];
+      if (strandPos[i] !== "") {
+        for (let j = 0; j < strandPos[i].length; j++) {
+          let singleStrand = strandPos[i][j];
+
+          console.log(
+            (singleStrand.txStart - (maxBp - bpRegionSize)) /
+              (windowWidth * 0.95),
+            "/",
+            (singleStrand.txEnd - (maxBp - bpRegionSize)) / (windowWidth * 0.95)
+          );
+
+          strandHtml.push(
+            <>
+              <line
+                key={j}
+                x1={`${
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) /
+                  (windowWidth * 0.95)
+                }`}
+                y1={`${yCoord}`}
+                x2={`${
+                  (singleStrand.txEnd - (maxBp - bpRegionSize)) /
+                  (windowWidth * 0.95)
+                }`}
+                y2={`${yCoord}`}
+                stroke="red"
+                strokeWidth="8"
+              ></line>
+              <text
+                fontSize={3}
+                textLength={
+                  (singleStrand.txEnd - (maxBp - bpRegionSize)) /
+                    (windowWidth * 0.95) -
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) /
+                    (windowWidth * 0.95)
+                }
+                x={`${
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) /
+                  (windowWidth * 0.95)
+                }`}
+                y={`${yCoord + 10}`}
+                fill="black"
+              >
+                {singleStrand.name}
+              </text>
+            </>
+          );
+        }
+      }
+      if (strandPos[i] !== "") {
+        strandList.push(strandHtml);
+      }
+
+      yCoord += 50;
+    }
+    return strandList;
+  }
   function ShowGenomeData() {
-    console.log(genRefDataRight);
+    let arraySize = 6;
+    let value = "";
+    let posArray = new Array(arraySize).fill(value);
+    let curTrackDetail = genRefDataRight[genRefDataRight.length - 1];
+    if (curTrackDetail) {
+      for (let i = 0; i < curTrackDetail.length; i++) {
+        let strandLevel = curTrackDetail[i][2];
+
+        for (let j = 0; j < strandLevel.length; j++) {
+          if (posArray[j]) {
+            posArray[j].push(strandLevel[j]);
+          } else {
+            posArray[j] = new Array<any>(strandLevel[j]);
+          }
+        }
+      }
+    }
+    let genomeStrands: Array<any> = [];
+    genomeStrands = setStrand(posArray);
+    if (genomeStrands.length !== 0) {
+      rightTrackGenes.current.push(genomeStrands);
+    }
+    console.log(rightTrackGenes);
     return svgColor.map((item, index) => (
       <svg
         key={index + 454545}
@@ -144,6 +292,9 @@ function GenRefTrack(props) {
       >
         <rect width={`${windowWidth}px`} height="100%" fill={item} />
         {setLines()}
+        {rightTrackGenes.current[index]
+          ? rightTrackGenes.current[index].map((item, i) => item)
+          : ""}
       </svg>
     ));
   }
@@ -194,7 +345,12 @@ function GenRefTrack(props) {
   }, []);
 
   useEffect(() => {
-    fetchGenomeData(1);
+    async function getData() {
+      await fetchGenomeData(1);
+      fetchGenomeData();
+      fetchGenomeData2();
+    }
+    getData();
     console.log(windowWidth);
   }, []);
 

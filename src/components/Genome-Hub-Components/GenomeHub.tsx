@@ -42,6 +42,18 @@ function GenomeHub(props: any) {
       getSelectedGenome();
     }
   }, [props.selectedGenome]);
+  //TESTING DELETE THIS PART WHEN READYT
+  useEffect(() => {
+    setgenRefView(
+      <GenRefTrack
+        currGenome={{
+          name: "hg38",
+          species: "human",
+          defaultRegion: "chr7:27053397-27373765",
+        }}
+      />
+    );
+  }, []);
   return (
     <div>
       {items}
