@@ -16,7 +16,7 @@ function GenRefTrack(props) {
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
 
-  //useRef to store data between states without re render the component
+  //useRef to store data between states without re render the componen
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const block = useRef<HTMLInputElement>(null);
   const frameID = useRef(0);
