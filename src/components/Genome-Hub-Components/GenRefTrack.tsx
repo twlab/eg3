@@ -15,8 +15,9 @@ function GenRefTrack(props) {
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
+  let bpToPx = bpRegionSize / (window.innerWidth * 0.95);
 
-  //useRef to store data between states without re render the componen
+  //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const block = useRef<HTMLInputElement>(null);
   const frameID = useRef(0);
@@ -39,7 +40,6 @@ function GenRefTrack(props) {
   const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
   const [maxBp, setMaxBp] = useState(rightStartCoord);
   const [minBp, setMinBp] = useState(leftStartCoord);
-
   function handleMove(e) {
     if (!isDragging) {
       return;
@@ -61,7 +61,7 @@ function GenRefTrack(props) {
     e.preventDefault();
   }
   function setLines() {
-    let yCoord = 50;
+    let yCoord = 30;
     const lineList: Array<any> = [];
     for (let i = 0; i < 9; i++) {
       lineList.push(
@@ -75,7 +75,7 @@ function GenRefTrack(props) {
           strokeWidth="2"
         />
       );
-      yCoord += 50;
+      yCoord += 30;
     }
     return lineList;
   }
@@ -198,7 +198,7 @@ function GenRefTrack(props) {
     setGenRefDataLeft((prev) => [...prev, ...tempList]);
   }
   function setStrand(strandPos: any) {
-    let yCoord = 50;
+    let yCoord = 30;
     const strandList: Array<any> = [];
     for (let i = 0; i < strandPos.length; i++) {
       let strandHtml: Array<any> = [];
@@ -207,10 +207,9 @@ function GenRefTrack(props) {
           let singleStrand = strandPos[i][j];
 
           console.log(
-            (singleStrand.txStart - (maxBp - bpRegionSize)) /
-              (windowWidth * 0.95),
+            singleStrand.txStart - (maxBp - bpRegionSize),
             "/",
-            (singleStrand.txEnd - (maxBp - bpRegionSize)) / (windowWidth * 0.95)
+            singleStrand.txEnd - (maxBp - bpRegionSize)
           );
 
           strandHtml.push(
@@ -218,14 +217,10 @@ function GenRefTrack(props) {
               <line
                 key={j}
                 x1={`${
-                  (singleStrand.txStart - (maxBp - bpRegionSize)) /
-                  (windowWidth * 0.95)
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
                 }`}
                 y1={`${yCoord}`}
-                x2={`${
-                  (singleStrand.txEnd - (maxBp - bpRegionSize)) /
-                  (windowWidth * 0.95)
-                }`}
+                x2={`${(singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx}`}
                 y2={`${yCoord}`}
                 stroke="red"
                 strokeWidth="8"
@@ -233,14 +228,11 @@ function GenRefTrack(props) {
               <text
                 fontSize={3}
                 textLength={
-                  (singleStrand.txEnd - (maxBp - bpRegionSize)) /
-                    (windowWidth * 0.95) -
-                  (singleStrand.txStart - (maxBp - bpRegionSize)) /
-                    (windowWidth * 0.95)
+                  (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx -
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
                 }
                 x={`${
-                  (singleStrand.txStart - (maxBp - bpRegionSize)) /
-                  (windowWidth * 0.95)
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
                 }`}
                 y={`${yCoord + 10}`}
                 fill="black"
@@ -255,7 +247,7 @@ function GenRefTrack(props) {
         strandList.push(strandHtml);
       }
 
-      yCoord += 50;
+      yCoord += 30;
     }
     return strandList;
   }
