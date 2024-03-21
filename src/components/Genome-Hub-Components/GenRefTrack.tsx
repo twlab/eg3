@@ -83,12 +83,12 @@ function GenRefTrack(props) {
   function handleMouseUp() {
     setDragging(false);
     if (
-      (-dragX.current / windowWidth) * 1.5 >= svgColor.length - 1 &&
+      -dragX.current / (windowWidth * 1.5) >= svgColor.length - 2 &&
       dragX.current < 0
     ) {
       setAddNewBpRegionLeft(true);
     } else if (
-      (dragX.current / windowWidth) * 1.5 >= svgColor2.length - 1 &&
+      dragX.current / (windowWidth * 1.5) >= svgColor2.length - 2 &&
       dragX.current > 0
     ) {
       setAddNewBpRegionRight(true);
@@ -336,7 +336,6 @@ function GenRefTrack(props) {
       rightTrackGenes.push(genomeStrands);
       console.log(rightTrackGenes, svgColor, rightTrackGenes.length);
     }
-    console.log("trigger");
     return svgColor.map((item, index) => (
       <svg
         key={index + 454545}
