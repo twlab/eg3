@@ -70,7 +70,7 @@ function GenRefTrack(props) {
           key={i}
           x1="0"
           y1={`${yCoord}`}
-          x2={`${windowWidth}`}
+          x2={`${windowWidth * 1.5}`}
           y2={`${yCoord}`}
           stroke="white"
           strokeWidth="2"
@@ -83,12 +83,12 @@ function GenRefTrack(props) {
   function handleMouseUp() {
     setDragging(false);
     if (
-      -dragX.current / windowWidth >= svgColor.length - 1 &&
+      (-dragX.current / windowWidth) * 1.5 >= svgColor.length - 1 &&
       dragX.current < 0
     ) {
       setAddNewBpRegionLeft(true);
     } else if (
-      dragX.current / windowWidth >= svgColor2.length - 1 &&
+      (dragX.current / windowWidth) * 1.5 >= svgColor2.length - 1 &&
       dragX.current > 0
     ) {
       setAddNewBpRegionRight(true);
@@ -97,9 +97,9 @@ function GenRefTrack(props) {
   async function fetchGenomeData(initial: number = 0) {
     if (!initial) {
       const userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${maxBp - bpRegionSize}&end=${
-          maxBp
-        }`,
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
+          maxBp - bpRegionSize
+        }&end=${maxBp}`,
         { method: "GET" }
       );
       const result = await userRespond.json();
@@ -164,14 +164,13 @@ function GenRefTrack(props) {
 
       let genomeStrands: Array<any> = [];
       genomeStrands = setStrand(strandLevelList);
-      //TO-DO HERE CREATE A WAY TO CHECK IF PREV TRACK HAS ON GOING STRANDS 
+      //TO-DO HERE CREATE A WAY TO CHECK IF PREV TRACK HAS ON GOING STRANDS
       //AND INSERT THE CONTINUE prev STRAND BETWEEN THE curr genomeStrands indexes since each index is a level
       // this ensures that the strand continues on the same level and the track is balance
       if (genomeStrands.length !== 0) {
         rightTrackGenes.push(genomeStrands);
       }
 
-      
       setGenRefDataRight((prev) => [...prev, ...currTrack]);
     } else {
       const userRespond = await fetch(
@@ -270,8 +269,8 @@ function GenRefTrack(props) {
       if (strandPos[i] !== "") {
         for (let j = 0; j < strandPos[i].length; j++) {
           let singleStrand = strandPos[i][j];
-          console.log(singleStrand.txStart, maxBp, bpRegionSize, bpToPx)
-          console.log((singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx)
+          console.log(singleStrand.txStart, maxBp, bpRegionSize, bpToPx);
+          console.log((singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx);
           strandHtml.push(
             <>
               <line
@@ -286,7 +285,7 @@ function GenRefTrack(props) {
                 strokeWidth="8"
               ></line>
               <text
-                fontSize={3}
+                fontSize={5}
                 textLength={
                   (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx -
                   (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
@@ -312,10 +311,8 @@ function GenRefTrack(props) {
     return strandList;
   }
 
-
   function ShowGenomeData() {
-
-      let arraySize = 6;
+    let arraySize = 6;
     let value = "";
     let posArray = new Array(arraySize).fill(value);
     let curTrackDetail = genRefDataRight[genRefDataRight.length - 1];
@@ -335,20 +332,19 @@ function GenRefTrack(props) {
     let genomeStrands: Array<any> = [];
     genomeStrands = setStrand(posArray);
     if (genomeStrands.length !== 0) {
-      
-      console.log(rightTrackGenes, svgColor, rightTrackGenes.length)
+      console.log(rightTrackGenes, svgColor, rightTrackGenes.length);
       rightTrackGenes.push(genomeStrands);
-      console.log(rightTrackGenes, svgColor, rightTrackGenes.length)
+      console.log(rightTrackGenes, svgColor, rightTrackGenes.length);
     }
-    console.log("trigger")
+    console.log("trigger");
     return svgColor.map((item, index) => (
       <svg
         key={index + 454545}
-        width={`${windowWidth}px`}
+        width={`${windowWidth * 1.5}px`}
         height={"100%"}
         style={{ display: "inline-block" }}
       >
-            <rect width={`${windowWidth}px`} height="100%" fill={item} />
+        <rect width={`${windowWidth * 1.5}px`} height="100%" fill={item} />
         {setLines()}
         {rightTrackGenes[index]
           ? rightTrackGenes[index].map((item, i) => item)
@@ -404,9 +400,7 @@ function GenRefTrack(props) {
   useEffect(() => {
     async function getData() {
       await fetchGenomeData(1);
-      await fetchGenomeData();
       setMaxBp(maxBp + bpRegionSize);
-    
     }
     getData();
     console.log(windowWidth);
@@ -414,24 +408,23 @@ function GenRefTrack(props) {
 
   useEffect(() => {
     if (addNewBpRegionLeft) {
-      async function handle(){
-      console.log("trigger add right side of track");
+      async function handle() {
+        console.log("trigger add right side of track");
 
-      if (curColor == "blue") {
-        curColor = "orange";
-      } else {
-        curColor = "blue";
+        if (curColor == "blue") {
+          curColor = "orange";
+        } else {
+          curColor = "blue";
+        }
+
+        setSvgColor((prevStrandInternal) => {
+          const t = [...prevStrandInternal];
+          t.push(curColor);
+          return t;
+        });
+        await fetchGenomeData();
       }
-
-      setSvgColor((prevStrandInternal) => {
-        const t = [...prevStrandInternal];
-        t.push(curColor);
-        return t;
-      });
-      await fetchGenomeData();
-
-    }
-    handle();
+      handle();
     }
     setAddNewBpRegionLeft(false);
   }, [addNewBpRegionLeft]);
