@@ -5,7 +5,7 @@ let curColor2 = "orange";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-let rightTrackGenes: Array<any> = [];
+
 function GenRefTrack(props) {
   //To-Do: need to move this part to initial render so this section only run once
   let genome = props.currGenome;
@@ -15,7 +15,7 @@ function GenRefTrack(props) {
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
-  let bpToPx = bpRegionSize / (window.innerWidth * 0.95);
+  let bpToPx = bpRegionSize / (window.innerWidth * 1.5);
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -23,6 +23,9 @@ function GenRefTrack(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
+  const rightTrackGenes = useRef<Array<any>>([]);
+  const prevOverflowStrand = useRef<{ [key: string]: any }>({});
+  const overflowStrand = useRef<{ [key: string]: any }>({});
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const leftTrackGenes = useRef<Array<any>>([]);
@@ -95,6 +98,7 @@ function GenRefTrack(props) {
     }
   }
   async function fetchGenomeData(initial: number = 0) {
+    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (!initial) {
       const userRespond = await fetch(
         `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
@@ -103,18 +107,20 @@ function GenRefTrack(props) {
         { method: "GET" }
       );
       const result = await userRespond.json();
-      setMaxBp(maxBp + bpRegionSize);
-
       const strandIntervalList: Array<any> = [];
       const strandLevelList: Array<any> = [];
+      let tempOverflow = { ...overflowStrand };
       if (result) {
         strandIntervalList.push([result[0].txStart, result[0].txEnd, 0]);
         strandLevelList.push(new Array<any>(result[0]));
         for (let i = 1; i < result.length; i++) {
           let idx = strandIntervalList.length - 1;
-
           let curStrand = result[i];
-          let prevStrandInternal = strandIntervalList[idx];
+          if (curStrand.id in prevOverflowStrand.current) {
+            console.log("HUIH");
+            continue;
+          }
+          let prevStrandInterval = strandIntervalList[idx];
 
           let curHighestLvl = [
             idx,
@@ -122,7 +128,7 @@ function GenRefTrack(props) {
           ];
 
           // if current starting coord is less than previous ending coord then they overlap
-          if (curStrand.txStart <= prevStrandInternal[1]) {
+          if (curStrand.txStart <= prevStrandInterval[1]) {
             // combine the intervals into one larger interval that encompass the strands
             strandIntervalList[idx][1] = curStrand.txEnd;
 
@@ -132,13 +138,12 @@ function GenRefTrack(props) {
               curStrand.txStart <= strandIntervalList[idx][1]
             ) {
               if (strandIntervalList[2] > curHighestLvl[1]) {
-                // change list to count
-                curHighestLvl = [idx, strandIntervalList[2]]; // change list to count
+                curHighestLvl = [idx, strandIntervalList[2]];
               }
               idx--;
             }
 
-            strandIntervalList[curHighestLvl[0]][2] += 1; // change list to count
+            strandIntervalList[curHighestLvl[0]][2] += 1;
             while (
               strandLevelList.length - 1 <
               strandIntervalList[curHighestLvl[0]][2]
@@ -148,12 +153,47 @@ function GenRefTrack(props) {
             strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
               curStrand
             );
-            //add to level list
+            if (curStrand.txEnd > maxBp) {
+              overflowStrand.current[curStrand.id] = {
+                level: strandIntervalList[curHighestLvl[0]][2],
+                strand: curStrand,
+              };
+            }
           } else {
             strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); // change list to count
             strandLevelList[0].push(curStrand);
+            if (curStrand.txEnd > maxBp) {
+              overflowStrand.current[curStrand.id] = {
+                level: 0,
+                strand: curStrand,
+              };
+            }
           }
         }
+      }
+      let curOverflow = { ...prevOverflowStrand.current };
+      prevOverflowStrand.current = { ...overflowStrand.current };
+      overflowStrand.current = {};
+      if (Object.keys(curOverflow).length !== 0) {
+        console.log(curOverflow);
+        // let orderedStrands = Object.keys(overflowStrand.current);
+        // orderedStrands.sort((a, b) => {
+        //   return overflowStrand.current[a] - overflowStrand.current[b];
+        // });
+        // for (let id of orderedStrands) {
+        //   let level = overflowStrand.current[id].level;
+        //   let curStrand = overflowStrand.current[id].strand;
+        //   let tempArr: Array<any> = [];
+        //   tempArr.push(curStrand);
+        //   if (strandLevelList.length - 1 >= level) {
+        //     strandLevelList.splice(level, 0, tempArr);
+        //   } else {
+        //     while (strandLevelList.length - 1 < level) {
+        //       strandLevelList.push(new Array<any>());
+        //     }
+        //     strandLevelList[level].push(curStrand);
+        //   }
+        // }
       }
 
       // here check if there are uncomplete strands from previous track and
@@ -161,14 +201,13 @@ function GenRefTrack(props) {
       // curr strand to the right increasing their level by one
       let currTrack: Array<any> = [];
       currTrack.push(strandIntervalList); // change list to count
-
       let genomeStrands: Array<any> = [];
       genomeStrands = setStrand(strandLevelList);
       //TO-DO HERE CREATE A WAY TO CHECK IF PREV TRACK HAS ON GOING STRANDS
       //AND INSERT THE CONTINUE prev STRAND BETWEEN THE curr genomeStrands indexes since each index is a level
       // this ensures that the strand continues on the same level and the track is balance
       if (genomeStrands.length !== 0) {
-        rightTrackGenes.push(genomeStrands);
+        rightTrackGenes.current.push(genomeStrands);
       }
 
       setGenRefDataRight((prev) => [...prev, ...currTrack]);
@@ -188,7 +227,7 @@ function GenRefTrack(props) {
           let idx = strandIntervalList.length - 1;
 
           let curStrand = result[i];
-          let prevStrandInternal = strandIntervalList[idx];
+          let prevStrandInterval = strandIntervalList[idx];
 
           let curHighestLvl = [
             idx,
@@ -196,7 +235,7 @@ function GenRefTrack(props) {
           ];
 
           // if current starting coord is less than previous ending coord then they overlap
-          if (curStrand.txStart <= prevStrandInternal[1]) {
+          if (curStrand.txStart <= prevStrandInterval[1]) {
             // combine the intervals into one larger interval that encompass the strands
             strandIntervalList[idx][1] = curStrand.txEnd;
 
@@ -222,10 +261,17 @@ function GenRefTrack(props) {
             strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
               curStrand
             );
+            if (curStrand.txEnd > maxBp) {
+              overflowStrand.current[curStrand.id] =
+                strandIntervalList[curHighestLvl[0]][2];
+            }
             //add to level list
           } else {
             strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); // change list to count
             strandLevelList[0].push(curStrand);
+            if (curStrand.txEnd > maxBp) {
+              overflowStrand.current[curStrand.id] = 0;
+            }
           }
         }
       }
@@ -239,12 +285,13 @@ function GenRefTrack(props) {
       let genomeStrands: Array<any> = [];
       genomeStrands = setStrand(strandLevelList);
       if (genomeStrands.length !== 0) {
-        rightTrackGenes.push(genomeStrands);
+        rightTrackGenes.current.push(genomeStrands);
       }
 
       setGenRefDataRight((prev) => [...prev, ...currTrack]);
       setGenRefDataLeft((prev) => [...prev, ...currTrack]);
     }
+    setMaxBp(maxBp + bpRegionSize);
   }
   async function fetchGenomeData2() {
     const userRespond = await fetch(
@@ -269,8 +316,6 @@ function GenRefTrack(props) {
       if (strandPos[i] !== "") {
         for (let j = 0; j < strandPos[i].length; j++) {
           let singleStrand = strandPos[i][j];
-          console.log(singleStrand.txStart, maxBp, bpRegionSize, bpToPx);
-          console.log((singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx);
           strandHtml.push(
             <>
               <line
@@ -312,30 +357,6 @@ function GenRefTrack(props) {
   }
 
   function ShowGenomeData() {
-    let arraySize = 6;
-    let value = "";
-    let posArray = new Array(arraySize).fill(value);
-    let curTrackDetail = genRefDataRight[genRefDataRight.length - 1];
-    if (curTrackDetail) {
-      for (let i = 0; i < curTrackDetail.length; i++) {
-        let strandLevel = curTrackDetail[i][2];
-
-        for (let j = 0; j < strandLevel.length; j++) {
-          if (posArray[j]) {
-            posArray[j].push(strandLevel[j]);
-          } else {
-            posArray[j] = new Array<any>(strandLevel[j]);
-          }
-        }
-      }
-    }
-    let genomeStrands: Array<any> = [];
-    genomeStrands = setStrand(posArray);
-    if (genomeStrands.length !== 0) {
-      console.log(rightTrackGenes, svgColor, rightTrackGenes.length);
-      rightTrackGenes.push(genomeStrands);
-      console.log(rightTrackGenes, svgColor, rightTrackGenes.length);
-    }
     return svgColor.map((item, index) => (
       <svg
         key={index + 454545}
@@ -345,8 +366,8 @@ function GenRefTrack(props) {
       >
         <rect width={`${windowWidth * 1.5}px`} height="100%" fill={item} />
         {setLines()}
-        {rightTrackGenes[index]
-          ? rightTrackGenes[index].map((item, i) => item)
+        {rightTrackGenes.current[index]
+          ? rightTrackGenes.current[index].map((item, i) => item)
           : ""}
       </svg>
     ));
@@ -416,8 +437,8 @@ function GenRefTrack(props) {
           curColor = "blue";
         }
 
-        setSvgColor((prevStrandInternal) => {
-          const t = [...prevStrandInternal];
+        setSvgColor((prevStrandInterval) => {
+          const t = [...prevStrandInterval];
           t.push(curColor);
           return t;
         });
@@ -436,8 +457,8 @@ function GenRefTrack(props) {
       } else {
         curColor2 = "green";
       }
-      setSvgColor2((prevStrandInternal) => {
-        const t = [...prevStrandInternal];
+      setSvgColor2((prevStrandInterval) => {
+        const t = [...prevStrandInterval];
         t.push(curColor2);
         return t;
       });
