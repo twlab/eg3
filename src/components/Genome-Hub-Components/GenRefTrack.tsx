@@ -5,7 +5,7 @@ let curColor2 = "orange";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-
+let rightTrackGenes: Array<any> = [];
 function GenRefTrack(props) {
   //To-Do: need to move this part to initial render so this section only run once
   let genome = props.currGenome;
@@ -24,7 +24,7 @@ function GenRefTrack(props) {
   const lastX = useRef(0);
   const dragX = useRef(0);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const rightTrackGenes = useRef<Array<any>>([]);
+
   const leftTrackGenes = useRef<Array<any>>([]);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -97,70 +97,78 @@ function GenRefTrack(props) {
   async function fetchGenomeData(initial: number = 0) {
     if (!initial) {
       const userRespond = await fetch(
-        `${AWS_API}/hg38/genes/refGene/queryRegion?chr=chr7&start=${maxBp}&end=${
-          maxBp + bpRegionSize
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${maxBp - bpRegionSize}&end=${
+          maxBp
         }`,
         { method: "GET" }
       );
       const result = await userRespond.json();
       setMaxBp(maxBp + bpRegionSize);
 
-      const posList: Array<any> = [];
-
+      const strandIntervalList: Array<any> = [];
+      const strandLevelList: Array<any> = [];
       if (result) {
-        posList.push([result[0].txStart, result[0].txEnd, [result[0]]]);
+        strandIntervalList.push([result[0].txStart, result[0].txEnd, 0]);
+        strandLevelList.push(new Array<any>(result[0]));
         for (let i = 1; i < result.length; i++) {
-          let genomeObj = result[i];
-          let prev = posList[posList.length - 1];
-          let idx = posList.length - 1;
-          let highest = [
-            posList.length - 1,
-            posList[posList.length - 1][2].length,
+          let idx = strandIntervalList.length - 1;
+
+          let curStrand = result[i];
+          let prevStrandInternal = strandIntervalList[idx];
+
+          let curHighestLvl = [
+            idx,
+            strandIntervalList[idx][2], // change list to count
           ];
-          if (genomeObj.txStart <= prev[1]) {
-            posList[posList.length - 1][1] = genomeObj.txEnd;
-            while (idx >= 0 && genomeObj.txStart <= posList[idx][1]) {
-              if (posList[idx][2].length > highest[1]) {
-                highest = [idx, posList[idx][2].length];
+
+          // if current starting coord is less than previous ending coord then they overlap
+          if (curStrand.txStart <= prevStrandInternal[1]) {
+            // combine the intervals into one larger interval that encompass the strands
+            strandIntervalList[idx][1] = curStrand.txEnd;
+
+            //loop to check which other intervals the current strand overlaps
+            while (
+              idx >= 0 &&
+              curStrand.txStart <= strandIntervalList[idx][1]
+            ) {
+              if (strandIntervalList[2] > curHighestLvl[1]) {
+                // change list to count
+                curHighestLvl = [idx, strandIntervalList[2]]; // change list to count
               }
               idx--;
             }
-            posList[highest[0]][2].push(result[i]);
-          } else {
-            posList.push([result[i].txStart, result[i].txEnd, [result[i]]]);
-          }
-        }
-      }
 
-      // in case we need to the bp in a certain way
-      // result.sort(function (a, b) {
-      //   return a.txEnd - b.txEnd;
-      // })
-      let currTrack: Array<any> = [];
-      currTrack.push(posList);
-      console.log("level", posList);
-      let arraySize = 6;
-      let value = "";
-      let posArray = new Array(arraySize).fill(value);
-      let curTrackDetail = genRefDataRight[genRefDataRight.length - 1];
-      if (curTrackDetail) {
-        for (let i = 0; i < curTrackDetail.length; i++) {
-          let strandLevel = curTrackDetail[i][2];
-
-          for (let j = 0; j < strandLevel.length; j++) {
-            if (posArray[j]) {
-              posArray[j].push(strandLevel[j]);
-            } else {
-              posArray[j] = new Array<any>(strandLevel[j]);
+            strandIntervalList[curHighestLvl[0]][2] += 1; // change list to count
+            while (
+              strandLevelList.length - 1 <
+              strandIntervalList[curHighestLvl[0]][2]
+            ) {
+              strandLevelList.push(new Array<any>());
             }
+            strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
+              curStrand
+            );
+            //add to level list
+          } else {
+            strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); // change list to count
+            strandLevelList[0].push(curStrand);
           }
         }
       }
+
+      // here check if there are uncomplete strands from previous track and
+      // in the strandLevelList insert the strands into their preivous level index and move every
+      // curr strand to the right increasing their level by one
+      let currTrack: Array<any> = [];
+      currTrack.push(strandIntervalList); // change list to count
+
       let genomeStrands: Array<any> = [];
-      genomeStrands = setStrand(posArray);
+      genomeStrands = setStrand(strandLevelList);
       if (genomeStrands.length !== 0) {
-        rightTrackGenes.current.push(genomeStrands);
+        rightTrackGenes.push(genomeStrands);
       }
+
+      
       setGenRefDataRight((prev) => [...prev, ...currTrack]);
     } else {
       const userRespond = await fetch(
@@ -229,7 +237,7 @@ function GenRefTrack(props) {
       let genomeStrands: Array<any> = [];
       genomeStrands = setStrand(strandLevelList);
       if (genomeStrands.length !== 0) {
-        rightTrackGenes.current.push(genomeStrands);
+        rightTrackGenes.push(genomeStrands);
       }
 
       setGenRefDataRight((prev) => [...prev, ...currTrack]);
@@ -259,7 +267,8 @@ function GenRefTrack(props) {
       if (strandPos[i] !== "") {
         for (let j = 0; j < strandPos[i].length; j++) {
           let singleStrand = strandPos[i][j];
-
+          console.log(singleStrand.txStart, maxBp, bpRegionSize, bpToPx)
+          console.log((singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx)
           strandHtml.push(
             <>
               <line
@@ -300,14 +309,35 @@ function GenRefTrack(props) {
     return strandList;
   }
 
-  function GetStrands(props) {
-    console.log(rightTrackGenes.current);
-    if (rightTrackGenes.current[props.idx]) {
-      console.log(rightTrackGenes.current[props.idx]);
-      return rightTrackGenes.current[props.idx].map((item) => item);
-    }
-  }
+
   function ShowGenomeData() {
+
+      let arraySize = 6;
+    let value = "";
+    let posArray = new Array(arraySize).fill(value);
+    let curTrackDetail = genRefDataRight[genRefDataRight.length - 1];
+    if (curTrackDetail) {
+      for (let i = 0; i < curTrackDetail.length; i++) {
+        let strandLevel = curTrackDetail[i][2];
+
+        for (let j = 0; j < strandLevel.length; j++) {
+          if (posArray[j]) {
+            posArray[j].push(strandLevel[j]);
+          } else {
+            posArray[j] = new Array<any>(strandLevel[j]);
+          }
+        }
+      }
+    }
+    let genomeStrands: Array<any> = [];
+    genomeStrands = setStrand(posArray);
+    if (genomeStrands.length !== 0) {
+      
+      console.log(rightTrackGenes, svgColor, rightTrackGenes.length)
+      rightTrackGenes.push(genomeStrands);
+      console.log(rightTrackGenes, svgColor, rightTrackGenes.length)
+    }
+    console.log("trigger")
     return svgColor.map((item, index) => (
       <svg
         key={index + 454545}
@@ -315,10 +345,10 @@ function GenRefTrack(props) {
         height={"100%"}
         style={{ display: "inline-block" }}
       >
-        <rect width={`${windowWidth}px`} height="100%" fill={item} />
+            <rect width={`${windowWidth}px`} height="100%" fill={item} />
         {setLines()}
-        {rightTrackGenes.current[index]
-          ? rightTrackGenes.current[index].map((item, i) => item)
+        {rightTrackGenes[index]
+          ? rightTrackGenes[index].map((item, i) => item)
           : ""}
       </svg>
     ));
@@ -371,8 +401,9 @@ function GenRefTrack(props) {
   useEffect(() => {
     async function getData() {
       await fetchGenomeData(1);
-      fetchGenomeData();
-      fetchGenomeData2();
+      await fetchGenomeData();
+      setMaxBp(maxBp + bpRegionSize);
+    
     }
     getData();
     console.log(windowWidth);
@@ -380,19 +411,24 @@ function GenRefTrack(props) {
 
   useEffect(() => {
     if (addNewBpRegionLeft) {
+      async function handle(){
       console.log("trigger add right side of track");
 
       if (curColor == "blue") {
-        curColor = "black";
+        curColor = "orange";
       } else {
         curColor = "blue";
       }
+
       setSvgColor((prevStrandInternal) => {
         const t = [...prevStrandInternal];
         t.push(curColor);
         return t;
       });
-      fetchGenomeData();
+      await fetchGenomeData();
+
+    }
+    handle();
     }
     setAddNewBpRegionLeft(false);
   }, [addNewBpRegionLeft]);

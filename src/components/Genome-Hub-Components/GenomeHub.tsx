@@ -37,11 +37,6 @@ function GenomeHub(props: any) {
     }
   }
 
-  useEffect(() => {
-    if (props.selectedGenome) {
-      getSelectedGenome();
-    }
-  }, [props.selectedGenome]);
   //TESTING DELETE THIS PART WHEN READYT
   useEffect(() => {
     setgenRefView(
