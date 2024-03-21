@@ -164,6 +164,9 @@ function GenRefTrack(props) {
 
       let genomeStrands: Array<any> = [];
       genomeStrands = setStrand(strandLevelList);
+      //TO-DO HERE CREATE A WAY TO CHECK IF PREV TRACK HAS ON GOING STRANDS 
+      //AND INSERT THE CONTINUE prev STRAND BETWEEN THE curr genomeStrands indexes since each index is a level
+      // this ensures that the strand continues on the same level and the track is balance
       if (genomeStrands.length !== 0) {
         rightTrackGenes.push(genomeStrands);
       }
