@@ -15,7 +15,7 @@ function GenRefTrack(props) {
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
-  let bpToPx = bpRegionSize / (window.innerWidth * 1.5);
+  let bpToPx = bpRegionSize / (window.innerWidth * 1.425);
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -86,12 +86,12 @@ function GenRefTrack(props) {
   function handleMouseUp() {
     setDragging(false);
     if (
-      -dragX.current / (windowWidth * 1.5) >= svgColor.length - 2 &&
+      -dragX.current / (windowWidth * 1.425) >= svgColor.length - 2 &&
       dragX.current < 0
     ) {
       setAddNewBpRegionLeft(true);
     } else if (
-      dragX.current / (windowWidth * 1.5) >= svgColor2.length - 2 &&
+      dragX.current / (windowWidth * 1.425) >= svgColor2.length - 2 &&
       dragX.current > 0
     ) {
       setAddNewBpRegionRight(true);
@@ -107,17 +107,31 @@ function GenRefTrack(props) {
         { method: "GET" }
       );
       const result = await userRespond.json();
+   
       const strandIntervalList: Array<any> = [];
       const strandLevelList: Array<any> = [];
-      let tempOverflow = { ...overflowStrand };
+
       if (result) {
-        strandIntervalList.push([result[0].txStart, result[0].txEnd, 0]);
-        strandLevelList.push(new Array<any>(result[0]));
-        for (let i = 1; i < result.length; i++) {
+        let resultIdx = 0;
+        while ( resultIdx < result.length && result[resultIdx].id in prevOverflowStrand.current){
+          resultIdx += 1
+        }
+        if(resultIdx <result.length){
+        strandIntervalList.push([result[resultIdx].txStart, result[resultIdx].txEnd, 0]);
+        strandLevelList.push(new Array<any>(result[resultIdx]));
+        }
+ 
+        for (let i = resultIdx + 1; i < result.length; i++) {
+          if(result[i].name = "MINDY4"){
+            console.log(maxBp, result[i])
+          }
+          else if (result[i].name = "INMT-MINDY4"){
+            console.log(maxBp, result[i])
+          }
           let idx = strandIntervalList.length - 1;
           let curStrand = result[i];
           if (curStrand.id in prevOverflowStrand.current) {
-            console.log("HUIH");
+  
             continue;
           }
           let prevStrandInterval = strandIntervalList[idx];
@@ -150,25 +164,51 @@ function GenRefTrack(props) {
             ) {
               strandLevelList.push(new Array<any>());
             }
-            strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
-              curStrand
-            );
             if (curStrand.txEnd > maxBp) {
+              console.log(curStrand)
+              let tempStrand = {...curStrand}
+          
+              tempStrand.txEnd = maxBp
+              strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
+                tempStrand
+              );
+              curStrand.txStart = maxBp
               overflowStrand.current[curStrand.id] = {
                 level: strandIntervalList[curHighestLvl[0]][2],
                 strand: curStrand,
               };
             }
+            else{
+              strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
+                curStrand
+              );
+            }
+
           } else {
-            strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); // change list to count
-            strandLevelList[0].push(curStrand);
             if (curStrand.txEnd > maxBp) {
+ 
+              let tempStrand = {...curStrand}
+       
+              tempStrand.txEnd = maxBp
+              strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); 
+
+              strandLevelList[0].push(tempStrand);
+        
+              curStrand.txStart = maxBp
               overflowStrand.current[curStrand.id] = {
                 level: 0,
                 strand: curStrand,
               };
+         
             }
+            else{ 
+              strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); 
+              strandLevelList[0].push(curStrand);
+            }
+
+  
           }
+  
         }
       }
       let curOverflow = { ...prevOverflowStrand.current };
@@ -176,24 +216,31 @@ function GenRefTrack(props) {
       overflowStrand.current = {};
       if (Object.keys(curOverflow).length !== 0) {
         console.log(curOverflow);
-        // let orderedStrands = Object.keys(overflowStrand.current);
-        // orderedStrands.sort((a, b) => {
-        //   return overflowStrand.current[a] - overflowStrand.current[b];
-        // });
-        // for (let id of orderedStrands) {
-        //   let level = overflowStrand.current[id].level;
-        //   let curStrand = overflowStrand.current[id].strand;
-        //   let tempArr: Array<any> = [];
-        //   tempArr.push(curStrand);
-        //   if (strandLevelList.length - 1 >= level) {
-        //     strandLevelList.splice(level, 0, tempArr);
-        //   } else {
-        //     while (strandLevelList.length - 1 < level) {
-        //       strandLevelList.push(new Array<any>());
-        //     }
-        //     strandLevelList[level].push(curStrand);
-        //   }
-        // }
+        let orderedStrands = Object.keys(curOverflow);
+        orderedStrands.sort((a, b) => {
+          return curOverflow[a] - curOverflow[b];
+        });
+        for (let id of orderedStrands) {
+          let level = curOverflow[id].level;
+          let curStrand = curOverflow[id].strand;
+          let tempArr: Array<any> = [];
+          tempArr.push(curStrand);
+          if (strandLevelList.length - 1 >= level) {
+            strandLevelList.splice(level, 0, tempArr);
+          } else {
+            while (strandLevelList.length - 1 < level) {
+              strandLevelList.push(new Array<any>());
+            }
+            strandLevelList[level].push(curStrand);
+          }
+          for(let key in prevOverflowStrand.current){
+
+            if (prevOverflowStrand.current[key].level >= level){
+
+              prevOverflowStrand.current[key].level += 1
+            }
+          }
+        }
       }
 
       // here check if there are uncomplete strands from previous track and
@@ -262,6 +309,7 @@ function GenRefTrack(props) {
               curStrand
             );
             if (curStrand.txEnd > maxBp) {
+              console.log(curStrand)
               overflowStrand.current[curStrand.id] =
                 strandIntervalList[curHighestLvl[0]][2];
             }
@@ -270,6 +318,7 @@ function GenRefTrack(props) {
             strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); // change list to count
             strandLevelList[0].push(curStrand);
             if (curStrand.txEnd > maxBp) {
+              console.log(curStrand)
               overflowStrand.current[curStrand.id] = 0;
             }
           }
@@ -360,11 +409,11 @@ function GenRefTrack(props) {
     return svgColor.map((item, index) => (
       <svg
         key={index + 454545}
-        width={`${windowWidth * 1.5}px`}
+        width={`${windowWidth * 1.425}px`}
         height={"100%"}
         style={{ display: "inline-block" }}
       >
-        <rect width={`${windowWidth * 1.5}px`} height="100%" fill={item} />
+        <rect width={`${windowWidth * 1.425}px`} height="100%" fill={item} />
         {setLines()}
         {rightTrackGenes.current[index]
           ? rightTrackGenes.current[index].map((item, i) => item)
@@ -429,7 +478,7 @@ function GenRefTrack(props) {
   useEffect(() => {
     if (addNewBpRegionLeft) {
       async function handle() {
-        console.log("trigger add right side of track");
+    
 
         if (curColor == "blue") {
           curColor = "orange";
