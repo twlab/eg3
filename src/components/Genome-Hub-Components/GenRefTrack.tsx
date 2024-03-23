@@ -86,7 +86,7 @@ function GenRefTrack(props) {
   function handleMouseUp() {
     setDragging(false);
     if (
-      -dragX.current / (windowWidth * 1.425) >= svgColor.length - 2 &&
+      -dragX.current / (windowWidth * 1.425) >= genRefDataRight.length - 2 &&
       dragX.current < 0
     ) {
       setAddNewBpRegionLeft(true);
@@ -101,37 +101,30 @@ function GenRefTrack(props) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (!initial) {
       const userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
-          maxBp - bpRegionSize
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${maxBp - bpRegionSize
         }&end=${maxBp}`,
         { method: "GET" }
       );
       const result = await userRespond.json();
-   
+
       const strandIntervalList: Array<any> = [];
       const strandLevelList: Array<any> = [];
 
       if (result) {
         let resultIdx = 0;
-        while ( resultIdx < result.length && result[resultIdx].id in prevOverflowStrand.current){
+        while (resultIdx < result.length && result[resultIdx].id in prevOverflowStrand.current) {
           resultIdx += 1
         }
-        if(resultIdx <result.length){
-        strandIntervalList.push([result[resultIdx].txStart, result[resultIdx].txEnd, 0]);
-        strandLevelList.push(new Array<any>(result[resultIdx]));
+        if (resultIdx < result.length) {
+          strandIntervalList.push([result[resultIdx].txStart, result[resultIdx].txEnd, 0]);
+          strandLevelList.push(new Array<any>(result[resultIdx]));
         }
- 
+
         for (let i = resultIdx + 1; i < result.length; i++) {
-          if(result[i].name = "MINDY4"){
-            console.log(maxBp, result[i])
-          }
-          else if (result[i].name = "INMT-MINDY4"){
-            console.log(maxBp, result[i])
-          }
           let idx = strandIntervalList.length - 1;
           let curStrand = result[i];
           if (curStrand.id in prevOverflowStrand.current) {
-  
+
             continue;
           }
           let prevStrandInterval = strandIntervalList[idx];
@@ -164,61 +157,65 @@ function GenRefTrack(props) {
             ) {
               strandLevelList.push(new Array<any>());
             }
-            if (curStrand.txEnd > maxBp) {
-              console.log(curStrand)
-              let tempStrand = {...curStrand}
-          
-              tempStrand.txEnd = maxBp
-              strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
-                tempStrand
-              );
-              curStrand.txStart = maxBp
-              overflowStrand.current[curStrand.id] = {
-                level: strandIntervalList[curHighestLvl[0]][2],
-                strand: curStrand,
-              };
-            }
-            else{
-              strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
-                curStrand
-              );
-            }
 
-          } else {
-            if (curStrand.txEnd > maxBp) {
- 
-              let tempStrand = {...curStrand}
-       
-              tempStrand.txEnd = maxBp
-              strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); 
 
-              strandLevelList[0].push(tempStrand);
-        
-              curStrand.txStart = maxBp
-              overflowStrand.current[curStrand.id] = {
-                level: 0,
-                strand: curStrand,
-              };
-         
-            }
-            else{ 
-              strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); 
-              strandLevelList[0].push(curStrand);
-            }
+            strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
+              curStrand
+            );
 
-  
+
           }
-  
+          else {
+
+            strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]);
+            strandLevelList[0].push(curStrand);
+
+
+
+          }
+
         }
       }
+
+      // if (curStrand.txEnd > maxBp) {
+
+      //   let tempStrand = {...curStrand}
+
+      //   tempStrand.txEnd = maxBp
+      //   strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
+      //     tempStrand
+      //   );
+      //   curStrand.txStart = maxBp
+      //   overflowStrand.current[curStrand.id] = {
+      //     level: strandIntervalList[curHighestLvl[0]][2],
+      //     strand: curStrand,
+      //   };
+      // }
+
+
+      // if (curStrand.txEnd > maxBp) {
+
+      //   let tempStrand = {...curStrand}
+
+      //   tempStrand.txEnd = maxBp
+      //   strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); 
+
+      //   strandLevelList[0].push(tempStrand);
+
+      //   curStrand.txStart = maxBp
+      //   overflowStrand.current[curStrand.id] = {
+      //     level: 0,
+      //     strand: curStrand,
+      //   };
+
+      // }
+
       let curOverflow = { ...prevOverflowStrand.current };
-      prevOverflowStrand.current = { ...overflowStrand.current };
-      overflowStrand.current = {};
+
       if (Object.keys(curOverflow).length !== 0) {
-        console.log(curOverflow);
         let orderedStrands = Object.keys(curOverflow);
         orderedStrands.sort((a, b) => {
-          return curOverflow[a] - curOverflow[b];
+          return curOverflow[a].level - curOverflow[b].level;
         });
         for (let id of orderedStrands) {
           let level = curOverflow[id].level;
@@ -227,21 +224,37 @@ function GenRefTrack(props) {
           tempArr.push(curStrand);
           if (strandLevelList.length - 1 >= level) {
             strandLevelList.splice(level, 0, tempArr);
+
           } else {
             while (strandLevelList.length - 1 < level) {
               strandLevelList.push(new Array<any>());
             }
             strandLevelList[level].push(curStrand);
           }
-          for(let key in prevOverflowStrand.current){
 
-            if (prevOverflowStrand.current[key].level >= level){
+        }
 
-              prevOverflowStrand.current[key].level += 1
-            }
+      }
+
+      for (var i = 0; i < strandLevelList.length; i++) {
+        let levelContent = strandLevelList[i]
+        for (var strand of levelContent) {
+          if (strand.txEnd > maxBp) {
+            overflowStrand.current[strand.id] = {
+              'level': i,
+              'strand': strand,
+            };
           }
         }
       }
+
+
+      console.log(strandLevelList)
+      prevOverflowStrand.current = { ...overflowStrand.current };
+      overflowStrand.current = {};
+
+
+
 
       // here check if there are uncomplete strands from previous track and
       // in the strandLevelList insert the strands into their preivous level index and move every
@@ -344,10 +357,8 @@ function GenRefTrack(props) {
   }
   async function fetchGenomeData2() {
     const userRespond = await fetch(
-      `${AWS_API}/${
-        genome.name
-      }/genes/refGene/queryRegion?chr=${region}&start=${
-        minBp - bpRegionSize
+      `${AWS_API}/${genome.name
+      }/genes/refGene/queryRegion?chr=${region}&start=${minBp - bpRegionSize
       }&end=${minBp}`,
       { method: "GET" }
     );
@@ -369,9 +380,8 @@ function GenRefTrack(props) {
             <>
               <line
                 key={j}
-                x1={`${
-                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                }`}
+                x1={`${(singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
+                  }`}
                 y1={`${yCoord}`}
                 x2={`${(singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx}`}
                 y2={`${yCoord}`}
@@ -384,9 +394,8 @@ function GenRefTrack(props) {
                   (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx -
                   (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
                 }
-                x={`${
-                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                }`}
+                x={`${(singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
+                  }`}
                 y={`${yCoord + 10}`}
                 fill="black"
               >
@@ -478,20 +487,20 @@ function GenRefTrack(props) {
   useEffect(() => {
     if (addNewBpRegionLeft) {
       async function handle() {
-    
+
 
         if (curColor == "blue") {
           curColor = "orange";
         } else {
           curColor = "blue";
         }
-
+        await fetchGenomeData();
         setSvgColor((prevStrandInterval) => {
           const t = [...prevStrandInterval];
           t.push(curColor);
           return t;
         });
-        await fetchGenomeData();
+   
       }
       handle();
     }
@@ -523,7 +532,7 @@ function GenRefTrack(props) {
           flex: "1",
           display: "flex",
           justifyContent: dragX.current <= 0 ? "start" : "end",
-          height: "80vh",
+          height: "90vh",
           flexDirection: "row",
           whiteSpace: "nowrap",
           width: `${windowWidth * 0.95}px`,
