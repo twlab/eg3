@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useRef, useState } from "react";
 
 let curColor = "blue";
@@ -83,10 +84,13 @@ function GenRefTrack(props) {
     }
     return lineList;
   }
+  function getRndInteger(min = 0, max = 10000000000) {
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
   function handleMouseUp() {
     setDragging(false);
     if (
-      -dragX.current / (windowWidth * 1.425) >= genRefDataRight.length - 2 &&
+      -dragX.current / (windowWidth * 1.425) >= svgColor.length - 2 &&
       dragX.current < 0
     ) {
       setAddNewBpRegionLeft(true);
@@ -101,7 +105,8 @@ function GenRefTrack(props) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (!initial) {
       const userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${maxBp - bpRegionSize
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
+          maxBp - bpRegionSize
         }&end=${maxBp}`,
         { method: "GET" }
       );
@@ -112,11 +117,18 @@ function GenRefTrack(props) {
 
       if (result) {
         let resultIdx = 0;
-        while (resultIdx < result.length && result[resultIdx].id in prevOverflowStrand.current) {
-          resultIdx += 1
+        while (
+          resultIdx < result.length &&
+          result[resultIdx].id in prevOverflowStrand.current
+        ) {
+          resultIdx += 1;
         }
         if (resultIdx < result.length) {
-          strandIntervalList.push([result[resultIdx].txStart, result[resultIdx].txEnd, 0]);
+          strandIntervalList.push([
+            result[resultIdx].txStart,
+            result[resultIdx].txEnd,
+            0,
+          ]);
           strandLevelList.push(new Array<any>(result[resultIdx]));
         }
 
@@ -124,7 +136,6 @@ function GenRefTrack(props) {
           let idx = strandIntervalList.length - 1;
           let curStrand = result[i];
           if (curStrand.id in prevOverflowStrand.current) {
-
             continue;
           }
           let prevStrandInterval = strandIntervalList[idx];
@@ -158,57 +169,15 @@ function GenRefTrack(props) {
               strandLevelList.push(new Array<any>());
             }
 
-
             strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
               curStrand
             );
-
-
-          }
-          else {
-
+          } else {
             strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]);
             strandLevelList[0].push(curStrand);
-
-
-
           }
-
         }
       }
-
-      // if (curStrand.txEnd > maxBp) {
-
-      //   let tempStrand = {...curStrand}
-
-      //   tempStrand.txEnd = maxBp
-      //   strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
-      //     tempStrand
-      //   );
-      //   curStrand.txStart = maxBp
-      //   overflowStrand.current[curStrand.id] = {
-      //     level: strandIntervalList[curHighestLvl[0]][2],
-      //     strand: curStrand,
-      //   };
-      // }
-
-
-      // if (curStrand.txEnd > maxBp) {
-
-      //   let tempStrand = {...curStrand}
-
-      //   tempStrand.txEnd = maxBp
-      //   strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); 
-
-      //   strandLevelList[0].push(tempStrand);
-
-      //   curStrand.txStart = maxBp
-      //   overflowStrand.current[curStrand.id] = {
-      //     level: 0,
-      //     strand: curStrand,
-      //   };
-
-      // }
 
       let curOverflow = { ...prevOverflowStrand.current };
 
@@ -224,51 +193,36 @@ function GenRefTrack(props) {
           tempArr.push(curStrand);
           if (strandLevelList.length - 1 >= level) {
             strandLevelList.splice(level, 0, tempArr);
-
           } else {
             while (strandLevelList.length - 1 < level) {
               strandLevelList.push(new Array<any>());
             }
+
             strandLevelList[level].push(curStrand);
           }
-
         }
-
       }
 
       for (var i = 0; i < strandLevelList.length; i++) {
-        let levelContent = strandLevelList[i]
+        let levelContent = strandLevelList[i];
         for (var strand of levelContent) {
           if (strand.txEnd > maxBp) {
             overflowStrand.current[strand.id] = {
-              'level': i,
-              'strand': strand,
+              level: i,
+              strand: strand,
             };
           }
         }
       }
-
-
-      console.log(strandLevelList)
       prevOverflowStrand.current = { ...overflowStrand.current };
       overflowStrand.current = {};
 
-
-
-
-      // here check if there are uncomplete strands from previous track and
-      // in the strandLevelList insert the strands into their preivous level index and move every
-      // curr strand to the right increasing their level by one
       let currTrack: Array<any> = [];
-      currTrack.push(strandIntervalList); // change list to count
-      let genomeStrands: Array<any> = [];
-      genomeStrands = setStrand(strandLevelList);
-      //TO-DO HERE CREATE A WAY TO CHECK IF PREV TRACK HAS ON GOING STRANDS
-      //AND INSERT THE CONTINUE prev STRAND BETWEEN THE curr genomeStrands indexes since each index is a level
-      // this ensures that the strand continues on the same level and the track is balance
-      if (genomeStrands.length !== 0) {
-        rightTrackGenes.current.push(genomeStrands);
-      }
+      currTrack.push(strandIntervalList);
+
+      rightTrackGenes.current.push(
+        <SetStrand key={getRndInteger()} strandPos={strandLevelList} />
+      );
 
       setGenRefDataRight((prev) => [...prev, ...currTrack]);
     } else {
@@ -322,7 +276,6 @@ function GenRefTrack(props) {
               curStrand
             );
             if (curStrand.txEnd > maxBp) {
-              console.log(curStrand)
               overflowStrand.current[curStrand.id] =
                 strandIntervalList[curHighestLvl[0]][2];
             }
@@ -331,24 +284,20 @@ function GenRefTrack(props) {
             strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); // change list to count
             strandLevelList[0].push(curStrand);
             if (curStrand.txEnd > maxBp) {
-              console.log(curStrand)
               overflowStrand.current[curStrand.id] = 0;
             }
           }
         }
       }
-
       // here check if there are uncomplete strands from previous track and
       // in the strandLevelList insert the strands into their preivous level index and move every
       // curr strand to the right increasing their level by one
       let currTrack: Array<any> = [];
       currTrack.push(strandIntervalList); // change list to count
 
-      let genomeStrands: Array<any> = [];
-      genomeStrands = setStrand(strandLevelList);
-      if (genomeStrands.length !== 0) {
-        rightTrackGenes.current.push(genomeStrands);
-      }
+      rightTrackGenes.current.push(
+        <SetStrand key={getRndInteger()} strandPos={strandLevelList} />
+      );
 
       setGenRefDataRight((prev) => [...prev, ...currTrack]);
       setGenRefDataLeft((prev) => [...prev, ...currTrack]);
@@ -357,8 +306,10 @@ function GenRefTrack(props) {
   }
   async function fetchGenomeData2() {
     const userRespond = await fetch(
-      `${AWS_API}/${genome.name
-      }/genes/refGene/queryRegion?chr=${region}&start=${minBp - bpRegionSize
+      `${AWS_API}/${
+        genome.name
+      }/genes/refGene/queryRegion?chr=${region}&start=${
+        minBp - bpRegionSize
       }&end=${minBp}`,
       { method: "GET" }
     );
@@ -368,65 +319,78 @@ function GenRefTrack(props) {
     tempList.push(result);
     setGenRefDataLeft((prev) => [...prev, ...tempList]);
   }
-  function setStrand(strandPos: any) {
+  function SetStrand(props) {
     let yCoord = 30;
     const strandList: Array<any> = [];
-    for (let i = 0; i < strandPos.length; i++) {
-      let strandHtml: Array<any> = [];
-      if (strandPos[i] !== "") {
-        for (let j = 0; j < strandPos[i].length; j++) {
-          let singleStrand = strandPos[i][j];
-          strandHtml.push(
-            <>
-              <line
-                key={j}
-                x1={`${(singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                  }`}
-                y1={`${yCoord}`}
-                x2={`${(singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx}`}
-                y2={`${yCoord}`}
-                stroke="red"
-                strokeWidth="8"
-              ></line>
-              <text
-                fontSize={5}
-                textLength={
-                  (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx -
-                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                }
-                x={`${(singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                  }`}
-                y={`${yCoord + 10}`}
-                fill="black"
-              >
-                {singleStrand.name}
-              </text>
-            </>
-          );
-        }
-      }
-      if (strandPos[i] !== "") {
-        strandList.push(strandHtml);
-      }
 
-      yCoord += 30;
+    if (props.strandPos.length) {
+      for (let i = 0; i < props.strandPos.length; i++) {
+        const strandHtml: Array<any> = [];
+
+        if (props.strandPos[i] !== "") {
+          for (let j = 0; j < props.strandPos[i].length; j++) {
+            const singleStrand = props.strandPos[i][j];
+            strandHtml.push(
+              <React.Fragment key={j}>
+                <line
+                  x1={`${
+                    (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
+                  }`}
+                  y1={`${yCoord}`}
+                  x2={`${
+                    (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx
+                  }`}
+                  y2={`${yCoord}`}
+                  stroke="red"
+                  strokeWidth="8"
+                />
+                <text
+                  fontSize={5}
+                  textLength={
+                    (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx -
+                    (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
+                  }
+                  x={`${
+                    (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
+                  }`}
+                  y={`${yCoord + 10}`}
+                  fill="black"
+                >
+                  {singleStrand.name}
+                </text>
+              </React.Fragment>
+            );
+          }
+        }
+
+        if (props.strandPos[i] !== "") {
+          strandList.push(strandHtml);
+        }
+
+        yCoord += 30;
+      }
     }
-    return strandList;
+
+    return (
+      <>
+        {strandList.map((item, index) => (
+          <React.Fragment key={index}>{item}</React.Fragment>
+        ))}
+      </>
+    );
   }
 
   function ShowGenomeData() {
+    console.log(rightTrackGenes.current);
     return svgColor.map((item, index) => (
       <svg
-        key={index + 454545}
+        key={index}
         width={`${windowWidth * 1.425}px`}
         height={"100%"}
         style={{ display: "inline-block" }}
       >
         <rect width={`${windowWidth * 1.425}px`} height="100%" fill={item} />
-        {setLines()}
-        {rightTrackGenes.current[index]
-          ? rightTrackGenes.current[index].map((item, i) => item)
-          : ""}
+        {rightTrackGenes.current[index] ? rightTrackGenes.current[index] : ""}
       </svg>
     ));
   }
@@ -478,6 +442,7 @@ function GenRefTrack(props) {
   useEffect(() => {
     async function getData() {
       await fetchGenomeData(1);
+
       setMaxBp(maxBp + bpRegionSize);
     }
     getData();
@@ -487,20 +452,17 @@ function GenRefTrack(props) {
   useEffect(() => {
     if (addNewBpRegionLeft) {
       async function handle() {
-
-
         if (curColor == "blue") {
           curColor = "orange";
         } else {
           curColor = "blue";
         }
-        await fetchGenomeData();
+        fetchGenomeData();
         setSvgColor((prevStrandInterval) => {
           const t = [...prevStrandInterval];
           t.push(curColor);
           return t;
         });
-   
       }
       handle();
     }
