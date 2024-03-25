@@ -108,14 +108,14 @@ function GenRefTrack(props) {
     let userRespond;
     if (initial) {
       userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
-          maxBp - bpRegionSize
-        }&end=${maxBp}`,
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
         { method: "GET" }
       );
     } else {
       userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
+          maxBp - bpRegionSize
+        }&end=${maxBp}`,
         { method: "GET" }
       );
     }
@@ -237,17 +237,18 @@ function GenRefTrack(props) {
       leftTrackGenes.current.push(
         <SetStrand2 key={getRndInteger()} strandPos={strandLevelList} />
       );
+      setMinBp(minBp - bpRegionSize);
     }
-    setMinBp(minBp - bpRegionSize);
+
     setMaxBp(maxBp + bpRegionSize);
   }
   async function fetchGenomeData2() {
     const userRespond = await fetch(
       `${AWS_API}/${
         genome.name
-      }/genes/refGene/queryRegion?chr=${region}&start=${
-        minBp - bpRegionSize
-      }&end=${minBp}`,
+      }/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${
+        minBp + bpRegionSize
+      }`,
       { method: "GET" }
     );
     const result = await userRespond.json();
@@ -609,10 +610,11 @@ function GenRefTrack(props) {
         </div>
       </div>
       <div>
-        Fetched ${genome.name} coord {region}: {maxBp - bpRegionSize}-{maxBp}
+        Fetched ${genome.name} coord {region}: {maxBp - bpRegionSize * 3}-
+        {maxBp - bpRegionSize * 2}
       </div>
       <div>
-        Fetched ${genome.name} coord {region}: {minBp - bpRegionSize}-{minBp}
+        Fetched ${genome.name} coord {region}: {minBp}-{minBp + bpRegionSize}
       </div>
       <div> drag offset: {lastX.current}</div>
       <div> bp movement: {dragX.current}</div>
