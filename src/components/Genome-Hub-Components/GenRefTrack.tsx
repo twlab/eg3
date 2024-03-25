@@ -103,205 +103,137 @@ function GenRefTrack(props) {
   }
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    if (!initial) {
-      const userRespond = await fetch(
+    let userRespond;
+    if (initial) {
+      userRespond = await fetch(
         `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
           maxBp - bpRegionSize
         }&end=${maxBp}`,
         { method: "GET" }
       );
-      const result = await userRespond.json();
-
-      const strandIntervalList: Array<any> = [];
-      const strandLevelList: Array<any> = [];
-
-      if (result) {
-        let resultIdx = 0;
-        while (
-          resultIdx < result.length &&
-          result[resultIdx].id in prevOverflowStrand.current
-        ) {
-          resultIdx += 1;
-        }
-        if (resultIdx < result.length) {
-          strandIntervalList.push([
-            result[resultIdx].txStart,
-            result[resultIdx].txEnd,
-            0,
-          ]);
-          strandLevelList.push(new Array<any>(result[resultIdx]));
-        }
-
-        for (let i = resultIdx + 1; i < result.length; i++) {
-          let idx = strandIntervalList.length - 1;
-          let curStrand = result[i];
-          if (curStrand.id in prevOverflowStrand.current) {
-            continue;
-          }
-          let prevStrandInterval = strandIntervalList[idx];
-
-          let curHighestLvl = [
-            idx,
-            strandIntervalList[idx][2], // change list to count
-          ];
-
-          // if current starting coord is less than previous ending coord then they overlap
-          if (curStrand.txStart <= prevStrandInterval[1]) {
-            // combine the intervals into one larger interval that encompass the strands
-            strandIntervalList[idx][1] = curStrand.txEnd;
-
-            //loop to check which other intervals the current strand overlaps
-            while (
-              idx >= 0 &&
-              curStrand.txStart <= strandIntervalList[idx][1]
-            ) {
-              if (strandIntervalList[2] > curHighestLvl[1]) {
-                curHighestLvl = [idx, strandIntervalList[2]];
-              }
-              idx--;
-            }
-
-            strandIntervalList[curHighestLvl[0]][2] += 1;
-            while (
-              strandLevelList.length - 1 <
-              strandIntervalList[curHighestLvl[0]][2]
-            ) {
-              strandLevelList.push(new Array<any>());
-            }
-
-            strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
-              curStrand
-            );
-          } else {
-            strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]);
-            strandLevelList[0].push(curStrand);
-          }
-        }
-      }
-
-      let curOverflow = { ...prevOverflowStrand.current };
-
-      if (Object.keys(curOverflow).length !== 0) {
-        let orderedStrands = Object.keys(curOverflow);
-        orderedStrands.sort((a, b) => {
-          return curOverflow[a].level - curOverflow[b].level;
-        });
-        for (let id of orderedStrands) {
-          let level = curOverflow[id].level;
-          let curStrand = curOverflow[id].strand;
-          let tempArr: Array<any> = [];
-          tempArr.push(curStrand);
-          if (strandLevelList.length - 1 >= level) {
-            strandLevelList.splice(level, 0, tempArr);
-          } else {
-            while (strandLevelList.length - 1 < level) {
-              strandLevelList.push(new Array<any>());
-            }
-
-            strandLevelList[level].push(curStrand);
-          }
-        }
-      }
-
-      for (var i = 0; i < strandLevelList.length; i++) {
-        let levelContent = strandLevelList[i];
-        for (var strand of levelContent) {
-          if (strand.txEnd > maxBp) {
-            overflowStrand.current[strand.id] = {
-              level: i,
-              strand: strand,
-            };
-          }
-        }
-      }
-      prevOverflowStrand.current = { ...overflowStrand.current };
-      overflowStrand.current = {};
-
-      let currTrack: Array<any> = [];
-      currTrack.push(strandIntervalList);
-
-      rightTrackGenes.current.push(
-        <SetStrand key={getRndInteger()} strandPos={strandLevelList} />
-      );
-
-      setGenRefDataRight((prev) => [...prev, ...currTrack]);
     } else {
-      const userRespond = await fetch(
+      userRespond = await fetch(
         `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
         { method: "GET" }
       );
+    }
 
-      const result = await userRespond.json();
-      const strandIntervalList: Array<any> = [];
-      const strandLevelList: Array<any> = [];
-      if (result) {
-        strandIntervalList.push([result[0].txStart, result[0].txEnd, 0]);
-        strandLevelList.push(new Array<any>(result[0]));
-        for (let i = 1; i < result.length; i++) {
-          let idx = strandIntervalList.length - 1;
+    const result = await userRespond.json();
 
-          let curStrand = result[i];
-          let prevStrandInterval = strandIntervalList[idx];
+    const strandIntervalList: Array<any> = [];
+    const strandLevelList: Array<any> = [];
 
-          let curHighestLvl = [
-            idx,
-            strandIntervalList[idx][2], // change list to count
-          ];
+    if (result) {
+      let resultIdx = 0;
+      while (
+        resultIdx < result.length &&
+        result[resultIdx].id in prevOverflowStrand.current
+      ) {
+        resultIdx += 1;
+      }
+      if (resultIdx < result.length) {
+        strandIntervalList.push([
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
+          0,
+        ]);
+        strandLevelList.push(new Array<any>(result[resultIdx]));
+      }
 
-          // if current starting coord is less than previous ending coord then they overlap
-          if (curStrand.txStart <= prevStrandInterval[1]) {
-            // combine the intervals into one larger interval that encompass the strands
-            strandIntervalList[idx][1] = curStrand.txEnd;
+      for (let i = resultIdx + 1; i < result.length; i++) {
+        let idx = strandIntervalList.length - 1;
+        let curStrand = result[i];
+        if (curStrand.id in prevOverflowStrand.current) {
+          continue;
+        }
+        let prevStrandInterval = strandIntervalList[idx];
 
-            //loop to check which other intervals the current strand overlaps
-            while (
-              idx >= 0 &&
-              curStrand.txStart <= strandIntervalList[idx][1]
-            ) {
-              if (strandIntervalList[2] > curHighestLvl[1]) {
-                // change list to count
-                curHighestLvl = [idx, strandIntervalList[2]]; // change list to count
-              }
-              idx--;
+        let curHighestLvl = [
+          idx,
+          strandIntervalList[idx][2], // change list to count
+        ];
+
+        // if current starting coord is less than previous ending coord then they overlap
+        if (curStrand.txStart <= prevStrandInterval[1]) {
+          // combine the intervals into one larger interval that encompass the strands
+          strandIntervalList[idx][1] = curStrand.txEnd;
+
+          //loop to check which other intervals the current strand overlaps
+          while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
+            if (strandIntervalList[2] > curHighestLvl[1]) {
+              curHighestLvl = [idx, strandIntervalList[2]];
             }
-
-            strandIntervalList[curHighestLvl[0]][2] += 1; // change list to count
-            while (
-              strandLevelList.length - 1 <
-              strandIntervalList[curHighestLvl[0]][2]
-            ) {
-              strandLevelList.push(new Array<any>());
-            }
-            strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
-              curStrand
-            );
-            if (curStrand.txEnd > maxBp) {
-              overflowStrand.current[curStrand.id] =
-                strandIntervalList[curHighestLvl[0]][2];
-            }
-            //add to level list
-          } else {
-            strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]); // change list to count
-            strandLevelList[0].push(curStrand);
-            if (curStrand.txEnd > maxBp) {
-              overflowStrand.current[curStrand.id] = 0;
-            }
+            idx--;
           }
+
+          strandIntervalList[curHighestLvl[0]][2] += 1;
+          while (
+            strandLevelList.length - 1 <
+            strandIntervalList[curHighestLvl[0]][2]
+          ) {
+            strandLevelList.push(new Array<any>());
+          }
+
+          strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
+            curStrand
+          );
+        } else {
+          strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]);
+          strandLevelList[0].push(curStrand);
         }
       }
-      // here check if there are uncomplete strands from previous track and
-      // in the strandLevelList insert the strands into their preivous level index and move every
-      // curr strand to the right increasing their level by one
-      let currTrack: Array<any> = [];
-      currTrack.push(strandIntervalList); // change list to count
+    }
 
-      rightTrackGenes.current.push(
-        <SetStrand key={getRndInteger()} strandPos={strandLevelList} />
-      );
+    let curOverflow = { ...prevOverflowStrand.current };
 
-      setGenRefDataRight((prev) => [...prev, ...currTrack]);
+    if (Object.keys(curOverflow).length !== 0) {
+      let orderedStrands = Object.keys(curOverflow);
+      orderedStrands.sort((a, b) => {
+        return curOverflow[a].level - curOverflow[b].level;
+      });
+      for (let id of orderedStrands) {
+        let level = curOverflow[id].level;
+        let curStrand = curOverflow[id].strand;
+        let tempArr: Array<any> = [];
+        tempArr.push(curStrand);
+        if (strandLevelList.length - 1 >= level) {
+          strandLevelList.splice(level, 0, tempArr);
+        } else {
+          while (strandLevelList.length - 1 < level) {
+            strandLevelList.push(new Array<any>());
+          }
+
+          strandLevelList[level].push(curStrand);
+        }
+      }
+    }
+
+    for (var i = 0; i < strandLevelList.length; i++) {
+      let levelContent = strandLevelList[i];
+      for (var strand of levelContent) {
+        if (strand.txEnd > maxBp) {
+          overflowStrand.current[strand.id] = {
+            level: i,
+            strand: strand,
+          };
+        }
+      }
+    }
+    prevOverflowStrand.current = { ...overflowStrand.current };
+    overflowStrand.current = {};
+
+    let currTrack: Array<any> = [];
+    currTrack.push(strandIntervalList);
+
+    rightTrackGenes.current.push(
+      <SetStrand key={getRndInteger()} strandPos={strandLevelList} />
+    );
+
+    setGenRefDataRight((prev) => [...prev, ...currTrack]);
+    if (initial) {
       setGenRefDataLeft((prev) => [...prev, ...currTrack]);
     }
+
     setMaxBp(maxBp + bpRegionSize);
   }
   async function fetchGenomeData2() {
