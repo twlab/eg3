@@ -187,7 +187,7 @@ function GenRefTrack(props) {
     }
 
     let curOverflow = { ...prevOverflowStrand.current };
-
+    // To- do fix creating mutiple overflowing strands
     if (Object.keys(curOverflow).length !== 0) {
       let orderedStrands = Object.keys(curOverflow);
       orderedStrands.sort((a, b) => {
@@ -255,7 +255,10 @@ function GenRefTrack(props) {
 
     const strandIntervalList: Array<any> = [];
     const strandLevelList: Array<any> = [];
-
+    result.sort((a, b) => {
+      return b.txStart - a.txStart;
+    });
+    console.log(result);
     if (result) {
       let resultIdx = 0;
       while (
@@ -270,10 +273,13 @@ function GenRefTrack(props) {
           result[resultIdx].txEnd,
           0,
         ]);
+        console.log(result[resultIdx]);
         strandLevelList.push(new Array<any>(result[resultIdx]));
+        console.log(strandLevelList);
       }
 
       for (let i = resultIdx + 1; i < result.length; i++) {
+        console.log(result[i]);
         let idx = strandIntervalList.length - 1;
         let curStrand = result[i];
         if (curStrand.id in prevOverflowStrand2.current) {
@@ -314,6 +320,7 @@ function GenRefTrack(props) {
           strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]);
           strandLevelList[0].push(curStrand);
         }
+        console.log(strandLevelList);
       }
     }
 
@@ -391,15 +398,11 @@ function GenRefTrack(props) {
                   strokeWidth="8"
                 />
                 <text
-                  fontSize={5}
-                  textLength={
-                    (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx -
-                    (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                  }
+                  fontSize={7}
                   x={`${
                     (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
                   }`}
-                  y={`${yCoord + 10}`}
+                  y={`${yCoord - 10}`}
                   fill="black"
                 >
                   {singleStrand.name}
@@ -437,8 +440,7 @@ function GenRefTrack(props) {
         if (props.strandPos[i] !== "") {
           for (let j = 0; j < props.strandPos[i].length; j++) {
             const singleStrand = props.strandPos[i][j];
-            console.log(singleStrand.txStart, minBp, bpRegionSize);
-            console.log(singleStrand.name);
+
             strandHtml.push(
               <React.Fragment key={j}>
                 <line
@@ -450,13 +452,9 @@ function GenRefTrack(props) {
                   strokeWidth="8"
                 />
                 <text
-                  fontSize={5}
-                  textLength={
-                    (singleStrand.txEnd - minBp) / bpToPx -
-                    (singleStrand.txStart - minBp) / bpToPx
-                  }
+                  fontSize={7}
                   x={`${(singleStrand.txStart - minBp) / bpToPx}`}
-                  y={`${yCoord + 10}`}
+                  y={`${yCoord - 10}`}
                   fill="black"
                 >
                   {singleStrand.name}
@@ -491,8 +489,33 @@ function GenRefTrack(props) {
         width={`${windowWidth * 2}px`}
         height={"100%"}
         style={{ display: "inline-block" }}
+        overflow="visible"
       >
-        <rect width={`${windowWidth * 2}px`} height="100%" fill={item} />
+        <line
+          x1={`0`}
+          y1="0"
+          x2={`${windowWidth * 2}px`}
+          y2={"0"}
+          stroke="gray"
+          strokeWidth="3"
+        />
+        <line
+          x1={`${windowWidth * 2}px`}
+          y1="0"
+          x2={`${windowWidth * 2}px`}
+          y2={"100%"}
+          stroke="gray"
+          strokeWidth="3"
+        />
+
+        <line
+          x1={`0`}
+          y1={"100%"}
+          x2={`${windowWidth * 2}px`}
+          y2={"100%"}
+          stroke="gray"
+          strokeWidth="3"
+        />
         {rightTrackGenes.current[index] ? rightTrackGenes.current[index] : ""}
       </svg>
     ));
@@ -509,8 +532,34 @@ function GenRefTrack(props) {
           width={`${windowWidth * 2}px`}
           height={"100%"}
           style={{ display: "inline-block" }}
+          overflow="visible"
         >
-          <rect width={`${windowWidth * 2}px`} height="100%" fill={item} />
+          <line
+            x1={`0`}
+            y1="0"
+            x2={`${windowWidth * 2}px`}
+            y2={"0"}
+            stroke="gray"
+            strokeWidth="3"
+          />
+          <line
+            x1={`${windowWidth * 2}px`}
+            y1="0"
+            x2={`${windowWidth * 2}px`}
+            y2={"100%"}
+            stroke="gray"
+            strokeWidth="3"
+          />
+
+          <line
+            x1={`0`}
+            y1={"100%"}
+            x2={`${windowWidth * 2}px`}
+            y2={"100%"}
+            stroke="gray"
+            strokeWidth="3"
+          />
+
           {tempData[index - 1] ? tempData[index - 1] : ""}
         </svg>
       ));
@@ -589,23 +638,20 @@ function GenRefTrack(props) {
           flex: "1",
           display: "flex",
           justifyContent: dragX.current <= 0 ? "start" : "end",
-          height: "90vh",
+          height: "900px",
           flexDirection: "row",
           whiteSpace: "nowrap",
+          // div width has to match a single track width or the alignment will be off
+          // in order to smoothly tranverse need to fetch info offscreen
+          // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth * 2}px`,
           backgroundColor: "pink",
           overflow: "hidden",
           margin: "auto",
-          paddingTop: "15vh",
+          paddingTop: "5vh",
         }}
       >
-        <div
-          ref={block}
-          onMouseDown={handleMouseDown}
-          style={{
-            height: "75%",
-          }}
-        >
+        <div ref={block} onMouseDown={handleMouseDown} style={{}}>
           {dragX.current <= 0 ? genomeTrackR : genomeTrackL}
         </div>
       </div>
