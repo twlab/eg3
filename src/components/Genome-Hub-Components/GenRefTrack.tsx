@@ -123,7 +123,6 @@ function GenRefTrack(props) {
     const result = await userRespond.json();
 
     const strandIntervalList: Array<any> = [];
-    const strandLevelList: Array<any> = [];
 
     if (result) {
       let resultIdx = 0;
@@ -137,17 +136,14 @@ function GenRefTrack(props) {
         strandIntervalList.push([
           result[resultIdx].txStart,
           result[resultIdx].txEnd,
-          0,
+          new Array<any>(result[resultIdx]),
         ]);
-        strandLevelList.push(new Array<any>(result[resultIdx]));
       }
 
       for (let i = resultIdx + 1; i < result.length; i++) {
         let idx = strandIntervalList.length - 1;
         let curStrand = result[i];
-        if (curStrand.id in prevOverflowStrand.current) {
-          continue;
-        }
+
         let prevStrandInterval = strandIntervalList[idx];
 
         let curHighestLvl = [
@@ -160,6 +156,41 @@ function GenRefTrack(props) {
           // combine the intervals into one larger interval that encompass the strands
           strandIntervalList[idx][1] = curStrand.txEnd;
 
+          //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
+          if (curStrand.id in prevOverflowStrand.current) {
+            while (
+              strandIntervalList[idx][2].length - 1 <
+              prevOverflowStrand.current[curStrand.id].level
+            ) {
+              strandIntervalList[idx][2].push({});
+            }
+            strandIntervalList[idx][2].splice(
+              prevOverflowStrand.current[curStrand.id].level,
+              0,
+              prevOverflowStrand.current[curStrand.id].strand
+            );
+
+            idx--;
+            while (
+              idx >= 0 &&
+              prevOverflowStrand.current[curStrand.id].strand.txStart <=
+                prevStrandInterval[1]
+            ) {
+              if (
+                strandIntervalList[idx][2].length - 1 >=
+                prevOverflowStrand.current[curStrand.id].level
+              ) {
+                strandIntervalList[idx][2].splice(
+                  prevOverflowStrand.current[curStrand.id].level,
+                  0,
+                  new Array<any>()
+                );
+              }
+              idx--;
+            }
+            continue;
+          }
+
           //loop to check which other intervals the current strand overlaps
           while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
             if (strandIntervalList[2] > curHighestLvl[1]) {
@@ -168,48 +199,31 @@ function GenRefTrack(props) {
             idx--;
           }
 
-          strandIntervalList[curHighestLvl[0]][2] += 1;
-          while (
-            strandLevelList.length - 1 <
-            strandIntervalList[curHighestLvl[0]][2]
-          ) {
-            strandLevelList.push(new Array<any>());
-          }
-
-          strandLevelList[strandIntervalList[curHighestLvl[0]][2]].push(
-            curStrand
-          );
+          strandIntervalList[curHighestLvl[0]][2].push(curStrand);
         } else {
-          strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]);
-          strandLevelList[0].push(curStrand);
+          strandIntervalList.push([
+            result[i].txStart,
+            result[i].txEnd,
+            new Array<any>(curStrand),
+          ]);
         }
       }
     }
 
-    let curOverflow = { ...prevOverflowStrand.current };
-    // To- do fix creating mutiple overflowing strands
-    if (Object.keys(curOverflow).length !== 0) {
-      let orderedStrands = Object.keys(curOverflow);
-      orderedStrands.sort((a, b) => {
-        return curOverflow[a].level - curOverflow[b].level;
-      });
-      for (let id of orderedStrands) {
-        let level = curOverflow[id].level;
-        let curStrand = curOverflow[id].strand;
-        let tempArr: Array<any> = [];
-        tempArr.push(curStrand);
-        if (strandLevelList.length - 1 >= level) {
-          strandLevelList.splice(level, 0, tempArr);
-        } else {
-          while (strandLevelList.length - 1 < level) {
-            strandLevelList.push(new Array<any>());
-          }
-
-          strandLevelList[level].push(curStrand);
+    //SORT our interval data into levels to be place on the track
+    const strandLevelList: Array<any> = [];
+    for (var i = 0; i < strandIntervalList.length; i++) {
+      var intervalLevelData = strandIntervalList[i][2];
+      for (var j = 0; j < intervalLevelData.length; j++) {
+        var strand = intervalLevelData[j];
+        while (strandLevelList.length - 1 < j) {
+          strandLevelList.push(new Array<any>());
         }
+        strandLevelList[j].push(strand);
       }
     }
-
+    console.log(strandLevelList);
+    // CHECK if there are overlapping strands to the next track
     for (var i = 0; i < strandLevelList.length; i++) {
       let levelContent = strandLevelList[i];
       for (var strand of levelContent) {
@@ -221,6 +235,7 @@ function GenRefTrack(props) {
         }
       }
     }
+
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
@@ -258,7 +273,7 @@ function GenRefTrack(props) {
     result.sort((a, b) => {
       return b.txStart - a.txStart;
     });
-    console.log(result);
+
     if (result) {
       let resultIdx = 0;
       while (
@@ -273,13 +288,11 @@ function GenRefTrack(props) {
           result[resultIdx].txEnd,
           0,
         ]);
-        console.log(result[resultIdx]);
+
         strandLevelList.push(new Array<any>(result[resultIdx]));
-        console.log(strandLevelList);
       }
 
       for (let i = resultIdx + 1; i < result.length; i++) {
-        console.log(result[i]);
         let idx = strandIntervalList.length - 1;
         let curStrand = result[i];
         if (curStrand.id in prevOverflowStrand2.current) {
@@ -320,7 +333,6 @@ function GenRefTrack(props) {
           strandIntervalList.push([result[i].txStart, result[i].txEnd, 0]);
           strandLevelList[0].push(curStrand);
         }
-        console.log(strandLevelList);
       }
     }
 
@@ -380,9 +392,12 @@ function GenRefTrack(props) {
       for (let i = 0; i < props.strandPos.length; i++) {
         const strandHtml: Array<any> = [];
 
-        if (props.strandPos[i] !== "") {
+        if (Object.keys(props.strandPos[i]).length !== 0) {
           for (let j = 0; j < props.strandPos[i].length; j++) {
             const singleStrand = props.strandPos[i][j];
+            if (Object.keys(singleStrand).length === 0) {
+              continue;
+            }
             strandHtml.push(
               <React.Fragment key={j}>
                 <line
@@ -410,9 +425,10 @@ function GenRefTrack(props) {
               </React.Fragment>
             );
           }
+        } else {
+          strandHtml.push(<div></div>);
         }
-
-        if (props.strandPos[i] !== "") {
+        if (Object.keys(props.strandPos[i]).length !== 0) {
           strandList.push(strandHtml);
         }
 
@@ -482,7 +498,6 @@ function GenRefTrack(props) {
   }
 
   function ShowGenomeData() {
-    console.log(rightTrackGenes.current);
     return svgColor.map((item, index) => (
       <svg
         key={index}
@@ -521,7 +536,6 @@ function GenRefTrack(props) {
     ));
   }
   function ShowGenomeData2() {
-    console.log(leftTrackGenes.current);
     let tempData = leftTrackGenes.current.slice(0);
     tempData.reverse();
     return svgColor2
