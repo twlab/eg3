@@ -92,12 +92,15 @@ function GenRefTrack(props) {
   function handleMouseUp() {
     setDragging(false);
     if (
-      -dragX.current / (windowWidth * 2) >= svgColor.length - 2 &&
+      -dragX.current / (windowWidth * 2) >= genRefDataRight.length - 1 &&
       dragX.current < 0
     ) {
       setAddNewBpRegionRight(true);
     } else if (
-      dragX.current / (windowWidth * 2) >= svgColor2.length - 2 &&
+      //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
+      //so we need to add to keep the position correct.
+      (dragX.current + windowWidth) / (windowWidth * 2) >=
+        genRefDataLeft.length - 1 &&
       dragX.current > 0
     ) {
       setAddNewBpRegionLeft(true);
@@ -122,24 +125,44 @@ function GenRefTrack(props) {
 
     const result = await userRespond.json();
 
-    const strandIntervalList: Array<any> = [];
-
+    var strandIntervalList: Array<any> = [];
+    // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (result) {
       let resultIdx = 0;
-      while (
+
+      if (
         resultIdx < result.length &&
-        result[resultIdx].id in prevOverflowStrand.current
+        !(result[resultIdx].id in prevOverflowStrand.current)
       ) {
-        resultIdx += 1;
-      }
-      if (resultIdx < result.length) {
         strandIntervalList.push([
           result[resultIdx].txStart,
           result[resultIdx].txEnd,
           new Array<any>(result[resultIdx]),
         ]);
+      } else if (
+        resultIdx < result.length &&
+        result[resultIdx].id in prevOverflowStrand.current
+      ) {
+        strandIntervalList.push([
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
+          new Array<any>(),
+        ]);
+
+        while (
+          strandIntervalList[resultIdx][2].length <
+          prevOverflowStrand.current[result[resultIdx].id].level
+        ) {
+          strandIntervalList[resultIdx][2].push({});
+        }
+        strandIntervalList[resultIdx][2].splice(
+          prevOverflowStrand.current[result[resultIdx].id].level,
+          0,
+          prevOverflowStrand.current[result[resultIdx].id].strand
+        );
       }
 
+      // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx + 1; i < result.length; i++) {
         let idx = strandIntervalList.length - 1;
         let curStrand = result[i];
@@ -156,7 +179,7 @@ function GenRefTrack(props) {
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand.current) {
             while (
-              strandIntervalList[idx][2].length - 1 <
+              strandIntervalList[idx][2].length <
               prevOverflowStrand.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
@@ -174,7 +197,7 @@ function GenRefTrack(props) {
                 prevStrandInterval[1]
             ) {
               if (
-                strandIntervalList[idx][2].length - 1 >=
+                strandIntervalList[idx][2].length - 1 >
                 prevOverflowStrand.current[curStrand.id].level
               ) {
                 strandIntervalList[idx][2].splice(
@@ -269,33 +292,51 @@ function GenRefTrack(props) {
     );
     const result = await userRespond.json();
 
-    const strandIntervalList: Array<any> = [];
+    var strandIntervalList: Array<any> = [];
     result.sort((a, b) => {
       return b.txStart - a.txStart;
     });
-
     if (result) {
+      console.log(result);
       let resultIdx = 0;
-      while (
+
+      if (
         resultIdx < result.length &&
-        result[resultIdx].id in prevOverflowStrand2.current
+        !(result[resultIdx].id in prevOverflowStrand2.current)
       ) {
-        resultIdx += 1;
-      }
-      if (resultIdx < result.length) {
         strandIntervalList.push([
           result[resultIdx].txStart,
           result[resultIdx].txEnd,
           new Array<any>(result[resultIdx]),
         ]);
-      }
+      } else if (
+        resultIdx < result.length &&
+        result[resultIdx].id in prevOverflowStrand2.current
+      ) {
+        strandIntervalList.push([
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
+          new Array<any>(),
+        ]);
 
+        while (
+          strandIntervalList[resultIdx][2].length <
+          prevOverflowStrand2.current[result[resultIdx].id].level
+        ) {
+          strandIntervalList[resultIdx][2].push({});
+        }
+        strandIntervalList[resultIdx][2].splice(
+          prevOverflowStrand2.current[result[resultIdx].id].level,
+          0,
+          prevOverflowStrand2.current[result[resultIdx].id].strand
+        );
+      }
+      //START THE LOOP TO CHECK IF Prev interval overlapp with curr
       for (let i = resultIdx + 1; i < result.length; i++) {
+        console.log(result[i]);
         let idx = strandIntervalList.length - 1;
         let curStrand = result[i];
-        if (curStrand.id in prevOverflowStrand2.current) {
-          continue;
-        }
+
         let prevStrandInterval = strandIntervalList[idx];
 
         let curHighestLvl = [
@@ -304,22 +345,13 @@ function GenRefTrack(props) {
         ];
 
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.txStart <= prevStrandInterval[1]) {
+        if (curStrand.txEnd >= prevStrandInterval[0]) {
           // combine the intervals into one larger interval that encompass the strands
-          strandIntervalList[idx][1] = curStrand.txEnd;
-
-          //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
-            if (strandIntervalList[2] > curHighestLvl[1]) {
-              curHighestLvl = [idx, strandIntervalList[2]];
-            }
-            idx--;
-          }
-
+          strandIntervalList[idx][0] = curStrand.txStart;
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand2.current) {
             while (
-              strandIntervalList[idx][2].length - 1 <
+              strandIntervalList[idx][2].length <
               prevOverflowStrand2.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
@@ -333,11 +365,11 @@ function GenRefTrack(props) {
             idx--;
             while (
               idx >= 0 &&
-              prevOverflowStrand2.current[curStrand.id].strand.txStart <=
-                prevStrandInterval[1]
+              prevOverflowStrand2.current[curStrand.id].strand.txEnd >=
+                prevStrandInterval[0]
             ) {
               if (
-                strandIntervalList[idx][2].length - 1 >=
+                strandIntervalList[idx][2].length - 1 >
                 prevOverflowStrand2.current[curStrand.id].level
               ) {
                 strandIntervalList[idx][2].splice(
@@ -349,6 +381,14 @@ function GenRefTrack(props) {
               idx--;
             }
             continue;
+          }
+
+          //loop to check which other intervals the current strand overlaps
+          while (idx >= 0 && curStrand.txEnd >= strandIntervalList[idx][0]) {
+            if (strandIntervalList[2] > curHighestLvl[1]) {
+              curHighestLvl = [idx, strandIntervalList[2]];
+            }
+            idx--;
           }
 
           strandIntervalList[curHighestLvl[0]][2].push(curStrand);
@@ -373,7 +413,7 @@ function GenRefTrack(props) {
         strandLevelList[j].push(strand);
       }
     }
-
+    console.log(strandIntervalList);
     for (var i = 0; i < strandLevelList.length; i++) {
       let levelContent = strandLevelList[i];
       for (var strand of levelContent) {
@@ -386,6 +426,8 @@ function GenRefTrack(props) {
       }
     }
     prevOverflowStrand2.current = { ...overflowStrand2.current };
+
+    console.log(overflowStrand2.current);
     overflowStrand2.current = {};
 
     let currTrack: Array<any> = [];
@@ -424,14 +466,15 @@ function GenRefTrack(props) {
                   }`}
                   y2={`${yCoord}`}
                   stroke="red"
-                  strokeWidth="8"
+                  strokeWidth="7"
                 />
+
                 <text
                   fontSize={7}
                   x={`${
                     (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
                   }`}
-                  y={`${yCoord - 10}`}
+                  y={`${yCoord - 5}`}
                   fill="black"
                 >
                   {singleStrand.name}
@@ -446,7 +489,7 @@ function GenRefTrack(props) {
           strandList.push(strandHtml);
         }
 
-        yCoord += 30;
+        yCoord += 20;
       }
     }
 
@@ -481,12 +524,12 @@ function GenRefTrack(props) {
                   x2={`${(singleStrand.txEnd - minBp) / bpToPx}`}
                   y2={`${yCoord}`}
                   stroke="red"
-                  strokeWidth="8"
+                  strokeWidth="5"
                 />
                 <text
                   fontSize={7}
                   x={`${(singleStrand.txStart - minBp) / bpToPx}`}
-                  y={`${yCoord - 10}`}
+                  y={`${yCoord - 5}`}
                   fill="black"
                 >
                   {singleStrand.name}
@@ -500,7 +543,7 @@ function GenRefTrack(props) {
           strandList.push(strandHtml);
         }
 
-        yCoord += 30;
+        yCoord += 20;
       }
     }
 
@@ -554,43 +597,48 @@ function GenRefTrack(props) {
   function ShowGenomeData2() {
     let tempData = leftTrackGenes.current.slice(0);
     tempData.reverse();
-    return svgColor2.map((item, index) => (
-      <svg
-        key={index}
-        width={`${windowWidth * 2}px`}
-        height={"100%"}
-        style={{ display: "inline-block" }}
-        overflow="visible"
-      >
-        <line
-          x1={`0`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"0"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`${windowWidth * 2}px`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
 
-        <line
-          x1={`0`}
-          y1={"100%"}
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
+    console.log(svgColor2.length, leftTrackGenes.current.length);
+    return svgColor2
+      .slice(0)
+      .reverse()
+      .map((item, index) => (
+        <svg
+          key={index}
+          width={`${windowWidth * 2}px`}
+          height={"100%"}
+          style={{ display: "inline-block" }}
+          overflow="visible"
+        >
+          <line
+            x1={`0`}
+            y1="0"
+            x2={`${windowWidth * 2}px`}
+            y2={"0"}
+            stroke="gray"
+            strokeWidth="3"
+          />
+          <line
+            x1={`${windowWidth * 2}px`}
+            y1="0"
+            x2={`${windowWidth * 2}px`}
+            y2={"100%"}
+            stroke="gray"
+            strokeWidth="3"
+          />
 
-        {tempData[index - 1] ? tempData[index - 1] : ""}
-      </svg>
-    ));
+          <line
+            x1={`0`}
+            y1={"100%"}
+            x2={`${windowWidth * 2}px`}
+            y2={"100%"}
+            stroke="gray"
+            strokeWidth="3"
+          />
+
+          {tempData[index - 1] ? tempData[index - 1] : ""}
+        </svg>
+      ));
   }
 
   useEffect(() => {
@@ -623,6 +671,7 @@ function GenRefTrack(props) {
   useEffect(() => {
     console.log(windowWidth);
     if (addNewBpRegionRight) {
+      console.log("trigger add right side of track");
       async function handle() {
         if (curColor == "blue") {
           curColor = "orange";
@@ -666,7 +715,7 @@ function GenRefTrack(props) {
           flex: "1",
           display: "flex",
           justifyContent: dragX.current <= 0 ? "start" : "end",
-          height: "900px",
+          height: "1000px",
           flexDirection: "row",
           whiteSpace: "nowrap",
           // div width has to match a single track width or the alignment will be off
@@ -691,7 +740,11 @@ function GenRefTrack(props) {
         Fetched ${genome.name} coord {region}: {minBp}-{minBp + bpRegionSize}
       </div>
       <div> drag offset: {lastX.current}</div>
-      <div> bp movement: {dragX.current}</div>
+      {dragX.current <= 0 ? (
+        <div> bp movement: {dragX.current}</div>
+      ) : (
+        <div> bp movement: {dragX.current + windowWidth}</div>
+      )}
     </>
   );
 }
