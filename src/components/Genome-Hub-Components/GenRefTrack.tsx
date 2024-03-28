@@ -131,7 +131,7 @@ function GenRefTrack(props) {
         ]);
 
         while (
-          strandIntervalList[resultIdx][2].length - 1 <
+          strandIntervalList[resultIdx][2].length <
           prevOverflowStrand.current[result[resultIdx].id].level
         ) {
           strandIntervalList[resultIdx][2].push({});
@@ -301,7 +301,7 @@ function GenRefTrack(props) {
         ]);
 
         while (
-          strandIntervalList[resultIdx][2].length - 1 <
+          strandIntervalList[resultIdx][2].length <
           prevOverflowStrand2.current[result[resultIdx].id].level
         ) {
           strandIntervalList[resultIdx][2].push({});
@@ -319,13 +319,16 @@ function GenRefTrack(props) {
 
         var curHighestLvl = [
           idx,
-          strandIntervalList[idx][2], // change list to count
+          strandIntervalList[idx][2].length - 1, //
         ];
 
         // if current starting coord is less than previous ending coord then they overlap
         if (curStrand.txEnd >= strandIntervalList[idx][0]) {
           // combine the intervals into one larger interval that encompass the strands
-          strandIntervalList[idx][0] = curStrand.txStart;
+          if (strandIntervalList[idx][0] > curStrand.txStart) {
+            strandIntervalList[idx][0] = curStrand.txStart;
+          }
+
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand2.current) {
             while (
@@ -364,8 +367,8 @@ function GenRefTrack(props) {
 
           //loop to check which other intervals the current strand overlaps
           while (idx >= 0 && curStrand.txEnd >= strandIntervalList[idx][0]) {
-            if (strandIntervalList[idx][2] > curHighestLvl[1]) {
-              curHighestLvl = [idx, strandIntervalList[idx][2]];
+            if (strandIntervalList[idx][2].length - 1 > curHighestLvl[1]) {
+              curHighestLvl = [idx, strandIntervalList[idx][2].length];
             }
             idx--;
           }
@@ -381,11 +384,13 @@ function GenRefTrack(props) {
       }
     }
     console.log(strandIntervalList);
-    const strandLevelList: Array<any> = [];
+    let strandLevelList: Array<any> = [];
     for (var i = 0; i < strandIntervalList.length; i++) {
       var intervalLevelData = strandIntervalList[i][2];
+
       for (var j = 0; j < intervalLevelData.length; j++) {
         var strand = intervalLevelData[j];
+
         while (strandLevelList.length - 1 < j) {
           strandLevelList.push(new Array<any>());
         }
@@ -834,12 +839,16 @@ function GenRefTrack(props) {
       }}
     >
       <div>
-        Fetched hg38 coord right {maxBp - bpRegionSize * 3}-
-        {maxBp - bpRegionSize * 2}
+        right hg38 region {maxBp - bpRegionSize * 3}-{maxBp - bpRegionSize * 2}
       </div>
       <div>
-        Fetched hg38 coord left {minBp + bpRegionSize * 2}-
-        {minBp + bpRegionSize * 3}
+        left hg38 region {minBp + bpRegionSize * 2}-{minBp + bpRegionSize * 3}
+      </div>
+      <div>
+        Fetched hg38 coord {maxBp - bpRegionSize}-{maxBp}
+      </div>
+      <div>
+        Fetched hg38 coord {minBp}-{minBp + bpRegionSize}
       </div>
       <div
         style={{
