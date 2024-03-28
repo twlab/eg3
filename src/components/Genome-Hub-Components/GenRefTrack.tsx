@@ -131,7 +131,7 @@ function GenRefTrack(props) {
         ]);
 
         while (
-          strandIntervalList[resultIdx][2].length <
+          strandIntervalList[resultIdx][2].length - 1 <
           prevOverflowStrand.current[result[resultIdx].id].level
         ) {
           strandIntervalList[resultIdx][2].push({});
@@ -147,20 +147,16 @@ function GenRefTrack(props) {
       for (let i = resultIdx + 1; i < result.length; i++) {
         var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
-
-        const prevStrandInterval = strandIntervalList[idx];
-
         var curHighestLvl = [idx, strandIntervalList[idx][2]];
 
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.txStart <= prevStrandInterval[1]) {
+        if (curStrand.txStart <= strandIntervalList[idx][1]) {
           // combine the intervals into one larger interval that encompass the strands
           strandIntervalList[idx][1] = curStrand.txEnd;
-
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand.current) {
             while (
-              strandIntervalList[idx][2].length <
+              strandIntervalList[idx][2].length - 1 <
               prevOverflowStrand.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
@@ -175,10 +171,10 @@ function GenRefTrack(props) {
             while (
               idx >= 0 &&
               prevOverflowStrand.current[curStrand.id].strand.txStart <=
-                prevStrandInterval[1]
+                strandIntervalList[idx][1]
             ) {
               if (
-                strandIntervalList[idx][2].length - 1 >
+                strandIntervalList[idx][2].length >
                 prevOverflowStrand.current[curStrand.id].level
               ) {
                 strandIntervalList[idx][2].splice(
@@ -194,8 +190,8 @@ function GenRefTrack(props) {
 
           //loop to check which other intervals the current strand overlaps
           while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
-            if (strandIntervalList[2] > curHighestLvl[1]) {
-              curHighestLvl = [idx, strandIntervalList[2]];
+            if (strandIntervalList[idx][2] > curHighestLvl[1]) {
+              curHighestLvl = [idx, strandIntervalList[idx][2]];
             }
             idx--;
           }
@@ -280,7 +276,7 @@ function GenRefTrack(props) {
 
     var strandIntervalList: Array<any> = [];
     result.sort((a, b) => {
-      return b.txStart - a.txStart;
+      return b.txEnd - a.txEnd;
     });
     if (result) {
       var resultIdx = 0;
@@ -305,7 +301,7 @@ function GenRefTrack(props) {
         ]);
 
         while (
-          strandIntervalList[resultIdx][2].length <
+          strandIntervalList[resultIdx][2].length - 1 <
           prevOverflowStrand2.current[result[resultIdx].id].level
         ) {
           strandIntervalList[resultIdx][2].push({});
@@ -321,21 +317,19 @@ function GenRefTrack(props) {
         var idx = strandIntervalList.length - 1;
         var curStrand = result[i];
 
-        const prevStrandInterval = strandIntervalList[idx];
-
         var curHighestLvl = [
           idx,
           strandIntervalList[idx][2], // change list to count
         ];
 
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.txEnd >= prevStrandInterval[0]) {
+        if (curStrand.txEnd >= strandIntervalList[idx][0]) {
           // combine the intervals into one larger interval that encompass the strands
           strandIntervalList[idx][0] = curStrand.txStart;
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand2.current) {
             while (
-              strandIntervalList[idx][2].length <
+              strandIntervalList[idx][2].length - 1 <
               prevOverflowStrand2.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
@@ -350,10 +344,10 @@ function GenRefTrack(props) {
             while (
               idx >= 0 &&
               prevOverflowStrand2.current[curStrand.id].strand.txEnd >=
-                prevStrandInterval[0]
+                strandIntervalList[idx][0]
             ) {
               if (
-                strandIntervalList[idx][2].length - 1 >
+                strandIntervalList[idx][2].length >
                 prevOverflowStrand2.current[curStrand.id].level
               ) {
                 strandIntervalList[idx][2].splice(
@@ -362,6 +356,7 @@ function GenRefTrack(props) {
                   new Array<any>()
                 );
               }
+
               idx--;
             }
             continue;
@@ -369,8 +364,8 @@ function GenRefTrack(props) {
 
           //loop to check which other intervals the current strand overlaps
           while (idx >= 0 && curStrand.txEnd >= strandIntervalList[idx][0]) {
-            if (strandIntervalList[2] > curHighestLvl[1]) {
-              curHighestLvl = [idx, strandIntervalList[2]];
+            if (strandIntervalList[idx][2] > curHighestLvl[1]) {
+              curHighestLvl = [idx, strandIntervalList[idx][2]];
             }
             idx--;
           }
@@ -385,7 +380,7 @@ function GenRefTrack(props) {
         }
       }
     }
-
+    console.log(strandIntervalList);
     const strandLevelList: Array<any> = [];
     for (var i = 0; i < strandIntervalList.length; i++) {
       var intervalLevelData = strandIntervalList[i][2];
@@ -429,6 +424,7 @@ function GenRefTrack(props) {
     setGenRefDataLeft((prev) => [...prev, ...currTrack]);
   }
   function SetStrand(props) {
+    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
     var yCoord = 25;
     const strandList: Array<any> = [];
 
@@ -539,8 +535,10 @@ function GenRefTrack(props) {
             </React.Fragment>
           );
         }
-        strandList.push(strandHtml);
+
         yCoord += 25;
+
+        strandList.push(strandHtml);
       }
     }
 
@@ -554,6 +552,7 @@ function GenRefTrack(props) {
   }
 
   function SetStrand2(props) {
+    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
     var yCoord = 25;
     const strandList: Array<any> = [];
 
@@ -662,9 +661,10 @@ function GenRefTrack(props) {
             </React.Fragment>
           );
         }
-        strandList.push(strandHtml);
 
         yCoord += 25;
+
+        strandList.push(strandHtml);
       }
     }
 
@@ -828,11 +828,19 @@ function GenRefTrack(props) {
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-        backgroundColor: "black",
+
         overflow: "hidden",
         margin: "auto",
       }}
     >
+      <div>
+        Fetched hg38 coord right {maxBp - bpRegionSize * 3}-
+        {maxBp - bpRegionSize * 2}
+      </div>
+      <div>
+        Fetched hg38 coord left {minBp + bpRegionSize * 2}-
+        {minBp + bpRegionSize * 3}
+      </div>
       <div
         style={{
           flex: "1",
