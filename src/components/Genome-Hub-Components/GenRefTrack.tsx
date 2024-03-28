@@ -397,6 +397,7 @@ function GenRefTrack(props) {
         strandLevelList[j].push(strand);
       }
     }
+
     leftTrackGenes.current.push(
       <SetStrand2
         key={getRndInteger()}
@@ -557,14 +558,19 @@ function GenRefTrack(props) {
     const strandList: Array<any> = [];
 
     if (props.strandPos.length) {
+      var checkObj = false;
+      if (props.checkPrev !== undefined) {
+        checkObj = true;
+      }
       for (let i = 0; i < props.strandPos.length; i++) {
         const strandHtml: Array<any> = [];
 
         for (let j = 0; j < props.strandPos[i].length; j++) {
           const singleStrand = props.strandPos[i][j];
+
           if (
             Object.keys(singleStrand).length === 0 ||
-            singleStrand.id in props.checkPrev
+            (checkObj && singleStrand.id in props.checkPrev)
           ) {
             continue;
           }
@@ -816,7 +822,17 @@ function GenRefTrack(props) {
   }, [addNewBpRegionLeft]);
 
   return (
-    <>
+    <div
+      style={{
+        height: "900px",
+        flexDirection: "row",
+        whiteSpace: "nowrap",
+        //not using flex allows us to keep the position of the track
+        backgroundColor: "black",
+        overflow: "hidden",
+        margin: "auto",
+      }}
+    >
       <div
         style={{
           flex: "1",
@@ -838,7 +854,7 @@ function GenRefTrack(props) {
           {dragX.current <= 0 ? genomeTrackR : genomeTrackL}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
