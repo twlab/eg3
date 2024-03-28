@@ -9,14 +9,14 @@ const cancelAnimationFrame = window.cancelAnimationFrame;
 const windowWidth = window.innerWidth;
 function GenRefTrack(props) {
   //To-Do: need to move this part to initial render so this section only run once
-  let genome = props.currGenome;
+  const genome = props.currGenome;
 
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
-  let bpToPx = bpRegionSize / (windowWidth * 2);
+  const bpToPx = bpRegionSize / (windowWidth * 2);
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -67,25 +67,6 @@ function GenRefTrack(props) {
     e.preventDefault();
   }
 
-  function setLines() {
-    let yCoord = 30;
-    const lineList: Array<any> = [];
-    for (let i = 0; i < 9; i++) {
-      lineList.push(
-        <line
-          key={i}
-          x1="0"
-          y1={`${yCoord}`}
-          x2={`${windowWidth * 1.5}`}
-          y2={`${yCoord}`}
-          stroke="white"
-          strokeWidth="2"
-        />
-      );
-      yCoord += 30;
-    }
-    return lineList;
-  }
   function getRndInteger(min = 0, max = 10000000000) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
@@ -97,7 +78,10 @@ function GenRefTrack(props) {
     ) {
       setAddNewBpRegionRight(true);
     } else if (
-      dragX.current / (windowWidth * 2) >= svgColor2.length - 2 &&
+      //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
+      //so we need to add to keep the position correct.
+      (dragX.current + windowWidth) / (windowWidth * 2) >=
+        svgColor2.length - 2 &&
       dragX.current > 0
     ) {
       setAddNewBpRegionLeft(true);
@@ -122,31 +106,51 @@ function GenRefTrack(props) {
 
     const result = await userRespond.json();
 
-    const strandIntervalList: Array<any> = [];
-
+    var strandIntervalList: Array<any> = [];
+    // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (result) {
-      let resultIdx = 0;
-      while (
+      var resultIdx = 0;
+
+      if (
         resultIdx < result.length &&
-        result[resultIdx].id in prevOverflowStrand.current
+        !(result[resultIdx].id in prevOverflowStrand.current)
       ) {
-        resultIdx += 1;
-      }
-      if (resultIdx < result.length) {
         strandIntervalList.push([
           result[resultIdx].txStart,
           result[resultIdx].txEnd,
           new Array<any>(result[resultIdx]),
         ]);
+      } else if (
+        resultIdx < result.length &&
+        result[resultIdx].id in prevOverflowStrand.current
+      ) {
+        strandIntervalList.push([
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
+          new Array<any>(),
+        ]);
+
+        while (
+          strandIntervalList[resultIdx][2].length <
+          prevOverflowStrand.current[result[resultIdx].id].level
+        ) {
+          strandIntervalList[resultIdx][2].push({});
+        }
+        strandIntervalList[resultIdx][2].splice(
+          prevOverflowStrand.current[result[resultIdx].id].level,
+          0,
+          prevOverflowStrand.current[result[resultIdx].id].strand
+        );
       }
 
+      // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx + 1; i < result.length; i++) {
-        let idx = strandIntervalList.length - 1;
-        let curStrand = result[i];
+        var idx = strandIntervalList.length - 1;
+        const curStrand = result[i];
 
-        let prevStrandInterval = strandIntervalList[idx];
+        const prevStrandInterval = strandIntervalList[idx];
 
-        let curHighestLvl = [idx, strandIntervalList[idx][2]];
+        var curHighestLvl = [idx, strandIntervalList[idx][2]];
 
         // if current starting coord is less than previous ending coord then they overlap
         if (curStrand.txStart <= prevStrandInterval[1]) {
@@ -156,7 +160,7 @@ function GenRefTrack(props) {
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand.current) {
             while (
-              strandIntervalList[idx][2].length - 1 <
+              strandIntervalList[idx][2].length <
               prevOverflowStrand.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
@@ -174,7 +178,7 @@ function GenRefTrack(props) {
                 prevStrandInterval[1]
             ) {
               if (
-                strandIntervalList[idx][2].length - 1 >=
+                strandIntervalList[idx][2].length - 1 >
                 prevOverflowStrand.current[curStrand.id].level
               ) {
                 strandIntervalList[idx][2].splice(
@@ -219,10 +223,18 @@ function GenRefTrack(props) {
         strandLevelList[j].push(strand);
       }
     }
-    console.log(strandLevelList);
+
+    rightTrackGenes.current.push(
+      <SetStrand
+        key={getRndInteger()}
+        strandPos={strandLevelList}
+        checkPrev={prevOverflowStrand.current}
+      />
+    );
+
     // CHECK if there are overlapping strands to the next track
     for (var i = 0; i < strandLevelList.length; i++) {
-      let levelContent = strandLevelList[i];
+      const levelContent = strandLevelList[i];
       for (var strand of levelContent) {
         if (strand.txEnd > maxBp) {
           overflowStrand.current[strand.id] = {
@@ -236,13 +248,10 @@ function GenRefTrack(props) {
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
-    let currTrack: Array<any> = [];
+    const currTrack: Array<any> = [];
     currTrack.push(strandIntervalList);
 
     setGenRefDataRight((prev) => [...prev, ...currTrack]);
-    rightTrackGenes.current.push(
-      <SetStrand key={getRndInteger()} strandPos={strandLevelList} />
-    );
 
     if (initial) {
       setGenRefDataLeft((prev) => [...prev, ...currTrack]);
@@ -269,57 +278,64 @@ function GenRefTrack(props) {
     );
     const result = await userRespond.json();
 
-    const strandIntervalList: Array<any> = [];
+    var strandIntervalList: Array<any> = [];
     result.sort((a, b) => {
       return b.txStart - a.txStart;
     });
-
     if (result) {
-      let resultIdx = 0;
-      while (
+      var resultIdx = 0;
+
+      if (
         resultIdx < result.length &&
-        result[resultIdx].id in prevOverflowStrand2.current
+        !(result[resultIdx].id in prevOverflowStrand2.current)
       ) {
-        resultIdx += 1;
-      }
-      if (resultIdx < result.length) {
         strandIntervalList.push([
           result[resultIdx].txStart,
           result[resultIdx].txEnd,
           new Array<any>(result[resultIdx]),
         ]);
-      }
+      } else if (
+        resultIdx < result.length &&
+        result[resultIdx].id in prevOverflowStrand2.current
+      ) {
+        strandIntervalList.push([
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
+          new Array<any>(),
+        ]);
 
-      for (let i = resultIdx + 1; i < result.length; i++) {
-        let idx = strandIntervalList.length - 1;
-        let curStrand = result[i];
-        if (curStrand.id in prevOverflowStrand2.current) {
-          continue;
+        while (
+          strandIntervalList[resultIdx][2].length <
+          prevOverflowStrand2.current[result[resultIdx].id].level
+        ) {
+          strandIntervalList[resultIdx][2].push({});
         }
-        let prevStrandInterval = strandIntervalList[idx];
+        strandIntervalList[resultIdx][2].splice(
+          prevOverflowStrand2.current[result[resultIdx].id].level,
+          0,
+          prevOverflowStrand2.current[result[resultIdx].id].strand
+        );
+      }
+      //START THE LOOP TO CHECK IF Prev interval overlapp with curr
+      for (let i = resultIdx + 1; i < result.length; i++) {
+        var idx = strandIntervalList.length - 1;
+        var curStrand = result[i];
 
-        let curHighestLvl = [
+        const prevStrandInterval = strandIntervalList[idx];
+
+        var curHighestLvl = [
           idx,
           strandIntervalList[idx][2], // change list to count
         ];
 
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.txStart <= prevStrandInterval[1]) {
+        if (curStrand.txEnd >= prevStrandInterval[0]) {
           // combine the intervals into one larger interval that encompass the strands
-          strandIntervalList[idx][1] = curStrand.txEnd;
-
-          //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
-            if (strandIntervalList[2] > curHighestLvl[1]) {
-              curHighestLvl = [idx, strandIntervalList[2]];
-            }
-            idx--;
-          }
-
+          strandIntervalList[idx][0] = curStrand.txStart;
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand2.current) {
             while (
-              strandIntervalList[idx][2].length - 1 <
+              strandIntervalList[idx][2].length <
               prevOverflowStrand2.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
@@ -333,11 +349,11 @@ function GenRefTrack(props) {
             idx--;
             while (
               idx >= 0 &&
-              prevOverflowStrand2.current[curStrand.id].strand.txStart <=
-                prevStrandInterval[1]
+              prevOverflowStrand2.current[curStrand.id].strand.txEnd >=
+                prevStrandInterval[0]
             ) {
               if (
-                strandIntervalList[idx][2].length - 1 >=
+                strandIntervalList[idx][2].length - 1 >
                 prevOverflowStrand2.current[curStrand.id].level
               ) {
                 strandIntervalList[idx][2].splice(
@@ -349,6 +365,14 @@ function GenRefTrack(props) {
               idx--;
             }
             continue;
+          }
+
+          //loop to check which other intervals the current strand overlaps
+          while (idx >= 0 && curStrand.txEnd >= strandIntervalList[idx][0]) {
+            if (strandIntervalList[2] > curHighestLvl[1]) {
+              curHighestLvl = [idx, strandIntervalList[2]];
+            }
+            idx--;
           }
 
           strandIntervalList[curHighestLvl[0]][2].push(curStrand);
@@ -374,8 +398,16 @@ function GenRefTrack(props) {
       }
     }
 
+    leftTrackGenes.current.push(
+      <SetStrand2
+        key={getRndInteger()}
+        strandPos={strandLevelList}
+        checkPrev={prevOverflowStrand2.current}
+      />
+    );
+
     for (var i = 0; i < strandLevelList.length; i++) {
-      let levelContent = strandLevelList[i];
+      var levelContent = strandLevelList[i];
       for (var strand of levelContent) {
         if (strand.txStart < minBp) {
           overflowStrand2.current[strand.id] = {
@@ -385,68 +417,130 @@ function GenRefTrack(props) {
         }
       }
     }
+
     prevOverflowStrand2.current = { ...overflowStrand2.current };
+
     overflowStrand2.current = {};
 
-    let currTrack: Array<any> = [];
+    const currTrack: Array<any> = [];
     currTrack.push(strandIntervalList);
-
-    leftTrackGenes.current.push(
-      <SetStrand2 key={getRndInteger()} strandPos={strandLevelList} />
-    );
 
     setMinBp(minBp - bpRegionSize);
     setGenRefDataLeft((prev) => [...prev, ...currTrack]);
   }
   function SetStrand(props) {
-    let yCoord = 30;
+    var yCoord = 25;
     const strandList: Array<any> = [];
 
     if (props.strandPos.length) {
       for (let i = 0; i < props.strandPos.length; i++) {
         const strandHtml: Array<any> = [];
 
-        if (Object.keys(props.strandPos[i]).length !== 0) {
-          for (let j = 0; j < props.strandPos[i].length; j++) {
-            const singleStrand = props.strandPos[i][j];
-            if (Object.keys(singleStrand).length === 0) {
-              continue;
-            }
-            strandHtml.push(
-              <React.Fragment key={j}>
-                <line
-                  x1={`${
-                    (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                  }`}
-                  y1={`${yCoord}`}
-                  x2={`${
-                    (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx
-                  }`}
-                  y2={`${yCoord}`}
-                  stroke="red"
-                  strokeWidth="8"
-                />
-                <text
-                  fontSize={7}
-                  x={`${
-                    (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
-                  }`}
-                  y={`${yCoord - 10}`}
-                  fill="black"
-                >
-                  {singleStrand.name}
-                </text>
-              </React.Fragment>
+        for (let j = 0; j < props.strandPos[i].length; j++) {
+          const singleStrand = props.strandPos[i][j];
+
+          if (
+            Object.keys(singleStrand).length === 0 ||
+            singleStrand.id in props.checkPrev
+          ) {
+            continue;
+          }
+          // find the color and exons on the strand---------------------------------------------------------------
+          var strandColor;
+          if (singleStrand.transcriptionClass === "coding") {
+            strandColor = "purple";
+          } else {
+            strandColor = "green";
+          }
+          const exonIntervals: Array<any> = [];
+          const exonStarts = singleStrand.exonStarts.split(",");
+          const exonEnds = singleStrand.exonEnds.split(",");
+          for (let z = 0; z < exonStarts.length; z++) {
+            exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
+          }
+          // add arrows direction to the strand------------------------------------------------------
+          const startX =
+            (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx;
+          const endX = (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx;
+          const ARROW_WIDTH = 5;
+          const arrowSeparation = 100;
+          const bottomY = 5;
+          var placementStartX = startX - ARROW_WIDTH / 2;
+          var placementEndX = endX;
+          if (singleStrand.strand === "+") {
+            placementStartX += ARROW_WIDTH;
+          } else {
+            placementEndX -= ARROW_WIDTH;
+          }
+
+          const children: Array<any> = [];
+          // Naming: if our arrows look like '<', then the tip is on the left, and the two tails are on the right.
+          for (
+            let arrowTipX = placementStartX;
+            arrowTipX <= placementEndX;
+            arrowTipX += arrowSeparation
+          ) {
+            // Is forward strand ? point to the right : point to the left
+            const arrowTailX =
+              singleStrand.strand === "+"
+                ? arrowTipX - ARROW_WIDTH
+                : arrowTipX + ARROW_WIDTH;
+            const arrowPoints = [
+              [arrowTailX, yCoord - bottomY],
+              [arrowTipX, yCoord],
+              [arrowTailX, bottomY + yCoord],
+            ];
+            children.push(
+              <polyline
+                key={arrowTipX}
+                points={`${arrowPoints}`}
+                fill="none"
+                stroke={strandColor}
+                strokeWidth={1}
+              />
             );
           }
-        } else {
-          strandHtml.push(<div></div>);
-        }
-        if (Object.keys(props.strandPos[i]).length !== 0) {
-          strandList.push(strandHtml);
-        }
+          //add a single strand to current track------------------------------------------------------------------------------------
+          strandHtml.push(
+            <React.Fragment key={j}>
+              {children.map((item, index) => item)}
+              <line
+                x1={`${
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
+                }`}
+                y1={`${yCoord}`}
+                x2={`${(singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx}`}
+                y2={`${yCoord}`}
+                stroke={`${strandColor}`}
+                strokeWidth="4"
+              />
+              {exonIntervals.map((coord, index) => (
+                <line
+                  key={index + 198}
+                  x1={`${(coord[0] - (maxBp - bpRegionSize)) / bpToPx}`}
+                  y1={`${yCoord}`}
+                  x2={`${(coord[1] - (maxBp - bpRegionSize)) / bpToPx}`}
+                  y2={`${yCoord}`}
+                  stroke={`${strandColor}`}
+                  strokeWidth="7"
+                />
+              ))}
 
-        yCoord += 30;
+              <text
+                fontSize={7}
+                x={`${
+                  (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx
+                }`}
+                y={`${yCoord - 7}`}
+                fill="black"
+              >
+                {singleStrand.name}
+              </text>
+            </React.Fragment>
+          );
+        }
+        strandList.push(strandHtml);
+        yCoord += 25;
       }
     }
 
@@ -460,47 +554,117 @@ function GenRefTrack(props) {
   }
 
   function SetStrand2(props) {
-    let yCoord = 30;
+    var yCoord = 25;
     const strandList: Array<any> = [];
 
     if (props.strandPos.length) {
+      var checkObj = false;
+      if (props.checkPrev !== undefined) {
+        checkObj = true;
+      }
       for (let i = 0; i < props.strandPos.length; i++) {
         const strandHtml: Array<any> = [];
 
-        if (Object.keys(props.strandPos[i]).length !== 0) {
-          for (let j = 0; j < props.strandPos[i].length; j++) {
-            const singleStrand = props.strandPos[i][j];
-            if (Object.keys(singleStrand).length === 0) {
-              continue;
-            }
-            strandHtml.push(
-              <React.Fragment key={j}>
-                <line
-                  x1={`${(singleStrand.txStart - minBp) / bpToPx}`}
-                  y1={`${yCoord}`}
-                  x2={`${(singleStrand.txEnd - minBp) / bpToPx}`}
-                  y2={`${yCoord}`}
-                  stroke="red"
-                  strokeWidth="8"
-                />
-                <text
-                  fontSize={7}
-                  x={`${(singleStrand.txStart - minBp) / bpToPx}`}
-                  y={`${yCoord - 10}`}
-                  fill="black"
-                >
-                  {singleStrand.name}
-                </text>
-              </React.Fragment>
+        for (let j = 0; j < props.strandPos[i].length; j++) {
+          const singleStrand = props.strandPos[i][j];
+
+          if (
+            Object.keys(singleStrand).length === 0 ||
+            (checkObj && singleStrand.id in props.checkPrev)
+          ) {
+            continue;
+          }
+          var strandColor;
+          if (singleStrand.transcriptionClass === "coding") {
+            strandColor = "purple";
+          } else {
+            strandColor = "green";
+          }
+          const exonIntervals: Array<any> = [];
+          const exonStarts = singleStrand.exonStarts.split(",");
+          const exonEnds = singleStrand.exonEnds.split(",");
+          for (let z = 0; z < exonStarts.length; z++) {
+            exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
+          }
+          // add arrows direction to the strand------------------------------------------------------
+          const startX = (singleStrand.txStart - minBp) / bpToPx;
+          const endX = (singleStrand.txEnd - minBp) / bpToPx;
+          const ARROW_WIDTH = 5;
+          const arrowSeparation = 100;
+
+          const bottomY = 5;
+          var placementStartX = startX - ARROW_WIDTH / 2;
+          var placementEndX = endX;
+          if (singleStrand.strand === "+") {
+            placementStartX += ARROW_WIDTH;
+          } else {
+            placementEndX -= ARROW_WIDTH;
+          }
+
+          const children: Array<any> = [];
+          // Naming: if our arrows look like '<', then the tip is on the left, and the two tails are on the right.
+          for (
+            var arrowTipX = placementStartX;
+            arrowTipX <= placementEndX;
+            arrowTipX += arrowSeparation
+          ) {
+            // Is forward strand ? point to the right : point to the left
+            const arrowTailX =
+              singleStrand.strand === "+"
+                ? arrowTipX - ARROW_WIDTH
+                : arrowTipX + ARROW_WIDTH;
+            const arrowPoints = [
+              [arrowTailX, yCoord - bottomY],
+              [arrowTipX, yCoord],
+              [arrowTailX, bottomY + yCoord],
+            ];
+            children.push(
+              <polyline
+                key={arrowTipX}
+                points={`${arrowPoints}`}
+                fill="none"
+                stroke={strandColor}
+                strokeWidth={1}
+              />
             );
           }
-        }
 
-        if (props.strandPos[i] !== "") {
-          strandList.push(strandHtml);
+          strandHtml.push(
+            <React.Fragment key={j}>
+              {children.map((item, index) => item)}
+              <line
+                x1={`${(singleStrand.txStart - minBp) / bpToPx}`}
+                y1={`${yCoord}`}
+                x2={`${(singleStrand.txEnd - minBp) / bpToPx}`}
+                y2={`${yCoord}`}
+                stroke={`${strandColor}`}
+                strokeWidth="4"
+              />
+              {exonIntervals.map((coord, index) => (
+                <line
+                  key={index + 199}
+                  x1={`${(coord[0] - minBp) / bpToPx}`}
+                  y1={`${yCoord}`}
+                  x2={`${(coord[1] - minBp) / bpToPx}`}
+                  y2={`${yCoord}`}
+                  stroke={`${strandColor}`}
+                  strokeWidth="7"
+                />
+              ))}
+              <text
+                fontSize={7}
+                x={`${(singleStrand.txStart - minBp) / bpToPx}`}
+                y={`${yCoord - 7}`}
+                fill="black"
+              >
+                {singleStrand.name}
+              </text>
+            </React.Fragment>
+          );
         }
+        strandList.push(strandHtml);
 
-        yCoord += 30;
+        yCoord += 25;
       }
     }
 
@@ -552,8 +716,9 @@ function GenRefTrack(props) {
     ));
   }
   function ShowGenomeData2() {
-    let tempData = leftTrackGenes.current.slice(0);
+    const tempData = leftTrackGenes.current.slice(0);
     tempData.reverse();
+
     return svgColor2.map((item, index) => (
       <svg
         key={index}
@@ -617,11 +782,9 @@ function GenRefTrack(props) {
       setMaxBp(maxBp + bpRegionSize);
     }
     getData();
-    console.log(windowWidth);
   }, []);
 
   useEffect(() => {
-    console.log(windowWidth);
     if (addNewBpRegionRight) {
       async function handle() {
         if (curColor == "blue") {
@@ -643,7 +806,6 @@ function GenRefTrack(props) {
 
   useEffect(() => {
     if (addNewBpRegionLeft) {
-      console.log("trigger add left side of track");
       if (curColor2 == "green") {
         curColor2 = "purple";
       } else {
@@ -660,7 +822,17 @@ function GenRefTrack(props) {
   }, [addNewBpRegionLeft]);
 
   return (
-    <>
+    <div
+      style={{
+        height: "900px",
+        flexDirection: "row",
+        whiteSpace: "nowrap",
+        //not using flex allows us to keep the position of the track
+        backgroundColor: "black",
+        overflow: "hidden",
+        margin: "auto",
+      }}
+    >
       <div
         style={{
           flex: "1",
@@ -670,29 +842,19 @@ function GenRefTrack(props) {
           flexDirection: "row",
           whiteSpace: "nowrap",
           // div width has to match a single track width or the alignment will be off
-          // in order to smoothly tranverse need to fetch info offscreen
+          // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth * 2}px`,
           backgroundColor: "pink",
           overflow: "hidden",
           margin: "auto",
-          paddingTop: "5vh",
         }}
       >
         <div ref={block} onMouseDown={handleMouseDown} style={{}}>
           {dragX.current <= 0 ? genomeTrackR : genomeTrackL}
         </div>
       </div>
-      <div>
-        Fetched ${genome.name} coord {region}: {maxBp - bpRegionSize * 3}-
-        {maxBp - bpRegionSize * 2}
-      </div>
-      <div>
-        Fetched ${genome.name} coord {region}: {minBp}-{minBp + bpRegionSize}
-      </div>
-      <div> drag offset: {lastX.current}</div>
-      <div> bp movement: {dragX.current}</div>
-    </>
+    </div>
   );
 }
 
