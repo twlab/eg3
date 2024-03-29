@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import GenRefTrack from "./GenRefTrack";
+import GetBedData from "./getData/bed";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
@@ -42,15 +43,16 @@ function GenomeHub(props: any) {
     setgenRefView(
       <GenRefTrack
         currGenome={{
-          name: "hg38",
-          species: "human",
-          defaultRegion: "chr7:27053397-27373765",
+          name: "mm10",
+          species: "mouse",
+          defaultRegion: "chr6:52149465-52164219",
         }}
       />
     );
   }, []);
   return (
     <div>
+      <GetBedData />
       {items}
       {genRefView}
     </div>

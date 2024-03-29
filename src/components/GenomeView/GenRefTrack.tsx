@@ -30,7 +30,7 @@ function GenRefTrack(props) {
 
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-
+  const trackRegionR = useRef<Array<any>>([]);
   const leftTrackGenes = useRef<Array<any>>([]);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -46,6 +46,7 @@ function GenRefTrack(props) {
   const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
   const [maxBp, setMaxBp] = useState(rightStartCoord);
   const [minBp, setMinBp] = useState(leftStartCoord);
+  const [trackRegion, setTrackRegion] = useState("");
   function handleMove(e) {
     if (!isDragging) {
       return;
@@ -54,7 +55,7 @@ function GenRefTrack(props) {
 
     lastX.current = e.pageX;
     dragX.current -= deltaX;
-
+    //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
       block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
@@ -97,7 +98,9 @@ function GenRefTrack(props) {
       );
     } else {
       userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=chr7&start=${
+        `${AWS_API}/${
+          genome.name
+        }/genes/refGene/queryRegion?chr=${region}&start=${
           maxBp - bpRegionSize
         }&end=${maxBp}`,
         { method: "GET" }
@@ -156,7 +159,7 @@ function GenRefTrack(props) {
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand.current) {
             while (
-              strandIntervalList[idx][2].length - 1 <
+              strandIntervalList[idx][2].length <
               prevOverflowStrand.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
@@ -190,7 +193,7 @@ function GenRefTrack(props) {
 
           //loop to check which other intervals the current strand overlaps
           while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
-            if (strandIntervalList[idx][2] > curHighestLvl[1]) {
+            if (strandIntervalList[idx][2].length > curHighestLvl[1].length) {
               curHighestLvl = [idx, strandIntervalList[idx][2]];
             }
             idx--;
@@ -226,6 +229,11 @@ function GenRefTrack(props) {
         strandPos={strandLevelList}
         checkPrev={prevOverflowStrand.current}
       />
+    );
+    trackRegionR.current.push(
+      <text fontSize={30} x={200} y={400} fill="black">
+        {`${maxBp - bpRegionSize} - ${maxBp}`}
+      </text>
     );
 
     // CHECK if there are overlapping strands to the next track
@@ -383,7 +391,7 @@ function GenRefTrack(props) {
         }
       }
     }
-    console.log(strandIntervalList);
+
     let strandLevelList: Array<any> = [];
     for (var i = 0; i < strandIntervalList.length; i++) {
       var intervalLevelData = strandIntervalList[i][2];
@@ -432,10 +440,12 @@ function GenRefTrack(props) {
     //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
     var yCoord = 25;
     const strandList: Array<any> = [];
+    console.log(`${maxBp - bpRegionSize} - ${maxBp}`, props.strandPos);
 
     if (props.strandPos.length) {
+      let prevStrandHtml = 0;
       for (let i = 0; i < props.strandPos.length; i++) {
-        const strandHtml: Array<any> = [];
+        let strandHtml: Array<any> = [];
 
         for (let j = 0; j < props.strandPos[i].length; j++) {
           const singleStrand = props.strandPos[i][j];
@@ -446,6 +456,7 @@ function GenRefTrack(props) {
           ) {
             continue;
           }
+
           // find the color and exons on the strand---------------------------------------------------------------
           var strandColor;
           if (singleStrand.transcriptionClass === "coding") {
@@ -464,7 +475,7 @@ function GenRefTrack(props) {
             (singleStrand.txStart - (maxBp - bpRegionSize)) / bpToPx;
           const endX = (singleStrand.txEnd - (maxBp - bpRegionSize)) / bpToPx;
           const ARROW_WIDTH = 5;
-          const arrowSeparation = 100;
+          const arrowSeparation = 22;
           const bottomY = 5;
           var placementStartX = startX - ARROW_WIDTH / 2;
           var placementEndX = endX;
@@ -544,16 +555,13 @@ function GenRefTrack(props) {
         yCoord += 25;
 
         strandList.push(strandHtml);
+        prevStrandHtml = strandHtml.length;
       }
     }
 
-    return (
-      <>
-        {strandList.map((item, index) => (
-          <React.Fragment key={index}>{item}</React.Fragment>
-        ))}
-      </>
-    );
+    return strandList.map((item, index) => (
+      <React.Fragment key={index}>{item}</React.Fragment>
+    ));
   }
 
   function SetStrand2(props) {
@@ -707,7 +715,6 @@ function GenRefTrack(props) {
           stroke="gray"
           strokeWidth="3"
         />
-
         <line
           x1={`0`}
           y1={"100%"}
@@ -716,7 +723,9 @@ function GenRefTrack(props) {
           stroke="gray"
           strokeWidth="3"
         />
+
         {rightTrackGenes.current[index] ? rightTrackGenes.current[index] : ""}
+        {trackRegionR.current[index] ? trackRegionR.current[index] : ""}
       </svg>
     ));
   }
@@ -797,12 +806,12 @@ function GenRefTrack(props) {
         } else {
           curColor = "blue";
         }
-        fetchGenomeData();
         setSvgColor((prevStrandInterval) => {
           const t = [...prevStrandInterval];
           t.push(curColor);
           return t;
         });
+        await fetchGenomeData();
       }
       handle();
     }
@@ -855,7 +864,7 @@ function GenRefTrack(props) {
           flex: "1",
           display: "flex",
           justifyContent: dragX.current <= 0 ? "start" : "end",
-          height: "900px",
+          height: "600px",
           flexDirection: "row",
           whiteSpace: "nowrap",
           // div width has to match a single track width or the alignment will be off

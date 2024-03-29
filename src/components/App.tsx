@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Homepage from "./Homepage-Components/Homepage";
 import { BrowserRouter, Link, Switch, Route } from "react-router-dom";
-import GenomeHub from "./Genome-Hub-Components/GenomeHub";
+import GenomeHub from "./GenomeView/GenomeRoot";
 import { treeOfLifeObj } from "../localdata/treeoflife";
 import { DefaultRegionData } from "../localdata/defaultregiondata";
 import mainLogo from "../assets/images/icon.png";

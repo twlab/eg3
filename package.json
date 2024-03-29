@@ -23,7 +23,8 @@
     "nodemon": "^3.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^5.2.0"
+    "react-router-dom": "^5.2.0",
+            "zlib": "^1.0.5"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
