@@ -1,13 +1,13 @@
+import { TabixIndexedFile } from "@gmod/tabix";
+import { RemoteFile } from "generic-filehandle";
 import { useEffect, useState } from "react";
-import makeBamIndex from "../../../vendor/igv/BamIndex";
 
-import unbgzf from "../../../vendor/igv/bgzf";
-import Zlib from "../../../vendor/zlib_and_gzip";
 const MAX_GZIP_BLOCK_SIZE = 1 << 16;
 const DATA_FILTER_LIMIT_LENGTH = 300000;
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
-function GetBedData() {
-  const [index, setIndex] = useState<any>();
+function GetBedData(url, chr, start, end) {
+  console.log(url);
+
   function ensureMaxListLength<T>(list: T[], limit: number): T[] {
     if (list.length <= limit) {
       return list;
@@ -21,82 +21,95 @@ function GetBedData() {
     }
     return selectedItems;
   }
-  async function fetchGenomeData(url: any, range?: any) {
-    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
-    let rawData = await fetch(`${url}`, {
-      method: "GET",
-      headers: {
-        range: `bytes=${94007}-${159543}`,
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
+  async function getData(loci, options) {
+    // let promises = loci.map(this.getDataForLocus);
+    const promises = loci.map((locus) => {
+      // graph container uses this source directly w/o initial track, so options is null
+      let chrom =
+        options && options.ensemblStyle
+          ? locus.chr.replace("chr", "")
+          : locus.chr;
+      if (chrom === "M") {
+        chrom = "MT";
+      }
+      console.log(chrom, locus.start, locus.end);
+      return getDataForLocus(chrom, locus.start, locus.end);
     });
-    const buffer = await rawData.arrayBuffer();
-    let decompressor = await new Zlib.Gunzip(new Uint8Array(buffer!)); // eslint-disable-line no-restricted-globals
-    let decompressed = await decompressor.decompress();
-    return makeBamIndex(decompressed.buffer, true);
+    console.log(promises);
+    const dataForEachLocus = await Promise.all(promises);
+    if (options && options.ensemblStyle) {
+      loci.forEach((locus, index) => {
+        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+      });
+    }
+    return dataForEachLocus;
   }
 
-  function parseAndFilterFeatures(buffer, chromosome, start, end) {
-    const text = new TextDecoder("utf-8").decode(buffer);
+  /**
+   * Gets data for a single chromosome interval.
+   *
+   * @param {string} chr - genome coordinates
+   * @param {number} start - genome coordinates
+   * @param {stnumberring} end - genome coordinates
+   * @return {Promise<BedRecord[]>} Promise for the data
+   */
+  async function getDataForLocus(chr, start, end) {
+    const fetch = window.fetch.bind(window);
+    let tabix = new TabixIndexedFile({
+      filehandle: new RemoteFile(url, { fetch }),
+      tbiFilehandle: new RemoteFile(url + ".tbi", {
+        fetch,
+      }),
+    });
+    // const { chr, start, end } = locus;
+    const rawlines: Array<any> = [];
+    await tabix.getLines(chr, start, end, (line) => rawlines.push(line));
     let lines;
-    if (end - start > DATA_FILTER_LIMIT_LENGTH) {
-      lines = ensureMaxListLength(text.split("\n"), 100000);
+    if (rawlines.length > 100000) {
+      lines = ensureMaxListLength(rawlines, 100000);
     } else {
-      lines = text.split("\n");
+      lines = rawlines;
     }
-    let features: Array<any> = [];
-    for (let line of lines) {
-      const columns = line.split("\t");
-      if (columns.length < 3) {
-        continue;
-      }
-      if (columns[0] !== chromosome) {
-        continue;
-      }
-
-      let feature = {
-        chr: columns[0],
-        start: Number.parseInt(columns[1], 10),
-        end: Number.parseInt(columns[2], 10),
-        n: columns.length, // number of columns in initial data row
-      };
-
-      if (feature.start > end) {
-        // This is correct as long as the features are sorted by start
-        break;
-      }
-      if (feature.end >= start && feature.start <= end) {
-        for (let i = 3; i < columns.length; i++) {
-          // Copy the rest of the columns to the feature
-          feature[i] = columns[i];
-        }
-        features.push(feature);
-      }
-    }
-
-    return features;
+    return lines.map(parseLine);
   }
 
-  useEffect(() => {
-    async function getData() {
-      let data = await fetchGenomeData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz.tbi"
-      );
-      console.log(data);
+  /**
+   * @param {string} line - raw string the bed-like file
+   */
+  function parseLine(line) {
+    const columns = line.split("\t");
+    if (columns.length < 3) {
+      return;
     }
-    getData();
-  }, []);
-
-  useEffect(() => {
-    async function getData() {
-      console.log(index);
-      console.log("it trigger");
+    let feature = {
+      chr: columns[0],
+      start: Number.parseInt(columns[1], 10),
+      end: Number.parseInt(columns[2], 10),
+      n: columns.length, // number of columns in initial data row
+    };
+    for (let i = 3; i < columns.length; i++) {
+      // Copy the rest of the columns to the feature
+      feature[i] = columns[i];
     }
-    getData();
-  }, [index]);
+    return feature;
+  }
 
-  return <div>testing</div>;
+  async function handle() {
+    let data = await getData([{ chr: chr, end: end, start: start }], {
+      displayMode: "full",
+      color: "blue",
+      color2: "red",
+      maxRows: 20,
+      height: 40,
+      hideMinimalItems: false,
+      sortItems: false,
+      label: "",
+    });
+    return data;
+  }
+
+  return handle();
 }
 
 export default GetBedData;

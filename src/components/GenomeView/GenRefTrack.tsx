@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-
+import GetBedData from "./getData/bed";
 let curColor = "blue";
 let curColor2 = "black";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
@@ -108,7 +108,13 @@ function GenRefTrack(props) {
     }
 
     const result = await userRespond.json();
-
+    let bedData = await GetBedData(
+      "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+      region,
+      maxBp - bpRegionSize,
+      maxBp
+    );
+    console.log(bedData);
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (result) {
