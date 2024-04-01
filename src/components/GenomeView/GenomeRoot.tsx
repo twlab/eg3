@@ -40,15 +40,17 @@ function GenomeHub(props: any) {
 
   //TESTING DELETE THIS PART WHEN READYT
   useEffect(() => {
-    setgenRefView(
-      <GenRefTrack
-        currGenome={{
-          name: "mm10",
-          species: "mouse",
-          defaultRegion: "chr6:52149465-52164219",
-        }}
-      />
-    );
+    let testGenome = {
+      name: "mm10",
+      species: "mouse",
+      defaultRegion: "chr6:52149465-52164219",
+    };
+    let testGen = {
+      name: "hg38",
+      species: "human",
+      defaultRegion: "chr7:27053397-27373765",
+    };
+    setgenRefView(<GenRefTrack currGenome={testGen} />);
   }, []);
   return (
     <div>
