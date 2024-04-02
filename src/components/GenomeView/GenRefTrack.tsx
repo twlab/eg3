@@ -463,9 +463,6 @@ function GenRefTrack(props) {
 
     overflowStrand2.current = {};
 
-    const currTrack: Array<any> = [];
-    currTrack.push(strandIntervalList);
-
     setMinBp(minBp - bpRegionSize);
   }
   function SetStrand(props) {
@@ -508,7 +505,7 @@ function GenRefTrack(props) {
           const startX = (singleStrand.txStart - props.startTrackPos) / bpToPx;
           const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx;
           const ARROW_WIDTH = 5;
-          const arrowSeparation = 44;
+          const arrowSeparation = 22;
           const bottomY = 5;
           var placementStartX = startX - ARROW_WIDTH / 2;
           var placementEndX = endX;
@@ -592,8 +589,8 @@ function GenRefTrack(props) {
     ));
   }
 
-  function ShowGenomeData() {
-    return rightSectionSize.map((item, index) => (
+  function ShowGenomeData(props) {
+    return props.size.map((item, index) => (
       <svg
         key={index}
         width={`${windowWidth * 2}px`}
@@ -626,63 +623,36 @@ function GenRefTrack(props) {
           strokeWidth="3"
         />
 
-        {rightTrackGenes.current[index] ? rightTrackGenes.current[index] : ""}
-        {trackRegionR.current[index] ? trackRegionR.current[index] : ""}
+        {props.trackHtml[index] ? props.trackHtml[index] : ""}
+        {props.trackInterval[index] ? props.trackInterval[index] : ""}
       </svg>
     ));
   }
-  function ShowGenomeData2() {
+
+  useEffect(() => {
+    setGenomeTrackR(
+      <ShowGenomeData
+        trackHtml={rightTrackGenes.current}
+        trackInterval={trackRegionR.current}
+        size={rightSectionSize}
+      />
+    );
+  }, [maxBp]);
+
+  useEffect(() => {
     const tempData = leftTrackGenes.current.slice(0);
     tempData.reverse();
     const tempRegion = trackRegionL.current.slice(0);
     tempRegion.reverse();
-    console.log(tempRegion);
-    return leftSectionSize.map((item, index) => (
-      <svg
-        key={index}
-        width={`${windowWidth * 2}px`}
-        height={"100%"}
-        style={{ display: "inline-block" }}
-        overflow="visible"
-      >
-        <line
-          x1={`0`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"0"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`${windowWidth * 2}px`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-
-        <line
-          x1={`0`}
-          y1={"100%"}
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-
-        {tempData[index - 1] ? tempData[index - 1] : ""}
-        {tempRegion[index] ? tempRegion[index] : ""}
-      </svg>
-    ));
-  }
-
-  useEffect(() => {
-    setGenomeTrackR(<ShowGenomeData />);
-  }, [maxBp]);
-
-  useEffect(() => {
-    setGenomeTrackL(<ShowGenomeData2 />);
+    let tempSize = leftSectionSize.slice(0);
+    tempSize.pop();
+    setGenomeTrackL(
+      <ShowGenomeData
+        trackHtml={tempData}
+        trackInterval={tempRegion}
+        size={tempSize}
+      />
+    );
   }, [minBp]);
   useEffect(() => {
     document.addEventListener("mousemove", handleMove);

@@ -1,9 +1,6 @@
 import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
-import { useEffect, useState } from "react";
 
-const MAX_GZIP_BLOCK_SIZE = 1 << 16;
-const DATA_FILTER_LIMIT_LENGTH = 300000;
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
 function GetBedData(url, chr, start, end) {
   console.log(url);
