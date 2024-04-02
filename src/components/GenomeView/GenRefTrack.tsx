@@ -233,6 +233,7 @@ function GenRefTrack(props) {
         strandLevelList[j].push(strand);
       }
     }
+    console.log(strandLevelList);
     rightTrackGenes.current.push(
       <SetStrand
         key={getRndInteger()}
