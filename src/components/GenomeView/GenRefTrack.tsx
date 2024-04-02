@@ -265,7 +265,11 @@ function GenRefTrack(props) {
 
     if (initial) {
       leftTrackGenes.current.push(
-        <SetStrand2 key={getRndInteger()} strandPos={strandLevelList} />
+        <SetStrand
+          key={getRndInteger()}
+          strandPos={strandLevelList}
+          startTrackPos={minBp}
+        />
       );
       trackRegionL.current.push(
         <text fontSize={30} x={200} y={400} fill="black">
@@ -429,10 +433,11 @@ function GenRefTrack(props) {
     }
 
     leftTrackGenes.current.push(
-      <SetStrand2
+      <SetStrand
         key={getRndInteger()}
         strandPos={strandLevelList}
         checkPrev={prevOverflowStrand2.current}
+        startTrackPos={minBp}
       />
     );
 
@@ -585,131 +590,6 @@ function GenRefTrack(props) {
     return strandList.map((item, index) => (
       <React.Fragment key={index}>{item}</React.Fragment>
     ));
-  }
-  function SetStrand2(props) {
-    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
-    var yCoord = 25;
-    const strandList: Array<any> = [];
-
-    if (props.strandPos.length) {
-      var checkObj = false;
-      if (props.checkPrev !== undefined) {
-        checkObj = true;
-      }
-      for (let i = 0; i < props.strandPos.length; i++) {
-        const strandHtml: Array<any> = [];
-
-        for (let j = 0; j < props.strandPos[i].length; j++) {
-          const singleStrand = props.strandPos[i][j];
-
-          if (
-            Object.keys(singleStrand).length === 0 ||
-            (checkObj && singleStrand.id in props.checkPrev)
-          ) {
-            continue;
-          }
-          var strandColor;
-          if (singleStrand.transcriptionClass === "coding") {
-            strandColor = "purple";
-          } else {
-            strandColor = "green";
-          }
-          const exonIntervals: Array<any> = [];
-          const exonStarts = singleStrand.exonStarts.split(",");
-          const exonEnds = singleStrand.exonEnds.split(",");
-          for (let z = 0; z < exonStarts.length; z++) {
-            exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
-          }
-          // add arrows direction to the strand------------------------------------------------------
-          const startX = (singleStrand.txStart - minBp) / bpToPx;
-          const endX = (singleStrand.txEnd - minBp) / bpToPx;
-          const ARROW_WIDTH = 5;
-          const arrowSeparation = 100;
-
-          const bottomY = 5;
-          var placementStartX = startX - ARROW_WIDTH / 2;
-          var placementEndX = endX;
-          if (singleStrand.strand === "+") {
-            placementStartX += ARROW_WIDTH;
-          } else {
-            placementEndX -= ARROW_WIDTH;
-          }
-
-          const children: Array<any> = [];
-          // Naming: if our arrows look like '<', then the tip is on the left, and the two tails are on the right.
-          for (
-            var arrowTipX = placementStartX;
-            arrowTipX <= placementEndX;
-            arrowTipX += arrowSeparation
-          ) {
-            // Is forward strand ? point to the right : point to the left
-            const arrowTailX =
-              singleStrand.strand === "+"
-                ? arrowTipX - ARROW_WIDTH
-                : arrowTipX + ARROW_WIDTH;
-            const arrowPoints = [
-              [arrowTailX, yCoord - bottomY],
-              [arrowTipX, yCoord],
-              [arrowTailX, bottomY + yCoord],
-            ];
-            children.push(
-              <polyline
-                key={arrowTipX}
-                points={`${arrowPoints}`}
-                fill="none"
-                stroke={strandColor}
-                strokeWidth={1}
-              />
-            );
-          }
-
-          strandHtml.push(
-            <React.Fragment key={j}>
-              {children.map((item, index) => item)}
-              <line
-                x1={`${(singleStrand.txStart - minBp) / bpToPx}`}
-                y1={`${yCoord}`}
-                x2={`${(singleStrand.txEnd - minBp) / bpToPx}`}
-                y2={`${yCoord}`}
-                stroke={`${strandColor}`}
-                strokeWidth="4"
-              />
-              {exonIntervals.map((coord, index) => (
-                <line
-                  key={index + 199}
-                  x1={`${(coord[0] - minBp) / bpToPx}`}
-                  y1={`${yCoord}`}
-                  x2={`${(coord[1] - minBp) / bpToPx}`}
-                  y2={`${yCoord}`}
-                  stroke={`${strandColor}`}
-                  strokeWidth="7"
-                />
-              ))}
-              <text
-                fontSize={7}
-                x={`${(singleStrand.txStart - minBp) / bpToPx}`}
-                y={`${yCoord - 7}`}
-                fill="black"
-              >
-                {singleStrand.name}
-              </text>
-            </React.Fragment>
-          );
-        }
-
-        yCoord += 25;
-
-        strandList.push(strandHtml);
-      }
-    }
-
-    return (
-      <>
-        {strandList.map((item, index) => (
-          <React.Fragment key={index}>{item}</React.Fragment>
-        ))}
-      </>
-    );
   }
 
   function ShowGenomeData() {
