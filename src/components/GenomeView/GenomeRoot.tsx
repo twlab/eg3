@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import GenRefTrack from "./GenRefTrack";
 import BedTrack from "./BedTrack";
+import BedDensityTrack from "./BedDensityTrack";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
@@ -13,6 +14,7 @@ function GenomeHub(props: any) {
   const [items, setItems] = useState();
   const [genRefView, setgenRefView] = useState(<></>);
   const [bedView, setBedView] = useState(<></>);
+  const [bedDensityView, setBedDensityView] = useState(<></>);
   function addGenome(currGenome: any) {
     props.addToView(currGenome);
   }
@@ -53,10 +55,12 @@ function GenomeHub(props: any) {
     };
     setgenRefView(<GenRefTrack currGenome={testGenome} />);
     setBedView(<BedTrack currGenome={testGenome} />);
+    setBedDensityView(<BedDensityTrack currGenome={testGenome} />);
   }, []);
   return (
     <div>
       {items}
+      {bedDensityView}
       {bedView}
       {genRefView}
     </div>

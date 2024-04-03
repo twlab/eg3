@@ -5,7 +5,7 @@ const AWS_API = "https://lambda.epigenomegateway.org/v2";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 const windowWidth = window.innerWidth;
-function BedTrack(props) {
+function BedDensityTrack(props) {
   //To-Do: need to move this part to initial render so this section only run once
   const genome = props.currGenome;
 
@@ -21,15 +21,17 @@ function BedTrack(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
-  const rightTrackGenes = useRef<Array<any>>([]);
+  const [rightTrackGenes, setRightTrackGenes] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
 
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-  const trackRegionR = useRef<Array<any>>([]);
-  const trackRegionL = useRef<Array<any>>([]);
-  const leftTrackGenes = useRef<Array<any>>([]);
+
+  const [leftTrackGenes, setLeftTrackGenes] = useState<Array<any>>([]);
+
+  const canvasRef = useRef<Array<any>>([]);
+  const canvasRefLeft = useRef<Array<any>>([]);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -39,9 +41,13 @@ function BedTrack(props) {
     "",
   ]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
+  const [rect, setRect] = useState({
+    x: 50,
+    y: 50,
+    width: 100,
+    height: 50,
+  });
 
-  const [genomeTrackR, setGenomeTrackR] = useState(<></>);
-  const [genomeTrackL, setGenomeTrackL] = useState(<></>);
   const [addNewBpRegionLeft, setAddNewBpRegionLeft] = useState(false);
   const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
   const [maxBp, setMaxBp] = useState(
@@ -113,11 +119,11 @@ function BedTrack(props) {
 
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(result);
+
     if (result[0]) {
       result = result[0];
       var resultIdx = 0;
-      console.log(result);
+
       if (
         resultIdx < result.length &&
         !(
@@ -245,20 +251,19 @@ function BedTrack(props) {
         strandLevelList[j].push(strand);
       }
     }
-    console.log(strandLevelList);
-    rightTrackGenes.current.push(
-      <SetStrand
-        key={getRndInteger()}
-        strandPos={strandLevelList}
-        checkPrev={prevOverflowStrand.current}
-        startTrackPos={maxBp - bpRegionSize}
-      />
-    );
-    trackRegionR.current.push(
-      <text fontSize={30} x={200} y={400} fill="black">
-        {`${maxBp - bpRegionSize} - ${maxBp}`}
-      </text>
-    );
+    // putting canvas draw here doesnt work because righttrackgebne hasnt update yet so its behind
+    setRightTrackGenes([
+      ...rightTrackGenes,
+      {
+        strandPos: [...strandLevelList],
+        checkPrev: { ...prevOverflowStrand.current },
+        startTrackPos: maxBp - bpRegionSize,
+      },
+    ]);
+
+    let temp: Array<any> = [];
+    temp = [...canvasRef.current];
+    canvasRef.current = [...temp, React.createRef()];
 
     // CHECK if there are overlapping strands to the next track
     for (var i = 0; i < strandLevelList.length; i++) {
@@ -273,30 +278,24 @@ function BedTrack(props) {
         }
       }
     }
+    if (initial) {
+      setLeftTrackGenes([
+        ...leftTrackGenes,
+        {
+          strandPos: [...strandLevelList],
+          checkPrev: { ...prevOverflowStrand2.current },
+          startTrackPos: minBp,
+        },
+      ]);
+      let temp2: Array<any> = [];
+      temp2 = [...canvasRefLeft.current];
+      canvasRefLeft.current = [...temp2, React.createRef()];
+
+      setMinBp(minBp - bpRegionSize);
+    }
 
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
-
-    if (initial) {
-      leftTrackGenes.current.push(
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={strandLevelList}
-          startTrackPos={minBp}
-        />
-      );
-      trackRegionL.current.push(
-        <text fontSize={30} x={200} y={400} fill="black">
-          {`${minBp} - ${maxBp}`}
-        </text>
-      );
-      trackRegionL.current.push(
-        <text fontSize={30} x={200} y={400} fill="black">
-          {`${minBp - bpRegionSize} - ${minBp}`}
-        </text>
-      );
-      setMinBp(minBp - bpRegionSize);
-    }
 
     setMaxBp(maxBp + bpRegionSize);
   }
@@ -457,21 +456,6 @@ function BedTrack(props) {
       }
     }
 
-    leftTrackGenes.current.push(
-      <SetStrand
-        key={getRndInteger()}
-        strandPos={strandLevelList}
-        checkPrev={prevOverflowStrand2.current}
-        startTrackPos={minBp}
-      />
-    );
-
-    trackRegionL.current.push(
-      <text fontSize={30} x={200} y={400} fill="black">
-        {`${minBp - bpRegionSize} - ${minBp}`}
-      </text>
-    );
-
     for (var i = 0; i < strandLevelList.length; i++) {
       var levelContent = strandLevelList[i];
       for (var strand of levelContent) {
@@ -484,6 +468,17 @@ function BedTrack(props) {
         }
       }
     }
+    setLeftTrackGenes([
+      ...leftTrackGenes,
+      {
+        strandPos: [...strandLevelList],
+        checkPrev: { ...prevOverflowStrand2.current },
+        startTrackPos: minBp,
+      },
+    ]);
+    let temp2: Array<any> = [];
+    temp2 = [...canvasRefLeft.current];
+    canvasRefLeft.current = [...temp2, React.createRef()];
 
     prevOverflowStrand2.current = { ...overflowStrand2.current };
 
@@ -491,10 +486,32 @@ function BedTrack(props) {
 
     setMinBp(minBp - bpRegionSize);
   }
-  function SetStrand(props) {
+
+  // HOW TO CREATE CANVASE AND DYNAMICLLY ADD MORE
+  // 1. create new ref for new canvas data
+  // 2. create uniqueid for ref object.
+  // 3. use the ref created for the new data context to draw a canvas
+
+  function setStrand(props, checkSection) {
     //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
-    var yCoord = 25;
-    const strandList: Array<any> = [];
+
+    // canvasRef.current.map((ref, index) => {
+    //   if (ref.current) {
+    //     let context = ref.current.getContext("2d");
+    //     // Your drawing logic here
+    //     context.fillStyle = "green"; // Example: Fill color
+    //     context.fillRect(10, 10, 150, 100); // Example: Draw a rectangle
+    //   }
+    // });
+    let context;
+
+    canvasRef.current = rightTrackGenes.map(
+      (_, i) => canvasRef.current[i] || React.createRef()
+    );
+    let canvasLength = canvasRef.current.length - 1;
+
+    let canvas = canvasRef.current[canvasLength].current;
+    context = canvas.getContext("2d");
 
     if (props.strandPos.length) {
       var checkObj = false;
@@ -502,8 +519,6 @@ function BedTrack(props) {
         checkObj = true;
       }
       for (let i = 0; i < props.strandPos.length; i++) {
-        let strandHtml: Array<any> = [];
-
         for (let j = 0; j < props.strandPos[i].length; j++) {
           const singleStrand = props.strandPos[i][j];
 
@@ -514,97 +529,85 @@ function BedTrack(props) {
             continue;
           }
 
-          //add a single strand to current track------------------------------------------------------------------------------------
-          strandHtml.push(
-            <React.Fragment key={j}>
-              <line
-                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx}`}
-                y1={`${yCoord}`}
-                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx}`}
-                y2={`${yCoord}`}
-                stroke={"blue"}
-                strokeWidth="20"
-              />
-            </React.Fragment>
+          context.fillStyle = "blue";
+          context.globalAlpha = 1;
+          context.fillRect(
+            (singleStrand.start - props.startTrackPos) / bpToPx,
+            130,
+            (singleStrand.end - props.startTrackPos) / bpToPx -
+              (singleStrand.start - props.startTrackPos) / bpToPx,
+            40
           );
         }
-
-        yCoord += 25;
-
-        strandList.push(strandHtml);
       }
     }
-
-    return strandList.map((item, index) => (
-      <React.Fragment key={index}>{item}</React.Fragment>
-    ));
   }
+  function setStrand2(props, checkSection) {
+    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
 
-  function ShowGenomeData(props) {
-    return props.size.map((item, index) => (
-      <svg
-        key={index}
-        width={`${windowWidth * 2}px`}
-        height={"100%"}
-        style={{ display: "inline-block" }}
-        overflow="visible"
-      >
-        <line
-          x1={`0`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"0"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`${windowWidth * 2}px`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`0`}
-          y1={"100%"}
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
+    // canvasRef.current.map((ref, index) => {
+    //   if (ref.current) {
+    //     let context = ref.current.getContext("2d");
+    //     // Your drawing logic here
+    //     context.fillStyle = "green"; // Example: Fill color
+    //     context.fillRect(10, 10, 150, 100); // Example: Draw a rectangle
+    //   }
+    // });
 
-        {props.trackHtml[index] ? props.trackHtml[index] : ""}
-        {props.trackInterval[index] ? props.trackInterval[index] : ""}
-      </svg>
-    ));
+    canvasRefLeft.current = leftTrackGenes.map(
+      (_, i) => canvasRefLeft.current[i] || React.createRef()
+    );
+    const canvas =
+      canvasRefLeft.current[canvasRefLeft.current.length - 1].current;
+
+    if (props.strandPos.length && canvas !== null) {
+      let context = canvas.getContext("2d");
+      var checkObj = false;
+      if (props.checkPrev !== undefined) {
+        checkObj = true;
+      }
+      for (let i = 0; i < props.strandPos.length; i++) {
+        for (let j = 0; j < props.strandPos[i].length; j++) {
+          const singleStrand = props.strandPos[i][j];
+
+          if (
+            Object.keys(singleStrand).length === 0 ||
+            (checkObj && singleStrand.id in props.checkPrev)
+          ) {
+            continue;
+          }
+
+          context.fillStyle = "blue";
+          context.globalAlpha = 1;
+          context.fillRect(
+            (singleStrand.start - props.startTrackPos) / bpToPx,
+            130,
+            (singleStrand.end - props.startTrackPos) / bpToPx -
+              (singleStrand.start - props.startTrackPos) / bpToPx,
+            40
+          );
+        }
+      }
+    }
   }
 
   useEffect(() => {
-    setGenomeTrackR(
-      <ShowGenomeData
-        trackHtml={rightTrackGenes.current}
-        trackInterval={trackRegionR.current}
-        size={rightSectionSize}
-      />
-    );
-  }, [maxBp]);
+    if (
+      rightTrackGenes.length !== 0 &&
+      Object.keys(rightTrackGenes[rightTrackGenes.length - 1]).length !== 0
+    ) {
+      setStrand(rightTrackGenes[rightTrackGenes.length - 1], "right");
+    }
+  }, [rightTrackGenes]);
 
   useEffect(() => {
-    const tempData = leftTrackGenes.current.slice(0);
-    tempData.reverse();
-    const tempRegion = trackRegionL.current.slice(0);
-    tempRegion.reverse();
-    let tempSize = leftSectionSize.slice(0);
-    tempSize.pop();
-    setGenomeTrackL(
-      <ShowGenomeData
-        trackHtml={tempData}
-        trackInterval={tempRegion}
-        size={tempSize}
-      />
-    );
-  }, [minBp]);
+    if (
+      leftTrackGenes.length !== 0 &&
+      Object.keys(leftTrackGenes[leftTrackGenes.length - 1]).length !== 0
+    ) {
+      setStrand2(leftTrackGenes[leftTrackGenes.length - 1], "right");
+    }
+  }, [leftTrackGenes]);
   useEffect(() => {
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
@@ -619,6 +622,7 @@ function BedTrack(props) {
     async function getData() {
       await fetchGenomeData(1);
     }
+    console.log("initial", rightTrackGenes);
     getData();
   }, []);
 
@@ -664,33 +668,63 @@ function BedTrack(props) {
       }}
     >
       {dragX.current <= 0 ? (
-        <div>{dragX.current}</div>
+        <div
+          style={{
+            height: "30px",
+          }}
+        >
+          {dragX.current}
+        </div>
       ) : (
-        <div>{dragX.current + windowWidth}</div>
+        <div
+          style={{
+            height: "30px",
+          }}
+        >
+          {dragX.current + windowWidth}
+        </div>
       )}
       <div
         style={{
           flex: "1",
           display: "flex",
           justifyContent: dragX.current <= 0 ? "start" : "end",
-          height: "200px",
+
           flexDirection: "row",
           whiteSpace: "nowrap",
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth * 2}px`,
-          backgroundColor: "pink",
+          background: "pink",
           overflow: "hidden",
           margin: "auto",
         }}
       >
         <div ref={block} onMouseDown={handleMouseDown} style={{}}>
-          {dragX.current <= 0 ? genomeTrackR : genomeTrackL}
+          {dragX.current <= 0
+            ? rightTrackGenes.map((canvasData, index) => (
+                <canvas
+                  key={index}
+                  ref={canvasRef.current[index]}
+                  height={"170px"}
+                  width={`${windowWidth * 2}px`}
+                  style={{}}
+                />
+              ))
+            : leftTrackGenes.map((canvasData, index) => (
+                <canvas
+                  key={index}
+                  ref={canvasRefLeft.current[index]}
+                  height={"170px"}
+                  width={`${windowWidth * 2}px`}
+                  style={{}}
+                />
+              ))}
         </div>
       </div>
     </div>
   );
 }
 
-export default BedTrack;
+export default BedDensityTrack;
