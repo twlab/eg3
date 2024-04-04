@@ -61,8 +61,8 @@ function GenomeHub(props: any) {
     <div>
       {items}
       {bedDensityView}
-      {bedView}
-      {genRefView}
+      {/* {bedView}
+      {genRefView} */}
     </div>
   );
 }
