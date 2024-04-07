@@ -31,6 +31,8 @@ function BedTrack(props) {
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
   const [trackRegionR, setTrackRegionR] = useState<Array<any>>([]);
   const [trackRegionL, setTrackRegionL] = useState<Array<any>>([]);
+  const [side, setSide] = useState("");
+
   const [canvasRdy, setCanvas] = useState(false);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -42,8 +44,7 @@ function BedTrack(props) {
   ]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
 
-  const [genomeTrackR, setGenomeTrackR] = useState(<></>);
-  const [genomeTrackL, setGenomeTrackL] = useState(<></>);
+  const [genomeTrack, setGenomeTrack] = useState("right");
   const [addNewBpRegionLeft, setAddNewBpRegionLeft] = useState(false);
   const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
   const [maxBp, setMaxBp] = useState(
@@ -77,6 +78,19 @@ function BedTrack(props) {
   }
   function handleMouseUp() {
     setDragging(false);
+
+    // if (dragX.current > 0 && side === "right") {
+    //   setSide("left");
+    // }
+    // if (dragX.current <= 0 && side === "left") {
+    //   setSide("right");
+    // }
+    if (dragX.current > 0) {
+      setSide("left");
+    }
+    if (dragX.current <= 0) {
+      setSide("right");
+    }
     if (
       -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
@@ -564,45 +578,6 @@ function BedTrack(props) {
     ));
   }
 
-  function ShowGenomeData(props) {
-    return props.size.map((item, index) => (
-      <svg
-        key={index}
-        width={`${windowWidth * 2}px`}
-        height={"100%"}
-        style={{ display: "inline-block" }}
-        overflow="visible"
-      >
-        <line
-          x1={`0`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"0"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`${windowWidth * 2}px`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`0`}
-          y1={"100%"}
-          x2={`${windowWidth * 2}px`}
-          y2={"100%"}
-          stroke="gray"
-          strokeWidth="3"
-        />
-
-        {props.trackHtml[index] ? props.trackHtml[index] : ""}
-        {props.trackInterval[index] ? props.trackInterval[index] : ""}
-      </svg>
-    ));
-  }
   useEffect(() => {
     // Access the context and draw shapes for each canvas
     // canvasRefR.map((canvasRef, index) => {
@@ -634,12 +609,10 @@ function BedTrack(props) {
     //ERASE ELEMNTS FROM THE LEFT TRACK WHEN WE ADD A NEW TRACK FROM THE RIGHT
     //FIND A WAY TO MAKE IT WORK all the time
     //maybe clear before setting
+    console.log(canvasRefR);
     canvasRefR.map((canvasRef, index) => {
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-        console.log(canvasRefR, rightTrackGenes);
         for (let i = 0; i < rightTrackGenes[index][1].length; i++) {
           let startPos = rightTrackGenes[index][2];
           for (let j = 0; j < rightTrackGenes[index][1][i].length; j++) {
@@ -657,21 +630,30 @@ function BedTrack(props) {
         }
       }
     });
-  }, [canvasRefR]);
+  }, [rightTrackGenes]);
 
   useEffect(() => {
     canvasRefL.map((canvasRef, index) => {
-      console.log(leftTrackGenes, canvasRefL);
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
-        context.fillStyle = "green";
-        context.fillRect(10, 10, 60, 50);
-        if (index === canvasRefL.length - 1) {
-          console.log(leftTrackGenes, canvasRefL);
+        for (let i = 0; i < leftTrackGenes[index][1].length; i++) {
+          let startPos = leftTrackGenes[index][2];
+          for (let j = 0; j < leftTrackGenes[index][1][i].length; j++) {
+            let singleStrand = leftTrackGenes[index][1][i][j];
+            context.fillStyle = "green";
+
+            context.fillRect(
+              (singleStrand.start - startPos) / bpToPx,
+              10,
+              (singleStrand.end - startPos) / bpToPx -
+                (singleStrand.start - startPos) / bpToPx,
+              50
+            );
+          }
         }
       }
     });
-  }, [canvasRefL]);
+  }, [leftTrackGenes]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handleMove);
@@ -719,6 +701,40 @@ function BedTrack(props) {
     setAddNewBpRegionLeft(false);
   }, [addNewBpRegionLeft]);
 
+  useEffect(() => {
+    if (side === "left") {
+      setGenomeTrack("left");
+    } else {
+      setGenomeTrack("right");
+    }
+  }, [side]);
+
+  useEffect(() => {
+    if (genomeTrack === "left") {
+      canvasRefL.map((canvasRef, index) => {
+        if (canvasRef.current) {
+          console.log(canvasRef.current);
+          let context = canvasRef.current.getContext("2d");
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        }
+      });
+      setGenomeTrack("left");
+      setLeftTrack([...leftTrackGenes]);
+    } else {
+      canvasRefR.forEach((canvasRef, index) => {
+        console.log(canvasRef.current);
+        if (canvasRef.current) {
+          console.log("WORK?");
+          console.log(canvasRef.current);
+          let context = canvasRef.current.getContext("2d");
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        }
+      });
+      setGenomeTrack("right");
+      setRightTrack([...rightTrackGenes]);
+    }
+  }, [genomeTrack]);
+
   return (
     <div
       style={{
@@ -736,6 +752,7 @@ function BedTrack(props) {
       ) : (
         <div>{dragX.current + windowWidth}</div>
       )}
+      <div>{side}</div>
       <div
         style={{
           flex: "1",
@@ -754,7 +771,7 @@ function BedTrack(props) {
         }}
       >
         <div ref={block} onMouseDown={handleMouseDown} style={{}}>
-          {dragX.current <= 0
+          {genomeTrack === "right"
             ? rightTrackGenes.map((item, index) => (
                 <svg
                   key={index}
@@ -808,7 +825,7 @@ function BedTrack(props) {
                   {trackRegionR[index]}
                 </svg>
               ))
-            : canvasRefL
+            : leftTrackGenes
                 .slice(0)
                 .reverse()
                 .map((item, index) => (
@@ -853,7 +870,7 @@ function BedTrack(props) {
                       <canvas
                         id="canvas2"
                         key={index}
-                        ref={item}
+                        ref={canvasRefL[canvasRefL.length - 1 - index]}
                         height={"100%"}
                         width={`${windowWidth * 2}px`}
                         style={{}}
