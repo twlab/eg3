@@ -31,7 +31,7 @@ function BedTrack(props) {
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
   const [trackRegionR, setTrackRegionR] = useState<Array<any>>([]);
   const [trackRegionL, setTrackRegionL] = useState<Array<any>>([]);
-  const [side, setSide] = useState("");
+  const [side, setSide] = useState("right");
 
   const [canvasRdy, setCanvas] = useState(false);
   // These states are used to update the tracks with new fetched data
@@ -60,6 +60,7 @@ function BedTrack(props) {
 
     lastX.current = e.pageX;
     dragX.current -= deltaX;
+
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
@@ -69,6 +70,7 @@ function BedTrack(props) {
 
   function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
     lastX.current = e.pageX;
+
     setDragging(true);
     e.preventDefault();
   }
@@ -78,32 +80,26 @@ function BedTrack(props) {
   }
   function handleMouseUp() {
     setDragging(false);
-
-    // if (dragX.current > 0 && side === "right") {
-    //   setSide("left");
-    // }
-    // if (dragX.current <= 0 && side === "left") {
-    //   setSide("right");
-    // }
-    if (dragX.current > 0) {
+    if (dragX.current > 0 && side === "right") {
       setSide("left");
-    }
-    if (dragX.current <= 0) {
+    } else if (dragX.current <= 0 && side === "left") {
+      console.log("wtf");
       setSide("right");
-    }
-    if (
-      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
-      dragX.current < 0
-    ) {
-      setAddNewBpRegionRight(true);
-    } else if (
-      //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
-      //so we need to add to keep the position correct.
-      (dragX.current + windowWidth) / windowWidth >=
-        2 * (leftSectionSize.length - 3) &&
-      dragX.current > 0
-    ) {
-      setAddNewBpRegionLeft(true);
+    } else {
+      if (
+        -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
+        dragX.current < 0
+      ) {
+        setAddNewBpRegionRight(true);
+      } else if (
+        //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
+        //so we need to add to keep the position correct.
+        (dragX.current + windowWidth) / windowWidth >=
+          2 * (leftSectionSize.length - 3) &&
+        dragX.current > 0
+      ) {
+        setAddNewBpRegionLeft(true);
+      }
     }
   }
   async function fetchGenomeData(initial: number = 0) {
@@ -502,6 +498,7 @@ function BedTrack(props) {
         startPos,
       ],
     ]);
+
     const newCanvasRef = createRef();
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
     setTrackRegionL([
@@ -609,7 +606,7 @@ function BedTrack(props) {
     //ERASE ELEMNTS FROM THE LEFT TRACK WHEN WE ADD A NEW TRACK FROM THE RIGHT
     //FIND A WAY TO MAKE IT WORK all the time
     //maybe clear before setting
-    console.log(canvasRefR);
+    console.log(canvasRefL, side);
     canvasRefR.map((canvasRef, index) => {
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
@@ -633,24 +630,14 @@ function BedTrack(props) {
   }, [rightTrackGenes]);
 
   useEffect(() => {
+    console.log(canvasRefL, side);
     canvasRefL.map((canvasRef, index) => {
       if (canvasRef.current) {
+        console.log(canvasRefL);
         let context = canvasRef.current.getContext("2d");
-        for (let i = 0; i < leftTrackGenes[index][1].length; i++) {
-          let startPos = leftTrackGenes[index][2];
-          for (let j = 0; j < leftTrackGenes[index][1][i].length; j++) {
-            let singleStrand = leftTrackGenes[index][1][i][j];
-            context.fillStyle = "green";
 
-            context.fillRect(
-              (singleStrand.start - startPos) / bpToPx,
-              10,
-              (singleStrand.end - startPos) / bpToPx -
-                (singleStrand.start - startPos) / bpToPx,
-              50
-            );
-          }
-        }
+        context.fillStyle = "green";
+        context.fillRect(20, 20, 50, 50);
       }
     });
   }, [leftTrackGenes]);
@@ -703,37 +690,39 @@ function BedTrack(props) {
 
   useEffect(() => {
     if (side === "left") {
-      setGenomeTrack("left");
-    } else {
-      setGenomeTrack("right");
+      if (canvasRefL.length != 0) {
+        canvasRefL.map((canvasRef, index) => {
+          if (canvasRef.current) {
+            let context = canvasRef.current.getContext("2d");
+            context.clearRect(
+              0,
+              0,
+              context.canvas.width,
+              context.canvas.height
+            );
+          }
+        });
+        setLeftTrack([...leftTrackGenes]);
+      }
+    } else if (side === "right") {
+      console.log("IT SHOUID WORKKKKKKKKKKKK");
+      if (canvasRefR.length != 0) {
+        canvasRefR.forEach((canvasRef, index) => {
+          if (canvasRef.current) {
+            console.log(canvasRefR);
+            let context = canvasRef.current.getContext("2d");
+            context.clearRect(
+              0,
+              0,
+              context.canvas.width,
+              context.canvas.height
+            );
+          }
+        });
+        setRightTrack([...rightTrackGenes]);
+      }
     }
   }, [side]);
-
-  useEffect(() => {
-    if (genomeTrack === "left") {
-      canvasRefL.map((canvasRef, index) => {
-        if (canvasRef.current) {
-          console.log(canvasRef.current);
-          let context = canvasRef.current.getContext("2d");
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-        }
-      });
-      setGenomeTrack("left");
-      setLeftTrack([...leftTrackGenes]);
-    } else {
-      canvasRefR.forEach((canvasRef, index) => {
-        console.log(canvasRef.current);
-        if (canvasRef.current) {
-          console.log("WORK?");
-          console.log(canvasRef.current);
-          let context = canvasRef.current.getContext("2d");
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-        }
-      });
-      setGenomeTrack("right");
-      setRightTrack([...rightTrackGenes]);
-    }
-  }, [genomeTrack]);
 
   return (
     <div
@@ -771,7 +760,7 @@ function BedTrack(props) {
         }}
       >
         <div ref={block} onMouseDown={handleMouseDown} style={{}}>
-          {genomeTrack === "right"
+          {dragX.current <= 0
             ? rightTrackGenes.map((item, index) => (
                 <svg
                   key={index}
@@ -860,7 +849,7 @@ function BedTrack(props) {
                       stroke="gray"
                       strokeWidth="3"
                     />
-                    {leftTrackGenes.slice(0).reverse()[index][0]}
+                    {item[0]}
                     <foreignObject
                       x="0"
                       y="55%"
