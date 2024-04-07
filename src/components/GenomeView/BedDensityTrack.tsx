@@ -312,6 +312,8 @@ function BedTrack(props) {
           startPos,
         ],
       ]);
+      const newCanvasRef = createRef();
+      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
 
       setTrackRegionL([
         ...trackRegionL,
@@ -606,7 +608,7 @@ function BedTrack(props) {
     //ERASE ELEMNTS FROM THE LEFT TRACK WHEN WE ADD A NEW TRACK FROM THE RIGHT
     //FIND A WAY TO MAKE IT WORK all the time
     //maybe clear before setting
-    console.log(canvasRefL, side);
+    console.log(canvasRefR, side);
     canvasRefR.map((canvasRef, index) => {
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
@@ -633,7 +635,6 @@ function BedTrack(props) {
     console.log(canvasRefL, side);
     canvasRefL.map((canvasRef, index) => {
       if (canvasRef.current) {
-        console.log(canvasRefL);
         let context = canvasRef.current.getContext("2d");
 
         context.fillStyle = "green";
@@ -690,8 +691,9 @@ function BedTrack(props) {
 
   useEffect(() => {
     if (side === "left") {
+      console.log("IT SHOUID WORKKKKKKKKKKKK");
       if (canvasRefL.length != 0) {
-        canvasRefL.map((canvasRef, index) => {
+        canvasRefL.forEach((canvasRef, index) => {
           if (canvasRef.current) {
             let context = canvasRef.current.getContext("2d");
             context.clearRect(
@@ -705,7 +707,6 @@ function BedTrack(props) {
         setLeftTrack([...leftTrackGenes]);
       }
     } else if (side === "right") {
-      console.log("IT SHOUID WORKKKKKKKKKKKK");
       if (canvasRefR.length != 0) {
         canvasRefR.forEach((canvasRef, index) => {
           if (canvasRef.current) {
