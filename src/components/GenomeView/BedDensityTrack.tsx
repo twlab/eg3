@@ -42,7 +42,11 @@ function BedTrack(props) {
     "",
     "",
   ]);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
+  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([
+    "",
+    "",
+    "",
+  ]);
 
   const [genomeTrack, setGenomeTrack] = useState("right");
   const [addNewBpRegionLeft, setAddNewBpRegionLeft] = useState(false);
@@ -83,7 +87,6 @@ function BedTrack(props) {
     if (dragX.current > 0 && side === "right") {
       setSide("left");
     } else if (dragX.current <= 0 && side === "left") {
-      console.log("wtf");
       setSide("right");
     } else {
       if (
@@ -128,11 +131,11 @@ function BedTrack(props) {
 
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(result);
+
     if (result[0]) {
       result = result[0];
       var resultIdx = 0;
-      console.log(result);
+
       if (
         resultIdx < result.length &&
         !(
@@ -609,6 +612,8 @@ function BedTrack(props) {
     //FIND A WAY TO MAKE IT WORK all the time
     //maybe clear before setting
     console.log(canvasRefR, side);
+    let copy = canvasRefR.slice(0);
+
     canvasRefR.map((canvasRef, index) => {
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
@@ -633,12 +638,28 @@ function BedTrack(props) {
 
   useEffect(() => {
     console.log(canvasRefL, side);
+
     canvasRefL.map((canvasRef, index) => {
       if (canvasRef.current) {
-        let context = canvasRef.current.getContext("2d");
+        let context =
+          canvasRefL[canvasRefL.length - 1 - index].current.getContext("2d");
+        let idx = leftTrackGenes.length - 1;
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        for (let i = 0; i < leftTrackGenes[index][1].length; i++) {
+          let startPos = leftTrackGenes[index][2];
+          for (let j = 0; j < leftTrackGenes[index][1][i].length; j++) {
+            let singleStrand = leftTrackGenes[index][1][i][j];
+            context.fillStyle = "green";
 
-        context.fillStyle = "green";
-        context.fillRect(20, 20, 50, 50);
+            context.fillRect(
+              (singleStrand.start - startPos) / bpToPx,
+              10,
+              (singleStrand.end - startPos) / bpToPx -
+                (singleStrand.start - startPos) / bpToPx,
+              50
+            );
+          }
+        }
       }
     });
   }, [leftTrackGenes]);
@@ -693,6 +714,7 @@ function BedTrack(props) {
     if (side === "left") {
       console.log("IT SHOUID WORKKKKKKKKKKKK");
       if (canvasRefL.length != 0) {
+        console.log(canvasRefL);
         canvasRefL.forEach((canvasRef, index) => {
           if (canvasRef.current) {
             let context = canvasRef.current.getContext("2d");
@@ -815,61 +837,58 @@ function BedTrack(props) {
                   {trackRegionR[index]}
                 </svg>
               ))
-            : leftTrackGenes
-                .slice(0)
-                .reverse()
-                .map((item, index) => (
-                  <svg
-                    key={index}
-                    width={`${windowWidth * 2}px`}
-                    height={"100%"}
-                    style={{ display: "inline-block" }}
-                    overflow="visible"
-                  >
-                    <line
-                      x1={`0`}
-                      y1="0"
-                      x2={`${windowWidth * 2}px`}
-                      y2={"0"}
-                      stroke="gray"
-                      strokeWidth="3"
-                    />
-                    <line
-                      x1={`${windowWidth * 2}px`}
-                      y1="0"
-                      x2={`${windowWidth * 2}px`}
-                      y2={"100%"}
-                      stroke="gray"
-                      strokeWidth="3"
-                    />
-                    <line
-                      x1={`0`}
-                      y1={"100%"}
-                      x2={`${windowWidth * 2}px`}
-                      y2={"100%"}
-                      stroke="gray"
-                      strokeWidth="3"
-                    />
-                    {item[0]}
-                    <foreignObject
-                      x="0"
-                      y="55%"
-                      width={`${windowWidth * 2}px`}
-                      height="100%"
-                    >
-                      <canvas
-                        id="canvas2"
-                        key={index}
-                        ref={canvasRefL[canvasRefL.length - 1 - index]}
-                        height={"100%"}
-                        width={`${windowWidth * 2}px`}
-                        style={{}}
-                      />
-                    </foreignObject>
+            : leftTrackGenes.map((item, index) => (
+                <svg
+                  key={index}
+                  width={`${windowWidth * 2}px`}
+                  height={"100%"}
+                  style={{ display: "inline-block" }}
+                  overflow="visible"
+                >
+                  <line
+                    x1={`0`}
+                    y1="0"
+                    x2={`${windowWidth * 2}px`}
+                    y2={"0"}
+                    stroke="gray"
+                    strokeWidth="3"
+                  />
+                  <line
+                    x1={`${windowWidth * 2}px`}
+                    y1="0"
+                    x2={`${windowWidth * 2}px`}
+                    y2={"100%"}
+                    stroke="gray"
+                    strokeWidth="3"
+                  />
+                  <line
+                    x1={`0`}
+                    y1={"100%"}
+                    x2={`${windowWidth * 2}px`}
+                    y2={"100%"}
+                    stroke="gray"
+                    strokeWidth="3"
+                  />
 
-                    {trackRegionL.slice(0).reverse()[index]}
-                  </svg>
-                ))}
+                  <foreignObject
+                    x="0"
+                    y="55%"
+                    width={`${windowWidth * 2}px`}
+                    height="100%"
+                  >
+                    <canvas
+                      id="canvas2"
+                      key={index}
+                      ref={canvasRefL[index]}
+                      height={"100%"}
+                      width={`${windowWidth * 2}px`}
+                      style={{}}
+                    />
+                  </foreignObject>
+
+                  {trackRegionL.slice(0).reverse()[index]}
+                </svg>
+              ))}
         </div>
       </div>
     </div>
