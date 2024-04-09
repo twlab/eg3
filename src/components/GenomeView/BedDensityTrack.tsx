@@ -581,39 +581,6 @@ function BedTrack(props) {
   }
 
   useEffect(() => {
-    // Access the context and draw shapes for each canvas
-    // canvasRefR.map((canvasRef, index) => {
-    //   if (canvasRef.current) {
-    //     let context = canvasRef.current.getContext("2d");
-    //     // Example: Draw a rectangle
-
-    //     for (let i = 0; i < rightTrackGenes[index][1].length; i++) {
-    //       let startPos = rightTrackGenes[i][2];
-    //       for (let j = 0; j < rightTrackGenes[index][1][i].length; j++) {
-    //         let singleStrand = rightTrackGenes[index][1][i][j];
-    //         context.fillStyle = "red";
-    //         console.log(
-    //           (singleStrand.start - startPos) / bpToPx,
-    //           (singleStrand.end - startPos) / bpToPx -
-    //             (singleStrand.start - startPos) / bpToPx
-    //         );
-    //         context.fillRect(
-    //           (singleStrand.start - startPos) / bpToPx,
-    //           10,
-    //           (singleStrand.end - startPos) / bpToPx -
-    //             (singleStrand.start - startPos) / bpToPx,
-    //           50
-    //         );
-    //       }
-    //     }
-    //   }
-    // });
-    //ERASE ELEMNTS FROM THE LEFT TRACK WHEN WE ADD A NEW TRACK FROM THE RIGHT
-    //FIND A WAY TO MAKE IT WORK all the time
-    //maybe clear before setting
-    console.log(canvasRefR, side);
-    let copy = canvasRefR.slice(0);
-
     canvasRefR.map((canvasRef, index) => {
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
@@ -628,7 +595,7 @@ function BedTrack(props) {
               10,
               (singleStrand.end - startPos) / bpToPx -
                 (singleStrand.start - startPos) / bpToPx,
-              50
+              80
             );
           }
         }
@@ -649,14 +616,14 @@ function BedTrack(props) {
           let startPos = leftTrackGenes[index][2];
           for (let j = 0; j < leftTrackGenes[index][1][i].length; j++) {
             let singleStrand = leftTrackGenes[index][1][i][j];
-            context.fillStyle = "green";
+            context.fillStyle = "red";
 
             context.fillRect(
               (singleStrand.start - startPos) / bpToPx,
               10,
               (singleStrand.end - startPos) / bpToPx -
                 (singleStrand.start - startPos) / bpToPx,
-              50
+              80
             );
           }
         }
@@ -712,7 +679,6 @@ function BedTrack(props) {
 
   useEffect(() => {
     if (side === "left") {
-      console.log("IT SHOUID WORKKKKKKKKKKKK");
       if (canvasRefL.length != 0) {
         console.log(canvasRefL);
         canvasRefL.forEach((canvasRef, index) => {
@@ -788,7 +754,7 @@ function BedTrack(props) {
                 <svg
                   key={index}
                   width={`${windowWidth * 2}px`}
-                  height={"100%"}
+                  height={"50%"}
                   style={{ display: "inline-block" }}
                   overflow="visible"
                 >
@@ -808,16 +774,8 @@ function BedTrack(props) {
                     stroke="gray"
                     strokeWidth="3"
                   />
-                  <line
-                    x1={`0`}
-                    y1={"100%"}
-                    x2={`${windowWidth * 2}px`}
-                    y2={"100%"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
 
-                  {item[0]}
+                  {/* {item[0]} */}
 
                   <foreignObject
                     x="0"
@@ -841,7 +799,7 @@ function BedTrack(props) {
                 <svg
                   key={index}
                   width={`${windowWidth * 2}px`}
-                  height={"100%"}
+                  height={"50%"}
                   style={{ display: "inline-block" }}
                   overflow="visible"
                 >
@@ -856,14 +814,6 @@ function BedTrack(props) {
                   <line
                     x1={`${windowWidth * 2}px`}
                     y1="0"
-                    x2={`${windowWidth * 2}px`}
-                    y2={"100%"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
-                  <line
-                    x1={`0`}
-                    y1={"100%"}
                     x2={`${windowWidth * 2}px`}
                     y2={"100%"}
                     stroke="gray"

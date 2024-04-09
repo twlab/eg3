@@ -1,11 +1,15 @@
-import React, { createRef } from "react";
+import React from "react";
 import { useEffect, useRef, useState } from "react";
 import GetBedData from "./getRemoteData/tabixSource";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
+import GenRefTrack from "./GenRefTrack";
+import BedTrack from "./BedTrack";
+import BedDensityTrack from "./BedDensityTrack";
+
 const windowWidth = window.innerWidth;
-function BedTrack(props) {
+function Test(props) {
   //To-Do: need to move this part to initial render so this section only run once
   const genome = props.currGenome;
 
@@ -21,19 +25,15 @@ function BedTrack(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
-  const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
-  const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
+  const rightTrackGenes = useRef<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
-  const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
-  const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
+
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-  const [trackRegionR, setTrackRegionR] = useState<Array<any>>([]);
-  const [trackRegionL, setTrackRegionL] = useState<Array<any>>([]);
-  const [side, setSide] = useState("right");
-
-  const [canvasRdy, setCanvas] = useState(false);
+  const trackRegionR = useRef<Array<any>>([]);
+  const trackRegionL = useRef<Array<any>>([]);
+  const leftTrackGenes = useRef<Array<any>>([]);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -44,7 +44,8 @@ function BedTrack(props) {
   ]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
 
-  const [genomeTrack, setGenomeTrack] = useState("right");
+  const [genomeTrackR, setGenomeTrackR] = useState(<></>);
+  const [genomeTrackL, setGenomeTrackL] = useState(<></>);
   const [addNewBpRegionLeft, setAddNewBpRegionLeft] = useState(false);
   const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
   const [maxBp, setMaxBp] = useState(
@@ -60,7 +61,6 @@ function BedTrack(props) {
 
     lastX.current = e.pageX;
     dragX.current -= deltaX;
-
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
@@ -70,7 +70,6 @@ function BedTrack(props) {
 
   function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
     lastX.current = e.pageX;
-
     setDragging(true);
     e.preventDefault();
   }
@@ -80,98 +79,77 @@ function BedTrack(props) {
   }
   function handleMouseUp() {
     setDragging(false);
-    if (dragX.current > 0 && side === "right") {
-      setSide("left");
-    } else if (dragX.current <= 0 && side === "left") {
-      console.log("wtf");
-      setSide("right");
-    } else {
-      if (
-        -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
-        dragX.current < 0
-      ) {
-        setAddNewBpRegionRight(true);
-      } else if (
-        //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
-        //so we need to add to keep the position correct.
-        (dragX.current + windowWidth) / windowWidth >=
-          2 * (leftSectionSize.length - 3) &&
-        dragX.current > 0
-      ) {
-        setAddNewBpRegionLeft(true);
-      }
+    if (
+      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
+      dragX.current < 0
+    ) {
+      setAddNewBpRegionRight(true);
+    } else if (
+      //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
+      //so we need to add to keep the position correct.
+      (dragX.current + windowWidth) / windowWidth >=
+        2 * (leftSectionSize.length - 3) &&
+      dragX.current > 0
+    ) {
+      setAddNewBpRegionLeft(true);
     }
   }
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     let userRespond;
-    let startPos;
     if (initial) {
-      userRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        minBp,
-        maxBp
+      console.log(minBp, maxBp);
+      userRespond = await fetch(
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
+        { method: "GET" }
       );
-      startPos = minBp;
     } else {
-      userRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        maxBp - bpRegionSize,
-        maxBp
+      userRespond = await fetch(
+        `${AWS_API}/${
+          genome.name
+        }/genes/refGene/queryRegion?chr=${region}&start=${
+          maxBp - bpRegionSize
+        }&end=${maxBp}`,
+        { method: "GET" }
       );
-      startPos = maxBp - bpRegionSize;
     }
 
-    var result = await userRespond;
+    const result = await userRespond.json();
 
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(result);
-    if (result[0]) {
-      result = result[0];
+    if (result) {
       var resultIdx = 0;
       console.log(result);
       if (
         resultIdx < result.length &&
-        !(
-          result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand.current
-        )
+        !(result[resultIdx].id in prevOverflowStrand.current)
       ) {
         strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
           new Array<any>(result[resultIdx]),
         ]);
       } else if (
         resultIdx < result.length &&
-        result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand.current
+        result[resultIdx].id in prevOverflowStrand.current
       ) {
         strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
           new Array<any>(),
         ]);
 
         while (
           strandIntervalList[resultIdx][2].length <
-          prevOverflowStrand.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level
+          prevOverflowStrand.current[result[resultIdx].id].level
         ) {
           strandIntervalList[resultIdx][2].push({});
         }
         strandIntervalList[resultIdx][2].splice(
-          prevOverflowStrand.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level,
+          prevOverflowStrand.current[result[resultIdx].id].level,
           0,
-          prevOverflowStrand.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].strand
+          prevOverflowStrand.current[result[resultIdx].id].strand
         );
       }
 
@@ -182,41 +160,40 @@ function BedTrack(props) {
         var curHighestLvl = [idx, strandIntervalList[idx][2]];
 
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.start <= strandIntervalList[idx][1]) {
+        if (curStrand.txStart <= strandIntervalList[idx][1]) {
           // combine the intervals into one larger interval that encompass the strands
-          if (curStrand.end > strandIntervalList[idx][1]) {
-            strandIntervalList[idx][1] = curStrand.end;
+          if (curStrand.txEnd > strandIntervalList[idx][1]) {
+            strandIntervalList[idx][1] = curStrand.txEnd;
           }
-          const curStrandId = curStrand.start + curStrand.end;
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
-          if (curStrandId in prevOverflowStrand.current) {
+          if (curStrand.id in prevOverflowStrand.current) {
             while (
               strandIntervalList[idx][2].length <
-              prevOverflowStrand.current[curStrandId].level
+              prevOverflowStrand.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
             }
             strandIntervalList[idx][2].splice(
-              prevOverflowStrand.current[curStrandId].level,
+              prevOverflowStrand.current[curStrand.id].level,
               0,
-              prevOverflowStrand.current[curStrandId].strand
+              prevOverflowStrand.current[curStrand.id].strand
             );
 
             idx--;
             while (
               idx >= 0 &&
-              prevOverflowStrand.current[curStrandId].strand.start <=
+              prevOverflowStrand.current[curStrand.id].strand.txStart <=
                 strandIntervalList[idx][1]
             ) {
               if (
                 strandIntervalList[idx][2].length >
-                prevOverflowStrand.current[curStrandId].level
+                prevOverflowStrand.current[curStrand.id].level
               ) {
-                if (curStrand.end > strandIntervalList[idx][1]) {
-                  strandIntervalList[idx][1] = curStrand.end;
+                if (curStrand.txEnd > strandIntervalList[idx][1]) {
+                  strandIntervalList[idx][1] = curStrand.txEnd;
                 }
                 strandIntervalList[idx][2].splice(
-                  prevOverflowStrand.current[curStrandId].level,
+                  prevOverflowStrand.current[curStrand.id].level,
                   0,
                   new Array<any>()
                 );
@@ -227,10 +204,10 @@ function BedTrack(props) {
           }
 
           //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.start <= strandIntervalList[idx][1]) {
+          while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
             if (strandIntervalList[idx][2].length > curHighestLvl[1].length) {
-              if (curStrand.end > strandIntervalList[idx][1]) {
-                strandIntervalList[idx][1] = curStrand.end;
+              if (curStrand.txEnd > strandIntervalList[idx][1]) {
+                strandIntervalList[idx][1] = curStrand.txEnd;
               }
               curHighestLvl = [idx, strandIntervalList[idx][2]];
             }
@@ -240,8 +217,8 @@ function BedTrack(props) {
           strandIntervalList[curHighestLvl[0]][2].push(curStrand);
         } else {
           strandIntervalList.push([
-            result[i].start,
-            result[i].end,
+            result[i].txStart,
+            result[i].txEnd,
             new Array<any>(curStrand),
           ]);
         }
@@ -260,37 +237,27 @@ function BedTrack(props) {
         strandLevelList[j].push(strand);
       }
     }
-
-    setRightTrack([
-      ...rightTrackGenes,
-      [
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={strandLevelList}
-          checkPrev={prevOverflowStrand.current}
-          startTrackPos={maxBp - bpRegionSize}
-        />,
-        [...strandLevelList],
-        startPos,
-      ],
-    ]);
-
-    const newCanvasRef = createRef();
-    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-
-    setTrackRegionR([
-      ...trackRegionR,
-      <text fontSize={30} x={200} y={100} fill="black">
+    console.log(strandLevelList);
+    rightTrackGenes.current.push(
+      <SetStrand
+        key={getRndInteger()}
+        strandPos={strandLevelList}
+        checkPrev={prevOverflowStrand.current}
+        startTrackPos={maxBp - bpRegionSize}
+      />
+    );
+    trackRegionR.current.push(
+      <text fontSize={30} x={200} y={400} fill="black">
         {`${maxBp - bpRegionSize} - ${maxBp}`}
-      </text>,
-    ]);
+      </text>
+    );
+
     // CHECK if there are overlapping strands to the next track
     for (var i = 0; i < strandLevelList.length; i++) {
       const levelContent = strandLevelList[i];
       for (var strand of levelContent) {
-        if (strand.end > maxBp) {
-          const strandId = strand.start + strand.end;
-          overflowStrand.current[strandId] = {
+        if (strand.txEnd > maxBp) {
+          overflowStrand.current[strand.id] = {
             level: i,
             strand: strand,
           };
@@ -298,36 +265,30 @@ function BedTrack(props) {
       }
     }
 
-    if (initial) {
-      setLeftTrack([
-        ...leftTrackGenes,
-        [
-          <SetStrand
-            key={getRndInteger()}
-            strandPos={strandLevelList}
-            checkPrev={prevOverflowStrand.current}
-            startTrackPos={minBp}
-          />,
-          [...strandLevelList],
-          startPos,
-        ],
-      ]);
-      const newCanvasRef2 = createRef();
-      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef2]);
-
-      setTrackRegionL([
-        ...trackRegionL,
-        <text fontSize={30} x={200} y={100} fill="black">
-          {`${minBp} - ${maxBp}`}
-        </text>,
-        <text fontSize={30} x={200} y={100} fill="black">
-          {`${minBp - bpRegionSize} - ${minBp}`}
-        </text>,
-      ]);
-      setMinBp(minBp - bpRegionSize);
-    }
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
+
+    if (initial) {
+      leftTrackGenes.current.push(
+        <SetStrand
+          key={getRndInteger()}
+          strandPos={strandLevelList}
+          startTrackPos={minBp}
+        />
+      );
+      trackRegionL.current.push(
+        <text fontSize={30} x={200} y={400} fill="black">
+          {`${minBp} - ${maxBp}`}
+        </text>
+      );
+      trackRegionL.current.push(
+        <text fontSize={30} x={200} y={400} fill="black">
+          {`${minBp - bpRegionSize} - ${minBp}`}
+        </text>
+      );
+      setMinBp(minBp - bpRegionSize);
+    }
+
     setMaxBp(maxBp + bpRegionSize);
   }
 
@@ -335,63 +296,52 @@ function BedTrack(props) {
   //________________________________________________________________________________________________________________________________________________________
 
   async function fetchGenomeData2() {
-    const userRespond = await GetBedData(
-      "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-      region,
-      minBp,
-      minBp + bpRegionSize
+    const userRespond = await fetch(
+      `${AWS_API}/${
+        genome.name
+      }/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${
+        minBp + bpRegionSize
+      }`,
+      { method: "GET" }
     );
-    let result = await userRespond;
-    let startPos = minBp;
+    const result = await userRespond.json();
+
     var strandIntervalList: Array<any> = [];
     result.sort((a, b) => {
-      return b.end - a.end;
+      return b.txEnd - a.txEnd;
     });
-
-    if (result[0]) {
-      result = result[0];
-
+    if (result) {
       var resultIdx = 0;
 
       if (
         resultIdx < result.length &&
-        !(
-          result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
-        )
+        !(result[resultIdx].id in prevOverflowStrand2.current)
       ) {
         strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
           new Array<any>(result[resultIdx]),
         ]);
       } else if (
         resultIdx < result.length &&
-        result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
+        result[resultIdx].id in prevOverflowStrand2.current
       ) {
         strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
+          result[resultIdx].txStart,
+          result[resultIdx].txEnd,
           new Array<any>(),
         ]);
 
         while (
           strandIntervalList[resultIdx][2].length <
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level
+          prevOverflowStrand2.current[result[resultIdx].id].level
         ) {
           strandIntervalList[resultIdx][2].push({});
         }
         strandIntervalList[resultIdx][2].splice(
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level,
+          prevOverflowStrand2.current[result[resultIdx].id].level,
           0,
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].strand
+          prevOverflowStrand2.current[result[resultIdx].id].strand
         );
       }
       //START THE LOOP TO CHECK IF Prev interval overlapp with curr
@@ -403,43 +353,43 @@ function BedTrack(props) {
           idx,
           strandIntervalList[idx][2].length - 1, //
         ];
-        const curStrandId = curStrand.start + curStrand.end;
+
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.end >= strandIntervalList[idx][0]) {
+        if (curStrand.txEnd >= strandIntervalList[idx][0]) {
           // combine the intervals into one larger interval that encompass the strands
-          if (strandIntervalList[idx][0] > curStrand.start) {
-            strandIntervalList[idx][0] = curStrand.start;
+          if (strandIntervalList[idx][0] > curStrand.txStart) {
+            strandIntervalList[idx][0] = curStrand.txStart;
           }
 
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
-          if (curStrandId in prevOverflowStrand2.current) {
+          if (curStrand.id in prevOverflowStrand2.current) {
             while (
               strandIntervalList[idx][2].length - 1 <
-              prevOverflowStrand2.current[curStrandId].level
+              prevOverflowStrand2.current[curStrand.id].level
             ) {
               strandIntervalList[idx][2].push({});
             }
             strandIntervalList[idx][2].splice(
-              prevOverflowStrand2.current[curStrandId].level,
+              prevOverflowStrand2.current[curStrand.id].level,
               0,
-              prevOverflowStrand2.current[curStrandId].strand
+              prevOverflowStrand2.current[curStrand.id].strand
             );
 
             idx--;
             while (
               idx >= 0 &&
-              prevOverflowStrand2.current[curStrandId].strand.end >=
+              prevOverflowStrand2.current[curStrand.id].strand.txEnd >=
                 strandIntervalList[idx][0]
             ) {
               if (
                 strandIntervalList[idx][2].length >
-                prevOverflowStrand2.current[curStrandId].level
+                prevOverflowStrand2.current[curStrand.id].level
               ) {
-                if (strandIntervalList[idx][0] > curStrand.start) {
-                  strandIntervalList[idx][0] = curStrand.start;
+                if (strandIntervalList[idx][0] > curStrand.txStart) {
+                  strandIntervalList[idx][0] = curStrand.txStart;
                 }
                 strandIntervalList[idx][2].splice(
-                  prevOverflowStrand2.current[curStrandId].level,
+                  prevOverflowStrand2.current[curStrand.id].level,
                   0,
                   new Array<any>()
                 );
@@ -451,10 +401,10 @@ function BedTrack(props) {
           }
 
           //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.end >= strandIntervalList[idx][0]) {
+          while (idx >= 0 && curStrand.txEnd >= strandIntervalList[idx][0]) {
             if (strandIntervalList[idx][2].length - 1 > curHighestLvl[1]) {
-              if (strandIntervalList[idx][0] > curStrand.start) {
-                strandIntervalList[idx][0] = curStrand.start;
+              if (strandIntervalList[idx][0] > curStrand.txStart) {
+                strandIntervalList[idx][0] = curStrand.txStart;
               }
 
               curHighestLvl = [idx, strandIntervalList[idx][2].length];
@@ -465,8 +415,8 @@ function BedTrack(props) {
           strandIntervalList[curHighestLvl[0]][2].push(curStrand);
         } else {
           strandIntervalList.push([
-            result[i].start,
-            result[i].end,
+            result[i].txStart,
+            result[i].txEnd,
             new Array<any>(curStrand),
           ]);
         }
@@ -487,34 +437,26 @@ function BedTrack(props) {
       }
     }
 
-    setLeftTrack([
-      ...leftTrackGenes,
-      [
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={strandLevelList}
-          checkPrev={prevOverflowStrand2.current}
-          startTrackPos={minBp}
-        />,
-        [...strandLevelList],
-        startPos,
-      ],
-    ]);
+    leftTrackGenes.current.push(
+      <SetStrand
+        key={getRndInteger()}
+        strandPos={strandLevelList}
+        checkPrev={prevOverflowStrand2.current}
+        startTrackPos={minBp}
+      />
+    );
 
-    const newCanvasRef = createRef();
-    setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-    setTrackRegionL([
-      ...trackRegionL,
-      <text fontSize={30} x={200} y={100} fill="black">
-        {`${minBp} - ${minBp + bpRegionSize}`}
-      </text>,
-    ]);
+    trackRegionL.current.push(
+      <text fontSize={30} x={200} y={400} fill="black">
+        {`${minBp - bpRegionSize} - ${minBp}`}
+      </text>
+    );
+
     for (var i = 0; i < strandLevelList.length; i++) {
       var levelContent = strandLevelList[i];
       for (var strand of levelContent) {
-        if (strand.start < minBp) {
-          const curStrandId = strand.start + strand.end;
-          overflowStrand2.current[curStrandId] = {
+        if (strand.txStart < minBp) {
+          overflowStrand2.current[strand.id] = {
             level: i,
             strand: strand,
           };
@@ -551,17 +493,92 @@ function BedTrack(props) {
             continue;
           }
 
+          // find the color and exons on the strand---------------------------------------------------------------
+          var strandColor;
+          if (singleStrand.transcriptionClass === "coding") {
+            strandColor = "purple";
+          } else {
+            strandColor = "green";
+          }
+          const exonIntervals: Array<any> = [];
+          const exonStarts = singleStrand.exonStarts.split(",");
+          const exonEnds = singleStrand.exonEnds.split(",");
+          for (let z = 0; z < exonStarts.length; z++) {
+            exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
+          }
+          // add arrows direction to the strand------------------------------------------------------
+          const startX = (singleStrand.txStart - props.startTrackPos) / bpToPx;
+          const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx;
+          const ARROW_WIDTH = 5;
+          const arrowSeparation = 22;
+          const bottomY = 5;
+          var placementStartX = startX - ARROW_WIDTH / 2;
+          var placementEndX = endX;
+          if (singleStrand.strand === "+") {
+            placementStartX += ARROW_WIDTH;
+          } else {
+            placementEndX -= ARROW_WIDTH;
+          }
+
+          const children: Array<any> = [];
+          // Naming: if our arrows look like '<', then the tip is on the left, and the two tails are on the right.
+          for (
+            let arrowTipX = placementStartX;
+            arrowTipX <= placementEndX;
+            arrowTipX += arrowSeparation
+          ) {
+            // Is forward strand ? point to the right : point to the left
+            const arrowTailX =
+              singleStrand.strand === "+"
+                ? arrowTipX - ARROW_WIDTH
+                : arrowTipX + ARROW_WIDTH;
+            const arrowPoints = [
+              [arrowTailX, yCoord - bottomY],
+              [arrowTipX, yCoord],
+              [arrowTailX, bottomY + yCoord],
+            ];
+            children.push(
+              <polyline
+                key={arrowTipX}
+                points={`${arrowPoints}`}
+                fill="none"
+                stroke={strandColor}
+                strokeWidth={1}
+              />
+            );
+          }
           //add a single strand to current track------------------------------------------------------------------------------------
           strandHtml.push(
             <React.Fragment key={j}>
+              {children.map((item, index) => item)}
               <line
-                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx}`}
+                x1={`${(singleStrand.txStart - props.startTrackPos) / bpToPx}`}
                 y1={`${yCoord}`}
-                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx}`}
+                x2={`${(singleStrand.txEnd - props.startTrackPos) / bpToPx}`}
                 y2={`${yCoord}`}
-                stroke={"blue"}
-                strokeWidth="20"
+                stroke={`${strandColor}`}
+                strokeWidth="4"
               />
+              {exonIntervals.map((coord, index) => (
+                <line
+                  key={index + 198}
+                  x1={`${(coord[0] - props.startTrackPos) / bpToPx}`}
+                  y1={`${yCoord}`}
+                  x2={`${(coord[1] - props.startTrackPos) / bpToPx}`}
+                  y2={`${yCoord}`}
+                  stroke={`${strandColor}`}
+                  strokeWidth="7"
+                />
+              ))}
+
+              <text
+                fontSize={7}
+                x={`${(singleStrand.txStart - props.startTrackPos) / bpToPx}`}
+                y={`${yCoord - 7}`}
+                fill="black"
+              >
+                {singleStrand.name}
+              </text>
             </React.Fragment>
           );
         }
@@ -577,88 +594,70 @@ function BedTrack(props) {
     ));
   }
 
-  useEffect(() => {
-    // Access the context and draw shapes for each canvas
-    // canvasRefR.map((canvasRef, index) => {
-    //   if (canvasRef.current) {
-    //     let context = canvasRef.current.getContext("2d");
-    //     // Example: Draw a rectangle
+  function ShowGenomeData(props) {
+    return props.size.map((item, index) => (
+      <svg
+        key={index}
+        width={`${windowWidth * 2}px`}
+        height={"100%"}
+        style={{ display: "inline-block" }}
+        overflow="visible"
+      >
+        <line
+          x1={`0`}
+          y1="0"
+          x2={`${windowWidth * 2}px`}
+          y2={"0"}
+          stroke="gray"
+          strokeWidth="3"
+        />
+        <line
+          x1={`${windowWidth * 2}px`}
+          y1="0"
+          x2={`${windowWidth * 2}px`}
+          y2={"100%"}
+          stroke="gray"
+          strokeWidth="3"
+        />
+        <line
+          x1={`0`}
+          y1={"100%"}
+          x2={`${windowWidth * 2}px`}
+          y2={"100%"}
+          stroke="gray"
+          strokeWidth="3"
+        />
 
-    //     for (let i = 0; i < rightTrackGenes[index][1].length; i++) {
-    //       let startPos = rightTrackGenes[i][2];
-    //       for (let j = 0; j < rightTrackGenes[index][1][i].length; j++) {
-    //         let singleStrand = rightTrackGenes[index][1][i][j];
-    //         context.fillStyle = "red";
-    //         console.log(
-    //           (singleStrand.start - startPos) / bpToPx,
-    //           (singleStrand.end - startPos) / bpToPx -
-    //             (singleStrand.start - startPos) / bpToPx
-    //         );
-    //         context.fillRect(
-    //           (singleStrand.start - startPos) / bpToPx,
-    //           10,
-    //           (singleStrand.end - startPos) / bpToPx -
-    //             (singleStrand.start - startPos) / bpToPx,
-    //           50
-    //         );
-    //       }
-    //     }
-    //   }
-    // });
-    //ERASE ELEMNTS FROM THE LEFT TRACK WHEN WE ADD A NEW TRACK FROM THE RIGHT
-    //FIND A WAY TO MAKE IT WORK all the time
-    //maybe clear before setting
-    console.log(canvasRefR, side);
-    let copy = canvasRefR.slice(0);
-
-    canvasRefR.map((canvasRef, index) => {
-      if (canvasRef.current) {
-        let context = canvasRef.current.getContext("2d");
-        for (let i = 0; i < rightTrackGenes[index][1].length; i++) {
-          let startPos = rightTrackGenes[index][2];
-          for (let j = 0; j < rightTrackGenes[index][1][i].length; j++) {
-            let singleStrand = rightTrackGenes[index][1][i][j];
-            context.fillStyle = "red";
-
-            context.fillRect(
-              (singleStrand.start - startPos) / bpToPx,
-              10,
-              (singleStrand.end - startPos) / bpToPx -
-                (singleStrand.start - startPos) / bpToPx,
-              50
-            );
-          }
-        }
-      }
-    });
-  }, [rightTrackGenes]);
+        {props.trackHtml[index] ? props.trackHtml[index] : ""}
+      </svg>
+    ));
+  }
 
   useEffect(() => {
-    console.log(canvasRefL, side);
+    setGenomeTrackR(
+      <ShowGenomeData
+        trackHtml={rightTrackGenes.current}
+        trackInterval={trackRegionR.current}
+        size={rightSectionSize}
+      />
+    );
+  }, [maxBp]);
 
-    canvasRefL.map((canvasRef, index) => {
-      if (canvasRef.current) {
-        let context = canvasRef.current.getContext("2d");
-        let idx = leftTrackGenes.length - 1;
-        for (let i = 0; i < leftTrackGenes[idx - index][1].length; i++) {
-          let startPos = leftTrackGenes[idx - index][2];
-          for (let j = 0; j < leftTrackGenes[idx - index][1][i].length; j++) {
-            let singleStrand = leftTrackGenes[idx - index][1][i][j];
-            context.fillStyle = "green";
-
-            context.fillRect(
-              (singleStrand.start - startPos) / bpToPx,
-              10,
-              (singleStrand.end - startPos) / bpToPx -
-                (singleStrand.start - startPos) / bpToPx,
-              50
-            );
-          }
-        }
-      }
-    });
-  }, [leftTrackGenes]);
-
+  useEffect(() => {
+    const tempData = leftTrackGenes.current.slice(0);
+    tempData.reverse();
+    const tempRegion = trackRegionL.current.slice(0);
+    tempRegion.reverse();
+    let tempSize = leftSectionSize.slice(0);
+    tempSize.pop();
+    setGenomeTrackL(
+      <ShowGenomeData
+        trackHtml={tempData}
+        trackInterval={tempRegion}
+        size={tempSize}
+      />
+    );
+  }, [minBp]);
   useEffect(() => {
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
@@ -705,47 +704,10 @@ function BedTrack(props) {
     setAddNewBpRegionLeft(false);
   }, [addNewBpRegionLeft]);
 
-  useEffect(() => {
-    if (side === "left") {
-      console.log("IT SHOUID WORKKKKKKKKKKKK");
-      if (canvasRefL.length != 0) {
-        console.log(canvasRefL);
-        canvasRefL.forEach((canvasRef, index) => {
-          if (canvasRef.current) {
-            let context = canvasRef.current.getContext("2d");
-            context.clearRect(
-              0,
-              0,
-              context.canvas.width,
-              context.canvas.height
-            );
-          }
-        });
-        setLeftTrack([...leftTrackGenes]);
-      }
-    } else if (side === "right") {
-      if (canvasRefR.length != 0) {
-        canvasRefR.forEach((canvasRef, index) => {
-          if (canvasRef.current) {
-            console.log(canvasRefR);
-            let context = canvasRef.current.getContext("2d");
-            context.clearRect(
-              0,
-              0,
-              context.canvas.width,
-              context.canvas.height
-            );
-          }
-        });
-        setRightTrack([...rightTrackGenes]);
-      }
-    }
-  }, [side]);
-
   return (
     <div
       style={{
-        height: "200px",
+        height: "800px",
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
@@ -759,13 +721,12 @@ function BedTrack(props) {
       ) : (
         <div>{dragX.current + windowWidth}</div>
       )}
-      <div>{side}</div>
       <div
         style={{
           flex: "1",
           display: "flex",
           justifyContent: dragX.current <= 0 ? "start" : "end",
-          height: "200px",
+          height: "800px",
           flexDirection: "row",
           whiteSpace: "nowrap",
           // div width has to match a single track width or the alignment will be off
@@ -777,117 +738,18 @@ function BedTrack(props) {
           margin: "auto",
         }}
       >
-        <div ref={block} onMouseDown={handleMouseDown} style={{}}>
-          {dragX.current <= 0
-            ? rightTrackGenes.map((item, index) => (
-                <svg
-                  key={index}
-                  width={`${windowWidth * 2}px`}
-                  height={"100%"}
-                  style={{ display: "inline-block" }}
-                  overflow="visible"
-                >
-                  <line
-                    x1={`0`}
-                    y1="0"
-                    x2={`${windowWidth * 2}px`}
-                    y2={"0"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
-                  <line
-                    x1={`${windowWidth * 2}px`}
-                    y1="0"
-                    x2={`${windowWidth * 2}px`}
-                    y2={"100%"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
-                  <line
-                    x1={`0`}
-                    y1={"100%"}
-                    x2={`${windowWidth * 2}px`}
-                    y2={"100%"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
-
-                  {item[0]}
-
-                  <foreignObject
-                    x="0"
-                    y="55%"
-                    width={`${windowWidth * 2}px`}
-                    height="100%"
-                  >
-                    <canvas
-                      id="canvas1"
-                      key={index}
-                      ref={canvasRefR[index]}
-                      height={"100%"}
-                      width={`${windowWidth * 2}px`}
-                      style={{}}
-                    />
-                  </foreignObject>
-                  {trackRegionR[index]}
-                </svg>
-              ))
-            : leftTrackGenes.map((item, index) => (
-                <svg
-                  key={index}
-                  width={`${windowWidth * 2}px`}
-                  height={"100%"}
-                  style={{ display: "inline-block" }}
-                  overflow="visible"
-                >
-                  <line
-                    x1={`0`}
-                    y1="0"
-                    x2={`${windowWidth * 2}px`}
-                    y2={"0"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
-                  <line
-                    x1={`${windowWidth * 2}px`}
-                    y1="0"
-                    x2={`${windowWidth * 2}px`}
-                    y2={"100%"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
-                  <line
-                    x1={`0`}
-                    y1={"100%"}
-                    x2={`${windowWidth * 2}px`}
-                    y2={"100%"}
-                    stroke="gray"
-                    strokeWidth="3"
-                  />
-
-                  <foreignObject
-                    x="0"
-                    y="55%"
-                    width={`${windowWidth * 2}px`}
-                    height="100%"
-                  >
-                    <canvas
-                      id="canvas2"
-                      key={index}
-                      ref={canvasRefL[index]}
-                      height={"100%"}
-                      width={`${windowWidth * 2}px`}
-                      style={{}}
-                    />
-                  </foreignObject>
-
-                  {trackRegionL.slice(0).reverse()[index]}
-                </svg>
-              ))}
+        <div
+          ref={block}
+          onMouseDown={handleMouseDown}
+          style={{ display: "flex", flexDirection: "column" }}
+        >
+          <div>{dragX.current <= 0 ? genomeTrackR : genomeTrackL}</div>
+          <div>{dragX.current <= 0 ? genomeTrackR : genomeTrackL}</div>
+          <div>{dragX.current <= 0 ? genomeTrackR : genomeTrackL}</div>
         </div>
       </div>
     </div>
   );
 }
 
-export default BedTrack;
+export default GenRefTrack;

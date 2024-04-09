@@ -625,7 +625,6 @@ function GenRefTrack(props) {
         />
 
         {props.trackHtml[index] ? props.trackHtml[index] : ""}
-        {props.trackInterval[index] ? props.trackInterval[index] : ""}
       </svg>
     ));
   }
@@ -735,8 +734,14 @@ function GenRefTrack(props) {
           margin: "auto",
         }}
       >
-        <div ref={block} onMouseDown={handleMouseDown} style={{}}>
-          {dragX.current <= 0 ? genomeTrackR : genomeTrackL}
+        <div
+          ref={block}
+          onMouseDown={handleMouseDown}
+          style={{ display: "flex", flexDirection: "column" }}
+        >
+          <div>{dragX.current <= 0 ? genomeTrackR : genomeTrackL}</div>
+          <div>{dragX.current <= 0 ? genomeTrackR : genomeTrackL}</div>
+          <div>{dragX.current <= 0 ? genomeTrackR : genomeTrackL}</div>
         </div>
       </div>
     </div>
