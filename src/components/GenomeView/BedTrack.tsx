@@ -1,39 +1,34 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import GetBedData from "./getRemoteData/tabixSource";
-const AWS_API = "https://lambda.epigenomegateway.org/v2";
-const requestAnimationFrame = window.requestAnimationFrame;
-const cancelAnimationFrame = window.cancelAnimationFrame;
+
 const windowWidth = window.innerWidth;
 function BedTrack(props) {
-  //To-Do: need to move this part to initial render so this section only run once
-  const genome = props.currGenome;
+  let name, region, start, end;
+  let bpRegionSize;
+  let bpToPx;
+  let result;
+  if (Object.keys(props.trackData).length > 0) {
+    [name, region, start, end] = props.trackData.location.split(":");
+    result = props.trackData.bedResult;
+    bpRegionSize = props.bpRegionSize;
+    bpToPx = props.bpToPx;
+  }
 
-  const [region, coord] = genome.defaultRegion.split(":");
-  const [leftStartStr, rightStartStr] = coord.split("-");
-  const leftStartCoord = Number(leftStartStr);
-  const rightStartCoord = Number(rightStartStr);
-  const bpRegionSize = (rightStartCoord - leftStartCoord) * 2;
-  const bpToPx = bpRegionSize / (windowWidth * 2);
-  //useRef to store data between states without re render the component
-  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
-  const block = useRef<HTMLInputElement>(null);
-  const frameID = useRef(0);
-  const lastX = useRef(0);
-  const dragX = useRef(0);
-  const rightTrackGenes = useRef<Array<any>>([]);
+  start = Number(start);
+  end = Number(end);
+
+  const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+  const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
 
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-  const trackRegionR = useRef<Array<any>>([]);
-  const trackRegionL = useRef<Array<any>>([]);
-  const leftTrackGenes = useRef<Array<any>>([]);
+
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-  const [isDragging, setDragging] = useState(false);
+
   const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
     "",
     "",
@@ -42,82 +37,21 @@ function BedTrack(props) {
 
   const [genomeTrackR, setGenomeTrackR] = useState(<></>);
   const [genomeTrackL, setGenomeTrackL] = useState(<></>);
-  const [addNewBpRegionLeft, setAddNewBpRegionLeft] = useState(false);
-  const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
-  const [maxBp, setMaxBp] = useState(
-    rightStartCoord + (rightStartCoord - leftStartCoord)
-  );
-  const [minBp, setMinBp] = useState(leftStartCoord);
-
-  function handleMove(e) {
-    if (!isDragging) {
-      return;
-    }
-    const deltaX = lastX.current - e.pageX;
-
-    lastX.current = e.pageX;
-    dragX.current -= deltaX;
-    //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
-    cancelAnimationFrame(frameID.current);
-    frameID.current = requestAnimationFrame(() => {
-      block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
-    });
-  }
-
-  function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
-    lastX.current = e.pageX;
-    setDragging(true);
-    e.preventDefault();
-  }
 
   function getRndInteger(min = 0, max = 10000000000) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
-  function handleMouseUp() {
-    setDragging(false);
-    if (
-      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
-      dragX.current < 0
-    ) {
-      setAddNewBpRegionRight(true);
-    } else if (
-      //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
-      //so we need to add to keep the position correct.
-      (dragX.current + windowWidth) / windowWidth >=
-        2 * (leftSectionSize.length - 3) &&
-      dragX.current > 0
-    ) {
-      setAddNewBpRegionLeft(true);
-    }
-  }
-  async function fetchGenomeData(initial: number = 0) {
-    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    let userRespond;
-    if (initial) {
-      userRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        minBp,
-        maxBp
-      );
-    } else {
-      userRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        maxBp - bpRegionSize,
-        maxBp
-      );
-    }
 
-    var result = await userRespond;
+  async function fetchGenomeData() {
+    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(result);
+
     if (result[0]) {
       result = result[0];
       var resultIdx = 0;
-      console.log(result);
+
       if (
         resultIdx < result.length &&
         !(
@@ -245,26 +179,22 @@ function BedTrack(props) {
         strandLevelList[j].push(strand);
       }
     }
-    console.log(strandLevelList);
-    rightTrackGenes.current.push(
+
+    setRightTrack([
+      ...rightTrackGenes,
       <SetStrand
         key={getRndInteger()}
         strandPos={strandLevelList}
         checkPrev={prevOverflowStrand.current}
-        startTrackPos={maxBp - bpRegionSize}
-      />
-    );
-    trackRegionR.current.push(
-      <text fontSize={30} x={200} y={400} fill="black">
-        {`${maxBp - bpRegionSize} - ${maxBp}`}
-      </text>
-    );
+        startTrackPos={end - bpRegionSize}
+      />,
+    ]);
 
     // CHECK if there are overlapping strands to the next track
     for (var i = 0; i < strandLevelList.length; i++) {
       const levelContent = strandLevelList[i];
       for (var strand of levelContent) {
-        if (strand.end > maxBp) {
+        if (strand.end > end) {
           const strandId = strand.start + strand.end;
           overflowStrand.current[strandId] = {
             level: i,
@@ -277,50 +207,30 @@ function BedTrack(props) {
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
-    if (initial) {
-      leftTrackGenes.current.push(
+    if (props.trackData.initial) {
+      setLeftTrack([
+        ...leftTrackGenes,
         <SetStrand
           key={getRndInteger()}
           strandPos={strandLevelList}
-          startTrackPos={minBp}
-        />
-      );
-      trackRegionL.current.push(
-        <text fontSize={30} x={200} y={400} fill="black">
-          {`${minBp} - ${maxBp}`}
-        </text>
-      );
-      trackRegionL.current.push(
-        <text fontSize={30} x={200} y={400} fill="black">
-          {`${minBp - bpRegionSize} - ${minBp}`}
-        </text>
-      );
-      setMinBp(minBp - bpRegionSize);
+          startTrackPos={start}
+        />,
+      ]);
     }
-
-    setMaxBp(maxBp + bpRegionSize);
   }
 
   //________________________________________________________________________________________________________________________________________________________
   //________________________________________________________________________________________________________________________________________________________
 
   async function fetchGenomeData2() {
-    const userRespond = await GetBedData(
-      "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-      region,
-      minBp,
-      minBp + bpRegionSize
-    );
-    let result = await userRespond;
-
     var strandIntervalList: Array<any> = [];
     result.sort((a, b) => {
       return b.end - a.end;
     });
-    console.log(result);
+
     if (result[0]) {
       result = result[0];
-      console.log(result);
+
       var resultIdx = 0;
 
       if (
@@ -457,25 +367,20 @@ function BedTrack(props) {
       }
     }
 
-    leftTrackGenes.current.push(
+    setLeftTrack([
+      ...leftTrackGenes,
       <SetStrand
         key={getRndInteger()}
         strandPos={strandLevelList}
         checkPrev={prevOverflowStrand2.current}
-        startTrackPos={minBp}
-      />
-    );
-
-    trackRegionL.current.push(
-      <text fontSize={30} x={200} y={400} fill="black">
-        {`${minBp - bpRegionSize} - ${minBp}`}
-      </text>
-    );
+        startTrackPos={start}
+      />,
+    ]);
 
     for (var i = 0; i < strandLevelList.length; i++) {
       var levelContent = strandLevelList[i];
       for (var strand of levelContent) {
-        if (strand.start < minBp) {
+        if (strand.start < start) {
           const curStrandId = strand.start + strand.end;
           overflowStrand2.current[curStrandId] = {
             level: i,
@@ -488,8 +393,6 @@ function BedTrack(props) {
     prevOverflowStrand2.current = { ...overflowStrand2.current };
 
     overflowStrand2.current = {};
-
-    setMinBp(minBp - bpRegionSize);
   }
   function SetStrand(props) {
     //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
@@ -575,122 +478,47 @@ function BedTrack(props) {
         />
 
         {props.trackHtml[index] ? props.trackHtml[index] : ""}
-        {props.trackInterval[index] ? props.trackInterval[index] : ""}
       </svg>
     ));
   }
 
   useEffect(() => {
     setGenomeTrackR(
-      <ShowGenomeData
-        trackHtml={rightTrackGenes.current}
-        trackInterval={trackRegionR.current}
-        size={rightSectionSize}
-      />
+      <ShowGenomeData trackHtml={rightTrackGenes} size={rightSectionSize} />
     );
-  }, [maxBp]);
+  }, [rightTrackGenes]);
 
   useEffect(() => {
-    const tempData = leftTrackGenes.current.slice(0);
+    const tempData = leftTrackGenes.slice(0);
     tempData.reverse();
-    const tempRegion = trackRegionL.current.slice(0);
-    tempRegion.reverse();
+
     let tempSize = leftSectionSize.slice(0);
     tempSize.pop();
-    setGenomeTrackL(
-      <ShowGenomeData
-        trackHtml={tempData}
-        trackInterval={tempRegion}
-        size={tempSize}
-      />
-    );
-  }, [minBp]);
-  useEffect(() => {
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging]);
+    setGenomeTrackL(<ShowGenomeData trackHtml={tempData} size={tempSize} />);
+  }, [leftTrackGenes]);
 
   useEffect(() => {
-    async function getData() {
-      await fetchGenomeData(1);
-    }
-    getData();
-  }, []);
-
-  useEffect(() => {
-    if (addNewBpRegionRight) {
-      console.log("trigger right");
-      async function handle() {
+    async function handle() {
+      if (props.trackData.location && props.trackData.side === "right") {
         setRightSectionSize((prevStrandInterval) => {
           const t = [...prevStrandInterval];
           t.push("");
           return t;
         });
         await fetchGenomeData();
+      } else if (props.trackData.location && props.trackData.side === "left") {
+        setLeftSectionSize((prevStrandInterval) => {
+          const t = [...prevStrandInterval];
+          t.push("");
+          return t;
+        });
+        await fetchGenomeData2();
       }
-      handle();
     }
-    setAddNewBpRegionRight(false);
-  }, [addNewBpRegionRight]);
+    handle();
+  }, [props.trackData]);
 
-  useEffect(() => {
-    if (addNewBpRegionLeft) {
-      console.log("trigger left");
-      setLeftSectionSize((prevStrandInterval) => {
-        const t = [...prevStrandInterval];
-        t.push("");
-        return t;
-      });
-      fetchGenomeData2();
-    }
-    setAddNewBpRegionLeft(false);
-  }, [addNewBpRegionLeft]);
-
-  return (
-    <div
-      style={{
-        height: "200px",
-        flexDirection: "row",
-        whiteSpace: "nowrap",
-        //not using flex allows us to keep the position of the track
-
-        overflow: "hidden",
-        margin: "auto",
-      }}
-    >
-      {dragX.current <= 0 ? (
-        <div>{dragX.current}</div>
-      ) : (
-        <div>{dragX.current + windowWidth}</div>
-      )}
-      <div
-        style={{
-          flex: "1",
-          display: "flex",
-          justifyContent: dragX.current <= 0 ? "start" : "end",
-          height: "200px",
-          flexDirection: "row",
-          whiteSpace: "nowrap",
-          // div width has to match a single track width or the alignment will be off
-          // in order to smoothly tranverse need to fetch info offscreen maybe?????
-          // 1. try add more blocks so the fetch is offscreen
-          width: `${windowWidth * 2}px`,
-          backgroundColor: "pink",
-          overflow: "hidden",
-          margin: "auto",
-        }}
-      >
-        <div ref={block} onMouseDown={handleMouseDown} style={{}}>
-          {dragX.current <= 0 ? genomeTrackR : genomeTrackL}
-        </div>
-      </div>
-    </div>
-  );
+  return <div>{props.Xpos <= 0 ? genomeTrackR : genomeTrackL}</div>;
 }
 
 export default BedTrack;
