@@ -29,12 +29,6 @@ function BedTrack(props) {
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
-    "",
-    "",
-  ]);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
-
   const [genomeTrackR, setGenomeTrackR] = useState(<></>);
   const [genomeTrackL, setGenomeTrackL] = useState(<></>);
 
@@ -208,6 +202,21 @@ function BedTrack(props) {
     overflowStrand.current = {};
 
     if (props.trackData.initial) {
+      for (var i = 0; i < strandLevelList.length; i++) {
+        var levelContent = strandLevelList[i];
+        for (var strand of levelContent) {
+          if (strand.txStart < start) {
+            overflowStrand2.current[strand.id] = {
+              level: i,
+              strand: strand,
+            };
+          }
+        }
+      }
+
+      prevOverflowStrand2.current = { ...overflowStrand2.current };
+
+      overflowStrand2.current = {};
       setLeftTrack([
         ...leftTrackGenes,
         <SetStrand
@@ -444,7 +453,7 @@ function BedTrack(props) {
   }
 
   function ShowGenomeData(props) {
-    return props.size.map((item, index) => (
+    return props.trackHtml.map((item, index) => (
       <svg
         key={index}
         width={`${windowWidth * 2}px`}
@@ -483,35 +492,21 @@ function BedTrack(props) {
   }
 
   useEffect(() => {
-    setGenomeTrackR(
-      <ShowGenomeData trackHtml={rightTrackGenes} size={rightSectionSize} />
-    );
+    setGenomeTrackR(<ShowGenomeData trackHtml={rightTrackGenes} />);
   }, [rightTrackGenes]);
 
   useEffect(() => {
     const tempData = leftTrackGenes.slice(0);
     tempData.reverse();
 
-    let tempSize = leftSectionSize.slice(0);
-    tempSize.pop();
-    setGenomeTrackL(<ShowGenomeData trackHtml={tempData} size={tempSize} />);
+    setGenomeTrackL(<ShowGenomeData trackHtml={tempData} />);
   }, [leftTrackGenes]);
 
   useEffect(() => {
     async function handle() {
       if (props.trackData.location && props.trackData.side === "right") {
-        setRightSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
         await fetchGenomeData();
       } else if (props.trackData.location && props.trackData.side === "left") {
-        setLeftSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
         await fetchGenomeData2();
       }
     }

@@ -209,6 +209,21 @@ function BedTrack(props) {
     }
 
     if (props.trackData.initial) {
+      for (var i = 0; i < strandLevelList.length; i++) {
+        var levelContent = strandLevelList[i];
+        for (var strand of levelContent) {
+          if (strand.txStart < start) {
+            overflowStrand2.current[strand.id] = {
+              level: i,
+              strand: strand,
+            };
+          }
+        }
+      }
+
+      prevOverflowStrand2.current = { ...overflowStrand2.current };
+
+      overflowStrand2.current = {};
       setLeftTrack([
         ...leftTrackGenes,
         [

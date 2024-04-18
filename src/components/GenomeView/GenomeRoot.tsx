@@ -51,7 +51,7 @@ function GenomeHub(props: any) {
     let testGen = {
       name: "hg38",
       species: "human",
-      defaultRegion: "chr7:2062981-4787717",
+      defaultRegion: "chr7:150053397-154373765",
     };
     setTestView(<Test currGenome={testGen} />);
   }, []);

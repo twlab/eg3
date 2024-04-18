@@ -34,12 +34,6 @@ function GenRefTrack(props) {
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
-    "",
-    "",
-  ]);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
-
   const [genomeTrackR, setGenomeTrackR] = useState(<></>);
   const [genomeTrackL, setGenomeTrackL] = useState(<></>);
 
@@ -244,7 +238,6 @@ function GenRefTrack(props) {
   //________________________________________________________________________________________________________________________________________________________
 
   async function fetchGenomeData2() {
-    console.log(prevOverflowStrand2.current);
     var strandIntervalList: Array<any> = [];
     result.sort((a, b) => {
       return b.txEnd - a.txEnd;
@@ -532,7 +525,7 @@ function GenRefTrack(props) {
   }
 
   function ShowGenomeData(props) {
-    return props.size.map((item, index) => (
+    return props.trackHtml.map((item, index) => (
       <svg
         key={index}
         width={`${windowWidth * 2}px`}
@@ -576,7 +569,6 @@ function GenRefTrack(props) {
       <ShowGenomeData
         trackHtml={rightTrackGenes}
         trackInterval={trackRegionR.current}
-        size={rightSectionSize}
       />
     );
   }, [rightTrackGenes]);
@@ -586,33 +578,18 @@ function GenRefTrack(props) {
     tempData.reverse();
     const tempRegion = trackRegionL.current.slice(0);
     tempRegion.reverse();
-    let tempSize = leftSectionSize.slice(0);
-    tempSize.pop();
+
     setGenomeTrackL(
-      <ShowGenomeData
-        trackHtml={tempData}
-        trackInterval={tempRegion}
-        size={tempSize}
-      />
+      <ShowGenomeData trackHtml={tempData} trackInterval={tempRegion} />
     );
   }, [leftTrackGenes]);
 
   useEffect(() => {
     async function handle() {
       if (props.trackData.location && props.trackData.side === "right") {
-        setRightSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
-        fetchGenomeData();
+        await fetchGenomeData();
       } else if (props.trackData.location && props.trackData.side === "left") {
-        setLeftSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
-        fetchGenomeData2();
+        await fetchGenomeData2();
       }
     }
     handle();
