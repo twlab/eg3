@@ -47,8 +47,7 @@ function Test(props) {
   const [side, setSide] = useState("right");
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
   const [Xpos, setXPos] = useState(0);
-  const [addNewBpRegionLeft, setAddNewBpRegionLeft] = useState(false);
-  const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
+
   const [maxBp, setMaxBp] = useState(
     rightStartCoord + (rightStartCoord - leftStartCoord)
   );
@@ -112,28 +111,38 @@ function Test(props) {
       -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
-      if (maxBp > Number(chrLength[chr])) {
-        let prevChr = [maxBp - bpRegionSize, Number(chrLength[chr])];
-        let curChr = [0, maxBp - Number(chrLength[chr])];
-        let testcur = [
-          Number(chrLength[chr]) -
-            (maxBp - bpRegionSize) +
-            maxBp -
-            Number(chrLength[chr]),
-          bpRegionSize,
-        ];
-        console.log(prevChr, curChr, testcur);
-      } else {
-        setAddNewBpRegionRight(true);
-      }
+      // if (maxBp > Number(chrLength[chr])) {
+      //   let prevChr = [maxBp - bpRegionSize, Number(chrLength[chr])];
+      //   let curChr = [0, maxBp - Number(chrLength[chr])];
+      //   let testcur = [
+      //     Number(chrLength[chr]) -
+      //       (maxBp - bpRegionSize) +
+      //       maxBp -
+      //       Number(chrLength[chr]),
+      //     bpRegionSize,
+      //   ];
+      //   console.log(prevChr, curChr, testcur);
+      // } else {
+      setRightSectionSize((prevStrandInterval) => {
+        const t = [...prevStrandInterval];
+        t.push("");
+        return t;
+      });
+      fetchGenomeData();
+      // }
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
       (dragX.current + windowWidth) / windowWidth >=
-        2 * (leftSectionSize.length - 3) &&
+        2 * (leftSectionSize.length - 2) &&
       dragX.current > 0
     ) {
-      setAddNewBpRegionLeft(true);
+      setLeftSectionSize((prevStrandInterval) => {
+        const t = [...prevStrandInterval];
+        t.push("");
+        return t;
+      });
+      fetchGenomeData2();
     }
   }
   async function fetchGenomeData(initial: number = 0) {
@@ -236,6 +245,7 @@ function Test(props) {
   }, [isDragging]);
 
   useEffect(() => {
+    console.log(windowWidth);
     async function getData() {
       await fetchGenomeData(1);
       let key = createGenomeData();
@@ -244,36 +254,6 @@ function Test(props) {
     getData();
   }, []);
 
-  useEffect(() => {
-    if (addNewBpRegionRight) {
-      async function handle() {
-        setRightSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
-        fetchGenomeData();
-      }
-      handle();
-    }
-    setAddNewBpRegionRight(false);
-  }, [addNewBpRegionRight]);
-
-  useEffect(() => {
-    if (addNewBpRegionLeft) {
-      async function handle() {
-        setLeftSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
-        fetchGenomeData2();
-      }
-      handle();
-    }
-    setAddNewBpRegionLeft(false);
-  }, [addNewBpRegionLeft]);
-
   return (
     <div
       style={{
@@ -281,7 +261,7 @@ function Test(props) {
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-        width: "1500px",
+        width: `${windowWidth * 0.75}px`,
         overflow: "hidden",
         margin: "auto",
       }}
