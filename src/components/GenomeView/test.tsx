@@ -30,13 +30,15 @@ function Test(props) {
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [isDragging, setDragging] = useState(false);
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
-    "",
-    "",
-  ]);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
+
+  const rightSectionSize = useRef<Array<any>>(["", ""]);
+
+  const leftSectionSize = useRef<Array<any>>(["", ""]);
+
   const [side, setSide] = useState("right");
-  const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
+  const [getNewRegionData, setGetNewRegionData] = useState<{
+    [key: string]: any;
+  }>({});
   const [Xpos, setXPos] = useState(0);
   const [addNewBpRegionLeft, setAddNewBpRegionLeft] = useState(false);
   const [addNewBpRegionRight, setAddNewBpRegionRight] = useState(false);
@@ -76,7 +78,8 @@ function Test(props) {
       setSide("right");
     } else {
       if (
-        -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
+        -dragX.current / windowWidth >=
+          2 * (rightSectionSize.current.length - 2) &&
         dragX.current < 0
       ) {
         setAddNewBpRegionRight(true);
@@ -84,7 +87,7 @@ function Test(props) {
         //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
         //so we need to add to keep the position correct.
         (dragX.current + windowWidth) / windowWidth >=
-          2 * (leftSectionSize.length - 3) &&
+          2 * (leftSectionSize.current.length - 3) &&
         dragX.current > 0
       ) {
         setAddNewBpRegionLeft(true);
@@ -137,11 +140,11 @@ function Test(props) {
 
     if (initial) {
       tempObj["initial"] = 1;
-      setGenomeTrackR({ ...tempObj });
+      setGetNewRegionData({ ...tempObj });
       setMinBp(minBp - bpRegionSize);
     } else {
       tempObj["initial"] = 0;
-      setGenomeTrackR({ ...tempObj });
+      setGetNewRegionData({ ...tempObj });
     }
 
     setMaxBp(maxBp + bpRegionSize);
@@ -176,7 +179,7 @@ function Test(props) {
     tempObj["bedResult"] = bedResult;
 
     tempObj["side"] = "left";
-    setGenomeTrackR({ ...tempObj });
+    setGetNewRegionData({ ...tempObj });
     setMinBp(minBp - bpRegionSize);
   }
 
@@ -200,11 +203,7 @@ function Test(props) {
   useEffect(() => {
     if (addNewBpRegionRight) {
       async function handle() {
-        setRightSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
+        rightSectionSize.current.push("");
         fetchGenomeData();
       }
       handle();
@@ -215,11 +214,7 @@ function Test(props) {
   useEffect(() => {
     if (addNewBpRegionLeft) {
       async function handle() {
-        setLeftSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
+        leftSectionSize.current.push("");
         fetchGenomeData2();
       }
       handle();
@@ -229,12 +224,13 @@ function Test(props) {
 
   return (
     <div
+      // this is the container for the track, able to resize without messing with function of track
       style={{
         height: "800px",
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-
+        width: "1600px",
         overflow: "hidden",
         margin: "auto",
       }}
@@ -245,6 +241,8 @@ function Test(props) {
         <div>{dragX.current + windowWidth}</div>
       )}
       <div
+        // This div determines the length, position of the track, and manage new regions getting added without shifting track position , cannot resize this without causing track position to mess up when updating information
+        // container that keep tracks in the current position
         style={{
           flex: "1",
           display: "flex",
@@ -252,16 +250,15 @@ function Test(props) {
           height: "800px",
           flexDirection: "row",
           whiteSpace: "nowrap",
-          // div width has to match a single track width or the alignment will be off
-          // in order to smoothly tranverse need to fetch info offscreen maybe?????
-          // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth * 2}px`,
-          backgroundColor: "pink",
+          backgroundColor: "gainsboro",
           overflow: "hidden",
           margin: "auto",
         }}
       >
         <div
+          // allow the user to drag the track and manage the type of track user requested, where can be dragged os determined
+          // display the type of track in stacking order
           ref={block}
           onMouseDown={handleMouseDown}
           style={{ display: "flex", flexDirection: "column" }}
@@ -269,20 +266,20 @@ function Test(props) {
           <GenRefTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
-            trackData={genomeTrackR}
+            trackData={getNewRegionData}
             Xpos={Xpos}
           />
 
           <BedTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
-            trackData={genomeTrackR}
+            trackData={getNewRegionData}
             Xpos={Xpos}
           />
           <BedDensityTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
-            trackData={genomeTrackR}
+            trackData={getNewRegionData}
             Xpos={Xpos}
             trackSide={side}
           />

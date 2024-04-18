@@ -53,7 +53,7 @@ function GenomeHub(props: any) {
       species: "human",
       defaultRegion: "chr7:27053397-27373765",
     };
-    setTestView(<Test currGenome={testGenome} />);
+    setTestView(<Test currGenome={testGen} />);
   }, []);
   return (
     <div>
