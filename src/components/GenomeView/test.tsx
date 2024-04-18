@@ -281,7 +281,6 @@ function Test(props) {
             bpToPx={bpToPx}
             trackData={getNewRegionData}
             Xpos={Xpos}
-            trackSide={side}
           />
         </div>
       </div>

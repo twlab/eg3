@@ -34,6 +34,12 @@ function GenRefTrack(props) {
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
+  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
+    "",
+    "",
+  ]);
+  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
+
   const [genomeTrackR, setGenomeTrackR] = useState(<></>);
   const [genomeTrackL, setGenomeTrackL] = useState(<></>);
 
@@ -198,6 +204,21 @@ function GenRefTrack(props) {
     overflowStrand.current = {};
 
     if (props.trackData.initial) {
+      for (var i = 0; i < strandLevelList.length; i++) {
+        var levelContent = strandLevelList[i];
+        for (var strand of levelContent) {
+          if (strand.txStart < start) {
+            overflowStrand2.current[strand.id] = {
+              level: i,
+              strand: strand,
+            };
+          }
+        }
+      }
+
+      prevOverflowStrand2.current = { ...overflowStrand2.current };
+
+      overflowStrand2.current = {};
       setLeftTrack([
         ...leftTrackGenes,
         <SetStrand
@@ -223,6 +244,7 @@ function GenRefTrack(props) {
   //________________________________________________________________________________________________________________________________________________________
 
   async function fetchGenomeData2() {
+    console.log(prevOverflowStrand2.current);
     var strandIntervalList: Array<any> = [];
     result.sort((a, b) => {
       return b.txEnd - a.txEnd;
@@ -510,7 +532,7 @@ function GenRefTrack(props) {
   }
 
   function ShowGenomeData(props) {
-    return props.trackHtml.map((item, index) => (
+    return props.size.map((item, index) => (
       <svg
         key={index}
         width={`${windowWidth * 2}px`}
@@ -543,7 +565,7 @@ function GenRefTrack(props) {
           strokeWidth="3"
         />
 
-        {item}
+        {props.trackHtml[index] ? props.trackHtml[index] : ""}
         {props.trackInterval[index] ? props.trackInterval[index] : ""}
       </svg>
     ));
@@ -554,6 +576,7 @@ function GenRefTrack(props) {
       <ShowGenomeData
         trackHtml={rightTrackGenes}
         trackInterval={trackRegionR.current}
+        size={rightSectionSize}
       />
     );
   }, [rightTrackGenes]);
@@ -563,17 +586,32 @@ function GenRefTrack(props) {
     tempData.reverse();
     const tempRegion = trackRegionL.current.slice(0);
     tempRegion.reverse();
-
+    let tempSize = leftSectionSize.slice(0);
+    tempSize.pop();
     setGenomeTrackL(
-      <ShowGenomeData trackHtml={tempData} trackInterval={tempRegion} />
+      <ShowGenomeData
+        trackHtml={tempData}
+        trackInterval={tempRegion}
+        size={tempSize}
+      />
     );
   }, [leftTrackGenes]);
 
   useEffect(() => {
     async function handle() {
       if (props.trackData.location && props.trackData.side === "right") {
+        setRightSectionSize((prevStrandInterval) => {
+          const t = [...prevStrandInterval];
+          t.push("");
+          return t;
+        });
         fetchGenomeData();
       } else if (props.trackData.location && props.trackData.side === "left") {
+        setLeftSectionSize((prevStrandInterval) => {
+          const t = [...prevStrandInterval];
+          t.push("");
+          return t;
+        });
         fetchGenomeData2();
       }
     }
