@@ -111,25 +111,25 @@ function Test(props) {
       -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
-      // if (maxBp > Number(chrLength[chr])) {
-      //   let prevChr = [maxBp - bpRegionSize, Number(chrLength[chr])];
-      //   let curChr = [0, maxBp - Number(chrLength[chr])];
-      //   let testcur = [
-      //     Number(chrLength[chr]) -
-      //       (maxBp - bpRegionSize) +
-      //       maxBp -
-      //       Number(chrLength[chr]),
-      //     bpRegionSize,
-      //   ];
-      //   console.log(prevChr, curChr, testcur);
-      // } else {
-      setRightSectionSize((prevStrandInterval) => {
-        const t = [...prevStrandInterval];
-        t.push("");
-        return t;
-      });
-      fetchGenomeData();
-      // }
+      if (maxBp > Number(chrLength[chr])) {
+        let prevChr = [maxBp - bpRegionSize, Number(chrLength[chr])];
+        let curChr = [0, maxBp - Number(chrLength[chr])];
+        let testcur = [
+          Number(chrLength[chr]) -
+            (maxBp - bpRegionSize) +
+            maxBp -
+            Number(chrLength[chr]),
+          bpRegionSize,
+        ];
+        console.log(prevChr, curChr, testcur);
+      } else {
+        setRightSectionSize((prevStrandInterval) => {
+          const t = [...prevStrandInterval];
+          t.push("");
+          return t;
+        });
+        fetchGenomeData();
+      }
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
