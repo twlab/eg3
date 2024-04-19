@@ -47,7 +47,6 @@ function Test(props) {
   const [side, setSide] = useState("right");
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
   const [Xpos, setXPos] = useState(0);
-
   const [maxBp, setMaxBp] = useState(
     rightStartCoord + (rightStartCoord - leftStartCoord)
   );
@@ -93,11 +92,11 @@ function Test(props) {
   }
 
   function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
-    lastX.current = e.pageX;
     setDragging(true);
+    lastX.current = e.pageX;
+
     e.preventDefault();
   }
-
   function handleMouseUp() {
     setDragging(false);
     setXPos(dragX.current);
@@ -123,6 +122,7 @@ function Test(props) {
         ];
         console.log(prevChr, curChr, testcur);
       } else {
+        console.log("trigger righ");
         setRightSectionSize((prevStrandInterval) => {
           const t = [...prevStrandInterval];
           t.push("");
@@ -137,6 +137,7 @@ function Test(props) {
         2 * (leftSectionSize.length - 2) &&
       dragX.current > 0
     ) {
+      console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
         t.push("");
@@ -153,37 +154,42 @@ function Test(props) {
     let bedRespond;
 
     if (initial) {
-      userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
-        { method: "GET" }
-      );
-      bedRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        minBp,
-        maxBp
-      );
-      tempObj["location"] = `${genome.name}:${region}:${minBp}:${maxBp}`;
+      try {
+        userRespond = await fetch(
+          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
+          { method: "GET" }
+        );
+        bedRespond = await GetBedData(
+          "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          region,
+          minBp,
+          maxBp
+        );
+
+        tempObj["location"] = `${genome.name}:${region}:${minBp}:${maxBp}`;
+      } catch {}
     } else {
-      userRespond = await fetch(
-        `${AWS_API}/${
-          genome.name
-        }/genes/refGene/queryRegion?chr=${region}&start=${
+      try {
+        userRespond = await fetch(
+          `${AWS_API}/${
+            genome.name
+          }/genes/refGene/queryRegion?chr=${region}&start=${
+            maxBp - bpRegionSize
+          }&end=${maxBp}`,
+          { method: "GET" }
+        );
+        bedRespond = await GetBedData(
+          "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          region,
+          maxBp - bpRegionSize,
+          maxBp
+        );
+        tempObj["location"] = `${genome.name}:${region}:${
           maxBp - bpRegionSize
-        }&end=${maxBp}`,
-        { method: "GET" }
-      );
-      bedRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        maxBp - bpRegionSize,
-        maxBp
-      );
-      tempObj["location"] = `${genome.name}:${region}:${
-        maxBp - bpRegionSize
-      }:${maxBp}`;
+        }:${maxBp}`;
+      } catch {}
     }
-    const bedResult = await bedRespond;
+    const bedResult = bedRespond;
     const result = await userRespond.json();
     tempObj["bedResult"] = bedResult;
     tempObj["result"] = result;
@@ -207,25 +213,28 @@ function Test(props) {
   async function fetchGenomeData2() {
     let tempObj = {};
     let bedRespond;
-    const userRespond = await fetch(
-      `${AWS_API}/${
-        genome.name
-      }/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${
+    let userRespond;
+    try {
+      userRespond = await fetch(
+        `${AWS_API}/${
+          genome.name
+        }/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${
+          minBp + bpRegionSize
+        }`,
+        { method: "GET" }
+      );
+      bedRespond = await GetBedData(
+        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+        region,
+        minBp,
         minBp + bpRegionSize
-      }`,
-      { method: "GET" }
-    );
-    bedRespond = await GetBedData(
-      "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-      region,
-      minBp,
-      minBp + bpRegionSize
-    );
-    tempObj["location"] = `${genome.name}:${region}:${minBp}:${
-      minBp + bpRegionSize
-    }`;
+      );
+      tempObj["location"] = `${genome.name}:${region}:${minBp}:${
+        minBp + bpRegionSize
+      }`;
+    } catch {}
     const result = await userRespond.json();
-    const bedResult = await bedRespond;
+    const bedResult = bedRespond;
     tempObj["result"] = result;
     tempObj["bedResult"] = bedResult;
 
@@ -261,7 +270,7 @@ function Test(props) {
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-        width: `${windowWidth * 0.75}px`,
+        width: "1500px",
         overflow: "hidden",
         margin: "auto",
       }}
@@ -272,8 +281,6 @@ function Test(props) {
         <div>{dragX.current + windowWidth}</div>
       )}
 
-      <div>{chrData.length > 0 ? chrData[chr] : " "}</div>
-      <div>{chrLength.length > 0 ? chrLength[chr] : " "}</div>
       <div
         style={{
           flex: "1",
@@ -286,7 +293,7 @@ function Test(props) {
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth * 2}px`,
-          backgroundColor: "pink",
+          backgroundColor: "gainsboro",
           overflow: "hidden",
           margin: "auto",
         }}

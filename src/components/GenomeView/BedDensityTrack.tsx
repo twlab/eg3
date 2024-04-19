@@ -2,7 +2,7 @@ import React, { createRef } from "react";
 import { useEffect, useRef, useState } from "react";
 
 const windowWidth = window.innerWidth;
-function BedTrack(props) {
+function BedTrackDensity(props) {
   let name, region, start, end;
   let bpRegionSize;
   let bpToPx;
@@ -562,9 +562,9 @@ function BedTrack(props) {
   useEffect(() => {
     async function handle() {
       if (props.trackData.location && props.trackData.side === "right") {
-        await fetchGenomeData();
+        fetchGenomeData();
       } else if (props.trackData.location && props.trackData.side === "left") {
-        await fetchGenomeData2();
+        fetchGenomeData2();
       }
     }
     handle();
@@ -663,4 +663,4 @@ function BedTrack(props) {
   );
 }
 
-export default BedTrack;
+export default BedTrackDensity;

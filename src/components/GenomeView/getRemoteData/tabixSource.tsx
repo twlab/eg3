@@ -3,8 +3,6 @@ import { RemoteFile } from "generic-filehandle";
 
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
 function GetBedData(url, chr, start, end) {
-  console.log(url);
-
   function ensureMaxListLength<T>(list: T[], limit: number): T[] {
     if (list.length <= limit) {
       return list;
@@ -30,10 +28,10 @@ function GetBedData(url, chr, start, end) {
       if (chrom === "M") {
         chrom = "MT";
       }
-      console.log(chrom, locus.start, locus.end);
+
       return getDataForLocus(chrom, locus.start, locus.end);
     });
-    console.log(promises);
+
     const dataForEachLocus = await Promise.all(promises);
     if (options && options.ensemblStyle) {
       loci.forEach((locus, index) => {

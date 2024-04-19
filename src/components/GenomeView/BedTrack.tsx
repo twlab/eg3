@@ -505,9 +505,9 @@ function BedTrack(props) {
   useEffect(() => {
     async function handle() {
       if (props.trackData.location && props.trackData.side === "right") {
-        await fetchGenomeData();
+        fetchGenomeData();
       } else if (props.trackData.location && props.trackData.side === "left") {
-        await fetchGenomeData2();
+        fetchGenomeData2();
       }
     }
     handle();
