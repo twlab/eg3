@@ -8,6 +8,7 @@ import GenRefTrack from "./GenRefTrack";
 import BedTrack from "./BedTrack";
 import BedDensityTrack from "./BedDensityTrack";
 import { ChromosomeData } from "../../localdata/chromosomedata";
+import CircularProgress from "@mui/material/CircularProgress";
 import {
   genomesName,
   genomesKeyName,
@@ -45,9 +46,9 @@ function Test(props) {
   const [chr, setChr] = useState(0);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
   const [side, setSide] = useState("right");
+  const [isLoading, setIsLoading] = useState(false);
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
   const [Xpos, setXPos] = useState(0);
-
   const [maxBp, setMaxBp] = useState(
     rightStartCoord + (rightStartCoord - leftStartCoord)
   );
@@ -77,7 +78,7 @@ function Test(props) {
     setChr(chrData.indexOf(region));
   }
   function handleMove(e) {
-    if (!isDragging) {
+    if (!isDragging || isLoading) {
       return;
     }
     const deltaX = lastX.current - e.pageX;
@@ -93,11 +94,11 @@ function Test(props) {
   }
 
   function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
-    lastX.current = e.pageX;
     setDragging(true);
+    lastX.current = e.pageX;
+
     e.preventDefault();
   }
-
   function handleMouseUp() {
     setDragging(false);
     setXPos(dragX.current);
@@ -111,6 +112,7 @@ function Test(props) {
       -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
+      setIsLoading(true);
       if (maxBp > Number(chrLength[chr])) {
         let prevChr = [maxBp - bpRegionSize, Number(chrLength[chr])];
         let curChr = [0, maxBp - Number(chrLength[chr])];
@@ -123,11 +125,13 @@ function Test(props) {
         ];
         console.log(prevChr, curChr, testcur);
       } else {
+        console.log("trigger righ");
         setRightSectionSize((prevStrandInterval) => {
           const t = [...prevStrandInterval];
           t.push("");
           return t;
         });
+
         fetchGenomeData();
       }
     } else if (
@@ -137,6 +141,8 @@ function Test(props) {
         2 * (leftSectionSize.length - 2) &&
       dragX.current > 0
     ) {
+      setIsLoading(true);
+      console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
         t.push("");
@@ -153,37 +159,42 @@ function Test(props) {
     let bedRespond;
 
     if (initial) {
-      userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
-        { method: "GET" }
-      );
-      bedRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        minBp,
-        maxBp
-      );
-      tempObj["location"] = `${genome.name}:${region}:${minBp}:${maxBp}`;
+      try {
+        userRespond = await fetch(
+          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
+          { method: "GET" }
+        );
+        bedRespond = await GetBedData(
+          "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          region,
+          minBp,
+          maxBp
+        );
+
+        tempObj["location"] = `${genome.name}:${region}:${minBp}:${maxBp}`;
+      } catch {}
     } else {
-      userRespond = await fetch(
-        `${AWS_API}/${
-          genome.name
-        }/genes/refGene/queryRegion?chr=${region}&start=${
+      try {
+        userRespond = await fetch(
+          `${AWS_API}/${
+            genome.name
+          }/genes/refGene/queryRegion?chr=${region}&start=${
+            maxBp - bpRegionSize
+          }&end=${maxBp}`,
+          { method: "GET" }
+        );
+        bedRespond = await GetBedData(
+          "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          region,
+          maxBp - bpRegionSize,
+          maxBp
+        );
+        tempObj["location"] = `${genome.name}:${region}:${
           maxBp - bpRegionSize
-        }&end=${maxBp}`,
-        { method: "GET" }
-      );
-      bedRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
-        maxBp - bpRegionSize,
-        maxBp
-      );
-      tempObj["location"] = `${genome.name}:${region}:${
-        maxBp - bpRegionSize
-      }:${maxBp}`;
+        }:${maxBp}`;
+      } catch {}
     }
-    const bedResult = await bedRespond;
+    const bedResult = bedRespond;
     const result = await userRespond.json();
     tempObj["bedResult"] = bedResult;
     tempObj["result"] = result;
@@ -199,6 +210,7 @@ function Test(props) {
     }
 
     setMaxBp(maxBp + bpRegionSize);
+    setIsLoading(false);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -207,31 +219,35 @@ function Test(props) {
   async function fetchGenomeData2() {
     let tempObj = {};
     let bedRespond;
-    const userRespond = await fetch(
-      `${AWS_API}/${
-        genome.name
-      }/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${
+    let userRespond;
+    try {
+      userRespond = await fetch(
+        `${AWS_API}/${
+          genome.name
+        }/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${
+          minBp + bpRegionSize
+        }`,
+        { method: "GET" }
+      );
+      bedRespond = await GetBedData(
+        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+        region,
+        minBp,
         minBp + bpRegionSize
-      }`,
-      { method: "GET" }
-    );
-    bedRespond = await GetBedData(
-      "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-      region,
-      minBp,
-      minBp + bpRegionSize
-    );
-    tempObj["location"] = `${genome.name}:${region}:${minBp}:${
-      minBp + bpRegionSize
-    }`;
+      );
+      tempObj["location"] = `${genome.name}:${region}:${minBp}:${
+        minBp + bpRegionSize
+      }`;
+    } catch {}
     const result = await userRespond.json();
-    const bedResult = await bedRespond;
+    const bedResult = bedRespond;
     tempObj["result"] = result;
     tempObj["bedResult"] = bedResult;
 
     tempObj["side"] = "left";
     setGenomeTrackR({ ...tempObj });
     setMinBp(minBp - bpRegionSize);
+    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -261,7 +277,7 @@ function Test(props) {
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-        width: `${windowWidth * 0.75}px`,
+        width: "1500px",
         overflow: "hidden",
         margin: "auto",
       }}
@@ -271,9 +287,23 @@ function Test(props) {
       ) : (
         <div>{dragX.current + windowWidth}</div>
       )}
+      {isLoading ? (
+        <CircularProgress
+          variant="indeterminate"
+          disableShrink
+          sx={{
+            color: (theme) =>
+              theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
+            animationDuration: "550ms",
 
-      <div>{chrData.length > 0 ? chrData[chr] : " "}</div>
-      <div>{chrLength.length > 0 ? chrLength[chr] : " "}</div>
+            left: 0,
+          }}
+          size={20}
+          thickness={4}
+        />
+      ) : (
+        <div>READY LETS GO</div>
+      )}
       <div
         style={{
           flex: "1",
@@ -286,7 +316,7 @@ function Test(props) {
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth * 2}px`,
-          backgroundColor: "pink",
+          backgroundColor: "gainsboro",
           overflow: "hidden",
           margin: "auto",
         }}
@@ -303,21 +333,20 @@ function Test(props) {
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
-            Xpos={Xpos}
+            side={side}
           />
 
           <BedTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
-            Xpos={Xpos}
+            side={side}
           />
           <BedDensityTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
-            Xpos={Xpos}
-            trackSide={side}
+            side={side}
           />
         </div>
       </div>

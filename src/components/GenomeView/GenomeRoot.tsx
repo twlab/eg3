@@ -33,11 +33,11 @@ function GenomeHub(props: any) {
       //1. user can add or delete track from each genome
       //2. use styling to display the genomes in multi view
       //3. add more types of tracks, currently only testing on genRef
-      setgenRefView(
-        props.selectedGenome.map((item: any, index) => (
-          <GenRefTrack key={index} currGenome={item} />
-        ))
-      );
+      // setgenRefView(
+      //   props.selectedGenome.map((item: any, index) => (
+      //     <GenRefTrack key={index} currGenome={item} />
+      //   ))
+      // );
     }
   }
 
@@ -51,7 +51,7 @@ function GenomeHub(props: any) {
     let testGen = {
       name: "hg38",
       species: "human",
-      defaultRegion: "chr7:147053397-150373765",
+      defaultRegion: "chr7:27053397-27373765",
     };
     setTestView(<Test currGenome={testGen} />);
   }, []);

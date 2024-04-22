@@ -1,17 +1,27 @@
-import React, { createRef } from "react";
+import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 
 const windowWidth = window.innerWidth;
-function BedTrack(props) {
+interface BedTrackProps {
+  bpRegionSize: number;
+  bpToPx: number;
+  trackData: { [key: string]: any }; // Replace with the actual type
+  side: string;
+}
+const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
+  bpRegionSize,
+  bpToPx,
+  trackData,
+  side,
+}) {
   let name, region, start, end;
-  let bpRegionSize;
-  let bpToPx;
+
   let result;
-  if (Object.keys(props.trackData).length > 0) {
-    [name, region, start, end] = props.trackData.location.split(":");
-    result = props.trackData.bedResult;
-    bpRegionSize = props.bpRegionSize;
-    bpToPx = props.bpToPx;
+  if (Object.keys(trackData).length > 0) {
+    [name, region, start, end] = trackData.location.split(":");
+    result = trackData.bedResult;
+    bpRegionSize = bpRegionSize;
+    bpToPx = bpToPx;
   }
 
   start = Number(start);
@@ -208,7 +218,7 @@ function BedTrack(props) {
       }
     }
 
-    if (props.trackData.initial) {
+    if (trackData.initial) {
       for (var i = 0; i < strandLevelList.length; i++) {
         var levelContent = strandLevelList[i];
         for (var strand of levelContent) {
@@ -250,7 +260,7 @@ function BedTrack(props) {
   async function fetchGenomeData2() {
     let startPos = start;
     var strandIntervalList: Array<any> = [];
-    result.sort((a, b) => {
+    result[0].sort((a, b) => {
       return b.end - a.end;
     });
 
@@ -526,7 +536,7 @@ function BedTrack(props) {
   }, [leftTrackGenes]);
 
   useEffect(() => {
-    if (props.trackSide === "left") {
+    if (side === "left") {
       if (canvasRefL.length != 0) {
         canvasRefL.forEach((canvasRef, index) => {
           if (canvasRef.current) {
@@ -541,7 +551,7 @@ function BedTrack(props) {
         });
         setLeftTrack([...leftTrackGenes]);
       }
-    } else if (props.trackSide === "right") {
+    } else if (side === "right") {
       if (canvasRefR.length != 0) {
         canvasRefR.forEach((canvasRef, index) => {
           if (canvasRef.current) {
@@ -557,22 +567,22 @@ function BedTrack(props) {
         setRightTrack([...rightTrackGenes]);
       }
     }
-  }, [props.trackSide]);
+  }, [side]);
 
   useEffect(() => {
     async function handle() {
-      if (props.trackData.location && props.trackData.side === "right") {
-        await fetchGenomeData();
-      } else if (props.trackData.location && props.trackData.side === "left") {
-        await fetchGenomeData2();
+      if (trackData.location && trackData.side === "right") {
+        fetchGenomeData();
+      } else if (trackData.location && trackData.side === "left") {
+        fetchGenomeData2();
       }
     }
     handle();
-  }, [props.trackData]);
+  }, [trackData]);
 
   return (
     <div>
-      {props.Xpos <= 0
+      {side === "right"
         ? rightTrackGenes.map((item, index) => (
             <svg
               key={index}
@@ -661,6 +671,6 @@ function BedTrack(props) {
           ))}
     </div>
   );
-}
+});
 
-export default BedTrack;
+export default memo(BedDensityTrack);

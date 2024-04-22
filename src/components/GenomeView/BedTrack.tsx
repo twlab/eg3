@@ -1,17 +1,26 @@
-import React from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 
 const windowWidth = window.innerWidth;
-function BedTrack(props) {
+interface BedTrackProps {
+  bpRegionSize: number;
+  bpToPx: number;
+  trackData: { [key: string]: any }; // Replace with the actual type
+  side: string;
+}
+const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
+  bpRegionSize,
+  bpToPx,
+  trackData,
+  side,
+}) {
   let name, region, start, end;
-  let bpRegionSize;
-  let bpToPx;
   let result;
-  if (Object.keys(props.trackData).length > 0) {
-    [name, region, start, end] = props.trackData.location.split(":");
-    result = props.trackData.bedResult;
-    bpRegionSize = props.bpRegionSize;
-    bpToPx = props.bpToPx;
+  if (Object.keys(trackData).length > 0) {
+    [name, region, start, end] = trackData.location.split(":");
+    result = trackData.bedResult;
+    bpRegionSize = bpRegionSize;
+    bpToPx = bpToPx;
   }
 
   start = Number(start);
@@ -201,7 +210,7 @@ function BedTrack(props) {
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
-    if (props.trackData.initial) {
+    if (trackData.initial) {
       for (var i = 0; i < strandLevelList.length; i++) {
         var levelContent = strandLevelList[i];
         for (var strand of levelContent) {
@@ -233,10 +242,10 @@ function BedTrack(props) {
 
   async function fetchGenomeData2() {
     var strandIntervalList: Array<any> = [];
-    result.sort((a, b) => {
+    result[0].sort((a, b) => {
       return b.end - a.end;
     });
-
+    console.log(result);
     if (result[0]) {
       result = result[0];
 
@@ -284,6 +293,7 @@ function BedTrack(props) {
         );
       }
       //START THE LOOP TO CHECK IF Prev interval overlapp with curr
+      console.log(result);
       for (let i = resultIdx + 1; i < result.length; i++) {
         var idx = strandIntervalList.length - 1;
         var curStrand = result[i];
@@ -294,9 +304,10 @@ function BedTrack(props) {
         ];
         const curStrandId = curStrand.start + curStrand.end;
         // if current starting coord is less than previous ending coord then they overlap
+
         if (curStrand.end >= strandIntervalList[idx][0]) {
           // combine the intervals into one larger interval that encompass the strands
-          if (strandIntervalList[idx][0] > curStrand.start) {
+          if (strandIntervalList[idx][0] < curStrand.start) {
             strandIntervalList[idx][0] = curStrand.start;
           }
 
@@ -363,6 +374,7 @@ function BedTrack(props) {
     }
 
     let strandLevelList: Array<any> = [];
+
     for (var i = 0; i < strandIntervalList.length; i++) {
       var intervalLevelData = strandIntervalList[i][2];
 
@@ -504,16 +516,16 @@ function BedTrack(props) {
 
   useEffect(() => {
     async function handle() {
-      if (props.trackData.location && props.trackData.side === "right") {
-        await fetchGenomeData();
-      } else if (props.trackData.location && props.trackData.side === "left") {
-        await fetchGenomeData2();
+      if (trackData.location && trackData.side === "right") {
+        fetchGenomeData();
+      } else if (trackData.location && trackData.side === "left") {
+        fetchGenomeData2();
       }
     }
     handle();
-  }, [props.trackData]);
+  }, [trackData]);
 
-  return <div>{props.Xpos <= 0 ? genomeTrackR : genomeTrackL}</div>;
-}
+  return <div>{side === "right" ? genomeTrackR : genomeTrackL}</div>;
+});
 
-export default BedTrack;
+export default memo(BedTrack);

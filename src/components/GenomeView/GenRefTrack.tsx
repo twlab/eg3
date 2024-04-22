@@ -1,18 +1,26 @@
-import React from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 const windowWidth = window.innerWidth;
-function GenRefTrack(props) {
+interface GenRefTrackProps {
+  bpRegionSize: number;
+  bpToPx: number;
+  trackData: { [key: string]: any }; // Replace with the actual type
+  side: string;
+}
+const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
+  bpRegionSize,
+  bpToPx,
+  trackData,
+  side,
+}) {
   let name, region, start, end;
-  let bpRegionSize;
-  let bpToPx;
+
   let result;
 
-  if (Object.keys(props.trackData).length > 0) {
-    [name, region, start, end] = props.trackData.location.split(":");
-    result = props.trackData.result;
-    bpRegionSize = props.bpRegionSize;
-    bpToPx = props.bpToPx;
+  if (Object.keys(trackData).length > 0) {
+    [name, region, start, end] = trackData.location.split(":");
+    result = trackData.result;
   }
 
   start = Number(start);
@@ -197,7 +205,7 @@ function GenRefTrack(props) {
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
-    if (props.trackData.initial) {
+    if (trackData.initial) {
       for (var i = 0; i < strandLevelList.length; i++) {
         var levelContent = strandLevelList[i];
         for (var strand of levelContent) {
@@ -242,6 +250,7 @@ function GenRefTrack(props) {
     result.sort((a, b) => {
       return b.txEnd - a.txEnd;
     });
+    console.log(result);
     if (result) {
       var resultIdx = 0;
 
@@ -586,16 +595,16 @@ function GenRefTrack(props) {
 
   useEffect(() => {
     async function handle() {
-      if (props.trackData.location && props.trackData.side === "right") {
-        await fetchGenomeData();
-      } else if (props.trackData.location && props.trackData.side === "left") {
-        await fetchGenomeData2();
+      if (trackData.location && trackData.side === "right") {
+        fetchGenomeData();
+      } else if (trackData.location && trackData.side === "left") {
+        fetchGenomeData2();
       }
     }
     handle();
-  }, [props.trackData]);
+  }, [trackData]);
 
-  return <div>{props.Xpos <= 0 ? genomeTrackR : genomeTrackL}</div>;
-}
+  return <div>{side === "right" ? genomeTrackR : genomeTrackL}</div>;
+});
 
-export default GenRefTrack;
+export default memo(GenRefTrack);
