@@ -250,6 +250,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     result.sort((a, b) => {
       return b.txEnd - a.txEnd;
     });
+    console.log(result);
     if (result) {
       var resultIdx = 0;
 

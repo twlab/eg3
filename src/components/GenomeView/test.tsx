@@ -8,6 +8,7 @@ import GenRefTrack from "./GenRefTrack";
 import BedTrack from "./BedTrack";
 import BedDensityTrack from "./BedDensityTrack";
 import { ChromosomeData } from "../../localdata/chromosomedata";
+import CircularProgress from "@mui/material/CircularProgress";
 import {
   genomesName,
   genomesKeyName,
@@ -45,6 +46,7 @@ function Test(props) {
   const [chr, setChr] = useState(0);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
   const [side, setSide] = useState("right");
+  const [isLoading, setIsLoading] = useState(false);
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
   const [Xpos, setXPos] = useState(0);
   const [maxBp, setMaxBp] = useState(
@@ -76,7 +78,7 @@ function Test(props) {
     setChr(chrData.indexOf(region));
   }
   function handleMove(e) {
-    if (!isDragging) {
+    if (!isDragging || isLoading) {
       return;
     }
     const deltaX = lastX.current - e.pageX;
@@ -110,6 +112,7 @@ function Test(props) {
       -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
+      setIsLoading(true);
       if (maxBp > Number(chrLength[chr])) {
         let prevChr = [maxBp - bpRegionSize, Number(chrLength[chr])];
         let curChr = [0, maxBp - Number(chrLength[chr])];
@@ -128,6 +131,7 @@ function Test(props) {
           t.push("");
           return t;
         });
+
         fetchGenomeData();
       }
     } else if (
@@ -137,6 +141,7 @@ function Test(props) {
         2 * (leftSectionSize.length - 2) &&
       dragX.current > 0
     ) {
+      setIsLoading(true);
       console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
@@ -205,6 +210,7 @@ function Test(props) {
     }
 
     setMaxBp(maxBp + bpRegionSize);
+    setIsLoading(false);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -241,6 +247,7 @@ function Test(props) {
     tempObj["side"] = "left";
     setGenomeTrackR({ ...tempObj });
     setMinBp(minBp - bpRegionSize);
+    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -280,7 +287,23 @@ function Test(props) {
       ) : (
         <div>{dragX.current + windowWidth}</div>
       )}
+      {isLoading ? (
+        <CircularProgress
+          variant="indeterminate"
+          disableShrink
+          sx={{
+            color: (theme) =>
+              theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
+            animationDuration: "550ms",
 
+            left: 0,
+          }}
+          size={20}
+          thickness={4}
+        />
+      ) : (
+        <div>READY LETS GO</div>
+      )}
       <div
         style={{
           flex: "1",
@@ -323,7 +346,7 @@ function Test(props) {
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
-            trackSide={side}
+            side={side}
           />
         </div>
       </div>
