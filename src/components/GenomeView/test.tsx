@@ -310,20 +310,19 @@ function Test(props) {
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
-            Xpos={Xpos}
+            side={side}
           />
 
           <BedTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
-            Xpos={Xpos}
+            side={side}
           />
           <BedDensityTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
-            Xpos={Xpos}
             trackSide={side}
           />
         </div>

@@ -513,7 +513,7 @@ function BedTrack(props) {
     handle();
   }, [props.trackData]);
 
-  return <div>{props.Xpos <= 0 ? genomeTrackR : genomeTrackL}</div>;
+  return <div>{props.side === "right" ? genomeTrackR : genomeTrackL}</div>;
 }
 
 export default BedTrack;

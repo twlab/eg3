@@ -6,13 +6,13 @@ interface GenRefTrackProps {
   bpRegionSize: number;
   bpToPx: number;
   trackData: { [key: string]: any }; // Replace with the actual type
-  Xpos: number;
+  side: string;
 }
 const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   bpRegionSize,
   bpToPx,
   trackData,
-  Xpos,
+  side,
 }) {
   let name, region, start, end;
 
@@ -448,7 +448,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
           const startX = (singleStrand.txStart - props.startTrackPos) / bpToPx;
           const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx;
           const ARROW_WIDTH = 5;
-          const arrowSeparation = 100;
+          const arrowSeparation = 22;
           const bottomY = 5;
           var placementStartX = startX - ARROW_WIDTH / 2;
           var placementEndX = endX;
@@ -603,7 +603,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     handle();
   }, [trackData]);
 
-  return <div>{Xpos <= 0 ? genomeTrackR : genomeTrackL}</div>;
+  return <div>{side === "right" ? genomeTrackR : genomeTrackL}</div>;
 });
 
 export default memo(GenRefTrack);
