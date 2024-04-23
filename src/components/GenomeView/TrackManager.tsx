@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useRef, useState } from "react";
 import GetBedData from "./getRemoteData/tabixSource";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
@@ -7,19 +6,28 @@ const cancelAnimationFrame = window.cancelAnimationFrame;
 import GenRefTrack from "./GenRefTrack";
 import BedTrack from "./BedTrack";
 import BedDensityTrack from "./BedDensityTrack";
-import { ChromosomeData } from "../../localdata/chromosomedata";
 import CircularProgress from "@mui/material/CircularProgress";
-import {
-  genomesName,
-  genomesKeyName,
-  chrType,
-} from "../../localdata/genomename";
+import { chrType } from "../../localdata/genomename";
 const windowWidth = window.innerWidth;
-
 let chrData: Array<any> = [];
 let chrLength: Array<any> = [];
-function Test(props) {
-  //To-Do: need to move this part to initial render so this section only run once
+
+interface MyComponentProps {
+  bpRegionSize?: number;
+  bpToPx?: number;
+  trackData?: { [key: string]: any }; // Replace with the actual type
+  side?: string;
+}
+
+const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
+  keyA: GenRefTrack,
+  keyB: BedTrack,
+  keyC: BedDensityTrack,
+  // Add more components as needed
+};
+
+function TrackManager(props) {
+  //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
   const genome = props.currGenome;
 
   const [region, coord] = genome.defaultRegion.split(":");
@@ -28,6 +36,16 @@ function Test(props) {
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = (rightStartCoord - leftStartCoord) * 2;
   const bpToPx = bpRegionSize / (windowWidth * 2);
+
+  let allChrData = genome.chromosomes;
+  for (const chromosome of allChrData) {
+    if (chrType.includes(chromosome.getName())) {
+      chrData.push(chromosome.getName());
+      chrLength.push(chromosome.getLength());
+      console.log("YEEEEEEEET");
+    }
+  }
+
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const block = useRef<HTMLInputElement>(null);
@@ -43,47 +61,32 @@ function Test(props) {
     "",
     "",
   ]);
-  const [chr, setChr] = useState(0);
+  const [chrIndex, setchrIndex] = useState(chrData.indexOf(region));
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
   const [side, setSide] = useState("right");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
   const [Xpos, setXPos] = useState(0);
   const [maxBp, setMaxBp] = useState(
     rightStartCoord + (rightStartCoord - leftStartCoord)
   );
   const [minBp, setMinBp] = useState(leftStartCoord);
+  let trackComponent: Array<any> = [];
+  trackComponent.push(componentMap.keyA);
+  trackComponent.push(componentMap.keyB);
+  trackComponent.push(componentMap.keyC);
 
-  function createGenomeData() {
-    let genDataKey;
-    for (let i = 0; i < genomesName.length; i++) {
-      if (genomesName[i] === genome.name) {
-        genDataKey = genomesKeyName[i];
-        break;
-      }
-    }
-
-    return genDataKey;
-  }
-
-  function getChrData(key: string) {
-    let chrList: Array<any> = [];
-    let allChrData = ChromosomeData[key];
-    for (const chromosome of allChrData) {
-      if (chrType.includes(chromosome.getName())) {
-        chrData.push(chromosome.getName());
-        chrLength.push(chromosome.getLength());
-      }
-    }
-    setChr(chrData.indexOf(region));
-  }
   function handleMove(e) {
     if (!isDragging || isLoading) {
       return;
     }
+
     const deltaX = lastX.current - e.pageX;
 
     lastX.current = e.pageX;
+    if (isLoading && side === "left" && lastX.current >= 0) {
+      return;
+    }
     dragX.current -= deltaX;
 
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
@@ -113,17 +116,19 @@ function Test(props) {
       dragX.current < 0
     ) {
       setIsLoading(true);
-      if (maxBp > Number(chrLength[chr])) {
-        let prevChr = [maxBp - bpRegionSize, Number(chrLength[chr])];
-        let curChr = [0, maxBp - Number(chrLength[chr])];
+      if (maxBp > Number(chrLength[chrIndex])) {
+        let prevChr = [maxBp - bpRegionSize, Number(chrLength[chrIndex])];
+        let curChr = [0, maxBp - Number(chrLength[chrIndex])];
         let testcur = [
-          Number(chrLength[chr]) -
+          Number(chrLength[chrIndex]) -
             (maxBp - bpRegionSize) +
             maxBp -
-            Number(chrLength[chr]),
+            Number(chrLength[chrIndex]),
           bpRegionSize,
         ];
+        setchrIndex(chrIndex + 1);
         console.log(prevChr, curChr, testcur);
+        setMaxBp(maxBp - Number(chrLength[chrIndex]) + bpRegionSize);
       } else {
         console.log("trigger righ");
         setRightSectionSize((prevStrandInterval) => {
@@ -161,35 +166,35 @@ function Test(props) {
     if (initial) {
       try {
         userRespond = await fetch(
-          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${maxBp}`,
+          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${chrData[chrIndex]}&start=${minBp}&end=${maxBp}`,
           { method: "GET" }
         );
         bedRespond = await GetBedData(
           "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-          region,
+          chrData[chrIndex],
           minBp,
           maxBp
         );
 
-        tempObj["location"] = `${genome.name}:${region}:${minBp}:${maxBp}`;
+        tempObj[
+          "location"
+        ] = `${genome.name}:${chrData[chrIndex]}:${minBp}:${maxBp}`;
       } catch {}
     } else {
       try {
         userRespond = await fetch(
-          `${AWS_API}/${
-            genome.name
-          }/genes/refGene/queryRegion?chr=${region}&start=${
-            maxBp - bpRegionSize
-          }&end=${maxBp}`,
+          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${
+            chrData[chrIndex]
+          }&start=${maxBp - bpRegionSize}&end=${maxBp}`,
           { method: "GET" }
         );
         bedRespond = await GetBedData(
           "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-          region,
+          chrData[chrIndex],
           maxBp - bpRegionSize,
           maxBp
         );
-        tempObj["location"] = `${genome.name}:${region}:${
+        tempObj["location"] = `${genome.name}:${chrData[chrIndex]}:${
           maxBp - bpRegionSize
         }:${maxBp}`;
       } catch {}
@@ -222,20 +227,18 @@ function Test(props) {
     let userRespond;
     try {
       userRespond = await fetch(
-        `${AWS_API}/${
-          genome.name
-        }/genes/refGene/queryRegion?chr=${region}&start=${minBp}&end=${
-          minBp + bpRegionSize
-        }`,
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${
+          chrData[chrIndex]
+        }&start=${minBp}&end=${minBp + bpRegionSize}`,
         { method: "GET" }
       );
       bedRespond = await GetBedData(
         "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        region,
+        chrData[chrIndex],
         minBp,
         minBp + bpRegionSize
       );
-      tempObj["location"] = `${genome.name}:${region}:${minBp}:${
+      tempObj["location"] = `${genome.name}:${chrData[chrIndex]}:${minBp}:${
         minBp + bpRegionSize
       }`;
     } catch {}
@@ -264,10 +267,10 @@ function Test(props) {
     console.log(windowWidth);
     async function getData() {
       await fetchGenomeData(1);
-      let key = createGenomeData();
-      getChrData(key);
     }
+
     getData();
+    setIsLoading(false);
   }, []);
 
   return (
@@ -277,16 +280,15 @@ function Test(props) {
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-        width: "1500px",
+        width: "70%",
         overflow: "hidden",
         margin: "auto",
       }}
     >
-      {Xpos <= 0 ? (
-        <div>{dragX.current}</div>
-      ) : (
-        <div>{dragX.current + windowWidth}</div>
-      )}
+      {Xpos <= 0 ? <div>{dragX.current}</div> : <div>{dragX.current}</div>}
+      <div>{chrLength[chrIndex]}</div>
+      <div>{chrData[chrIndex]}</div>
+      <div>{maxBp}</div>
       {isLoading ? (
         <CircularProgress
           variant="indeterminate"
@@ -318,7 +320,6 @@ function Test(props) {
           width: `${windowWidth * 2}px`,
           backgroundColor: "gainsboro",
           overflow: "hidden",
-          margin: "auto",
         }}
       >
         <div
@@ -329,7 +330,15 @@ function Test(props) {
             flexDirection: "column",
           }}
         >
-          <GenRefTrack
+          {trackComponent.map((Component, index) => (
+            <Component
+              bpRegionSize={bpRegionSize}
+              bpToPx={bpToPx}
+              trackData={genomeTrackR}
+              side={side}
+            />
+          ))}
+          {/* <GenRefTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
@@ -347,11 +356,11 @@ function Test(props) {
             bpToPx={bpToPx}
             trackData={genomeTrackR}
             side={side}
-          />
+          /> */}
         </div>
       </div>
     </div>
   );
 }
 
-export default Test;
+export default TrackManager;

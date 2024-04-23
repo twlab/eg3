@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 
 const windowWidth = window.innerWidth;
 interface BedTrackProps {
-  bpRegionSize: number;
-  bpToPx: number;
-  trackData: { [key: string]: any }; // Replace with the actual type
-  side: string;
+  bpRegionSize?: number;
+  bpToPx?: number;
+  trackData?: { [key: string]: any }; // Replace with the actual type
+  side?: string;
 }
 const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   bpRegionSize,
@@ -17,9 +17,9 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   let name, region, start, end;
 
   let result;
-  if (Object.keys(trackData).length > 0) {
-    [name, region, start, end] = trackData.location.split(":");
-    result = trackData.bedResult;
+  if (Object.keys(trackData!).length > 0) {
+    [name, region, start, end] = trackData!.location.split(":");
+    result = trackData!.bedResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -194,7 +194,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
           key={getRndInteger()}
           strandPos={strandLevelList}
           checkPrev={prevOverflowStrand.current}
-          startTrackPos={end - bpRegionSize}
+          startTrackPos={end - bpRegionSize!}
         />,
         [...strandLevelList],
         startPos,
@@ -218,7 +218,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
       }
     }
 
-    if (trackData.initial) {
+    if (trackData!.initial) {
       for (var i = 0; i < strandLevelList.length; i++) {
         var levelContent = strandLevelList[i];
         for (var strand of levelContent) {
@@ -464,9 +464,9 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
           strandHtml.push(
             <React.Fragment key={j}>
               <line
-                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx}`}
+                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`}
                 y1={`${yCoord}`}
-                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx}`}
+                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
                 y2={`${yCoord}`}
                 stroke={"blue"}
                 strokeWidth="20"
@@ -497,10 +497,10 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
             context.fillStyle = "red";
 
             context.fillRect(
-              (singleStrand.start - startPos) / bpToPx,
+              (singleStrand.start - startPos) / bpToPx!,
               10,
-              (singleStrand.end - startPos) / bpToPx -
-                (singleStrand.start - startPos) / bpToPx,
+              (singleStrand.end - startPos) / bpToPx! -
+                (singleStrand.start - startPos) / bpToPx!,
               80
             );
           }
@@ -523,10 +523,10 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
             context.fillStyle = "red";
 
             context.fillRect(
-              (singleStrand.start - startPos) / bpToPx,
+              (singleStrand.start - startPos) / bpToPx!,
               10,
-              (singleStrand.end - startPos) / bpToPx -
-                (singleStrand.start - startPos) / bpToPx,
+              (singleStrand.end - startPos) / bpToPx! -
+                (singleStrand.start - startPos) / bpToPx!,
               80
             );
           }
@@ -571,9 +571,9 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
 
   useEffect(() => {
     async function handle() {
-      if (trackData.location && trackData.side === "right") {
+      if (trackData!.location && trackData!.side === "right") {
         fetchGenomeData();
-      } else if (trackData.location && trackData.side === "left") {
+      } else if (trackData!.location && trackData!.side === "left") {
         fetchGenomeData2();
       }
     }
@@ -672,5 +672,4 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
     </div>
   );
 });
-
 export default memo(BedDensityTrack);

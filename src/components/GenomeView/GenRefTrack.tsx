@@ -2,11 +2,12 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 const windowWidth = window.innerWidth;
+
 interface GenRefTrackProps {
-  bpRegionSize: number;
-  bpToPx: number;
-  trackData: { [key: string]: any }; // Replace with the actual type
-  side: string;
+  bpRegionSize?: number;
+  bpToPx?: number;
+  trackData?: { [key: string]: any }; // Replace with the actual type
+  side?: string;
 }
 const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   bpRegionSize,
@@ -18,9 +19,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
   let result;
 
-  if (Object.keys(trackData).length > 0) {
-    [name, region, start, end] = trackData.location.split(":");
-    result = trackData.result;
+  if (Object.keys(trackData!).length > 0) {
+    [name, region, start, end] = trackData!.location.split(":");
+    result = trackData!.result;
   }
 
   start = Number(start);
@@ -179,7 +180,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
         key={getRndInteger()}
         strandPos={strandLevelList}
         checkPrev={prevOverflowStrand.current}
-        startTrackPos={end - bpRegionSize}
+        startTrackPos={end - bpRegionSize!}
       />,
     ]);
 
@@ -205,7 +206,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
-    if (trackData.initial) {
+    if (trackData!.initial) {
       for (var i = 0; i < strandLevelList.length; i++) {
         var levelContent = strandLevelList[i];
         for (var strand of levelContent) {
@@ -231,7 +232,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
       ]);
       trackRegionL.current.push(
         <text fontSize={30} x={200} y={400} fill="black">
-          {`${start - bpRegionSize} - ${start}`}
+          {`${start - bpRegionSize!} - ${start}`}
         </text>
       );
       trackRegionL.current.push(
@@ -250,7 +251,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     result.sort((a, b) => {
       return b.txEnd - a.txEnd;
     });
-    console.log(result);
+
     if (result) {
       var resultIdx = 0;
 
@@ -446,8 +447,8 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
           }
           // add arrows direction to the strand------------------------------------------------------
-          const startX = (singleStrand.txStart - props.startTrackPos) / bpToPx;
-          const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx;
+          const startX = (singleStrand.txStart - props.startTrackPos) / bpToPx!;
+          const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx!;
           const ARROW_WIDTH = 5;
           const arrowSeparation = 22;
           const bottomY = 5;
@@ -491,9 +492,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             <React.Fragment key={j}>
               {children.map((item, index) => item)}
               <line
-                x1={`${(singleStrand.txStart - props.startTrackPos) / bpToPx}`}
+                x1={`${(singleStrand.txStart - props.startTrackPos) / bpToPx!}`}
                 y1={`${yCoord}`}
-                x2={`${(singleStrand.txEnd - props.startTrackPos) / bpToPx}`}
+                x2={`${(singleStrand.txEnd - props.startTrackPos) / bpToPx!}`}
                 y2={`${yCoord}`}
                 stroke={`${strandColor}`}
                 strokeWidth="4"
@@ -501,9 +502,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               {exonIntervals.map((coord, index) => (
                 <line
                   key={index + 198}
-                  x1={`${(coord[0] - props.startTrackPos) / bpToPx}`}
+                  x1={`${(coord[0] - props.startTrackPos) / bpToPx!}`}
                   y1={`${yCoord}`}
-                  x2={`${(coord[1] - props.startTrackPos) / bpToPx}`}
+                  x2={`${(coord[1] - props.startTrackPos) / bpToPx!}`}
                   y2={`${yCoord}`}
                   stroke={`${strandColor}`}
                   strokeWidth="7"
@@ -512,7 +513,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
               <text
                 fontSize={7}
-                x={`${(singleStrand.txStart - props.startTrackPos) / bpToPx}`}
+                x={`${(singleStrand.txStart - props.startTrackPos) / bpToPx!}`}
                 y={`${yCoord - 7}`}
                 fill="black"
               >
@@ -595,9 +596,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
   useEffect(() => {
     async function handle() {
-      if (trackData.location && trackData.side === "right") {
+      if (trackData!.location && trackData!.side === "right") {
         fetchGenomeData();
-      } else if (trackData.location && trackData.side === "left") {
+      } else if (trackData!.location && trackData!.side === "left") {
         fetchGenomeData2();
       }
     }
