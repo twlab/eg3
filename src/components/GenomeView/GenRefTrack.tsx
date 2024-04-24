@@ -410,9 +410,21 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
     overflowStrand2.current = {};
   }
+
+  function areIntervalsOverlapping(
+    interval1Start: number,
+    interval1End: number,
+    interval2Start: number,
+    interval2End: number
+  ): boolean {
+    return interval1Start <= interval2End && interval2Start <= interval1End;
+  }
+  // check each strand interval on each level to see if they overlapp and place it there
+  // they are already in order of not overlapp. so we just just check  Loop previousIndex <- (currentIndex interval)
+  //update the previous level start and end
   function SetStrand(props) {
     //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
-    var yCoord = 25;
+    var yCoord = 20;
     const strandList: Array<any> = [];
 
     if (props.strandPos.length) {
@@ -422,7 +434,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
       }
       for (let i = 0; i < props.strandPos.length; i++) {
         let strandHtml: Array<any> = [];
-
+        let addY = false;
         for (let j = 0; j < props.strandPos[i].length; j++) {
           const singleStrand = props.strandPos[i][j];
 
@@ -431,99 +443,104 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             (checkObj && singleStrand.id in props.checkPrev)
           ) {
             continue;
-          }
-
-          // find the color and exons on the strand---------------------------------------------------------------
-          var strandColor;
-          if (singleStrand.transcriptionClass === "coding") {
-            strandColor = "purple";
           } else {
-            strandColor = "green";
-          }
-          const exonIntervals: Array<any> = [];
-          const exonStarts = singleStrand.exonStarts.split(",");
-          const exonEnds = singleStrand.exonEnds.split(",");
-          for (let z = 0; z < exonStarts.length; z++) {
-            exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
-          }
-          // add arrows direction to the strand------------------------------------------------------
-          const startX = (singleStrand.txStart - props.startTrackPos) / bpToPx!;
-          const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx!;
-          const ARROW_WIDTH = 5;
-          const arrowSeparation = 22;
-          const bottomY = 5;
-          var placementStartX = startX - ARROW_WIDTH / 2;
-          var placementEndX = endX;
-          if (singleStrand.strand === "+") {
-            placementStartX += ARROW_WIDTH;
-          } else {
-            placementEndX -= ARROW_WIDTH;
-          }
+            // find the color and exons on the strand---------------------------------------------------------------
+            var strandColor;
+            if (singleStrand.transcriptionClass === "coding") {
+              strandColor = "purple";
+            } else {
+              strandColor = "green";
+            }
+            const exonIntervals: Array<any> = [];
+            const exonStarts = singleStrand.exonStarts.split(",");
+            const exonEnds = singleStrand.exonEnds.split(",");
+            for (let z = 0; z < exonStarts.length; z++) {
+              exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
+            }
+            // add arrows direction to the strand------------------------------------------------------
+            const startX =
+              (singleStrand.txStart - props.startTrackPos) / bpToPx!;
+            const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx!;
+            const ARROW_WIDTH = 5;
+            const arrowSeparation = 22;
+            const bottomY = 5;
+            var placementStartX = startX - ARROW_WIDTH / 2;
+            var placementEndX = endX;
+            if (singleStrand.strand === "+") {
+              placementStartX += ARROW_WIDTH;
+            } else {
+              placementEndX -= ARROW_WIDTH;
+            }
 
-          const children: Array<any> = [];
-          // Naming: if our arrows look like '<', then the tip is on the left, and the two tails are on the right.
-          for (
-            let arrowTipX = placementStartX;
-            arrowTipX <= placementEndX;
-            arrowTipX += arrowSeparation
-          ) {
-            // Is forward strand ? point to the right : point to the left
-            const arrowTailX =
-              singleStrand.strand === "+"
-                ? arrowTipX - ARROW_WIDTH
-                : arrowTipX + ARROW_WIDTH;
-            const arrowPoints = [
-              [arrowTailX, yCoord - bottomY],
-              [arrowTipX, yCoord],
-              [arrowTailX, bottomY + yCoord],
-            ];
-            children.push(
-              <polyline
-                key={arrowTipX}
-                points={`${arrowPoints}`}
-                fill="none"
-                stroke={strandColor}
-                strokeWidth={1}
-              />
-            );
-          }
-          //add a single strand to current track------------------------------------------------------------------------------------
-          strandHtml.push(
-            <React.Fragment key={j}>
-              {children.map((item, index) => item)}
-              <line
-                x1={`${(singleStrand.txStart - props.startTrackPos) / bpToPx!}`}
-                y1={`${yCoord}`}
-                x2={`${(singleStrand.txEnd - props.startTrackPos) / bpToPx!}`}
-                y2={`${yCoord}`}
-                stroke={`${strandColor}`}
-                strokeWidth="4"
-              />
-              {exonIntervals.map((coord, index) => (
+            const children: Array<any> = [];
+            // Naming: if our arrows look like '<', then the tip is on the left, and the two tails are on the right.
+            for (
+              let arrowTipX = placementStartX;
+              arrowTipX <= placementEndX;
+              arrowTipX += arrowSeparation
+            ) {
+              // Is forward strand ? point to the right : point to the left
+              const arrowTailX =
+                singleStrand.strand === "+"
+                  ? arrowTipX - ARROW_WIDTH
+                  : arrowTipX + ARROW_WIDTH;
+              const arrowPoints = [
+                [arrowTailX, yCoord - bottomY],
+                [arrowTipX, yCoord],
+                [arrowTailX, bottomY + yCoord],
+              ];
+              children.push(
+                <polyline
+                  key={arrowTipX}
+                  points={`${arrowPoints}`}
+                  fill="none"
+                  stroke={strandColor}
+                  strokeWidth={1}
+                />
+              );
+            }
+            //add a single strand to current track------------------------------------------------------------------------------------
+            strandHtml.push(
+              <React.Fragment key={j}>
+                {children.map((item, index) => item)}
                 <line
-                  key={index + 198}
-                  x1={`${(coord[0] - props.startTrackPos) / bpToPx!}`}
+                  x1={`${
+                    (singleStrand.txStart - props.startTrackPos) / bpToPx!
+                  }`}
                   y1={`${yCoord}`}
-                  x2={`${(coord[1] - props.startTrackPos) / bpToPx!}`}
+                  x2={`${(singleStrand.txEnd - props.startTrackPos) / bpToPx!}`}
                   y2={`${yCoord}`}
                   stroke={`${strandColor}`}
-                  strokeWidth="7"
+                  strokeWidth="4"
                 />
-              ))}
+                {exonIntervals.map((coord, index) => (
+                  <line
+                    key={index + 198}
+                    x1={`${(coord[0] - props.startTrackPos) / bpToPx!}`}
+                    y1={`${yCoord}`}
+                    x2={`${(coord[1] - props.startTrackPos) / bpToPx!}`}
+                    y2={`${yCoord}`}
+                    stroke={`${strandColor}`}
+                    strokeWidth="7"
+                  />
+                ))}
 
-              <text
-                fontSize={7}
-                x={`${(singleStrand.txStart - props.startTrackPos) / bpToPx!}`}
-                y={`${yCoord - 7}`}
-                fill="black"
-              >
-                {singleStrand.name}
-              </text>
-            </React.Fragment>
-          );
+                <text
+                  fontSize={7}
+                  x={`${
+                    (singleStrand.txStart - props.startTrackPos) / bpToPx!
+                  }`}
+                  y={`${yCoord - 7}`}
+                  fill="black"
+                >
+                  {singleStrand.name}
+                </text>
+              </React.Fragment>
+            );
+          }
         }
 
-        yCoord += 25;
+        yCoord += 20;
 
         strandList.push(strandHtml);
       }
@@ -605,7 +622,11 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     handle();
   }, [trackData]);
 
-  return <div>{side === "right" ? genomeTrackR : genomeTrackL}</div>;
+  return (
+    <div style={{ display: "flex", height: "400px" }}>
+      {side === "right" ? genomeTrackR : genomeTrackL}
+    </div>
+  );
 });
 
 export default memo(GenRefTrack);

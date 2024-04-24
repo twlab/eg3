@@ -20,16 +20,15 @@ interface MyComponentProps {
 }
 
 const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
-  keyA: GenRefTrack,
-  keyB: BedTrack,
-  keyC: BedDensityTrack,
+  refGene: GenRefTrack,
+  bed: BedTrack,
+  bedDensity: BedDensityTrack,
   // Add more components as needed
 };
 
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
   const genome = props.currGenome;
-
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
@@ -38,11 +37,11 @@ function TrackManager(props) {
   const bpToPx = bpRegionSize / (windowWidth * 2);
 
   let allChrData = genome.chromosomes;
-  for (const chromosome of allChrData) {
-    if (chrType.includes(chromosome.getName())) {
-      chrData.push(chromosome.getName());
-      chrLength.push(chromosome.getLength());
-      console.log("YEEEEEEEET");
+
+  for (const chromosome in allChrData) {
+    if (chrType.includes(chromosome)) {
+      chrData.push(chromosome);
+      chrLength.push(allChrData[chromosome]);
     }
   }
 
@@ -61,32 +60,36 @@ function TrackManager(props) {
     "",
     "",
   ]);
+
   const [chrIndex, setchrIndex] = useState(chrData.indexOf(region));
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
   const [side, setSide] = useState("right");
   const [isLoading, setIsLoading] = useState(true);
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
-  const [Xpos, setXPos] = useState(0);
+  const [bpX, setBpX] = useState(0);
   const [maxBp, setMaxBp] = useState(
     rightStartCoord + (rightStartCoord - leftStartCoord)
   );
   const [minBp, setMinBp] = useState(leftStartCoord);
   let trackComponent: Array<any> = [];
-  trackComponent.push(componentMap.keyA);
-  trackComponent.push(componentMap.keyB);
-  trackComponent.push(componentMap.keyC);
-
+  for (let i = 0; i < genome.defaultTracks.length; i++) {
+    trackComponent.push(componentMap[genome.defaultTracks[i].name]);
+  }
   function handleMove(e) {
-    if (!isDragging || isLoading) {
+    if (!isDragging) {
       return;
     }
 
     const deltaX = lastX.current - e.pageX;
-
-    lastX.current = e.pageX;
-    if (isLoading && side === "left" && lastX.current >= 0) {
+    if (
+      (isLoading && deltaX > 0 && side === "right") ||
+      (isLoading && deltaX < 0 && side === "left")
+    ) {
       return;
     }
+
+    lastX.current = e.pageX;
+
     dragX.current -= deltaX;
 
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
@@ -95,7 +98,19 @@ function TrackManager(props) {
       block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
     });
   }
-
+  const handleClick = () => {
+    let curRegion =
+      chrData[chrIndex] +
+      ":" +
+      String(bpX) +
+      "-" +
+      String(bpX + bpRegionSize / 2);
+    props.addTrack({
+      region: curRegion,
+      trackName: "bed",
+      genome: genome,
+    });
+  };
   function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
     setDragging(true);
     lastX.current = e.pageX;
@@ -104,7 +119,7 @@ function TrackManager(props) {
   }
   function handleMouseUp() {
     setDragging(false);
-    setXPos(dragX.current);
+    setBpX(leftStartCoord + -dragX.current * bpToPx);
     if (dragX.current > 0 && side === "right") {
       setSide("left");
     } else if (dragX.current <= 0 && side === "left") {
@@ -276,7 +291,6 @@ function TrackManager(props) {
   return (
     <div
       style={{
-        height: "800px",
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
@@ -285,9 +299,14 @@ function TrackManager(props) {
         margin: "auto",
       }}
     >
-      {Xpos <= 0 ? <div>{dragX.current}</div> : <div>{dragX.current}</div>}
-      <div>{chrLength[chrIndex]}</div>
-      <div>{chrData[chrIndex]}</div>
+      <button onClick={handleClick}>add bed</button>
+      {dragX.current <= 0 ? (
+        <div>{dragX.current}</div>
+      ) : (
+        <div>{dragX.current}</div>
+      )}
+
+      <div>{bpX}</div>
       <div>{maxBp}</div>
       {isLoading ? (
         <CircularProgress
@@ -306,20 +325,20 @@ function TrackManager(props) {
       ) : (
         <div>READY LETS GO</div>
       )}
+
       <div
         style={{
           flex: "1",
           display: "flex",
-          justifyContent: Xpos <= 0 ? "start" : "end",
-          height: "800px",
+          justifyContent: dragX.current <= 0 ? "start" : "end",
+
           flexDirection: "row",
-          whiteSpace: "nowrap",
+
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth * 2}px`,
           backgroundColor: "gainsboro",
-          overflow: "hidden",
         }}
       >
         <div
@@ -332,6 +351,7 @@ function TrackManager(props) {
         >
           {trackComponent.map((Component, index) => (
             <Component
+              key={index}
               bpRegionSize={bpRegionSize}
               bpToPx={bpToPx}
               trackData={genomeTrackR}

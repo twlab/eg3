@@ -69,7 +69,7 @@ function App() {
   //   setChr(chrData.indexOf(region));
   // }
   function addGenomeView(obj: any) {
-    console.log(obj);
+    // sessionStorage.clear();
     if (!currSelectGenome[obj.name as keyof typeof currSelectGenome]) {
       if (selectedGenome.length < 3) {
         setSelectedGenome((prevList: any) => {
@@ -141,11 +141,16 @@ function App() {
       for (const key in treeOfLifeObj) {
         for (let genomeName of treeOfLifeObj[key].assemblies) {
           const genKey = createGenKey(genomeName);
+          let chrObj = {};
+          for (const chromosome of ChromosomeData[genKey]) {
+            chrObj[chromosome.getName()] = chromosome.getLength();
+          }
+
           tempObj[genomeName] = {
             name: genomeName,
             species: key,
             defaultRegion: DefaultRegionData[genKey],
-            chromosomes: ChromosomeData[genKey],
+            chromosomes: chrObj,
             defaultTracks: DefaultTrack[genKey],
             annotationTrackData: AnnotationTrackData[genKey],
             publicHubData: PublicHubAllData[genKey]["publicHubData"],
