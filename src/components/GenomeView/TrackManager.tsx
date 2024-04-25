@@ -7,7 +7,6 @@ import GenRefTrack from "./GenRefTrack";
 import BedTrack from "./BedTrack";
 import BedDensityTrack from "./BedDensityTrack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { chrType } from "../../localdata/genomename";
 const windowWidth = window.innerWidth;
 let chrData: Array<any> = [];
 let chrLength: Array<any> = [];
@@ -29,6 +28,7 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
   const genome = props.currGenome;
+
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
@@ -39,7 +39,7 @@ function TrackManager(props) {
   let allChrData = genome.chromosomes;
 
   for (const chromosome in allChrData) {
-    if (chrType.includes(chromosome)) {
+    if (props.chrOrder.includes(chromosome)) {
       chrData.push(chromosome);
       chrLength.push(allChrData[chromosome]);
     }
@@ -119,7 +119,16 @@ function TrackManager(props) {
   }
   function handleMouseUp() {
     setDragging(false);
-    setBpX(leftStartCoord + -dragX.current * bpToPx);
+    const curBp = leftStartCoord + -dragX.current * bpToPx;
+    let curRegion =
+      chrData[chrIndex] +
+      ":" +
+      String(curBp) +
+      "-" +
+      String(curBp + bpRegionSize / 2);
+    props.startBp(curRegion);
+    setBpX(curBp);
+
     if (dragX.current > 0 && side === "right") {
       setSide("left");
     } else if (dragX.current <= 0 && side === "left") {
@@ -178,42 +187,24 @@ function TrackManager(props) {
     let userRespond;
     let bedRespond;
 
-    if (initial) {
-      try {
-        userRespond = await fetch(
-          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${chrData[chrIndex]}&start=${minBp}&end=${maxBp}`,
-          { method: "GET" }
-        );
-        bedRespond = await GetBedData(
-          "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-          chrData[chrIndex],
-          minBp,
-          maxBp
-        );
+    try {
+      userRespond = await fetch(
+        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${
+          chrData[chrIndex]
+        }&start=${maxBp - bpRegionSize}&end=${maxBp}`,
+        { method: "GET" }
+      );
+      bedRespond = await GetBedData(
+        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+        chrData[chrIndex],
+        maxBp - bpRegionSize,
+        maxBp
+      );
+      tempObj["location"] = `${genome.name}:${chrData[chrIndex]}:${
+        maxBp - bpRegionSize
+      }:${maxBp}`;
+    } catch {}
 
-        tempObj[
-          "location"
-        ] = `${genome.name}:${chrData[chrIndex]}:${minBp}:${maxBp}`;
-      } catch {}
-    } else {
-      try {
-        userRespond = await fetch(
-          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${
-            chrData[chrIndex]
-          }&start=${maxBp - bpRegionSize}&end=${maxBp}`,
-          { method: "GET" }
-        );
-        bedRespond = await GetBedData(
-          "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-          chrData[chrIndex],
-          maxBp - bpRegionSize,
-          maxBp
-        );
-        tempObj["location"] = `${genome.name}:${chrData[chrIndex]}:${
-          maxBp - bpRegionSize
-        }:${maxBp}`;
-      } catch {}
-    }
     const bedResult = bedRespond;
     const result = await userRespond.json();
     tempObj["bedResult"] = bedResult;
@@ -300,14 +291,9 @@ function TrackManager(props) {
       }}
     >
       <button onClick={handleClick}>add bed</button>
-      {dragX.current <= 0 ? (
-        <div>{dragX.current}</div>
-      ) : (
-        <div>{dragX.current}</div>
-      )}
 
       <div>{bpX}</div>
-      <div>{maxBp}</div>
+
       {isLoading ? (
         <CircularProgress
           variant="indeterminate"
@@ -323,7 +309,7 @@ function TrackManager(props) {
           thickness={4}
         />
       ) : (
-        <div>READY LETS GO</div>
+        <div>DATA READY LETS GO</div>
       )}
 
       <div

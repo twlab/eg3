@@ -69,7 +69,7 @@ function App() {
   //   setChr(chrData.indexOf(region));
   // }
   function addGenomeView(obj: any) {
-    // sessionStorage.clear();
+    sessionStorage.clear();
     if (!currSelectGenome[obj.name as keyof typeof currSelectGenome]) {
       if (selectedGenome.length < 3) {
         setSelectedGenome((prevList: any) => {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TrackManager from "./TrackManager";
 
 import { DefaultTrack } from "../../localdata/defaulttrack";
@@ -9,6 +9,8 @@ import { ChromosomeData } from "../../localdata/chromosomedata";
 import { AnnotationTrackData } from "../../localdata/annotationtrackdata";
 import { TwoBitUrlData } from "../../localdata/twobiturl";
 import { PublicHubAllData } from "../../localdata/publichub";
+import { parse } from "path";
+import Drag from "./ChrOrder";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 /**
@@ -23,18 +25,54 @@ export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 //
 
 function GenomeHub(props: any) {
-  const [items, setItems] = useState();
+  const [items, setItems] = useState([
+    "chr1",
+    "chr2",
+    "chr3",
+    "chr4",
+    "chr5",
+    "chr6",
+    "chr7",
+    "chr8",
+    "chr9",
+    "chr10",
+    "chr11",
+    "chr12",
+    "chr13",
+    "chr14",
+    "chr15",
+    "chr16",
+    "chr17",
+    "chr18",
+    "chr19",
+    "chr20",
+    "chr21",
+    "chr22",
+    "chr23",
+    "chr24",
+    "chr25",
+    "chr26",
+    "chr27",
+    "chr28",
+    "chr29",
+    "chr30",
+    "chr31",
+    "chr32",
+    "chr33",
+    "chr34",
+    "chr35",
+    "chr36",
+    "chr37",
+    "chr38",
+    "chrM",
+    "chrUn",
+    "chrY",
+    "chrX",
+  ]);
   const [genomeList, setGenomeList] = useState<Array<any>>(
     props.selectedGenome
   );
-  const [genRefView, setgenRefView] = useState(<></>);
-  const [bedView, setBedView] = useState(<></>);
-  const [bedDensityView, setBedDensityView] = useState(<></>);
   const [TrackManagerView, setTrackManagerView] = useState(<></>);
-  function addGenome(currGenome: any) {
-    props.addToView(currGenome);
-  }
-
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
@@ -42,101 +80,141 @@ function GenomeHub(props: any) {
       { name: "bed" },
     ];
     let newList = [curGen.genome];
-    setGenomeList(newList);
+    setGenomeList([...newList]);
     setTrackManagerView(<></>);
   }
+  function startBp(region: string) {
+    console.log(region);
+    let newList = { ...genomeList[0] };
+    newList.defaultRegion = region;
+    const serializedArray = JSON.stringify(newList);
+    sessionStorage.clear();
+    sessionStorage.setItem("myArray", serializedArray);
+  }
+  function changeChrOrder(chrArr: any) {
+    setItems([...chrArr]);
+  }
   function getSelectedGenome() {
-    // const serializedArray = JSON.stringify(props.selectedGenome[0]);
-    // sessionStorage.setItem("myArray", serializedArray);
-
     if (props.selectedGenome != undefined) {
+      let newList = props.selectedGenome[0];
+
+      newList.defaultTracks = [
+        {
+          type: "geneAnnotation",
+          name: "refGene",
+          genome: "hg38",
+        },
+        {
+          name: "bed",
+          genome: "hg38",
+        },
+        {
+          name: "bedDensity",
+
+          genome: "hg38",
+        },
+      ];
+      const serializedArray = JSON.stringify(newList);
+      sessionStorage.setItem("myArray", serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {
-        console.log(props.selectedGenome[i]);
+        setGenomeList(new Array<any>(newList));
         setTrackManagerView(<></>);
       }
-      //goes through selected genome and create the tracks that are applicable to them
-      //users can display mutiple genome and their tracks at the same time
-      //features to be add:
-      //1. user can add or delete track from each genome
-      //2. use styling to display the genomes in multi view
-      //3. add more types of tracks, currently only TrackManagering on genRef
-      // setgenRefView(
-      //   props.selectedGenome.map((item: any, index) => (
-      //     <GenRefTrack key={index} currGenome={item} />
-      //   ))
-      // );
     }
   }
 
-  //TrackManagerING DELETE THIS PART WHEN READYT
   useEffect(() => {
     async function handler() {
-      // const storedArray = sessionStorage.getItem("myArray");
-      // console.log("IOTWORK>?");
-      // if (storedArray !== null) {
-      //   const parsedArray = JSON.parse(storedArray);
-      //   setTrackManagerView(
-      //     <TrackManager currGenome={parsedArray} addTrack={addTrack} />
-      //   );
-      // } else
-      // if (props.selectedGenome.length !== 0) {
-      //   getSelectedGenome();
-      // } else {
-      let chrObj = {};
-      for (const chromosome of ChromosomeData["HG38"]) {
-        chrObj[chromosome.getName()] = chromosome.getLength();
+      const storedArray = sessionStorage.getItem("myArray");
+      if (storedArray !== null) {
+        const parsedArray = JSON.parse(storedArray);
+        const newObj: { [key: string]: any } = parsedArray;
+        setGenomeList(new Array<any>(newObj));
+      } else if (props.selectedGenome.length !== 0) {
+        getSelectedGenome();
+      } else {
+        let chrObj = {};
+        for (const chromosome of ChromosomeData["HG38"]) {
+          chrObj[chromosome.getName()] = chromosome.getLength();
+        }
+        let testGen: any = {
+          name: "hg38",
+          species: "human",
+          defaultRegion: "chr7:27053397-27373765",
+
+          chromosomes: chrObj,
+          defaultTracks: [
+            {
+              type: "geneAnnotation",
+              name: "refGene",
+              genome: "hg38",
+            },
+            {
+              name: "bed",
+              genome: "hg38",
+            },
+            {
+              name: "bedDensity",
+
+              genome: "hg38",
+            },
+          ],
+          annotationTrackData: AnnotationTrackData["HG38"],
+          publicHubData: PublicHubAllData["HG38"]["publicHubData"],
+          publicHubList: PublicHubAllData["HG38"]["publicHubList"],
+          twoBitURL: TwoBitUrlData["HG38"],
+        };
+        setGenomeList(testGen);
+
+        // }
       }
-      let testGen: any = {
-        name: "hg38",
-        species: "human",
-        defaultRegion: "chr7:27053397-27373765",
-
-        chromosomes: chrObj,
-        defaultTracks: [
-          {
-            type: "geneAnnotation",
-            name: "refGene",
-            genome: "hg38",
-          },
-          {
-            name: "bed",
-            genome: "hg38",
-          },
-          {
-            name: "bedDensity",
-
-            genome: "hg38",
-          },
-        ],
-        annotationTrackData: AnnotationTrackData["HG38"],
-        publicHubData: PublicHubAllData["HG38"]["publicHubData"],
-        publicHubList: PublicHubAllData["HG38"]["publicHubList"],
-        twoBitURL: TwoBitUrlData["HG38"],
-      };
-      setTrackManagerView(
-        <TrackManager currGenome={testGen} addTrack={addTrack} />
-      );
-      // }
     }
     handler();
   }, []);
 
   useEffect(() => {
     async function handler() {
-      if (genomeList.length !== 0)
+      if (genomeList.length !== 0) {
         setTrackManagerView(
-          <TrackManager currGenome={genomeList[0]} addTrack={addTrack} />
+          <TrackManager
+            currGenome={genomeList[0]}
+            addTrack={addTrack}
+            chrOrder={items}
+            startBp={startBp}
+          />
         );
+      }
     }
     handler();
   }, [genomeList]);
+
+  useEffect(() => {
+    async function handler() {
+      if (genomeList.length !== 0) {
+        setTrackManagerView(
+          <TrackManager
+            currGenome={genomeList[0]}
+            addTrack={addTrack}
+            chrOrder={items}
+            startBp={startBp}
+          />
+        );
+      }
+    }
+    handler();
+  }, [items]);
   return (
-    <div>
-      {/* {items}
-      {bedDensityView}
-      {bedView} */}
-      {TrackManagerView}
-    </div>
+    <>
+      <div style={{ display: "flex" }}>
+        <Drag items={items} changeChrOrder={changeChrOrder} />
+      </div>
+      <div>
+        {/* {items}
+    {bedDensityView}
+    {bedView} */}
+        {TrackManagerView}
+      </div>
+    </>
   );
 }
 

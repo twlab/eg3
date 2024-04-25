@@ -622,11 +622,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     handle();
   }, [trackData]);
 
-  return (
-    <div style={{ display: "flex", height: "400px" }}>
-      {side === "right" ? genomeTrackR : genomeTrackL}
-    </div>
-  );
+  return <div style={{}}>{side === "right" ? genomeTrackR : genomeTrackL}</div>;
 });
 
 export default memo(GenRefTrack);
