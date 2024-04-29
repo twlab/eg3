@@ -28,7 +28,6 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
   const genome = props.currGenome;
-
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
@@ -39,7 +38,7 @@ function TrackManager(props) {
   let allChrData = genome.chromosomes;
 
   for (const chromosome in allChrData) {
-    if (props.chrOrder.includes(chromosome)) {
+    if (genome.chrOrder.includes(chromosome)) {
       chrData.push(chromosome);
       chrLength.push(allChrData[chromosome]);
     }
