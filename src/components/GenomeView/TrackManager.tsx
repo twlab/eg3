@@ -8,8 +8,6 @@ import BedTrack from "./BedTrack";
 import BedDensityTrack from "./BedDensityTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 const windowWidth = window.innerWidth;
-let chrData: Array<any> = [];
-let chrLength: Array<any> = [];
 
 interface MyComponentProps {
   bpRegionSize?: number;
@@ -34,16 +32,7 @@ function TrackManager(props) {
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = (rightStartCoord - leftStartCoord) * 2;
   const bpToPx = bpRegionSize / (windowWidth * 2);
-
   let allChrData = genome.chromosomes;
-
-  for (const chromosome in allChrData) {
-    if (genome.chrOrder.includes(chromosome)) {
-      chrData.push(chromosome);
-      chrLength.push(allChrData[chromosome]);
-    }
-  }
-
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const block = useRef<HTMLInputElement>(null);
@@ -59,6 +48,14 @@ function TrackManager(props) {
     "",
     "",
   ]);
+  let chrData: Array<any> = [];
+  let chrLength: Array<any> = [];
+  for (const chromosome of genome.chrOrder) {
+    if (allChrData[chromosome] !== undefined) {
+      chrData.push(chromosome);
+      chrLength.push(allChrData[chromosome]);
+    }
+  }
 
   const [chrIndex, setchrIndex] = useState(chrData.indexOf(region));
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
@@ -74,6 +71,7 @@ function TrackManager(props) {
   for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
+
   function handleMove(e) {
     if (!isDragging) {
       return;
@@ -139,29 +137,47 @@ function TrackManager(props) {
       dragX.current < 0
     ) {
       setIsLoading(true);
-      if (maxBp > Number(chrLength[chrIndex])) {
-        let prevChr = [maxBp - bpRegionSize, Number(chrLength[chrIndex])];
-        let curChr = [0, maxBp - Number(chrLength[chrIndex])];
-        let testcur = [
-          Number(chrLength[chrIndex]) -
-            (maxBp - bpRegionSize) +
-            maxBp -
-            Number(chrLength[chrIndex]),
-          bpRegionSize,
-        ];
-        setchrIndex(chrIndex + 1);
-        console.log(prevChr, curChr, testcur);
-        setMaxBp(maxBp - Number(chrLength[chrIndex]) + bpRegionSize);
-      } else {
-        console.log("trigger righ");
-        setRightSectionSize((prevStrandInterval) => {
-          const t = [...prevStrandInterval];
-          t.push("");
-          return t;
-        });
+      let totalEndBp = Number(chrLength[chrIndex]);
+      let startBp = maxBp - bpRegionSize;
+      let tmpChrIdx = chrIndex;
+      let tmpRegion: Array<any> = [];
+      tmpRegion.push(
+        `${chrData[chrIndex]}` +
+          ":" +
+          `${startBp}` +
+          "-" +
+          `${chrLength[chrIndex]}`
+      );
+      tmpChrIdx += 1;
+      while (maxBp > totalEndBp) {
+        let chrStart = 0;
+        let chrEnd = 0;
+        if (chrLength[tmpChrIdx] + totalEndBp > maxBp) {
+          chrEnd = chrLength[tmpChrIdx];
+        } else {
+          chrEnd = maxBp - totalEndBp;
+        }
+        console.log(chrEnd);
+        tmpRegion.push(
+          `${chrData[tmpChrIdx]}` +
+            ":" +
+            `${chrStart}` +
+            "-" +
+            `${chrLength[tmpChrIdx]}`
+        );
 
-        fetchGenomeData();
+        totalEndBp += chrEnd;
       }
+      console.log(tmpRegion);
+      setMaxBp(maxBp - Number(chrLength[chrIndex]) + bpRegionSize);
+      console.log("trigger righ");
+      setRightSectionSize((prevStrandInterval) => {
+        const t = [...prevStrandInterval];
+        t.push("");
+        return t;
+      });
+
+      fetchGenomeData();
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
@@ -181,35 +197,104 @@ function TrackManager(props) {
   }
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
+    let tmpRegion: Array<any> = [];
+    if (maxBp > chrLength[chrIndex]) {
+      let totalEndBp = Number(chrLength[chrIndex]);
+      let startBp = maxBp - bpRegionSize;
+      let tmpChrIdx = chrIndex;
+
+      tmpRegion.push(
+        `${chrData[chrIndex]}` +
+          ":" +
+          `${startBp}` +
+          "-" +
+          `${chrLength[chrIndex]}` +
+          "|" +
+          `${startBp}` +
+          "-" +
+          `${chrLength[chrIndex]}`
+      );
+      tmpChrIdx += 1;
+      let chrEnd = 0;
+
+      while (maxBp > totalEndBp) {
+        let chrStart = 0;
+
+        if (chrLength[tmpChrIdx] + totalEndBp < maxBp) {
+          chrEnd = chrLength[tmpChrIdx];
+        } else {
+          chrEnd = maxBp - totalEndBp;
+        }
+
+        tmpRegion.push(
+          `${chrData[tmpChrIdx]}` +
+            ":" +
+            `${chrStart + totalEndBp}` +
+            "-" +
+            `${totalEndBp + chrEnd}` +
+            "|" +
+            `${0}` +
+            "-" +
+            `${chrEnd}`
+        );
+        totalEndBp += chrEnd;
+
+        tmpChrIdx += 1;
+      }
+
+      setchrIndex(tmpChrIdx);
+      setMaxBp(chrEnd + bpRegionSize);
+    } else {
+      tmpRegion.push(
+        `${chrData[chrIndex]}` +
+          ":" +
+          `${maxBp - bpRegionSize}` +
+          "-" +
+          `${maxBp}` +
+          "|" +
+          +`${maxBp - bpRegionSize}` +
+          "-" +
+          `${maxBp}`
+      );
+    }
 
     let tempObj = {};
     let userRespond;
     let bedRespond;
+    let tmpResult: Array<any> = [];
+    let tmpBed: Array<any> = [];
+    for (let i = 0; i < tmpRegion.length; i++) {
+      let sectionRegion = tmpRegion[i];
+      const [curChrName, bpCoord] = sectionRegion.split(":");
+      const [totalBp, sectionBp] = bpCoord.split("|");
+      const [sectionStart, sectionEnd] = sectionBp.split("-");
+      console.log(bpCoord);
+      try {
+        userRespond = await fetch(
+          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
+          { method: "GET" }
+        );
+        bedRespond = await GetBedData(
+          "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          curChrName,
+          sectionStart,
+          sectionEnd
+        );
 
-    try {
-      userRespond = await fetch(
-        `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${
-          chrData[chrIndex]
-        }&start=${maxBp - bpRegionSize}&end=${maxBp}`,
-        { method: "GET" }
-      );
-      bedRespond = await GetBedData(
-        "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        chrData[chrIndex],
-        maxBp - bpRegionSize,
-        maxBp
-      );
-      tempObj["location"] = `${genome.name}:${chrData[chrIndex]}:${
-        maxBp - bpRegionSize
-      }:${maxBp}`;
-    } catch {}
-
-    const bedResult = bedRespond;
-    const result = await userRespond.json();
-    tempObj["bedResult"] = bedResult;
+        let gotResult = await userRespond.json();
+        tmpResult = [...tmpResult, ...gotResult];
+        tmpBed = [...tmpBed, ...bedRespond];
+      } catch {}
+    }
+    const bedResult = tmpBed;
+    const result = tmpResult;
+    tempObj["location"] = `${maxBp - bpRegionSize}:${maxBp}`;
     tempObj["result"] = result;
+    tempObj["bedResult"] = bedResult;
+    // tempObj["bedResult"] = bedResult;
+    // tempObj["result"] = result;
     tempObj["side"] = "right";
-
+    console.log(tempObj);
     if (initial) {
       tempObj["initial"] = 1;
       setGenomeTrackR({ ...tempObj });
@@ -218,8 +303,9 @@ function TrackManager(props) {
       tempObj["initial"] = 0;
       setGenomeTrackR({ ...tempObj });
     }
-
-    setMaxBp(maxBp + bpRegionSize);
+    if (maxBp <= chrLength[chrIndex]) {
+      setMaxBp(maxBp + bpRegionSize);
+    }
     setIsLoading(false);
   }
 
@@ -243,9 +329,7 @@ function TrackManager(props) {
         minBp,
         minBp + bpRegionSize
       );
-      tempObj["location"] = `${genome.name}:${chrData[chrIndex]}:${minBp}:${
-        minBp + bpRegionSize
-      }`;
+      tempObj["location"] = `${minBp}:${minBp + bpRegionSize}`;
     } catch {}
     const result = await userRespond.json();
     const bedResult = bedRespond;

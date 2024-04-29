@@ -14,11 +14,11 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   trackData,
   side,
 }) {
-  let name, region, start, end;
+  let start, end;
 
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [name, region, start, end] = trackData!.location.split(":");
+    [start, end] = trackData!.location.split(":");
     result = trackData!.bedResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;

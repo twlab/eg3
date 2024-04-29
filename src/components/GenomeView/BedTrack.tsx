@@ -14,10 +14,10 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   trackData,
   side,
 }) {
-  let name, region, start, end;
+  let start, end;
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [name, region, start, end] = trackData!.location.split(":");
+    [start, end] = trackData!.location.split(":");
     result = trackData!.bedResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
@@ -516,9 +516,9 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
   useEffect(() => {
     async function handle() {
-      if (trackData!.location && trackData!.side === "right") {
+      if (trackData!.side === "right") {
         fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === "left") {
+      } else if (trackData!.side === "left") {
         fetchGenomeData2();
       }
     }

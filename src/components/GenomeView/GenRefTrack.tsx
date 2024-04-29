@@ -15,12 +15,12 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   trackData,
   side,
 }) {
-  let name, region, start, end;
+  let start, end;
 
   let result;
 
   if (Object.keys(trackData!).length > 0) {
-    [name, region, start, end] = trackData!.location.split(":");
+    [start, end] = trackData!.location.split(":");
     result = trackData!.result;
   }
 
@@ -613,9 +613,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
   useEffect(() => {
     async function handle() {
-      if (trackData!.location && trackData!.side === "right") {
+      if (trackData!.side === "right") {
         fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === "left") {
+      } else if (trackData!.side === "left") {
         fetchGenomeData2();
       }
     }
