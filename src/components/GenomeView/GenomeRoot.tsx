@@ -76,7 +76,7 @@ function GenomeHub(props: any) {
         },
       ];
       newList.chrOrder = items;
-      // newList.defaultRegion = "chr7:27000000-27300000";
+      newList.defaultRegion = "chr7:27053397-28573765";
       const serializedArray = JSON.stringify(newList);
       sessionStorage.setItem("myArray", serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {

@@ -268,7 +268,6 @@ function TrackManager(props) {
       const [curChrName, bpCoord] = sectionRegion.split(":");
       const [totalBp, sectionBp] = bpCoord.split("|");
       const [sectionStart, sectionEnd] = sectionBp.split("-");
-      console.log(bpCoord);
       try {
         userRespond = await fetch(
           `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
@@ -277,10 +276,11 @@ function TrackManager(props) {
         bedRespond = await GetBedData(
           "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
           curChrName,
-          sectionStart,
-          sectionEnd
+          Number(sectionStart),
+          Number(sectionEnd)
         );
 
+        // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
         tmpResult = [...tmpResult, ...gotResult];
         tmpBed = [...tmpBed, ...bedRespond];
@@ -290,9 +290,7 @@ function TrackManager(props) {
     const result = tmpResult;
     tempObj["location"] = `${maxBp - bpRegionSize}:${maxBp}`;
     tempObj["result"] = result;
-    tempObj["bedResult"] = bedResult;
-    // tempObj["bedResult"] = bedResult;
-    // tempObj["result"] = result;
+    tempObj["bedResult"] = tmpBed;
     tempObj["side"] = "right";
     console.log(tempObj);
     if (initial) {
