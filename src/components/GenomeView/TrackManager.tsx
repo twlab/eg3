@@ -7,6 +7,7 @@ import GenRefTrack from "./GenRefTrack";
 import BedTrack from "./BedTrack";
 import BedDensityTrack from "./BedDensityTrack";
 import CircularProgress from "@mui/material/CircularProgress";
+import { start } from "repl";
 const windowWidth = window.innerWidth;
 
 interface MyComponentProps {
@@ -25,7 +26,9 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
 
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
+
   const genome = props.currGenome;
+
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
@@ -56,8 +59,9 @@ function TrackManager(props) {
       chrLength.push(allChrData[chromosome]);
     }
   }
-
-  const [chrIndex, setchrIndex] = useState(chrData.indexOf(region));
+  const initialChrIdx = chrData.indexOf(region);
+  const [chrIndexRight, setChrIndexRight] = useState(initialChrIdx);
+  const [chrIndexLeft, setchrIndexLeft] = useState(initialChrIdx);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
   const [side, setSide] = useState("right");
   const [isLoading, setIsLoading] = useState(true);
@@ -97,7 +101,7 @@ function TrackManager(props) {
   }
   const handleClick = () => {
     let curRegion =
-      chrData[chrIndex] +
+      chrData[chrIndexRight] +
       ":" +
       String(bpX) +
       "-" +
@@ -116,13 +120,26 @@ function TrackManager(props) {
   }
   function handleMouseUp() {
     setDragging(false);
+    let curIdx = initialChrIdx;
+    let totalLength = chrLength[curIdx];
+    let curStartBp = leftStartCoord + -dragX.current * bpToPx;
+    while (
+      side === "right" &&
+      leftStartCoord + -dragX.current * bpToPx > totalLength
+    ) {
+      curStartBp -= chrLength[curIdx];
+      curIdx += 1;
+      totalLength += chrLength[curIdx];
+    }
+    console.log(chrData[curIdx], curStartBp);
     const curBp = leftStartCoord + -dragX.current * bpToPx;
     let curRegion =
-      chrData[chrIndex] +
+      chrData[curIdx] +
       ":" +
-      String(curBp) +
+      String(curStartBp) +
       "-" +
-      String(curBp + bpRegionSize / 2);
+      String(curStartBp + bpRegionSize / 2);
+
     props.startBp(curRegion);
     setBpX(curBp);
 
@@ -137,40 +154,6 @@ function TrackManager(props) {
       dragX.current < 0
     ) {
       setIsLoading(true);
-      let totalEndBp = Number(chrLength[chrIndex]);
-      let startBp = maxBp - bpRegionSize;
-      let tmpChrIdx = chrIndex;
-      let tmpRegion: Array<any> = [];
-      tmpRegion.push(
-        `${chrData[chrIndex]}` +
-          ":" +
-          `${startBp}` +
-          "-" +
-          `${chrLength[chrIndex]}`
-      );
-      tmpChrIdx += 1;
-      while (maxBp > totalEndBp) {
-        let chrStart = 0;
-        let chrEnd = 0;
-        if (chrLength[tmpChrIdx] + totalEndBp > maxBp) {
-          chrEnd = chrLength[tmpChrIdx];
-        } else {
-          chrEnd = maxBp - totalEndBp;
-        }
-        console.log(chrEnd);
-        tmpRegion.push(
-          `${chrData[tmpChrIdx]}` +
-            ":" +
-            `${chrStart}` +
-            "-" +
-            `${chrLength[tmpChrIdx]}`
-        );
-
-        totalEndBp += chrEnd;
-      }
-      console.log(tmpRegion);
-      setMaxBp(maxBp - Number(chrLength[chrIndex]) + bpRegionSize);
-      console.log("trigger righ");
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
         t.push("");
@@ -198,21 +181,21 @@ function TrackManager(props) {
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     let tmpRegion: Array<any> = [];
-    if (maxBp > chrLength[chrIndex]) {
-      let totalEndBp = Number(chrLength[chrIndex]);
+    if (maxBp > chrLength[chrIndexRight]) {
+      let totalEndBp = Number(chrLength[chrIndexRight]);
       let startBp = maxBp - bpRegionSize;
-      let tmpChrIdx = chrIndex;
+      let tmpChrIdx = chrIndexRight;
 
       tmpRegion.push(
-        `${chrData[chrIndex]}` +
+        `${chrData[chrIndexRight]}` +
           ":" +
           `${startBp}` +
           "-" +
-          `${chrLength[chrIndex]}` +
+          `${chrLength[chrIndexRight]}` +
           "|" +
           `${startBp}` +
           "-" +
-          `${chrLength[chrIndex]}`
+          `${chrLength[chrIndexRight]}`
       );
       tmpChrIdx += 1;
       let chrEnd = 0;
@@ -242,11 +225,11 @@ function TrackManager(props) {
         tmpChrIdx += 1;
       }
 
-      setchrIndex(tmpChrIdx);
+      setChrIndexRight(tmpChrIdx - 1);
       setMaxBp(chrEnd + bpRegionSize);
     } else {
       tmpRegion.push(
-        `${chrData[chrIndex]}` +
+        `${chrData[chrIndexRight]}` +
           ":" +
           `${maxBp - bpRegionSize}` +
           "-" +
@@ -263,11 +246,15 @@ function TrackManager(props) {
     let bedRespond;
     let tmpResult: Array<any> = [];
     let tmpBed: Array<any> = [];
+    let tmpEndCoord = maxBp;
     for (let i = 0; i < tmpRegion.length; i++) {
       let sectionRegion = tmpRegion[i];
       const [curChrName, bpCoord] = sectionRegion.split(":");
       const [totalBp, sectionBp] = bpCoord.split("|");
+
+      const [startRegion, endRegion] = totalBp.split("-");
       const [sectionStart, sectionEnd] = sectionBp.split("-");
+
       try {
         userRespond = await fetch(
           `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
@@ -282,17 +269,30 @@ function TrackManager(props) {
 
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
+        console.log(bedRespond);
+        if (i !== 0) {
+          for (let i = 0; i < gotResult.length; i++) {
+            gotResult[i].txStart += Number(startRegion);
+            gotResult[i].txEnd += Number(startRegion);
+          }
+          for (let i = 0; i < bedRespond.length; i++) {
+            bedRespond[i].start += Number(startRegion);
+            bedRespond[i].end += Number(startRegion);
+          }
+          tmpEndCoord;
+        }
+
         tmpResult = [...tmpResult, ...gotResult];
         tmpBed = [...tmpBed, ...bedRespond];
       } catch {}
     }
     const bedResult = tmpBed;
     const result = tmpResult;
-    tempObj["location"] = `${maxBp - bpRegionSize}:${maxBp}`;
+    tempObj["location"] = `${maxBp - bpRegionSize}:${tmpEndCoord}`;
     tempObj["result"] = result;
-    tempObj["bedResult"] = tmpBed;
+    tempObj["bedResult"] = bedResult;
     tempObj["side"] = "right";
-    console.log(tempObj);
+
     if (initial) {
       tempObj["initial"] = 1;
       setGenomeTrackR({ ...tempObj });
@@ -301,7 +301,7 @@ function TrackManager(props) {
       tempObj["initial"] = 0;
       setGenomeTrackR({ ...tempObj });
     }
-    if (maxBp <= chrLength[chrIndex]) {
+    if (maxBp <= chrLength[chrIndexRight]) {
       setMaxBp(maxBp + bpRegionSize);
     }
     setIsLoading(false);
@@ -317,13 +317,13 @@ function TrackManager(props) {
     try {
       userRespond = await fetch(
         `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${
-          chrData[chrIndex]
+          chrData[chrIndexRight]
         }&start=${minBp}&end=${minBp + bpRegionSize}`,
         { method: "GET" }
       );
       bedRespond = await GetBedData(
         "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        chrData[chrIndex],
+        chrData[chrIndexRight],
         minBp,
         minBp + bpRegionSize
       );
