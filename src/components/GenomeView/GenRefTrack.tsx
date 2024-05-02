@@ -18,7 +18,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   let start, end;
 
   let result;
-
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
     result = trackData!.result;
@@ -248,6 +247,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
   async function fetchGenomeData2() {
     var strandIntervalList: Array<any> = [];
+
     result.sort((a, b) => {
       return b.txEnd - a.txEnd;
     });
