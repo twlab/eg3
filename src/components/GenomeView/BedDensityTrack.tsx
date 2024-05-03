@@ -490,6 +490,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
     canvasRefR.map((canvasRef, index) => {
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
         for (let i = 0; i < rightTrackGenes[index][1].length; i++) {
           let startPos = rightTrackGenes[index][2];
           for (let j = 0; j < rightTrackGenes[index][1][i].length; j++) {

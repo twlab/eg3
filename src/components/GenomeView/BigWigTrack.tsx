@@ -23,6 +23,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
+
   start = Number(start);
   end = Number(end);
   //useRef to store data between states without re render the component
@@ -185,7 +186,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
         strandLevelList[j].push(strand);
       }
     }
-    console.log(strandLevelList);
+
     setRightTrack([
       ...rightTrackGenes,
       [
@@ -218,6 +219,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     }
 
     if (trackData!.initial) {
+      console.log("HUGGGGGGGGGGGGGGGGG");
       for (var i = 0; i < strandLevelList.length; i++) {
         var levelContent = strandLevelList[i];
         for (var strand of levelContent) {
@@ -259,6 +261,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   async function fetchGenomeData2() {
     let startPos = start;
     var strandIntervalList: Array<any> = [];
+    console.log(result);
     result[0].sort((a, b) => {
       return b.end - a.end;
     });
@@ -438,8 +441,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }
   function SetStrand(props) {
     //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
-    console.log(props.strandPos);
-
+    var yCoord = 25;
     const strandList: Array<any> = [];
 
     if (props.strandPos.length) {
@@ -465,15 +467,17 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
             <React.Fragment key={j}>
               <line
                 x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`}
-                y1={`${0}`}
+                y1={`${yCoord}`}
                 x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
-                y2={`${3000}`}
+                y2={`${yCoord}`}
                 stroke={"blue"}
-                strokeWidth={"20"}
+                strokeWidth="20"
               />
             </React.Fragment>
           );
         }
+
+        yCoord += 25;
 
         strandList.push(strandHtml);
       }
@@ -488,6 +492,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     canvasRefR.map((canvasRef, index) => {
       if (canvasRef.current) {
         let context = canvasRef.current.getContext("2d");
+
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
         for (let i = 0; i < rightTrackGenes[index][1].length; i++) {
           let startPos = rightTrackGenes[index][2];
           for (let j = 0; j < rightTrackGenes[index][1][i].length; j++) {
@@ -496,10 +503,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
             context.fillRect(
               (singleStrand.start - startPos) / bpToPx!,
-              70,
-              (singleStrand.end - startPos) / bpToPx! -
-                (singleStrand.start - startPos) / bpToPx!,
-              80
+              20,
+              1,
+              singleStrand.score
             );
           }
         }
@@ -570,9 +576,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   useEffect(() => {
     async function handle() {
       if (trackData!.location && trackData!.side === "right") {
-        console.log(trackData);
         fetchGenomeData();
       } else if (trackData!.location && trackData!.side === "left") {
+        console.log(trackData);
         fetchGenomeData2();
       }
     }
@@ -586,7 +592,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
             <svg
               key={index}
               width={`${windowWidth * 2}px`}
-              height={"50%"}
+              height={"100%"}
               style={{ display: "inline-block" }}
               overflow="visible"
             >
