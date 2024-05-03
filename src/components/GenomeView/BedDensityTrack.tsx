@@ -7,12 +7,14 @@ interface BedTrackProps {
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
+  trackWidth: number;
 }
 const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
+  trackWidth,
 }) {
   let start, end;
 

@@ -8,12 +8,14 @@ interface GenRefTrackProps {
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
+  trackWidth: number;
 }
 const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
+  trackWidth,
 }) {
   let start, end;
 

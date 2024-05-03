@@ -17,6 +17,7 @@ interface MyComponentProps {
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
+  trackWidth: number;
 }
 
 const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
@@ -319,17 +320,13 @@ function TrackManager(props) {
     const bedResult = tmpBed;
     const result = tmpResult;
     const bigWigResult = tmpBigWig;
-    var scale = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-    for (let i = 0; i < bigWigResult[0].length; i++) {
-      bigWigResult[0][i].score = scale(bigWigResult[0][i].score);
-    }
 
     tempObj["location"] = `${maxBp - bpRegionSize}:${maxBp}`;
     tempObj["result"] = result;
     tempObj["bedResult"] = bedResult;
     tempObj["bigWigResult"] = bigWigResult;
     tempObj["side"] = "right";
-
+    console.log("zigWig", bigWigResult);
     if (initial) {
       tempObj["initial"] = 1;
       setGenomeTrackR({ ...tempObj });
@@ -571,6 +568,7 @@ function TrackManager(props) {
               bpToPx={bpToPx}
               trackData={genomeTrackR}
               side={side}
+              trackWidth={windowWidth * 2}
             />
           ))}
           {/* <GenRefTrack
