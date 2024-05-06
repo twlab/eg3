@@ -137,7 +137,6 @@ function TrackManager(props) {
     } else if (side === "left") {
       while (leftStartCoord + -dragX.current * bpToPx < totalLength) {
         curStartBp += chrLength[curIdx];
-        console.log("etytt");
         curIdx -= 1;
         totalLength += -chrLength[curIdx];
       }
@@ -326,7 +325,6 @@ function TrackManager(props) {
     tempObj["bedResult"] = bedResult;
     tempObj["bigWigResult"] = bigWigResult;
     tempObj["side"] = "right";
-    console.log("zigWig", bigWigResult);
     if (initial) {
       tempObj["initial"] = 1;
       setGenomeTrackR({ ...tempObj });
@@ -348,6 +346,9 @@ function TrackManager(props) {
     ///////-__________________________________________________________________________________________________________________________
     let tmpRegion: Array<any> = [];
     let tempObj = {};
+    let bigWigRespond;
+
+    let tmpBigWig: Array<any> = [];
     if (minBp < 0) {
       let totalEndBp = 0;
       let endBp = minBp + bpRegionSize;
@@ -408,9 +409,6 @@ function TrackManager(props) {
           `${minBp + bpRegionSize}`
       );
     }
-    console.log(chrLength);
-    console.log(tmpRegion);
-    console.log(`${minBp}:${minBp + bpRegionSize}`);
 
     let userRespond;
     let bedRespond;
@@ -432,6 +430,12 @@ function TrackManager(props) {
         );
         bedRespond = await GetBedData(
           "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          curChrName,
+          Number(sectionStart),
+          Number(sectionEnd)
+        );
+        bigWigRespond = await GetBigData(
+          "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
           curChrName,
           Number(sectionStart),
           Number(sectionEnd)
@@ -460,20 +464,33 @@ function TrackManager(props) {
               (Number(sectionEnd) - Number(gotResult[i].end))
             );
           }
+          for (let i = 0; i < bigWigRespond.length; i++) {
+            bigWigRespond[i].start =
+              Number(startRegion) +
+              (Number(sectionEnd) - Number(bigWigRespond[i].start));
+            bigWigRespond[i].end = -(
+              Number(startRegion) +
+              (Number(sectionEnd) - Number(bigWigRespond[i].end))
+            );
+          }
+
           tmpEndCoord;
         }
 
         tmpResult = [...tmpResult, ...gotResult];
         tmpBed = [...tmpBed, ...bedRespond];
+        tmpBigWig = [...tmpBigWig, ...bigWigRespond];
       } catch {}
     }
 
     const bedResult = tmpBed;
     const result = tmpResult;
-
+    const bigWigResult = tmpBigWig;
     tempObj["result"] = result;
     tempObj["bedResult"] = bedResult;
     tempObj["side"] = "left";
+
+    tempObj["bigWigResult"] = bigWigResult;
     tempObj["location"] = `${minBp}:${minBp + bpRegionSize}`;
     ///////-__________________________________________________________________________________________________________________________
 
@@ -561,7 +578,7 @@ function TrackManager(props) {
             flexDirection: "column",
           }}
         >
-          {trackComponent.map((Component, index) => (
+          {/* {trackComponent.map((Component, index) => (
             <Component
               key={index}
               bpRegionSize={bpRegionSize}
@@ -570,12 +587,13 @@ function TrackManager(props) {
               side={side}
               trackWidth={windowWidth * 2}
             />
-          ))}
-          {/* <GenRefTrack
+          ))} */}
+          <GenRefTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
             side={side}
+            trackWidth={0}
           />
 
           <BedTrack
@@ -583,13 +601,24 @@ function TrackManager(props) {
             bpToPx={bpToPx}
             trackData={genomeTrackR}
             side={side}
+            trackWidth={0}
           />
           <BedDensityTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={genomeTrackR}
             side={side}
-          /> */}
+            trackWidth={0}
+          />
+
+          <BigWigTrack
+
+            bpRegionSize={bpRegionSize}
+            bpToPx={bpToPx}
+            trackData={genomeTrackR}
+            side={side}
+            trackWidth={windowWidth * 2}
+          />
         </div>
       </div>
     </div>

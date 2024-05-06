@@ -1,3 +1,4 @@
+import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 
@@ -39,7 +40,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-
+  var scale = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -224,19 +225,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
       overflowStrand2.current = {};
-      setLeftTrack([
-        ...leftTrackGenes,
-        [
-          <SetStrand
-            key={getRndInteger()}
-            strandPos={strandLevelList}
-            checkPrev={prevOverflowStrand.current}
-            startTrackPos={start}
-          />,
-          [...strandLevelList],
-          startPos,
-        ],
-      ]);
+      setLeftTrack([...leftTrackGenes, [[...strandLevelList], startPos]]);
       const newCanvasRef = createRef();
       setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
     }
@@ -250,7 +239,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   async function fetchGenomeData2() {
     let startPos = start;
     var strandIntervalList: Array<any> = [];
-    console.log(result);
+
     result[0].sort((a, b) => {
       return b.end - a.end;
     });
@@ -394,19 +383,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       }
     }
 
-    setLeftTrack([
-      ...leftTrackGenes,
-      [
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={strandLevelList}
-          checkPrev={prevOverflowStrand2.current}
-          startTrackPos={start}
-        />,
-        [...strandLevelList],
-        startPos,
-      ],
-    ]);
+    setLeftTrack([...leftTrackGenes, [[...strandLevelList], startPos]]);
 
     const newCanvasRef = createRef();
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
@@ -459,14 +436,10 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
                 y1={`${yCoord}`}
                 x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
                 y2={`${yCoord}`}
-                stroke={"blue"}
-                strokeWidth="20"
               />
             </React.Fragment>
           );
         }
-
-        yCoord += 25;
 
         strandList.push(strandHtml);
       }
@@ -478,112 +451,146 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }
 
   useEffect(() => {
-    async function handle() {
-      // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
-      //     x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`
-      // x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
-      // step 1: loop through the svg width which is windowwith * 2
-      // 2: create an array for each x pixel.
-      // 3: round each strand start and end xspan
-      // 4: If a strand is in the same xspan pixel then add them to a array index
-      // 5: the array index will represent the x coord pixel of the canvas and svg
-      const xToFeatures: Array<any> = Array.from(
-        { length: trackWidth },
-        () => []
-      );
+    // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
+    //     x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`
+    // x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
+    // step 1: loop through the svg width which is windowwith * 2
+    // 2: create an array for each x pixel.
+    // 3: round each strand start and end xspan
+    // 4: If a strand is in the same xspan pixel then add them to a array index
+    // 5: the array index will represent the x coord pixel of the canvas and svg
+    let xToFeatures: Array<any> = [];
+    for (let i = 0; i < rightTrackGenes.length; i++) {
+      const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
+      xToFeatures.push(newArr);
+    }
 
-      for (let i = 0; i < rightTrackGenes.length; i++) {
-        let startPos = rightTrackGenes[i][1];
-        for (let j = 0; j < rightTrackGenes[i][0][i].length; j++) {
-          let singleStrand = rightTrackGenes[i][0][i][j];
-          let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
-          let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
-          const startX = Math.max(0, Math.floor(xSpanStart));
-          const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
-          for (let x = startX; x <= endX; x++) {
-            xToFeatures[x].push(singleStrand);
+    for (let i = 0; i < rightTrackGenes.length; i++) {
+      let startPos = rightTrackGenes[i][1];
+      for (let j = 0; j < rightTrackGenes[i][0].length; j++) {
+        for (let x = 0; x < rightTrackGenes[i][0][j].length; x++) {
+          let singleStrand = rightTrackGenes[i][0][j][x];
+
+          if (Object.keys(singleStrand).length > 0) {
+            let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
+            let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
+            const startX = Math.max(0, Math.floor(xSpanStart));
+            const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
+            for (let x = startX; x <= endX; x++) {
+              xToFeatures[i][x].push(singleStrand);
+            }
           }
         }
       }
-      for (let i = 0; i < xToFeatures.length; i++) {
-        let sum = xToFeatures[i].reduce((acc, curr) => acc + curr, 0);
-        const average = sum / xToFeatures[i].length;
-        console.log("base", i, xToFeatures[i]);
+    }
+    for (let i = 0; i < xToFeatures.length; i++) {
+      for (let j = 0; j < xToFeatures[i].length; j++) {
+        let sum = 0;
+
+        for (let x = 0; x < xToFeatures[i][j].length; x++) {
+          sum += xToFeatures[i][j][x].score;
+        }
+        let avg = 0;
+        if (xToFeatures[i][j].length > 0) {
+          avg = sum / xToFeatures[i][j].length;
+        }
+
+        avg = scale(avg);
+
+        xToFeatures[i][j] = avg;
       }
-      console.log("xSpan", xToFeatures);
+    }
 
-      //       for (const placedFeature of placement) {
-      //     const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
-      //     const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));
-      //     for (let x = startX; x <= endX; x++) {
-      //         xToFeatures[x].push(placedFeature.feature);
-      //     }
-      // }
-      await canvasRefR.map((canvasRef, index) => {
+    canvasRefR.map((canvasRef, index) => {
+      if (canvasRef.current) {
+        let context = canvasRef.current.getContext("2d");
+
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+        for (let i = 0; i < xToFeatures[index].length; i++) {
+          // going through width pixels
+          // i = canvas pixel xpos
+          console.log(xToFeatures[index][i]);
+          context.fillStyle = "blue";
+          context.globalAlpha = 1;
+          context.fillRect(
+            i,
+            40 - xToFeatures[index][i],
+            1,
+            xToFeatures[index][i]
+          );
+        }
+      }
+    });
+  }, [rightTrackGenes]);
+
+  useEffect(() => {
+    // let xToFeatures: Array<any> = [];
+    // for (let i = 0; i < leftTrackGenes.length; i++) {
+    //   const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
+    //   xToFeatures.push(newArr);
+    // }
+
+    // for (let i = 0; i < leftTrackGenes.length; i++) {
+    //   let startPos = leftTrackGenes[i][1];
+    //   for (let j = 0; j < leftTrackGenes[i][0].length; j++) {
+    //     for (let x = 0; x < leftTrackGenes[i][0][j].length; x++) {
+    //       let singleStrand = leftTrackGenes[i][0][j][x];
+
+    //       if (Object.keys(singleStrand).length > 0) {
+    //         let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
+    //         let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
+    //         const startX = Math.max(0, Math.floor(xSpanStart));
+    //         const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
+    //         for (let x = startX; x <= endX; x++) {
+    //           xToFeatures[i][x].push(singleStrand);
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // for (let i = 0; i < xToFeatures.length; i++) {
+    //   for (let j = 0; j < xToFeatures[i].length; j++) {
+    //     let sum = 0;
+
+    //     for (let x = 0; x < xToFeatures[i][j].length; x++) {
+    //       sum += xToFeatures[i][j][x].score;
+    //     }
+    //     let avg = 0;
+    //     if (xToFeatures[i][j].length > 0) {
+    //       avg = sum / xToFeatures[i][j].length;
+    //     }
+
+    //     avg = scale(avg);
+
+    //     xToFeatures[i][j] = avg;
+    //   }
+    // }
+    function handle() {
+      canvasRefL.map((canvasRef, index) => {
         if (canvasRef.current) {
-          let context = canvasRef.current.getContext("2d");
-
+          let context =
+            canvasRefL[canvasRefL.length - 1 - index].current.getContext("2d");
           context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+          for (let i = 0; i < leftTrackGenes[index][0].length; i++) {
+            let startPos = leftTrackGenes[index][1];
+            for (let j = 0; j < leftTrackGenes[index][0][i].length; j++) {
+              let singleStrand = leftTrackGenes[index][0][i][j];
+              context.fillStyle = "red";
 
-          for (let i = 0; i < rightTrackGenes[index][0].length; i++) {
-            let startPos = rightTrackGenes[index][1];
-            for (let j = 0; j < rightTrackGenes[index][0][i].length; j++) {
-              let singleStrand = rightTrackGenes[index][0][i][j];
-              context.fillStyle = "blue";
-              for (
-                let z = (singleStrand.start - startPos) / bpToPx!;
-                z <
+              context.fillRect(
+                (singleStrand.start - startPos) / bpToPx!,
+                10,
                 (singleStrand.end - startPos) / bpToPx! -
-                  (singleStrand.start - startPos) / bpToPx! +
-                  (singleStrand.start - startPos) / bpToPx!;
-                z++
-              ) {
-                console.log(
-                  "BIG",
-                  z,
-                  40 - singleStrand.score,
-                  1,
-                  singleStrand.score
-                );
-                context.fillRect(
-                  z,
-                  40 - singleStrand.score,
-                  1,
-                  singleStrand.score
-                );
-              }
+                  (singleStrand.start - startPos) / bpToPx!,
+                80
+              );
             }
           }
         }
       });
     }
     handle();
-  }, [rightTrackGenes]);
-
-  useEffect(() => {
-    canvasRefL.map((canvasRef, index) => {
-      if (canvasRef.current) {
-        let context =
-          canvasRefL[canvasRefL.length - 1 - index].current.getContext("2d");
-        let idx = leftTrackGenes.length - 1;
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-        for (let i = 0; i < leftTrackGenes[index][1].length; i++) {
-          let startPos = leftTrackGenes[index][2];
-          for (let j = 0; j < leftTrackGenes[index][1][i].length; j++) {
-            let singleStrand = leftTrackGenes[index][1][i][j];
-            context.fillStyle = "red";
-
-            context.fillRect(
-              (singleStrand.start - startPos) / bpToPx!,
-              10,
-              (singleStrand.end - startPos) / bpToPx! -
-                (singleStrand.start - startPos) / bpToPx!,
-              80
-            );
-          }
-        }
-      }
-    });
   }, [leftTrackGenes]);
 
   useEffect(() => {
@@ -626,7 +633,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       if (trackData!.location && trackData!.side === "right") {
         fetchGenomeData();
       } else if (trackData!.location && trackData!.side === "left") {
-        console.log(trackData);
         fetchGenomeData2();
       }
     }
@@ -637,90 +643,24 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     <div>
       {side === "right"
         ? rightTrackGenes.map((item, index) => (
-            <svg
+            <canvas
+              id="canvas1"
               key={index}
+              ref={canvasRefR[index]}
+              height={"100"}
               width={`${windowWidth * 2}px`}
-              height={"100%"}
-              style={{ display: "inline-block" }}
-              overflow="visible"
-            >
-              <line
-                x1={`0`}
-                y1="0"
-                x2={`${windowWidth * 2}px`}
-                y2={"0"}
-                stroke="gray"
-                strokeWidth="3"
-              />
-              <line
-                x1={`${windowWidth * 2}px`}
-                y1="0"
-                x2={`${windowWidth * 2}px`}
-                y2={"100%"}
-                stroke="gray"
-                strokeWidth="3"
-              />
-
-              {/* {item[0]} */}
-
-              <foreignObject
-                x="0"
-                y="40%"
-                width={`${windowWidth * 2}px`}
-                height="100%"
-              >
-                <canvas
-                  id="canvas1"
-                  key={index}
-                  ref={canvasRefR[index]}
-                  height={"70px"}
-                  width={`${windowWidth * 2}px`}
-                  style={{}}
-                />
-              </foreignObject>
-            </svg>
+              style={{}}
+            />
           ))
         : leftTrackGenes.map((item, index) => (
-            <svg
+            <canvas
+              id="canvas2"
               key={index}
+              ref={canvasRefL[index]}
+              height={"200"}
               width={`${windowWidth * 2}px`}
-              height={"50%"}
-              style={{ display: "inline-block" }}
-              overflow="visible"
-            >
-              <line
-                x1={`0`}
-                y1="0"
-                x2={`${windowWidth * 2}px`}
-                y2={"0"}
-                stroke="gray"
-                strokeWidth="3"
-              />
-              <line
-                x1={`${windowWidth * 2}px`}
-                y1="0"
-                x2={`${windowWidth * 2}px`}
-                y2={"100%"}
-                stroke="gray"
-                strokeWidth="3"
-              />
-
-              <foreignObject
-                x="0"
-                y="55%"
-                width={`${windowWidth * 2}px`}
-                height="100%"
-              >
-                <canvas
-                  id="canvas2"
-                  key={index}
-                  ref={canvasRefL[index]}
-                  height={"100%"}
-                  width={`${windowWidth * 2}px`}
-                  style={{}}
-                />
-              </foreignObject>
-            </svg>
+              style={{}}
+            />
           ))}
     </div>
   );
