@@ -510,7 +510,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
         for (let i = 0; i < xToFeatures[index].length; i++) {
           // going through width pixels
           // i = canvas pixel xpos
-          console.log(xToFeatures[index][i]);
           context.fillStyle = "blue";
           context.globalAlpha = 1;
           context.fillRect(
@@ -525,72 +524,68 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [rightTrackGenes]);
 
   useEffect(() => {
-    // let xToFeatures: Array<any> = [];
-    // for (let i = 0; i < leftTrackGenes.length; i++) {
-    //   const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
-    //   xToFeatures.push(newArr);
-    // }
+    let xToFeatures: Array<any> = [];
+    for (let i = 0; i < leftTrackGenes.length; i++) {
+      const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
+      xToFeatures.push(newArr);
+    }
 
-    // for (let i = 0; i < leftTrackGenes.length; i++) {
-    //   let startPos = leftTrackGenes[i][1];
-    //   for (let j = 0; j < leftTrackGenes[i][0].length; j++) {
-    //     for (let x = 0; x < leftTrackGenes[i][0][j].length; x++) {
-    //       let singleStrand = leftTrackGenes[i][0][j][x];
+    for (let i = 0; i < leftTrackGenes.length; i++) {
+      let startPos = leftTrackGenes[i][1];
+      for (let j = 0; j < leftTrackGenes[i][0].length; j++) {
+        for (let x = 0; x < leftTrackGenes[i][0][j].length; x++) {
+          let singleStrand = leftTrackGenes[i][0][j][x];
 
-    //       if (Object.keys(singleStrand).length > 0) {
-    //         let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
-    //         let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
-    //         const startX = Math.max(0, Math.floor(xSpanStart));
-    //         const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
-    //         for (let x = startX; x <= endX; x++) {
-    //           xToFeatures[i][x].push(singleStrand);
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-    // for (let i = 0; i < xToFeatures.length; i++) {
-    //   for (let j = 0; j < xToFeatures[i].length; j++) {
-    //     let sum = 0;
-
-    //     for (let x = 0; x < xToFeatures[i][j].length; x++) {
-    //       sum += xToFeatures[i][j][x].score;
-    //     }
-    //     let avg = 0;
-    //     if (xToFeatures[i][j].length > 0) {
-    //       avg = sum / xToFeatures[i][j].length;
-    //     }
-
-    //     avg = scale(avg);
-
-    //     xToFeatures[i][j] = avg;
-    //   }
-    // }
-    function handle() {
-      canvasRefL.map((canvasRef, index) => {
-        if (canvasRef.current) {
-          let context =
-            canvasRefL[canvasRefL.length - 1 - index].current.getContext("2d");
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-          for (let i = 0; i < leftTrackGenes[index][0].length; i++) {
-            let startPos = leftTrackGenes[index][1];
-            for (let j = 0; j < leftTrackGenes[index][0][i].length; j++) {
-              let singleStrand = leftTrackGenes[index][0][i][j];
-              context.fillStyle = "red";
-
-              context.fillRect(
-                (singleStrand.start - startPos) / bpToPx!,
-                10,
-                (singleStrand.end - startPos) / bpToPx! -
-                  (singleStrand.start - startPos) / bpToPx!,
-                80
-              );
+          if (Object.keys(singleStrand).length > 0) {
+            let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
+            let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
+            const startX = Math.max(0, Math.floor(xSpanStart));
+            const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
+            for (let x = startX; x <= endX; x++) {
+              xToFeatures[i][x].push(singleStrand);
             }
           }
         }
-      });
+      }
     }
-    handle();
+    for (let i = 0; i < xToFeatures.length; i++) {
+      for (let j = 0; j < xToFeatures[i].length; j++) {
+        let sum = 0;
+
+        for (let x = 0; x < xToFeatures[i][j].length; x++) {
+          sum += xToFeatures[i][j][x].score;
+        }
+        let avg = 0;
+        if (xToFeatures[i][j].length > 0) {
+          avg = sum / xToFeatures[i][j].length;
+        }
+
+        avg = scale(avg);
+
+        xToFeatures[i][j] = avg;
+      }
+    }
+    canvasRefL.map((canvasRef, index) => {
+      if (canvasRefL[canvasRefL.length - 1 - index].current) {
+        let context =
+          canvasRefL[canvasRefL.length - 1 - index].current.getContext("2d");
+
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+        for (let i = 0; i < xToFeatures[index].length; i++) {
+          // going through width pixels
+          // i = canvas pixel xpos
+          context.fillStyle = "blue";
+          context.globalAlpha = 1;
+          context.fillRect(
+            i,
+            40 - xToFeatures[index][i],
+            1,
+            xToFeatures[index][i]
+          );
+        }
+      }
+    });
   }, [leftTrackGenes]);
 
   useEffect(() => {
@@ -657,7 +652,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
               id="canvas2"
               key={index}
               ref={canvasRefL[index]}
-              height={"200"}
+              height={"100"}
               width={`${windowWidth * 2}px`}
               style={{}}
             />

@@ -587,8 +587,8 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
           strokeWidth="3"
         />
 
-        {props.trackHtml[index] ? props.trackHtml[index] : ""}
-        {props.trackInterval[index] ? props.trackInterval[index] : ""}
+        {props.trackHtml[index]}
+        {props.trackInterval[index]}
       </svg>
     ));
   }

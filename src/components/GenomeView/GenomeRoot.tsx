@@ -98,16 +98,17 @@ function GenomeHub(props: any) {
 
   useEffect(() => {
     async function handler() {
-      const storedArray = sessionStorage.getItem("myArray");
-      const chrOrderStorage = sessionStorage.getItem("chrOrder");
-      if (storedArray !== null) {
-        const parsedArray = JSON.parse(storedArray);
-        if (chrOrderStorage !== null) {
-          setItems([...JSON.parse(chrOrderStorage)]);
-          parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
-        }
-        setGenomeList(new Array<any>(parsedArray));
-      } else if (props.selectedGenome.length !== 0) {
+      // const storedArray = sessionStorage.getItem("myArray");
+      // const chrOrderStorage = sessionStorage.getItem("chrOrder");
+      // if (storedArray !== null) {
+      //   const parsedArray = JSON.parse(storedArray);
+      //   if (chrOrderStorage !== null) {
+      //     setItems([...JSON.parse(chrOrderStorage)]);
+      //     parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
+      //   }
+      //   setGenomeList(new Array<any>(parsedArray));
+      // } else
+      if (props.selectedGenome.length !== 0) {
         getSelectedGenome();
       } else {
         let chrObj = {};
@@ -117,7 +118,7 @@ function GenomeHub(props: any) {
         let testGen: any = {
           name: "hg38",
           species: "human",
-          defaultRegion: "chr7:0-15500000",
+          defaultRegion: "chr7:27000000-273000000",
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [

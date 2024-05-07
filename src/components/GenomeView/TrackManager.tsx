@@ -71,6 +71,7 @@ function TrackManager(props) {
   const [isLoading, setIsLoading] = useState(true);
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
   const [bpX, setBpX] = useState(0);
+
   const [maxBp, setMaxBp] = useState(
     rightStartCoord + (rightStartCoord - leftStartCoord)
   );
@@ -488,9 +489,9 @@ function TrackManager(props) {
     const bigWigResult = tmpBigWig;
     tempObj["result"] = result;
     tempObj["bedResult"] = bedResult;
+    tempObj["bigWigResult"] = bigWigResult;
     tempObj["side"] = "left";
 
-    tempObj["bigWigResult"] = bigWigResult;
     tempObj["location"] = `${minBp}:${minBp + bpRegionSize}`;
     ///////-__________________________________________________________________________________________________________________________
 
@@ -500,6 +501,18 @@ function TrackManager(props) {
       setMinBp(minBp - bpRegionSize);
     }
     setIsLoading(false);
+  }
+  function TrackComp() {
+    return trackComponent.map((Component, index) => (
+      <Component
+        key={index}
+        bpRegionSize={bpRegionSize}
+        bpToPx={bpToPx}
+        trackData={genomeTrackR}
+        side={side}
+        trackWidth={windowWidth * 2}
+      />
+    ));
   }
 
   useEffect(() => {
@@ -578,7 +591,7 @@ function TrackManager(props) {
             flexDirection: "column",
           }}
         >
-          {/* {trackComponent.map((Component, index) => (
+          {trackComponent.map((Component, index) => (
             <Component
               key={index}
               bpRegionSize={bpRegionSize}
@@ -587,38 +600,7 @@ function TrackManager(props) {
               side={side}
               trackWidth={windowWidth * 2}
             />
-          ))} */}
-          <GenRefTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={genomeTrackR}
-            side={side}
-            trackWidth={0}
-          />
-
-          <BedTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={genomeTrackR}
-            side={side}
-            trackWidth={0}
-          />
-          <BedDensityTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={genomeTrackR}
-            side={side}
-            trackWidth={0}
-          />
-
-          <BigWigTrack
-
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={genomeTrackR}
-            side={side}
-            trackWidth={windowWidth * 2}
-          />
+          ))}
         </div>
       </div>
     </div>
