@@ -5,12 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import TrackManager from "./TrackManager";
 import Drag from "./ChrOrder";
 import { chrType } from "../../localdata/genomename";
-import { parse } from "path";
 import { ChromosomeData } from "../../localdata/chromosomedata";
 import { AnnotationTrackData } from "../../localdata/annotationtrackdata";
 import { PublicHubAllData } from "../../localdata/publichub";
 import { TwoBitUrlData } from "../../localdata/twobiturl";
-import test from "node:test";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
@@ -86,7 +84,6 @@ function GenomeHub(props: any) {
         },
       ];
       newList.chrOrder = items;
-      newList.defaultRegion = "chr7:27053397-27373765";
       const serializedArray = JSON.stringify(newList);
       sessionStorage.setItem("myArray", serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {
@@ -98,16 +95,17 @@ function GenomeHub(props: any) {
 
   useEffect(() => {
     async function handler() {
-      const storedArray = sessionStorage.getItem("myArray");
-      const chrOrderStorage = sessionStorage.getItem("chrOrder");
-      if (storedArray !== null) {
-        const parsedArray = JSON.parse(storedArray);
-        if (chrOrderStorage !== null) {
-          setItems([...JSON.parse(chrOrderStorage)]);
-          parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
-        }
-        setGenomeList(new Array<any>(parsedArray));
-      } else if (props.selectedGenome.length !== 0) {
+      // const storedArray = sessionStorage.getItem("myArray");
+      // const chrOrderStorage = sessionStorage.getItem("chrOrder");
+      // if (storedArray !== null) {
+      //   const parsedArray = JSON.parse(storedArray);
+      //   if (chrOrderStorage !== null) {
+      //     setItems([...JSON.parse(chrOrderStorage)]);
+      //     parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
+      //   }
+      //   setGenomeList(new Array<any>(parsedArray));
+      // } else
+      if (props.selectedGenome.length !== 0) {
         getSelectedGenome();
       } else {
         let chrObj = {};
@@ -117,7 +115,7 @@ function GenomeHub(props: any) {
         let testGen: any = {
           name: "hg38",
           species: "human",
-          defaultRegion: "chr7:27000000-273000000",
+          defaultRegion: "chr7:27053397-27373765",
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [
@@ -138,7 +136,12 @@ function GenomeHub(props: any) {
             {
               name: "bigWig",
 
-              genome: "hg38",
+              genome: "hg19",
+            },
+            {
+              name: "dynseq",
+
+              genome: "hg19",
             },
           ],
           annotationTrackData: AnnotationTrackData["HG38"],

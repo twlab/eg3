@@ -8,6 +8,7 @@ import GenRefTrack from "./GenRefTrack";
 import BedTrack from "./BedTrack";
 import BedDensityTrack from "./BedDensityTrack";
 import BigWigTrack from "./BigWigTrack";
+import DynseqTrack from "./DynseqTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { scaleLinear } from "d3-scale";
 const windowWidth = window.innerWidth;
@@ -25,6 +26,7 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   bed: BedTrack,
   bedDensity: BedDensityTrack,
   bigWig: BigWigTrack,
+  dynseq: DynseqTrack,
   // Add more components as needed
 };
 
@@ -123,36 +125,39 @@ function TrackManager(props) {
   function handleMouseUp() {
     setDragging(false);
     let curIdx = side === "right" ? initialChrIdx : initialChrIdx - 1;
-    let totalLength =
-      side === "right" ? chrLength[curIdx] : chrLength[curIdx - 1];
+    let totalLength = 0;
+
     let curStartBp = leftStartCoord + -dragX.current * bpToPx;
     const curBp = leftStartCoord + -dragX.current * bpToPx;
     if (side === "right" && curBp > totalLength) {
+      totalLength = chrLength[curIdx];
       while (leftStartCoord + -dragX.current * bpToPx > totalLength) {
         curStartBp -= chrLength[curIdx];
         curIdx += 1;
         totalLength += chrLength[curIdx];
       }
     } else if (side === "left" && curBp < 0) {
+      totalLength = chrLength[curIdx - 1];
       while (leftStartCoord + -dragX.current * bpToPx < totalLength) {
         curStartBp += chrLength[curIdx];
         curIdx -= 1;
         totalLength += -chrLength[curIdx];
       }
+      curIdx += 1;
     }
     console.log(
       chrData[side === "left" ? curIdx + 1 : curIdx] +
         ":" +
-        String(curStartBp) +
+        String(curStartBp + totalLength) +
         "-" +
-        String(curStartBp + bpRegionSize / 2)
+        String(curStartBp + bpRegionSize / 2 + totalLength)
     );
     let curRegion =
       chrData[side === "left" ? curIdx + 1 : curIdx] +
       ":" +
-      String(curStartBp) +
+      String(curStartBp + totalLength) +
       "-" +
-      String(curStartBp + bpRegionSize / 2);
+      String(curStartBp + bpRegionSize / 2 + totalLength);
 
     props.startBp(curRegion);
     setBpX(curBp);
@@ -259,10 +264,11 @@ function TrackManager(props) {
     let userRespond;
     let bedRespond;
     let bigWigRespond;
+    let dynSeqRespond;
     let tmpResult: Array<any> = [];
     let tmpBed: Array<any> = [];
     let tmpBigWig: Array<any> = [];
-
+    let tmpDynseq: Array<any> = [];
     for (let i = 0; i < tmpRegion.length; i++) {
       let sectionRegion = tmpRegion[i];
       const [curChrName, bpCoord] = sectionRegion.split(":");
@@ -288,6 +294,12 @@ function TrackManager(props) {
           Number(sectionStart),
           Number(sectionEnd)
         );
+        dynSeqRespond = await GetBigData(
+          "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+          curChrName,
+          Number(sectionStart),
+          Number(sectionEnd)
+        );
 
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
@@ -305,8 +317,12 @@ function TrackManager(props) {
             bigWigRespond[i].start += Number(startRegion);
             bigWigRespond[i].end += Number(startRegion);
           }
+          for (let i = 0; i < dynSeqRespond.length; i++) {
+            dynSeqRespond[i].start += Number(startRegion);
+            dynSeqRespond[i].end += Number(startRegion);
+          }
         }
-
+        tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
         tmpResult = [...tmpResult, ...gotResult];
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
@@ -316,11 +332,13 @@ function TrackManager(props) {
     const bedResult = tmpBed;
     const result = tmpResult;
     const bigWigResult = tmpBigWig;
-
+    const dynSeqResult = tmpDynseq;
+    console.log(dynSeqResult);
     tempObj["location"] = `${maxBp - bpRegionSize}:${maxBp}`;
     tempObj["result"] = result;
     tempObj["bedResult"] = bedResult;
     tempObj["bigWigResult"] = bigWigResult;
+    tempObj["dynseqResult"] = dynSeqResult;
     tempObj["side"] = "right";
     if (initial) {
       tempObj["initial"] = 1;

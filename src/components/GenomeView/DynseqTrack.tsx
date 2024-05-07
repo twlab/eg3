@@ -8,21 +8,19 @@ interface BedTrackProps {
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
-  trackWidth: number;
 }
-const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
+const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
-  trackWidth,
 }) {
   let start, end;
 
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
-    result = trackData!.bigWigResult;
+    result = trackData!.dynseqResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -189,7 +187,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
         strandLevelList[j].push(strand);
       }
     }
-
+    console.log(strandLevelList);
     setRightTrack([...rightTrackGenes, [[...strandLevelList], startPos]]);
 
     const newCanvasRef = createRef();
@@ -449,7 +447,32 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       <React.Fragment key={index}>{item}</React.Fragment>
     ));
   }
+  function averagFeatureHeight(data: any) {
+    let xToFeatures: Array<any> = [];
+    for (let i = 0; i < rightTrackGenes.length; i++) {
+      const newArr: Array<any> = Array.from({ length: windowWidth }, () => []);
+      xToFeatures.push(newArr);
+    }
+    for (let i = 0; i < data.length; i++) {
+      for (let j = 0; j < data[i].length; j++) {
+        let singleStrand = data[i][j];
 
+        if (Object.keys(singleStrand).length > 0) {
+          let xSpanStart =
+            (singleStrand.start - rightTrackGenes[i][1]) / bpToPx!;
+          let xSpanEnd = (singleStrand.end - rightTrackGenes[i][1]) / bpToPx!;
+          const startX = Math.max(0, Math.floor(xSpanStart));
+          const endX = Math.min(windowWidth - 1, Math.ceil(xSpanEnd));
+
+          for (let x = startX; x <= endX; x++) {
+            xToFeatures[i][x].push(singleStrand);
+          }
+        }
+      }
+    }
+
+    return xToFeatures;
+  }
   useEffect(() => {
     // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
     //     x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`
@@ -460,9 +483,13 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
     let xToFeatures: Array<any> = [];
+    let dataForward: Array<any> = [];
+    let dataReverse: Array<any> = [];
     for (let i = 0; i < rightTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
-      xToFeatures.push(newArr);
+      const newArr: Array<any> = [];
+      dataForward.push(newArr);
+      const newArr2: Array<any> = [];
+      dataReverse.push(newArr2);
     }
 
     for (let i = 0; i < rightTrackGenes.length; i++) {
@@ -470,34 +497,42 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       for (let j = 0; j < rightTrackGenes[i][0].length; j++) {
         for (let x = 0; x < rightTrackGenes[i][0][j].length; x++) {
           let singleStrand = rightTrackGenes[i][0][j][x];
-
-          if (Object.keys(singleStrand).length > 0) {
-            let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
-            let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
-            const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
-            for (let x = startX; x <= endX; x++) {
-              xToFeatures[i][x].push(singleStrand);
-            }
+          if (singleStrand.score < 0) {
+            dataReverse[i].push(singleStrand);
+          } else {
+            dataForward[i].push(singleStrand);
           }
+          //   if (Object.keys(singleStrand).length > 0) {
+          //     let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
+          //     let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
+          //     const startX = Math.max(0, Math.floor(xSpanStart));
+          //     const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
+          //     for (let x = startX; x <= endX; x++) {
+          //       xToFeatures[i][x].push(singleStrand);
+          //     }
+          //   }
         }
       }
     }
-    for (let i = 0; i < xToFeatures.length; i++) {
-      for (let j = 0; j < xToFeatures[i].length; j++) {
+
+    console.log(dataForward);
+    let featureForward = averagFeatureHeight(dataForward);
+
+    for (let i = 0; i < featureForward.length; i++) {
+      for (let j = 0; j < featureForward[i].length; j++) {
         let sum = 0;
 
-        for (let x = 0; x < xToFeatures[i][j].length; x++) {
-          sum += xToFeatures[i][j][x].score;
+        for (let x = 0; x < featureForward[i][j].length; x++) {
+          sum += featureForward[i][j][x].score;
         }
         let avg = 0;
-        if (xToFeatures[i][j].length > 0) {
-          avg = sum / xToFeatures[i][j].length;
+        if (featureForward[i][j].length > 0) {
+          avg = sum / featureForward[i][j].length;
         }
 
         avg = scale(avg);
 
-        xToFeatures[i][j] = avg;
+        featureForward[i][j] = avg;
       }
     }
 
@@ -512,7 +547,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
           // i = canvas pixel xpos
           context.fillStyle = "blue";
           context.globalAlpha = 1;
-
           context.fillRect(
             i,
             40 - xToFeatures[index][i],
@@ -527,7 +561,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   useEffect(() => {
     let xToFeatures: Array<any> = [];
     for (let i = 0; i < leftTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
+      const newArr: Array<any> = Array.from({ length: windowWidth }, () => []);
       xToFeatures.push(newArr);
     }
 
@@ -541,7 +575,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
             let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
             let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
             const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
+            const endX = Math.min(windowWidth - 1, Math.ceil(xSpanEnd));
             for (let x = startX; x <= endX; x++) {
               xToFeatures[i][x].push(singleStrand);
             }
@@ -549,7 +583,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
         }
       }
     }
-
     for (let i = 0; i < xToFeatures.length; i++) {
       for (let j = 0; j < xToFeatures[i].length; j++) {
         let sum = 0;
@@ -662,4 +695,4 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     </div>
   );
 });
-export default memo(BigWigTrack);
+export default memo(DynseqTrack);
