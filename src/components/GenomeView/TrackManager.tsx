@@ -38,7 +38,7 @@ function TrackManager(props) {
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = (rightStartCoord - leftStartCoord) * 2;
-  const bpToPx = bpRegionSize / (windowWidth * 2);
+  const bpToPx = bpRegionSize / windowWidth;
   let allChrData = genome.chromosomes;
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -51,10 +51,7 @@ function TrackManager(props) {
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [isDragging, setDragging] = useState(false);
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
-    "",
-    "",
-  ]);
+  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([""]);
   let chrData: Array<any> = [];
   let chrLength: Array<any> = [];
   for (const chromosome of genome.chrOrder) {
@@ -66,7 +63,7 @@ function TrackManager(props) {
   const initialChrIdx = chrData.indexOf(region);
   const [chrIndexRight, setChrIndexRight] = useState(initialChrIdx);
   const [chrIndexLeft, setchrIndexLeft] = useState(initialChrIdx);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(["", ""]);
+  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([""]);
   const [side, setSide] = useState("right");
   const [isLoading, setIsLoading] = useState(true);
   const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
@@ -129,13 +126,14 @@ function TrackManager(props) {
     let totalLength =
       side === "right" ? chrLength[curIdx] : chrLength[curIdx - 1];
     let curStartBp = leftStartCoord + -dragX.current * bpToPx;
-    if (side === "right") {
+    const curBp = leftStartCoord + -dragX.current * bpToPx;
+    if (side === "right" && curBp > totalLength) {
       while (leftStartCoord + -dragX.current * bpToPx > totalLength) {
         curStartBp -= chrLength[curIdx];
         curIdx += 1;
         totalLength += chrLength[curIdx];
       }
-    } else if (side === "left") {
+    } else if (side === "left" && curBp < 0) {
       while (leftStartCoord + -dragX.current * bpToPx < totalLength) {
         curStartBp += chrLength[curIdx];
         curIdx -= 1;
@@ -143,15 +141,14 @@ function TrackManager(props) {
       }
     }
     console.log(
-      chrData[curIdx] +
+      chrData[side === "left" ? curIdx + 1 : curIdx] +
         ":" +
         String(curStartBp) +
         "-" +
         String(curStartBp + bpRegionSize / 2)
     );
-    const curBp = leftStartCoord + -dragX.current * bpToPx;
     let curRegion =
-      chrData[curIdx] +
+      chrData[side === "left" ? curIdx + 1 : curIdx] +
       ":" +
       String(curStartBp) +
       "-" +
@@ -167,7 +164,7 @@ function TrackManager(props) {
     }
 
     if (
-      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
+      -dragX.current / windowWidth >= rightSectionSize.length - 2 &&
       dragX.current < 0
     ) {
       setIsLoading(true);
@@ -181,8 +178,7 @@ function TrackManager(props) {
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
-      (dragX.current + windowWidth) / windowWidth >=
-        2 * (leftSectionSize.length - 2) &&
+      dragX.current / windowWidth >= leftSectionSize.length - 2 &&
       dragX.current > 0
     ) {
       setIsLoading(true);
@@ -510,7 +506,7 @@ function TrackManager(props) {
         bpToPx={bpToPx}
         trackData={genomeTrackR}
         side={side}
-        trackWidth={windowWidth * 2}
+        trackWidth={windowWidth}
       />
     ));
   }
@@ -572,14 +568,15 @@ function TrackManager(props) {
         style={{
           flex: "1",
           display: "flex",
-          justifyContent: dragX.current <= 0 ? "start" : "end",
+          //makes element align right
+          justifyContent: dragX.current <= 0 ? "flex-start" : "flex-end",
 
           flexDirection: "row",
 
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
-          width: `${windowWidth * 2}px`,
+          width: `${windowWidth}px`,
           backgroundColor: "gainsboro",
         }}
       >
@@ -588,6 +585,8 @@ function TrackManager(props) {
           onMouseDown={handleMouseDown}
           style={{
             display: "flex",
+            //makes element align right
+            alignItems: dragX.current <= 0 ? "flex-start" : "flex-end",
             flexDirection: "column",
           }}
         >
@@ -598,7 +597,7 @@ function TrackManager(props) {
               bpToPx={bpToPx}
               trackData={genomeTrackR}
               side={side}
-              trackWidth={windowWidth * 2}
+              trackWidth={windowWidth}
             />
           ))}
         </div>

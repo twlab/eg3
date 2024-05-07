@@ -589,7 +589,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
         ? rightTrackGenes.map((item, index) => (
             <svg
               key={index}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               height={"50%"}
               style={{ display: "inline-block" }}
               overflow="visible"
@@ -597,15 +597,15 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
               <line
                 x1={`0`}
                 y1="0"
-                x2={`${windowWidth * 2}px`}
+                x2={`${windowWidth}px`}
                 y2={"0"}
                 stroke="gray"
                 strokeWidth="3"
               />
               <line
-                x1={`${windowWidth * 2}px`}
+                x1={`${windowWidth}px`}
                 y1="0"
-                x2={`${windowWidth * 2}px`}
+                x2={`${windowWidth}px`}
                 y2={"100%"}
                 stroke="gray"
                 strokeWidth="3"
@@ -616,7 +616,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
               <foreignObject
                 x="0"
                 y="55%"
-                width={`${windowWidth * 2}px`}
+                width={`${windowWidth}px`}
                 height="100%"
               >
                 <canvas
@@ -624,7 +624,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
                   key={index}
                   ref={canvasRefR[index]}
                   height={"100%"}
-                  width={`${windowWidth * 2}px`}
+                  width={`${windowWidth}px`}
                   style={{}}
                 />
               </foreignObject>
@@ -633,7 +633,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
         : leftTrackGenes.map((item, index) => (
             <svg
               key={index}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               height={"50%"}
               style={{ display: "inline-block" }}
               overflow="visible"
@@ -641,15 +641,15 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
               <line
                 x1={`0`}
                 y1="0"
-                x2={`${windowWidth * 2}px`}
+                x2={`${windowWidth}px`}
                 y2={"0"}
                 stroke="gray"
                 strokeWidth="3"
               />
               <line
-                x1={`${windowWidth * 2}px`}
+                x1={`${windowWidth}px`}
                 y1="0"
-                x2={`${windowWidth * 2}px`}
+                x2={`${windowWidth}px`}
                 y2={"100%"}
                 stroke="gray"
                 strokeWidth="3"

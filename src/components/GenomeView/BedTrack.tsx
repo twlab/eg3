@@ -468,7 +468,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     return props.trackHtml.map((item, index) => (
       <svg
         key={index}
-        width={`${windowWidth * 2}px`}
+        width={`${windowWidth}px`}
         height={"100%"}
         style={{ display: "inline-block" }}
         overflow="visible"
@@ -476,15 +476,15 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
         <line
           x1={`0`}
           y1="0"
-          x2={`${windowWidth * 2}px`}
+          x2={`${windowWidth}px`}
           y2={"0"}
           stroke="gray"
           strokeWidth="3"
         />
         <line
-          x1={`${windowWidth * 2}px`}
+          x1={`${windowWidth}px`}
           y1="0"
-          x2={`${windowWidth * 2}px`}
+          x2={`${windowWidth}px`}
           y2={"100%"}
           stroke="gray"
           strokeWidth="3"
@@ -492,7 +492,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
         <line
           x1={`0`}
           y1={"100%"}
-          x2={`${windowWidth * 2}px`}
+          x2={`${windowWidth}px`}
           y2={"100%"}
           stroke="gray"
           strokeWidth="3"

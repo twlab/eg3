@@ -643,7 +643,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
               key={index}
               ref={canvasRefR[index]}
               height={"100"}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))
@@ -653,7 +653,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
               key={index}
               ref={canvasRefL[index]}
               height={"100"}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))}

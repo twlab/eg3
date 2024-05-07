@@ -98,17 +98,16 @@ function GenomeHub(props: any) {
 
   useEffect(() => {
     async function handler() {
-      // const storedArray = sessionStorage.getItem("myArray");
-      // const chrOrderStorage = sessionStorage.getItem("chrOrder");
-      // if (storedArray !== null) {
-      //   const parsedArray = JSON.parse(storedArray);
-      //   if (chrOrderStorage !== null) {
-      //     setItems([...JSON.parse(chrOrderStorage)]);
-      //     parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
-      //   }
-      //   setGenomeList(new Array<any>(parsedArray));
-      // } else
-      if (props.selectedGenome.length !== 0) {
+      const storedArray = sessionStorage.getItem("myArray");
+      const chrOrderStorage = sessionStorage.getItem("chrOrder");
+      if (storedArray !== null) {
+        const parsedArray = JSON.parse(storedArray);
+        if (chrOrderStorage !== null) {
+          setItems([...JSON.parse(chrOrderStorage)]);
+          parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
+        }
+        setGenomeList(new Array<any>(parsedArray));
+      } else if (props.selectedGenome.length !== 0) {
         getSelectedGenome();
       } else {
         let chrObj = {};
