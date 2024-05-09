@@ -552,10 +552,11 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   }
 
   function ShowGenomeData(props) {
+    console.log(windowWidth * 2);
     return props.trackHtml.map((item, index) => (
       <svg
         key={index}
-        width={`${windowWidth}px`}
+        width={`${windowWidth * 2}px`}
         height={"100%"}
         style={{ display: "inline-block" }}
         overflow="visible"
@@ -563,15 +564,15 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
         <line
           x1={`0`}
           y1="0"
-          x2={`${windowWidth}px`}
+          x2={`${windowWidth * 2}px`}
           y2={"0"}
           stroke="gray"
           strokeWidth="3"
         />
         <line
-          x1={`${windowWidth}px`}
+          x1={`${windowWidth * 2}px`}
           y1="0"
-          x2={`${windowWidth}px`}
+          x2={`${windowWidth * 2}px`}
           y2={"100%"}
           stroke="gray"
           strokeWidth="3"
@@ -579,7 +580,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
         <line
           x1={`0`}
           y1={"100%"}
-          x2={`${windowWidth}px`}
+          x2={`${windowWidth * 2}px`}
           y2={"100%"}
           stroke="gray"
           strokeWidth="3"

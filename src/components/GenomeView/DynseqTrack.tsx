@@ -31,10 +31,12 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
+  const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
@@ -187,12 +189,13 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         strandLevelList[j].push(strand);
       }
     }
-    console.log(strandLevelList);
+
     setRightTrack([...rightTrackGenes, [[...strandLevelList], startPos]]);
 
     const newCanvasRef = createRef();
+    const newCanvasRef2 = createRef();
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-
+    setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
     for (var i = 0; i < strandLevelList.length; i++) {
       const levelContent = strandLevelList[i];
@@ -448,11 +451,15 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     ));
   }
   function averagFeatureHeight(data: any) {
-    let xToFeatures: Array<any> = [];
-    for (let i = 0; i < rightTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from({ length: windowWidth }, () => []);
+    let xToFeatures: Array<Array<any>> = [];
+    for (let i = 0; i < data.length; i++) {
+      const newArr: Array<any> = Array.from(
+        { length: Number(windowWidth * 2) },
+        () => []
+      );
       xToFeatures.push(newArr);
     }
+    console.log(xToFeatures);
     for (let i = 0; i < data.length; i++) {
       for (let j = 0; j < data[i].length; j++) {
         let singleStrand = data[i][j];
@@ -462,7 +469,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
             (singleStrand.start - rightTrackGenes[i][1]) / bpToPx!;
           let xSpanEnd = (singleStrand.end - rightTrackGenes[i][1]) / bpToPx!;
           const startX = Math.max(0, Math.floor(xSpanStart));
-          const endX = Math.min(windowWidth - 1, Math.ceil(xSpanEnd));
+          const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
 
           for (let x = startX; x <= endX; x++) {
             xToFeatures[i][x].push(singleStrand);
@@ -470,8 +477,51 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         }
       }
     }
-
+    console.log(xToFeatures);
     return xToFeatures;
+  }
+  function xAvg(data: any) {
+    let max = 0;
+    let min = 0;
+    console.log(data);
+    for (let i = 0; i < data.length; i++) {
+      for (let j = 0; j < data[i].length; j++) {
+        let sum = 0;
+
+        for (let x = 0; x < data[i][j].length; x++) {
+          sum += data[i][j][x].score;
+        }
+        let avgPos = 0;
+        if (data[i][j].length > 0) {
+          avgPos = sum / data[i][j].length;
+        }
+
+        if (avgPos > max) {
+          max = avgPos;
+        }
+        if (avgPos < min) {
+          min = avgPos;
+        }
+        data[i][j] = avgPos;
+      }
+    }
+
+    return [data, max, min];
+  }
+  function scaleX(data: any) {
+    console.log(data);
+    var scale = scaleLinear()
+      .domain([-data[1], data[1]])
+      .range([2, 20])
+      .clamp(true);
+    for (let i = 0; i < data[0].length; i++) {
+      for (let j = 0; j < data[0][i].length; j++) {
+        if (data[0][i][j] !== 0) {
+          data[0][i][j] = scale(data[0][i][j]);
+        }
+      }
+    }
+    return data;
   }
   useEffect(() => {
     // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
@@ -482,86 +532,95 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     // 3: round each strand start and end xspan
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
-    let xToFeatures: Array<any> = [];
-    let dataForward: Array<any> = [];
-    let dataReverse: Array<any> = [];
-    for (let i = 0; i < rightTrackGenes.length; i++) {
-      const newArr: Array<any> = [];
-      dataForward.push(newArr);
-      const newArr2: Array<any> = [];
-      dataReverse.push(newArr2);
-    }
-
-    for (let i = 0; i < rightTrackGenes.length; i++) {
-      let startPos = rightTrackGenes[i][1];
-      for (let j = 0; j < rightTrackGenes[i][0].length; j++) {
-        for (let x = 0; x < rightTrackGenes[i][0][j].length; x++) {
-          let singleStrand = rightTrackGenes[i][0][j][x];
-          if (singleStrand.score < 0) {
-            dataReverse[i].push(singleStrand);
-          } else {
-            dataForward[i].push(singleStrand);
+    if (rightTrackGenes.length > 0) {
+      let xToFeatures: Array<any> = [];
+      let dataForward: Array<any> = [];
+      let dataReverse: Array<any> = [];
+      for (let i = 0; i < rightTrackGenes.length; i++) {
+        const newArr: Array<any> = [];
+        dataForward.push(newArr);
+        const newArr2: Array<any> = [];
+        dataReverse.push(newArr2);
+      }
+      console.log(rightTrackGenes);
+      for (let i = 0; i < rightTrackGenes.length; i++) {
+        let startPos = rightTrackGenes[i][1];
+        for (let j = 0; j < rightTrackGenes[i][0].length; j++) {
+          for (let x = 0; x < rightTrackGenes[i][0][j].length; x++) {
+            let singleStrand = rightTrackGenes[i][0][j][x];
+            if (singleStrand.score < 0) {
+              dataReverse[i].push(singleStrand);
+            } else {
+              dataForward[i].push(singleStrand);
+            }
+            //   if (Object.keys(singleStrand).length > 0) {
+            //     let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
+            //     let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
+            //     const startX = Math.max(0, Math.floor(xSpanStart));
+            //     const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
+            //     for (let x = startX; x <= endX; x++) {
+            //       xToFeatures[i][x].push(singleStrand);
+            //     }
+            //   }
           }
-          //   if (Object.keys(singleStrand).length > 0) {
-          //     let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
-          //     let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
-          //     const startX = Math.max(0, Math.floor(xSpanStart));
-          //     const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
-          //     for (let x = startX; x <= endX; x++) {
-          //       xToFeatures[i][x].push(singleStrand);
-          //     }
-          //   }
         }
       }
+
+      let featureForward = averagFeatureHeight(dataForward);
+      let featureReverse = averagFeatureHeight(dataReverse);
+
+      let avgPos = xAvg(featureForward);
+      let avgNeg = xAvg(featureReverse);
+      let resultPos = scaleX(avgPos);
+      let resultNeg = scaleX(avgNeg);
+      console.log(resultPos);
+      console.log(resultNeg);
+      canvasRefR.map((canvasRef, index) => {
+        if (canvasRef.current) {
+          let context = canvasRef.current.getContext("2d");
+
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+          for (let i = 0; i < featureForward[index].length; i++) {
+            // going through width pixels
+            // i = canvas pixel xpos
+            context.fillStyle = "blue";
+            context.globalAlpha = 1;
+            context.fillRect(
+              i,
+              20 - featureForward[index][i],
+              1,
+              featureForward[index][i]
+            );
+          }
+        }
+      });
+
+      canvasRefR2.map((canvasRef, index) => {
+        if (canvasRef.current) {
+          let context = canvasRef.current.getContext("2d");
+
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+          for (let i = 0; i < featureForward[index].length; i++) {
+            // going through width pixels
+            // i = canvas pixel xpos
+            context.fillStyle = "blue";
+            context.globalAlpha = 1;
+            context.fillRect(i, 1, 1, featureReverse[index][i]);
+          }
+        }
+      });
     }
-
-    console.log(dataForward);
-    let featureForward = averagFeatureHeight(dataForward);
-
-    for (let i = 0; i < featureForward.length; i++) {
-      for (let j = 0; j < featureForward[i].length; j++) {
-        let sum = 0;
-
-        for (let x = 0; x < featureForward[i][j].length; x++) {
-          sum += featureForward[i][j][x].score;
-        }
-        let avg = 0;
-        if (featureForward[i][j].length > 0) {
-          avg = sum / featureForward[i][j].length;
-        }
-
-        avg = scale(avg);
-
-        featureForward[i][j] = avg;
-      }
-    }
-
-    canvasRefR.map((canvasRef, index) => {
-      if (canvasRef.current) {
-        let context = canvasRef.current.getContext("2d");
-
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-        for (let i = 0; i < xToFeatures[index].length; i++) {
-          // going through width pixels
-          // i = canvas pixel xpos
-          context.fillStyle = "blue";
-          context.globalAlpha = 1;
-          context.fillRect(
-            i,
-            40 - xToFeatures[index][i],
-            1,
-            xToFeatures[index][i]
-          );
-        }
-      }
-    });
   }, [rightTrackGenes]);
 
   useEffect(() => {
     let xToFeatures: Array<any> = [];
     for (let i = 0; i < leftTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from({ length: windowWidth }, () => []);
+      const newArr: Array<any> = Array.from(
+        { length: windowWidth * 2 },
+        () => []
+      );
       xToFeatures.push(newArr);
     }
 
@@ -575,7 +634,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
             let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
             let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
             const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(windowWidth - 1, Math.ceil(xSpanEnd));
+            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
             for (let x = startX; x <= endX; x++) {
               xToFeatures[i][x].push(singleStrand);
             }
@@ -590,14 +649,14 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         for (let x = 0; x < xToFeatures[i][j].length; x++) {
           sum += xToFeatures[i][j][x].score;
         }
-        let avg = 0;
+        let avgPos = 0;
         if (xToFeatures[i][j].length > 0) {
-          avg = sum / xToFeatures[i][j].length;
+          avgPos = sum / xToFeatures[i][j].length;
         }
 
-        avg = scale(avg);
+        avgPos = scale(avgPos);
 
-        xToFeatures[i][j] = avg;
+        xToFeatures[i][j] = avgPos;
       }
     }
     canvasRefL.map((canvasRef, index) => {
@@ -674,21 +733,19 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
       {side === "right"
         ? rightTrackGenes.map((item, index) => (
             <canvas
-              id="canvas1"
               key={index}
               ref={canvasRefR[index]}
-              height={"100"}
-              width={`${windowWidth}px`}
+              height={"20"}
+              width={`${windowWidth * 2}px`}
               style={{}}
             />
           ))
         : leftTrackGenes.map((item, index) => (
             <canvas
-              id="canvas2"
               key={index}
               ref={canvasRefL[index]}
               height={"100"}
-              width={`${windowWidth}px`}
+              width={`${windowWidth * 2}px`}
               style={{}}
             />
           ))}

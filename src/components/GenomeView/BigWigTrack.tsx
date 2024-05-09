@@ -8,14 +8,12 @@ interface BedTrackProps {
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
-  trackWidth: number;
 }
 const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
-  trackWidth,
 }) {
   let start, end;
 
@@ -405,50 +403,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
     overflowStrand2.current = {};
   }
-  function SetStrand(props) {
-    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
-    var yCoord = 25;
-    const strandList: Array<any> = [];
-
-    if (props.strandPos.length) {
-      var checkObj = false;
-      if (props.checkPrev !== undefined) {
-        checkObj = true;
-      }
-      for (let i = 0; i < props.strandPos.length; i++) {
-        let strandHtml: Array<any> = [];
-
-        for (let j = 0; j < props.strandPos[i].length; j++) {
-          const singleStrand = props.strandPos[i][j];
-
-          if (
-            Object.keys(singleStrand).length === 0 ||
-            (checkObj && singleStrand.id in props.checkPrev)
-          ) {
-            continue;
-          }
-
-          //add a single strand to current track------------------------------------------------------------------------------------
-          strandHtml.push(
-            <React.Fragment key={j}>
-              <line
-                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`}
-                y1={`${yCoord}`}
-                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
-                y2={`${yCoord}`}
-              />
-            </React.Fragment>
-          );
-        }
-
-        strandList.push(strandHtml);
-      }
-    }
-
-    return strandList.map((item, index) => (
-      <React.Fragment key={index}>{item}</React.Fragment>
-    ));
-  }
 
   useEffect(() => {
     // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
@@ -461,7 +415,10 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     // 5: the array index will represent the x coord pixel of the canvas and svg
     let xToFeatures: Array<any> = [];
     for (let i = 0; i < rightTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
+      const newArr: Array<any> = Array.from(
+        { length: windowWidth * 2 },
+        () => []
+      );
       xToFeatures.push(newArr);
     }
 
@@ -475,7 +432,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
             let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
             let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
             const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
+            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
             for (let x = startX; x <= endX; x++) {
               xToFeatures[i][x].push(singleStrand);
             }
@@ -527,7 +484,10 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   useEffect(() => {
     let xToFeatures: Array<any> = [];
     for (let i = 0; i < leftTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from({ length: trackWidth }, () => []);
+      const newArr: Array<any> = Array.from(
+        { length: windowWidth * 2 },
+        () => []
+      );
       xToFeatures.push(newArr);
     }
 
@@ -541,7 +501,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
             let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
             let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
             const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(trackWidth - 1, Math.ceil(xSpanEnd));
+            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
             for (let x = startX; x <= endX; x++) {
               xToFeatures[i][x].push(singleStrand);
             }
@@ -626,7 +586,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [side]);
 
   useEffect(() => {
-    async function handle() {
+    function handle() {
       if (trackData!.location && trackData!.side === "right") {
         fetchGenomeData();
       } else if (trackData!.location && trackData!.side === "left") {
@@ -645,17 +605,17 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
               key={index}
               ref={canvasRefR[index]}
               height={"100"}
-              width={`${windowWidth}px`}
+              width={`${windowWidth * 2}px`}
               style={{}}
             />
           ))
         : leftTrackGenes.map((item, index) => (
             <canvas
               id="canvas2"
-              key={index}
+              key={index + 232323232323233}
               ref={canvasRefL[index]}
               height={"100"}
-              width={`${windowWidth}px`}
+              width={`${windowWidth * 2}px`}
               style={{}}
             />
           ))}
