@@ -1,4 +1,4 @@
-export const genomesName: Array<string> = [
+export const genName: Array<string> = [
   "hg38",
   "hg19",
   "mm39",
@@ -100,7 +100,7 @@ export let chrType: Array<any> = [
   "chrY",
   "chrX",
 ];
-export const genomesKeyName: Array<string> = [
+export const genKeyName: Array<string> = [
   "HG38",
   "HG19",
   "MM39",

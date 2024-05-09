@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 
 const windowWidth = window.innerWidth;
 interface BedTrackProps {
-  bpRegionSize: number;
-  bpToPx: number;
-  trackData: { [key: string]: any }; // Replace with the actual type
-  side: string;
+  bpRegionSize?: number;
+  bpToPx?: number;
+  trackData?: { [key: string]: any }; // Replace with the actual type
+  side?: string;
 }
 const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   bpRegionSize,
@@ -14,11 +14,11 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   trackData,
   side,
 }) {
-  let name, region, start, end;
+  let start, end;
   let result;
-  if (Object.keys(trackData).length > 0) {
-    [name, region, start, end] = trackData.location.split(":");
-    result = trackData.bedResult;
+  if (Object.keys(trackData!).length > 0) {
+    [start, end] = trackData!.location.split(":");
+    result = trackData!.bedResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -189,7 +189,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
         key={getRndInteger()}
         strandPos={strandLevelList}
         checkPrev={prevOverflowStrand.current}
-        startTrackPos={end - bpRegionSize}
+        startTrackPos={end - bpRegionSize!}
       />,
     ]);
 
@@ -210,7 +210,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
-    if (trackData.initial) {
+    if (trackData!.initial) {
       for (var i = 0; i < strandLevelList.length; i++) {
         var levelContent = strandLevelList[i];
         for (var strand of levelContent) {
@@ -442,9 +442,9 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
           strandHtml.push(
             <React.Fragment key={j}>
               <line
-                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx}`}
+                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`}
                 y1={`${yCoord}`}
-                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx}`}
+                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
                 y2={`${yCoord}`}
                 stroke={"blue"}
                 strokeWidth="20"
@@ -516,9 +516,9 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
   useEffect(() => {
     async function handle() {
-      if (trackData.location && trackData.side === "right") {
+      if (trackData!.side === "right") {
         fetchGenomeData();
-      } else if (trackData.location && trackData.side === "left") {
+      } else if (trackData!.side === "left") {
         fetchGenomeData2();
       }
     }
@@ -527,5 +527,4 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
   return <div>{side === "right" ? genomeTrackR : genomeTrackL}</div>;
 });
-
 export default memo(BedTrack);

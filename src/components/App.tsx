@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import Homepage from "./Homepage-Components/Homepage";
 import { BrowserRouter, Link, Switch, Route } from "react-router-dom";
-import GenomeHub from "./GenomeView/GenomeRoot";
+import GenomeView from "./GenomeView/GenomeRoot";
 import { treeOfLifeObj } from "../localdata/treeoflife";
 import { DefaultRegionData } from "../localdata/defaultregiondata";
 import mainLogo from "../assets/images/icon.png";
 import "../assets/main.css";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-
+import { genName, genKeyName, chrType } from "../localdata/genomename";
+import { DefaultTrack } from "../localdata/defaulttrack";
+import { ChromosomeData } from "../localdata/chromosomedata";
+import { AnnotationTrackData } from "../localdata/annotationtrackdata";
+import { TwoBitUrlData } from "../localdata/twobiturl";
+import { PublicHubAllData } from "../localdata/publichub";
 // this section needs to be moved to a backend if we want to access
 // aws backend because it need access key and secret key
 // if you  are trying to pull data from aws bucket then create an access token and input them here
@@ -23,9 +28,9 @@ var s3Config = new S3Client({
 
 const isLocal = 1;
 function App() {
-  // Used to display the home screen and genomehub
+  // Used to display the home screen and GenomeView
   // if a user add or update a new genome to aws bucket the homeView will be updated with a new state and render the newly added genome
-  // if a user select or delete from their selected genomes of choice then the genomeView will update our genomehub
+  // if a user select or delete from their selected genomes of choice then the genomeView will update our GenomeView
   const [genomeView, setGenomeView] = useState(<></>);
   const [homeView, setHomeView] = useState(<></>);
 
@@ -40,13 +45,37 @@ function App() {
 
   // object for checking if user select the same genome
   const [currSelectGenome, setCurrSelectGenome] = useState({});
+  function createGenKey(genome: string) {
+    let genDataKey;
+    for (let i = 0; i < genName.length; i++) {
+      if (genName[i] === genome) {
+        genDataKey = genKeyName[i];
+        break;
+      }
+    }
 
+    return genDataKey;
+  }
+
+  // function getChrData(key: string) {
+  //   let chrList: Array<any> = [];
+  //   let allChrData = ChromosomeData[key];
+  //   for (const chromosome of allChrData) {
+  //     if (chrType.includes(chromosome.getName())) {
+  //       chrData.push(chromosome.getName());
+  //       chrLength.push(chromosome.getLength());
+  //     }
+  //   }
+  //   setChr(chrData.indexOf(region));
+  // }
   function addGenomeView(obj: any) {
+    sessionStorage.clear();
     if (!currSelectGenome[obj.name as keyof typeof currSelectGenome]) {
-      if (selectedGenome.length < 3)
+      if (selectedGenome.length < 3) {
         setSelectedGenome((prevList: any) => {
           return [...prevList, obj];
         });
+      }
       let newObj: { [key: string]: any } = currSelectGenome;
       newObj[obj.name as keyof typeof newObj] = " ";
       setCurrSelectGenome(newObj);
@@ -67,7 +96,7 @@ function App() {
     // This is using aws sdk to get genome data from the bucket, if you are testing using local data look at else statement
     if (!isLocal) {
       var command = new ListObjectsV2Command({
-        Bucket: "genomehubs",
+        Bucket: "GenomeViews",
         StartAfter: "/",
 
         MaxKeys: 1000,
@@ -111,10 +140,22 @@ function App() {
     else {
       for (const key in treeOfLifeObj) {
         for (let genomeName of treeOfLifeObj[key].assemblies) {
+          const genKey = createGenKey(genomeName);
+          let chrObj = {};
+          for (const chromosome of ChromosomeData[genKey]) {
+            chrObj[chromosome.getName()] = chromosome.getLength();
+          }
+
           tempObj[genomeName] = {
             name: genomeName,
             species: key,
-            defaultRegion: DefaultRegionData[genomeName],
+            defaultRegion: DefaultRegionData[genKey],
+            chromosomes: chrObj,
+            defaultTracks: DefaultTrack[genKey],
+            annotationTrackData: AnnotationTrackData[genKey],
+            publicHubData: PublicHubAllData[genKey]["publicHubData"],
+            publicHubList: PublicHubAllData[genKey]["publicHubList"],
+            twoBitURL: TwoBitUrlData[genKey],
           };
         }
       }
@@ -155,10 +196,10 @@ function App() {
   }, [allGenome, selectedGenome, treeOfLife]);
 
   //This useeffect triggers when selectedGenome data is updated
-  //This tells us that the GenomeHub component needs to update because a user added or delete a genome from their list
+  //This tells us that the GenomeView component needs to update because a user added or delete a genome from their list
   useEffect(() => {
     setGenomeView(
-      <GenomeHub
+      <GenomeView
         selectedGenome={selectedGenome}
         allGenome={allGenome}
         addToView={addGenomeView}
