@@ -533,7 +533,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
     if (rightTrackGenes.length > 0) {
-      let xToFeatures: Array<any> = [];
       let dataForward: Array<any> = [];
       let dataReverse: Array<any> = [];
       for (let i = 0; i < rightTrackGenes.length; i++) {
@@ -571,10 +570,11 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
       let avgPos = xAvg(featureForward);
       let avgNeg = xAvg(featureReverse);
+      avgNeg[1] = avgPos[1];
+      avgNeg[2] = avgPos[2];
       let resultPos = scaleX(avgPos);
       let resultNeg = scaleX(avgNeg);
-      console.log(resultPos);
-      console.log(resultNeg);
+
       canvasRefR.map((canvasRef, index) => {
         if (canvasRef.current) {
           let context = canvasRef.current.getContext("2d");
@@ -585,7 +585,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
             // going through width pixels
             // i = canvas pixel xpos
             context.fillStyle = "blue";
-            context.globalAlpha = 1;
+
             context.fillRect(
               i,
               20 - featureForward[index][i],
@@ -595,19 +595,22 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
           }
         }
       });
-
+      console.log(featureReverse);
       canvasRefR2.map((canvasRef, index) => {
         if (canvasRef.current) {
           let context = canvasRef.current.getContext("2d");
 
           context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-          for (let i = 0; i < featureForward[index].length; i++) {
+          for (let i = 0; i < featureReverse[index].length; i++) {
             // going through width pixels
             // i = canvas pixel xpos
-            context.fillStyle = "blue";
-            context.globalAlpha = 1;
-            context.fillRect(i, 1, 1, featureReverse[index][i]);
+            if (featureReverse[index][i] !== 0) {
+              console.log(featureReverse[index][i]);
+              context.fillStyle = "red";
+
+              context.fillRect(i, 0, 1, featureReverse[index][i]);
+            }
           }
         }
       });
@@ -729,16 +732,25 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }, [trackData]);
 
   return (
-    <div>
+    <div style={{ height: "40px", border: "2px solid black" }}>
       {side === "right"
         ? rightTrackGenes.map((item, index) => (
-            <canvas
-              key={index}
-              ref={canvasRefR[index]}
-              height={"20"}
-              width={`${windowWidth * 2}px`}
-              style={{}}
-            />
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <canvas
+                key={index}
+                ref={canvasRefR[index]}
+                height={"20"}
+                width={`${windowWidth * 2}px`}
+                style={{}}
+              />
+              <canvas
+                key={index + 2}
+                ref={canvasRefR2[index]}
+                height={"20"}
+                width={`${windowWidth * 2}px`}
+                style={{}}
+              />
+            </div>
           ))
         : leftTrackGenes.map((item, index) => (
             <canvas
