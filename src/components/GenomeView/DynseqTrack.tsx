@@ -1,19 +1,33 @@
 import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
+const CHROMOSOMES_Y = 60;
+const TOP_PADDING = 2;
+export const MAX_PIXELS_PER_BASE_NUMERIC = 0.5;
 
-const windowWidth = window.innerWidth;
+export const DEFAULT_OPTIONS = {
+  aggregateMethod: "mean",
+  height: 40,
+  color: "blue",
+  color2: "darkorange",
+  yScale: "auto",
+  yMax: 0.25,
+  yMin: -0.25,
+};
+
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
+  windowWidth?: number;
 }
 const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
+  windowWidth = 0,
 }) {
   let start, end;
 
@@ -595,7 +609,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
           }
         }
       });
-      console.log(featureReverse);
+
       canvasRefR2.map((canvasRef, index) => {
         if (canvasRef.current) {
           let context = canvasRef.current.getContext("2d");
@@ -732,9 +746,10 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }, [trackData]);
 
   return (
-    <div style={{ height: "40px", border: "2px solid black" }}>
-      {side === "right"
-        ? rightTrackGenes.map((item, index) => (
+    <div style={{ display: "flex", height: "40px", border: "2px solid black" }}>
+      {side === "right" ? (
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          {rightTrackGenes.map((item, index) => (
             <div style={{ display: "flex", flexDirection: "column" }}>
               <canvas
                 key={index}
@@ -751,16 +766,19 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
                 style={{}}
               />
             </div>
-          ))
-        : leftTrackGenes.map((item, index) => (
-            <canvas
-              key={index}
-              ref={canvasRefL[index]}
-              height={"100"}
-              width={`${windowWidth * 2}px`}
-              style={{}}
-            />
           ))}
+        </div>
+      ) : (
+        leftTrackGenes.map((item, index) => (
+          <canvas
+            key={index}
+            ref={canvasRefL[index]}
+            height={"100"}
+            width={`${windowWidth * 2}px`}
+            style={{}}
+          />
+        ))
+      )}
     </div>
   );
 });

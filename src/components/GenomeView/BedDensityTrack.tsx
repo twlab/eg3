@@ -1,18 +1,19 @@
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 
-const windowWidth = window.innerWidth;
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
+  windowWidth?: number;
 }
 const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
+  windowWidth = 0,
 }) {
   let start, end;
 

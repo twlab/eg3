@@ -1,19 +1,20 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
-const windowWidth = window.innerWidth;
 
 interface GenRefTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
+  windowWidth?: number;
 }
 const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
+  windowWidth = 0,
 }) {
   let start, end;
 

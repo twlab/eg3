@@ -564,7 +564,7 @@ function TrackManager(props) {
 
             left: 0,
           }}
-          size={20}
+          size={10}
           thickness={4}
         />
       ) : (
@@ -604,7 +604,7 @@ function TrackManager(props) {
               bpToPx={bpToPx}
               trackData={genomeTrackR}
               side={side}
-              trackWidth={windowWidth}
+              windowWidth={windowWidth}
             />
           ))}
         </div>

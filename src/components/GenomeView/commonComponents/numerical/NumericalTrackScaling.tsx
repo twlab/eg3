@@ -1,5 +1,6 @@
 export const DEFAULT_OPTIONS = {
   aggregateMethod: "mean",
+  displayMode: "auto",
   height: 40,
   color: "blue",
   colorAboveMax: "red",
@@ -12,15 +13,17 @@ export const DEFAULT_OPTIONS = {
   ensemblStyle: false,
 };
 
-function DesignRenderer() {
-  function getPixelRatioSafely() {
-    const pixelRatio = window.devicePixelRatio;
-    if (Number.isFinite(pixelRatio) && pixelRatio > 0) {
-      return pixelRatio;
-    } else {
-      return 1;
-    }
-  }
+const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap
+const TOP_PADDING = 2;
+const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
+
+/**
+ * Track specialized in showing numerical data.
+ *
+ * @author Silas Hsu
+ * @author Chanrung
+ */
+function NumericalTrackScaling() {
   function computeScales(xToValue, xToValue2, height) {
     /*
         All tracks get `PropsFromTrackContainer` (see `Track.ts`).
@@ -30,26 +33,12 @@ function DesignRenderer() {
         */
     console.log("SCALE", xToValue, xToValue2, height);
     const { yScale, yMin, yMax } = this.props.options;
-
     // if (yMin >= yMax) {
     //     notify.show("Y-axis min must less than max", "error", 2000);
     // }
-
     const { trackModel, groupScale } = this.props;
 
-    let gscale = {},
-      min,
-      max,
-      xValues2 = [];
-    if (groupScale) {
-      if (trackModel.options.hasOwnProperty("group")) {
-        gscale = groupScale[trackModel.options.group];
-      }
-    }
-    if (!_.isEmpty(gscale)) {
-      max = _.max(Object.values(gscale.max));
-      min = _.min(Object.values(gscale.min));
-    } else {
+    {
       const visibleValues = xToValue.slice(
         this.props.viewWindow.start,
         this.props.viewWindow.end
@@ -152,3 +141,7 @@ function DesignRenderer() {
     }
   }
 }
+
+function CanvasRenderer() {}
+
+function SVGRenderer() {}
