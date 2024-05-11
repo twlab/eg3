@@ -19,7 +19,12 @@ const TOP_PADDING = 2;
 const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
 
 export interface FeatureAggregator {
-  makeXMap(trackGenes: Array<any>, bpToPx: number, windowWidth: number);
+  makeXMap(
+    trackGenes: Array<any>,
+    bpToPx: number,
+    windowWidth: number,
+    bpRegionSize: number
+  );
 }
 
 function computeScales(
@@ -55,26 +60,14 @@ function computeScales(
   //   max = _.max(Object.values(gscale.max));
   //   min = _.min(Object.values(gscale.min));
 
-  const visibleValues = xToValue.slice(regionStart, regionEnd);
-  max = Math.max(...xToValue) || 1; // in case undefined returned here, cause maxboth be undefined too
-  xValues2 = xToValue2.filter((x) => x);
-  min =
-    (xValues2.length ? Math.min(xToValue2.slice(regionStart, regionEnd)) : 0) ||
-    0;
+  max = Math.max(...xToValue); // in case undefined returned here, cause maxboth be undefined too
+
+  min = Math.min(...xToValue2);
+
   const maxBoth = Math.max(Math.abs(max), Math.abs(min));
   max = maxBoth;
-  min = xValues2.length ? -maxBoth : 0;
-  if (yScale === "fixed") {
-    max = yMax ? yMax : max;
-    min = yMin !== undefined ? yMin : min;
-    if (xValues2.length && yMin > 0) {
-      // notify.show(
-      //   "Please set Y-axis min <=0 when there are negative values",
-      //   "warning",
-      //   5000
-      // );
-      min = 0;
-    }
+  if (xToValue2.length > 0) {
+    min = -maxBoth;
   }
 
   // if (min > max) {
@@ -87,9 +80,10 @@ function computeScales(
     min < 0
       ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
       : height;
+
   console.log(min, max, zeroLine);
   if (
-    xValues2.length &&
+    xValues2.length > 0 &&
     (yScale === "auto" || (yScale === "fixed" && yMin < 0))
   ) {
     return {
@@ -145,7 +139,7 @@ function computeScales(
 }
 
 export const myFeatureAggregator: FeatureAggregator = {
-  makeXMap(trackGenes, bpToPx, windowWidth) {
+  makeXMap(trackGenes, bpToPx, windowWidth, bpRegionSize) {
     function averagFeatureHeight(data: any) {
       let xToFeatures: Array<Array<any>> = [];
       for (let i = 0; i < data.length; i++) {
@@ -203,21 +197,6 @@ export const myFeatureAggregator: FeatureAggregator = {
 
       return [data, max, min];
     }
-    function scaleX(data: any) {
-      var scale = scaleLinear()
-        .domain([-data[1], data[1]])
-        .range([2, 20])
-        .clamp(true);
-      for (let i = 0; i < data[0].length; i++) {
-        for (let j = 0; j < data[0][i].length; j++) {
-          if (data[0][i][j] !== 0) {
-            data[0][i][j] = scale(data[0][i][j]);
-          }
-        }
-      }
-
-      return data;
-    }
 
     let dataForward: Array<any> = [];
     let dataReverse: Array<any> = [];
@@ -251,23 +230,126 @@ export const myFeatureAggregator: FeatureAggregator = {
     avgNeg[1] = avgPos[1];
     avgNeg[2] = avgPos[2];
 
+    let scales = computeScales(avgPos[0][0], avgNeg[0][0], 0, bpToPx);
+
     for (let i = 0; i < avgPos[0].length; i++) {
-      let scales = computeScales(
-        avgPos[0][i],
-        avgNeg[0][i],
-        trackGenes[i][1],
-        trackGenes[i][1] + bpToPx
-      );
+      let scales = computeScales(avgPos[i][0], avgNeg[i][0], 0, bpToPx);
       for (let j = 0; j < avgPos[0][i].length; j++) {
         if (avgPos[0][i][j] !== 0) {
           avgPos[0][i][j] = scales.valueToY(avgPos[0][i][j]);
+          avgNeg[0][i][j] = scales.valueToYReverse(avgNeg[0][i][j]);
         }
       }
     }
 
     let newResult: Array<any> = [];
+    for (let i = 0; i < featureReverse[0].length; i++) {
+      if (featureReverse[0][i] !== 0) {
+        console.log(featureReverse[0][i]);
+      }
+    }
+    console.log(featureReverse);
     newResult.push(featureForward);
     newResult.push(featureReverse);
     return newResult;
   },
 };
+
+// function computeScales(
+//   xToValue,
+//   xToValue2,
+//   regionStart,
+//   regionEnd,
+//   height: number = 40,
+//   yScale: string = "auto",
+//   yMin: number = 0,
+//   yMax: number = 10
+// ) {
+//   /*
+//         All tracks get `PropsFromTrackContainer` (see `Track.ts`).
+
+//         `props.viewWindow` contains the range of x that is visible when no dragging.
+//             It comes directly from the `ViewExpansion` object from `RegionExpander.ts`
+//         */
+
+//   // if (yMin >= yMax) {
+//   //   notify.show("Y-axis min must less than max", "error", 2000);
+//   // }
+//   // const { trackModel, groupScale } = this.props;
+//   let min: number,
+//     max: number,
+//     xValues2 = [];
+//   // if (groupScale) {
+//   //   if (trackModel.options.hasOwnProperty("group")) {
+//   //     gscale = groupScale[trackModel.options.group];
+//   //   }
+//   // }
+//   // if (!_.isEmpty(gscale)) {
+//   //   max = _.max(Object.values(gscale.max));
+//   //   min = _.min(Object.values(gscale.min));
+
+//   max = Math.max(...xToValue); // in case undefined returned here, cause maxboth be undefined too
+
+//   min = Math.min(...xToValue2);
+
+//   // if (min > max) {
+//   //   notify.show("Y-axis min should less than Y-axis max", "warning", 5000);
+//   //   min = 0;
+//   // }
+
+//   // determines the distance of y=0 from the top, also the height of positive part
+//   const zeroLine =
+//     min < 0
+//       ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
+//       : height;
+
+//   console.log(min, max, zeroLine);
+//   if (xToValue2.length > 0) {
+//     return {
+//       valueToHeight: scaleLinear()
+//         .domain([min, max])
+//         .range([zeroLine - height + TOP_PADDING, zeroLine - TOP_PADDING]),
+//       valueToY: scaleLinear()
+//         .domain([max, 0])
+//         .range([TOP_PADDING, zeroLine])
+//         .clamp(true),
+//       axisScale: scaleLinear()
+//         .domain([max, min])
+//         .range([TOP_PADDING, height - TOP_PADDING])
+//         .clamp(true),
+//       valueToYReverse: scaleLinear()
+//         .domain([0, min])
+//         .range([0, zeroLine - TOP_PADDING])
+//         .clamp(true),
+//       valueToOpacity: scaleLinear().domain([0, max]).range([0, 1]).clamp(true),
+//       valueToOpacityReverse: scaleLinear()
+//         .domain([0, min])
+//         .range([0, 1])
+//         .clamp(true),
+//       min,
+//       max,
+//       zeroLine,
+//     };
+//   } else {
+//     return {
+//       valueToHeight: scaleLinear()
+//         .domain([min, max])
+//         .range([0, height - TOP_PADDING]),
+//       valueToY: scaleLinear()
+//         .domain([max, min])
+//         .range([TOP_PADDING, height])
+//         .clamp(true),
+//       axisScale: scaleLinear()
+//         .domain([max, min])
+//         .range([TOP_PADDING, height])
+//         .clamp(true),
+//       valueToOpacity: scaleLinear()
+//         .domain([min, max])
+//         .range([0, 1])
+//         .clamp(true),
+//       min,
+//       max,
+//       zeroLine,
+//     };
+//   }
+// }

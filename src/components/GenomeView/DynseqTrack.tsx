@@ -1,20 +1,8 @@
 import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
-const CHROMOSOMES_Y = 60;
-const TOP_PADDING = 2;
-export const MAX_PIXELS_PER_BASE_NUMERIC = 0.5;
 
-export const DEFAULT_OPTIONS = {
-  aggregateMethod: "mean",
-  height: 40,
-  color: "blue",
-  color2: "darkorange",
-  yScale: "auto",
-  yMax: 0.25,
-  yMin: -0.25,
-};
-
+import { myFeatureAggregator } from "./commonComponents/screen-scaling/FeatureAggregator";
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -547,47 +535,12 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
     if (rightTrackGenes.length > 0) {
-      let dataForward: Array<any> = [];
-      let dataReverse: Array<any> = [];
-      for (let i = 0; i < rightTrackGenes.length; i++) {
-        const newArr: Array<any> = [];
-        dataForward.push(newArr);
-        const newArr2: Array<any> = [];
-        dataReverse.push(newArr2);
-      }
-      console.log(rightTrackGenes);
-      for (let i = 0; i < rightTrackGenes.length; i++) {
-        let startPos = rightTrackGenes[i][1];
-        for (let j = 0; j < rightTrackGenes[i][0].length; j++) {
-          for (let x = 0; x < rightTrackGenes[i][0][j].length; x++) {
-            let singleStrand = rightTrackGenes[i][0][j][x];
-            if (singleStrand.score < 0) {
-              dataReverse[i].push(singleStrand);
-            } else {
-              dataForward[i].push(singleStrand);
-            }
-            //   if (Object.keys(singleStrand).length > 0) {
-            //     let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
-            //     let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
-            //     const startX = Math.max(0, Math.floor(xSpanStart));
-            //     const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
-            //     for (let x = startX; x <= endX; x++) {
-            //       xToFeatures[i][x].push(singleStrand);
-            //     }
-            //   }
-          }
-        }
-      }
-
-      let featureForward = averagFeatureHeight(dataForward);
-      let featureReverse = averagFeatureHeight(dataReverse);
-
-      let avgPos = xAvg(featureForward);
-      let avgNeg = xAvg(featureReverse);
-      avgNeg[1] = avgPos[1];
-      avgNeg[2] = avgPos[2];
-      let resultPos = scaleX(avgPos);
-      let resultNeg = scaleX(avgNeg);
+      let [featureForward, featureReverse] = myFeatureAggregator.makeXMap(
+        rightTrackGenes,
+        bpToPx!,
+        windowWidth,
+        bpRegionSize!
+      );
 
       canvasRefR.map((canvasRef, index) => {
         if (canvasRef.current) {
@@ -599,13 +552,15 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
             // going through width pixels
             // i = canvas pixel xpos
             context.fillStyle = "blue";
-
-            context.fillRect(
-              i,
-              20 - featureForward[index][i],
-              1,
-              featureForward[index][i]
-            );
+            if (featureForward[index][i] !== 0) {
+              console.log(featureForward[index][i]);
+              context.fillRect(
+                i,
+                featureForward[index][i],
+                1,
+                20 - featureForward[index][i]
+              );
+            }
           }
         }
       });
@@ -620,7 +575,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
             // going through width pixels
             // i = canvas pixel xpos
             if (featureReverse[index][i] !== 0) {
-              console.log(featureReverse[index][i]);
               context.fillStyle = "red";
 
               context.fillRect(i, 0, 1, featureReverse[index][i]);
@@ -750,7 +704,10 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
       {side === "right" ? (
         <div style={{ display: "flex", flexDirection: "row" }}>
           {rightTrackGenes.map((item, index) => (
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              key={index + 34343479}
+              style={{ display: "flex", flexDirection: "column" }}
+            >
               <canvas
                 key={index}
                 ref={canvasRefR[index]}
