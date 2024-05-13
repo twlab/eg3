@@ -1,13 +1,13 @@
-import { scaleLinear } from "d3-scale";
+import { scaleLinear } from 'd3-scale';
 export const DEFAULT_OPTIONS = {
-  aggregateMethod: "mean",
-  displayMode: "auto",
+  aggregateMethod: 'mean',
+  displayMode: 'auto',
   height: 40,
-  color: "blue",
-  colorAboveMax: "red",
-  color2: "darkorange",
-  color2BelowMin: "darkgreen",
-  yScale: "auto",
+  color: 'blue',
+  colorAboveMax: 'red',
+  color2: 'darkorange',
+  color2BelowMin: 'darkgreen',
+  yScale: 'auto',
   yMax: 10,
   yMin: 0,
   smooth: 0,
@@ -33,7 +33,7 @@ function computeScales(
   regionStart,
   regionEnd,
   height: number = 40,
-  yScale: string = "auto",
+  yScale: string = 'auto',
   yMin: number = 0,
   yMax: number = 10
 ) {
@@ -83,7 +83,7 @@ function computeScales(
 
   if (
     xValues2.length > 0 &&
-    (yScale === "auto" || (yScale === "fixed" && yMin < 0))
+    (yScale === 'auto' || (yScale === 'fixed' && yMin < 0))
   ) {
     return {
       axisScale: scaleLinear()
@@ -137,7 +137,7 @@ function computeScales(
   }
 }
 
-function averagFeatureHeight(
+function findFeatureInPixel(
   data: any,
   windowWidth: number,
   trackGenes: Array<any>,
@@ -173,7 +173,7 @@ function averagFeatureHeight(
 }
 export const myFeatureAggregator: FeatureAggregator = {
   makeXMap(trackGenes, bpToPx, windowWidth, bpRegionSize) {
-    function xAvg(data: any) {
+    function avgHeightFeature(data: any) {
       let max = 0;
       let min = 0;
 
@@ -225,22 +225,22 @@ export const myFeatureAggregator: FeatureAggregator = {
       }
     }
 
-    let featureForward = averagFeatureHeight(
+    let featureForward = findFeatureInPixel(
       dataForward,
       windowWidth,
       trackGenes,
       bpToPx
     );
 
-    let featureReverse = averagFeatureHeight(
+    let featureReverse = findFeatureInPixel(
       dataReverse,
       windowWidth,
       trackGenes,
       bpToPx
     );
 
-    let avgPos = xAvg(featureForward);
-    let avgNeg = xAvg(featureReverse);
+    let avgPos = avgHeightFeature(featureForward);
+    let avgNeg = avgHeightFeature(featureReverse);
 
     for (let i = 0; i < avgPos.length; i++) {
       let scales = computeScales(avgPos[i], avgNeg[i], 0, bpToPx);

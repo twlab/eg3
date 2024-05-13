@@ -1,0 +1,9 @@
+{
+  "name": "track-manager",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "modules/track-manager/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project track-manager --web",
+  "targets": {}
+}

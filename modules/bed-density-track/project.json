@@ -1,0 +1,9 @@
+{
+  "name": "bed-density-track",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "modules/bed-density-track/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project bed-density-track --web",
+  "targets": {}
+}

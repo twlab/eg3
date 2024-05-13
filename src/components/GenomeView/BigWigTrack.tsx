@@ -1,6 +1,6 @@
-import { scaleLinear } from "d3-scale";
-import React, { createRef, memo } from "react";
-import { useEffect, useRef, useState } from "react";
+import { scaleLinear } from 'd3-scale';
+import React, { createRef, memo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -20,7 +20,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(":");
+    [start, end] = trackData!.location.split(':');
     result = trackData!.bigWigResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
@@ -457,10 +457,10 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     height: number = 40
   ) {
     let context;
-    if (side === "right") {
-      context = canvasRefR[index].current.getContext("2d");
+    if (side === 'right') {
+      context = canvasRefR[index].current.getContext('2d');
     } else {
-      context = canvasRefL[index].current.getContext("2d");
+      context = canvasRefL[index].current.getContext('2d');
     }
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
@@ -468,13 +468,8 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     for (let i = 0; i < xToFeatures[index].length; i++) {
       // going through width pixels
       // i = canvas pixel xpos
-      context.fillStyle = "blue";
-      context.fillRect(
-        i,
-        height - xToFeatures[index][i],
-        1,
-        xToFeatures[index][i]
-      );
+      context.fillStyle = 'blue';
+      context.fillRect(i, 40 - xToFeatures[index][i], 1, xToFeatures[index][i]);
     }
   }
 
@@ -506,7 +501,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [leftTrackGenes]);
 
   useEffect(() => {
-    if (side === "left") {
+    if (side === 'left') {
       if (canvasRefL.length != 0) {
         const xToFeatures = getPixelAvg(leftTrackGenes);
         canvasRefL.forEach((canvasRef, index) => {
@@ -515,7 +510,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
           }
         });
       }
-    } else if (side === "right") {
+    } else if (side === 'right') {
       if (canvasRefR.length != 0) {
         const xToFeatures = getPixelAvg(rightTrackGenes);
         canvasRefR.forEach((canvasRef, index) => {
@@ -529,9 +524,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
   useEffect(() => {
     function handle() {
-      if (trackData!.location && trackData!.side === "right") {
+      if (trackData!.location && trackData!.side === 'right') {
         fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === "left") {
+      } else if (trackData!.location && trackData!.side === 'left') {
         fetchGenomeData2();
       }
     }
@@ -539,14 +534,14 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [trackData]);
 
   return (
-    <div>
-      {side === "right"
+    <div style={{ display: 'flex' }}>
+      {side === 'right'
         ? rightTrackGenes.map((item, index) => (
             <canvas
               id={`${index} + canvas1`}
               key={index}
               ref={canvasRefR[index]}
-              height={"100"}
+              height={'40'}
               width={`${windowWidth * 2}px`}
               style={{}}
             />
@@ -556,7 +551,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
               id={`${canvasRefL.length - index - 1} + canvas2`}
               key={canvasRefL.length - index - 1}
               ref={canvasRefL[canvasRefL.length - index - 1]}
-              height={"100"}
+              height={'40'}
               width={`${windowWidth * 2}px`}
               style={{}}
             />
