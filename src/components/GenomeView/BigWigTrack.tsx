@@ -528,27 +528,28 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
         xToFeatures[i][j] = avg;
       }
     }
-    canvasRefL.map((canvasRef, index) => {
-      if (canvasRefL[canvasRefL.length - 1 - index].current) {
+
+    if (canvasRefL.length > 0) {
+      if (canvasRefL[canvasRefL.length - 1].current) {
         let context =
-          canvasRefL[canvasRefL.length - 1 - index].current.getContext("2d");
+          canvasRefL[canvasRefL.length - 1].current.getContext("2d");
 
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-        for (let i = 0; i < xToFeatures[index].length; i++) {
+        for (let i = 0; i < xToFeatures[0].length; i++) {
           // going through width pixels
           // i = canvas pixel xpos
           context.fillStyle = "blue";
           context.globalAlpha = 1;
           context.fillRect(
             i,
-            40 - xToFeatures[index][i],
+            40 - xToFeatures[xToFeatures.length - 1][i],
             1,
-            xToFeatures[index][i]
+            xToFeatures[xToFeatures.length - 1][i]
           );
         }
       }
-    });
+    }
   }, [leftTrackGenes]);
 
   useEffect(() => {
@@ -602,7 +603,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       {side === "right"
         ? rightTrackGenes.map((item, index) => (
             <canvas
-              id="canvas1"
+              id={`${index} + canvas1`}
               key={index}
               ref={canvasRefR[index]}
               height={"100"}
@@ -612,9 +613,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
           ))
         : leftTrackGenes.map((item, index) => (
             <canvas
-              id="canvas2"
-              key={index + 232323232323233}
-              ref={canvasRefL[index]}
+              id={`${canvasRefL.length - index - 1} + canvas2`}
+              key={canvasRefL.length - index - 1}
+              ref={canvasRefL[canvasRefL.length - index - 1]}
               height={"100"}
               width={`${windowWidth * 2}px`}
               style={{}}
