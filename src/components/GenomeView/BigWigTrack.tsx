@@ -404,6 +404,79 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
     overflowStrand2.current = {};
   }
+  function getPixelAvg(trackGenes) {
+    let xToFeatures: Array<any> = [];
+    for (let i = 0; i < trackGenes.length; i++) {
+      const newArr: Array<any> = Array.from(
+        { length: windowWidth * 2 },
+        () => []
+      );
+      xToFeatures.push(newArr);
+    }
+
+    for (let i = 0; i < trackGenes.length; i++) {
+      let startPos = trackGenes[i][1];
+      for (let j = 0; j < trackGenes[i][0].length; j++) {
+        for (let x = 0; x < trackGenes[i][0][j].length; x++) {
+          let singleStrand = trackGenes[i][0][j][x];
+
+          if (Object.keys(singleStrand).length > 0) {
+            let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
+            let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
+            const startX = Math.max(0, Math.floor(xSpanStart));
+            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
+            for (let x = startX; x <= endX; x++) {
+              xToFeatures[i][x].push(singleStrand);
+            }
+          }
+        }
+      }
+    }
+    for (let i = 0; i < xToFeatures.length; i++) {
+      for (let j = 0; j < xToFeatures[i].length; j++) {
+        let sum = 0;
+
+        for (let x = 0; x < xToFeatures[i][j].length; x++) {
+          sum += xToFeatures[i][j][x].score;
+        }
+        let avg = 0;
+        if (xToFeatures[i][j].length > 0) {
+          avg = sum / xToFeatures[i][j].length;
+        }
+
+        avg = scale(avg);
+
+        xToFeatures[i][j] = avg;
+      }
+    }
+    return xToFeatures;
+  }
+  function drawCanvas(
+    xToFeatures: Array<any>,
+    index: number,
+    height: number = 40
+  ) {
+    let context;
+    if (side === "right") {
+      context = canvasRefR[index].current.getContext("2d");
+    } else {
+      context = canvasRefL[index].current.getContext("2d");
+    }
+
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+    for (let i = 0; i < xToFeatures[index].length; i++) {
+      // going through width pixels
+      // i = canvas pixel xpos
+      context.fillStyle = "blue";
+      context.fillRect(
+        i,
+        height - xToFeatures[index][i],
+        1,
+        xToFeatures[index][i]
+      );
+    }
+  }
 
   useEffect(() => {
     // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
@@ -414,140 +487,20 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     // 3: round each strand start and end xspan
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
-    let xToFeatures: Array<any> = [];
-    for (let i = 0; i < rightTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from(
-        { length: windowWidth * 2 },
-        () => []
-      );
-      xToFeatures.push(newArr);
-    }
-
-    for (let i = 0; i < rightTrackGenes.length; i++) {
-      let startPos = rightTrackGenes[i][1];
-      for (let j = 0; j < rightTrackGenes[i][0].length; j++) {
-        for (let x = 0; x < rightTrackGenes[i][0][j].length; x++) {
-          let singleStrand = rightTrackGenes[i][0][j][x];
-
-          if (Object.keys(singleStrand).length > 0) {
-            let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
-            let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
-            const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
-            for (let x = startX; x <= endX; x++) {
-              xToFeatures[i][x].push(singleStrand);
-            }
-          }
-        }
+    const xToFeatures = getPixelAvg(rightTrackGenes);
+    if (canvasRefR.length > 0) {
+      if (canvasRefR[canvasRefR.length - 1].current) {
+        drawCanvas(xToFeatures, canvasRefR.length - 1);
       }
     }
-    for (let i = 0; i < xToFeatures.length; i++) {
-      for (let j = 0; j < xToFeatures[i].length; j++) {
-        let sum = 0;
-
-        for (let x = 0; x < xToFeatures[i][j].length; x++) {
-          sum += xToFeatures[i][j][x].score;
-        }
-        let avg = 0;
-        if (xToFeatures[i][j].length > 0) {
-          avg = sum / xToFeatures[i][j].length;
-        }
-
-        avg = scale(avg);
-
-        xToFeatures[i][j] = avg;
-      }
-    }
-
-    canvasRefR.map((canvasRef, index) => {
-      if (canvasRef.current) {
-        let context = canvasRef.current.getContext("2d");
-
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-        for (let i = 0; i < xToFeatures[index].length; i++) {
-          // going through width pixels
-          // i = canvas pixel xpos
-          context.fillStyle = "blue";
-          context.globalAlpha = 1;
-
-          context.fillRect(
-            i,
-            40 - xToFeatures[index][i],
-            1,
-            xToFeatures[index][i]
-          );
-        }
-      }
-    });
   }, [rightTrackGenes]);
 
   useEffect(() => {
-    let xToFeatures: Array<any> = [];
-    for (let i = 0; i < leftTrackGenes.length; i++) {
-      const newArr: Array<any> = Array.from(
-        { length: windowWidth * 2 },
-        () => []
-      );
-      xToFeatures.push(newArr);
-    }
-
-    for (let i = 0; i < leftTrackGenes.length; i++) {
-      let startPos = leftTrackGenes[i][1];
-      for (let j = 0; j < leftTrackGenes[i][0].length; j++) {
-        for (let x = 0; x < leftTrackGenes[i][0][j].length; x++) {
-          let singleStrand = leftTrackGenes[i][0][j][x];
-
-          if (Object.keys(singleStrand).length > 0) {
-            let xSpanStart = (singleStrand.start - startPos) / bpToPx!;
-            let xSpanEnd = (singleStrand.end - startPos) / bpToPx!;
-            const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
-            for (let x = startX; x <= endX; x++) {
-              xToFeatures[i][x].push(singleStrand);
-            }
-          }
-        }
-      }
-    }
-
-    for (let i = 0; i < xToFeatures.length; i++) {
-      for (let j = 0; j < xToFeatures[i].length; j++) {
-        let sum = 0;
-
-        for (let x = 0; x < xToFeatures[i][j].length; x++) {
-          sum += xToFeatures[i][j][x].score;
-        }
-        let avg = 0;
-        if (xToFeatures[i][j].length > 0) {
-          avg = sum / xToFeatures[i][j].length;
-        }
-
-        avg = scale(avg);
-
-        xToFeatures[i][j] = avg;
-      }
-    }
+    const xToFeatures = getPixelAvg(leftTrackGenes);
 
     if (canvasRefL.length > 0) {
       if (canvasRefL[canvasRefL.length - 1].current) {
-        let context =
-          canvasRefL[canvasRefL.length - 1].current.getContext("2d");
-
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-        for (let i = 0; i < xToFeatures[0].length; i++) {
-          // going through width pixels
-          // i = canvas pixel xpos
-          context.fillStyle = "blue";
-          context.globalAlpha = 1;
-          context.fillRect(
-            i,
-            40 - xToFeatures[xToFeatures.length - 1][i],
-            1,
-            xToFeatures[xToFeatures.length - 1][i]
-          );
-        }
+        drawCanvas(xToFeatures, canvasRefL.length - 1);
       }
     }
   }, [leftTrackGenes]);
@@ -555,34 +508,21 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   useEffect(() => {
     if (side === "left") {
       if (canvasRefL.length != 0) {
+        const xToFeatures = getPixelAvg(leftTrackGenes);
         canvasRefL.forEach((canvasRef, index) => {
           if (canvasRef.current) {
-            let context = canvasRef.current.getContext("2d");
-            context.clearRect(
-              0,
-              0,
-              context.canvas.width,
-              context.canvas.height
-            );
+            drawCanvas(xToFeatures, index);
           }
         });
-        setLeftTrack([...leftTrackGenes]);
       }
     } else if (side === "right") {
       if (canvasRefR.length != 0) {
+        const xToFeatures = getPixelAvg(rightTrackGenes);
         canvasRefR.forEach((canvasRef, index) => {
           if (canvasRef.current) {
-            let context = canvasRef.current.getContext("2d");
-
-            context.clearRect(
-              0,
-              0,
-              context.canvas.width,
-              context.canvas.height
-            );
+            drawCanvas(xToFeatures, index);
           }
         });
-        setRightTrack([...rightTrackGenes]);
       }
     }
   }, [side]);

@@ -82,6 +82,12 @@ function GenomeHub(props: any) {
 
           genome: newList.name,
         },
+
+        {
+          name: "dynseq",
+
+          genome: "hg19",
+        },
       ];
       newList.chrOrder = items;
       const serializedArray = JSON.stringify(newList);
