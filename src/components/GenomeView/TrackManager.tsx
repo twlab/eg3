@@ -430,6 +430,8 @@ function TrackManager(props) {
 
     let userRespond;
     let bedRespond;
+    let dynSeqRespond;
+    let tmpDynseq: Array<any> = [];
     let tmpResult: Array<any> = [];
     let tmpBed: Array<any> = [];
 
@@ -454,6 +456,12 @@ function TrackManager(props) {
         );
         bigWigRespond = await GetBigData(
           "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+          curChrName,
+          Number(sectionStart),
+          Number(sectionEnd)
+        );
+        dynSeqRespond = await GetBigData(
+          "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
           curChrName,
           Number(sectionStart),
           Number(sectionEnd)
@@ -491,8 +499,18 @@ function TrackManager(props) {
               (Number(sectionEnd) - Number(bigWigRespond[i].end))
             );
           }
-        }
 
+          for (let i = 0; i < dynSeqRespond.length; i++) {
+            dynSeqRespond[i].start =
+              Number(startRegion) +
+              (Number(sectionEnd) - Number(dynSeqRespond[i].start));
+            dynSeqRespond[i].end = -(
+              Number(startRegion) +
+              (Number(sectionEnd) - Number(dynSeqRespond[i].end))
+            );
+          }
+        }
+        tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
         tmpResult = [...tmpResult, ...gotResult];
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
@@ -502,9 +520,11 @@ function TrackManager(props) {
     const bedResult = tmpBed;
     const result = tmpResult;
     const bigWigResult = tmpBigWig;
+    const dynSeqResult = tmpDynseq;
     tempObj["result"] = result;
     tempObj["bedResult"] = bedResult;
     tempObj["bigWigResult"] = bigWigResult;
+    tempObj["dynseqResult"] = dynSeqResult;
     tempObj["side"] = "left";
 
     tempObj["location"] = `${minBp}:${minBp + bpRegionSize}`;
