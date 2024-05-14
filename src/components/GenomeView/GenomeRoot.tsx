@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState } from "react";
-import TrackManager from "./TrackManager";
-import Drag from "./ChrOrder";
-import { chrType } from "../../localdata/genomename";
-import { ChromosomeData } from "../../localdata/chromosomedata";
-import { AnnotationTrackData } from "../../localdata/annotationtrackdata";
-import { PublicHubAllData } from "../../localdata/publichub";
-import { TwoBitUrlData } from "../../localdata/twobiturl";
-export const AWS_API = "https://lambda.epigenomegateway.org/v2";
+import { useEffect, useRef, useState } from 'react';
+import TrackManager from './TrackManager';
+import Drag from './ChrOrder';
+import { chrType } from '../../localdata/genomename';
+import { ChromosomeData } from '../../localdata/chromosomedata';
+import { AnnotationTrackData } from '../../localdata/annotationtrackdata';
+import { PublicHubAllData } from '../../localdata/publichub';
+import { TwoBitUrlData } from '../../localdata/twobiturl';
+export const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
  * for the genomes that the user selected
@@ -31,13 +31,13 @@ function GenomeHub(props: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
       ...curGen.genome.defaultTracks,
-      { name: "bed" },
+      { name: 'bed' },
     ];
     let newList = [curGen.genome];
 
     const serializedArray = JSON.stringify(newList);
 
-    sessionStorage.setItem("myArray", serializedArray);
+    sessionStorage.setItem('myArray', serializedArray);
     setGenomeList([...newList]);
     setTrackManagerView(<></>);
   }
@@ -45,7 +45,7 @@ function GenomeHub(props: any) {
     let newList = { ...genomeList[0] };
     newList.defaultRegion = region;
     const serializedArray = JSON.stringify(newList);
-    sessionStorage.setItem("myArray", serializedArray);
+    sessionStorage.setItem('myArray', serializedArray);
   }
   function changeChrOrder(chrArr: any) {
     let newList = { ...genomeList[0] };
@@ -55,7 +55,7 @@ function GenomeHub(props: any) {
 
     const serializedArray = JSON.stringify(chrArr);
 
-    sessionStorage.setItem("chrOrder", serializedArray);
+    sessionStorage.setItem('chrOrder', serializedArray);
     setTrackManagerView(<></>);
   }
   function getSelectedGenome() {
@@ -64,34 +64,39 @@ function GenomeHub(props: any) {
 
       newList.defaultTracks = [
         {
-          type: "geneAnnotation",
-          name: "refGene",
+          type: 'geneAnnotation',
+          name: 'refGene',
           genome: newList.name,
         },
         {
-          name: "bed",
+          name: 'bed',
           genome: newList.name,
         },
         {
-          name: "bedDensity",
+          name: 'bedDensity',
 
           genome: newList.name,
         },
         {
-          name: "bigWig",
+          name: 'bigWig',
 
           genome: newList.name,
         },
 
         {
-          name: "dynseq",
+          name: 'dynseq',
 
-          genome: "hg19",
+          genome: 'hg19',
+        },
+        {
+          name: 'methylc',
+
+          genome: 'hg19',
         },
       ];
       newList.chrOrder = items;
       const serializedArray = JSON.stringify(newList);
-      sessionStorage.setItem("myArray", serializedArray);
+      sessionStorage.setItem('myArray', serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {
         setGenomeList(new Array<any>(newList));
         setTrackManagerView(<></>);
@@ -115,45 +120,50 @@ function GenomeHub(props: any) {
         getSelectedGenome();
       } else {
         let chrObj = {};
-        for (const chromosome of ChromosomeData["HG38"]) {
+        for (const chromosome of ChromosomeData['HG38']) {
           chrObj[chromosome.getName()] = chromosome.getLength();
         }
         let testGen: any = {
-          name: "hg38",
-          species: "human",
-          defaultRegion: "chr7:27053397-27373765",
+          name: 'hg38',
+          species: 'human',
+          defaultRegion: 'chr7:27053397-27373765',
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [
             {
-              type: "geneAnnotation",
-              name: "refGene",
-              genome: "hg38",
+              type: 'geneAnnotation',
+              name: 'refGene',
+              genome: 'hg19',
             },
             {
-              name: "bed",
-              genome: "hg38",
+              name: 'bed',
+              genome: 'hg19',
             },
             {
-              name: "bedDensity",
+              name: 'bedDensity',
 
-              genome: "hg38",
+              genome: 'hg19',
             },
             {
-              name: "bigWig",
+              name: 'bigWig',
 
-              genome: "hg19",
+              genome: 'hg19',
             },
             {
-              name: "dynseq",
+              name: 'dynseq',
 
-              genome: "hg19",
+              genome: 'hg19',
+            },
+            {
+              name: 'methylc',
+
+              genome: 'hg19',
             },
           ],
-          annotationTrackData: AnnotationTrackData["HG38"],
-          publicHubData: PublicHubAllData["HG38"]["publicHubData"],
-          publicHubList: PublicHubAllData["HG38"]["publicHubList"],
-          twoBitURL: TwoBitUrlData["HG38"],
+          annotationTrackData: AnnotationTrackData['HG19'],
+          publicHubData: PublicHubAllData['HG19']['publicHubData'],
+          publicHubList: PublicHubAllData['HG19']['publicHubList'],
+          twoBitURL: TwoBitUrlData['HG19'],
         };
         setTrackManagerView(
           <TrackManager
@@ -186,7 +196,7 @@ function GenomeHub(props: any) {
 
   return (
     <>
-      <div style={{ display: "flex" }}>
+      <div style={{ display: 'flex' }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div>
       <div>{TrackManagerView}</div>

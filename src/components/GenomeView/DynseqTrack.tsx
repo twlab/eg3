@@ -413,6 +413,22 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     overflowStrand2.current = {};
   }
 
+  function drawCanvas(xToFeatures, context, y, height, width: number = 1) {
+    for (let i = 0; i < xToFeatures[canvasRefR.length - 1].length; i++) {
+      // going through width pixels
+      // i = canvas pixel xpos
+      if (xToFeatures[canvasRefR.length - 1][i] !== 0) {
+        context.fillStyle = 'blue';
+
+        context.fillRect(
+          i,
+          xToFeatures[canvasRefR.length - 1][i],
+          1,
+          20 - xToFeatures[canvasRefR.length - 1][i]
+        );
+      }
+    }
+  }
   useEffect(() => {
     // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
     //     x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`
@@ -423,7 +439,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
     if (rightTrackGenes.length > 0) {
-      let [xToFeatureForward, featureReverse] = myFeatureAggregator.makeXMap(
+      let [xToFeatureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
         rightTrackGenes,
         bpToPx!,
         windowWidth,
@@ -443,6 +459,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         ) {
           // going through width pixels
           // i = canvas pixel xpos
+
           if (xToFeatureForward[canvasRefR.length - 1][i] !== 0) {
             context.fillStyle = 'blue';
 
@@ -456,78 +473,98 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         }
       }
 
-      canvasRefR2.map((canvasRef, index) => {
-        if (canvasRef.current) {
-          let context = canvasRef.current.getContext('2d');
+      if (canvasRefR2[canvasRefR2.length - 1].current) {
+        let context =
+          canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
 
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-          for (let i = 0; i < featureReverse[index].length; i++) {
-            // going through width pixels
-            // i = canvas pixel xpos
-            if (featureReverse[index][i] !== 0) {
-              context.fillStyle = 'red';
+        for (
+          let i = 0;
+          i < xToFeatureReverse[canvasRefR2.length - 1].length;
+          i++
+        ) {
+          // going through width pixels
+          // i = canvas pixel xpos
+          if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
+            context.fillStyle = 'red';
 
-              context.fillRect(i, 0, 1, featureReverse[index][i]);
-            }
+            context.fillRect(
+              i,
+              0,
+              1,
+              xToFeatureReverse[canvasRefR2.length - 1][i]
+            );
           }
         }
-      });
+      }
     }
   }, [rightTrackGenes]);
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {
-      let [featureForward, featureReverse] = myFeatureAggregator.makeXMap(
+      let [featureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
         leftTrackGenes,
         bpToPx!,
         windowWidth,
         bpRegionSize!
       );
-      canvasRefL.map((canvasRef, index) => {
-        if (canvasRefL[canvasRefL.length - 1 - index].current) {
+
+      if (canvasRefL.length > 0) {
+        if (canvasRefL[canvasRefL.length - 1].current) {
           let context =
-            canvasRefL[canvasRefL.length - 1 - index].current.getContext('2d');
+            canvasRefL[canvasRefL.length - 1].current.getContext('2d');
 
           context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-          for (let i = 0; i < featureForward[index].length; i++) {
+          for (
+            let i = 0;
+            i < featureForward[canvasRefL.length - 1].length;
+            i++
+          ) {
             // going through width pixels
             // i = canvas pixel xpos
-            context.fillStyle = 'blue';
-            if (featureForward[index][i] !== 0) {
-              console.log(featureForward[index][i]);
+
+            if (featureForward[canvasRefL.length - 1][i] !== 0) {
+              context.fillStyle = 'blue';
               context.fillRect(
                 i,
-                featureForward[index][i],
+                featureForward[canvasRefL.length - 1][i],
                 1,
-                20 - featureForward[index][i]
+                20 - featureForward[canvasRefL.length - 1][i]
               );
             }
           }
         }
-      });
+      }
 
-      canvasRefL2.map((canvasRef, index) => {
-        if (canvasRefL2[canvasRefL2.length - 1 - index].current) {
+      if (canvasRefL2.length > 0) {
+        if (canvasRefL2[canvasRefL2.length - 1].current) {
           let context =
-            canvasRefL2[canvasRefL2.length - 1 - index].current.getContext(
-              '2d'
-            );
+            canvasRefL2[canvasRefL2.length - 1].current.getContext('2d');
 
           context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-          for (let i = 0; i < featureReverse[index].length; i++) {
+          for (
+            let i = 0;
+            i < xToFeatureReverse[canvasRefL2.length - 1].length;
+            i++
+          ) {
             // going through width pixels
             // i = canvas pixel xpos
-            if (featureReverse[index][i] !== 0) {
+            if (xToFeatureReverse[canvasRefL2.length - 1][i] !== 0) {
               context.fillStyle = 'red';
 
-              context.fillRect(i, 0, 1, featureReverse[index][i]);
+              context.fillRect(
+                i,
+                0,
+                1,
+                xToFeatureReverse[canvasRefL2.length - 1][i]
+              );
             }
           }
         }
-      });
+      }
     }
   }, [leftTrackGenes]);
 
@@ -578,7 +615,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }, [trackData]);
 
   return (
-    <div style={{ display: 'flex', height: '40px' }}>
+    <div style={{ height: '40px' }}>
       {side === 'right' ? (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {rightTrackGenes.map((item, index) => (
@@ -607,19 +644,23 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {leftTrackGenes.map((item, index) => (
             <div
-              key={index + 3479}
-              style={{ display: 'flex', flexDirection: 'column' }}
+              key={canvasRefL.length - index - 1}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'end',
+              }}
             >
               <canvas
-                key={index}
-                ref={canvasRefL[index]}
+                key={canvasRefL.length - index - 1 + 34343}
+                ref={canvasRefL[canvasRefL.length - index - 1]}
                 height={'20'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
               <canvas
-                key={index + 2}
-                ref={canvasRefL2[index]}
+                key={canvasRefL2.length - index - 1 + 3343434}
+                ref={canvasRefL2[canvasRefL2.length - index - 1]}
                 height={'20'}
                 width={`${windowWidth * 2}px`}
                 style={{}}

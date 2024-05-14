@@ -1,6 +1,17 @@
+import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
+import { myFeatureAggregator } from './commonComponents/screen-scaling/FeatureAggregator';
+const VERTICAL_PADDING = 0;
+const PLOT_DOWNWARDS_STRAND = 'reverse';
+const DEFAULT_COLORS_FOR_CONTEXT = {
+  CG: { color: 'rgb(100,139,216)', background: '#d9d9d9' },
+  CHG: { color: 'rgb(255,148,77)', background: '#ffe0cc' },
+  CHH: { color: 'rgb(255,0,255)', background: '#ffe5ff' },
+};
+const OVERLAPPING_CONTEXTS_COLORS = DEFAULT_COLORS_FOR_CONTEXT.CG;
+const UNKNOWN_CONTEXT_COLORS = DEFAULT_COLORS_FOR_CONTEXT.CG;
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -8,7 +19,7 @@ interface BedTrackProps {
   side?: string;
   windowWidth?: number;
 }
-const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
+const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   bpRegionSize,
   bpToPx,
   trackData,
@@ -20,7 +31,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(':');
-    result = trackData!.bedResult;
+    result = trackData!.methylcResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -31,14 +42,17 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
+  const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
+  const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-
+  var scale = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -187,24 +201,13 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
         strandLevelList[j].push(strand);
       }
     }
-
-    setRightTrack([
-      ...rightTrackGenes,
-      [
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={strandLevelList}
-          checkPrev={prevOverflowStrand.current}
-          startTrackPos={end - bpRegionSize!}
-        />,
-        [...strandLevelList],
-        startPos,
-      ],
-    ]);
+    console.log(strandLevelList);
+    setRightTrack([...rightTrackGenes, [[...result], startPos]]);
 
     const newCanvasRef = createRef();
+    const newCanvasRef2 = createRef();
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-
+    setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
     for (var i = 0; i < strandLevelList.length; i++) {
       const levelContent = strandLevelList[i];
@@ -235,21 +238,11 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
       overflowStrand2.current = {};
-      setLeftTrack([
-        ...leftTrackGenes,
-        [
-          <SetStrand
-            key={getRndInteger()}
-            strandPos={strandLevelList}
-            checkPrev={prevOverflowStrand.current}
-            startTrackPos={start}
-          />,
-          [...strandLevelList],
-          startPos,
-        ],
-      ]);
+      setLeftTrack([...leftTrackGenes, [[...result[0]], startPos]]);
       const newCanvasRef = createRef();
       setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
+      const newCanvasRef2 = createRef();
+      setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
     }
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
@@ -261,6 +254,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   async function fetchGenomeData2() {
     let startPos = start;
     var strandIntervalList: Array<any> = [];
+
     result[0].sort((a, b) => {
       return b.end - a.end;
     });
@@ -404,23 +398,12 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
       }
     }
 
-    setLeftTrack([
-      ...leftTrackGenes,
-      [
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={strandLevelList}
-          checkPrev={prevOverflowStrand2.current}
-          startTrackPos={start}
-        />,
-        [...strandLevelList],
-        startPos,
-      ],
-    ]);
+    setLeftTrack([...leftTrackGenes, [[...result[0]], startPos]]);
 
     const newCanvasRef = createRef();
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-
+    const newCanvasRef2 = createRef();
+    setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
     for (var i = 0; i < strandLevelList.length; i++) {
       var levelContent = strandLevelList[i];
       for (var strand of levelContent) {
@@ -438,102 +421,253 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
 
     overflowStrand2.current = {};
   }
-  function SetStrand(props) {
-    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
-    var yCoord = 25;
-    const strandList: Array<any> = [];
-
-    if (props.strandPos.length) {
-      var checkObj = false;
-      if (props.checkPrev !== undefined) {
-        checkObj = true;
-      }
-      for (let i = 0; i < props.strandPos.length; i++) {
-        let strandHtml: Array<any> = [];
-
-        for (let j = 0; j < props.strandPos[i].length; j++) {
-          const singleStrand = props.strandPos[i][j];
-
-          if (
-            Object.keys(singleStrand).length === 0 ||
-            (checkObj && singleStrand.id in props.checkPrev)
-          ) {
-            continue;
-          }
-
-          //add a single strand to current track------------------------------------------------------------------------------------
-          strandHtml.push(
-            <React.Fragment key={j}>
-              <line
-                x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`}
-                y1={`${yCoord}`}
-                x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
-                y2={`${yCoord}`}
-                stroke={'blue'}
-                strokeWidth="20"
-              />
-            </React.Fragment>
-          );
-        }
-
-        yCoord += 25;
-
-        strandList.push(strandHtml);
-      }
+  function findFeatureInPixel(data: any, windowWidth: number, bpToPx) {
+    let xToFeatures: Array<Array<any>> = [];
+    for (let i = 0; i < data.length; i++) {
+      const newArr: Array<any> = Array.from(
+        { length: Number(windowWidth * 2) },
+        () => []
+      );
+      xToFeatures.push(newArr);
     }
 
-    return strandList.map((item, index) => (
-      <React.Fragment key={index}>{item}</React.Fragment>
-    ));
+    for (let i = 0; i < data.length; i++) {
+      for (let j = 0; j < data[i].length; j++) {
+        for (let x = 0; x < data[i][j].length; x++) {
+          let singleStrand = data[i][j][x];
+
+          if (Object.keys(singleStrand).length > 0) {
+            let xSpanStart = (singleStrand.start - data[i][1]) / bpToPx!;
+            let xSpanEnd = (singleStrand.end - data[i][1]) / bpToPx!;
+            const startX = Math.max(0, Math.floor(xSpanStart));
+            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
+
+            for (let x = startX; x <= endX; x++) {
+              xToFeatures[i][x].push(singleStrand);
+            }
+          }
+        }
+      }
+    }
+    return xToFeatures;
   }
 
+  function computeScales(
+    dataForward,
+    dataReverse,
+    height: number = 40,
+    maxMethyl: number = 1
+  ) {
+    /*
+      xMap = returnValueOfAggregateRecords = [
+          {
+              combined: {
+                  depth: 5 (NaN if no data),
+                  contextValues: [
+                      {context: "CG", value: 0.3},
+                      {context: "CHH", value: 0.3},
+                      {context: "CHG", value: 0.3},
+                  ]
+              },
+              forward: {},
+              reverse: {}
+          },
+          ...
+      ]
+      */
+    const maxDepthForward = dataForward.reduce(
+      (max, record) => {
+        return record.depth > dataForward[6] ? record : max;
+      },
+      { depth: 0 }
+    );
+
+    const maxDepthReverse = dataReverse.reduce(
+      (max, record) => {
+        return record.depth > dataReverse[6] ? record : max;
+      },
+      { depth: 0 }
+    );
+    console.log(maxDepthForward, maxDepthReverse);
+    const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
+    console.log(maxDepth);
+    return {
+      methylToY: scaleLinear()
+        .domain([maxMethyl, 0])
+        .range([VERTICAL_PADDING, height])
+        .clamp(true),
+      depthToY: scaleLinear()
+        .domain([maxDepth, 0])
+        .range([VERTICAL_PADDING, height])
+        .clamp(true),
+    };
+  }
   useEffect(() => {
-    canvasRefR.map((canvasRef, index) => {
-      if (canvasRef.current) {
-        let context = canvasRef.current.getContext('2d');
+    // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
+    //     x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`
+    // x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
+    // step 1: loop through the svg width which is windowwith * 2
+    // 2: create an array for each x pixel.
+    // 3: round each strand start and end xspan
+    // 4: If a strand is in the same xspan pixel then add them to a array index
+    // 5: the array index will represent the x coord pixel of the canvas and svg
+    if (rightTrackGenes.length > 0) {
+      let dataForward: Array<any> = [];
+      let dataReverse: Array<any> = [];
+      for (let i = 0; i < rightTrackGenes.length; i++) {
+        const newArr: Array<any> = [];
+        dataForward.push(newArr);
+        const newArr2: Array<any> = [];
+        dataReverse.push(newArr2);
+      }
+
+      let records = findFeatureInPixel(rightTrackGenes, windowWidth, bpToPx!);
+      console.log(records);
+      for (let i = 0; i < records.length; i++) {
+        let filteredForward;
+        let filteredReverse;
+        for (let j = 0; j < records[i].length; j++) {
+          filteredForward = records[i][j].filter(
+            (record) => record['5'] === '+'
+          );
+          filteredReverse = records[i][j].filter(
+            (record) => record['5'] !== '+'
+          );
+
+          dataForward[i].push([...filteredForward]);
+          dataReverse[i].push([...filteredReverse]);
+        }
+      }
+
+      for (let i = 0; i < dataForward.length; i++) {
+        let scales = computeScales(dataForward[i], dataReverse[i]);
+        for (let j = 0; j < dataForward[i].length; j++) {
+          for (let x = 0; x < dataForward[i][j].length; x++) {
+            dataForward[i][j][x];
+          }
+        }
+      }
+
+      if (canvasRefR[canvasRefR.length - 1].current) {
+        let context =
+          canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-        for (let i = 0; i < rightTrackGenes[index][1].length; i++) {
-          let startPos = rightTrackGenes[index][2];
-          for (let j = 0; j < rightTrackGenes[index][1][i].length; j++) {
-            let singleStrand = rightTrackGenes[index][1][i][j];
-            context.fillStyle = 'red';
+
+        for (
+          let i = 0;
+          i < xToFeatureForward[canvasRefR.length - 1].length;
+          i++
+        ) {
+          // going through width pixels
+          // i = canvas pixel xpos
+
+          if (xToFeatureForward[canvasRefR.length - 1][i] !== 0) {
+            context.fillStyle = 'blue';
 
             context.fillRect(
-              (singleStrand.start - startPos) / bpToPx!,
-              10,
-              (singleStrand.end - startPos) / bpToPx! -
-                (singleStrand.start - startPos) / bpToPx!,
-              80
+              i,
+              xToFeatureForward[canvasRefR.length - 1][i],
+              1,
+              20 - xToFeatureForward[canvasRefR.length - 1][i]
             );
           }
         }
       }
-    });
+
+      if (canvasRefR2[canvasRefR2.length - 1].current) {
+        let context =
+          canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
+
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+        for (
+          let i = 0;
+          i < xToFeatureReverse[canvasRefR2.length - 1].length;
+          i++
+        ) {
+          // going through width pixels
+          // i = canvas pixel xpos
+          if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
+            context.fillStyle = 'red';
+
+            context.fillRect(
+              i,
+              0,
+              1,
+              xToFeatureReverse[canvasRefR2.length - 1][i]
+            );
+          }
+        }
+      }
+    }
   }, [rightTrackGenes]);
 
   useEffect(() => {
-    canvasRefL.map((canvasRef, index) => {
-      if (canvasRef.current) {
-        let context = canvasRefL[index].current.getContext('2d');
+    if (leftTrackGenes.length > 0) {
+      let [featureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
+        leftTrackGenes,
+        bpToPx!,
+        windowWidth,
+        bpRegionSize!
+      );
 
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-        for (let i = 0; i < leftTrackGenes[index][1].length; i++) {
-          let startPos = leftTrackGenes[index][2];
-          for (let j = 0; j < leftTrackGenes[index][1][i].length; j++) {
-            let singleStrand = leftTrackGenes[index][1][i][j];
-            context.fillStyle = 'red';
+      if (canvasRefL.length > 0) {
+        if (canvasRefL[canvasRefL.length - 1].current) {
+          let context =
+            canvasRefL[canvasRefL.length - 1].current.getContext('2d');
 
-            context.fillRect(
-              (singleStrand.start - startPos) / bpToPx!,
-              10,
-              (singleStrand.end - startPos) / bpToPx! -
-                (singleStrand.start - startPos) / bpToPx!,
-              80
-            );
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+          for (
+            let i = 0;
+            i < featureForward[canvasRefL.length - 1].length;
+            i++
+          ) {
+            // going through width pixels
+            // i = canvas pixel xpos
+
+            if (featureForward[canvasRefL.length - 1][i] !== 0) {
+              context.fillStyle = 'blue';
+              context.fillRect(
+                i,
+                featureForward[canvasRefL.length - 1][i],
+                1,
+                20 - featureForward[canvasRefL.length - 1][i]
+              );
+            }
           }
         }
       }
-    });
+
+      if (canvasRefL2.length > 0) {
+        if (canvasRefL2[canvasRefL2.length - 1].current) {
+          let context =
+            canvasRefL2[canvasRefL2.length - 1].current.getContext('2d');
+
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+          for (
+            let i = 0;
+            i < xToFeatureReverse[canvasRefL2.length - 1].length;
+            i++
+          ) {
+            // going through width pixels
+            // i = canvas pixel xpos
+            if (xToFeatureReverse[canvasRefL2.length - 1][i] !== 0) {
+              context.fillStyle = 'red';
+
+              context.fillRect(
+                i,
+                0,
+                1,
+                xToFeatureReverse[canvasRefL2.length - 1][i]
+              );
+            }
+          }
+        }
+      }
+    }
   }, [leftTrackGenes]);
 
   useEffect(() => {
@@ -557,6 +691,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
         canvasRefR.forEach((canvasRef, index) => {
           if (canvasRef.current) {
             let context = canvasRef.current.getContext('2d');
+
             context.clearRect(
               0,
               0,
@@ -582,29 +717,61 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   }, [trackData]);
 
   return (
-    <div>
-      {side === 'right'
-        ? rightTrackGenes.map((item, index) => (
-            <canvas
-              id="canvas1"
-              key={index}
-              ref={canvasRefR[index]}
-              height={'100%'}
-              width={`${windowWidth * 2}px`}
-              style={{}}
-            />
-          ))
-        : leftTrackGenes.map((item, index) => (
-            <canvas
-              id="canvas2"
-              key={canvasRefL.length - 1 - index}
-              ref={canvasRefL[canvasRefL.length - 1 - index]}
-              height={'100%'}
-              width={`${windowWidth * 2}px`}
-              style={{}}
-            />
+    <div style={{ height: '40px' }}>
+      {side === 'right' ? (
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          {rightTrackGenes.map((item, index) => (
+            <div
+              key={index + 34343479}
+              style={{ display: 'flex', flexDirection: 'column' }}
+            >
+              <canvas
+                key={index}
+                ref={canvasRefR[index]}
+                height={'20'}
+                width={`${windowWidth * 2}px`}
+                style={{}}
+              />
+              <canvas
+                key={index + 2}
+                ref={canvasRefR2[index]}
+                height={'20'}
+                width={`${windowWidth * 2}px`}
+                style={{}}
+              />
+            </div>
           ))}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          {leftTrackGenes.map((item, index) => (
+            <div
+              key={canvasRefL.length - index - 1}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'end',
+              }}
+            >
+              <canvas
+                key={canvasRefL.length - index - 1 + 34343}
+                ref={canvasRefL[canvasRefL.length - index - 1]}
+                height={'20'}
+                width={`${windowWidth * 2}px`}
+                style={{}}
+              />
+              <canvas
+                key={canvasRefL2.length - index - 1 + 3343434}
+                ref={canvasRefL2[canvasRefL2.length - index - 1]}
+                height={'20'}
+                width={`${windowWidth * 2}px`}
+                style={{}}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 });
-export default memo(BedDensityTrack);
+export default memo(MethylcTrack);

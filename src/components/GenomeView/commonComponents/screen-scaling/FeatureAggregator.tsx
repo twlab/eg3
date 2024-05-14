@@ -137,7 +137,7 @@ function computeScales(
   }
 }
 
-function findFeatureInPixel(
+export function findFeatureInPixel(
   data: any,
   windowWidth: number,
   trackGenes: Array<any>,
