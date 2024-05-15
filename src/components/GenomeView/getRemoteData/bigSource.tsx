@@ -1,5 +1,5 @@
-import { BigWig } from "@gmod/bbi";
-import { RemoteFile } from "generic-filehandle";
+import { BigWig } from '@gmod/bbi';
+import { RemoteFile } from 'generic-filehandle';
 
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
@@ -10,12 +10,14 @@ import { RemoteFile } from "generic-filehandle";
 function GetBigData(url, chr, start, end) {
   async function getData(loci, options) {
     const fetch = window.fetch.bind(window);
+    console.log();
     const promises = loci.map((locus) => {
+      console.log('ERER');
       let chrom = options.ensemblStyle
-        ? locus.chr.replace("chr", "")
+        ? locus.chr.replace('chr', '')
         : locus.chr;
-      if (chrom === "M") {
-        chrom = "MT";
+      if (chrom === 'M') {
+        chrom = 'MT';
       }
 
       let bw = new BigWig({
@@ -32,15 +34,15 @@ function GetBigData(url, chr, start, end) {
   }
 
   async function handle() {
-    let data = await getData([{ chr: chr, end: end, start: start }], {
-      displayMode: "full",
-      color: "blue",
-      color2: "red",
+    let data = getData([{ chr: chr, end: end, start: start }], {
+      displayMode: 'full',
+      color: 'blue',
+      color2: 'red',
       maxRows: 20,
       height: 40,
       hideMinimalItems: false,
       sortItems: false,
-      label: "",
+      label: '',
     });
 
     return data;

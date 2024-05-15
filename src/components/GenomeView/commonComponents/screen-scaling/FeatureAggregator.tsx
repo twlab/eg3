@@ -214,13 +214,11 @@ export const myFeatureAggregator: FeatureAggregator = {
     for (let i = 0; i < trackGenes.length; i++) {
       let startPos = trackGenes[i][1];
       for (let j = 0; j < trackGenes[i][0].length; j++) {
-        for (let x = 0; x < trackGenes[i][0][j].length; x++) {
-          let singleStrand = trackGenes[i][0][j][x];
-          if (singleStrand.score < 0) {
-            dataReverse[i].push(singleStrand);
-          } else {
-            dataForward[i].push(singleStrand);
-          }
+        let singleStrand = trackGenes[i][0][j];
+        if (singleStrand.score < 0) {
+          dataReverse[i].push(singleStrand);
+        } else {
+          dataForward[i].push(singleStrand);
         }
       }
     }

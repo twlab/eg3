@@ -1,6 +1,6 @@
-import React, { memo } from "react";
-import { useEffect, useRef, useState } from "react";
-const AWS_API = "https://lambda.epigenomegateway.org/v2";
+import React, { memo } from 'react';
+import { useEffect, useRef, useState } from 'react';
+const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 
 interface GenRefTrackProps {
   bpRegionSize?: number;
@@ -20,7 +20,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(":");
+    [start, end] = trackData!.location.split(':');
     result = trackData!.result;
   }
 
@@ -50,7 +50,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     return Math.floor(Math.random() * (max - min)) + min;
   }
 
-  async function fetchGenomeData(initial: number = 0) {
+  function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
     var strandIntervalList: Array<any> = [];
@@ -246,7 +246,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   //________________________________________________________________________________________________________________________________________________________
   //________________________________________________________________________________________________________________________________________________________
 
-  async function fetchGenomeData2() {
+  function fetchGenomeData2() {
     var strandIntervalList: Array<any> = [];
 
     result.sort((a, b) => {
@@ -447,14 +447,14 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
           } else {
             // find the color and exons on the strand---------------------------------------------------------------
             var strandColor;
-            if (singleStrand.transcriptionClass === "coding") {
-              strandColor = "purple";
+            if (singleStrand.transcriptionClass === 'coding') {
+              strandColor = 'purple';
             } else {
-              strandColor = "green";
+              strandColor = 'green';
             }
             const exonIntervals: Array<any> = [];
-            const exonStarts = singleStrand.exonStarts.split(",");
-            const exonEnds = singleStrand.exonEnds.split(",");
+            const exonStarts = singleStrand.exonStarts.split(',');
+            const exonEnds = singleStrand.exonEnds.split(',');
             for (let z = 0; z < exonStarts.length; z++) {
               exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
             }
@@ -467,7 +467,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             const bottomY = 5;
             var placementStartX = startX - ARROW_WIDTH / 2;
             var placementEndX = endX;
-            if (singleStrand.strand === "+") {
+            if (singleStrand.strand === '+') {
               placementStartX += ARROW_WIDTH;
             } else {
               placementEndX -= ARROW_WIDTH;
@@ -482,7 +482,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             ) {
               // Is forward strand ? point to the right : point to the left
               const arrowTailX =
-                singleStrand.strand === "+"
+                singleStrand.strand === '+'
                   ? arrowTipX - ARROW_WIDTH
                   : arrowTipX + ARROW_WIDTH;
               const arrowPoints = [
@@ -558,15 +558,15 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
       <svg
         key={index}
         width={`${windowWidth * 2}px`}
-        height={"100%"}
-        style={{ display: "inline-block" }}
+        height={'100%'}
+        style={{ display: 'inline-block' }}
         overflow="visible"
       >
         <line
           x1={`0`}
           y1="0"
           x2={`${windowWidth * 2}px`}
-          y2={"0"}
+          y2={'0'}
           stroke="gray"
           strokeWidth="3"
         />
@@ -574,15 +574,15 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
           x1={`${windowWidth * 2}px`}
           y1="0"
           x2={`${windowWidth * 2}px`}
-          y2={"100%"}
+          y2={'100%'}
           stroke="gray"
           strokeWidth="3"
         />
         <line
           x1={`0`}
-          y1={"100%"}
+          y1={'100%'}
           x2={`${windowWidth * 2}px`}
-          y2={"100%"}
+          y2={'100%'}
           stroke="gray"
           strokeWidth="3"
         />
@@ -614,17 +614,17 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   }, [leftTrackGenes]);
 
   useEffect(() => {
-    async function handle() {
-      if (trackData!.side === "right") {
+    function handle() {
+      if (trackData!.side === 'right') {
         fetchGenomeData();
-      } else if (trackData!.side === "left") {
+      } else if (trackData!.side === 'left') {
         fetchGenomeData2();
       }
     }
     handle();
   }, [trackData]);
 
-  return <div style={{}}>{side === "right" ? genomeTrackR : genomeTrackL}</div>;
+  return <div style={{}}>{side === 'right' ? genomeTrackR : genomeTrackL}</div>;
 });
 
 export default memo(GenRefTrack);

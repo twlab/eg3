@@ -150,13 +150,7 @@ function TrackManager(props) {
       }
       curIdx += 1;
     }
-    console.log(
-      chrData[side === 'left' ? curIdx + 1 : curIdx] +
-        ':' +
-        String(curStartBp + totalLength) +
-        '-' +
-        String(curStartBp + bpRegionSize / 2 + totalLength)
-    );
+
     let curRegion =
       chrData[side === 'left' ? curIdx + 1 : curIdx] +
       ':' +
@@ -492,7 +486,7 @@ function TrackManager(props) {
         );
 
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
-        let gotResult = await userRespond.json();
+        let gotResult = userRespond.json();
 
         if (i !== 0) {
           for (let i = 0; i < gotResult.length; i++) {
@@ -574,8 +568,8 @@ function TrackManager(props) {
 
   useEffect(() => {
     console.log(windowWidth);
-    async function getData() {
-      await fetchGenomeData(1);
+    function getData() {
+      fetchGenomeData(1);
     }
 
     getData();
@@ -637,7 +631,7 @@ function TrackManager(props) {
           style={{
             display: 'flex',
             //makes element align right
-            alignItems: dragX.current <= 0 ? 'start' : 'end',
+            alignItems: side === 'right' ? 'start' : 'end',
             flexDirection: 'column',
           }}
         >
