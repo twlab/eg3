@@ -1,8 +1,9 @@
 import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
-
+import MethylCRecord from './MethylCRecord';
 import { myFeatureAggregator } from './commonComponents/screen-scaling/FeatureAggregator';
+import { reverse } from 'dns';
 const VERTICAL_PADDING = 0;
 const PLOT_DOWNWARDS_STRAND = 'reverse';
 const DEFAULT_COLORS_FOR_CONTEXT = {
@@ -120,6 +121,22 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       for (let i = resultIdx + 1; i < result.length; i++) {
         var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
+        if (curStrand.end > end) {
+          const strandId = curStrand.start + curStrand.end;
+          overflowStrand.current[strandId] = {
+            level: i,
+            strand: curStrand,
+          };
+        }
+
+        if (trackData!.initial) {
+          if (curStrand.txStart < start) {
+            overflowStrand2.current[curStrand.id] = {
+              level: i,
+              strand: curStrand,
+            };
+          }
+        }
         var curHighestLvl = [idx, strandIntervalList[idx][2]];
 
         // if current starting coord is less than previous ending coord then they overlap
@@ -190,18 +207,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     }
 
     //SORT our interval data into levels to be place on the track
-    const strandLevelList: Array<any> = [];
-    for (var i = 0; i < strandIntervalList.length; i++) {
-      var intervalLevelData = strandIntervalList[i][2];
-      for (var j = 0; j < intervalLevelData.length; j++) {
-        var strand = intervalLevelData[j];
-        while (strandLevelList.length - 1 < j) {
-          strandLevelList.push(new Array<any>());
-        }
-        strandLevelList[j].push(strand);
-      }
-    }
-    console.log(strandLevelList);
+
     setRightTrack([...rightTrackGenes, [[...result], startPos]]);
 
     const newCanvasRef = createRef();
@@ -209,36 +215,12 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
-    for (var i = 0; i < strandLevelList.length; i++) {
-      const levelContent = strandLevelList[i];
-      for (var strand of levelContent) {
-        if (strand.end > end) {
-          const strandId = strand.start + strand.end;
-          overflowStrand.current[strandId] = {
-            level: i,
-            strand: strand,
-          };
-        }
-      }
-    }
 
     if (trackData!.initial) {
-      for (var i = 0; i < strandLevelList.length; i++) {
-        var levelContent = strandLevelList[i];
-        for (var strand of levelContent) {
-          if (strand.txStart < start) {
-            overflowStrand2.current[strand.id] = {
-              level: i,
-              strand: strand,
-            };
-          }
-        }
-      }
-
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
       overflowStrand2.current = {};
-      setLeftTrack([...leftTrackGenes, [[...result[0]], startPos]]);
+      setLeftTrack([...leftTrackGenes, [[...result], startPos]]);
       const newCanvasRef = createRef();
       setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
       const newCanvasRef2 = createRef();
@@ -452,12 +434,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     return xToFeatures;
   }
 
-  function computeScales(
-    dataForward,
-    dataReverse,
-    height: number = 40,
-    maxMethyl: number = 1
-  ) {
+  function computeScales(xMap, height: number = 40, maxMethyl: number = 1) {
     /*
       xMap = returnValueOfAggregateRecords = [
           {
@@ -475,22 +452,25 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
           ...
       ]
       */
-    const maxDepthForward = dataForward.reduce(
-      (max, record) => {
-        return record.depth > dataForward[6] ? record : max;
+    const forwardRecords = xMap.map((record) => record.forward);
+    const reverseRecords = xMap.map((record) => record.reverse);
+
+    const maxDepthForward = forwardRecords.reduce(
+      (maxRecord, record) => {
+        return record.depth > maxRecord.depth ? record : maxRecord;
       },
       { depth: 0 }
     );
 
-    const maxDepthReverse = dataReverse.reduce(
-      (max, record) => {
-        return record.depth > dataReverse[6] ? record : max;
+    const maxDepthReverse = reverseRecords.reduce(
+      (maxRecord, record) => {
+        return record.depth > maxRecord.depth ? record : maxRecord;
       },
       { depth: 0 }
     );
-    console.log(maxDepthForward, maxDepthReverse);
+
     const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
-    console.log(maxDepth);
+
     return {
       methylToY: scaleLinear()
         .domain([maxMethyl, 0])
@@ -511,6 +491,11 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     // 3: round each strand start and end xspan
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
+
+    //     CONTEXT = 3,
+    // VALUE = 4,
+    // STRAND = 5,
+    // DEPTH = 6,
     if (rightTrackGenes.length > 0) {
       let dataForward: Array<any> = [];
       let dataReverse: Array<any> = [];
@@ -521,85 +506,79 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         dataReverse.push(newArr2);
       }
 
-      let records = findFeatureInPixel(rightTrackGenes, windowWidth, bpToPx!);
-      console.log(records);
-      for (let i = 0; i < records.length; i++) {
-        let filteredForward;
-        let filteredReverse;
-        for (let j = 0; j < records[i].length; j++) {
-          filteredForward = records[i][j].filter(
-            (record) => record['5'] === '+'
+      let xToRecords = findFeatureInPixel(
+        rightTrackGenes,
+        windowWidth,
+        bpToPx!
+      );
+
+      let aggregatedRecords: Array<any> = [];
+      for (let i = 0; i < xToRecords.length; i++) {
+        aggregatedRecords.push(
+          xToRecords[i].map(MethylCRecord.aggregateByStrand)
+        );
+      }
+
+      if (rightTrackGenes.length > 0) {
+        if (canvasRefR[canvasRefR.length - 1].current) {
+          let context =
+            canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+          let scales = computeScales(
+            aggregatedRecords[aggregatedRecords.length - 1]
           );
-          filteredReverse = records[i][j].filter(
-            (record) => record['5'] !== '+'
-          );
+          for (
+            let j = 0;
+            j < aggregatedRecords[aggregatedRecords.length - 1].length;
+            j++
+          ) {
+            let forward =
+              aggregatedRecords[aggregatedRecords.length - 1][j].forward;
+            let reverse =
+              aggregatedRecords[aggregatedRecords.length - 1][j].reverse;
+            let combine =
+              aggregatedRecords[aggregatedRecords.length - 1][j].combined;
 
-          dataForward[i].push([...filteredForward]);
-          dataReverse[i].push([...filteredReverse]);
-        }
-      }
+            for (let contextData of forward.contextValues) {
+              const drawY = scales.methylToY(Number(contextData.value));
+              const drawHeight = 40 - drawY;
+              const contextName = contextData.context;
+              const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
 
-      for (let i = 0; i < dataForward.length; i++) {
-        let scales = computeScales(dataForward[i], dataReverse[i]);
-        for (let j = 0; j < dataForward[i].length; j++) {
-          for (let x = 0; x < dataForward[i][j].length; x++) {
-            dataForward[i][j][x];
+              context.fillStyle = color;
+              context.globalAlpha = 0.75;
+              context.fillRect(j, drawY, 1, drawHeight);
+            }
           }
         }
       }
 
-      if (canvasRefR[canvasRefR.length - 1].current) {
-        let context =
-          canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+      // if (canvasRefR2[canvasRefR2.length - 1].current) {
+      //   let context =
+      //     canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
 
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+      //   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-        for (
-          let i = 0;
-          i < xToFeatureForward[canvasRefR.length - 1].length;
-          i++
-        ) {
-          // going through width pixels
-          // i = canvas pixel xpos
+      //   for (
+      //     let i = 0;
+      //     i < xToFeatureReverse[canvasRefR2.length - 1].length;
+      //     i++
+      //   ) {
+      //     // going through width pixels
+      //     // i = canvas pixel xpos
+      //     if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
+      //       context.fillStyle = 'red';
 
-          if (xToFeatureForward[canvasRefR.length - 1][i] !== 0) {
-            context.fillStyle = 'blue';
-
-            context.fillRect(
-              i,
-              xToFeatureForward[canvasRefR.length - 1][i],
-              1,
-              20 - xToFeatureForward[canvasRefR.length - 1][i]
-            );
-          }
-        }
-      }
-
-      if (canvasRefR2[canvasRefR2.length - 1].current) {
-        let context =
-          canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
-
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-        for (
-          let i = 0;
-          i < xToFeatureReverse[canvasRefR2.length - 1].length;
-          i++
-        ) {
-          // going through width pixels
-          // i = canvas pixel xpos
-          if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
-            context.fillStyle = 'red';
-
-            context.fillRect(
-              i,
-              0,
-              1,
-              xToFeatureReverse[canvasRefR2.length - 1][i]
-            );
-          }
-        }
-      }
+      //       context.fillRect(
+      //         i,
+      //         0,
+      //         1,
+      //         xToFeatureReverse[canvasRefR2.length - 1][i]
+      //       );
+      //     }
+      //   }
+      // }
     }
   }, [rightTrackGenes]);
 
@@ -717,7 +696,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   }, [trackData]);
 
   return (
-    <div style={{ height: '40px' }}>
+    <div style={{ height: '80px' }}>
       {side === 'right' ? (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {rightTrackGenes.map((item, index) => (
@@ -728,14 +707,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
               <canvas
                 key={index}
                 ref={canvasRefR[index]}
-                height={'20'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-              <canvas
-                key={index + 2}
-                ref={canvasRefR2[index]}
-                height={'20'}
+                height={'40'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />

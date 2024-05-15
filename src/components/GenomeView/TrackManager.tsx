@@ -350,7 +350,7 @@ function TrackManager(props) {
     const bigWigResult = tmpBigWig;
     const methylcResult = tmpMethylc;
     const dynSeqResult = tmpDynseq;
-    console.log(methylcResult);
+
     tempObj['location'] = `${maxBp - bpRegionSize}:${maxBp}`;
     tempObj['result'] = result;
     tempObj['bedResult'] = bedResult;
