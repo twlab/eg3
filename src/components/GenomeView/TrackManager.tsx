@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import GetTabixData from './getRemoteData/tabixSource';
-
+import worker_script from '../../Worker/worker';
 import GetBigData from './getRemoteData/bigSource';
 const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 const requestAnimationFrame = window.requestAnimationFrame;
@@ -13,7 +13,7 @@ import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
 import CircularProgress from '@mui/material/CircularProgress';
 const windowWidth = window.innerWidth;
-
+let worker: Worker;
 interface MyComponentProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -35,7 +35,11 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
 
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
+   if(window.Worker)
+     {worker = new Worker(worker_script);
 
+      worker.postMessage('Beunos Dias!');
+     }
   const genome = props.currGenome;
   console.log('ASDASDASDSAD');
   const [region, coord] = genome.defaultRegion.split(':');
