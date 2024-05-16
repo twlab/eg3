@@ -57,6 +57,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx; i < result.length; i++) {
+        var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
         if (curStrand.end > end) {
           const strandId = curStrand.start + curStrand.end;
@@ -76,17 +77,12 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
         }
       }
     }
-
-    setRightTrack([
-      ...rightTrackGenes,
-      <SetStrand
-        key={getRndInteger()}
-        strandPos={result}
-        checkPrev={prevOverflowStrand.current}
-        startTrackPos={end - bpRegionSize!}
-      />,
-    ]);
-
+    let svgResult = setStrand({
+      strandPos: [...result],
+      checkPrev: { ...prevOverflowStrand.current },
+      startTrackPos: end - bpRegionSize!,
+    });
+    setRightTrack([...rightTrackGenes, svgResult]);
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
 
@@ -94,14 +90,14 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
       overflowStrand2.current = {};
-      setLeftTrack([
-        ...leftTrackGenes,
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={result}
-          startTrackPos={start}
-        />,
-      ]);
+      // setLeftTrack([
+      //   ...leftTrackGenes,
+      //   <SetStrand
+      //     key={getRndInteger()}
+      //     strandPos={result}
+      //     startTrackPos={start}
+      //   />,
+      // ]);
     }
   }
 
@@ -256,15 +252,15 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
       }
     }
 
-    setLeftTrack([
-      ...leftTrackGenes,
-      <SetStrand
-        key={getRndInteger()}
-        strandPos={strandLevelList}
-        checkPrev={prevOverflowStrand2.current}
-        startTrackPos={start}
-      />,
-    ]);
+    // setLeftTrack([
+    //   ...leftTrackGenes,
+    //   <SetStrand
+    //     key={getRndInteger()}
+    //     strandPos={strandLevelList}
+    //     checkPrev={prevOverflowStrand2.current}
+    //     startTrackPos={start}
+    //   />,
+    // ]);
 
     for (var i = 0; i < strandLevelList.length; i++) {
       var levelContent = strandLevelList[i];
@@ -283,41 +279,41 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
     overflowStrand2.current = {};
   }
-  function SetStrand(props) {
+  function setStrand(trackGeneData: { [Key: string]: any }) {
     //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
     var yCoord = 25;
     const strandList: Array<any> = [];
 
-    if (props.strandPos.length) {
+    if (Object.keys(trackGeneData).length > 0) {
       var checkObj = false;
-      if (props.checkPrev !== undefined) {
+      if (trackGeneData.checkPrev !== undefined) {
         checkObj = true;
       }
 
       let strandHtml: Array<any> = [];
 
-      for (let j = 0; j < props.strandPos.length; j++) {
-        const singleStrand = props.strandPos[j];
+      for (let j = 0; j < trackGeneData.strandPos.length; j++) {
+        const singleStrand = trackGeneData.strandPos[j];
 
         if (
           Object.keys(singleStrand).length === 0 ||
-          (checkObj && singleStrand.id in props.checkPrev)
+          (checkObj && singleStrand.id in trackGeneData.checkPrev)
         ) {
           continue;
         }
 
         //add a single strand to current track------------------------------------------------------------------------------------
         strandHtml.push(
-          <React.Fragment key={j}>
-            <line
-              x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`}
-              y1={`${yCoord}`}
-              x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
-              y2={`${yCoord}`}
-              stroke={'blue'}
-              strokeWidth="20"
-            />
-          </React.Fragment>
+          <line
+            x1={`${
+              (singleStrand.start - trackGeneData.startTrackPos) / bpToPx!
+            }`}
+            y1={`${yCoord}`}
+            x2={`${(singleStrand.end - trackGeneData.startTrackPos) / bpToPx!}`}
+            y2={`${yCoord}`}
+            stroke={'blue'}
+            strokeWidth="20"
+          />
         );
       }
 
@@ -326,9 +322,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
       strandList.push(strandHtml);
     }
 
-    return strandList.map((item, index) => (
-      <React.Fragment key={index}>{item}</React.Fragment>
-    ));
+    return strandList.map((item, index) => item);
   }
 
   function ShowGenomeData(props) {
@@ -367,6 +361,28 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     handle();
   }, [trackData]);
 
-  return <div>{side === 'right' ? genomeTrackR : genomeTrackL}</div>;
+  return (
+    <div>
+      {' '}
+      {side === 'right'
+        ? rightTrackGenes.map((item, index) =>
+            index <= rightTrackGenes.length - 1 ? (
+              <svg
+                width={`${windowWidth * 2}px`}
+                height={'100%'}
+                style={{ display: 'inline-block' }}
+                overflow="visible"
+              >
+                {rightTrackGenes[index]}
+              </svg>
+            ) : (
+              <div style={{ display: 'flex', width: windowWidth * 2 }}>
+                ....LOADING
+              </div>
+            )
+          )
+        : genomeTrackL}
+    </div>
+  );
 });
 export default memo(BedTrack);

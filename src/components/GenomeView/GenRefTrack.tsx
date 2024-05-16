@@ -8,6 +8,7 @@ interface GenRefTrackProps {
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   windowWidth?: number;
+  trackSize: any;
 }
 const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   bpRegionSize,
@@ -15,6 +16,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   trackData,
   side,
   windowWidth = 0,
+  trackSize,
 }) {
   let start, end;
 
@@ -45,10 +47,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
   const [genomeTrackR, setGenomeTrackR] = useState(<></>);
   const [genomeTrackL, setGenomeTrackL] = useState(<></>);
-
-  function getRndInteger(min = 0, max = 10000000000) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
 
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
@@ -163,7 +161,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     }
 
     //SORT our interval data into levels to be place on the track
-    const strandLevelList: Array<any> = [];
+    let strandLevelList: Array<any> = [];
     for (var i = 0; i < strandIntervalList.length; i++) {
       var intervalLevelData = strandIntervalList[i][2];
       for (var j = 0; j < intervalLevelData.length; j++) {
@@ -174,15 +172,14 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
         strandLevelList[j].push(strand);
       }
     }
-    setRightTrack([
-      ...rightTrackGenes,
-      <SetStrand
-        key={getRndInteger()}
-        strandPos={strandLevelList}
-        checkPrev={prevOverflowStrand.current}
-        startTrackPos={end - bpRegionSize!}
-      />,
-    ]);
+
+    let svgResult = setStrand({
+      strandPos: [...strandLevelList],
+      checkPrev: { ...prevOverflowStrand.current },
+      startTrackPos: end - bpRegionSize!,
+    });
+
+    setRightTrack([...rightTrackGenes, svgResult]);
 
     trackRegionR.current.push(
       <text fontSize={30} x={200} y={400} fill="black">
@@ -221,15 +218,15 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
-      overflowStrand2.current = {};
-      setLeftTrack([
-        ...leftTrackGenes,
-        <SetStrand
-          key={getRndInteger()}
-          strandPos={strandLevelList}
-          startTrackPos={start}
-        />,
-      ]);
+      // overflowStrand2.current = {};
+      // setLeftTrack([
+      //   ...leftTrackGenes,
+      //   <SetStrand
+      //     key={getRndInteger()}
+      //     strandPos={strandLevelList}
+      //     startTrackPos={start}
+      //   />,
+      // ]);
       trackRegionL.current.push(
         <text fontSize={30} x={200} y={400} fill="black">
           {`${start - bpRegionSize!} - ${start}`}
@@ -380,20 +377,20 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
       }
     }
 
-    setLeftTrack([
-      ...leftTrackGenes,
-      <SetStrand
-        key={getRndInteger()}
-        strandPos={strandLevelList}
-        checkPrev={prevOverflowStrand2.current}
-        startTrackPos={start}
-      />,
-    ]);
-    trackRegionL.current.push(
-      <text fontSize={30} x={200} y={400} fill="black">
-        {`${start} - ${end}`}
-      </text>
-    );
+    // setLeftTrack([
+    //   ...leftTrackGenes,
+    //   <SetStrand
+    //     key={getRndInteger()}
+    //     strandPos={strandLevelList}
+    //     checkPrev={prevOverflowStrand2.current}
+    //     startTrackPos={start}
+    //   />,
+    // ]);
+    // trackRegionL.current.push(
+    //   <text fontSize={30} x={200} y={400} fill="black">
+    //     {`${start} - ${end}`}
+    //   </text>
+    // );
 
     for (var i = 0; i < strandLevelList.length; i++) {
       var levelContent = strandLevelList[i];
@@ -412,40 +409,38 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     overflowStrand2.current = {};
   }
 
-  function areIntervalsOverlapping(
-    interval1Start: number,
-    interval1End: number,
-    interval2Start: number,
-    interval2End: number
-  ): boolean {
-    return interval1Start <= interval2End && interval2Start <= interval1End;
-  }
   // check each strand interval on each level to see if they overlapp and place it there
   // they are already in order of not overlapp. so we just just check  Loop previousIndex <- (currentIndex interval)
   //update the previous level start and end
-  function SetStrand(props) {
-    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
+  function setStrand(trackGeneData: { [Key: string]: any }) {
+    // Set up event listener for messages from the worker
+    // const worker = new Worker('./worker', {
+    //   name: 'runSetStrand',
+    //   type: 'module',
+    // });
+    // const { setStrand } = wrap<import('./worker').runSetStrand>(worker);
+    // trackGeneData['bpToPx'] = bpToPx;
+    // console.log(await setStrand(trackGeneData));
+
     var yCoord = 20;
     const strandList: Array<any> = [];
 
-    if (props.strandPos.length) {
+    if (Object.keys(trackGeneData).length > 0) {
       var checkObj = false;
-      if (props.checkPrev !== undefined) {
+      if (trackGeneData.checkPrev !== undefined) {
         checkObj = true;
       }
-      for (let i = 0; i < props.strandPos.length; i++) {
+      for (let i = 0; i < trackGeneData.strandPos.length; i++) {
         let strandHtml: Array<any> = [];
-        let addY = false;
-        for (let j = 0; j < props.strandPos[i].length; j++) {
-          const singleStrand = props.strandPos[i][j];
+        for (let j = 0; j < trackGeneData.strandPos[i].length; j++) {
+          const singleStrand = trackGeneData.strandPos[i][j];
 
           if (
             Object.keys(singleStrand).length === 0 ||
-            (checkObj && singleStrand.id in props.checkPrev)
+            (checkObj && singleStrand.id in trackGeneData.checkPrev)
           ) {
             continue;
           } else {
-            // find the color and exons on the strand---------------------------------------------------------------
             var strandColor;
             if (singleStrand.transcriptionClass === 'coding') {
               strandColor = 'purple';
@@ -458,11 +453,12 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             for (let z = 0; z < exonStarts.length; z++) {
               exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
             }
-            // add arrows direction to the strand------------------------------------------------------
+
             const startX =
-              (singleStrand.txStart - props.startTrackPos) / bpToPx!;
-            const endX = (singleStrand.txEnd - props.startTrackPos) / bpToPx!;
-            const ARROW_WIDTH = 5;
+              (singleStrand.txStart - trackGeneData.startTrackPos) / bpToPx!;
+            const endX =
+              (singleStrand.txEnd - trackGeneData.startTrackPos) / bpToPx!;
+            const ARROW_WIDTH = 4;
             const arrowSeparation = 22;
             const bottomY = 5;
             var placementStartX = startX - ARROW_WIDTH / 2;
@@ -474,13 +470,12 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             }
 
             const children: Array<any> = [];
-            // Naming: if our arrows look like '<', then the tip is on the left, and the two tails are on the right.
+
             for (
               let arrowTipX = placementStartX;
               arrowTipX <= placementEndX;
               arrowTipX += arrowSeparation
             ) {
-              // Is forward strand ? point to the right : point to the left
               const arrowTailX =
                 singleStrand.strand === '+'
                   ? arrowTipX - ARROW_WIDTH
@@ -496,30 +491,32 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                   points={`${arrowPoints}`}
                   fill="none"
                   stroke={strandColor}
-                  strokeWidth={1}
+                  strokeWidth={0.5}
                 />
               );
             }
-            //add a single strand to current track------------------------------------------------------------------------------------
+
             strandHtml.push(
-              <React.Fragment key={j}>
+              <>
                 {children.map((item, index) => item)}
                 <line
                   x1={`${
-                    (singleStrand.txStart - props.startTrackPos) / bpToPx!
+                    (singleStrand.txStart - trackGeneData.startTrackPos) /
+                    bpToPx!
                   }`}
                   y1={`${yCoord}`}
-                  x2={`${(singleStrand.txEnd - props.startTrackPos) / bpToPx!}`}
+                  x2={`${
+                    (singleStrand.txEnd - trackGeneData.startTrackPos) / bpToPx!
+                  }`}
                   y2={`${yCoord}`}
                   stroke={`${strandColor}`}
                   strokeWidth="4"
                 />
                 {exonIntervals.map((coord, index) => (
                   <line
-                    key={index + 198}
-                    x1={`${(coord[0] - props.startTrackPos) / bpToPx!}`}
+                    x1={`${(coord[0] - trackGeneData.startTrackPos) / bpToPx!}`}
                     y1={`${yCoord}`}
-                    x2={`${(coord[1] - props.startTrackPos) / bpToPx!}`}
+                    x2={`${(coord[1] - trackGeneData.startTrackPos) / bpToPx!}`}
                     y2={`${yCoord}`}
                     stroke={`${strandColor}`}
                     strokeWidth="7"
@@ -529,89 +526,35 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 <text
                   fontSize={7}
                   x={`${
-                    (singleStrand.txStart - props.startTrackPos) / bpToPx!
+                    (singleStrand.txStart - trackGeneData.startTrackPos) /
+                    bpToPx!
                   }`}
                   y={`${yCoord - 7}`}
                   fill="black"
                 >
                   {singleStrand.name}
                 </text>
-              </React.Fragment>
+              </>
             );
           }
         }
-
         yCoord += 20;
-
         strandList.push(strandHtml);
       }
     }
 
-    return strandList.map((item, index) => (
-      <React.Fragment key={index}>{item}</React.Fragment>
-    ));
+    return strandList.map((item, index) => item);
   }
+  // useEffect(() => {
+  //   const tempData = leftTrackGenes.slice(0);
+  //   tempData.reverse();
+  //   const tempRegion = trackRegionL.current.slice(0);
+  //   tempRegion.reverse();
 
-  function ShowGenomeData(props) {
-    console.log(windowWidth * 2);
-    return props.trackHtml.map((item, index) => (
-      <svg
-        key={index}
-        width={`${windowWidth * 2}px`}
-        height={'100%'}
-        style={{ display: 'inline-block' }}
-        overflow="visible"
-      >
-        <line
-          x1={`0`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={'0'}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`${windowWidth * 2}px`}
-          y1="0"
-          x2={`${windowWidth * 2}px`}
-          y2={'100%'}
-          stroke="gray"
-          strokeWidth="3"
-        />
-        <line
-          x1={`0`}
-          y1={'100%'}
-          x2={`${windowWidth * 2}px`}
-          y2={'100%'}
-          stroke="gray"
-          strokeWidth="3"
-        />
-
-        {props.trackHtml[index]}
-        {props.trackInterval[index]}
-      </svg>
-    ));
-  }
-
-  useEffect(() => {
-    setGenomeTrackR(
-      <ShowGenomeData
-        trackHtml={rightTrackGenes}
-        trackInterval={trackRegionR.current}
-      />
-    );
-  }, [rightTrackGenes]);
-
-  useEffect(() => {
-    const tempData = leftTrackGenes.slice(0);
-    tempData.reverse();
-    const tempRegion = trackRegionL.current.slice(0);
-    tempRegion.reverse();
-
-    setGenomeTrackL(
-      <ShowGenomeData trackHtml={tempData} trackInterval={tempRegion} />
-    );
-  }, [leftTrackGenes]);
+  //   setGenomeTrackL(
+  //     <ShowGenomeData trackHtml={tempData} trackInterval={tempRegion} />
+  //   );
+  // }, [leftTrackGenes]);
 
   useEffect(() => {
     function handle() {
@@ -624,7 +567,28 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     handle();
   }, [trackData]);
 
-  return <div style={{}}>{side === 'right' ? genomeTrackR : genomeTrackL}</div>;
+  return (
+    <div style={{ display: 'flex' }}>
+      {side === 'right'
+        ? trackSize.map((item, index) =>
+            index <= rightTrackGenes.length - 1 ? (
+              <svg
+                width={`${windowWidth * 2}px`}
+                height={'100%'}
+                style={{ display: 'inline-block' }}
+                overflow="visible"
+              >
+                {rightTrackGenes[index]}
+              </svg>
+            ) : (
+              <div style={{ display: 'flex', width: windowWidth * 2 }}>
+                ....LOADING
+              </div>
+            )
+          )
+        : genomeTrackL}
+    </div>
+  );
 });
 
 export default memo(GenRefTrack);
