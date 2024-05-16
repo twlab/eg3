@@ -20,11 +20,12 @@ interface MyComponentProps {
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   trackWidth: number;
+  trackSize: any;
 }
 
 const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   refGene: GenRefTrack,
-  bed: BedTrack,
+
   bedDensity: BedDensityTrack,
   bigWig: BigWigTrack,
   dynseq: DynseqTrack,
@@ -36,7 +37,7 @@ function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
 
   const genome = props.currGenome;
-
+  console.log('ASDASDASDSAD');
   const [region, coord] = genome.defaultRegion.split(':');
   const [leftStartStr, rightStartStr] = coord.split('-');
   const leftStartCoord = Number(leftStartStr);
@@ -47,7 +48,9 @@ function TrackManager(props) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const block = useRef<HTMLInputElement>(null);
+  const trackblock = useRef<HTMLInputElement>(null);
   const frameID = useRef(0);
+  const frameID2 = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
 
@@ -68,18 +71,17 @@ function TrackManager(props) {
     }
   }
   const initialChrIdx = chrData.indexOf(region);
-  const [chrIndexRight, setChrIndexRight] = useState(initialChrIdx);
-  const [chrIndexLeft, setchrIndexLeft] = useState(initialChrIdx);
+
+  const chrIndexRight = useRef(initialChrIdx);
+  const chrIndexLeft = useRef(initialChrIdx);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(['', '']);
   const [side, setSide] = useState('right');
   const [isLoading, setIsLoading] = useState(true);
-  const [genomeTrackR, setGenomeTrackR] = useState<{ [key: string]: any }>({});
+  const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [bpX, setBpX] = useState(0);
 
-  const [maxBp, setMaxBp] = useState(
-    rightStartCoord + (rightStartCoord - leftStartCoord)
-  );
-  const [minBp, setMinBp] = useState(leftStartCoord);
+  const maxBp = useRef(rightStartCoord + (rightStartCoord - leftStartCoord));
+  const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
   for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
@@ -105,12 +107,20 @@ function TrackManager(props) {
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
-      block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+      block.current!.style.transform = `translate3d(${
+        dragX.current * 0.6
+      }px, 0px, 0)`;
+    });
+    cancelAnimationFrame(frameID2.current);
+    frameID2.current = requestAnimationFrame(() => {
+      trackblock.current!.style.transform = `translate3d(${
+        dragX.current * 0.6
+      }px, 0px, 0)`;
     });
   }
   const handleClick = () => {
     let curRegion =
-      chrData[chrIndexRight] +
+      chrData[chrIndexRight.current] +
       ':' +
       String(bpX) +
       '-' +
@@ -171,7 +181,7 @@ function TrackManager(props) {
       -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
-      setIsLoading(true);
+      // setIsLoading(true);
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
         t.push('');
@@ -200,32 +210,32 @@ function TrackManager(props) {
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     let tmpRegion: Array<any> = [];
-    if (maxBp > chrLength[chrIndexRight]) {
-      let totalEndBp = Number(chrLength[chrIndexRight]);
-      let startBp = maxBp - bpRegionSize;
-      let tmpChrIdx = chrIndexRight;
+    if (maxBp.current > chrLength[chrIndexRight.current]) {
+      let totalEndBp = Number(chrLength[chrIndexRight.current]);
+      let startBp = maxBp.current - bpRegionSize;
+      let tmpChrIdx = chrIndexRight.current;
 
       tmpRegion.push(
-        `${chrData[chrIndexRight]}` +
+        `${chrData[chrIndexRight.current]}` +
           ':' +
           `${startBp}` +
           '-' +
-          `${chrLength[chrIndexRight]}` +
+          `${chrLength[chrIndexRight.current]}` +
           '|' +
           `${startBp}` +
           '-' +
-          `${chrLength[chrIndexRight]}`
+          `${chrLength[chrIndexRight.current]}`
       );
       tmpChrIdx += 1;
       let chrEnd = 0;
 
-      while (maxBp > totalEndBp) {
+      while (maxBp.current > totalEndBp) {
         let chrStart = 0;
 
-        if (chrLength[tmpChrIdx] + totalEndBp < maxBp) {
+        if (chrLength[tmpChrIdx] + totalEndBp < maxBp.current) {
           chrEnd = chrLength[tmpChrIdx];
         } else {
-          chrEnd = maxBp - totalEndBp;
+          chrEnd = maxBp.current - totalEndBp;
         }
 
         tmpRegion.push(
@@ -243,29 +253,24 @@ function TrackManager(props) {
 
         tmpChrIdx += 1;
       }
+      chrIndexRight.current = tmpChrIdx - 1;
 
-      setChrIndexRight(tmpChrIdx - 1);
-      setMaxBp(chrEnd + bpRegionSize);
+      maxBp.current = chrEnd + bpRegionSize;
     } else {
       tmpRegion.push(
-        `${chrData[chrIndexRight]}` +
+        `${chrData[chrIndexRight.current]}` +
           ':' +
-          `${maxBp - bpRegionSize}` +
+          `${maxBp.current - bpRegionSize}` +
           '-' +
-          `${maxBp}` +
+          `${maxBp.current}` +
           '|' +
-          +`${maxBp - bpRegionSize}` +
+          +`${maxBp.current - bpRegionSize}` +
           '-' +
-          `${maxBp}`
+          `${maxBp.current}`
       );
     }
 
     let tempObj = {};
-    let userRespond;
-    let bedRespond;
-    let bigWigRespond;
-    let dynSeqRespond;
-    let methylcRespond;
     let tmpMethylc: Array<any> = [];
     let tmpResult: Array<any> = [];
     let tmpBed: Array<any> = [];
@@ -280,6 +285,7 @@ function TrackManager(props) {
       const [sectionStart, sectionEnd] = sectionBp.split('-');
 
       try {
+        // Execute all requests concurrently
         const [
           userRespond,
           bedRespond,
@@ -352,7 +358,7 @@ function TrackManager(props) {
     const methylcResult = tmpMethylc;
     const dynSeqResult = tmpDynseq;
 
-    tempObj['location'] = `${maxBp - bpRegionSize}:${maxBp}`;
+    tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
     tempObj['result'] = result;
     tempObj['bedResult'] = bedResult;
     tempObj['bigWigResult'] = bigWigResult;
@@ -361,14 +367,14 @@ function TrackManager(props) {
     tempObj['side'] = 'right';
     if (initial) {
       tempObj['initial'] = 1;
-      setGenomeTrackR({ ...tempObj });
-      setMinBp(minBp - bpRegionSize);
+      setTrackData({ ...tempObj });
+      minBp.current = minBp.current - bpRegionSize;
     } else {
       tempObj['initial'] = 0;
-      setGenomeTrackR({ ...tempObj });
+      setTrackData({ ...tempObj });
     }
-    if (maxBp <= chrLength[chrIndexRight]) {
-      setMaxBp(maxBp + bpRegionSize);
+    if (maxBp.current <= chrLength[chrIndexRight.current]) {
+      maxBp.current = maxBp.current + bpRegionSize;
     }
     setIsLoading(false);
   }
@@ -383,12 +389,12 @@ function TrackManager(props) {
     let bigWigRespond;
 
     let tmpBigWig: Array<any> = [];
-    if (minBp < 0) {
+    if (minBp.current < 0) {
       let totalEndBp = 0;
-      let endBp = minBp + bpRegionSize;
-      let tmpChrIdx = chrIndexLeft - 1;
+      let endBp = minBp.current + bpRegionSize;
+      let tmpChrIdx = chrIndexLeft.current - 1;
       tmpRegion.push(
-        `${chrData[chrIndexLeft]}` +
+        `${chrData[chrIndexLeft.current]}` +
           ':' +
           `${0}` +
           '-' +
@@ -401,11 +407,11 @@ function TrackManager(props) {
 
       let chrEnd = 0;
 
-      while (minBp < totalEndBp) {
-        if (minBp < totalEndBp - chrLength[tmpChrIdx]) {
+      while (minBp.current < totalEndBp) {
+        if (minBp.current < totalEndBp - chrLength[tmpChrIdx]) {
           chrEnd = chrLength[tmpChrIdx];
         } else {
-          chrEnd = -(totalEndBp - chrLength[tmpChrIdx]) - -minBp;
+          chrEnd = -(totalEndBp - chrLength[tmpChrIdx]) - -minBp.current;
         }
         tmpRegion.push(
           `${chrData[tmpChrIdx]}` +
@@ -426,21 +432,20 @@ function TrackManager(props) {
 
         tmpChrIdx -= 1;
       }
+      chrIndexLeft.current = tmpChrIdx + 1;
 
-      setchrIndexLeft(tmpChrIdx + 1);
-
-      setMinBp(chrEnd - bpRegionSize);
+      minBp.current = chrEnd - bpRegionSize;
     } else {
       tmpRegion.push(
-        `${chrData[chrIndexLeft]}` +
+        `${chrData[chrIndexLeft.current]}` +
           ':' +
-          `${minBp}` +
+          `${minBp.current}` +
           '-' +
-          `${minBp + bpRegionSize}` +
+          `${minBp.current + bpRegionSize}` +
           '|' +
-          +`${minBp}` +
+          +`${minBp.current}` +
           '-' +
-          `${minBp + bpRegionSize}`
+          `${minBp.current + bpRegionSize}`
       );
     }
 
@@ -552,13 +557,13 @@ function TrackManager(props) {
     tempObj['dynseqResult'] = dynSeqResult;
     tempObj['side'] = 'left';
 
-    tempObj['location'] = `${minBp}:${minBp + bpRegionSize}`;
+    tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
     ///////-__________________________________________________________________________________________________________________________
 
     tempObj['side'] = 'left';
-    setGenomeTrackR({ ...tempObj });
-    if (minBp >= 0) {
-      setMinBp(minBp - bpRegionSize);
+    setTrackData({ ...tempObj });
+    if (minBp.current >= 0) {
+      minBp.current = minBp.current - bpRegionSize;
     }
     setIsLoading(false);
   }
@@ -639,20 +644,34 @@ function TrackManager(props) {
             display: 'flex',
             //makes element align right
             alignItems: side === 'right' ? 'start' : 'end',
-            flexDirection: 'column',
           }}
         >
-          {trackComponent.map((Component, index) => (
-            <Component
-              key={index}
-              bpRegionSize={bpRegionSize}
-              bpToPx={bpToPx}
-              trackData={genomeTrackR}
-              side={side}
-              windowWidth={windowWidth}
-            />
+          {rightSectionSize.map((item, index) => (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                width: windowWidth * 2,
+                height: 150,
+              }}
+            >
+              ....LOADING
+            </div>
           ))}
         </div>
+      </div>
+      <div ref={trackblock}>
+        {trackComponent.map((Component, index) => (
+          <Component
+            key={index}
+            bpRegionSize={bpRegionSize}
+            bpToPx={bpToPx}
+            trackData={trackData}
+            side={side}
+            windowWidth={windowWidth}
+            trackSize={rightSectionSize}
+          />
+        ))}
       </div>
     </div>
   );
