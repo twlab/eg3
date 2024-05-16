@@ -1,9 +1,0 @@
-{
-  "name": "bigwig-track",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "modules/bigwig-track/src",
-  "projectType": "library",
-  "tags": [],
-  "// targets": "to see all targets run: nx show project bigwig-track --web",
-  "targets": {}
-}
