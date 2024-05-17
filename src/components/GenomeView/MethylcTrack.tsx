@@ -3,7 +3,8 @@ import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import MethylCRecord from './MethylCRecord';
 import { myFeatureAggregator } from './commonComponents/screen-scaling/FeatureAggregator';
-import { reverse } from 'dns';
+import worker_script from '../../Worker/worker';
+let worker: Worker;
 const VERTICAL_PADDING = 0;
 const PLOT_DOWNWARDS_STRAND = 'reverse';
 const DEFAULT_COLORS_FOR_CONTEXT = {
@@ -49,6 +50,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
   const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
+  const [converted, setConverted] = useState<Array<any>>([]);
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
   const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
@@ -388,91 +390,89 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     // VALUE = 4,
     // STRAND = 5,
     // DEPTH = 6,
-    if (rightTrackGenes.length > 0) {
-      let dataForward: Array<any> = [];
-      let dataReverse: Array<any> = [];
-      for (let i = 0; i < rightTrackGenes.length; i++) {
-        const newArr: Array<any> = [];
-        dataForward.push(newArr);
-        const newArr2: Array<any> = [];
-        dataReverse.push(newArr2);
-      }
-
-      let xToRecords = findFeatureInPixel(
-        rightTrackGenes,
-        windowWidth,
-        bpToPx!
-      );
-
-      let aggregatedRecords: Array<any> = [];
-      for (let i = 0; i < xToRecords.length; i++) {
-        aggregatedRecords.push(
-          xToRecords[i].map(MethylCRecord.aggregateByStrand)
-        );
-      }
-
+    async function handle() {
       if (rightTrackGenes.length > 0) {
-        if (canvasRefR[canvasRefR.length - 1].current) {
-          let context =
-            canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+        let dataForward: Array<any> = [];
+        let dataReverse: Array<any> = [];
+        for (let i = 0; i < rightTrackGenes.length; i++) {
+          const newArr: Array<any> = [];
+          dataForward.push(newArr);
+          const newArr2: Array<any> = [];
+          dataReverse.push(newArr2);
+        }
 
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-          let scales = computeScales(
-            aggregatedRecords[aggregatedRecords.length - 1]
-          );
-          for (
-            let j = 0;
-            j < aggregatedRecords[aggregatedRecords.length - 1].length;
-            j++
-          ) {
-            let forward =
-              aggregatedRecords[aggregatedRecords.length - 1][j].forward;
-            let reverse =
-              aggregatedRecords[aggregatedRecords.length - 1][j].reverse;
-            let combine =
-              aggregatedRecords[aggregatedRecords.length - 1][j].combined;
+        let xToRecords;
 
-            for (let contextData of forward.contextValues) {
-              const drawY = scales.methylToY(Number(contextData.value));
-              const drawHeight = 40 - drawY;
-              const contextName = contextData.context;
-              const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
+        worker = new Worker(worker_script);
 
-              context.fillStyle = color;
-              context.globalAlpha = 0.75;
-              context.fillRect(j, drawY, 1, drawHeight);
-            }
+        worker.postMessage({
+          trackGene: rightTrackGenes,
+          windowWidth: windowWidth,
+          bpToPx: bpToPx!,
+        });
+
+        // Listen for messages from the web worker
+        worker.onmessage = (event) => {
+          setConverted([...event.data]);
+        };
+
+        // if (canvasRefR2[canvasRefR2.length - 1].current) {
+        //   let context =
+        //     canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
+
+        //   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+        //   for (
+        //     let i = 0;
+        //     i < xToFeatureReverse[canvasRefR2.length - 1].length;
+        //     i++
+        //   ) {
+        //     // going through width pixels
+        //     // i = canvas pixel xpos
+        //     if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
+        //       context.fillStyle = 'red';
+
+        //       context.fillRect(
+        //         i,
+        //         0,
+        //         1,
+        //         xToFeatureReverse[canvasRefR2.length - 1][i]
+        //       );
+        //     }
+        //   }
+        // }
+      }
+    }
+    handle();
+  }, [rightTrackGenes]);
+
+  useEffect(() => {
+    if (converted.length > 0) {
+      if (canvasRefR[canvasRefR.length - 1].current) {
+        let context =
+          canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        let scales = computeScales(converted[converted.length - 1]);
+        for (let j = 0; j < converted[converted.length - 1].length; j++) {
+          let forward = converted[converted.length - 1][j].forward;
+          let reverse = converted[converted.length - 1][j].reverse;
+          let combine = converted[converted.length - 1][j].combined;
+
+          for (let contextData of forward.contextValues) {
+            const drawY = scales.methylToY(Number(contextData.value));
+            const drawHeight = 40 - drawY;
+            const contextName = contextData.context;
+            const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
+
+            context.fillStyle = color;
+            context.globalAlpha = 0.75;
+            context.fillRect(j, drawY, 1, drawHeight);
           }
         }
       }
-
-      // if (canvasRefR2[canvasRefR2.length - 1].current) {
-      //   let context =
-      //     canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
-
-      //   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-      //   for (
-      //     let i = 0;
-      //     i < xToFeatureReverse[canvasRefR2.length - 1].length;
-      //     i++
-      //   ) {
-      //     // going through width pixels
-      //     // i = canvas pixel xpos
-      //     if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
-      //       context.fillStyle = 'red';
-
-      //       context.fillRect(
-      //         i,
-      //         0,
-      //         1,
-      //         xToFeatureReverse[canvasRefR2.length - 1][i]
-      //       );
-      //     }
-      //   }
-      // }
     }
-  }, [rightTrackGenes]);
+  }, [converted]);
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {

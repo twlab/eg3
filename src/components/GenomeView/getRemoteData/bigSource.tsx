@@ -10,9 +10,8 @@ import { RemoteFile } from 'generic-filehandle';
 function GetBigData(url, chr, start, end) {
   async function getData(loci, options) {
     const fetch = window.fetch.bind(window);
-    console.log();
+
     const promises = loci.map((locus) => {
-      console.log('ERER');
       let chrom = options.ensemblStyle
         ? locus.chr.replace('chr', '')
         : locus.chr;

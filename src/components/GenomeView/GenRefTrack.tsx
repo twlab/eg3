@@ -1,8 +1,6 @@
 import React, { memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 const AWS_API = 'https://lambda.epigenomegateway.org/v2';
-  import worker_script from '../../Worker/worker';
-let worker: Worker;
 
 interface GenRefTrackProps {
   bpRegionSize?: number;
@@ -428,20 +426,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     const strandList: Array<any> = [];
 
     if (Object.keys(trackGeneData).length > 0) {
-         if(window.Worker)
-         {
-           trackGeneData["bpToPx"] = bpToPx
-           worker = new Worker(worker_script);
-
-           worker.postMessage(trackGeneData);
-           
-
-               // Listen for messages from the web worker
-    worker.onmessage = (event) => {
-      const htmlElements = event.data; // The array of HTML elements
-      console.log(event.data)
-    };
-     }
       var checkObj = false;
       if (trackGeneData.checkPrev !== undefined) {
         checkObj = true;

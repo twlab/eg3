@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 /**
  * Records returned by BedSource and its worker.  Each prop is a column in the bed file.
  *
@@ -12,12 +10,7 @@ interface BedRecord {
   [column: number]: string; // The rest of the columns in the bed file, starting from [3]
   n?: number; // number of columns in initial data row
 }
-enum MethylRecordColumnIndex {
-  CONTEXT = 3,
-  VALUE = 4,
-  STRAND = 5,
-  DEPTH = 6,
-}
+
 interface AggregationByRecordsResult {
   depth: number; // mean of depth
   contextValues: Array<{
