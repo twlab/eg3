@@ -578,7 +578,32 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 style={{ display: 'inline-block' }}
                 overflow="visible"
               >
+                <line
+                  x1={`0`}
+                  y1="0"
+                  x2={`${windowWidth * 2}px`}
+                  y2={'0'}
+                  stroke="gray"
+                  strokeWidth="3"
+                />
+                <line
+                  x1={`${windowWidth * 2}px`}
+                  y1="0"
+                  x2={`${windowWidth * 2}px`}
+                  y2={'100%'}
+                  stroke="gray"
+                  strokeWidth="3"
+                />
+                <line
+                  x1={`0`}
+                  y1={'100%'}
+                  x2={`${windowWidth * 2}px`}
+                  y2={'100%'}
+                  stroke="gray"
+                  strokeWidth="3"
+                />
                 {rightTrackGenes[index]}
+                {trackRegionR.current[index]}
               </svg>
             ) : (
               <div style={{ display: 'flex', width: windowWidth * 2 }}>

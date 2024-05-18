@@ -36,7 +36,7 @@ function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
 
   const genome = props.currGenome;
-  console.log('ASDASDASDSAD');
+
   const [region, coord] = genome.defaultRegion.split(':');
   const [leftStartStr, rightStartStr] = coord.split('-');
   const leftStartCoord = Number(leftStartStr);
@@ -47,9 +47,7 @@ function TrackManager(props) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const block = useRef<HTMLInputElement>(null);
-  const trackblock = useRef<HTMLInputElement>(null);
   const frameID = useRef(0);
-  const frameID2 = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
 
@@ -107,13 +105,7 @@ function TrackManager(props) {
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
       block.current!.style.transform = `translate3d(${
-        dragX.current * 0.6
-      }px, 0px, 0)`;
-    });
-    cancelAnimationFrame(frameID2.current);
-    frameID2.current = requestAnimationFrame(() => {
-      trackblock.current!.style.transform = `translate3d(${
-        dragX.current * 0.6
+        dragX.current * 0.5
       }px, 0px, 0)`;
     });
   }
@@ -177,10 +169,14 @@ function TrackManager(props) {
     }
 
     if (
-      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
+      -dragX.current / (windowWidth * 2) >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
-      // setIsLoading(true);
+      console.log(
+        -dragX.current / windowWidth,
+        2 * (rightSectionSize.length - 1)
+      );
+      setIsLoading(true);
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
         t.push('');
@@ -622,7 +618,6 @@ function TrackManager(props) {
 
       <div
         style={{
-          flex: '1',
           display: 'flex',
           //makes element align right
           justifyContent: side === 'right' ? 'start' : 'end',
@@ -641,39 +636,24 @@ function TrackManager(props) {
           onMouseDown={handleMouseDown}
           style={{
             display: 'flex',
+            flexDirection: 'column',
             //makes element align right
             alignItems: side === 'right' ? 'start' : 'end',
           }}
-        > 
-            {rightSectionSize.map((item, index) => (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                width: windowWidth * 2,
-                height: 150,
-              }}
-            >
-              ....LOADING
-            </div>
+        >
+          {trackComponent.map((Component, index) => (
+            <Component
+              key={index}
+              bpRegionSize={bpRegionSize}
+              bpToPx={bpToPx}
+              trackData={trackData}
+              side={side}
+              windowWidth={windowWidth}
+              trackSize={rightSectionSize}
+            />
           ))}
-
         </div>
       </div>
-      <div ref={trackblock}>
-          {trackComponent.map((Component, index) => (
-          <Component
-            key={index}
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={trackData}
-            side={side}
-            windowWidth={windowWidth}
-            trackSize={rightSectionSize}
-          />
-        ))}
-      </div>
-      
     </div>
   );
 }
