@@ -2,6 +2,8 @@ import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
+import worker_script from '../../Worker/dynseqWorker';
+let worker: Worker;
 import { myFeatureAggregator } from './commonComponents/screen-scaling/FeatureAggregator';
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -38,6 +40,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
+  const [scaledRightVal, setScaledRightVal] = useState<Array<any>>([]);
   const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
   const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
@@ -283,6 +286,137 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     overflowStrand2.current = {};
   }
+  const DEFAULT_OPTIONS = {
+    aggregateMethod: 'mean',
+    displayMode: 'auto',
+    height: 40,
+    color: 'blue',
+    colorAboveMax: 'red',
+    color2: 'darkorange',
+    color2BelowMin: 'darkgreen',
+    yScale: 'auto',
+    yMax: 10,
+    yMin: 0,
+    smooth: 0,
+    ensemblStyle: false,
+  };
+
+  const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap
+  const TOP_PADDING = 2;
+  const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
+
+  function computeScales(
+    xToValue,
+    xToValue2,
+    regionStart,
+    regionEnd,
+    height: number = 40,
+    yScale: string = 'auto',
+    yMin: number = 0,
+    yMax: number = 10
+  ) {
+    /*
+        All tracks get `PropsFromTrackContainer` (see `Track.ts`).
+
+        `props.viewWindow` contains the range of x that is visible when no dragging.  
+            It comes directly from the `ViewExpansion` object from `RegionExpander.ts`
+        */
+
+    // if (yMin >= yMax) {
+    //   notify.show("Y-axis min must less than max", "error", 2000);
+    // }
+    // const { trackModel, groupScale } = this.props;
+    let min: number,
+      max: number,
+      xValues2 = [];
+    // if (groupScale) {
+    //   if (trackModel.options.hasOwnProperty("group")) {
+    //     gscale = groupScale[trackModel.options.group];
+    //   }
+    // }
+    // if (!_.isEmpty(gscale)) {
+    //   max = _.max(Object.values(gscale.max));
+    //   min = _.min(Object.values(gscale.min));
+
+    max = Math.max(...xToValue); // in case undefined returned here, cause maxboth be undefined too
+
+    min = Math.min(...xToValue2);
+
+    const maxBoth = Math.max(Math.abs(max), Math.abs(min));
+    max = maxBoth;
+    if (xToValue2.length > 0) {
+      min = -maxBoth;
+    }
+
+    // if (min > max) {
+    //   notify.show("Y-axis min should less than Y-axis max", "warning", 5000);
+    //   min = 0;
+    // }
+
+    // determines the distance of y=0 from the top, also the height of positive part
+    const zeroLine =
+      min < 0
+        ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
+        : height;
+
+    if (
+      xValues2.length > 0 &&
+      (yScale === 'auto' || (yScale === 'fixed' && yMin < 0))
+    ) {
+      return {
+        axisScale: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height - TOP_PADDING])
+          .clamp(true),
+        valueToY: scaleLinear()
+          .domain([max, 0])
+          .range([TOP_PADDING, zeroLine])
+          .clamp(true),
+        valueToYReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, height - zeroLine - TOP_PADDING])
+          .clamp(true),
+        valueToOpacity: scaleLinear()
+          .domain([0, max])
+          .range([0, 1])
+          .clamp(true),
+        valueToOpacityReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, 1])
+          .clamp(true),
+        min,
+        max,
+        zeroLine,
+      };
+    } else {
+      return {
+        axisScale: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height])
+          .clamp(true),
+        valueToY: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height])
+          .clamp(true),
+        valueToOpacity: scaleLinear()
+          .domain([min, max])
+          .range([0, 1])
+          .clamp(true),
+        // for group feature when there is only nagetiva data, to be fixed
+        valueToYReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, height - zeroLine - TOP_PADDING])
+          .clamp(true),
+        valueToOpacityReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, 1])
+          .clamp(true),
+        min,
+        max,
+        zeroLine,
+      };
+    }
+  }
 
   useEffect(() => {
     // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
@@ -294,65 +428,70 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     // 4: If a strand is in the same xspan pixel then add them to a array index
     // 5: the array index will represent the x coord pixel of the canvas and svg
     if (rightTrackGenes.length > 0) {
-      let [xToFeatureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
-        rightTrackGenes,
-        bpToPx!,
-        windowWidth,
-        bpRegionSize!
-      );
+      // makeXMap(trackGenes, bpToPx, windowWidth, bpRegionSize)
 
-      if (canvasRefR[canvasRefR.length - 1].current) {
-        let context =
-          canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+      worker = new Worker(worker_script);
 
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+      worker.postMessage({
+        trackGene: rightTrackGenes,
+        windowWidth: windowWidth,
+        bpToPx: bpToPx!,
+        bpRegionSize: bpRegionSize!,
+      });
 
-        for (
-          let i = 0;
-          i < xToFeatureForward[canvasRefR.length - 1].length;
-          i++
-        ) {
-          // going through width pixels
-          // i = canvas pixel xpos
+      // Listen for messages from the web worker
+      worker.onmessage = (event) => {
+        const [avgPos, avgNeg] = event.data;
 
-          if (xToFeatureForward[canvasRefR.length - 1][i] !== 0) {
-            context.fillStyle = 'blue';
+        let scales = computeScales(
+          avgPos[0],
+          avgNeg[0],
+          0,
+          rightTrackGenes[rightTrackGenes.length - 1][1]
+        );
 
-            context.fillRect(
-              i,
-              xToFeatureForward[canvasRefR.length - 1][i],
-              1,
-              20 - xToFeatureForward[canvasRefR.length - 1][i]
-            );
+        for (let j = 0; j < avgPos[0].length; j++) {
+          if (avgPos[0][j] !== 0) {
+            avgPos[0][j] = scales.valueToY(avgPos[0][j]);
+            avgNeg[0][j] = scales.valueToYReverse(avgNeg[0][j]);
           }
         }
-      }
 
-      if (canvasRefR2[canvasRefR2.length - 1].current) {
-        let context =
-          canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
+        if (canvasRefR[canvasRefR.length - 1].current) {
+          let context =
+            canvasRefR[canvasRefR.length - 1].current.getContext('2d');
 
-        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-        for (
-          let i = 0;
-          i < xToFeatureReverse[canvasRefR2.length - 1].length;
-          i++
-        ) {
-          // going through width pixels
-          // i = canvas pixel xpos
-          if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
-            context.fillStyle = 'red';
+          for (let i = 0; i < avgPos[0].length; i++) {
+            // going through width pixels
+            // i = canvas pixel xpos
 
-            context.fillRect(
-              i,
-              0,
-              1,
-              xToFeatureReverse[canvasRefR2.length - 1][i]
-            );
+            if (avgPos[0][i] !== 0) {
+              context.fillStyle = 'blue';
+
+              context.fillRect(i, avgPos[0][i], 1, 20 - avgPos[0][i]);
+            }
           }
         }
-      }
+
+        if (canvasRefR2[canvasRefR2.length - 1].current) {
+          let context =
+            canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
+
+          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+          for (let i = 0; i < avgNeg[0].length; i++) {
+            // going through width pixels
+            // i = canvas pixel xpos
+            if (avgNeg[0][i] !== 0) {
+              context.fillStyle = 'red';
+
+              context.fillRect(i, 0, 1, avgNeg[0][i]);
+            }
+          }
+        }
+      };
     }
   }, [rightTrackGenes]);
 

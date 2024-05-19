@@ -322,7 +322,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       */
     const forwardRecords = xMap.map((record) => record.forward);
     const reverseRecords = xMap.map((record) => record.reverse);
-    console.log(xMap);
+
     const maxDepthForward = forwardRecords.reduce(
       (maxRecord, record) => {
         return record.depth > maxRecord.depth ? record : maxRecord;
@@ -367,7 +367,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         context.globalAlpha = 0.75;
         context.fillRect(j, drawY, 1, drawHeight);
       }
-      await delay(4);
     }
   }
   useEffect(() => {
@@ -418,7 +417,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                 context.canvas.width,
                 context.canvas.height
               );
-              console.log(converted);
+
               let scales = computeScales(converted[0]);
               let length = converted[0].length;
               const sectionSize = Math.ceil(length / 10); // Calculate the size of each section
