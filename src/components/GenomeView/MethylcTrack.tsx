@@ -106,6 +106,27 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
+
+    worker = new Worker(worker_script);
+
+    worker.postMessage({
+      trackGene: result,
+      windowWidth: windowWidth,
+      bpToPx: bpToPx!,
+      bpRegionSize: bpRegionSize!,
+      startBpRegion: start,
+    });
+
+    // Listen for messages from the web worker
+    worker.onmessage = (event) => {
+      let converted = event.data;
+      let scales = computeScales(converted[0]);
+      let length = converted[0].length;
+
+      drawCanvas(0, length, newCanvasRef, converted, scales);
+      // Example: You can call your custom function here
+      // myCustomFunction(sectionStart, sectionEnd);
+    };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
@@ -351,7 +372,16 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     };
   }
 
-  async function drawCanvas(startRange, endRange, context, converted, scales) {
+  async function drawCanvas(
+    startRange,
+    endRange,
+    canvasRef,
+    converted,
+    scales
+  ) {
+    let context = canvasRef.current.getContext('2d');
+
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     for (let j = startRange; j < endRange; j++) {
       let forward = converted[0][j].forward;
       let reverse = converted[0][j].reverse;
@@ -385,55 +415,10 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     // DEPTH = 6,
     async function handle() {
       if (rightTrackGenes.length > 0) {
-        let dataForward: Array<any> = [];
-        let dataReverse: Array<any> = [];
-        for (let i = 0; i < rightTrackGenes.length; i++) {
-          const newArr: Array<any> = [];
-          dataForward.push(newArr);
-          const newArr2: Array<any> = [];
-          dataReverse.push(newArr2);
-        }
-
-        worker = new Worker(worker_script);
-
-        worker.postMessage({
-          trackGene: rightTrackGenes,
-          windowWidth: windowWidth,
-          bpToPx: bpToPx!,
-        });
-
-        // Listen for messages from the web worker
-        worker.onmessage = async (event) => {
-          let converted = event.data;
-
-          if (converted.length > 0) {
-            if (canvasRefR[canvasRefR.length - 1].current) {
-              let context =
-                canvasRefR[canvasRefR.length - 1].current.getContext('2d');
-
-              context.clearRect(
-                0,
-                0,
-                context.canvas.width,
-                context.canvas.height
-              );
-
-              let scales = computeScales(converted[0]);
-              let length = converted[0].length;
-
-              drawCanvas(0, length, context, converted, scales);
-              // Example: You can call your custom function here
-              // myCustomFunction(sectionStart, sectionEnd);
-            }
-          }
-        };
-
         // if (canvasRefR2[canvasRefR2.length - 1].current) {
         //   let context =
         //     canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
-
         //   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
         //   for (
         //     let i = 0;
         //     i < xToFeatureReverse[canvasRefR2.length - 1].length;
@@ -443,7 +428,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         //     // i = canvas pixel xpos
         //     if (xToFeatureReverse[canvasRefR2.length - 1][i] !== 0) {
         //       context.fillStyle = 'red';
-
         //       context.fillRect(
         //         i,
         //         0,

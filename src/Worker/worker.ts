@@ -66,50 +66,43 @@ const workerFunction = function () {
         reverse: aggregateRecords(reverseStrandRecords),
       };
     }
-    function findFeatureInPixel(data: any, windowWidth: number, bpToPx) {
-      let xToFeatures: Array<Array<any>> = [];
-
-      const newArr: Array<any> = Array.from(
-        { length: Number(windowWidth * 2) },
+    function findFeatureInPixel(regionData) {
+      const xToFeatures: Array<any> = Array.from(
+        { length: regionData.windowWidth * 2 },
         () => []
       );
 
-      xToFeatures.push(newArr);
-
-      let lastIdx = data.length - 1;
-      for (let j = 0; j < data[lastIdx][0].length; j++) {
-        let singleStrand = data[lastIdx][0][j];
+      let startPos = regionData.startBpRegion;
+      for (let j = 0; j < regionData.trackGene.length; j++) {
+        let singleStrand = regionData.trackGene[j];
 
         {
           if (Object.keys(singleStrand).length > 0) {
-            let xSpanStart = (singleStrand.start - data[lastIdx][1]) / bpToPx!;
-            let xSpanEnd = (singleStrand.end - data[lastIdx][1]) / bpToPx!;
+            let xSpanStart =
+              (singleStrand.start - startPos) / regionData.bpToPx!;
+            let xSpanEnd = (singleStrand.start - startPos) / regionData.bpToPx!;
             const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
+            const endX = Math.min(
+              regionData.windowWidth * 2 - 1,
+              Math.ceil(xSpanEnd)
+            );
 
             for (let x = startX; x <= endX; x++) {
-              xToFeatures[0][x].push(singleStrand);
+              xToFeatures[x].push(singleStrand);
             }
           }
         }
       }
       return xToFeatures;
     }
-    let data = event.data;
 
-    let xToRecords = findFeatureInPixel(
-      data.trackGene,
-      data.windowWidth,
-      data.bpToPx
-    );
+    let xToRecords = findFeatureInPixel(event.data);
 
     let aggregatedRecords: Array<any> = [];
     if (xToRecords.length > 0) {
-      for (let i = 0; i < xToRecords.length; i++) {
-        aggregatedRecords.push(
-          xToRecords[i].map((item, index) => aggregateByStrand(item))
-        );
-      }
+      aggregatedRecords.push(
+        xToRecords.map((item, index) => aggregateByStrand(item))
+      );
     }
 
     postMessage(aggregatedRecords);
