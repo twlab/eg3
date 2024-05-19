@@ -1,7 +1,8 @@
 import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
-
+import worker_script from '../../Worker/bigWigWorker';
+let worker: Worker;
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -47,7 +48,33 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   function getRndInteger(min = 0, max = 10000000000) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
+  function drawCanvas(
+    xToFeatures: Array<any>,
+    canvasRef: any,
+    height: number = 40
+  ) {
+    console.log(canvasRef);
+    if (canvasRef.current !== null) {
+      let context;
+      xToFeatures;
+      {
+        if (side === 'right') {
+          context = canvasRef.current.getContext('2d');
+        } else {
+          context = canvasRef.current.getContext('2d');
+        }
 
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+        for (let i = 0; i < xToFeatures.length; i++) {
+          // going through width pixels
+          // i = canvas pixel xpos
+          context.fillStyle = 'blue';
+          context.fillRect(i, 40 - xToFeatures[i], 1, xToFeatures[i]);
+        }
+      }
+    }
+  }
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
@@ -82,15 +109,36 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
           }
         }
       }
+    } else {
+      return;
     }
 
     //SORT our interval data into levels to be place on the track
-
+    const newCanvasRef = createRef();
     setRightTrack([...rightTrackGenes, [[...result], startPos]]);
 
-    const newCanvasRef = createRef();
-    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
+    worker = new Worker(worker_script);
 
+    worker.postMessage({
+      trackGene: result,
+      windowWidth: windowWidth,
+      bpToPx: bpToPx!,
+      bpRegionSize: bpRegionSize!,
+      startBpRegion: start,
+    });
+
+    // Listen for messages from the web worker
+    worker.onmessage = (event) => {
+      const xToFeature = event.data;
+      for (let i = 0; i < xToFeature.length; i++) {
+        const scaledHeight = scale(xToFeature[i]);
+
+        xToFeature[i] = scaledHeight;
+      }
+
+      drawCanvas(xToFeature, newCanvasRef);
+    };
+    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     if (trackData!.initial) {
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
@@ -320,44 +368,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     }
     return xToFeatures;
   }
-  function drawCanvas(
-    xToFeatures: Array<any>,
-    index: number,
-    height: number = 40
-  ) {
-    let context;
-    if (side === 'right') {
-      context = canvasRefR[index].current.getContext('2d');
-    } else {
-      context = canvasRefL[index].current.getContext('2d');
-    }
-
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-    for (let i = 0; i < xToFeatures[index].length; i++) {
-      // going through width pixels
-      // i = canvas pixel xpos
-      context.fillStyle = 'blue';
-      context.fillRect(i, 40 - xToFeatures[index][i], 1, xToFeatures[index][i]);
-    }
-  }
-
-  useEffect(() => {
-    // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
-    //     x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`
-    // x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
-    // step 1: loop through the svg width which is windowwith * 2
-    // 2: create an array for each x pixel.
-    // 3: round each strand start and end xspan
-    // 4: If a strand is in the same xspan pixel then add them to a array index
-    // 5: the array index will represent the x coord pixel of the canvas and svg
-    const xToFeatures = getPixelAvg(rightTrackGenes);
-    if (canvasRefR.length > 0) {
-      if (canvasRefR[canvasRefR.length - 1].current) {
-        drawCanvas(xToFeatures, canvasRefR.length - 1);
-      }
-    }
-  }, [rightTrackGenes]);
 
   useEffect(() => {
     const xToFeatures = getPixelAvg(leftTrackGenes);
@@ -405,11 +415,11 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   return (
     <div style={{ display: 'flex' }}>
       {side === 'right'
-        ? rightTrackGenes.map((item, index) => (
+        ? canvasRefR.map((item, index) => (
             <canvas
               id={`${index} + canvas1`}
               key={index}
-              ref={canvasRefR[index]}
+              ref={item}
               height={'40'}
               width={`${windowWidth * 2}px`}
               style={{}}

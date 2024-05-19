@@ -420,22 +420,10 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
               let scales = computeScales(converted[0]);
               let length = converted[0].length;
-              const sectionSize = Math.ceil(length / 10); // Calculate the size of each section
 
-              for (let i = 0; i < length; i += sectionSize) {
-                const sectionStart = i;
-                const sectionEnd = Math.min(i + sectionSize, length);
-
-                drawCanvas(
-                  sectionStart,
-                  sectionEnd,
-                  context,
-                  converted,
-                  scales
-                );
-                // Example: You can call your custom function here
-                // myCustomFunction(sectionStart, sectionEnd);
-              }
+              drawCanvas(0, length, context, converted, scales);
+              // Example: You can call your custom function here
+              // myCustomFunction(sectionStart, sectionEnd);
             }
           }
         };
