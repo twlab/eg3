@@ -91,8 +91,9 @@ function TrackManager(props) {
 
     const deltaX = lastX.current - e.pageX;
     if (
-      (isLoading && deltaX > 0 && side === 'right') ||
-      (isLoading && deltaX < 0 && side === 'left')
+      // (isLoading && deltaX > 0 && side === 'right') ||
+      // (isLoading && deltaX < 0 && side === 'left')
+      isLoading
     ) {
       return;
     }
@@ -105,9 +106,7 @@ function TrackManager(props) {
     // .5 = * 1 ,1 = * 2
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
-      block.current!.style.transform = `translate3d(${
-        dragX.current * 0.5
-      }px, 0px, 0)`;
+      block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
     });
   }
   const handleClick = () => {
@@ -172,7 +171,7 @@ function TrackManager(props) {
     if (
       // windowWidth needs to be changed to match the speed of the dragx else it has a differenace translate
       // for example if we set speed to 0.5 then need to mutiply windowith by 2
-      -dragX.current / (windowWidth * 2) >= 2 * (rightSectionSize.length - 2) &&
+      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
       setIsLoading(true);
