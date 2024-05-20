@@ -109,7 +109,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     result[0].sort((a, b) => {
       return b.end - a.end;
     });
-    console.log(result);
+
     if (result[0]) {
       result = result[0];
 
@@ -157,7 +157,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
         );
       }
       //START THE LOOP TO CHECK IF Prev interval overlapp with curr
-      console.log(result);
+
       for (let i = resultIdx + 1; i < result.length; i++) {
         var idx = strandIntervalList.length - 1;
         var curStrand = result[i];
@@ -304,16 +304,20 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
         //add a single strand to current track------------------------------------------------------------------------------------
         strandHtml.push(
-          <line
-            x1={`${
-              (singleStrand.start - trackGeneData.startTrackPos) / bpToPx!
-            }`}
-            y1={`${yCoord}`}
-            x2={`${(singleStrand.end - trackGeneData.startTrackPos) / bpToPx!}`}
-            y2={`${yCoord}`}
-            stroke={'blue'}
-            strokeWidth="20"
-          />
+          <React.Fragment key={singleStrand.start + singleStrand.end + 2333}>
+            <line
+              x1={`${
+                (singleStrand.start - trackGeneData.startTrackPos) / bpToPx!
+              }`}
+              y1={`${yCoord}`}
+              x2={`${
+                (singleStrand.end - trackGeneData.startTrackPos) / bpToPx!
+              }`}
+              y2={`${yCoord}`}
+              stroke={'blue'}
+              strokeWidth="20"
+            />
+          </React.Fragment>
         );
       }
 
@@ -363,11 +367,12 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
   return (
     <div>
-      {' '}
       {side === 'right'
-        ? rightTrackGenes.map((item, index) =>
-            index <= rightTrackGenes.length - 1 ? (
+        ? rightTrackGenes.map(
+            (item, index) => (
+              // index <= rightTrackGenes.length - 1 ?
               <svg
+                key={index}
                 width={`${windowWidth * 2}px`}
                 height={'100%'}
                 style={{ display: 'inline-block' }}
@@ -375,11 +380,12 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               >
                 {rightTrackGenes[index]}
               </svg>
-            ) : (
-              <div style={{ display: 'flex', width: windowWidth * 2 }}>
-                ....LOADING
-              </div>
             )
+            // : (
+            //   <div style={{ display: 'flex', width: windowWidth * 2 }}>
+            //     ....LOADING
+            //   </div>
+            // )
           )
         : genomeTrackL}
     </div>

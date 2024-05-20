@@ -497,7 +497,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             }
 
             strandHtml.push(
-              <>
+              <React.Fragment
+                key={singleStrand.txStart + singleStrand.txEnd + 2332323}
+              >
                 {children.map((item, index) => item)}
                 <line
                   x1={`${
@@ -514,6 +516,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 />
                 {exonIntervals.map((coord, index) => (
                   <line
+                    key={index}
                     x1={`${(coord[0] - trackGeneData.startTrackPos) / bpToPx!}`}
                     y1={`${yCoord}`}
                     x2={`${(coord[1] - trackGeneData.startTrackPos) / bpToPx!}`}
@@ -534,7 +537,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 >
                   {singleStrand.name}
                 </text>
-              </>
+              </React.Fragment>
             );
           }
         }
@@ -543,7 +546,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
       }
     }
 
-    return strandList.map((item, index) => item);
+    return strandList;
   }
   // useEffect(() => {
   //   const tempData = leftTrackGenes.slice(0);
@@ -570,22 +573,16 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   return (
     <div style={{ display: 'flex' }}>
       {side === 'right'
-        ? trackSize.map((item, index) =>
-            index <= rightTrackGenes.length - 1 ? (
+        ? rightTrackGenes.map(
+            (item, index) => (
+              // index <= rightTrackGenes.length - 1 ?
               <svg
+                key={index + 67923}
                 width={`${windowWidth * 2}px`}
                 height={'100%'}
                 style={{ display: 'inline-block' }}
                 overflow="visible"
               >
-                <line
-                  x1={`0`}
-                  y1="0"
-                  x2={`${windowWidth * 2}px`}
-                  y2={'0'}
-                  stroke="gray"
-                  strokeWidth="3"
-                />
                 <line
                   x1={`${windowWidth * 2}px`}
                   y1="0"
@@ -594,22 +591,16 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                   stroke="gray"
                   strokeWidth="3"
                 />
-                <line
-                  x1={`0`}
-                  y1={'100%'}
-                  x2={`${windowWidth * 2}px`}
-                  y2={'100%'}
-                  stroke="gray"
-                  strokeWidth="3"
-                />
+
                 {rightTrackGenes[index]}
                 {trackRegionR.current[index]}
               </svg>
-            ) : (
-              <div style={{ display: 'flex', width: windowWidth * 2 }}>
-                ....LOADING
-              </div>
             )
+            //  : (
+            //   <div style={{ display: 'flex', width: windowWidth * 2 }}>
+            //     ....LOADING
+            //   </div>
+            // )
           )
         : genomeTrackL}
     </div>

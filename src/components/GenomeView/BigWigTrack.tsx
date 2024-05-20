@@ -53,7 +53,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     canvasRef: any,
     height: number = 40
   ) {
-    console.log(canvasRef);
     if (canvasRef.current !== null) {
       let context;
       xToFeatures;

@@ -102,6 +102,7 @@ function TrackManager(props) {
     dragX.current -= deltaX;
 
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
+    // .5 = * 1 ,1 = * 2
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
       block.current!.style.transform = `translate3d(${
@@ -169,13 +170,11 @@ function TrackManager(props) {
     }
 
     if (
+      // windowWidth needs to be changed to match the speed of the dragx else it has a differenace translate
+      // for example if we set speed to 0.5 then need to mutiply windowith by 2
       -dragX.current / (windowWidth * 2) >= 2 * (rightSectionSize.length - 2) &&
       dragX.current < 0
     ) {
-      console.log(
-        -dragX.current / windowWidth,
-        2 * (rightSectionSize.length - 1)
-      );
       setIsLoading(true);
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];

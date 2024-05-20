@@ -98,14 +98,7 @@ const workerFunction = function () {
 
     let xToRecords = findFeatureInPixel(event.data);
 
-    let aggregatedRecords: Array<any> = [];
-    if (xToRecords.length > 0) {
-      aggregatedRecords.push(
-        xToRecords.map((item, index) => aggregateByStrand(item))
-      );
-    }
-
-    postMessage(aggregatedRecords);
+    postMessage(xToRecords.map((item, index) => aggregateByStrand(item)));
   };
 };
 
