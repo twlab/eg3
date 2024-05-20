@@ -442,10 +442,6 @@ function TrackManager(props) {
       );
     }
 
-    let userRespond;
-    let bedRespond;
-    let dynSeqRespond;
-    let methylcRespond;
     let tmpMethylc: Array<any> = [];
     let tmpDynseq: Array<any> = [];
     let tmpResult: Array<any> = [];
@@ -460,38 +456,45 @@ function TrackManager(props) {
       const [sectionStart, sectionEnd] = sectionBp.split('-');
 
       try {
-        userRespond = await fetch(
-          `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
-          { method: 'GET' }
-        );
-        bedRespond = await GetTabixData(
-          'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
-          curChrName,
-          Number(sectionStart),
-          Number(sectionEnd)
-        );
-        bigWigRespond = await GetBigData(
-          'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
-          curChrName,
-          Number(sectionStart),
-          Number(sectionEnd)
-        );
-        dynSeqRespond = await GetBigData(
-          'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
-          curChrName,
-          Number(sectionStart),
-          Number(sectionEnd)
-        );
-
-        bedRespond = await GetTabixData(
-          'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
-          curChrName,
-          Number(sectionStart),
-          Number(sectionEnd)
-        );
+        const [
+          userRespond,
+          bedRespond,
+          bigWigRespond,
+          dynSeqRespond,
+          methylcRespond,
+        ] = await Promise.all([
+          fetch(
+            `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
+            { method: 'GET' }
+          ),
+          GetTabixData(
+            'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
+            curChrName,
+            Number(sectionStart),
+            Number(sectionEnd)
+          ),
+          GetBigData(
+            'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
+            curChrName,
+            Number(sectionStart),
+            Number(sectionEnd)
+          ),
+          GetBigData(
+            'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
+            curChrName,
+            Number(sectionStart),
+            Number(sectionEnd)
+          ),
+          GetTabixData(
+            'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
+            curChrName,
+            Number(sectionStart),
+            Number(sectionEnd)
+          ),
+        ]);
 
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
-        let gotResult = userRespond.json();
+        let gotResult = await userRespond.json();
 
         if (i !== 0) {
           for (let i = 0; i < gotResult.length; i++) {
@@ -533,7 +536,7 @@ function TrackManager(props) {
             );
           }
         }
-        tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
+        tmpMethylc = [...tmpMethylc, ...methylcRespond];
         tmpResult = [...tmpResult, ...gotResult];
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
@@ -548,6 +551,7 @@ function TrackManager(props) {
     tempObj['bedResult'] = bedResult;
     tempObj['bigWigResult'] = bigWigResult;
     tempObj['dynseqResult'] = dynSeqResult;
+    tempObj['methylcResult'] = tmpMethylc;
     tempObj['side'] = 'left';
 
     tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
@@ -639,7 +643,7 @@ function TrackManager(props) {
             alignItems: side === 'right' ? 'start' : 'end',
           }}
         >
-          {trackComponent.map((Component, index) => (
+          {/* {trackComponent.map((Component, index) => (
             <Component
               key={index}
               bpRegionSize={bpRegionSize}
@@ -649,7 +653,14 @@ function TrackManager(props) {
               windowWidth={windowWidth}
               trackSize={rightSectionSize}
             />
-          ))}
+          ))} */}
+          <MethylcTrack
+            bpRegionSize={bpRegionSize}
+            bpToPx={bpToPx}
+            trackData={trackData}
+            side={side}
+            windowWidth={windowWidth}
+          />
         </div>
       </div>
     </div>

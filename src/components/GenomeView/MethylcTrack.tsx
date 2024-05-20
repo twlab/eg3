@@ -126,23 +126,25 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         ...rightTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
-      // Example: You can call your custom function here
-      // myCustomFunction(sectionStart, sectionEnd);
+      if (trackData!.initial) {
+        console;
+        const newCanvasRevRef = createRef();
+        const newCanvasRevRef2 = createRef();
+        prevOverflowStrand2.current = { ...overflowStrand2.current };
+        setLeftTrack([
+          ...leftTrackGenes,
+          { canvasData: converted, scaleData: scales },
+        ]);
+        overflowStrand2.current = {};
+        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
+
+        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
+      }
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
 
-    if (trackData!.initial) {
-      prevOverflowStrand2.current = { ...overflowStrand2.current };
-
-      overflowStrand2.current = {};
-      setLeftTrack([...leftTrackGenes, [[...result], startPos]]);
-      const newCanvasRef = createRef();
-      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-      const newCanvasRef2 = createRef();
-      setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
-    }
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
   }
@@ -151,170 +153,60 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   //________________________________________________________________________________________________________________________________________________________
 
   function fetchGenomeData2() {
-    let startPos = start;
+    let startPos;
+    startPos = start;
+
     var strandIntervalList: Array<any> = [];
-
-    result[0].sort((a, b) => {
-      return b.end - a.end;
-    });
-
-    if (result[0]) {
+    // initialize the first index of the interval so we can start checking for prev overlapping intervals
+    console.log(result);
+    if (result !== undefined && result.length > 0) {
+      result[0].sort((a, b) => {
+        return b.end - a.end;
+      });
       result = result[0];
-
       var resultIdx = 0;
 
-      if (
-        resultIdx < result.length &&
-        !(
-          result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
-        )
-      ) {
-        strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
-          new Array<any>(result[resultIdx]),
-        ]);
-      } else if (
-        resultIdx < result.length &&
-        result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
-      ) {
-        strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
-          new Array<any>(),
-        ]);
-
-        while (
-          strandIntervalList[resultIdx][2].length <
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level
-        ) {
-          strandIntervalList[resultIdx][2].push({});
-        }
-        strandIntervalList[resultIdx][2].splice(
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level,
-          0,
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].strand
-        );
-      }
-      //START THE LOOP TO CHECK IF Prev interval overlapp with curr
-      for (let i = resultIdx + 1; i < result.length; i++) {
+      // let checking for interval overlapping and determining what level each strand should be on
+      for (let i = resultIdx; i < result.length; i++) {
         var idx = strandIntervalList.length - 1;
-        var curStrand = result[i];
+        const curStrand = result[i];
+        if (curStrand.start < start) {
+          const strandId = curStrand.start + curStrand.end;
 
-        var curHighestLvl = [
-          idx,
-          strandIntervalList[idx][2].length - 1, //
-        ];
-        const curStrandId = curStrand.start + curStrand.end;
-        // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.end >= strandIntervalList[idx][0]) {
-          // combine the intervals into one larger interval that encompass the strands
-          if (strandIntervalList[idx][0] > curStrand.start) {
-            strandIntervalList[idx][0] = curStrand.start;
-          }
-
-          //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
-          if (curStrandId in prevOverflowStrand2.current) {
-            while (
-              strandIntervalList[idx][2].length - 1 <
-              prevOverflowStrand2.current[curStrandId].level
-            ) {
-              strandIntervalList[idx][2].push({});
-            }
-            strandIntervalList[idx][2].splice(
-              prevOverflowStrand2.current[curStrandId].level,
-              0,
-              prevOverflowStrand2.current[curStrandId].strand
-            );
-
-            idx--;
-            while (
-              idx >= 0 &&
-              prevOverflowStrand2.current[curStrandId].strand.end >=
-                strandIntervalList[idx][0]
-            ) {
-              if (
-                strandIntervalList[idx][2].length >
-                prevOverflowStrand2.current[curStrandId].level
-              ) {
-                if (strandIntervalList[idx][0] > curStrand.start) {
-                  strandIntervalList[idx][0] = curStrand.start;
-                }
-                strandIntervalList[idx][2].splice(
-                  prevOverflowStrand2.current[curStrandId].level,
-                  0,
-                  new Array<any>()
-                );
-              }
-
-              idx--;
-            }
-            continue;
-          }
-
-          //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.end >= strandIntervalList[idx][0]) {
-            if (strandIntervalList[idx][2].length - 1 > curHighestLvl[1]) {
-              if (strandIntervalList[idx][0] > curStrand.start) {
-                strandIntervalList[idx][0] = curStrand.start;
-              }
-
-              curHighestLvl = [idx, strandIntervalList[idx][2].length];
-            }
-            idx--;
-          }
-
-          strandIntervalList[curHighestLvl[0]][2].push(curStrand);
-        } else {
-          strandIntervalList.push([
-            result[i].start,
-            result[i].end,
-            new Array<any>(curStrand),
-          ]);
-        }
-      }
-    }
-
-    let strandLevelList: Array<any> = [];
-    for (var i = 0; i < strandIntervalList.length; i++) {
-      var intervalLevelData = strandIntervalList[i][2];
-
-      for (var j = 0; j < intervalLevelData.length; j++) {
-        var strand = intervalLevelData[j];
-
-        while (strandLevelList.length - 1 < j) {
-          strandLevelList.push(new Array<any>());
-        }
-        strandLevelList[j].push(strand);
-      }
-    }
-
-    setLeftTrack([...leftTrackGenes, [[...result[0]], startPos]]);
-
-    const newCanvasRef = createRef();
-    setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-    const newCanvasRef2 = createRef();
-    setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
-    for (var i = 0; i < strandLevelList.length; i++) {
-      var levelContent = strandLevelList[i];
-      for (var strand of levelContent) {
-        if (strand.start < start) {
-          const curStrandId = strand.start + strand.end;
-          overflowStrand2.current[curStrandId] = {
+          overflowStrand2.current[strandId] = {
             level: i,
-            strand: strand,
+            strand: curStrand,
           };
         }
       }
     }
+
+    const newCanvasRef = createRef();
+    const newCanvasRef2 = createRef();
+
+    worker = new Worker(worker_script);
+
+    worker.postMessage({
+      trackGene: result,
+      windowWidth: windowWidth,
+      bpToPx: bpToPx!,
+      bpRegionSize: bpRegionSize!,
+      startBpRegion: start,
+    });
+
+    worker.onmessage = (event) => {
+      let converted = event.data;
+      let scales = computeScales(converted);
+      let length = converted.length;
+
+      drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
+      setLeftTrack([
+        ...leftTrackGenes,
+        { canvasData: converted, scaleData: scales },
+      ]);
+    };
+    setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
+    setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
 
     prevOverflowStrand2.current = { ...overflowStrand2.current };
 
@@ -412,104 +304,105 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     }
   }
 
-  useEffect(() => {
-    if (leftTrackGenes.length > 0) {
-      let [featureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
-        leftTrackGenes,
-        bpToPx!,
-        windowWidth,
-        bpRegionSize!
-      );
+  // useEffect(() => {
+  //   if (leftTrackGenes.length > 0) {
+  //     let [featureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
+  //       leftTrackGenes,
+  //       bpToPx!,
+  //       windowWidth,
+  //       bpRegionSize!
+  //     );
 
-      if (canvasRefL.length > 0) {
-        if (canvasRefL[canvasRefL.length - 1].current) {
-          let context =
-            canvasRefL[canvasRefL.length - 1].current.getContext('2d');
+  //     if (canvasRefL.length > 0) {
+  //       if (canvasRefL[canvasRefL.length - 1].current) {
+  //         let context =
+  //           canvasRefL[canvasRefL.length - 1].current.getContext('2d');
 
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  //         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-          for (
-            let i = 0;
-            i < featureForward[canvasRefL.length - 1].length;
-            i++
-          ) {
-            // going through width pixels
-            // i = canvas pixel xpos
+  //         for (
+  //           let i = 0;
+  //           i < featureForward[canvasRefL.length - 1].length;
+  //           i++
+  //         ) {
+  //           // going through width pixels
+  //           // i = canvas pixel xpos
 
-            if (featureForward[canvasRefL.length - 1][i] !== 0) {
-              context.fillStyle = 'blue';
-              context.fillRect(
-                i,
-                featureForward[canvasRefL.length - 1][i],
-                1,
-                20 - featureForward[canvasRefL.length - 1][i]
-              );
-            }
-          }
-        }
-      }
+  //           if (featureForward[canvasRefL.length - 1][i] !== 0) {
+  //             context.fillStyle = 'blue';
+  //             context.fillRect(
+  //               i,
+  //               featureForward[canvasRefL.length - 1][i],
+  //               1,
+  //               20 - featureForward[canvasRefL.length - 1][i]
+  //             );
+  //           }
+  //         }
+  //       }
+  //     }
 
-      if (canvasRefL2.length > 0) {
-        if (canvasRefL2[canvasRefL2.length - 1].current) {
-          let context =
-            canvasRefL2[canvasRefL2.length - 1].current.getContext('2d');
+  //     if (canvasRefL2.length > 0) {
+  //       if (canvasRefL2[canvasRefL2.length - 1].current) {
+  //         let context =
+  //           canvasRefL2[canvasRefL2.length - 1].current.getContext('2d');
 
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  //         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-          for (
-            let i = 0;
-            i < xToFeatureReverse[canvasRefL2.length - 1].length;
-            i++
-          ) {
-            // going through width pixels
-            // i = canvas pixel xpos
-            if (xToFeatureReverse[canvasRefL2.length - 1][i] !== 0) {
-              context.fillStyle = 'red';
+  //         for (
+  //           let i = 0;
+  //           i < xToFeatureReverse[canvasRefL2.length - 1].length;
+  //           i++
+  //         ) {
+  //           // going through width pixels
+  //           // i = canvas pixel xpos
+  //           if (xToFeatureReverse[canvasRefL2.length - 1][i] !== 0) {
+  //             context.fillStyle = 'red';
 
-              context.fillRect(
-                i,
-                0,
-                1,
-                xToFeatureReverse[canvasRefL2.length - 1][i]
-              );
-            }
-          }
-        }
-      }
-    }
-  }, [leftTrackGenes]);
+  //             context.fillRect(
+  //               i,
+  //               0,
+  //               1,
+  //               xToFeatureReverse[canvasRefL2.length - 1][i]
+  //             );
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }, [leftTrackGenes]);
 
   useEffect(() => {
     if (side === 'left') {
-      if (canvasRefL.length != 0) {
-        canvasRefL.forEach((canvasRef, index) => {
-          if (canvasRef.current) {
-            let context = canvasRef.current.getContext('2d');
-            context.clearRect(
+      if (leftTrackGenes.length != 0) {
+        leftTrackGenes.forEach((canvasRef, index) => {
+          if (canvasRefL[index].current && canvasRefL2[index].current) {
+            let length = leftTrackGenes[index].canvasData.length;
+            drawCanvas(
               0,
-              0,
-              context.canvas.width,
-              context.canvas.height
+              length,
+              canvasRefL[index],
+              leftTrackGenes[index].canvasData,
+              leftTrackGenes[index].scaleData,
+              canvasRefL2[index]
             );
           }
         });
-        setLeftTrack([...leftTrackGenes]);
       }
     } else if (side === 'right') {
-      if (canvasRefR.length != 0) {
-        canvasRefR.forEach((canvasRef, index) => {
-          if (canvasRef.current) {
-            let context = canvasRef.current.getContext('2d');
-
-            context.clearRect(
+      if (rightTrackGenes.length != 0) {
+        rightTrackGenes.forEach((canvasRef, index) => {
+          if (canvasRefR[index].current && canvasRefR2[index].current) {
+            let length = rightTrackGenes[index].canvasData.length;
+            drawCanvas(
               0,
-              0,
-              context.canvas.width,
-              context.canvas.height
+              length,
+              canvasRefR[index],
+              rightTrackGenes[index].canvasData,
+              rightTrackGenes[index].scaleData,
+              canvasRefR2[index]
             );
           }
         });
-        setRightTrack([...rightTrackGenes]);
       }
     }
   }, [side]);
@@ -519,6 +412,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       if (trackData!.location && trackData!.side === 'right') {
         fetchGenomeData();
       } else if (trackData!.location && trackData!.side === 'left') {
+        console.log(trackData);
         fetchGenomeData2();
       }
     }
@@ -553,32 +447,29 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {leftTrackGenes.map((item, index) => (
-            <div
-              key={canvasRefL.length - index - 1}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'end',
-              }}
-            >
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {canvasRefL.map((item, index) => (
               <canvas
-                key={canvasRefL.length - index - 1 + 34343}
+                key={canvasRefL.length - index - 1}
                 ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={'20'}
+                height={'40'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {canvasRefL2.map((item, index) => (
               <canvas
                 key={canvasRefL2.length - index - 1 + 3343434}
                 ref={canvasRefL2[canvasRefL2.length - index - 1]}
-                height={'20'}
+                height={'40'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
