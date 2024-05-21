@@ -91,8 +91,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
       }
     }
 
-    setRightTrack([...rightTrackGenes, [[...result], startPos]]);
-
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
 
@@ -114,32 +112,49 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         converted.forward,
         converted.reverse,
         0,
-        start
+        bpRegionSize
       );
 
       drawCanvas(
         0,
         windowWidth * 2,
-        canvasRefR,
+        newCanvasRef,
         converted,
         scales,
-        canvasRefR2
+        newCanvasRef2
       );
+      setRightTrack([
+        ...rightTrackGenes,
+        { canvasData: converted, scaleData: scales },
+      ]);
+      if (trackData!.initial) {
+        const newCanvasRevRef = createRef();
+        const newCanvasRevRef2 = createRef();
+        prevOverflowStrand2.current = { ...overflowStrand2.current };
+        setLeftTrack([
+          ...leftTrackGenes,
+          { canvasData: converted, scaleData: scales },
+        ]);
+        overflowStrand2.current = {};
+        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
+
+        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
+      }
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
 
-    if (trackData!.initial) {
-      prevOverflowStrand2.current = { ...overflowStrand2.current };
+    // if (trackData!.initial) {
+    //   prevOverflowStrand2.current = { ...overflowStrand2.current };
 
-      overflowStrand2.current = {};
-      setLeftTrack([...leftTrackGenes, [[...result], startPos]]);
-      const newCanvasRef = createRef();
-      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-      const newCanvasRef2 = createRef();
-      setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
-    }
+    //   overflowStrand2.current = {};
+    //   setLeftTrack([...leftTrackGenes, [[...result], startPos]]);
+    //   const newCanvasRef = createRef();
+    //   setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
+    //   const newCanvasRef2 = createRef();
+    //   setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
+    // }
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
   }
@@ -148,170 +163,71 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   //________________________________________________________________________________________________________________________________________________________
 
   function fetchGenomeData2() {
-    let startPos = start;
+    let startPos;
+    startPos = start;
+
     var strandIntervalList: Array<any> = [];
+    // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    result[0].sort((a, b) => {
-      return b.end - a.end;
-    });
-
-    if (result[0]) {
+    if (result !== undefined && result.length > 0) {
+      result[0].sort((a, b) => {
+        return b.end - a.end;
+      });
       result = result[0];
-
       var resultIdx = 0;
 
-      if (
-        resultIdx < result.length &&
-        !(
-          result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
-        )
-      ) {
-        strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
-          new Array<any>(result[resultIdx]),
-        ]);
-      } else if (
-        resultIdx < result.length &&
-        result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
-      ) {
-        strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
-          new Array<any>(),
-        ]);
-
-        while (
-          strandIntervalList[resultIdx][2].length <
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level
-        ) {
-          strandIntervalList[resultIdx][2].push({});
-        }
-        strandIntervalList[resultIdx][2].splice(
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level,
-          0,
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].strand
-        );
-      }
-      //START THE LOOP TO CHECK IF Prev interval overlapp with curr
-      for (let i = resultIdx + 1; i < result.length; i++) {
+      // let checking for interval overlapping and determining what level each strand should be on
+      for (let i = resultIdx; i < result.length; i++) {
         var idx = strandIntervalList.length - 1;
-        var curStrand = result[i];
+        const curStrand = result[i];
+        if (curStrand.start < start) {
+          const strandId = curStrand.start + curStrand.end;
 
-        var curHighestLvl = [
-          idx,
-          strandIntervalList[idx][2].length - 1, //
-        ];
-        const curStrandId = curStrand.start + curStrand.end;
-        // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.end >= strandIntervalList[idx][0]) {
-          // combine the intervals into one larger interval that encompass the strands
-          if (strandIntervalList[idx][0] > curStrand.start) {
-            strandIntervalList[idx][0] = curStrand.start;
-          }
-
-          //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
-          if (curStrandId in prevOverflowStrand2.current) {
-            while (
-              strandIntervalList[idx][2].length - 1 <
-              prevOverflowStrand2.current[curStrandId].level
-            ) {
-              strandIntervalList[idx][2].push({});
-            }
-            strandIntervalList[idx][2].splice(
-              prevOverflowStrand2.current[curStrandId].level,
-              0,
-              prevOverflowStrand2.current[curStrandId].strand
-            );
-
-            idx--;
-            while (
-              idx >= 0 &&
-              prevOverflowStrand2.current[curStrandId].strand.end >=
-                strandIntervalList[idx][0]
-            ) {
-              if (
-                strandIntervalList[idx][2].length >
-                prevOverflowStrand2.current[curStrandId].level
-              ) {
-                if (strandIntervalList[idx][0] > curStrand.start) {
-                  strandIntervalList[idx][0] = curStrand.start;
-                }
-                strandIntervalList[idx][2].splice(
-                  prevOverflowStrand2.current[curStrandId].level,
-                  0,
-                  new Array<any>()
-                );
-              }
-
-              idx--;
-            }
-            continue;
-          }
-
-          //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.end >= strandIntervalList[idx][0]) {
-            if (strandIntervalList[idx][2].length - 1 > curHighestLvl[1]) {
-              if (strandIntervalList[idx][0] > curStrand.start) {
-                strandIntervalList[idx][0] = curStrand.start;
-              }
-
-              curHighestLvl = [idx, strandIntervalList[idx][2].length];
-            }
-            idx--;
-          }
-
-          strandIntervalList[curHighestLvl[0]][2].push(curStrand);
-        } else {
-          strandIntervalList.push([
-            result[i].start,
-            result[i].end,
-            new Array<any>(curStrand),
-          ]);
-        }
-      }
-    }
-
-    let strandLevelList: Array<any> = [];
-    for (var i = 0; i < strandIntervalList.length; i++) {
-      var intervalLevelData = strandIntervalList[i][2];
-
-      for (var j = 0; j < intervalLevelData.length; j++) {
-        var strand = intervalLevelData[j];
-
-        while (strandLevelList.length - 1 < j) {
-          strandLevelList.push(new Array<any>());
-        }
-        strandLevelList[j].push(strand);
-      }
-    }
-
-    setLeftTrack([...leftTrackGenes, [[...strandLevelList], startPos]]);
-
-    const newCanvasRef = createRef();
-    setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-    const newCanvasRef2 = createRef();
-    setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
-    for (var i = 0; i < strandLevelList.length; i++) {
-      var levelContent = strandLevelList[i];
-      for (var strand of levelContent) {
-        if (strand.start < start) {
-          const curStrandId = strand.start + strand.end;
-          overflowStrand2.current[curStrandId] = {
+          overflowStrand2.current[strandId] = {
             level: i,
-            strand: strand,
+            strand: curStrand,
           };
         }
       }
     }
+
+    const newCanvasRef = createRef();
+    const newCanvasRef2 = createRef();
+
+    worker = new Worker(worker_script);
+
+    worker.postMessage({
+      trackGene: result,
+      windowWidth: windowWidth,
+      bpToPx: bpToPx!,
+      bpRegionSize: bpRegionSize!,
+      startBpRegion: start,
+    });
+
+    worker.onmessage = (event) => {
+      let converted = event.data;
+      let scales = computeScales(
+        converted.forward,
+        converted.reverse,
+        0,
+        bpRegionSize
+      );
+      console.log(converted);
+      drawCanvas(
+        0,
+        windowWidth * 2,
+        newCanvasRef,
+        converted,
+        scales,
+        newCanvasRef2
+      );
+      setLeftTrack([
+        ...leftTrackGenes,
+        { canvasData: converted, scaleData: scales },
+      ]);
+    };
+    setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
+    setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
 
     prevOverflowStrand2.current = { ...overflowStrand2.current };
 
@@ -348,22 +264,20 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
+    console.log(converted);
     for (let i = startRange; i < endRange; i++) {
       if (converted.forward[i] !== 0) {
         context.fillStyle = 'blue';
+        const drawY = scales.valueToY(converted.forward[i]);
 
-        context.fillRect(
-          i,
-          scales.valueToY(converted.forward[i]),
-          1,
-          20 - scales.valueToY(converted.forward[i])
-        );
+        context.fillRect(i, drawY, 1, 20 - drawY);
       }
       if (converted.reverse[i] !== 0) {
-        context.fillStyle = 'red';
+        const height = scales.valueToYReverse(converted.reverse[i]);
 
-        context.fillRect(i, 0, 1, scales.valueToYReverse(converted.reverse[i]));
+        contextRev.fillStyle = 'red';
+
+        contextRev.fillRect(i, 0, 1, height);
       }
     }
   }
@@ -481,148 +395,38 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }
 
   useEffect(() => {
-    // to find the "xSpan" or the x coord of the canvas and svg. They start at 0 - the windowwith * 2 for this setup
-    //     x1={`${(singleStrand.start - props.startTrackPos) / bpToPx!}`
-    // x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
-    // step 1: loop through the svg width which is windowwith * 2
-    // 2: create an array for each x pixel.
-    // 3: round each strand start and end xspan
-    // 4: If a strand is in the same xspan pixel then add them to a array index
-    // 5: the array index will represent the x coord pixel of the canvas and svg
-    if (rightTrackGenes.length > 0) {
-      // makeXMap(trackGenes, bpToPx, windowWidth, bpRegionSize)
-
-      worker = new Worker(worker_script);
-
-      worker.postMessage({
-        trackGene: result[0],
-        windowWidth: windowWidth,
-        bpToPx: bpToPx!,
-        bpRegionSize: bpRegionSize!,
-        startBpRegion: start,
-      });
-
-      // Listen for messages from the web worker
-      worker.onmessage = (event) => {
-        const converted = event.data;
-
-        let scales = computeScales(
-          converted.forward,
-          converted.reverse,
-          0,
-          start
-        );
-
-        drawCanvas(
-          0,
-          windowWidth * 2,
-          canvasRefR,
-          converted,
-          scales,
-          canvasRefR2
-        );
-      };
-    }
-  }, [rightTrackGenes]);
-
-  useEffect(() => {
-    if (leftTrackGenes.length > 0) {
-      let [featureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
-        leftTrackGenes,
-        bpToPx!,
-        windowWidth,
-        bpRegionSize!
-      );
-
-      if (canvasRefL.length > 0) {
-        if (canvasRefL[canvasRefL.length - 1].current) {
-          let context =
-            canvasRefL[canvasRefL.length - 1].current.getContext('2d');
-
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-          for (
-            let i = 0;
-            i < featureForward[canvasRefL.length - 1].length;
-            i++
-          ) {
-            // going through width pixels
-            // i = canvas pixel xpos
-
-            if (featureForward[canvasRefL.length - 1][i] !== 0) {
-              context.fillStyle = 'blue';
-              context.fillRect(
-                i,
-                featureForward[canvasRefL.length - 1][i],
-                1,
-                20 - featureForward[canvasRefL.length - 1][i]
-              );
-            }
-          }
-        }
-      }
-
-      if (canvasRefL2.length > 0) {
-        if (canvasRefL2[canvasRefL2.length - 1].current) {
-          let context =
-            canvasRefL2[canvasRefL2.length - 1].current.getContext('2d');
-
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-          for (
-            let i = 0;
-            i < xToFeatureReverse[canvasRefL2.length - 1].length;
-            i++
-          ) {
-            // going through width pixels
-            // i = canvas pixel xpos
-            if (xToFeatureReverse[canvasRefL2.length - 1][i] !== 0) {
-              context.fillStyle = 'red';
-
-              context.fillRect(
-                i,
-                0,
-                1,
-                xToFeatureReverse[canvasRefL2.length - 1][i]
-              );
-            }
-          }
-        }
-      }
-    }
-  }, [leftTrackGenes]);
-
-  useEffect(() => {
     if (side === 'left') {
-      if (canvasRefL.length != 0) {
-        canvasRefL.forEach((canvasRef, index) => {
-          if (canvasRef.current) {
-            let context = canvasRef.current.getContext('2d');
-            context.clearRect(
+      if (leftTrackGenes.length != 0) {
+        leftTrackGenes.forEach((canvasRef, index) => {
+          if (canvasRefL[index].current && canvasRefL2[index].current) {
+            let length = leftTrackGenes[index].canvasData.reverse.length;
+            console.log(leftTrackGenes[index].canvasData.reverse);
+            drawCanvas(
               0,
-              0,
-              context.canvas.width,
-              context.canvas.height
+              length,
+              canvasRefL[index],
+              leftTrackGenes[index].canvasData,
+              leftTrackGenes[index].scaleData,
+              canvasRefL2[index]
             );
           }
         });
-        setLeftTrack([...leftTrackGenes]);
       }
     } else if (side === 'right') {
-      if (canvasRefR.length != 0) {
-        canvasRefR.forEach((canvasRef, index) => {
-          if (canvasRef.current) {
-            let context = canvasRef.current.getContext('2d');
-
-            context.clearRect(
+      if (rightTrackGenes.length != 0) {
+        rightTrackGenes.forEach((canvasRef, index) => {
+          if (canvasRefR[index].current && canvasRefR2[index].current) {
+            let length = rightTrackGenes[index].canvasData.forward.length;
+            drawCanvas(
               0,
-              0,
-              context.canvas.width,
-              context.canvas.height
+              length,
+              canvasRefR[index],
+              rightTrackGenes[index].canvasData,
+              rightTrackGenes[index].scaleData,
+              canvasRefR2[index]
             );
           }
         });
-        setRightTrack([...rightTrackGenes]);
       }
     }
   }, [side]);
@@ -641,47 +445,45 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   return (
     <div style={{ height: '40px' }}>
       {side === 'right' ? (
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {rightTrackGenes.map((item, index) => (
-            <div
-              key={index + 34343479}
-              style={{ display: 'flex', flexDirection: 'column' }}
-            >
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {canvasRefR.map((item, index) => (
               <canvas
                 key={index}
-                ref={canvasRefR[index]}
+                ref={item}
                 height={'20'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {canvasRefR2.map((item, index) => (
               <canvas
-                key={index + 2}
-                ref={canvasRefR2[index]}
+                key={index + 32}
+                ref={item}
                 height={'20'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {leftTrackGenes.map((item, index) => (
-            <div
-              key={canvasRefL.length - index - 1}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'end',
-              }}
-            >
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {canvasRefL.map((item, index) => (
               <canvas
-                key={canvasRefL.length - index - 1 + 34343}
+                key={canvasRefL.length - index - 1}
                 ref={canvasRefL[canvasRefL.length - index - 1]}
                 height={'20'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {canvasRefL2.map((item, index) => (
               <canvas
                 key={canvasRefL2.length - index - 1 + 3343434}
                 ref={canvasRefL2[canvasRefL2.length - index - 1]}
@@ -689,8 +491,8 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

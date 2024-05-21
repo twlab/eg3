@@ -88,7 +88,7 @@ const workerFunction = function () {
     let aggResult = {};
     aggResult['forward'] = featureForward;
     aggResult['reverse'] = featureReverse;
-
+    console.log(event.data);
     postMessage(aggResult);
   };
 };

@@ -127,7 +127,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         { canvasData: converted, scaleData: scales },
       ]);
       if (trackData!.initial) {
-        console;
         const newCanvasRevRef = createRef();
         const newCanvasRevRef2 = createRef();
         prevOverflowStrand2.current = { ...overflowStrand2.current };
@@ -158,7 +157,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(result);
+
     if (result !== undefined && result.length > 0) {
       result[0].sort((a, b) => {
         return b.end - a.end;
@@ -278,7 +277,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     for (let j = startRange; j < endRange; j++) {
       let forward = converted[j].forward;
       let reverse = converted[j].reverse;
-      // let combine = converted[0][j].combined;
+      // let combine = converted[j].combined;
 
       for (let contextData of forward.contextValues) {
         const drawY = scales.methylToY(contextData.value);
@@ -303,73 +302,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       }
     }
   }
-
-  // useEffect(() => {
-  //   if (leftTrackGenes.length > 0) {
-  //     let [featureForward, xToFeatureReverse] = myFeatureAggregator.makeXMap(
-  //       leftTrackGenes,
-  //       bpToPx!,
-  //       windowWidth,
-  //       bpRegionSize!
-  //     );
-
-  //     if (canvasRefL.length > 0) {
-  //       if (canvasRefL[canvasRefL.length - 1].current) {
-  //         let context =
-  //           canvasRefL[canvasRefL.length - 1].current.getContext('2d');
-
-  //         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-  //         for (
-  //           let i = 0;
-  //           i < featureForward[canvasRefL.length - 1].length;
-  //           i++
-  //         ) {
-  //           // going through width pixels
-  //           // i = canvas pixel xpos
-
-  //           if (featureForward[canvasRefL.length - 1][i] !== 0) {
-  //             context.fillStyle = 'blue';
-  //             context.fillRect(
-  //               i,
-  //               featureForward[canvasRefL.length - 1][i],
-  //               1,
-  //               20 - featureForward[canvasRefL.length - 1][i]
-  //             );
-  //           }
-  //         }
-  //       }
-  //     }
-
-  //     if (canvasRefL2.length > 0) {
-  //       if (canvasRefL2[canvasRefL2.length - 1].current) {
-  //         let context =
-  //           canvasRefL2[canvasRefL2.length - 1].current.getContext('2d');
-
-  //         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-  //         for (
-  //           let i = 0;
-  //           i < xToFeatureReverse[canvasRefL2.length - 1].length;
-  //           i++
-  //         ) {
-  //           // going through width pixels
-  //           // i = canvas pixel xpos
-  //           if (xToFeatureReverse[canvasRefL2.length - 1][i] !== 0) {
-  //             context.fillStyle = 'red';
-
-  //             context.fillRect(
-  //               i,
-  //               0,
-  //               1,
-  //               xToFeatureReverse[canvasRefL2.length - 1][i]
-  //             );
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }, [leftTrackGenes]);
 
   useEffect(() => {
     if (side === 'left') {
