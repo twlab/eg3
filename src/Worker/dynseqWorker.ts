@@ -8,27 +8,22 @@ const workerFunction = function () {
       startRegionBp: number,
       bpToPx
     ) {
-      let xToFeatures: Array<Array<any>> = [];
-
-      const newArr: Array<any> = Array.from(
+      const xToFeatures: Array<any> = Array.from(
         { length: Number(windowWidth * 2) },
         () => []
       );
-      xToFeatures.push(newArr);
 
-      for (let i = 0; i < data.length; i++) {
-        for (let j = 0; j < data[i].length; j++) {
-          let singleStrand = data[i][j];
+      for (let j = 0; j < data.length; j++) {
+        let singleStrand = data[j];
 
-          if (Object.keys(singleStrand).length > 0) {
-            let xSpanStart = (singleStrand.start - startRegionBp) / bpToPx!;
-            let xSpanEnd = (singleStrand.end - startRegionBp) / bpToPx!;
-            const startX = Math.max(0, Math.floor(xSpanStart));
-            const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
+        if (Object.keys(singleStrand).length > 0) {
+          let xSpanStart = (singleStrand.start - startRegionBp) / bpToPx!;
+          let xSpanEnd = (singleStrand.end - startRegionBp) / bpToPx!;
+          const startX = Math.max(0, Math.floor(xSpanStart));
+          const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
 
-            for (let x = startX; x <= endX; x++) {
-              xToFeatures[i][x].push(singleStrand);
-            }
+          for (let x = startX; x <= endX; x++) {
+            xToFeatures[x].push(singleStrand);
           }
         }
       }
@@ -40,25 +35,23 @@ const workerFunction = function () {
       let min = 0;
 
       for (let i = 0; i < data.length; i++) {
+        let sum = 0;
+
         for (let j = 0; j < data[i].length; j++) {
-          let sum = 0;
-
-          for (let x = 0; x < data[i][j].length; x++) {
-            sum += data[i][j][x].score;
-          }
-          let avgPos = 0;
-          if (data[i][j].length > 0) {
-            avgPos = sum / data[i][j].length;
-          }
-
-          if (avgPos > max) {
-            max = avgPos;
-          }
-          if (avgPos < min) {
-            min = avgPos;
-          }
-          data[i][j] = avgPos;
+          sum += data[i][j].score;
         }
+        let avgPos = 0;
+        if (data[i].length > 0) {
+          avgPos = sum / data[i].length;
+        }
+
+        if (avgPos > max) {
+          max = avgPos;
+        }
+        if (avgPos < min) {
+          min = avgPos;
+        }
+        data[i] = avgPos;
       }
     }
 
@@ -66,47 +59,37 @@ const workerFunction = function () {
     let dataForward: Array<any> = [];
     let dataReverse: Array<any> = [];
 
-    const newArr: Array<any> = [];
-    dataForward.push(newArr);
-    const newArr2: Array<any> = [];
-    dataReverse.push(newArr2);
-
-    let lastIdx = trackData.trackGene.length - 1;
-
-    let startRegionBp = trackData.trackGene[lastIdx][1];
-
-    for (let j = 0; j < trackData.trackGene[lastIdx][0].length; j++) {
-      let singleStrand = trackData.trackGene[lastIdx][0][j];
+    for (let j = 0; j < trackData.trackGene.length; j++) {
+      let singleStrand = trackData.trackGene[j];
       if (singleStrand.score < 0) {
-        dataReverse[0].push(singleStrand);
+        dataReverse.push(singleStrand);
       } else {
-        dataForward[0].push(singleStrand);
+        dataForward.push(singleStrand);
       }
     }
 
     let featureForward = findFeatureInPixel(
       dataForward,
       trackData.windowWidth,
-      startRegionBp,
+      trackData.startBpRegion,
       trackData.bpToPx
     );
 
     let featureReverse = findFeatureInPixel(
       dataReverse,
       trackData.windowWidth,
-      startRegionBp,
+      trackData.startBpRegion,
       trackData.bpToPx
     );
 
     avgHeightFeature(featureForward);
     avgHeightFeature(featureReverse);
 
-    let newResult: Array<any> = [];
+    let aggResult = {};
+    aggResult['forward'] = featureForward;
+    aggResult['reverse'] = featureReverse;
 
-    newResult.push(featureForward);
-    newResult.push(featureReverse);
-
-    postMessage(newResult);
+    postMessage(aggResult);
   };
 };
 

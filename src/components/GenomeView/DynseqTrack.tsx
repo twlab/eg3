@@ -95,6 +95,37 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
+
+    worker = new Worker(worker_script);
+
+    worker.postMessage({
+      trackGene: result,
+      windowWidth: windowWidth,
+      bpToPx: bpToPx!,
+      bpRegionSize: bpRegionSize!,
+      startBpRegion: start,
+    });
+
+    // Listen for messages from the web worker
+    worker.onmessage = (event) => {
+      const converted = event.data;
+
+      let scales = computeScales(
+        converted.forward,
+        converted.reverse,
+        0,
+        start
+      );
+
+      drawCanvas(
+        0,
+        windowWidth * 2,
+        canvasRefR,
+        converted,
+        scales,
+        canvasRefR2
+      );
+    };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
@@ -304,7 +335,38 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap
   const TOP_PADDING = 2;
   const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
+  async function drawCanvas(
+    startRange,
+    endRange,
+    canvasRef,
+    converted,
+    scales,
+    canvasRefReverse
+  ) {
+    let context = canvasRef.current.getContext('2d');
+    let contextRev = canvasRefReverse.current.getContext('2d');
 
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+    for (let i = startRange; i < endRange; i++) {
+      if (converted.forward[i] !== 0) {
+        context.fillStyle = 'blue';
+
+        context.fillRect(
+          i,
+          scales.valueToY(converted.forward[i]),
+          1,
+          20 - scales.valueToY(converted.forward[i])
+        );
+      }
+      if (converted.reverse[i] !== 0) {
+        context.fillStyle = 'red';
+
+        context.fillRect(i, 0, 1, scales.valueToYReverse(converted.reverse[i]));
+      }
+    }
+  }
   function computeScales(
     xToValue,
     xToValue2,
@@ -433,64 +495,32 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
       worker = new Worker(worker_script);
 
       worker.postMessage({
-        trackGene: rightTrackGenes,
+        trackGene: result[0],
         windowWidth: windowWidth,
         bpToPx: bpToPx!,
         bpRegionSize: bpRegionSize!,
+        startBpRegion: start,
       });
 
       // Listen for messages from the web worker
       worker.onmessage = (event) => {
-        const [avgPos, avgNeg] = event.data;
+        const converted = event.data;
 
         let scales = computeScales(
-          avgPos[0],
-          avgNeg[0],
+          converted.forward,
+          converted.reverse,
           0,
-          rightTrackGenes[rightTrackGenes.length - 1][1]
+          start
         );
 
-        for (let j = 0; j < avgPos[0].length; j++) {
-          if (avgPos[0][j] !== 0) {
-            avgPos[0][j] = scales.valueToY(avgPos[0][j]);
-            avgNeg[0][j] = scales.valueToYReverse(avgNeg[0][j]);
-          }
-        }
-
-        if (canvasRefR[canvasRefR.length - 1].current) {
-          let context =
-            canvasRefR[canvasRefR.length - 1].current.getContext('2d');
-
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-          for (let i = 0; i < avgPos[0].length; i++) {
-            // going through width pixels
-            // i = canvas pixel xpos
-
-            if (avgPos[0][i] !== 0) {
-              context.fillStyle = 'blue';
-
-              context.fillRect(i, avgPos[0][i], 1, 20 - avgPos[0][i]);
-            }
-          }
-        }
-
-        if (canvasRefR2[canvasRefR2.length - 1].current) {
-          let context =
-            canvasRefR2[canvasRefR2.length - 1].current.getContext('2d');
-
-          context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-          for (let i = 0; i < avgNeg[0].length; i++) {
-            // going through width pixels
-            // i = canvas pixel xpos
-            if (avgNeg[0][i] !== 0) {
-              context.fillStyle = 'red';
-
-              context.fillRect(i, 0, 1, avgNeg[0][i]);
-            }
-          }
-        }
+        drawCanvas(
+          0,
+          windowWidth * 2,
+          canvasRefR,
+          converted,
+          scales,
+          canvasRefR2
+        );
       };
     }
   }, [rightTrackGenes]);

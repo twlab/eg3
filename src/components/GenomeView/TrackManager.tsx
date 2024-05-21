@@ -643,7 +643,7 @@ function TrackManager(props) {
             alignItems: side === 'right' ? 'start' : 'end',
           }}
         >
-          {/* {trackComponent.map((Component, index) => (
+          {trackComponent.map((Component, index) => (
             <Component
               key={index}
               bpRegionSize={bpRegionSize}
@@ -653,14 +653,14 @@ function TrackManager(props) {
               windowWidth={windowWidth}
               trackSize={rightSectionSize}
             />
-          ))} */}
-          <MethylcTrack
+          ))}
+          {/* <MethylcTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={trackData}
             side={side}
             windowWidth={windowWidth}
-          />
+          /> */}
         </div>
       </div>
     </div>
