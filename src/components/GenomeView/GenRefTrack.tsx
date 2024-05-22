@@ -218,15 +218,16 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
-      // overflowStrand2.current = {};
-      // setLeftTrack([
-      //   ...leftTrackGenes,
-      //   <SetStrand
-      //     key={getRndInteger()}
-      //     strandPos={strandLevelList}
-      //     startTrackPos={start}
-      //   />,
-      // ]);
+      overflowStrand2.current = {};
+
+      let svgResultLeft = setStrand({
+        strandPos: [...strandLevelList],
+        checkPrev: { ...prevOverflowStrand2.current },
+        startTrackPos: end - bpRegionSize!,
+      });
+
+      setLeftTrack([...leftTrackGenes, svgResultLeft]);
+
       trackRegionL.current.push(
         <text fontSize={30} x={200} y={400} fill="black">
           {`${start - bpRegionSize!} - ${start}`}
@@ -377,20 +378,19 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
       }
     }
 
-    // setLeftTrack([
-    //   ...leftTrackGenes,
-    //   <SetStrand
-    //     key={getRndInteger()}
-    //     strandPos={strandLevelList}
-    //     checkPrev={prevOverflowStrand2.current}
-    //     startTrackPos={start}
-    //   />,
-    // ]);
-    // trackRegionL.current.push(
-    //   <text fontSize={30} x={200} y={400} fill="black">
-    //     {`${start} - ${end}`}
-    //   </text>
-    // );
+    let svgResultLeft = setStrand({
+      strandPos: [...strandLevelList],
+      checkPrev: { ...prevOverflowStrand2.current },
+      startTrackPos: start,
+    });
+
+    setLeftTrack([...leftTrackGenes, svgResultLeft]);
+
+    trackRegionL.current.push(
+      <text fontSize={30} x={200} y={400} fill="black">
+        {`${start} - ${end}`}
+      </text>
+    );
 
     for (var i = 0; i < strandLevelList.length; i++) {
       var levelContent = strandLevelList[i];
@@ -602,7 +602,28 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             //   </div>
             // )
           )
-        : genomeTrackL}
+        : leftTrackGenes.map((item, index) => (
+            // index <= rightTrackGenes.length - 1 ?
+            <svg
+              key={index + 67923}
+              width={`${windowWidth * 2}px`}
+              height={'100%'}
+              style={{ display: 'inline-block' }}
+              overflow="visible"
+            >
+              <line
+                x1={`${windowWidth * 2}px`}
+                y1="0"
+                x2={`${windowWidth * 2}px`}
+                y2={'100%'}
+                stroke="gray"
+                strokeWidth="3"
+              />
+
+              {leftTrackGenes[leftTrackGenes.length - index - 1]}
+              {trackRegionL.current[trackRegionL.current.length - index - 1]}
+            </svg>
+          ))}
     </div>
   );
 });

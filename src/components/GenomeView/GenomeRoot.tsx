@@ -73,11 +73,6 @@ function GenomeHub(props: any) {
           genome: newList.name,
         },
         {
-          name: 'bedDensity',
-
-          genome: newList.name,
-        },
-        {
           name: 'bigWig',
 
           genome: newList.name,
@@ -139,11 +134,7 @@ function GenomeHub(props: any) {
               name: 'bed',
               genome: 'hg19',
             },
-            {
-              name: 'bedDensity',
 
-              genome: 'hg19',
-            },
             {
               name: 'bigWig',
 

@@ -90,14 +90,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
       prevOverflowStrand2.current = { ...overflowStrand2.current };
 
       overflowStrand2.current = {};
-      // setLeftTrack([
-      //   ...leftTrackGenes,
-      //   <SetStrand
-      //     key={getRndInteger()}
-      //     strandPos={result}
-      //     startTrackPos={start}
-      //   />,
-      // ]);
+      setLeftTrack([...leftTrackGenes, svgResult]);
     }
   }
 
@@ -105,175 +98,39 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   //________________________________________________________________________________________________________________________________________________________
 
   function fetchGenomeData2() {
+    let startPos;
+    startPos = start;
+
     var strandIntervalList: Array<any> = [];
-    result[0].sort((a, b) => {
-      return b.end - a.end;
-    });
+    // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result[0]) {
+    if (result !== undefined && result.length > 0) {
+      result[0].sort((a, b) => {
+        return b.end - a.end;
+      });
       result = result[0];
-
       var resultIdx = 0;
 
-      if (
-        resultIdx < result.length &&
-        !(
-          result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
-        )
-      ) {
-        strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
-          new Array<any>(result[resultIdx]),
-        ]);
-      } else if (
-        resultIdx < result.length &&
-        result[resultIdx].start + result[resultIdx].end in
-          prevOverflowStrand2.current
-      ) {
-        strandIntervalList.push([
-          result[resultIdx].start,
-          result[resultIdx].end,
-          new Array<any>(),
-        ]);
-
-        while (
-          strandIntervalList[resultIdx][2].length <
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level
-        ) {
-          strandIntervalList[resultIdx][2].push({});
-        }
-        strandIntervalList[resultIdx][2].splice(
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].level,
-          0,
-          prevOverflowStrand2.current[
-            result[resultIdx].start + result[resultIdx].end
-          ].strand
-        );
-      }
-      //START THE LOOP TO CHECK IF Prev interval overlapp with curr
-
-      for (let i = resultIdx + 1; i < result.length; i++) {
+      // let checking for interval overlapping and determining what level each strand should be on
+      for (let i = resultIdx; i < result.length; i++) {
         var idx = strandIntervalList.length - 1;
-        var curStrand = result[i];
+        const curStrand = result[i];
+        if (curStrand.start < start) {
+          const strandId = curStrand.start + curStrand.end;
 
-        var curHighestLvl = [
-          idx,
-          strandIntervalList[idx][2].length - 1, //
-        ];
-        const curStrandId = curStrand.start + curStrand.end;
-        // if current starting coord is less than previous ending coord then they overlap
-
-        if (curStrand.end >= strandIntervalList[idx][0]) {
-          // combine the intervals into one larger interval that encompass the strands
-          if (strandIntervalList[idx][0] < curStrand.start) {
-            strandIntervalList[idx][0] = curStrand.start;
-          }
-
-          //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
-          if (curStrandId in prevOverflowStrand2.current) {
-            while (
-              strandIntervalList[idx][2].length - 1 <
-              prevOverflowStrand2.current[curStrandId].level
-            ) {
-              strandIntervalList[idx][2].push({});
-            }
-            strandIntervalList[idx][2].splice(
-              prevOverflowStrand2.current[curStrandId].level,
-              0,
-              prevOverflowStrand2.current[curStrandId].strand
-            );
-
-            idx--;
-            while (
-              idx >= 0 &&
-              prevOverflowStrand2.current[curStrandId].strand.end >=
-                strandIntervalList[idx][0]
-            ) {
-              if (
-                strandIntervalList[idx][2].length >
-                prevOverflowStrand2.current[curStrandId].level
-              ) {
-                if (strandIntervalList[idx][0] > curStrand.start) {
-                  strandIntervalList[idx][0] = curStrand.start;
-                }
-                strandIntervalList[idx][2].splice(
-                  prevOverflowStrand2.current[curStrandId].level,
-                  0,
-                  new Array<any>()
-                );
-              }
-
-              idx--;
-            }
-            continue;
-          }
-
-          //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.end >= strandIntervalList[idx][0]) {
-            if (strandIntervalList[idx][2].length - 1 > curHighestLvl[1]) {
-              if (strandIntervalList[idx][0] > curStrand.start) {
-                strandIntervalList[idx][0] = curStrand.start;
-              }
-
-              curHighestLvl = [idx, strandIntervalList[idx][2].length];
-            }
-            idx--;
-          }
-
-          strandIntervalList[curHighestLvl[0]][2].push(curStrand);
-        } else {
-          strandIntervalList.push([
-            result[i].start,
-            result[i].end,
-            new Array<any>(curStrand),
-          ]);
-        }
-      }
-    }
-
-    let strandLevelList: Array<any> = [];
-
-    for (var i = 0; i < strandIntervalList.length; i++) {
-      var intervalLevelData = strandIntervalList[i][2];
-
-      for (var j = 0; j < intervalLevelData.length; j++) {
-        var strand = intervalLevelData[j];
-
-        while (strandLevelList.length - 1 < j) {
-          strandLevelList.push(new Array<any>());
-        }
-        strandLevelList[j].push(strand);
-      }
-    }
-
-    // setLeftTrack([
-    //   ...leftTrackGenes,
-    //   <SetStrand
-    //     key={getRndInteger()}
-    //     strandPos={strandLevelList}
-    //     checkPrev={prevOverflowStrand2.current}
-    //     startTrackPos={start}
-    //   />,
-    // ]);
-
-    for (var i = 0; i < strandLevelList.length; i++) {
-      var levelContent = strandLevelList[i];
-      for (var strand of levelContent) {
-        if (strand.start < start) {
-          const curStrandId = strand.start + strand.end;
-          overflowStrand2.current[curStrandId] = {
+          overflowStrand2.current[strandId] = {
             level: i,
-            strand: strand,
+            strand: curStrand,
           };
         }
       }
     }
+    let svgResult = setStrand({
+      strandPos: [...result],
+      checkPrev: { ...prevOverflowStrand2.current },
+      startTrackPos: start,
+    });
+    setLeftTrack([...leftTrackGenes, svgResult]);
 
     prevOverflowStrand2.current = { ...overflowStrand2.current };
 
@@ -387,7 +244,27 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
             //   </div>
             // )
           )
-        : genomeTrackL}
+        : leftTrackGenes.map((item, index) => (
+            // index <= rightTrackGenes.length - 1 ?
+            <svg
+              key={index + 67923}
+              width={`${windowWidth * 2}px`}
+              height={'100%'}
+              style={{ display: 'inline-block' }}
+              overflow="visible"
+            >
+              <line
+                x1={`${windowWidth * 2}px`}
+                y1="0"
+                x2={`${windowWidth * 2}px`}
+                y2={'100%'}
+                stroke="gray"
+                strokeWidth="3"
+              />
+
+              {leftTrackGenes[leftTrackGenes.length - index - 1]}
+            </svg>
+          ))}
     </div>
   );
 });

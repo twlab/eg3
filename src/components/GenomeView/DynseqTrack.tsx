@@ -143,18 +143,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
-    // CHECK if there are overlapping strands to the next track
-
-    // if (trackData!.initial) {
-    //   prevOverflowStrand2.current = { ...overflowStrand2.current };
-
-    //   overflowStrand2.current = {};
-    //   setLeftTrack([...leftTrackGenes, [[...result], startPos]]);
-    //   const newCanvasRef = createRef();
-    //   setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-    //   const newCanvasRef2 = createRef();
-    //   setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
-    // }
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
   }
@@ -212,7 +200,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         0,
         bpRegionSize
       );
-      console.log(converted);
       drawCanvas(
         0,
         windowWidth * 2,
@@ -264,7 +251,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    console.log(converted);
+
     for (let i = startRange; i < endRange; i++) {
       if (converted.forward[i] !== 0) {
         context.fillStyle = 'blue';
@@ -400,7 +387,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         leftTrackGenes.forEach((canvasRef, index) => {
           if (canvasRefL[index].current && canvasRefL2[index].current) {
             let length = leftTrackGenes[index].canvasData.reverse.length;
-            console.log(leftTrackGenes[index].canvasData.reverse);
+
             drawCanvas(
               0,
               length,
