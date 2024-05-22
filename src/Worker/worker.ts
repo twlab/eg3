@@ -1,25 +1,12 @@
 //src/Worker/worker.ts
 
 const workerFunction = function () {
-  // Set up event listener for messages from the worker
-  // const worker = new Worker('./worker', {
-  //   name: 'runSetStrand',
-  //   type: 'module',
-  // });
-  // const { setStrand } = wrap<import('./worker').runSetStrand>(worker);
-  // trackGeneData['bpToPx'] = bpToPx;
-  // console.log(await setStrand(trackGeneData));
-
-  //we perform every operation we want in this function right here
   self.onmessage = (event: MessageEvent) => {
     function aggregateRecords(records: Array<any>) {
       if (records.length === 0) {
         return { depth: 0, contextValues: [] };
       }
-      // const depth = _.meanBy(records, 'depth');
-      // for (let i = 0; i < records.length; i++) {
-      //   console.log(records[i]['6']);
-      // }
+
       const depth =
         records.reduce((sum, record) => {
           const value = parseFloat(record['6']); // Convert the value to a number

@@ -548,26 +548,13 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
 
     return strandList;
   }
-  // useEffect(() => {
-  //   const tempData = leftTrackGenes.slice(0);
-  //   tempData.reverse();
-  //   const tempRegion = trackRegionL.current.slice(0);
-  //   tempRegion.reverse();
-
-  //   setGenomeTrackL(
-  //     <ShowGenomeData trackHtml={tempData} trackInterval={tempRegion} />
-  //   );
-  // }, [leftTrackGenes]);
 
   useEffect(() => {
-    function handle() {
-      if (trackData!.side === 'right') {
-        fetchGenomeData();
-      } else if (trackData!.side === 'left') {
-        fetchGenomeData2();
-      }
+    if (trackData!.side === 'right') {
+      fetchGenomeData();
+    } else if (trackData!.side === 'left') {
+      fetchGenomeData2();
     }
-    handle();
   }, [trackData]);
 
   return (
@@ -579,7 +566,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               <svg
                 key={index + 67923}
                 width={`${windowWidth * 2}px`}
-                height={'100%'}
+                height={'350'}
                 style={{ display: 'inline-block' }}
                 overflow="visible"
               >
@@ -607,7 +594,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             <svg
               key={index + 67923}
               width={`${windowWidth * 2}px`}
-              height={'100%'}
+              height={'300'}
               style={{ display: 'inline-block' }}
               overflow="visible"
             >

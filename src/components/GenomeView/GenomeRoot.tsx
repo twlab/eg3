@@ -48,11 +48,12 @@ function GenomeHub(props: any) {
     sessionStorage.setItem('myArray', serializedArray);
   }
   function changeChrOrder(chrArr: any) {
+    console.log(genomeList);
     let newList = { ...genomeList[0] };
     newList.chrOrder = chrArr;
     setItems([...chrArr]);
     setGenomeList([newList]);
-
+    console.log(newList);
     const serializedArray = JSON.stringify(chrArr);
 
     sessionStorage.setItem('chrOrder', serializedArray);
@@ -156,13 +157,14 @@ function GenomeHub(props: any) {
           publicHubList: PublicHubAllData['HG19']['publicHubList'],
           twoBitURL: TwoBitUrlData['HG19'],
         };
-        setTrackManagerView(
-          <TrackManager
-            currGenome={testGen}
-            addTrack={addTrack}
-            startBp={startBp}
-          />
-        );
+        setGenomeList([...genomeList, testGen]);
+        // setTrackManagerView(
+        //   <TrackManager
+        //     currGenome={testGen}
+        //     addTrack={addTrack}
+        //     startBp={startBp}
+        //   />
+        // );
 
         // }
       }
@@ -173,6 +175,7 @@ function GenomeHub(props: any) {
   useEffect(() => {
     async function handler() {
       if (genomeList.length !== 0) {
+        console.log(genomeList);
         setTrackManagerView(
           <TrackManager
             currGenome={genomeList[0]}

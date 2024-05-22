@@ -358,14 +358,14 @@ function TrackManager(props) {
     tempObj['dynseqResult'] = dynSeqResult;
     tempObj['methylcResult'] = methylcResult;
     tempObj['side'] = 'right';
-    if (initial) {
-      tempObj['initial'] = 1;
-      setTrackData({ ...tempObj });
-      minBp.current = minBp.current - bpRegionSize;
-    } else {
+    if (initial === 0) {
       tempObj['initial'] = 0;
-      setTrackData({ ...tempObj });
+    } else {
+      tempObj['initial'] = 1;
+
+      minBp.current = minBp.current - bpRegionSize;
     }
+    setTrackData({ ...tempObj });
     if (maxBp.current <= chrLength[chrIndexRight.current]) {
       maxBp.current = maxBp.current + bpRegionSize;
     }
@@ -623,7 +623,7 @@ function TrackManager(props) {
         style={{
           display: 'flex',
           //makes element align right
-          justifyContent: side === 'right' ? 'start' : 'end',
+          justifyContent: side == 'right' ? 'start' : 'end',
 
           flexDirection: 'row',
 
@@ -641,7 +641,7 @@ function TrackManager(props) {
             display: 'flex',
             flexDirection: 'column',
             //makes element align right
-            alignItems: side === 'right' ? 'start' : 'end',
+            alignItems: side == 'right' ? 'start' : 'end',
           }}
         >
           {trackComponent.map((Component, index) => (
@@ -660,6 +660,8 @@ function TrackManager(props) {
             bpToPx={bpToPx}
             trackData={trackData}
             side={side}
+            HOXA10
+            
             windowWidth={windowWidth}
           />
           <MethylcTrack

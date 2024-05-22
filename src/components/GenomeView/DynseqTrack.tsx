@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import worker_script from '../../Worker/dynseqWorker';
 let worker: Worker;
-import { myFeatureAggregator } from './commonComponents/screen-scaling/FeatureAggregator';
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -40,20 +39,16 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
-  const [scaledRightVal, setScaledRightVal] = useState<Array<any>>([]);
+
   const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
   const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-  var scale = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
+
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-
-  function getRndInteger(min = 0, max = 10000000000) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
 
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
@@ -154,7 +149,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     let startPos;
     startPos = start;
 
-    var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result !== undefined && result.length > 0) {
@@ -166,7 +160,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
         if (curStrand.start < start) {
           const strandId = curStrand.start + curStrand.end;
@@ -220,24 +213,24 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     overflowStrand2.current = {};
   }
-  const DEFAULT_OPTIONS = {
-    aggregateMethod: 'mean',
-    displayMode: 'auto',
-    height: 40,
-    color: 'blue',
-    colorAboveMax: 'red',
-    color2: 'darkorange',
-    color2BelowMin: 'darkgreen',
-    yScale: 'auto',
-    yMax: 10,
-    yMin: 0,
-    smooth: 0,
-    ensemblStyle: false,
-  };
+  // const DEFAULT_OPTIONS = {
+  //   aggregateMethod: 'mean',
+  //   displayMode: 'auto',
+  //   height: 40,
+  //   color: 'blue',
+  //   colorAboveMax: 'red',
+  //   color2: 'darkorange',
+  //   color2BelowMin: 'darkgreen',
+  //   yScale: 'auto',
+  //   yMax: 10,
+  //   yMin: 0,
+  //   smooth: 0,
+  //   ensemblStyle: false,
+  // };
 
-  const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap
+  // const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap
   const TOP_PADDING = 2;
-  const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
+  // const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
   async function drawCanvas(
     startRange,
     endRange,
@@ -419,14 +412,11 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }, [side]);
 
   useEffect(() => {
-    function handle() {
-      if (trackData!.location && trackData!.side === 'right') {
-        fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === 'left') {
-        fetchGenomeData2();
-      }
+    if (trackData!.side === 'right') {
+      fetchGenomeData();
+    } else if (trackData!.side === 'left') {
+      fetchGenomeData2();
     }
-    handle();
   }, [trackData]);
 
   return (

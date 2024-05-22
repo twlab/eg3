@@ -39,16 +39,9 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
-  const [genomeTrackR, setGenomeTrackR] = useState(<></>);
-  const [genomeTrackL, setGenomeTrackL] = useState(<></>);
-
-  function getRndInteger(min = 0, max = 10000000000) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
   function fetchGenomeData() {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
-    var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result[0]) {
@@ -57,7 +50,6 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
         if (curStrand.end > end) {
           const strandId = curStrand.start + curStrand.end;
@@ -101,7 +93,6 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     let startPos;
     startPos = start;
 
-    var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result !== undefined && result.length > 0) {
@@ -113,7 +104,6 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
 
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
         if (curStrand.start < start) {
           const strandId = curStrand.start + curStrand.end;
@@ -186,40 +176,12 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     return strandList.map((item, index) => item);
   }
 
-  function ShowGenomeData(props) {
-    return props.trackHtml.map((item, index) => (
-      <svg
-        key={index}
-        width={`${windowWidth * 2}px`}
-        height={'100%'}
-        style={{ display: 'inline-block' }}
-        overflow="visible"
-      >
-        {props.trackHtml[index] ? props.trackHtml[index] : ''}
-      </svg>
-    ));
-  }
-
   useEffect(() => {
-    setGenomeTrackR(<ShowGenomeData trackHtml={rightTrackGenes} />);
-  }, [rightTrackGenes]);
-
-  useEffect(() => {
-    const tempData = leftTrackGenes.slice(0);
-    tempData.reverse();
-
-    setGenomeTrackL(<ShowGenomeData trackHtml={tempData} />);
-  }, [leftTrackGenes]);
-
-  useEffect(() => {
-    function handle() {
-      if (trackData!.side === 'right') {
-        fetchGenomeData();
-      } else if (trackData!.side === 'left') {
-        fetchGenomeData2();
-      }
+    if (trackData!.side === 'right') {
+      fetchGenomeData();
+    } else if (trackData!.side === 'left') {
+      fetchGenomeData2();
     }
-    handle();
   }, [trackData]);
 
   return (
@@ -231,7 +193,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               <svg
                 key={index}
                 width={`${windowWidth * 2}px`}
-                height={'100%'}
+                height={'40'}
                 style={{ display: 'inline-block' }}
                 overflow="visible"
               >
@@ -249,7 +211,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
             <svg
               key={index + 67923}
               width={`${windowWidth * 2}px`}
-              height={'100%'}
+              height={'40'}
               style={{ display: 'inline-block' }}
               overflow="visible"
             >

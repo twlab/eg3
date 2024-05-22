@@ -1,19 +1,14 @@
 import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import MethylCRecord from './MethylCRecord';
-import { myFeatureAggregator } from './commonComponents/screen-scaling/FeatureAggregator';
 import worker_script from '../../Worker/worker';
 let worker: Worker;
 const VERTICAL_PADDING = 0;
-const PLOT_DOWNWARDS_STRAND = 'reverse';
 const DEFAULT_COLORS_FOR_CONTEXT = {
   CG: { color: 'rgb(100,139,216)', background: '#d9d9d9' },
   CHG: { color: 'rgb(255,148,77)', background: '#ffe0cc' },
   CHH: { color: 'rgb(255,0,255)', background: '#ffe5ff' },
 };
-const OVERLAPPING_CONTEXTS_COLORS = DEFAULT_COLORS_FOR_CONTEXT.CG;
-const UNKNOWN_CONTEXT_COLORS = DEFAULT_COLORS_FOR_CONTEXT.CG;
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -55,14 +50,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-  var scale = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-  // These states are used to update the tracks with new fetched data
-  // new track sections are added as the user moves left (lower regions) and right (higher region)
-  // New data are fetched only if the user drags to the either ends of the track
-
-  function getRndInteger(min = 0, max = 10000000000) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
 
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
@@ -70,7 +57,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     let startPos;
     startPos = start;
 
-    var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result[0]) {
@@ -79,7 +65,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
         if (curStrand.end > end) {
           const strandId = curStrand.start + curStrand.end;
@@ -155,7 +140,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     let startPos;
     startPos = start;
 
-    var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result !== undefined && result.length > 0) {
@@ -167,7 +151,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
         if (curStrand.start < start) {
           const strandId = curStrand.start + curStrand.end;
@@ -278,6 +261,35 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       let forward = converted[j].forward;
       let reverse = converted[j].reverse;
       // let combine = converted[j].combined;
+      let depthFilter = 0;
+
+      if (j + 1 !== endRange) {
+        let currRecord = converted[j].forward;
+        let nextRecord = converted[j + 1].forward;
+        let currRecordRev = converted[j].reverse;
+        let nextRecordRev = converted[j + 1].reverse;
+        if (currRecord.depth < depthFilter) {
+          continue;
+        }
+
+        const y1 = scales.depthToY(currRecord.depth);
+        const y2 = scales.depthToY(nextRecord.depth);
+
+        context.strokeStyle = '#525252';
+        context.beginPath();
+        context.moveTo(j, y1);
+        context.lineTo(j + 1, y2);
+        context.stroke();
+
+        const y1Rev = scales.depthToY(currRecordRev.depth);
+        const y2Rev = scales.depthToY(nextRecordRev.depth);
+
+        contextRev.strokeStyle = '#525252';
+        contextRev.beginPath();
+        contextRev.moveTo(j, 40 - y1Rev);
+        contextRev.lineTo(j + 1, 40 - y2Rev);
+        contextRev.stroke();
+      }
 
       for (let contextData of forward.contextValues) {
         const drawY = scales.methylToY(contextData.value);
@@ -305,50 +317,42 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
   useEffect(() => {
     if (side === 'left') {
-      if (leftTrackGenes.length != 0) {
-        leftTrackGenes.forEach((canvasRef, index) => {
-          if (canvasRefL[index].current && canvasRefL2[index].current) {
-            let length = leftTrackGenes[index].canvasData.length;
-            drawCanvas(
-              0,
-              length,
-              canvasRefL[index],
-              leftTrackGenes[index].canvasData,
-              leftTrackGenes[index].scaleData,
-              canvasRefL2[index]
-            );
-          }
-        });
-      }
+      leftTrackGenes.forEach((canvasRef, index) => {
+        if (canvasRefL[index].current && canvasRefL2[index].current) {
+          let length = leftTrackGenes[index].canvasData.length;
+          drawCanvas(
+            0,
+            length,
+            canvasRefL[index],
+            leftTrackGenes[index].canvasData,
+            leftTrackGenes[index].scaleData,
+            canvasRefL2[index]
+          );
+        }
+      });
     } else if (side === 'right') {
-      if (rightTrackGenes.length != 0) {
-        rightTrackGenes.forEach((canvasRef, index) => {
-          if (canvasRefR[index].current && canvasRefR2[index].current) {
-            let length = rightTrackGenes[index].canvasData.length;
-            drawCanvas(
-              0,
-              length,
-              canvasRefR[index],
-              rightTrackGenes[index].canvasData,
-              rightTrackGenes[index].scaleData,
-              canvasRefR2[index]
-            );
-          }
-        });
-      }
+      rightTrackGenes.forEach((canvasRef, index) => {
+        if (canvasRefR[index].current && canvasRefR2[index].current) {
+          let length = rightTrackGenes[index].canvasData.length;
+          drawCanvas(
+            0,
+            length,
+            canvasRefR[index],
+            rightTrackGenes[index].canvasData,
+            rightTrackGenes[index].scaleData,
+            canvasRefR2[index]
+          );
+        }
+      });
     }
   }, [side]);
 
   useEffect(() => {
-    function handle() {
-      if (trackData!.location && trackData!.side === 'right') {
-        fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === 'left') {
-        console.log(trackData);
-        fetchGenomeData2();
-      }
+    if (trackData!.side === 'right') {
+      fetchGenomeData();
+    } else if (trackData!.side === 'left') {
+      fetchGenomeData2();
     }
-    handle();
   }, [trackData]);
 
   return (

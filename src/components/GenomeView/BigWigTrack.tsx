@@ -45,9 +45,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
-  function getRndInteger(min = 0, max = 10000000000) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
   function drawCanvas(
     startRange,
     endRange,
@@ -76,7 +73,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     let startPos;
     startPos = start;
 
-    var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result[0]) {
@@ -85,7 +81,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = resultIdx; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
         const curStrand = result[i];
         if (curStrand.end > end) {
           const strandId = curStrand.start + curStrand.end;
@@ -243,14 +238,11 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [side]);
 
   useEffect(() => {
-    function handle() {
-      if (trackData!.location && trackData!.side === 'right') {
-        fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === 'left') {
-        fetchGenomeData2();
-      }
+    if (trackData!.side === 'right') {
+      fetchGenomeData();
+    } else if (trackData!.side === 'left') {
+      fetchGenomeData2();
     }
-    handle();
   }, [trackData]);
 
   return (

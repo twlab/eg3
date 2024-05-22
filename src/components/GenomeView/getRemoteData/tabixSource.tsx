@@ -1,7 +1,6 @@
 import { TabixIndexedFile } from '@gmod/tabix';
 import { RemoteFile } from 'generic-filehandle';
-import worker_script from '../../../Worker/tabixParseLineWorker';
-let worker: Worker;
+
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
 function GetTabixData(url, chr, start, end) {
   function ensureMaxListLength<T>(list: T[], limit: number): T[] {
@@ -50,17 +49,6 @@ function GetTabixData(url, chr, start, end) {
    * @param {stnumberring} end - genome coordinates
    * @return {Promise<BedRecord[]>} Promise for the data
    */
-
-  async function waitForMessage(lines: any) {
-    worker = new Worker(worker_script);
-
-    worker.postMessage(lines);
-    return new Promise((resolve) => {
-      worker.onmessage = ({ data }) => {
-        resolve(data);
-      };
-    });
-  }
   async function getDataForLocus(chr, start, end) {
     const fetch = window.fetch.bind(window);
     let tabix = new TabixIndexedFile({
@@ -78,8 +66,7 @@ function GetTabixData(url, chr, start, end) {
     } else {
       lines = rawlines;
     }
-
-    return waitForMessage(lines);
+    return lines.map(parseLine);
   }
 
   /**

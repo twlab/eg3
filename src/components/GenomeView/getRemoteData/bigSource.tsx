@@ -32,7 +32,7 @@ function GetBigData(url, chr, start, end) {
     return dataForEachLocus;
   }
 
-  async function handle() {
+  function handle() {
     let data = getData([{ chr: chr, end: end, start: start }], {
       displayMode: 'full',
       color: 'blue',

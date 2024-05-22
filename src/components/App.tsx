@@ -13,7 +13,6 @@ import { ChromosomeData } from '../localdata/chromosomedata';
 import { AnnotationTrackData } from '../localdata/annotationtrackdata';
 import { TwoBitUrlData } from '../localdata/twobiturl';
 import { PublicHubAllData } from '../localdata/publichub';
-import TrackManagerDemo from '../../modules/track-manager/src/lib/track-manager';
 
 // this section needs to be moved to a backend if we want to access
 // aws backend because it need access key and secret key
