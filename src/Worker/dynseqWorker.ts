@@ -88,6 +88,7 @@ const workerFunction = function () {
     let aggResult = {};
     aggResult['forward'] = featureForward;
     aggResult['reverse'] = featureReverse;
+    console.log(aggResult);
     postMessage(aggResult);
   };
 };
@@ -102,6 +103,6 @@ let mainCode = codeToString.substring(
 //convert the code into a raw data
 let blob = new Blob([mainCode], { type: 'application/javascript' });
 //A url is made out of the blob object and we're good to go
-let worker_script = URL.createObjectURL(blob);
+let worker_script2 = URL.createObjectURL(blob);
 
-export default worker_script;
+export default worker_script2;

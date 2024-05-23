@@ -3,6 +3,7 @@ import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import worker_script from '../../Worker/bigWigWorker';
 let worker: Worker;
+worker = new Worker(worker_script);
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -19,7 +20,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 }) {
   let start, end;
 
-  let result;
+  let result: Array<any> = [];
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(':');
     result = trackData!.bigWigResult;
@@ -55,12 +56,13 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   ) {
     let context = canvasRef.current.getContext('2d');
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
     for (let i = startRange; i < endRange; i++) {
+      console.log(aggFeatures[i]);
       if (aggFeatures[i] !== 0) {
         // going through width pixels
         // i = canvas pixel xpos
         const drawY = scales(aggFeatures[i]);
+
         context.fillStyle = 'blue';
         context.fillRect(i, 40 - drawY, 1, drawY);
       }
@@ -105,40 +107,13 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
     const newCanvasRef = createRef();
 
-    worker = new Worker(worker_script);
+    if (trackData!.initial) {
+      const newCanvasLeftRef = createRef();
+      prevOverflowStrand2.current = { ...overflowStrand2.current };
+      overflowStrand2.current = {};
+      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasLeftRef]);
+    }
 
-    worker.postMessage({
-      trackGene: result,
-      windowWidth: windowWidth,
-      bpToPx: bpToPx!,
-      bpRegionSize: bpRegionSize!,
-      startBpRegion: start,
-    });
-
-    // Listen for messages from the web worker
-    worker.onmessage = (event) => {
-      const aggFeature = event.data;
-
-      var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-      drawCanvas(0, windowWidth * 2, newCanvasRef, aggFeature, scales);
-
-      setRightTrack([
-        ...rightTrackGenes,
-        { canvasData: aggFeature, scaleData: scales },
-      ]);
-
-      if (trackData!.initial) {
-        const newCanvasLeftRef = createRef();
-        prevOverflowStrand2.current = { ...overflowStrand2.current };
-        setLeftTrack([
-          ...leftTrackGenes,
-          { canvasData: aggFeature, scaleData: scales },
-        ]);
-        overflowStrand2.current = {};
-
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasLeftRef]);
-      }
-    };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
@@ -177,7 +152,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     }
 
     const newCanvasRef = createRef();
-    worker = new Worker(worker_script);
 
     worker.postMessage({
       trackGene: result,
@@ -244,6 +218,49 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       fetchGenomeData2();
     }
   }, [trackData]);
+
+  useEffect(() => {
+    if (result.length > 0) {
+      worker.postMessage({
+        trackGene: result[0],
+        windowWidth: windowWidth,
+        bpToPx: bpToPx!,
+        bpRegionSize: bpRegionSize!,
+        startBpRegion: start,
+      });
+
+      // Listen for messages from the web worker
+      worker.onmessage = (event) => {
+        const aggFeature = event.data;
+        var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
+        console.log(canvasRefR);
+        drawCanvas(
+          0,
+          windowWidth * 2,
+          canvasRefR[canvasRefR.length - 1],
+          aggFeature,
+          scales
+        );
+
+        setRightTrack([
+          ...rightTrackGenes,
+          { canvasData: aggFeature, scaleData: scales },
+        ]);
+
+        if (trackData!.initial) {
+          const newCanvasLeftRef = createRef();
+          prevOverflowStrand2.current = { ...overflowStrand2.current };
+          setLeftTrack([
+            ...leftTrackGenes,
+            { canvasData: aggFeature, scaleData: scales },
+          ]);
+          overflowStrand2.current = {};
+
+          setCanvasRefL((prevRefs) => [...prevRefs, newCanvasLeftRef]);
+        }
+      };
+    }
+  }, [canvasRefR]);
 
   return (
     <div style={{ display: 'flex' }}>
