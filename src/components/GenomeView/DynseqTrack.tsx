@@ -135,6 +135,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
         setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
       }
+
       worker.terminate();
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
@@ -206,6 +207,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
+      worker.terminate();
     };
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);

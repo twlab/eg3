@@ -215,6 +215,15 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               style={{ display: 'inline-block' }}
               overflow="visible"
             >
+              <line
+                x1={`${windowWidth * 2}px`}
+                y1="0"
+                x2={`${windowWidth * 2}px`}
+                y2={'100%'}
+                stroke="gray"
+                strokeWidth="3"
+              />
+
               {leftTrackGenes[leftTrackGenes.length - index - 1]}
             </svg>
           ))}

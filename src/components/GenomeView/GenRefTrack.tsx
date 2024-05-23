@@ -566,6 +566,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               <svg
                 key={index + 67923}
                 width={`${windowWidth * 2}px`}
+                height={'350'}
                 style={{ display: 'inline-block' }}
                 overflow="visible"
               >
@@ -593,6 +594,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             <svg
               key={leftTrackGenes.length - index - 1}
               width={`${windowWidth * 2}px`}
+              height={'300'}
               style={{ display: 'inline-block' }}
               overflow="visible"
             >

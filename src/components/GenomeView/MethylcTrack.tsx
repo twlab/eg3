@@ -3,7 +3,6 @@ import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import worker_script from '../../Worker/worker';
 let worker: Worker;
-
 const VERTICAL_PADDING = 0;
 const DEFAULT_COLORS_FOR_CONTEXT = {
   CG: { color: 'rgb(100,139,216)', background: '#d9d9d9' },
@@ -17,8 +16,6 @@ interface BedTrackProps {
   side?: string;
   windowWidth?: number;
 }
-
-worker = new Worker(worker_script);
 const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   bpRegionSize,
   bpToPx,
@@ -92,8 +89,9 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
-    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-    setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
+
+    worker = new Worker(worker_script);
+
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -126,8 +124,10 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
         setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
       }
+      worker.terminate();
     };
-
+    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
+    setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
 
     prevOverflowStrand.current = { ...overflowStrand.current };
@@ -167,6 +167,8 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
 
+    worker = new Worker(worker_script);
+
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -185,6 +187,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
+      worker.terminate();
     };
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
