@@ -458,7 +458,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               (singleStrand.txStart - trackGeneData.startTrackPos) / bpToPx!;
             const endX =
               (singleStrand.txEnd - trackGeneData.startTrackPos) / bpToPx!;
-            const ARROW_WIDTH = 4;
+            const ARROW_WIDTH = 5;
             const arrowSeparation = 22;
             const bottomY = 5;
             var placementStartX = startX - ARROW_WIDTH / 2;
@@ -497,9 +497,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             }
 
             strandHtml.push(
-              <React.Fragment
-                key={singleStrand.txStart + singleStrand.txEnd + 2332323}
-              >
+              <React.Fragment key={singleStrand.txStart + singleStrand.txEnd}>
                 {children.map((item, index) => item)}
                 <line
                   x1={`${
@@ -564,9 +562,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             (item, index) => (
               // index <= rightTrackGenes.length - 1 ?
               <svg
-                key={index + 67923}
+                key={index}
                 width={`${windowWidth * 2}px`}
-                height={'350'}
+                height={'250'}
                 style={{ display: 'inline-block' }}
                 overflow="visible"
               >
@@ -594,7 +592,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             <svg
               key={leftTrackGenes.length - index - 1}
               width={`${windowWidth * 2}px`}
-              height={'300'}
+              height={'250'}
               style={{ display: 'inline-block' }}
               overflow="visible"
             >

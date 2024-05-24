@@ -61,10 +61,9 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
     if (result[0]) {
       result = result[0];
-      var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
-      for (let i = resultIdx; i < result.length; i++) {
+      for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
         if (curStrand.end > end) {
           const strandId = curStrand.start + curStrand.end;
@@ -81,6 +80,9 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
               strand: curStrand,
             };
           }
+        }
+        if (!trackData!.initial && curStrand.end < end) {
+          break;
         }
       }
     }
@@ -160,6 +162,10 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
             level: i,
             strand: curStrand,
           };
+        }
+
+        if (curStrand.start > start) {
+          break;
         }
       }
     }
