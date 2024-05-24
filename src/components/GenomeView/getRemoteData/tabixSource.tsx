@@ -1,8 +1,8 @@
-import { TabixIndexedFile } from "@gmod/tabix";
-import { RemoteFile } from "generic-filehandle";
+import { TabixIndexedFile } from '@gmod/tabix';
+import { RemoteFile } from 'generic-filehandle';
 
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
-function GetBedData(url, chr, start, end) {
+function GetTabixData(url, chr, start, end) {
   function ensureMaxListLength<T>(list: T[], limit: number): T[] {
     if (list.length <= limit) {
       return list;
@@ -23,10 +23,10 @@ function GetBedData(url, chr, start, end) {
       // graph container uses this source directly w/o initial track, so options is null
       let chrom =
         options && options.ensemblStyle
-          ? locus.chr.replace("chr", "")
+          ? locus.chr.replace('chr', '')
           : locus.chr;
-      if (chrom === "M") {
-        chrom = "MT";
+      if (chrom === 'M') {
+        chrom = 'MT';
       }
 
       return getDataForLocus(chrom, locus.start, locus.end);
@@ -53,7 +53,7 @@ function GetBedData(url, chr, start, end) {
     const fetch = window.fetch.bind(window);
     let tabix = new TabixIndexedFile({
       filehandle: new RemoteFile(url, { fetch }),
-      tbiFilehandle: new RemoteFile(url + ".tbi", {
+      tbiFilehandle: new RemoteFile(url + '.tbi', {
         fetch,
       }),
     });
@@ -73,7 +73,7 @@ function GetBedData(url, chr, start, end) {
    * @param {string} line - raw string the bed-like file
    */
   function parseLine(line) {
-    const columns = line.split("\t");
+    const columns = line.split('\t');
     if (columns.length < 3) {
       return;
     }
@@ -90,16 +90,16 @@ function GetBedData(url, chr, start, end) {
     return feature;
   }
 
-  async function handle() {
-    let data = await getData([{ chr: chr, end: end, start: start }], {
-      displayMode: "full",
-      color: "blue",
-      color2: "red",
+  function handle() {
+    let data = getData([{ chr: chr, end: end, start: start }], {
+      displayMode: 'full',
+      color: 'blue',
+      color2: 'red',
       maxRows: 20,
       height: 40,
       hideMinimalItems: false,
       sortItems: false,
-      label: "",
+      label: '',
     });
     return data;
   }
@@ -107,4 +107,4 @@ function GetBedData(url, chr, start, end) {
   return handle();
 }
 
-export default GetBedData;
+export default GetTabixData;

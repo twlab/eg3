@@ -1,9 +1,14 @@
 import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
-
-import worker_script from '../../Worker/dynseqWorker';
+import worker_script from '../../Worker/worker';
 let worker: Worker;
+const VERTICAL_PADDING = 0;
+const DEFAULT_COLORS_FOR_CONTEXT = {
+  CG: { color: 'rgb(100,139,216)', background: '#d9d9d9' },
+  CHG: { color: 'rgb(255,148,77)', background: '#ffe0cc' },
+  CHH: { color: 'rgb(255,0,255)', background: '#ffe5ff' },
+};
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -11,7 +16,7 @@ interface BedTrackProps {
   side?: string;
   windowWidth?: number;
 }
-const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
+const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   bpRegionSize,
   bpToPx,
   trackData,
@@ -23,7 +28,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(':');
-    result = trackData!.dynseqResult;
+    result = trackData!.methylcResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -39,16 +44,12 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
-
   const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
+
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
   const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-
-  // These states are used to update the tracks with new fetched data
-  // new track sections are added as the user moves left (lower regions) and right (higher region)
-  // New data are fetched only if the user drags to the either ends of the track
 
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
@@ -56,16 +57,13 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     let startPos;
     startPos = start;
 
-    var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result[0]) {
       result = result[0];
-      var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
-      for (let i = resultIdx; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
+      for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
         if (curStrand.end > end) {
           const strandId = curStrand.start + curStrand.end;
@@ -83,8 +81,13 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
             };
           }
         }
+        if (!trackData!.initial && curStrand.end < end) {
+          break;
+        }
       }
     }
+
+    //SORT our interval data into levels to be place on the track
 
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
@@ -101,23 +104,11 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     // Listen for messages from the web worker
     worker.onmessage = (event) => {
-      const converted = event.data;
+      let converted = event.data;
+      let scales = computeScales(converted);
+      let length = converted.length;
 
-      let scales = computeScales(
-        converted.forward,
-        converted.reverse,
-        0,
-        bpRegionSize
-      );
-
-      drawCanvas(
-        0,
-        windowWidth * 2,
-        newCanvasRef,
-        converted,
-        scales,
-        newCanvasRef2
-      );
+      drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
       setRightTrack([
         ...rightTrackGenes,
         { canvasData: converted, scaleData: scales },
@@ -135,11 +126,12 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
         setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
       }
-
       worker.terminate();
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
+    // CHECK if there are overlapping strands to the next track
+
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
   }
@@ -171,6 +163,10 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
             strand: curStrand,
           };
         }
+
+        if (curStrand.start > start) {
+          break;
+        }
       }
     }
 
@@ -189,20 +185,10 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     worker.onmessage = (event) => {
       let converted = event.data;
-      let scales = computeScales(
-        converted.forward,
-        converted.reverse,
-        0,
-        bpRegionSize
-      );
-      drawCanvas(
-        0,
-        windowWidth * 2,
-        newCanvasRef,
-        converted,
-        scales,
-        newCanvasRef2
-      );
+      let scales = computeScales(converted);
+      let length = converted.length;
+
+      drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
       setLeftTrack([
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
@@ -216,24 +202,56 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     overflowStrand2.current = {};
   }
-  // const DEFAULT_OPTIONS = {
-  //   aggregateMethod: 'mean',
-  //   displayMode: 'auto',
-  //   height: 40,
-  //   color: 'blue',
-  //   colorAboveMax: 'red',
-  //   color2: 'darkorange',
-  //   color2BelowMin: 'darkgreen',
-  //   yScale: 'auto',
-  //   yMax: 10,
-  //   yMin: 0,
-  //   smooth: 0,
-  //   ensemblStyle: false,
-  // };
 
-  // const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap
-  const TOP_PADDING = 2;
-  // const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max or below min
+  function computeScales(xMap, height: number = 40, maxMethyl: number = 1) {
+    /*
+      xMap = returnValueOfAggregateRecords = [
+          {
+              combined: {
+                  depth: 5 (NaN if no data),
+                  contextValues: [
+                      {context: "CG", value: 0.3},
+                      {context: "CHH", value: 0.3},
+                      {context: "CHG", value: 0.3},
+                  ]
+              },
+              forward: {},
+              reverse: {}
+          },
+          ...
+      ]
+      */
+    const forwardRecords = xMap.map((record) => record.forward);
+    const reverseRecords = xMap.map((record) => record.reverse);
+
+    const maxDepthForward = forwardRecords.reduce(
+      (maxRecord, record) => {
+        return record.depth > maxRecord.depth ? record : maxRecord;
+      },
+      { depth: 0 }
+    );
+
+    const maxDepthReverse = reverseRecords.reduce(
+      (maxRecord, record) => {
+        return record.depth > maxRecord.depth ? record : maxRecord;
+      },
+      { depth: 0 }
+    );
+
+    const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
+
+    return {
+      methylToY: scaleLinear()
+        .domain([maxMethyl, 0])
+        .range([VERTICAL_PADDING, height])
+        .clamp(true),
+      depthToY: scaleLinear()
+        .domain([maxDepth, 0])
+        .range([VERTICAL_PADDING, height])
+        .clamp(true),
+    };
+  }
+
   async function drawCanvas(
     startRange,
     endRange,
@@ -247,170 +265,93 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    for (let j = startRange; j < endRange; j++) {
+      let forward = converted[j].forward;
+      let reverse = converted[j].reverse;
+      // let combine = converted[j].combined;
+      let depthFilter = 0;
 
-    for (let i = startRange; i < endRange; i++) {
-      if (converted.forward[i] !== 0) {
-        context.fillStyle = 'blue';
-        const drawY = scales.valueToY(converted.forward[i]);
+      if (j + 1 !== endRange) {
+        let currRecord = converted[j].forward;
+        let nextRecord = converted[j + 1].forward;
+        let currRecordRev = converted[j].reverse;
+        let nextRecordRev = converted[j + 1].reverse;
+        if (currRecord.depth < depthFilter) {
+          continue;
+        }
 
-        context.fillRect(i, drawY, 1, 20 - drawY);
+        const y1 = scales.depthToY(currRecord.depth);
+        const y2 = scales.depthToY(nextRecord.depth);
+
+        context.strokeStyle = '#525252';
+        context.beginPath();
+        context.moveTo(j, y1);
+        context.lineTo(j + 1, y2);
+        context.stroke();
+
+        const y1Rev = scales.depthToY(currRecordRev.depth);
+        const y2Rev = scales.depthToY(nextRecordRev.depth);
+
+        contextRev.strokeStyle = '#525252';
+        contextRev.beginPath();
+        contextRev.moveTo(j, 40 - y1Rev);
+        contextRev.lineTo(j + 1, 40 - y2Rev);
+        contextRev.stroke();
       }
-      if (converted.reverse[i] !== 0) {
-        const height = scales.valueToYReverse(converted.reverse[i]);
 
-        contextRev.fillStyle = 'red';
+      for (let contextData of forward.contextValues) {
+        const drawY = scales.methylToY(contextData.value);
+        const drawHeight = 40 - drawY;
+        const contextName = contextData.context;
+        const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
 
-        contextRev.fillRect(i, 0, 1, height);
+        context.fillStyle = color;
+        context.globalAlpha = 0.75;
+        context.fillRect(j, drawY, 1, drawHeight);
       }
-    }
-  }
-  function computeScales(
-    xToValue,
-    xToValue2,
-    regionStart,
-    regionEnd,
-    height: number = 40,
-    yScale: string = 'auto',
-    yMin: number = 0,
-    yMax: number = 10
-  ) {
-    /*
-        All tracks get `PropsFromTrackContainer` (see `Track.ts`).
 
-        `props.viewWindow` contains the range of x that is visible when no dragging.  
-            It comes directly from the `ViewExpansion` object from `RegionExpander.ts`
-        */
+      for (let contextData of reverse.contextValues) {
+        const drawY = scales.methylToY(contextData.value);
+        const drawHeight = 40 - drawY;
+        const contextName = contextData.context;
+        const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
 
-    // if (yMin >= yMax) {
-    //   notify.show("Y-axis min must less than max", "error", 2000);
-    // }
-    // const { trackModel, groupScale } = this.props;
-    let min: number,
-      max: number,
-      xValues2 = [];
-    // if (groupScale) {
-    //   if (trackModel.options.hasOwnProperty("group")) {
-    //     gscale = groupScale[trackModel.options.group];
-    //   }
-    // }
-    // if (!_.isEmpty(gscale)) {
-    //   max = _.max(Object.values(gscale.max));
-    //   min = _.min(Object.values(gscale.min));
-
-    max = Math.max(...xToValue); // in case undefined returned here, cause maxboth be undefined too
-
-    min = Math.min(...xToValue2);
-
-    const maxBoth = Math.max(Math.abs(max), Math.abs(min));
-    max = maxBoth;
-    if (xToValue2.length > 0) {
-      min = -maxBoth;
-    }
-
-    // if (min > max) {
-    //   notify.show("Y-axis min should less than Y-axis max", "warning", 5000);
-    //   min = 0;
-    // }
-
-    // determines the distance of y=0 from the top, also the height of positive part
-    const zeroLine =
-      min < 0
-        ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-        : height;
-
-    if (
-      xValues2.length > 0 &&
-      (yScale === 'auto' || (yScale === 'fixed' && yMin < 0))
-    ) {
-      return {
-        axisScale: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height - TOP_PADDING])
-          .clamp(true),
-        valueToY: scaleLinear()
-          .domain([max, 0])
-          .range([TOP_PADDING, zeroLine])
-          .clamp(true),
-        valueToYReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, height - zeroLine - TOP_PADDING])
-          .clamp(true),
-        valueToOpacity: scaleLinear()
-          .domain([0, max])
-          .range([0, 1])
-          .clamp(true),
-        valueToOpacityReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, 1])
-          .clamp(true),
-        min,
-        max,
-        zeroLine,
-      };
-    } else {
-      return {
-        axisScale: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height])
-          .clamp(true),
-        valueToY: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height])
-          .clamp(true),
-        valueToOpacity: scaleLinear()
-          .domain([min, max])
-          .range([0, 1])
-          .clamp(true),
-        // for group feature when there is only nagetiva data, to be fixed
-        valueToYReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, height - zeroLine - TOP_PADDING])
-          .clamp(true),
-        valueToOpacityReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, 1])
-          .clamp(true),
-        min,
-        max,
-        zeroLine,
-      };
+        contextRev.fillStyle = color;
+        contextRev.globalAlpha = 0.75;
+        contextRev.fillRect(j, 0, 1, drawHeight);
+      }
     }
   }
 
   useEffect(() => {
     if (side === 'left') {
-      if (leftTrackGenes.length != 0) {
-        leftTrackGenes.forEach((canvasRef, index) => {
-          if (canvasRefL[index].current && canvasRefL2[index].current) {
-            let length = leftTrackGenes[index].canvasData.reverse.length;
-
-            drawCanvas(
-              0,
-              length,
-              canvasRefL[index],
-              leftTrackGenes[index].canvasData,
-              leftTrackGenes[index].scaleData,
-              canvasRefL2[index]
-            );
-          }
-        });
-      }
+      leftTrackGenes.forEach((canvasRef, index) => {
+        if (canvasRefL[index].current && canvasRefL2[index].current) {
+          let length = leftTrackGenes[index].canvasData.length;
+          drawCanvas(
+            0,
+            length,
+            canvasRefL[index],
+            leftTrackGenes[index].canvasData,
+            leftTrackGenes[index].scaleData,
+            canvasRefL2[index]
+          );
+        }
+      });
     } else if (side === 'right') {
-      if (rightTrackGenes.length != 0) {
-        rightTrackGenes.forEach((canvasRef, index) => {
-          if (canvasRefR[index].current && canvasRefR2[index].current) {
-            let length = rightTrackGenes[index].canvasData.forward.length;
-            drawCanvas(
-              0,
-              length,
-              canvasRefR[index],
-              rightTrackGenes[index].canvasData,
-              rightTrackGenes[index].scaleData,
-              canvasRefR2[index]
-            );
-          }
-        });
-      }
+      rightTrackGenes.forEach((canvasRef, index) => {
+        if (canvasRefR[index].current && canvasRefR2[index].current) {
+          let length = rightTrackGenes[index].canvasData.length;
+          drawCanvas(
+            0,
+            length,
+            canvasRefR[index],
+            rightTrackGenes[index].canvasData,
+            rightTrackGenes[index].scaleData,
+            canvasRefR2[index]
+          );
+        }
+      });
     }
   }, [side]);
 
@@ -423,7 +364,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }, [trackData]);
 
   return (
-    <div style={{ height: '40px' }}>
+    <div style={{ height: '80px' }}>
       {side === 'right' ? (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -431,7 +372,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
               <canvas
                 key={index}
                 ref={item}
-                height={'20'}
+                height={'40'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
@@ -442,7 +383,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
               <canvas
                 key={index + 32}
                 ref={item}
-                height={'20'}
+                height={'40'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
@@ -456,7 +397,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
               <canvas
                 key={canvasRefL.length - index - 1}
                 ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={'20'}
+                height={'40'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
@@ -467,7 +408,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
               <canvas
                 key={canvasRefL2.length - index - 1 + 3343434}
                 ref={canvasRefL2[canvasRefL2.length - index - 1]}
-                height={'20'}
+                height={'40'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
@@ -478,4 +419,4 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     </div>
   );
 });
-export default memo(DynseqTrack);
+export default memo(MethylcTrack);
