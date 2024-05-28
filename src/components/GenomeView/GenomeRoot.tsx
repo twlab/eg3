@@ -9,6 +9,7 @@ import { ChromosomeData } from '../../localdata/chromosomedata';
 import { AnnotationTrackData } from '../../localdata/annotationtrackdata';
 import { PublicHubAllData } from '../../localdata/publichub';
 import { TwoBitUrlData } from '../../localdata/twobiturl';
+
 export const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
@@ -193,6 +194,7 @@ function GenomeHub(props: any) {
       <div style={{ display: 'flex' }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div>
+
       <div>{TrackManagerView}</div>
     </>
   );

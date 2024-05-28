@@ -2,6 +2,8 @@ import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import worker_script from '../../Worker/worker';
+import TestToolTip from '../test';
+import { right } from '@popperjs/core';
 let worker: Worker;
 const VERTICAL_PADDING = 0;
 const DEFAULT_COLORS_FOR_CONTEXT = {
@@ -364,7 +366,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   }, [trackData]);
 
   return (
-    <div style={{ height: '80px' }}>
+    <div style={{ height: '120px' }}>
       {side === 'right' ? (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -376,6 +378,12 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {rightTrackGenes.map((item, index) => (
+              <TestToolTip data={rightTrackGenes[index]} />
             ))}
           </div>
           <div style={{ display: 'flex', flexDirection: 'row' }}>
