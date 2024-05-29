@@ -366,9 +366,39 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   }, [trackData]);
 
   return (
-    <div style={{ height: '120px' }}>
+    <div
+      style={{
+        height: '220px',
+        position: 'relative',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          position: 'absolute',
+          opacity: 0.5,
+
+          zIndex: 3,
+        }}
+      >
+        {rightTrackGenes.map((item, index) => (
+          <TestToolTip
+            data={rightTrackGenes[index]}
+            windowWidth={windowWidth}
+            trackIdx={index}
+          />
+        ))}
+      </div>
       {side === 'right' ? (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'absolute',
+            zIndex: 2,
+          }}
+        >
           <div style={{ display: 'flex', flexDirection: 'row' }}>
             {canvasRefR.map((item, index) => (
               <canvas
@@ -381,11 +411,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
             ))}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {rightTrackGenes.map((item, index) => (
-              <TestToolTip data={rightTrackGenes[index]} />
-            ))}
-          </div>
           <div style={{ display: 'flex', flexDirection: 'row' }}>
             {canvasRefR2.map((item, index) => (
               <canvas
