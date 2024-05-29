@@ -3,7 +3,7 @@ import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import worker_script from '../../Worker/worker';
 import TestToolTip from '../test';
-import { right } from '@popperjs/core';
+// SCrolling to 80% view on current epi browser matches default in eg3
 let worker: Worker;
 const VERTICAL_PADDING = 0;
 const DEFAULT_COLORS_FOR_CONTEXT = {
@@ -368,7 +368,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   return (
     <div
       style={{
-        height: '220px',
+        height: '300px',
         position: 'relative',
       }}
     >
@@ -384,6 +384,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       >
         {rightTrackGenes.map((item, index) => (
           <TestToolTip
+            key={index}
             data={rightTrackGenes[index]}
             windowWidth={windowWidth}
             trackIdx={index}
