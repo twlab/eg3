@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import TrackManager from './TrackManager';
-import Drag from './ChrOrder';
+import Drag from './commonComponents/chr-order/ChrOrder';
 import { chrType } from '../../localdata/genomename';
 import { ChromosomeData } from '../../localdata/chromosomedata';
 import { AnnotationTrackData } from '../../localdata/annotationtrackdata';

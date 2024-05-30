@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import GetTabixData from './getRemoteData/tabixSource';
 import GetBigData from './getRemoteData/bigSource';
+import GetHicData from './getRemoteData/hicSource';
 const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
@@ -11,6 +12,26 @@ import BigWigTrack from './BigWigTrack';
 import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
 import CircularProgress from '@mui/material/CircularProgress';
+let defaultHic = {
+  color: '#B8008A',
+  color2: '#006385',
+  backgroundColor: 'var(--bg-color)',
+  displayMode: 'heatmap',
+  scoreScale: 'auto',
+  scoreMax: 10,
+  scalePercentile: 95,
+  scoreMin: 0,
+  height: 500,
+  lineWidth: 2,
+  greedyTooltip: false,
+  fetchViewWindowOnly: false,
+  bothAnchorsInView: false,
+  isThereG3dTrack: false,
+  clampHeight: false,
+  binSize: 0,
+  normalization: 'NONE',
+  label: '',
+};
 const windowWidth = window.innerWidth;
 
 interface MyComponentProps {
@@ -285,6 +306,7 @@ function TrackManager(props) {
           bigWigRespond,
           dynSeqRespond,
           methylcRespond,
+          hicRespond,
         ] = await Promise.all([
           fetch(
             `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
@@ -314,8 +336,14 @@ function TrackManager(props) {
             Number(sectionStart),
             Number(sectionEnd)
           ),
-        ]);
 
+          GetHicData(
+            'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+            0,
+            defaultHic
+          ),
+        ]);
+        console.log(hicRespond, 'SADASDSAD');
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
 

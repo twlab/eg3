@@ -2,7 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import worker_script from '../../Worker/worker';
-import TestToolTip from '../test';
+import TestToolTip from './commonComponents/hover/tooltip';
 // SCrolling to 80% view on current epi browser matches default in eg3
 let worker: Worker;
 const VERTICAL_PADDING = 0;

@@ -72,14 +72,15 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
     setIsVisible(false);
   };
   useEffect(() => {
-    if (targetRef.current === null) return;
-
-    targetRef.current.addEventListener('mousemove', handleMouseEnter);
-    targetRef.current.addEventListener('mouseleave', handleMouseLeave);
-
+    if (targetRef.current !== null) {
+      targetRef.current.addEventListener('mousemove', handleMouseEnter);
+      targetRef.current.addEventListener('mouseleave', handleMouseLeave);
+    }
     return () => {
-      targetRef.current!.removeEventListener('mousemove', handleMouseEnter);
-      targetRef.current!.removeEventListener('mouseleave', handleMouseLeave);
+      if (targetRef.current !== null) {
+        targetRef.current.removeEventListener('mousemove', handleMouseEnter);
+        targetRef.current.removeEventListener('mouseleave', handleMouseLeave);
+      }
     };
   }, []);
 
