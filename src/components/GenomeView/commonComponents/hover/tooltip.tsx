@@ -25,13 +25,6 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
       const dataIdx = Math.floor(e.pageX - rect.left);
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
       if (dataIdx < windowWidth * 2) {
-        console.log(
-          trackIdx,
-          data,
-          dataIdx,
-          Math.floor(e.pageX),
-          Math.floor(rect.left)
-        );
         setPosition({
           ...position,
           top: rect.bottom,

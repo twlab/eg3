@@ -1,8 +1,7 @@
-import _ from 'lodash';
 // import Straw from 'hic-straw/src/straw';
 // import HicStraw from "hic-straw/dist/hic-straw";
 // import HicStraw from "hic-straw/dist/hic-straw.esm.js";
-import HicStraw from 'hic-straw/dist/hic-straw.min.js';
+
 // import DataSource from './DataSource';
 // import ChromosomeInterval from '../model/interval/ChromosomeInterval';
 import { NormalizationMode } from './HicDataModes';
@@ -128,46 +127,43 @@ function GetHicData(straw, base, options, start, end) {
    * @param {NormalizationMode} normalization
    * @return {GenomeInteraction[]}
    */
-  // async function getInteractionsBetweenLoci(
-  //   queryLocus1,
-  //   queryLocus2,
-  //   binSize,
-  //   normalization = NormalizationMode.NONE
-  // ) {
-  //   // if (normalization !== NormalizationMode.NONE) {
-  //   //     await this.fetchNormalizationData();
-  //   // }
-  //   // console.log(this.normOptions)
-  //   if (!this.normOptions.includes(normalization)) {
-  //     return [];
-  //   }
-  //   // console.log(normalization, queryLocus1, queryLocus2, "BP", binSize)
-  //   const records = await this.straw.getContactRecords(
-  //     normalization,
-  //     queryLocus1,
-  //     queryLocus2,
-  //     'BP',
-  //     binSize
-  //   );
-  //   // console.log(records)
-  //   const interactions = [];
-  //   for (const record of records) {
-  //     const recordLocus1 = new ChromosomeInterval(
-  //       queryLocus1.chr,
-  //       record.bin1 * binSize,
-  //       (record.bin1 + 1) * binSize
-  //     );
-  //     const recordLocus2 = new ChromosomeInterval(
-  //       queryLocus2.chr,
-  //       record.bin2 * binSize,
-  //       (record.bin2 + 1) * binSize
-  //     );
-  //     interactions.push(
-  //       new GenomeInteraction(recordLocus1, recordLocus2, record.counts)
-  //     );
-  //   }
-  //   return interactions;
-  // }
+  async function getInteractionsBetweenLoci(
+    queryLocus1,
+    queryLocus2,
+    binSize,
+    normalization = NormalizationMode.NONE
+  ) {
+    // if (normalization !== NormalizationMode.NONE) {
+    //     await this.fetchNormalizationData();
+    // }
+    // console.log(this.normOptions)
+    // console.log(normalization, queryLocus1, queryLocus2, "BP", binSize)
+    const records = await straw.getContactRecords(
+      normalization,
+      queryLocus1,
+      queryLocus2,
+      'BP',
+      binSize
+    );
+    // console.log(records)
+    const interactions: Array<any> = [];
+    for (const record of records) {
+      const recordLocus1 = {
+        chr: queryLocus1.chr,
+        start: record.bin1 * binSize,
+        end: (record.bin1 + 1) * binSize,
+      };
+      const recordLocus2 = {
+        chr: queryLocus2.chr,
+        start: record.bin2 * binSize,
+        end: (record.bin2 + 1) * binSize,
+      };
+      interactions.push(
+        new GenomeInteraction(recordLocus1, recordLocus2, record.counts)
+      );
+    }
+    return interactions;
+  }
 
   /**
    * Gets HiC data in the view region.  Note that only a triangular portion of the contact matrix is returned.
@@ -182,32 +178,18 @@ function GetHicData(straw, base, options, start, end) {
     // let currentBinSize = binSize;
     // const promises: Array<any> = [];
     let normalization = NormalizationMode.NONE;
-
-    const records = await straw.getContactRecords(
-      normalization,
+    console.log(start, end);
+    const dataForEachSegment = await getInteractionsBetweenLoci(
       { start: start, end: end, chr: 'chr7' },
       { start: start, end: end, chr: 'chr7' },
-      'BP',
-      10000
+      10000,
+      options.normalization
     );
-
-    // for (let i = 0; i < loci.length; i++) {
-    //   for (let j = i; j < loci.length; j++) {
-    //     promises.push(
-    //     getInteractionsBetweenLoci(
-    //         loci[i],
-    //         loci[j],
-    //         binSize,
-    //         options.normalization
-    //       )
-    //     );
-    //   }
-    // }
     // const dataForEachSegment = await Promise.all(promises);
     // return _.flatMap(dataForEachSegment);
     // return ensureMaxListLength(_.flatMap(dataForEachSegment), 5000);
-
-    return records;
+    console.log(dataForEachSegment);
+    return dataForEachSegment;
   }
 
   /**

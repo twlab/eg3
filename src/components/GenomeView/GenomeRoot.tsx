@@ -9,7 +9,7 @@ import { ChromosomeData } from '../../localdata/chromosomedata';
 import { AnnotationTrackData } from '../../localdata/annotationtrackdata';
 import { PublicHubAllData } from '../../localdata/publichub';
 import { TwoBitUrlData } from '../../localdata/twobiturl';
-
+import HicStraw from 'hic-straw/dist/hic-straw.min.js';
 export const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
@@ -63,7 +63,11 @@ function GenomeHub(props: any) {
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {
       let newList = props.selectedGenome[0];
-
+      let straw = new HicStraw({
+        url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+      });
+      let metadata = straw.getMetaData();
+      let normOptions = straw.getNormalizationOptions();
       newList.defaultTracks = [
         {
           type: 'geneAnnotation',
@@ -87,6 +91,16 @@ function GenomeHub(props: any) {
         },
         {
           name: 'methylc',
+
+          genome: 'hg19',
+        },
+        {
+          name: 'hic',
+          straw: new HicStraw({
+            url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+          }),
+          metadata: metadata,
+          normOptions: normOptions,
 
           genome: 'hg19',
         },
@@ -120,6 +134,11 @@ function GenomeHub(props: any) {
         for (const chromosome of ChromosomeData['HG38']) {
           chrObj[chromosome.getName()] = chromosome.getLength();
         }
+        let straw = new HicStraw({
+          url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+        });
+        let metadata = straw.getMetaData();
+        let normOptions = straw.getNormalizationOptions();
         let testGen: any = {
           name: 'hg38',
           species: 'human',
@@ -149,6 +168,16 @@ function GenomeHub(props: any) {
             },
             {
               name: 'methylc',
+
+              genome: 'hg19',
+            },
+            {
+              name: 'hic',
+              straw: new HicStraw({
+                url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+              }),
+              metadata: metadata,
+              normOptions: normOptions,
 
               genome: 'hg19',
             },

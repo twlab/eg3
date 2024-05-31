@@ -12,13 +12,9 @@ import BigWigTrack from './BigWigTrack';
 import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
 import CircularProgress from '@mui/material/CircularProgress';
-import HicStraw from 'hic-straw/dist/hic-straw.min.js';
-let straw = new HicStraw({
-  url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
-});
-await straw.hicFile.init();
-let metadata = await straw.getMetaData();
-let normOptions = await straw.getNormalizationOptions();
+
+// use class to create an instance of hic fetch and sent it to track manager in genome root
+
 let defaultHic = {
   color: '#B8008A',
   color2: '#006385',
@@ -57,6 +53,7 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   bigWig: BigWigTrack,
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
+
   // Add more components as needed
 };
 
@@ -110,7 +107,7 @@ function TrackManager(props) {
   const maxBp = useRef(rightStartCoord + (rightStartCoord - leftStartCoord));
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
-  for (let i = 0; i < genome.defaultTracks.length; i++) {
+  for (let i = 0; i < genome.defaultTracks.length - 1; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
 
@@ -347,7 +344,7 @@ function TrackManager(props) {
           ),
 
           GetHicData(
-            straw,
+            genome.defaultTracks[5].straw,
             0,
             defaultHic,
             Number(sectionStart),
