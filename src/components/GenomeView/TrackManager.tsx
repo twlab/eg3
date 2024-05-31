@@ -12,6 +12,13 @@ import BigWigTrack from './BigWigTrack';
 import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
 import CircularProgress from '@mui/material/CircularProgress';
+import HicStraw from 'hic-straw/dist/hic-straw.min.js';
+let straw = new HicStraw({
+  url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+});
+await straw.hicFile.init();
+let metadata = await straw.getMetaData();
+let normOptions = await straw.getNormalizationOptions();
 let defaultHic = {
   color: '#B8008A',
   color2: '#006385',
@@ -55,6 +62,8 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
 
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
+  //TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
+  // use interface key to get certain track function based on information the user clicked on.
 
   const genome = props.currGenome;
 
@@ -338,12 +347,14 @@ function TrackManager(props) {
           ),
 
           GetHicData(
-            'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+            straw,
             0,
-            defaultHic
+            defaultHic,
+            Number(sectionStart),
+            Number(sectionEnd)
           ),
         ]);
-        console.log(hicRespond, 'SADASDSAD');
+
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
 

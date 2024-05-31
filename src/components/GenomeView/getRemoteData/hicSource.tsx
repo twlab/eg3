@@ -39,7 +39,7 @@ const MIN_BINS_PER_REGION = 50;
  *
  * @author Silas Hsu
  */
-function GetHicData(url, base, options) {
+function GetHicData(straw, base, options, start, end) {
   /**
    * Makes a new instance specialized in serving data from one URL
    *
@@ -177,12 +177,7 @@ function GetHicData(url, base, options) {
    * @param {Object} options - rendering options
    * @return {Promise<GenomeInteraction[]>} a Promise for the data
    */
-  async function getData(region, basesPerPixel, options) {
-    let straw = new HicStraw({ url: url });
-    await straw.hicFile.init();
-    let metadata = await straw.getMetaData();
-    let normOptions = await straw.getNormalizationOptions();
-    console.log(metadata, normOptions);
+  async function getData() {
     // const binSize =getBinSize(options, region);
     // let currentBinSize = binSize;
     // const promises: Array<any> = [];
@@ -190,11 +185,12 @@ function GetHicData(url, base, options) {
 
     const records = await straw.getContactRecords(
       normalization,
-      { start: 30968297, end: 31929404, chr: 'chr7' },
-      { start: 30968297, end: 31929404, chr: 'chr7' },
+      { start: start, end: end, chr: 'chr7' },
+      { start: start, end: end, chr: 'chr7' },
       'BP',
       10000
     );
+
     // for (let i = 0; i < loci.length; i++) {
     //   for (let j = i; j < loci.length; j++) {
     //     promises.push(
@@ -210,7 +206,7 @@ function GetHicData(url, base, options) {
     // const dataForEachSegment = await Promise.all(promises);
     // return _.flatMap(dataForEachSegment);
     // return ensureMaxListLength(_.flatMap(dataForEachSegment), 5000);
-    console.log(records);
+
     return records;
   }
 
@@ -271,7 +267,7 @@ function GetHicData(url, base, options) {
   // }
 
   function handle() {
-    let data = getData(url, base, options);
+    let data = getData();
 
     return data;
   }
