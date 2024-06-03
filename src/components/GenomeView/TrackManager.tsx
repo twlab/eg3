@@ -11,6 +11,7 @@ import BedDensityTrack from './BedDensityTrack';
 import BigWigTrack from './BigWigTrack';
 import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
+import HiCTrack from './HiCTrack';
 import CircularProgress from '@mui/material/CircularProgress';
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
@@ -53,6 +54,7 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   bigWig: BigWigTrack,
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
+  hic: HiCTrack,
 
   // Add more components as needed
 };
@@ -61,6 +63,14 @@ function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
   //TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
   // use interface key to get certain track function based on information the user clicked on.
+  // We want to sent a defaultTrack List of component of trackcomponent already from genomerooot and use it in trackmanager instead of
+  // creating the component in trackmanager/
+  //LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
+  // for ... track:
+  //if(genome.defaultTrack[i] = ref)
+  // else if (bigWig)
+  // else if (hic)
+  //getHic(genome.defaultTrack.staw,....)
 
   const genome = props.currGenome;
 
@@ -306,14 +316,8 @@ function TrackManager(props) {
 
       try {
         // Execute all requests concurrently
-        const [
-          userRespond,
-          bedRespond,
-          bigWigRespond,
-          dynSeqRespond,
-          methylcRespond,
-          hicRespond,
-        ] = await Promise.all([
+        //create an array of promises then we can loop with specific statements for different tracks
+        const fetchPromises: Array<any> = [
           fetch(
             `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
             { method: 'GET' }
@@ -342,7 +346,6 @@ function TrackManager(props) {
             Number(sectionStart),
             Number(sectionEnd)
           ),
-
           GetHicData(
             genome.defaultTracks[5].straw,
             0,
@@ -350,8 +353,16 @@ function TrackManager(props) {
             Number(sectionStart),
             Number(sectionEnd)
           ),
-        ]);
+        ];
 
+        const [
+          userRespond,
+          bedRespond,
+          bigWigRespond,
+          dynSeqRespond,
+          methylcRespond,
+          hicRespond,
+        ] = await Promise.all(fetchPromises);
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
 
@@ -580,21 +591,16 @@ function TrackManager(props) {
       } catch {}
     }
 
-    const bedResult = tmpBed;
-    const result = tmpResult;
-    const bigWigResult = tmpBigWig;
-    const dynSeqResult = tmpDynseq;
-    tempObj['result'] = result;
-    tempObj['bedResult'] = bedResult;
-    tempObj['bigWigResult'] = bigWigResult;
-    tempObj['dynseqResult'] = dynSeqResult;
+    tempObj['result'] = tmpResult;
+    tempObj['bedResult'] = tmpBed;
+    tempObj['bigWigResult'] = tmpBigWig;
+    tempObj['dynseqResult'] = tmpDynseq;
     tempObj['methylcResult'] = tmpMethylc;
     tempObj['side'] = 'left';
 
     tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
     ///////-__________________________________________________________________________________________________________________________
 
-    tempObj['side'] = 'left';
     setTrackData({ ...tempObj });
     if (minBp.current >= 0) {
       minBp.current = minBp.current - bpRegionSize;
