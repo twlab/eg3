@@ -117,7 +117,7 @@ function TrackManager(props) {
   const maxBp = useRef(rightStartCoord + (rightStartCoord - leftStartCoord));
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
-  for (let i = 0; i < genome.defaultTracks.length - 1; i++) {
+  for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
 
@@ -306,6 +306,7 @@ function TrackManager(props) {
     let tmpBed: Array<any> = [];
     let tmpBigWig: Array<any> = [];
     let tmpDynseq: Array<any> = [];
+    let tmpHic: Array<any> = [];
     for (let i = 0; i < tmpRegion.length; i++) {
       let sectionRegion = tmpRegion[i];
       const [curChrName, bpCoord] = sectionRegion.split(':');
@@ -316,7 +317,7 @@ function TrackManager(props) {
 
       try {
         // Execute all requests concurrently
-        //create an array of promises then we can loop with specific statements for different tracks
+        //create an array of promises then we can loop with specific statements
         const fetchPromises: Array<any> = [
           fetch(
             `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
@@ -389,21 +390,17 @@ function TrackManager(props) {
         tmpResult = [...tmpResult, ...gotResult];
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
+        tmpHic = [...tmpHic, ...hicRespond];
       } catch {}
     }
 
-    const bedResult = tmpBed;
-    const result = tmpResult;
-    const bigWigResult = tmpBigWig;
-    const methylcResult = tmpMethylc;
-    const dynSeqResult = tmpDynseq;
-
     tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
-    tempObj['result'] = result;
-    tempObj['bedResult'] = bedResult;
-    tempObj['bigWigResult'] = bigWigResult;
-    tempObj['dynseqResult'] = dynSeqResult;
-    tempObj['methylcResult'] = methylcResult;
+    tempObj['result'] = tmpResult;
+    tempObj['bedResult'] = tmpBed;
+    tempObj['bigWigResult'] = tmpBigWig;
+    tempObj['dynseqResult'] = tmpDynseq;
+    tempObj['methylcResult'] = tmpMethylc;
+    tempObj['hicResult'] = tmpHic;
     tempObj['side'] = 'right';
     if (initial === 0) {
       tempObj['initial'] = 0;
@@ -591,10 +588,14 @@ function TrackManager(props) {
       } catch {}
     }
 
-    tempObj['result'] = tmpResult;
-    tempObj['bedResult'] = tmpBed;
-    tempObj['bigWigResult'] = tmpBigWig;
-    tempObj['dynseqResult'] = tmpDynseq;
+    const bedResult = tmpBed;
+    const result = tmpResult;
+    const bigWigResult = tmpBigWig;
+    const dynSeqResult = tmpDynseq;
+    tempObj['result'] = result;
+    tempObj['bedResult'] = bedResult;
+    tempObj['bigWigResult'] = bigWigResult;
+    tempObj['dynseqResult'] = dynSeqResult;
     tempObj['methylcResult'] = tmpMethylc;
     tempObj['side'] = 'left';
 

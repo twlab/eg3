@@ -3,13 +3,50 @@ import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import worker_script from '../../Worker/worker';
 import TestToolTip from './commonComponents/hover/tooltip';
+import { InteractionDisplayMode } from './DisplayModes';
+import { ScaleChoices } from './ScaleChoices';
+import { GenomeInteraction } from './getRemoteData/GenomeInteraction';
+import percentile from 'percentile';
 // SCrolling to 80% view on current epi browser matches default in eg3
 let worker: Worker;
-const VERTICAL_PADDING = 0;
-const DEFAULT_COLORS_FOR_CONTEXT = {
-  CG: { color: 'rgb(100,139,216)', background: '#d9d9d9' },
-  CHG: { color: 'rgb(255,148,77)', background: '#ffe0cc' },
-  CHH: { color: 'rgb(255,0,255)', background: '#ffe5ff' },
+const TOP_PADDING = 2;
+const DEFAULT_OPTIONS = {
+  color: '#B8008A',
+  color2: '#006385',
+  backgroundColor: 'var(--bg-color)',
+  displayMode: InteractionDisplayMode.HEATMAP,
+  scoreScale: ScaleChoices.AUTO,
+  scoreMax: 10,
+  scalePercentile: 95,
+  scoreMin: 0,
+  height: 500,
+  lineWidth: 2,
+  greedyTooltip: false,
+  fetchViewWindowOnly: false,
+  bothAnchorsInView: false,
+  isThereG3dTrack: false,
+  clampHeight: false,
+};
+
+let defaultHic = {
+  color: '#B8008A',
+  color2: '#006385',
+  backgroundColor: 'var(--bg-color)',
+  displayMode: 'heatmap',
+  scoreScale: 'auto',
+  scoreMax: 10,
+  scalePercentile: 95,
+  scoreMin: 0,
+  height: 500,
+  lineWidth: 2,
+  greedyTooltip: false,
+  fetchViewWindowOnly: false,
+  bothAnchorsInView: false,
+  isThereG3dTrack: false,
+  clampHeight: false,
+  binSize: 0,
+  normalization: 'NONE',
+  label: '',
 };
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -30,7 +67,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(':');
-    result = trackData!.methylcResult;
+    result = trackData!.hicResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -61,9 +98,8 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result[0]) {
-      result = result[0];
-
+    if (result) {
+      console.log(result);
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
@@ -94,42 +130,27 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
 
-    worker = new Worker(worker_script);
+    let scales = computeScales(result);
 
-    worker.postMessage({
-      trackGene: result,
-      windowWidth: windowWidth,
-      bpToPx: bpToPx!,
-      bpRegionSize: bpRegionSize!,
-      startBpRegion: start,
-    });
-
-    // Listen for messages from the web worker
-    worker.onmessage = (event) => {
-      let converted = event.data;
-      let scales = computeScales(converted);
-      let length = converted.length;
-
-      drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
-      setRightTrack([
-        ...rightTrackGenes,
+    drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
+    setRightTrack([
+      ...rightTrackGenes,
+      { canvasData: converted, scaleData: scales },
+    ]);
+    if (trackData!.initial) {
+      const newCanvasRevRef = createRef();
+      const newCanvasRevRef2 = createRef();
+      prevOverflowStrand2.current = { ...overflowStrand2.current };
+      setLeftTrack([
+        ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
-      if (trackData!.initial) {
-        const newCanvasRevRef = createRef();
-        const newCanvasRevRef2 = createRef();
-        prevOverflowStrand2.current = { ...overflowStrand2.current };
-        setLeftTrack([
-          ...leftTrackGenes,
-          { canvasData: converted, scaleData: scales },
-        ]);
-        overflowStrand2.current = {};
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
+      overflowStrand2.current = {};
+      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
 
-        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
-      }
-      worker.terminate();
-    };
+      setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
+    }
+
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
     // CHECK if there are overlapping strands to the next track
@@ -205,55 +226,149 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     overflowStrand2.current = {};
   }
 
-  function computeScales(xMap, height: number = 40, maxMethyl: number = 1) {
-    /*
-      xMap = returnValueOfAggregateRecords = [
-          {
-              combined: {
-                  depth: 5 (NaN if no data),
-                  contextValues: [
-                      {context: "CG", value: 0.3},
-                      {context: "CHH", value: 0.3},
-                      {context: "CHG", value: 0.3},
-                  ]
-              },
-              forward: {},
-              reverse: {}
-          },
-          ...
-      ]
-      */
-    const forwardRecords = xMap.map((record) => record.forward);
-    const reverseRecords = xMap.map((record) => record.reverse);
-
-    const maxDepthForward = forwardRecords.reduce(
-      (maxRecord, record) => {
-        return record.depth > maxRecord.depth ? record : maxRecord;
-      },
-      { depth: 0 }
-    );
-
-    const maxDepthReverse = reverseRecords.reduce(
-      (maxRecord, record) => {
-        return record.depth > maxRecord.depth ? record : maxRecord;
-      },
-      { depth: 0 }
-    );
-
-    const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
-
-    return {
-      methylToY: scaleLinear()
-        .domain([maxMethyl, 0])
-        .range([VERTICAL_PADDING, height])
-        .clamp(true),
-      depthToY: scaleLinear()
-        .domain([maxDepth, 0])
-        .range([VERTICAL_PADDING, height])
-        .clamp(true),
-    };
+  function computeScales(data: GenomeInteraction[]) {
+    if (defaultHic.scoreScale === ScaleChoices.AUTO) {
+      // const maxScore = this.props.data.length > 0 ? _.maxBy(this.props.data, "score").score : 10;
+      const item = percentile(
+        DEFAULT_OPTIONS.scalePercentile,
+        data,
+        (item) => item.score
+      );
+      // console.log(item)
+      const maxScore = data.length > 0 ? (item as GenomeInteraction).score : 10;
+      // console.log(maxScore)
+      return {
+        opacityScale: scaleLinear()
+          .domain([0, maxScore])
+          .range([0, 1])
+          .clamp(true),
+        heightScale: scaleLinear()
+          .domain([0, maxScore])
+          .range([0, defaultHic.height - TOP_PADDING])
+          .clamp(true),
+        min: 0,
+        max: maxScore,
+      };
+    } else {
+      if (defaultHic.scoreMin >= defaultHic.scoreMax) {
+        // notify.show(
+        //   'Score min cannot be greater than Score max',
+        //   'error',
+        //   2000
+        // );
+        return {
+          opacityScale: scaleLinear()
+            .domain([defaultHic.scoreMax - 1, defaultHic.scoreMax])
+            .range([0, 1])
+            .clamp(true),
+          heightScale: scaleLinear()
+            .domain([defaultHic.scoreMax - 1, defaultHic.scoreMax])
+            .range([0, defaultHic.height - TOP_PADDING])
+            .clamp(true),
+          min: defaultHic.scoreMax - 1,
+          max: defaultHic.scoreMax,
+        };
+      }
+      return {
+        opacityScale: scaleLinear()
+          .domain([defaultHic.scoreMin, defaultHic.scoreMax])
+          .range([0, 1])
+          .clamp(true),
+        heightScale: scaleLinear()
+          .domain([defaultHic.scoreMin, defaultHic.scoreMax])
+          .range([0, defaultHic.height - TOP_PADDING])
+          .clamp(true),
+        min: defaultHic.scoreMin,
+        max: defaultHic.scoreMax,
+      };
+    }
   }
 
+  function filterData(data: any) {
+    let filteredData: Array<any> = [];
+    // if (maxValueFilter && !isNaN(maxValueFilter)) {
+    //   filteredData = data.filter((d) => d.score <= maxValueFilter);
+    // } else {
+    filteredData = data;
+    // }
+    // if (defaultHic.minValueFilter && !isNaN(minValueFilter)) {
+    //   filteredData = filteredData.filter((d) => d.score >= minValueFilter);
+    // }
+    return filteredData;
+  }
+
+  function renderRect(placedInteraction: any, index: number) {
+    if (placedInteraction.interaction.color) {
+      defaultHic.color = placedInteraction.interaction.color;
+      defaultHic.color2 = placedInteraction.interaction.color;
+    }
+    const score = placedInteraction.interaction.score;
+    if (!score) {
+      return null;
+    }
+    const { xSpan1, xSpan2 } = placedInteraction;
+    console.log(xSpan1, xSp);
+    if (xSpan1.end < viewWindow.start && xSpan2.start > viewWindow.end) {
+      return null;
+    }
+    if (bothAnchorsInView) {
+      if (xSpan1.start < viewWindow.start || xSpan2.end > viewWindow.end) {
+        return null;
+      }
+    }
+    const gapCenter = (xSpan1.end + xSpan2.start) / 2;
+    const gapLength = xSpan2.start - xSpan1.end;
+    const topX = gapCenter;
+    const halfSpan1 = Math.max(0.5 * xSpan1.getLength(), 1);
+    const halfSpan2 = Math.max(0.5 * xSpan2.getLength(), 1);
+    let topY, bottomY, leftY, rightY;
+    if (clampHeight) {
+      bottomY = this.clampScale(0.5 * gapLength + halfSpan1 + halfSpan2);
+      topY = bottomY - this.clampScale(halfSpan1 + halfSpan2);
+      leftY = topY + this.clampScale(halfSpan1);
+      rightY = topY + this.clampScale(halfSpan2);
+    } else {
+      topY = 0.5 * gapLength;
+      bottomY = topY + halfSpan1 + halfSpan2;
+      leftY = topY + halfSpan1;
+      rightY = topY + halfSpan2;
+    }
+    const points = [
+      // Going counterclockwise
+      [topX, topY], // Top
+      [topX - halfSpan1, leftY], // Left
+      [topX - halfSpan1 + halfSpan2, bottomY], // Bottom = left + halfSpan2
+      [topX + halfSpan2, rightY], // Right
+    ];
+    const key = placedInteraction.generateKey() + index;
+    // only push the points in screen
+    if (
+      topX + halfSpan2 > viewWindow.start &&
+      topX - halfSpan1 < viewWindow.end &&
+      topY < height
+    ) {
+      this.hmData.push({
+        points,
+        interaction: placedInteraction.interaction,
+        xSpan1,
+        xSpan2,
+      });
+    }
+
+    return (
+      <polygon
+        key={key}
+        points={points as any} // React can convert the array to a string
+        fill={score >= 0 ? color : color2}
+        opacity={opacityScale(score)}
+        // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
+      />
+    );
+
+    // const height = bootomYs.length > 0 ? Math.round(_.max(bootomYs)) : 50;
+    // return <svg width={width} height={height} onMouseOut={onMouseOut} >{diamonds}</svg>;
+    // return <svg width={width} height={Heatmap.getHeight(this.props)} onMouseOut={onMouseOut} >{diamonds}</svg>;
+  }
   async function drawCanvas(
     startRange,
     endRange,
