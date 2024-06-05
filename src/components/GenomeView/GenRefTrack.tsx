@@ -575,7 +575,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                   x2={`${windowWidth * 2}px`}
                   y2={'100%'}
                   stroke="gray"
-                  strokeWidth="3"
+                  strokeWidth="1"
                 />
 
                 {rightTrackGenes[index]}

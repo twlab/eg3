@@ -79,6 +79,10 @@ function GenomeHub(props: any) {
           genome: newList.name,
         },
         {
+          name: 'bedDensity',
+          genome: newList.name,
+        },
+        {
           name: 'bigWig',
 
           genome: newList.name,
@@ -96,9 +100,7 @@ function GenomeHub(props: any) {
         },
         {
           name: 'hic',
-          straw: new HicStraw({
-            url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
-          }),
+          straw: straw,
           metadata: metadata,
           normOptions: normOptions,
 
@@ -155,7 +157,10 @@ function GenomeHub(props: any) {
               name: 'bed',
               genome: 'hg19',
             },
-
+            {
+              name: 'bedDensity',
+              genome: 'hg19',
+            },
             {
               name: 'bigWig',
 
@@ -173,9 +178,7 @@ function GenomeHub(props: any) {
             },
             {
               name: 'hic',
-              straw: new HicStraw({
-                url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
-              }),
+              straw: straw,
               metadata: metadata,
               normOptions: normOptions,
 

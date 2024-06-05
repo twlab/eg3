@@ -127,8 +127,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     overflowStrand2.current = {};
   }
   function setStrand(trackGeneData: { [Key: string]: any }) {
-    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVEL
-    var yCoord = 25;
+    //TO- DO FIX Y COORD ADD SPACE EVEN WHEN THERES NO STRAND ON LEVE
     const strandList: Array<any> = [];
 
     if (Object.keys(trackGeneData).length > 0) {
@@ -148,7 +147,8 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
         ) {
           continue;
         }
-
+        //strokewidth will expand equally in both direction up and down so to fill 40. Y1 and Y2 needs to be in the middle which
+        // is 20 expanding 20 up
         //add a single strand to current track------------------------------------------------------------------------------------
         strandHtml.push(
           <React.Fragment key={singleStrand.start + singleStrand.end + 2333}>
@@ -156,19 +156,17 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               x1={`${
                 (singleStrand.start - trackGeneData.startTrackPos) / bpToPx!
               }`}
-              y1={`${yCoord}`}
+              y1={`${20}`}
               x2={`${
                 (singleStrand.end - trackGeneData.startTrackPos) / bpToPx!
               }`}
-              y2={`${yCoord}`}
+              y2={`${20}`}
               stroke={'blue'}
-              strokeWidth="20"
+              strokeWidth={40}
             />
           </React.Fragment>
         );
       }
-
-      yCoord += 25;
 
       strandList.push(strandHtml);
     }
@@ -185,7 +183,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   }, [trackData]);
 
   return (
-    <div>
+    <div style={{ display: 'flex' }}>
       {side === 'right'
         ? rightTrackGenes.map(
             (item, index) => (
@@ -194,7 +192,6 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
                 key={index}
                 width={`${windowWidth * 2}px`}
                 height={'40'}
-                style={{ display: 'inline-block' }}
                 overflow="visible"
               >
                 {rightTrackGenes[index]}

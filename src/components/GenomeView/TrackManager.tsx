@@ -318,6 +318,7 @@ function TrackManager(props) {
       try {
         // Execute all requests concurrently
         //create an array of promises then we can loop with specific statements
+        // when things dont show up and no data because promise fail to fetch
         const fetchPromises: Array<any> = [
           fetch(
             `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
@@ -348,14 +349,14 @@ function TrackManager(props) {
             Number(sectionEnd)
           ),
           GetHicData(
-            genome.defaultTracks[5].straw,
+            genome.defaultTracks[6].straw,
             0,
             defaultHic,
             Number(sectionStart),
             Number(sectionEnd)
           ),
         ];
-
+        console.log(fetchPromises);
         const [
           userRespond,
           bedRespond,
@@ -366,7 +367,7 @@ function TrackManager(props) {
         ] = await Promise.all(fetchPromises);
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
-
+        console.log(userRespond);
         if (i !== 0) {
           for (let i = 0; i < gotResult.length; i++) {
             gotResult[i].txStart += Number(startRegion);
@@ -409,6 +410,7 @@ function TrackManager(props) {
 
       minBp.current = minBp.current - bpRegionSize;
     }
+    console.log(tempObj);
     setTrackData({ ...tempObj });
     if (maxBp.current <= chrLength[chrIndexRight.current]) {
       maxBp.current = maxBp.current + bpRegionSize;
@@ -580,6 +582,7 @@ function TrackManager(props) {
             );
           }
         }
+        console.log('ASdsad');
         tmpMethylc = [...tmpMethylc, ...methylcRespond];
         tmpResult = [...tmpResult, ...gotResult];
         tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
@@ -695,9 +698,12 @@ function TrackManager(props) {
               trackData={trackData}
               side={side}
               windowWidth={windowWidth}
-              trackSize={rightSectionSize}
             />
           ))}
+          {
+            // DIDNT WORK BECAUSE THEY DIUDNT WHAT TRACK WIDTH Was}
+          }
+
           {/* <BigWigTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}

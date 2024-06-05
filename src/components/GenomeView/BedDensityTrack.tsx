@@ -55,7 +55,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
 
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-
+    console.log(trackData);
     if (result[0]) {
       result = result[0];
       var resultIdx = 0;
@@ -303,7 +303,6 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
                 x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
                 y2={`${yCoord}`}
                 stroke={'blue'}
-                strokeWidth="20"
               />
             </React.Fragment>
           );
@@ -416,16 +415,12 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   }, [side]);
 
   useEffect(() => {
-    function handle() {
-      if (trackData!.location && trackData!.side === 'right') {
-        fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === 'left') {
-        fetchGenomeData2();
-      }
+    if (trackData!.side === 'right') {
+      fetchGenomeData();
+    } else if (trackData!.side === 'left') {
+      fetchGenomeData2();
     }
-    handle();
   }, [trackData]);
-
   return (
     <div>
       {side === 'right'

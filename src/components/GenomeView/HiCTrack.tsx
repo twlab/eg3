@@ -1,14 +1,15 @@
 import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import worker_script from '../../Worker/worker';
+// import worker_script from '../../Worker/worker';
 import TestToolTip from './commonComponents/hover/tooltip';
 import { InteractionDisplayMode } from './DisplayModes';
 import { ScaleChoices } from './ScaleChoices';
 import { GenomeInteraction } from './getRemoteData/GenomeInteraction';
 import percentile from 'percentile';
 // SCrolling to 80% view on current epi browser matches default in eg3
-let worker: Worker;
+// let worker: Worker;
+let hmData: Array<any> = [];
 const TOP_PADDING = 2;
 const DEFAULT_OPTIONS = {
   color: '#B8008A',
@@ -89,7 +90,10 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
-
+  // step 1 filtered
+  // step 2 change genomeInteraction in placedInteraction
+  // step 3compute the value find the middle rect and display on screen
+  // step 4 show both sides when hovering
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
@@ -128,31 +132,23 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     //SORT our interval data into levels to be place on the track
 
     const newCanvasRef = createRef();
-    const newCanvasRef2 = createRef();
 
-    let scales = computeScales(result);
+    let placedInteraction = placeInteractions(result);
+    let coordResult = placedInteraction.map((item, index) =>
+      renderRect(item, index)
+    );
 
-    drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
-    setRightTrack([
-      ...rightTrackGenes,
-      { canvasData: converted, scaleData: scales },
-    ]);
+    setRightTrack([...rightTrackGenes, coordResult]);
+
     if (trackData!.initial) {
       const newCanvasRevRef = createRef();
-      const newCanvasRevRef2 = createRef();
       prevOverflowStrand2.current = { ...overflowStrand2.current };
-      setLeftTrack([
-        ...leftTrackGenes,
-        { canvasData: converted, scaleData: scales },
-      ]);
       overflowStrand2.current = {};
       setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
-
-      setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
     }
 
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-    setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
+
     // CHECK if there are overlapping strands to the next track
 
     prevOverflowStrand.current = { ...overflowStrand.current };
@@ -161,6 +157,98 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   //________________________________________________________________________________________________________________________________________________________
   //________________________________________________________________________________________________________________________________________________________
+  function placeInteractions(interactions: GenomeInteraction[]) {
+    const mappedInteractions: Array<any> = [];
+    for (const interaction of interactions) {
+      let location1 = interaction.locus1;
+      let location2 = interaction.locus2;
+
+      const startX1 = (location1.start - start) / bpToPx!;
+      const endX1 = (location1.end - start) / bpToPx!;
+
+      const startX2 = (location2.start - start) / bpToPx!;
+      const endX2 = (location2.end - start) / bpToPx!;
+
+      const xSpan1 = { start: startX1, end: endX1 };
+      const xSpan2 = { start: startX2, end: endX2 };
+      mappedInteractions.push({ interaction, xSpan1, xSpan2 });
+    }
+
+    return mappedInteractions;
+  }
+
+  function renderRect(placedInteraction: any, index: number) {
+    // if (placedInteraction.interaction.color) {
+    //   color = placedInteraction.interaction.color;
+    //   color2 = placedInteraction.interaction.color;
+    // }
+    let color = defaultHic.color;
+    let color2 = defaultHic.color;
+    const score = placedInteraction.interaction.score;
+    if (!score) {
+      return null;
+    }
+    const { xSpan1, xSpan2 } = placedInteraction;
+    if (xSpan1.end < start && xSpan2.start > end) {
+      return null;
+    }
+    // if (bothAnchorsInView) {
+    //   if (xSpan1.start < viewWindow.start || xSpan2.end > viewWindow.end) {
+    //     return null;
+    //   }
+    // }
+    const gapCenter = (xSpan1.end + xSpan2.start) / 2;
+    const gapLength = xSpan2.start - xSpan1.end;
+    const topX = gapCenter;
+    const halfSpan1 = Math.max(0.5 * (xSpan1.end - xSpan1.start), 1);
+    const halfSpan2 = Math.max(0.5 * (xSpan2.end - xSpan2.start), 1);
+    let topY, bottomY, leftY, rightY;
+    // if (defaultHic.clampHeight) {
+    //   bottomY = this.clampScale(0.5 * gapLength + halfSpan1 + halfSpan2);
+    //   topY = bottomY - this.clampScale(halfSpan1 + halfSpan2);
+    //   leftY = topY + this.clampScale(halfSpan1);
+    //   rightY = topY + this.clampScale(halfSpan2);
+    // } else {
+    topY = 0.5 * gapLength;
+    bottomY = topY + halfSpan1 + halfSpan2;
+    leftY = topY + halfSpan1;
+    rightY = topY + halfSpan2;
+
+    const points = [
+      // Going counterclockwise
+      [topX, topY], // Top
+      [topX - halfSpan1, leftY], // Left
+      [topX - halfSpan1 + halfSpan2, bottomY], // Bottom = left + halfSpan2
+      [topX + halfSpan2, rightY], // Right
+    ];
+    const key =
+      '' + xSpan1.start + xSpan1.end + xSpan2.start + xSpan2.end + index;
+    // only push the points in screen
+    if (
+      topX + halfSpan2 > start &&
+      topX - halfSpan1 < end &&
+      topY < defaultHic.height
+    ) {
+      hmData.push({
+        points,
+        interaction: placedInteraction.interaction,
+        xSpan1,
+        xSpan2,
+      });
+    }
+    let currRes = {
+      key: key,
+      points: points, // React can convert the array to a string
+      fill: score >= 0 ? color : color2,
+      opacity: score,
+    };
+
+    return currRes;
+
+    // const height = bootomYs.length > 0 ? Math.round(_.max(bootomYs)) : 50;
+    // return <svg width={width} height={height} onMouseOut={onMouseOut} >{diamonds}</svg>;
+    // return <svg width={width} height={Heatmap.getHeight(this.props)} onMouseOut={onMouseOut} >{diamonds}</svg>;
+  }
 
   function fetchGenomeData2() {
     let startPos;
@@ -297,180 +385,45 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     return filteredData;
   }
 
-  function renderRect(placedInteraction: any, index: number) {
-    if (placedInteraction.interaction.color) {
-      defaultHic.color = placedInteraction.interaction.color;
-      defaultHic.color2 = placedInteraction.interaction.color;
-    }
-    const score = placedInteraction.interaction.score;
-    if (!score) {
-      return null;
-    }
-    const { xSpan1, xSpan2 } = placedInteraction;
-    console.log(xSpan1, xSp);
-    if (xSpan1.end < viewWindow.start && xSpan2.start > viewWindow.end) {
-      return null;
-    }
-    if (bothAnchorsInView) {
-      if (xSpan1.start < viewWindow.start || xSpan2.end > viewWindow.end) {
-        return null;
-      }
-    }
-    const gapCenter = (xSpan1.end + xSpan2.start) / 2;
-    const gapLength = xSpan2.start - xSpan1.end;
-    const topX = gapCenter;
-    const halfSpan1 = Math.max(0.5 * xSpan1.getLength(), 1);
-    const halfSpan2 = Math.max(0.5 * xSpan2.getLength(), 1);
-    let topY, bottomY, leftY, rightY;
-    if (clampHeight) {
-      bottomY = this.clampScale(0.5 * gapLength + halfSpan1 + halfSpan2);
-      topY = bottomY - this.clampScale(halfSpan1 + halfSpan2);
-      leftY = topY + this.clampScale(halfSpan1);
-      rightY = topY + this.clampScale(halfSpan2);
-    } else {
-      topY = 0.5 * gapLength;
-      bottomY = topY + halfSpan1 + halfSpan2;
-      leftY = topY + halfSpan1;
-      rightY = topY + halfSpan2;
-    }
-    const points = [
-      // Going counterclockwise
-      [topX, topY], // Top
-      [topX - halfSpan1, leftY], // Left
-      [topX - halfSpan1 + halfSpan2, bottomY], // Bottom = left + halfSpan2
-      [topX + halfSpan2, rightY], // Right
-    ];
-    const key = placedInteraction.generateKey() + index;
-    // only push the points in screen
-    if (
-      topX + halfSpan2 > viewWindow.start &&
-      topX - halfSpan1 < viewWindow.end &&
-      topY < height
-    ) {
-      this.hmData.push({
-        points,
-        interaction: placedInteraction.interaction,
-        xSpan1,
-        xSpan2,
-      });
-    }
-
-    return (
-      <polygon
-        key={key}
-        points={points as any} // React can convert the array to a string
-        fill={score >= 0 ? color : color2}
-        opacity={opacityScale(score)}
-        // onMouseMove={event => onInteractionHovered(event, placedInteraction.interaction)} // tslint:disable-line
-      />
-    );
-
-    // const height = bootomYs.length > 0 ? Math.round(_.max(bootomYs)) : 50;
-    // return <svg width={width} height={height} onMouseOut={onMouseOut} >{diamonds}</svg>;
-    // return <svg width={width} height={Heatmap.getHeight(this.props)} onMouseOut={onMouseOut} >{diamonds}</svg>;
+  async function drawCanvas(polyRegionData) {
+    console.log(polyRegionData);
   }
-  async function drawCanvas(
-    startRange,
-    endRange,
-    canvasRef,
-    converted,
-    scales,
-    canvasRefReverse
-  ) {
-    let context = canvasRef.current.getContext('2d');
-    let contextRev = canvasRefReverse.current.getContext('2d');
 
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    for (let j = startRange; j < endRange; j++) {
-      let forward = converted[j].forward;
-      let reverse = converted[j].reverse;
-      // let combine = converted[j].combined;
-      let depthFilter = 0;
-
-      if (j + 1 !== endRange) {
-        let currRecord = converted[j].forward;
-        let nextRecord = converted[j + 1].forward;
-        let currRecordRev = converted[j].reverse;
-        let nextRecordRev = converted[j + 1].reverse;
-        if (currRecord.depth < depthFilter) {
-          continue;
-        }
-
-        const y1 = scales.depthToY(currRecord.depth);
-        const y2 = scales.depthToY(nextRecord.depth);
-
-        context.strokeStyle = '#525252';
-        context.beginPath();
-        context.moveTo(j, y1);
-        context.lineTo(j + 1, y2);
-        context.stroke();
-
-        const y1Rev = scales.depthToY(currRecordRev.depth);
-        const y2Rev = scales.depthToY(nextRecordRev.depth);
-
-        contextRev.strokeStyle = '#525252';
-        contextRev.beginPath();
-        contextRev.moveTo(j, 40 - y1Rev);
-        contextRev.lineTo(j + 1, 40 - y2Rev);
-        contextRev.stroke();
-      }
-
-      for (let contextData of forward.contextValues) {
-        const drawY = scales.methylToY(contextData.value);
-        const drawHeight = 40 - drawY;
-        const contextName = contextData.context;
-        const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
-
-        context.fillStyle = color;
-        context.globalAlpha = 0.75;
-        context.fillRect(j, drawY, 1, drawHeight);
-      }
-
-      for (let contextData of reverse.contextValues) {
-        const drawY = scales.methylToY(contextData.value);
-        const drawHeight = 40 - drawY;
-        const contextName = contextData.context;
-        const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
-
-        contextRev.fillStyle = color;
-        contextRev.globalAlpha = 0.75;
-        contextRev.fillRect(j, 0, 1, drawHeight);
-      }
-    }
-  }
+  // useEffect(() => {
+  //   if (side === 'left') {
+  //     leftTrackGenes.forEach((canvasRef, index) => {
+  //       if (canvasRefL[index].current && canvasRefL2[index].current) {
+  //         let length = leftTrackGenes[index].canvasData.length;
+  //         drawCanvas(
+  //           0,
+  //           length,
+  //           canvasRefL[index],
+  //           leftTrackGenes[index].canvasData,
+  //           leftTrackGenes[index].scaleData,
+  //           canvasRefL2[index]
+  //         );
+  //       }
+  //     });
+  //   } else if (side === 'right') {
+  //     rightTrackGenes.forEach((canvasRef, index) => {
+  //       if (canvasRefR[index].current && canvasRefR2[index].current) {
+  //         let length = rightTrackGenes[index].canvasData.length;
+  //         drawCanvas(
+  //           0,
+  //           length,
+  //           canvasRefR[index],
+  //           rightTrackGenes[index].canvasData,
+  //           rightTrackGenes[index].scaleData,
+  //           canvasRefR2[index]
+  //         );
+  //       }
+  //     });
+  //   }
+  // }, [side]);
 
   useEffect(() => {
-    if (side === 'left') {
-      leftTrackGenes.forEach((canvasRef, index) => {
-        if (canvasRefL[index].current && canvasRefL2[index].current) {
-          let length = leftTrackGenes[index].canvasData.length;
-          drawCanvas(
-            0,
-            length,
-            canvasRefL[index],
-            leftTrackGenes[index].canvasData,
-            leftTrackGenes[index].scaleData,
-            canvasRefL2[index]
-          );
-        }
-      });
-    } else if (side === 'right') {
-      rightTrackGenes.forEach((canvasRef, index) => {
-        if (canvasRefR[index].current && canvasRefR2[index].current) {
-          let length = rightTrackGenes[index].canvasData.length;
-          drawCanvas(
-            0,
-            length,
-            canvasRefR[index],
-            rightTrackGenes[index].canvasData,
-            rightTrackGenes[index].scaleData,
-            canvasRefR2[index]
-          );
-        }
-      });
-    }
-  }, [side]);
+    drawCanvas(rightTrackGenes[rightTrackGenes.length - 1]);
+  }, [rightTrackGenes]);
 
   useEffect(() => {
     if (trackData!.side === 'right') {
