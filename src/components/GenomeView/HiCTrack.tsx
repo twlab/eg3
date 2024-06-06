@@ -103,7 +103,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result) {
-      console.log(result);
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
@@ -385,8 +384,24 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     return filteredData;
   }
 
-  async function drawCanvas(polyRegionData) {
-    console.log(polyRegionData);
+  function drawCanvas(polyRegionData) {
+    if (canvasRefR[canvasRefR.length - 1].current) {
+      let context = canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+      for (let i = 0; i < polyRegionData.length; i++) {
+        const points = polyRegionData[i].points;
+        context.fillStyle = '#B8008A';
+        context.globalAlpha = 1;
+
+        context.beginPath();
+        context.moveTo(points[0][0], points[0][1]);
+        context.lineTo(points[1][0], points[1][1]);
+        context.lineTo(points[2][0], points[2][1]);
+        context.lineTo(points[3][0], points[3][1]);
+        context.closePath();
+        context.fill();
+      }
+    }
   }
 
   // useEffect(() => {
@@ -422,7 +437,9 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   // }, [side]);
 
   useEffect(() => {
-    drawCanvas(rightTrackGenes[rightTrackGenes.length - 1]);
+    if (rightTrackGenes.length > 0) {
+      drawCanvas(rightTrackGenes[rightTrackGenes.length - 1]);
+    }
   }, [rightTrackGenes]);
 
   useEffect(() => {
@@ -434,63 +451,18 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }, [trackData]);
 
   return (
-    <div
-      style={{
-        height: '300px',
-        position: 'relative',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          position: 'absolute',
-          opacity: 0.5,
-
-          zIndex: 3,
-        }}
-      >
-        {rightTrackGenes.map((item, index) => (
-          <TestToolTip
-            key={index}
-            data={rightTrackGenes[index]}
-            windowWidth={windowWidth}
-            trackIdx={index}
-          />
-        ))}
-      </div>
+    <div>
       {side === 'right' ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'absolute',
-            zIndex: 2,
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {canvasRefR.map((item, index) => (
-              <canvas
-                key={index}
-                ref={item}
-                height={'40'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {canvasRefR2.map((item, index) => (
-              <canvas
-                key={index + 32}
-                ref={item}
-                height={'40'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-            ))}
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          {canvasRefR.map((item, index) => (
+            <canvas
+              key={index}
+              ref={item}
+              height={'500'}
+              width={`${windowWidth * 2}px`}
+              style={{}}
+            />
+          ))}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>

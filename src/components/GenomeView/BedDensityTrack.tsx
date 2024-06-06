@@ -55,7 +55,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
 
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(trackData);
+
     if (result[0]) {
       result = result[0];
       var resultIdx = 0;

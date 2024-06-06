@@ -54,7 +54,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (result) {
-      console.log(result);
       var resultIdx = 0;
 
       if (

@@ -356,7 +356,7 @@ function TrackManager(props) {
             Number(sectionEnd)
           ),
         ];
-        console.log(fetchPromises);
+
         const [
           userRespond,
           bedRespond,
@@ -367,7 +367,7 @@ function TrackManager(props) {
         ] = await Promise.all(fetchPromises);
         // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
         let gotResult = await userRespond.json();
-        console.log(userRespond);
+
         if (i !== 0) {
           for (let i = 0; i < gotResult.length; i++) {
             gotResult[i].txStart += Number(startRegion);
@@ -410,7 +410,7 @@ function TrackManager(props) {
 
       minBp.current = minBp.current - bpRegionSize;
     }
-    console.log(tempObj);
+
     setTrackData({ ...tempObj });
     if (maxBp.current <= chrLength[chrIndexRight.current]) {
       maxBp.current = maxBp.current + bpRegionSize;
@@ -582,7 +582,7 @@ function TrackManager(props) {
             );
           }
         }
-        console.log('ASdsad');
+
         tmpMethylc = [...tmpMethylc, ...methylcRespond];
         tmpResult = [...tmpResult, ...gotResult];
         tmpDynseq = [...tmpDynseq, ...dynSeqRespond];

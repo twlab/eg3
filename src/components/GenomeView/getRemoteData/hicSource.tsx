@@ -178,7 +178,7 @@ function GetHicData(straw, base, options, start, end) {
     // let currentBinSize = binSize;
     // const promises: Array<any> = [];
     let normalization = NormalizationMode.NONE;
-    console.log(start, end);
+
     const dataForEachSegment = await getInteractionsBetweenLoci(
       { start: start, end: end, chr: 'chr7' },
       { start: start, end: end, chr: 'chr7' },
@@ -188,7 +188,7 @@ function GetHicData(straw, base, options, start, end) {
     // const dataForEachSegment = await Promise.all(promises);
     // return _.flatMap(dataForEachSegment);
     // return ensureMaxListLength(_.flatMap(dataForEachSegment), 5000);
-    console.log(dataForEachSegment);
+
     return dataForEachSegment;
   }
 
