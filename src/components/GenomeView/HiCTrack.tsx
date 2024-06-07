@@ -2,7 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 // import worker_script from '../../Worker/worker';
-import TestToolTip from './commonComponents/hover/tooltip';
+import TestToolTipHic from './commonComponents/hover/tooltipHic';
 import { InteractionDisplayMode } from './DisplayModes';
 import { ScaleChoices } from './ScaleChoices';
 import { GenomeInteraction } from './getRemoteData/GenomeInteraction';
@@ -133,11 +133,28 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     const newCanvasRef = createRef();
 
     let placedInteraction = placeInteractions(result);
-    let coordResult = placedInteraction.map((item, index) =>
+
+    let polyCoord = placedInteraction.map((item, index) =>
       renderRect(item, index)
     );
+    let tmpObj = {};
+    tmpObj['placedInteraction'] = placedInteraction;
+    tmpObj['polyCoord'] = polyCoord;
 
-    setRightTrack([...rightTrackGenes, coordResult]);
+    // // 500 is the y height of the hictrack
+    // let polyCoord: Array<any> = [];
+    // for (let i = 0; i < windowWidth * 2; i++) {
+    //   polyCoord.push(new Array<any>());
+    //   for (let j = 0; j < 500; j++) {
+    //     polyCoord[i].push(new Array<any>());
+    //   }
+    // }
+    // console.log(polyCoord);
+    // for (let i = 0; i < polyCoord.length; i++) {
+    //   let curPoly = polyCoord[i];
+    //   console.log(curPoly);
+    // }
+    setRightTrack([...rightTrackGenes, tmpObj]);
 
     if (trackData!.initial) {
       const newCanvasRevRef = createRef();
@@ -438,7 +455,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
-      drawCanvas(rightTrackGenes[rightTrackGenes.length - 1]);
+      drawCanvas(rightTrackGenes[rightTrackGenes.length - 1].polyCoord);
     }
   }, [rightTrackGenes]);
 
@@ -451,18 +468,51 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }, [trackData]);
 
   return (
-    <div>
+    <div
+      style={{
+        height: '1000px',
+        position: 'relative',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          position: 'absolute',
+          opacity: 0.5,
+
+          zIndex: 3,
+        }}
+      >
+        {rightTrackGenes.map((item, index) => (
+          <TestToolTipHic
+            key={index}
+            data={rightTrackGenes[index]}
+            windowWidth={windowWidth}
+            trackIdx={index}
+          />
+        ))}
+      </div>
       {side === 'right' ? (
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {canvasRefR.map((item, index) => (
-            <canvas
-              key={index}
-              ref={item}
-              height={'500'}
-              width={`${windowWidth * 2}px`}
-              style={{}}
-            />
-          ))}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'absolute',
+            zIndex: 2,
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {canvasRefR.map((item, index) => (
+              <canvas
+                key={index}
+                ref={item}
+                height={'1000'}
+                width={`${windowWidth * 2}px`}
+                style={{}}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>

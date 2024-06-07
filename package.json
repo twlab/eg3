@@ -34,6 +34,7 @@
     "grommet": "^2.37.0",
     "hic-straw": "^2.1.1",
     "percentile": "^1.6.0",
+    "point-in-polygon": "^1.1.0",
     "react": "^18.2.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",

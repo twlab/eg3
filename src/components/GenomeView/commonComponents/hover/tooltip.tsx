@@ -22,7 +22,10 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
   const handleMouseEnter = (e) => {
     if (Object.keys(data).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
-      const dataIdx = Math.floor(e.pageX - rect.left);
+      console.log(rect);
+      let dataIdx = Math.floor(e.pageX - rect.left);
+      let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
+
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
       if (dataIdx < windowWidth * 2) {
         setPosition({
