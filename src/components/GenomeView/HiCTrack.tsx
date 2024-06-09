@@ -38,7 +38,7 @@ let defaultHic = {
   scoreMax: 10,
   scalePercentile: 95,
   scoreMin: 0,
-  height: 500,
+  height: 1000,
   lineWidth: 2,
   greedyTooltip: false,
   fetchViewWindowOnly: false,
@@ -131,7 +131,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     //SORT our interval data into levels to be place on the track
 
     const newCanvasRef = createRef();
-
+    console.log(result);
     let placedInteraction = placeInteractions(result);
 
     let polyCoord = placedInteraction.map((item, index) =>
@@ -204,6 +204,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     if (!score) {
       return null;
     }
+
     const { xSpan1, xSpan2 } = placedInteraction;
     if (xSpan1.end < start && xSpan2.start > end) {
       return null;
@@ -237,14 +238,12 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       [topX - halfSpan1 + halfSpan2, bottomY], // Bottom = left + halfSpan2
       [topX + halfSpan2, rightY], // Right
     ];
+
     const key =
       '' + xSpan1.start + xSpan1.end + xSpan2.start + xSpan2.end + index;
     // only push the points in screen
-    if (
-      topX + halfSpan2 > start &&
-      topX - halfSpan1 < end &&
-      topY < defaultHic.height
-    ) {
+    if (topX + halfSpan2 > start && topX - halfSpan1 < end) {
+      console.log('ASDADSADASDSD');
       hmData.push({
         points,
         interaction: placedInteraction.interaction,
@@ -252,6 +251,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
         xSpan2,
       });
     }
+
     let currRes = {
       key: key,
       points: points, // React can convert the array to a string
@@ -472,6 +472,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       style={{
         height: '1000px',
         position: 'relative',
+        display: 'flex',
       }}
     >
       <div
@@ -502,7 +503,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
             zIndex: 2,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <div style={{ display: 'flex' }}>
             {canvasRefR.map((item, index) => (
               <canvas
                 key={index}

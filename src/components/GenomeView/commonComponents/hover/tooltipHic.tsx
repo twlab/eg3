@@ -13,7 +13,6 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   windowWidth,
   trackIdx,
 }) {
-  console.log(data);
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [toolTip, setToolTip] = useState({
@@ -45,8 +44,8 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
         const curPlacedInteraction = findPolygon(dataIdxX, dataIdxY);
         if (curPlacedInteraction) {
           const { xSpan1, xSpan2, interaction } = curPlacedInteraction;
-          const left = xSpan1.start + legendWidth;
-          const right = xSpan2.start + legendWidth;
+          const left = xSpan1.start;
+          const right = xSpan2.start;
           const leftWidth = Math.max(xSpan1.end - xSpan1.start, 1);
           const rightWidth = Math.max(xSpan2.end - xSpan2.start, 1);
 
@@ -77,11 +76,9 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
                   left: right,
                   width: rightWidth,
                   backgroundColor: 'green',
-                  height: 500,
+                  height: 1000,
                 }}
-              >
-                RIGHTHSHTSTS
-              </div>
+              ></div>
             ),
             beamLeft: (
               <div
@@ -90,11 +87,9 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
                   backgroundColor: 'red',
                   left: left,
                   width: leftWidth,
-                  height: 500,
+                  height: 1000,
                 }}
-              >
-                LEFLETFELTELF
-              </div>
+              ></div>
             ),
           });
           setIsVisible(true);
@@ -125,19 +120,30 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   return (
     //Need to have two separate div for hovering area and tooltip or else when tooltip is being displayed based on track actual x toolTip it will also move the hovering area when using
     // absolute display and left in css styling
+    // using opacity will block mouse event because element is on top of hoverzone which will not register mouse event
+    <div
+      style={{
+        width: windowWidth * 2,
+        height: 1000,
+      }}
+    >
+      {isVisible ? (
+        <div
+          style={{
+            display: 'flex',
 
-    <div>
-      <div
-        key={`tooltipHic-${trackIdx}`} // Use a unique key
-        ref={targetRef}
-        style={{
-          width: windowWidth * 2,
-          height: 1000,
-        }}
-      >
-        {toolTip.beamRight}
-        {toolTip.beamLeft}
-      </div>
+            position: 'absolute',
+            width: windowWidth * 2,
+            height: 1000,
+          }}
+        >
+          {toolTip.beamRight}
+
+          {toolTip.beamLeft}
+        </div>
+      ) : (
+        ' '
+      )}
 
       <div
         style={{
@@ -157,6 +163,15 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
         {trackIdx}
         {toolTip.toolTip}
       </div>
+      <div
+        key={`tooltipHic-${trackIdx}`} // Use a unique key
+        ref={targetRef}
+        style={{
+          position: 'absolute',
+          width: windowWidth * 2,
+          height: 1000,
+        }}
+      ></div>
     </div>
   );
 });

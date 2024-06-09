@@ -178,10 +178,13 @@ function GetHicData(straw, base, options, start, end) {
     // let currentBinSize = binSize;
     // const promises: Array<any> = [];
     let normalization = NormalizationMode.NONE;
-
+    // NEED TO BE INCLUSIVE TO INTERACTIONS THAT DONT SHOW UP WHEN THEIR START ISNT IN RANGE OF REGION
+    // SO WE NEED TO MAKE START 0 TO MAKE SURE WE GET EVERY INTERACTION
+    // BIN SIDE IS THE OVERALL SIZE OF THE INTERACTION. WHEN ITS 10000 WE ARE TRYING TO RQUERY EVERY BEAM WITH A DISTANCE OF 10000 IN THE CHROMOSOME
+    // to be inclusive of bins to the left size of track we need to subtract start by binsize + binsize/2
     const dataForEachSegment = await getInteractionsBetweenLoci(
-      { start: start, end: end, chr: 'chr7' },
-      { start: start, end: end, chr: 'chr7' },
+      { start: start - 20000, end: end, chr: 'chr7' },
+      { start: start - 20000, end: end, chr: 'chr7' },
       10000,
       options.normalization
     );

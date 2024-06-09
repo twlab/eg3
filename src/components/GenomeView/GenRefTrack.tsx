@@ -565,7 +565,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 key={index}
                 width={`${windowWidth * 2}px`}
                 height={'250'}
-                style={{ display: 'inline-block' }}
                 overflow="visible"
               >
                 <line
