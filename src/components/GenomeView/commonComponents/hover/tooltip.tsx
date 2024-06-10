@@ -22,7 +22,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
   const handleMouseEnter = (e) => {
     if (Object.keys(data).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
-      console.log(rect);
+
       let dataIdx = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 

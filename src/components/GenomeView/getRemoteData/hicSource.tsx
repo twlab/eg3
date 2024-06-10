@@ -183,8 +183,8 @@ function GetHicData(straw, base, options, start, end) {
     // BIN SIDE IS THE OVERALL SIZE OF THE INTERACTION. WHEN ITS 10000 WE ARE TRYING TO RQUERY EVERY BEAM WITH A DISTANCE OF 10000 IN THE CHROMOSOME
     // to be inclusive of bins to the left size of track we need to subtract start by binsize + binsize/2
     const dataForEachSegment = await getInteractionsBetweenLoci(
-      { start: start - 20000, end: end, chr: 'chr7' },
-      { start: start - 20000, end: end, chr: 'chr7' },
+      { start: start - 20000, end: end + 20000, chr: 'chr7' },
+      { start: start - 20000, end: end + 20000, chr: 'chr7' },
       10000,
       options.normalization
     );

@@ -23,7 +23,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
     beamRight: <></>,
     beamLeft: <></>,
   });
-
+  console.log('1', data);
   function findPolygon(x: number, y: number): any {
     for (let i = 0; i < data.polyCoord.length; i++) {
       if (pointInPolygon([x, y], data.polyCoord[i].points)) {
@@ -41,9 +41,11 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
       if (dataIdxX < windowWidth * 2 && dataIdxY < 1000) {
+        console.log('2', data);
         const curPlacedInteraction = findPolygon(dataIdxX, dataIdxY);
         if (curPlacedInteraction) {
           const { xSpan1, xSpan2, interaction } = curPlacedInteraction;
+          console.log();
           const left = xSpan1.start;
           const right = xSpan2.start;
           const leftWidth = Math.max(xSpan1.end - xSpan1.start, 1);
@@ -121,36 +123,25 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
     //Need to have two separate div for hovering area and tooltip or else when tooltip is being displayed based on track actual x toolTip it will also move the hovering area when using
     // absolute display and left in css styling
     // using opacity will block mouse event because element is on top of hoverzone which will not register mouse event
+
     <div
+      key={`tooltipHic-${trackIdx}`} // Use a unique key
+      ref={targetRef}
       style={{
+        position: 'relative',
         width: windowWidth * 2,
         height: 1000,
       }}
     >
-      {isVisible ? (
-        <div
-          style={{
-            display: 'flex',
+      {toolTip.beamRight}
 
-            position: 'absolute',
-            width: windowWidth * 2,
-            height: 1000,
-          }}
-        >
-          {toolTip.beamRight}
-
-          {toolTip.beamLeft}
-        </div>
-      ) : (
-        ' '
-      )}
+      {toolTip.beamLeft}
 
       <div
         style={{
           opacity: isVisible ? 1 : 0,
           display: 'flex',
 
-          left: -toolTip.left + windowWidth / 3 + trackIdx * windowWidth * 2,
           position: 'absolute',
           backgroundColor: '#333',
           color: '#fff',
@@ -163,15 +154,6 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
         {trackIdx}
         {toolTip.toolTip}
       </div>
-      <div
-        key={`tooltipHic-${trackIdx}`} // Use a unique key
-        ref={targetRef}
-        style={{
-          position: 'absolute',
-          width: windowWidth * 2,
-          height: 1000,
-        }}
-      ></div>
     </div>
   );
 });

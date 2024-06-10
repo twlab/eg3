@@ -393,6 +393,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (side === 'left' && leftTrackGenes.length > 0) {
+      console.log(leftTrackGenes);
       leftTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefL[index].current) {
           drawCanvas(
@@ -442,81 +443,68 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
-    <div
-      style={{
-        height: '1000px',
-        position: 'relative',
-        display: 'flex',
-      }}
-    >
+    <div>
       {side === 'right' ? (
-        <>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              position: 'absolute',
-              opacity: 0.5,
-
-              zIndex: 3,
-            }}
-          >
-            {rightTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={index}
-                data={rightTrackGenes[index]}
-                windowWidth={windowWidth}
-                trackIdx={index}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex' }}>
-            {canvasRefR.map((item, index) => (
-              <canvas
-                key={index}
-                ref={item}
-                height={'1000'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-            ))}
-          </div>
-        </>
+        <div
+          key={'hicRight'}
+          style={{
+            opacity: 0.5,
+            display: 'flex',
+            position: 'absolute',
+          }}
+        >
+          {rightTrackGenes.map((item, index) => (
+            <TestToolTipHic
+              key={index}
+              data={rightTrackGenes[index]}
+              windowWidth={windowWidth}
+              trackIdx={index}
+            />
+          ))}
+        </div>
       ) : (
-        <>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              position: 'absolute',
-              opacity: 0.5,
-
-              zIndex: 5,
-            }}
-          >
-            {leftTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={leftTrackGenes.length - 1 - index}
-                data={leftTrackGenes[leftTrackGenes.length - 1 - index]}
-                windowWidth={windowWidth}
-                trackIdx={leftTrackGenes.length - 1 - index}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex' }}>
-            {canvasRefL.map((item, index) => (
-              <canvas
-                key={canvasRefL.length - index - 1}
-                ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={'1000'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-            ))}
-          </div>
-        </>
+        <div
+          key={'hicLeft'}
+          style={{
+            opacity: 0.5,
+            display: 'flex',
+            position: 'absolute',
+          }}
+        >
+          {leftTrackGenes.map((item, index) => (
+            <TestToolTipHic
+              key={leftTrackGenes.length - index - 1}
+              data={leftTrackGenes[leftTrackGenes.length - index - 1]}
+              windowWidth={windowWidth}
+              trackIdx={leftTrackGenes.length - index - 1}
+            />
+          ))}
+        </div>
+      )}
+      {side === 'right' ? (
+        <div style={{ display: 'flex' }}>
+          {canvasRefR.map((item, index) => (
+            <canvas
+              key={index}
+              ref={item}
+              height={'1000'}
+              width={`${windowWidth * 2}px`}
+              style={{}}
+            />
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'flex' }}>
+          {canvasRefL.map((item, index) => (
+            <canvas
+              key={canvasRefL.length - index - 1}
+              ref={canvasRefL[canvasRefL.length - index - 1]}
+              height={'1000'}
+              width={`${windowWidth * 2}px`}
+              style={{}}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
