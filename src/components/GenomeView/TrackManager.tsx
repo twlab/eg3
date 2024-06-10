@@ -127,21 +127,23 @@ function TrackManager(props) {
     }
 
     const deltaX = lastX.current - e.pageX;
+    const tmpDragX = dragX.current - deltaX;
+
     if (
-      // (isLoading && deltaX > 0 && side === 'right') ||
-      // (isLoading && deltaX < 0 && side === 'left')
-      isLoading
+      (isLoading &&
+        deltaX > 0 &&
+        side === 'right' &&
+        -tmpDragX > 2 * (rightSectionSize.length - 3) * windowWidth) ||
+      (isLoading && deltaX < 0 && side === 'left')
     ) {
       return;
     }
-
     lastX.current = e.pageX;
 
     dragX.current -= deltaX;
-
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 = * 2
-    cancelAnimationFrame(frameID.current);
+
     frameID.current = requestAnimationFrame(() => {
       block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
     });
@@ -233,6 +235,7 @@ function TrackManager(props) {
         t.push('');
         return t;
       });
+
       fetchGenomeData2();
     }
   }
@@ -349,7 +352,7 @@ function TrackManager(props) {
             Number(sectionEnd)
           ),
           GetHicData(
-            genome.defaultTracks[6].straw,
+            genome.defaultTracks[5].straw,
             0,
             defaultHic,
             Number(sectionStart),
@@ -416,6 +419,7 @@ function TrackManager(props) {
       maxBp.current = maxBp.current + bpRegionSize;
     }
     setIsLoading(false);
+    cancelAnimationFrame(frameID.current);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -492,7 +496,7 @@ function TrackManager(props) {
     let tmpDynseq: Array<any> = [];
     let tmpResult: Array<any> = [];
     let tmpBed: Array<any> = [];
-
+    let tmpHic: Array<any> = [];
     for (let i = 0; i < tmpRegion.length; i++) {
       let sectionRegion = tmpRegion[i];
       const [curChrName, bpCoord] = sectionRegion.split(':');
@@ -508,6 +512,7 @@ function TrackManager(props) {
           bigWigRespond,
           dynSeqRespond,
           methylcRespond,
+          hicRespond,
         ] = await Promise.all([
           fetch(
             `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
@@ -534,6 +539,13 @@ function TrackManager(props) {
           GetTabixData(
             'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
             curChrName,
+            Number(sectionStart),
+            Number(sectionEnd)
+          ),
+          GetHicData(
+            genome.defaultTracks[5].straw,
+            0,
+            defaultHic,
             Number(sectionStart),
             Number(sectionEnd)
           ),
@@ -588,6 +600,7 @@ function TrackManager(props) {
         tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
+        tmpHic = [...tmpHic, ...hicRespond];
       } catch {}
     }
 
@@ -600,6 +613,7 @@ function TrackManager(props) {
     tempObj['bigWigResult'] = bigWigResult;
     tempObj['dynseqResult'] = dynSeqResult;
     tempObj['methylcResult'] = tmpMethylc;
+    tempObj['hicResult'] = tmpHic;
     tempObj['side'] = 'left';
 
     tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
@@ -610,6 +624,7 @@ function TrackManager(props) {
       minBp.current = minBp.current - bpRegionSize;
     }
     setIsLoading(false);
+    cancelAnimationFrame(frameID.current);
   }
 
   useEffect(() => {

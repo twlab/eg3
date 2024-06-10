@@ -372,83 +372,106 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         position: 'relative',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          position: 'absolute',
-          opacity: 0.5,
-
-          zIndex: 3,
-        }}
-      >
-        {rightTrackGenes.map((item, index) => (
-          <TestToolTip
-            key={index}
-            data={rightTrackGenes[index]}
-            windowWidth={windowWidth}
-            trackIdx={index}
-          />
-        ))}
-      </div>
       {side === 'right' ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'absolute',
-            zIndex: 2,
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {canvasRefR.map((item, index) => (
-              <canvas
-                key={index}
-                ref={item}
-                height={'40'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-            ))}
-          </div>
+        <>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              position: 'absolute',
+              opacity: 0.5,
 
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {canvasRefR2.map((item, index) => (
-              <canvas
-                key={index + 32}
-                ref={item}
-                height={'40'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
+              zIndex: 3,
+            }}
+          >
+            {rightTrackGenes.map((item, index) => (
+              <TestToolTip
+                key={index}
+                data={rightTrackGenes[index]}
+                windowWidth={windowWidth}
+                trackIdx={index}
               />
             ))}
           </div>
-        </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+
+              zIndex: 2,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              {canvasRefR.map((item, index) => (
+                <canvas
+                  key={index}
+                  ref={item}
+                  height={'40'}
+                  width={`${windowWidth * 2}px`}
+                  style={{}}
+                />
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              {canvasRefR2.map((item, index) => (
+                <canvas
+                  key={index + 32}
+                  ref={item}
+                  height={'40'}
+                  width={`${windowWidth * 2}px`}
+                  style={{}}
+                />
+              ))}
+            </div>
+          </div>
+        </>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {canvasRefL.map((item, index) => (
-              <canvas
-                key={canvasRefL.length - index - 1}
-                ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={'40'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
+        <>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              position: 'absolute',
+              opacity: 0.5,
+
+              zIndex: 3,
+            }}
+          >
+            {leftTrackGenes.map((item, index) => (
+              <TestToolTip
+                key={leftTrackGenes.length - 1 - index}
+                data={leftTrackGenes[leftTrackGenes.length - 1 - index]}
+                windowWidth={windowWidth}
+                trackIdx={leftTrackGenes.length - 1 - index}
               />
             ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {canvasRefL2.map((item, index) => (
-              <canvas
-                key={canvasRefL2.length - index - 1 + 3343434}
-                ref={canvasRefL2[canvasRefL2.length - index - 1]}
-                height={'40'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              {canvasRefL.map((item, index) => (
+                <canvas
+                  key={canvasRefL.length - index - 1}
+                  ref={canvasRefL[canvasRefL.length - index - 1]}
+                  height={'40'}
+                  width={`${windowWidth * 2}px`}
+                  style={{}}
+                />
+              ))}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              {canvasRefL2.map((item, index) => (
+                <canvas
+                  key={canvasRefL2.length - index - 1 + 3343434}
+                  ref={canvasRefL2[canvasRefL2.length - index - 1]}
+                  height={'40'}
+                  width={`${windowWidth * 2}px`}
+                  style={{}}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

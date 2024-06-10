@@ -128,10 +128,8 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       }
     }
 
-    //SORT our interval data into levels to be place on the track
-
     const newCanvasRef = createRef();
-    console.log(result);
+
     let placedInteraction = placeInteractions(result);
 
     let polyCoord = placedInteraction.map((item, index) =>
@@ -141,26 +139,14 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     tmpObj['placedInteraction'] = placedInteraction;
     tmpObj['polyCoord'] = polyCoord;
 
-    // // 500 is the y height of the hictrack
-    // let polyCoord: Array<any> = [];
-    // for (let i = 0; i < windowWidth * 2; i++) {
-    //   polyCoord.push(new Array<any>());
-    //   for (let j = 0; j < 500; j++) {
-    //     polyCoord[i].push(new Array<any>());
-    //   }
-    // }
-    // console.log(polyCoord);
-    // for (let i = 0; i < polyCoord.length; i++) {
-    //   let curPoly = polyCoord[i];
-    //   console.log(curPoly);
-    // }
     setRightTrack([...rightTrackGenes, tmpObj]);
 
     if (trackData!.initial) {
-      const newCanvasRevRef = createRef();
+      const newCanvasRefL = createRef();
       prevOverflowStrand2.current = { ...overflowStrand2.current };
       overflowStrand2.current = {};
-      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
+      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRefL]);
+      setLeftTrack([...leftTrackGenes, tmpObj]);
     }
 
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
@@ -243,7 +229,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       '' + xSpan1.start + xSpan1.end + xSpan2.start + xSpan2.end + index;
     // only push the points in screen
     if (topX + halfSpan2 > start && topX - halfSpan1 < end) {
-      console.log('ASDADSADASDSD');
       hmData.push({
         points,
         interaction: placedInteraction.interaction,
@@ -272,15 +257,14 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result !== undefined && result.length > 0) {
-      result[0].sort((a, b) => {
+    if (result) {
+      // let checking for interval overlapping and determining what level each strand should be on
+      result.sort((a, b) => {
         return b.end - a.end;
       });
-      result = result[0];
-      var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
-      for (let i = resultIdx; i < result.length; i++) {
+      for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
         if (curStrand.start < start) {
           const strandId = curStrand.start + curStrand.end;
@@ -298,35 +282,21 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     }
 
     const newCanvasRef = createRef();
-    const newCanvasRef2 = createRef();
 
-    worker = new Worker(worker_script);
+    let placedInteraction = placeInteractions(result);
 
-    worker.postMessage({
-      trackGene: result,
-      windowWidth: windowWidth,
-      bpToPx: bpToPx!,
-      bpRegionSize: bpRegionSize!,
-      startBpRegion: start,
-    });
+    let polyCoord = placedInteraction.map((item, index) =>
+      renderRect(item, index)
+    );
+    let tmpObj = {};
+    tmpObj['placedInteraction'] = placedInteraction;
+    tmpObj['polyCoord'] = polyCoord;
 
-    worker.onmessage = (event) => {
-      let converted = event.data;
-      let scales = computeScales(converted);
-      let length = converted.length;
+    setLeftTrack([...leftTrackGenes, tmpObj]);
 
-      drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
-      setLeftTrack([
-        ...leftTrackGenes,
-        { canvasData: converted, scaleData: scales },
-      ]);
-      worker.terminate();
-    };
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-    setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
 
     prevOverflowStrand2.current = { ...overflowStrand2.current };
-
     overflowStrand2.current = {};
   }
 
@@ -401,9 +371,9 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     return filteredData;
   }
 
-  function drawCanvas(polyRegionData) {
-    if (canvasRefR[canvasRefR.length - 1].current) {
-      let context = canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+  function drawCanvas(polyRegionData, canvasRef) {
+    if (canvasRef) {
+      let context = canvasRef.getContext('2d');
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
       for (let i = 0; i < polyRegionData.length; i++) {
         const points = polyRegionData[i].points;
@@ -421,43 +391,46 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     }
   }
 
-  // useEffect(() => {
-  //   if (side === 'left') {
-  //     leftTrackGenes.forEach((canvasRef, index) => {
-  //       if (canvasRefL[index].current && canvasRefL2[index].current) {
-  //         let length = leftTrackGenes[index].canvasData.length;
-  //         drawCanvas(
-  //           0,
-  //           length,
-  //           canvasRefL[index],
-  //           leftTrackGenes[index].canvasData,
-  //           leftTrackGenes[index].scaleData,
-  //           canvasRefL2[index]
-  //         );
-  //       }
-  //     });
-  //   } else if (side === 'right') {
-  //     rightTrackGenes.forEach((canvasRef, index) => {
-  //       if (canvasRefR[index].current && canvasRefR2[index].current) {
-  //         let length = rightTrackGenes[index].canvasData.length;
-  //         drawCanvas(
-  //           0,
-  //           length,
-  //           canvasRefR[index],
-  //           rightTrackGenes[index].canvasData,
-  //           rightTrackGenes[index].scaleData,
-  //           canvasRefR2[index]
-  //         );
-  //       }
-  //     });
-  //   }
-  // }, [side]);
+  useEffect(() => {
+    if (side === 'left' && leftTrackGenes.length > 0) {
+      leftTrackGenes.forEach((canvasRef, index) => {
+        if (canvasRefL[index].current) {
+          drawCanvas(
+            leftTrackGenes[index].polyCoord,
+            canvasRefL[index].current
+          );
+        }
+      });
+    } else if (side === 'right' && rightTrackGenes.length > 0) {
+      rightTrackGenes.forEach((canvasRef, index) => {
+        if (canvasRefR[index].current) {
+          drawCanvas(
+            rightTrackGenes[index].polyCoord,
+            canvasRefR[index].current
+          );
+        }
+      });
+    }
+  }, [side]);
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
-      drawCanvas(rightTrackGenes[rightTrackGenes.length - 1].polyCoord);
+      drawCanvas(
+        rightTrackGenes[rightTrackGenes.length - 1].polyCoord,
+        canvasRefR[canvasRefR.length - 1].current
+      );
     }
   }, [rightTrackGenes]);
+
+  useEffect(() => {
+    if (leftTrackGenes.length > 0) {
+      console.log(leftTrackGenes);
+      drawCanvas(
+        leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
+        canvasRefL[canvasRefL.length - 1].current
+      );
+    }
+  }, [leftTrackGenes]);
 
   useEffect(() => {
     if (trackData!.side === 'right') {
@@ -466,7 +439,8 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       fetchGenomeData2();
     }
   }, [trackData]);
-
+  // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
+  // absolute element will affect each other position so you need those element to all have absolute
   return (
     <div
       style={{
@@ -475,34 +449,28 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
         display: 'flex',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          position: 'absolute',
-          opacity: 0.5,
-
-          zIndex: 3,
-        }}
-      >
-        {rightTrackGenes.map((item, index) => (
-          <TestToolTipHic
-            key={index}
-            data={rightTrackGenes[index]}
-            windowWidth={windowWidth}
-            trackIdx={index}
-          />
-        ))}
-      </div>
       {side === 'right' ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'absolute',
-            zIndex: 2,
-          }}
-        >
+        <>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              position: 'absolute',
+              opacity: 0.5,
+
+              zIndex: 3,
+            }}
+          >
+            {rightTrackGenes.map((item, index) => (
+              <TestToolTipHic
+                key={index}
+                data={rightTrackGenes[index]}
+                windowWidth={windowWidth}
+                trackIdx={index}
+              />
+            ))}
+          </div>
+
           <div style={{ display: 'flex' }}>
             {canvasRefR.map((item, index) => (
               <canvas
@@ -514,32 +482,41 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
               />
             ))}
           </div>
-        </div>
+        </>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              position: 'absolute',
+              opacity: 0.5,
+
+              zIndex: 5,
+            }}
+          >
+            {leftTrackGenes.map((item, index) => (
+              <TestToolTipHic
+                key={leftTrackGenes.length - 1 - index}
+                data={leftTrackGenes[leftTrackGenes.length - 1 - index]}
+                windowWidth={windowWidth}
+                trackIdx={leftTrackGenes.length - 1 - index}
+              />
+            ))}
+          </div>
+
+          <div style={{ display: 'flex' }}>
             {canvasRefL.map((item, index) => (
               <canvas
                 key={canvasRefL.length - index - 1}
                 ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={'40'}
+                height={'1000'}
                 width={`${windowWidth * 2}px`}
                 style={{}}
               />
             ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {canvasRefL2.map((item, index) => (
-              <canvas
-                key={canvasRefL2.length - index - 1 + 3343434}
-                ref={canvasRefL2[canvasRefL2.length - index - 1]}
-                height={'40'}
-                width={`${windowWidth * 2}px`}
-                style={{}}
-              />
-            ))}
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

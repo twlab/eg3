@@ -95,7 +95,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
 
       <div
         style={{
-          opacity: isVisible ? 1 : 0,
+          opacity: 1,
           display: 'flex',
 
           left: -position.left + windowWidth / 3 + trackIdx * windowWidth * 2,
