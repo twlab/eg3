@@ -23,7 +23,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
     beamRight: <></>,
     beamLeft: <></>,
   });
-  console.log('1', data);
+
   function findPolygon(x: number, y: number): any {
     for (let i = 0; i < data.polyCoord.length; i++) {
       if (pointInPolygon([x, y], data.polyCoord[i].points)) {
@@ -41,11 +41,10 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
       if (dataIdxX < windowWidth * 2 && dataIdxY < 1000) {
-        console.log('2', data);
         const curPlacedInteraction = findPolygon(dataIdxX, dataIdxY);
         if (curPlacedInteraction) {
           const { xSpan1, xSpan2, interaction } = curPlacedInteraction;
-          console.log();
+
           const left = xSpan1.start;
           const right = xSpan2.start;
           const leftWidth = Math.max(xSpan1.end - xSpan1.start, 1);
