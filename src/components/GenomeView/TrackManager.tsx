@@ -13,6 +13,7 @@ import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
 import HiCTrack from './HiCTrack';
 import CircularProgress from '@mui/material/CircularProgress';
+import { drag } from 'd3';
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 
@@ -92,10 +93,7 @@ function TrackManager(props) {
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [isDragging, setDragging] = useState(false);
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
-    '',
-    '',
-  ]);
+  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
   let chrData: Array<any> = [];
   let chrLength: Array<any> = [];
   for (const chromosome of genome.chrOrder) {
@@ -108,7 +106,7 @@ function TrackManager(props) {
 
   const chrIndexRight = useRef(initialChrIdx);
   const chrIndexLeft = useRef(initialChrIdx);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(['', '']);
+  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
   const [side, setSide] = useState('right');
   const [isLoading, setIsLoading] = useState(true);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
@@ -119,6 +117,13 @@ function TrackManager(props) {
   let trackComponent: Array<any> = [];
   for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
+  }
+  function sumArray(numbers) {
+    let total = 0;
+    for (let i = 0; i < numbers.length; i++) {
+      total += numbers[i];
+    }
+    return total;
   }
 
   function handleMove(e) {
@@ -143,7 +148,7 @@ function TrackManager(props) {
     dragX.current -= deltaX;
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 = * 2
-
+    cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
       block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
     });
@@ -206,17 +211,18 @@ function TrackManager(props) {
     } else if (dragX.current <= 0 && side === 'left') {
       setSide('right');
     }
-
+    console.log(dragX.current, sumArray(leftSectionSize));
     if (
       // windowWidth needs to be changed to match the speed of the dragx else it has a differenace translate
       // for example if we set speed to 0.5 then need to mutiply windowith by 2
-      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
+      -dragX.current >= sumArray(rightSectionSize) &&
       dragX.current < 0
     ) {
       setIsLoading(true);
+      console.log('trigger right');
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push('');
+        t.push(windowWidth * 2);
         return t;
       });
 
@@ -224,15 +230,18 @@ function TrackManager(props) {
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
-      (dragX.current + windowWidth) / windowWidth >=
-        2 * (leftSectionSize.length - 2) &&
+      dragX.current >= sumArray(leftSectionSize) &&
       dragX.current > 0
     ) {
       setIsLoading(true);
       console.log('trigger left');
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push('');
+        let size = windowWidth * 2;
+        if (leftSectionSize.length === 0) {
+          size = windowWidth;
+        }
+        t.push(size);
         return t;
       });
 
@@ -419,7 +428,6 @@ function TrackManager(props) {
       maxBp.current = maxBp.current + bpRegionSize;
     }
     setIsLoading(false);
-    cancelAnimationFrame(frameID.current);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -624,7 +632,6 @@ function TrackManager(props) {
       minBp.current = minBp.current - bpRegionSize;
     }
     setIsLoading(false);
-    cancelAnimationFrame(frameID.current);
   }
 
   useEffect(() => {
@@ -661,7 +668,7 @@ function TrackManager(props) {
       <button onClick={handleClick}>add bed</button>
 
       <div>{bpX}</div>
-
+      <div>{dragX.current}</div>
       {isLoading ? (
         <CircularProgress
           variant="indeterminate"
