@@ -27,7 +27,7 @@ function GenomeHub(props: any) {
   const [genomeList, setGenomeList] = useState<Array<any>>(
     props.selectedGenome
   );
-  const [TrackManagerView, setTrackManagerView] = useState(<></>);
+  const [TrackManagerView, setTrackManagerView] = useState<any>();
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
@@ -40,7 +40,7 @@ function GenomeHub(props: any) {
 
     sessionStorage.setItem('myArray', serializedArray);
     setGenomeList([...newList]);
-    setTrackManagerView(<></>);
+    setTrackManagerView('');
   }
   function startBp(region: string) {
     let newList = { ...genomeList[0] };
@@ -57,7 +57,7 @@ function GenomeHub(props: any) {
     const serializedArray = JSON.stringify(chrArr);
 
     sessionStorage.setItem('chrOrder', serializedArray);
-    setTrackManagerView(<></>);
+    setTrackManagerView('');
   }
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {

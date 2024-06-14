@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Homepage from './Homepage-Components/Homepage';
+import Homepage from './Home/Homepage';
 import { BrowserRouter, Link, Switch, Route } from 'react-router-dom';
 import GenomeView from './GenomeView/GenomeRoot';
 import { treeOfLifeObj } from '../localdata/treeoflife';

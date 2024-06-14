@@ -2,7 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
-import worker_script from '../../Worker/dynseqWorker';
+import worker_script from '../../worker/dynseqWorker';
 let worker: Worker;
 interface BedTrackProps {
   bpRegionSize?: number;

@@ -3,10 +3,14 @@ import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 // import worker_script from '../../Worker/worker';
 import TestToolTipHic from './commonComponents/hover/tooltipHic';
-import { InteractionDisplayMode } from './DisplayModes';
-import { ScaleChoices } from './ScaleChoices';
+import { InteractionDisplayMode } from './commonComponents/user-options/DisplayModes';
+
 import { GenomeInteraction } from './getRemoteData/GenomeInteraction';
 import percentile from 'percentile';
+export enum ScaleChoices {
+  AUTO = 'auto',
+  FIXED = 'fixed',
+}
 // SCrolling to 80% view on current epi browser matches default in eg3
 // let worker: Worker;
 let hmData: Array<any> = [];

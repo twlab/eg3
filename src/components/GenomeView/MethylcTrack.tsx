@@ -1,7 +1,7 @@
 import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import worker_script from '../../Worker/worker';
+import worker_script from '../../worker/worker';
 import TestToolTip from './commonComponents/hover/tooltip';
 // SCrolling to 80% view on current epi browser matches default in eg3
 let worker: Worker;

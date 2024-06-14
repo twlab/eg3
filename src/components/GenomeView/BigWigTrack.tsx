@@ -1,7 +1,7 @@
 import { scaleLinear } from 'd3-scale';
 import React, { createRef, memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import worker_script from '../../Worker/bigWigWorker';
+import worker_script from '../../worker/bigWigWorker';
 let worker: Worker;
 interface BedTrackProps {
   bpRegionSize?: number;
