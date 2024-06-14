@@ -38,7 +38,7 @@ const MIN_BINS_PER_REGION = 50;
  *
  * @author Silas Hsu
  */
-function GetHicData(straw, base, options, start, end) {
+function GetHicData(straw, options, start, end) {
   /**
    * Makes a new instance specialized in serving data from one URL
    *

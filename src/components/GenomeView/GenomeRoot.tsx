@@ -28,6 +28,8 @@ function GenomeHub(props: any) {
     props.selectedGenome
   );
   const [TrackManagerView, setTrackManagerView] = useState<any>();
+
+  // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
@@ -52,7 +54,7 @@ function GenomeHub(props: any) {
     let newList = { ...genomeList[0] };
     newList.chrOrder = chrArr;
     setItems([...chrArr]);
-    setGenomeList([newList]);
+    setGenomeList([...newList]);
 
     const serializedArray = JSON.stringify(chrArr);
 
@@ -76,23 +78,24 @@ function GenomeHub(props: any) {
         {
           name: 'bed',
           genome: newList.name,
+          url: 'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
         },
 
         {
           name: 'bigWig',
-
           genome: newList.name,
+          url: 'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
         },
 
         {
           name: 'dynseq',
-
           genome: 'hg19',
+          url: 'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
         },
         {
           name: 'methylc',
-
           genome: 'hg19',
+          url: 'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
         },
         {
           name: 'hic',
@@ -108,7 +111,7 @@ function GenomeHub(props: any) {
       sessionStorage.setItem('myArray', serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {
         setGenomeList(new Array<any>(newList));
-        setTrackManagerView(<></>);
+        setTrackManagerView('');
       }
     }
   }
@@ -140,7 +143,7 @@ function GenomeHub(props: any) {
         let testGen: any = {
           name: 'hg38',
           species: 'human',
-          defaultRegion: 'chr7:27053397-27373765',
+          defaultRegion: 'chr7:150924404-152924404',
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [
@@ -152,22 +155,24 @@ function GenomeHub(props: any) {
             {
               name: 'bed',
               genome: 'hg19',
+              url: 'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
             },
 
             {
               name: 'bigWig',
-
               genome: 'hg19',
+              url: 'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
             },
+
             {
               name: 'dynseq',
-
               genome: 'hg19',
+              url: 'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
             },
             {
               name: 'methylc',
-
               genome: 'hg19',
+              url: 'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
             },
             {
               name: 'hic',
