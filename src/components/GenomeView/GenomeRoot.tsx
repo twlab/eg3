@@ -143,7 +143,8 @@ function GenomeHub(props: any) {
         let testGen: any = {
           name: 'hg38',
           species: 'human',
-          defaultRegion: 'chr7:150924404-152924404',
+          // testing mutiple chr 'chr7:150924404-152924404'
+          defaultRegion: 'chr7:27053397-27373765',
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [

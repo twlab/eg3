@@ -699,7 +699,7 @@ function TrackManager(props) {
         whiteSpace: 'nowrap',
         //not using flex allows us to keep the position of the track
         width: '100%',
-        overflow: 'hidden',
+
         margin: 'auto',
       }}
     >
@@ -750,7 +750,7 @@ function TrackManager(props) {
             alignItems: side == 'right' ? 'start' : 'end',
           }}
         >
-          {/* {trackComponent.map((Component, index) => (
+          {trackComponent.map((Component, index) => (
             <Component
               key={index}
               bpRegionSize={bpRegionSize}
@@ -759,17 +759,11 @@ function TrackManager(props) {
               side={side}
               windowWidth={windowWidth}
             />
-          ))} */}
+          ))}
           {
             // DIDNT WORK BECAUSE THEY DIUDNT WHAT TRACK WIDTH Was}
           }
-          <GenRefTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={trackData}
-            side={side}
-            windowWidth={windowWidth}
-          />
+
           {/* <BigWigTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}

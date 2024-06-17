@@ -553,7 +553,8 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   }, [trackData]);
 
   return (
-    <div style={{ display: 'flex' }}>
+    //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
+    <div style={{ display: 'flex', overflowX: 'visible', overflowY: 'hidden' }}>
       {side === 'right'
         ? rightTrackGenes.map(
             (item, index) => (
@@ -562,7 +563,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 key={index}
                 width={`${windowWidth * 2}px`}
                 height={'250'}
-                overflow="visible"
+                style={{
+                  overflow: 'visible',
+                }}
               >
                 <line
                   x1={`${windowWidth * 2}px`}
