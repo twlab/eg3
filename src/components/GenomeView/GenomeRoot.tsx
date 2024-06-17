@@ -3,12 +3,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import TrackManager from './TrackManager';
-import Drag from './ChrOrder';
+import Drag from './commonComponents/chr-order/ChrOrder';
 import { chrType } from '../../localdata/genomename';
 import { ChromosomeData } from '../../localdata/chromosomedata';
 import { AnnotationTrackData } from '../../localdata/annotationtrackdata';
 import { PublicHubAllData } from '../../localdata/publichub';
 import { TwoBitUrlData } from '../../localdata/twobiturl';
+import HicStraw from 'hic-straw/dist/hic-straw.min.js';
 export const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
@@ -26,7 +27,9 @@ function GenomeHub(props: any) {
   const [genomeList, setGenomeList] = useState<Array<any>>(
     props.selectedGenome
   );
-  const [TrackManagerView, setTrackManagerView] = useState(<></>);
+  const [TrackManagerView, setTrackManagerView] = useState<any>();
+
+  // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
@@ -39,7 +42,7 @@ function GenomeHub(props: any) {
 
     sessionStorage.setItem('myArray', serializedArray);
     setGenomeList([...newList]);
-    setTrackManagerView(<></>);
+    setTrackManagerView('');
   }
   function startBp(region: string) {
     let newList = { ...genomeList[0] };
@@ -48,21 +51,24 @@ function GenomeHub(props: any) {
     sessionStorage.setItem('myArray', serializedArray);
   }
   function changeChrOrder(chrArr: any) {
-    console.log(genomeList);
     let newList = { ...genomeList[0] };
     newList.chrOrder = chrArr;
     setItems([...chrArr]);
-    setGenomeList([newList]);
-    console.log(newList);
+    setGenomeList([...newList]);
+
     const serializedArray = JSON.stringify(chrArr);
 
     sessionStorage.setItem('chrOrder', serializedArray);
-    setTrackManagerView(<></>);
+    setTrackManagerView('');
   }
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {
       let newList = props.selectedGenome[0];
-
+      let straw = new HicStraw({
+        url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+      });
+      let metadata = straw.getMetaData();
+      let normOptions = straw.getNormalizationOptions();
       newList.defaultTracks = [
         {
           type: 'geneAnnotation',
@@ -72,20 +78,30 @@ function GenomeHub(props: any) {
         {
           name: 'bed',
           genome: newList.name,
+          url: 'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
         },
+
         {
           name: 'bigWig',
-
           genome: newList.name,
+          url: 'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
         },
 
         {
           name: 'dynseq',
-
           genome: 'hg19',
+          url: 'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
         },
         {
           name: 'methylc',
+          genome: 'hg19',
+          url: 'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
+        },
+        {
+          name: 'hic',
+          straw: straw,
+          metadata: metadata,
+          normOptions: normOptions,
 
           genome: 'hg19',
         },
@@ -95,7 +111,7 @@ function GenomeHub(props: any) {
       sessionStorage.setItem('myArray', serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {
         setGenomeList(new Array<any>(newList));
-        setTrackManagerView(<></>);
+        setTrackManagerView('');
       }
     }
   }
@@ -119,9 +135,15 @@ function GenomeHub(props: any) {
         for (const chromosome of ChromosomeData['HG38']) {
           chrObj[chromosome.getName()] = chromosome.getLength();
         }
+        let straw = new HicStraw({
+          url: 'https://epgg-test.wustl.edu/dli/long-range-test/test.hic',
+        });
+        let metadata = straw.getMetaData();
+        let normOptions = straw.getNormalizationOptions();
         let testGen: any = {
           name: 'hg38',
           species: 'human',
+          // testing mutiple chr 'chr7:150924404-152924404'
           defaultRegion: 'chr7:27053397-27373765',
           chrOrder: items,
           chromosomes: chrObj,
@@ -134,20 +156,30 @@ function GenomeHub(props: any) {
             {
               name: 'bed',
               genome: 'hg19',
+              url: 'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
             },
 
             {
               name: 'bigWig',
-
               genome: 'hg19',
+              url: 'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
             },
+
             {
               name: 'dynseq',
-
               genome: 'hg19',
+              url: 'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
             },
             {
               name: 'methylc',
+              genome: 'hg19',
+              url: 'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
+            },
+            {
+              name: 'hic',
+              straw: straw,
+              metadata: metadata,
+              normOptions: normOptions,
 
               genome: 'hg19',
             },
@@ -175,7 +207,6 @@ function GenomeHub(props: any) {
   useEffect(() => {
     async function handler() {
       if (genomeList.length !== 0) {
-        console.log(genomeList);
         setTrackManagerView(
           <TrackManager
             currGenome={genomeList[0]}
@@ -193,6 +224,7 @@ function GenomeHub(props: any) {
       <div style={{ display: 'flex' }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div>
+
       <div>{TrackManagerView}</div>
     </>
   );

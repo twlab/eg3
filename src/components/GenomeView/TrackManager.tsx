@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import GetTabixData from './getRemoteData/tabixSource';
 import GetBigData from './getRemoteData/bigSource';
+import GetHicData from './getRemoteData/hicSource';
 const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
@@ -10,7 +11,32 @@ import BedDensityTrack from './BedDensityTrack';
 import BigWigTrack from './BigWigTrack';
 import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
+import HiCTrack from './HiCTrack';
 import CircularProgress from '@mui/material/CircularProgress';
+import { drag } from 'd3';
+
+// use class to create an instance of hic fetch and sent it to track manager in genome root
+
+let defaultHic = {
+  color: '#B8008A',
+  color2: '#006385',
+  backgroundColor: 'var(--bg-color)',
+  displayMode: 'heatmap',
+  scoreScale: 'auto',
+  scoreMax: 10,
+  scalePercentile: 95,
+  scoreMin: 0,
+  height: 500,
+  lineWidth: 2,
+  greedyTooltip: false,
+  fetchViewWindowOnly: false,
+  bothAnchorsInView: false,
+  isThereG3dTrack: false,
+  clampHeight: false,
+  binSize: 0,
+  normalization: 'NONE',
+  label: '',
+};
 const windowWidth = window.innerWidth;
 
 interface MyComponentProps {
@@ -29,11 +55,77 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   bigWig: BigWigTrack,
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
+  hic: HiCTrack,
+
   // Add more components as needed
+};
+
+//add logic to change diferernt fetch for difererrnt file types
+const trackFetchFunction: { [key: string]: any } = {
+  refGene: async function refGeneFetch(regionData: any) {
+    const genRefResponse = await fetch(
+      `${AWS_API}/${regionData.name}/genes/refGene/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
+      { method: 'GET' }
+    );
+    const data = await genRefResponse.json();
+    return data;
+  },
+  bed: function bedFetch(regionData: any) {
+    return GetTabixData(
+      regionData.url,
+      regionData.chr,
+      regionData.start,
+      regionData.end
+    );
+  },
+
+  bigWig: function bigWigFetch(regionData: any) {
+    return GetBigData(
+      regionData.url,
+      regionData.chr,
+      regionData.start,
+      regionData.end
+    );
+  },
+
+  dynseq: function dynseqFetch(regionData: any) {
+    return GetBigData(
+      regionData.url,
+      regionData.chr,
+      regionData.start,
+      regionData.end
+    );
+  },
+  methylc: function methylcFetch(regionData: any) {
+    return GetTabixData(
+      regionData.url,
+      regionData.chr,
+      regionData.start,
+      regionData.end
+    );
+  },
+  hic: function hicFetch(regionData: any) {
+    return GetHicData(
+      regionData.straw,
+      regionData.option,
+      regionData.start,
+      regionData.end
+    );
+  },
 };
 
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
+  //TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
+  // use interface key to get certain track function based on information the user clicked on.
+  // We want to sent a defaultTrack List of component of trackcomponent already from genomerooot and use it in trackmanager instead of
+  // creating the component in trackmanager/
+  //LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
+  // for ... track:
+  //if(genome.defaultTrack[i] = ref)
+  // else if (bigWig)
+  // else if (hic)
+  //getHic(genome.defaultTrack.staw,....)
 
   const genome = props.currGenome;
 
@@ -55,10 +147,7 @@ function TrackManager(props) {
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [isDragging, setDragging] = useState(false);
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
-    '',
-    '',
-  ]);
+  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
   let chrData: Array<any> = [];
   let chrLength: Array<any> = [];
   for (const chromosome of genome.chrOrder) {
@@ -71,7 +160,7 @@ function TrackManager(props) {
 
   const chrIndexRight = useRef(initialChrIdx);
   const chrIndexLeft = useRef(initialChrIdx);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>(['', '']);
+  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
   const [side, setSide] = useState('right');
   const [isLoading, setIsLoading] = useState(true);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
@@ -83,6 +172,13 @@ function TrackManager(props) {
   for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
+  function sumArray(numbers) {
+    let total = 0;
+    for (let i = 0; i < numbers.length; i++) {
+      total += numbers[i];
+    }
+    return total;
+  }
 
   function handleMove(e) {
     if (!isDragging) {
@@ -90,18 +186,20 @@ function TrackManager(props) {
     }
 
     const deltaX = lastX.current - e.pageX;
+    const tmpDragX = dragX.current - deltaX;
+
     if (
-      // (isLoading && deltaX > 0 && side === 'right') ||
-      // (isLoading && deltaX < 0 && side === 'left')
-      isLoading
+      (isLoading &&
+        deltaX > 0 &&
+        side === 'right' &&
+        -tmpDragX > 2 * (rightSectionSize.length - 3) * windowWidth) ||
+      (isLoading && deltaX < 0 && side === 'left')
     ) {
       return;
     }
-
     lastX.current = e.pageX;
 
     dragX.current -= deltaX;
-
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 = * 2
     cancelAnimationFrame(frameID.current);
@@ -167,17 +265,18 @@ function TrackManager(props) {
     } else if (dragX.current <= 0 && side === 'left') {
       setSide('right');
     }
-
+    console.log(dragX.current, sumArray(leftSectionSize));
     if (
       // windowWidth needs to be changed to match the speed of the dragx else it has a differenace translate
       // for example if we set speed to 0.5 then need to mutiply windowith by 2
-      -dragX.current / windowWidth >= 2 * (rightSectionSize.length - 2) &&
+      -dragX.current >= sumArray(rightSectionSize) &&
       dragX.current < 0
     ) {
       setIsLoading(true);
+      console.log('trigger right');
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push('');
+        t.push(windowWidth * 2);
         return t;
       });
 
@@ -185,17 +284,21 @@ function TrackManager(props) {
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
-      (dragX.current + windowWidth) / windowWidth >=
-        2 * (leftSectionSize.length - 2) &&
+      dragX.current >= sumArray(leftSectionSize) &&
       dragX.current > 0
     ) {
       setIsLoading(true);
       console.log('trigger left');
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push('');
+        let size = windowWidth * 2;
+        if (leftSectionSize.length === 0) {
+          size = windowWidth;
+        }
+        t.push(size);
         return t;
       });
+
       fetchGenomeData2();
     }
   }
@@ -203,6 +306,7 @@ function TrackManager(props) {
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     let tmpRegion: Array<any> = [];
+    let tempObj = {};
     if (maxBp.current > chrLength[chrIndexRight.current]) {
       let totalEndBp = Number(chrLength[chrIndexRight.current]);
       let startBp = maxBp.current - bpRegionSize;
@@ -221,13 +325,16 @@ function TrackManager(props) {
       );
       tmpChrIdx += 1;
       let chrEnd = 0;
-
+      console.log(maxBp.current);
       while (maxBp.current > totalEndBp) {
         let chrStart = 0;
 
         if (chrLength[tmpChrIdx] + totalEndBp < maxBp.current) {
           chrEnd = chrLength[tmpChrIdx];
         } else {
+          // maxBp.current is the end distance measured in bp moved
+          // totalEndBp is how many chromosome length maxBp is greater than
+          // subtracting the two will give us the starting point in the next chromosome in the next fetch
           chrEnd = maxBp.current - totalEndBp;
         }
 
@@ -247,7 +354,11 @@ function TrackManager(props) {
         tmpChrIdx += 1;
       }
       chrIndexRight.current = tmpChrIdx - 1;
-
+      // Location is used to property align svg and coordinates. we set the overflow coordinates to the overflow region
+      // in order to correctly place all the genes in multiple chromosomes
+      // then we set maxBp.current to the next new region we will fetch next time
+      tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
+      //maxBp.current will now be based on the new chromosome region
       maxBp.current = chrEnd + bpRegionSize;
     } else {
       tmpRegion.push(
@@ -263,14 +374,16 @@ function TrackManager(props) {
       );
     }
 
-    let tempObj = {};
     let tmpMethylc: Array<any> = [];
     let tmpResult: Array<any> = [];
     let tmpBed: Array<any> = [];
     let tmpBigWig: Array<any> = [];
     let tmpDynseq: Array<any> = [];
+    let tmpHic: Array<any> = [];
+
     for (let i = 0; i < tmpRegion.length; i++) {
       let sectionRegion = tmpRegion[i];
+
       const [curChrName, bpCoord] = sectionRegion.split(':');
       const [totalBp, sectionBp] = bpCoord.split('|');
 
@@ -278,51 +391,46 @@ function TrackManager(props) {
       const [sectionStart, sectionEnd] = sectionBp.split('-');
 
       try {
-        // Execute all requests concurrently
         const [
           userRespond,
           bedRespond,
           bigWigRespond,
           dynSeqRespond,
           methylcRespond,
-        ] = await Promise.all([
-          fetch(
-            `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
-            { method: 'GET' }
-          ),
-          GetTabixData(
-            'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-          GetBigData(
-            'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-          GetBigData(
-            'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-          GetTabixData(
-            'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-        ]);
+          hicRespond,
+        ] = await Promise.all(
+          genome.defaultTracks.map((item) => {
+            const trackName = item.name;
+            if (trackName === 'refGene') {
+              return trackFetchFunction[trackName]({
+                name: genome.name,
+                chr: curChrName,
+                start: sectionStart,
+                end: sectionEnd,
+              });
+            } else if (trackName === 'hic') {
+              return trackFetchFunction.hic({
+                straw: genome.defaultTracks[5].straw,
 
-        // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
-        let gotResult = await userRespond.json();
+                option: defaultHic,
+                start: Number(sectionStart),
+                end: Number(sectionEnd),
+              });
+            } else {
+              return trackFetchFunction[trackName]({
+                url: item.url,
+                chr: curChrName,
+                start: Number(sectionStart),
+                end: Number(sectionEnd),
+              });
+            }
+          })
+        );
 
         if (i !== 0) {
-          for (let i = 0; i < gotResult.length; i++) {
-            gotResult[i].txStart += Number(startRegion);
-            gotResult[i].txEnd += Number(startRegion);
+          for (let i = 0; i < userRespond.length; i++) {
+            userRespond[i].txStart += Number(startRegion);
+            userRespond[i].txEnd += Number(startRegion);
           }
           for (let i = 0; i < bedRespond.length; i++) {
             bedRespond[i].start += Number(startRegion);
@@ -337,26 +445,27 @@ function TrackManager(props) {
             dynSeqRespond[i].end += Number(startRegion);
           }
         }
+
         tmpMethylc = [...tmpMethylc, ...methylcRespond];
         tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
-        tmpResult = [...tmpResult, ...gotResult];
+        tmpResult = [...tmpResult, ...userRespond];
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
+        tmpHic = [...tmpHic, ...hicRespond];
       } catch {}
     }
+    if (tempObj['location'] === undefined) {
+      // if location is undefined that means view does not contain multiple chromosome
+      tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
+      maxBp.current = maxBp.current + bpRegionSize;
+    }
 
-    const bedResult = tmpBed;
-    const result = tmpResult;
-    const bigWigResult = tmpBigWig;
-    const methylcResult = tmpMethylc;
-    const dynSeqResult = tmpDynseq;
-
-    tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
-    tempObj['result'] = result;
-    tempObj['bedResult'] = bedResult;
-    tempObj['bigWigResult'] = bigWigResult;
-    tempObj['dynseqResult'] = dynSeqResult;
-    tempObj['methylcResult'] = methylcResult;
+    tempObj['result'] = tmpResult;
+    tempObj['bedResult'] = tmpBed;
+    tempObj['bigWigResult'] = tmpBigWig;
+    tempObj['dynseqResult'] = tmpDynseq;
+    tempObj['methylcResult'] = tmpMethylc;
+    tempObj['hicResult'] = tmpHic;
     tempObj['side'] = 'right';
     if (initial === 0) {
       tempObj['initial'] = 0;
@@ -365,10 +474,9 @@ function TrackManager(props) {
 
       minBp.current = minBp.current - bpRegionSize;
     }
+
     setTrackData({ ...tempObj });
-    if (maxBp.current <= chrLength[chrIndexRight.current]) {
-      maxBp.current = maxBp.current + bpRegionSize;
-    }
+
     setIsLoading(false);
   }
 
@@ -446,7 +554,7 @@ function TrackManager(props) {
     let tmpDynseq: Array<any> = [];
     let tmpResult: Array<any> = [];
     let tmpBed: Array<any> = [];
-
+    let tmpHic: Array<any> = [];
     for (let i = 0; i < tmpRegion.length; i++) {
       let sectionRegion = tmpRegion[i];
       const [curChrName, bpCoord] = sectionRegion.split(':');
@@ -462,58 +570,54 @@ function TrackManager(props) {
           bigWigRespond,
           dynSeqRespond,
           methylcRespond,
-        ] = await Promise.all([
-          fetch(
-            `${AWS_API}/${genome.name}/genes/refGene/queryRegion?chr=${curChrName}&start=${sectionStart}&end=${sectionEnd}`,
-            { method: 'GET' }
-          ),
-          GetTabixData(
-            'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-          GetBigData(
-            'https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-          GetBigData(
-            'https://target.wustl.edu/dli/tmp/deeplift.example.bw',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-          GetTabixData(
-            'https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz',
-            curChrName,
-            Number(sectionStart),
-            Number(sectionEnd)
-          ),
-        ]);
+          hicRespond,
+        ] = await Promise.all(
+          genome.defaultTracks.map((item) => {
+            const trackName = item.name;
+            if (trackName === 'refGene') {
+              return trackFetchFunction[trackName]({
+                name: genome.name,
+                chr: curChrName,
+                start: sectionStart,
+                end: sectionEnd,
+              });
+            } else if (trackName === 'hic') {
+              return trackFetchFunction.hic({
+                straw: genome.defaultTracks[5].straw,
 
-        // change future chr tracks txstart and txend and pass to the track component so new coord onlu need to udpate once
-        let gotResult = await userRespond.json();
+                option: defaultHic,
+                start: Number(sectionStart),
+                end: Number(sectionEnd),
+              });
+            } else {
+              return trackFetchFunction[trackName]({
+                url: item.url,
+                chr: curChrName,
+                start: Number(sectionStart),
+                end: Number(sectionEnd),
+              });
+            }
+          })
+        );
 
         if (i !== 0) {
-          for (let i = 0; i < gotResult.length; i++) {
-            gotResult[i].txStart = -(
+          for (let i = 0; i < userRespond.length; i++) {
+            userRespond[i].txStart = -(
               Number(startRegion) +
-              (Number(sectionEnd) - Number(gotResult[i].txStart))
+              (Number(sectionEnd) - Number(userRespond[i].txStart))
             );
-            gotResult[i].txEnd = -(
+            userRespond[i].txEnd = -(
               Number(startRegion) +
-              (Number(sectionEnd) - Number(gotResult[i].txEnd))
+              (Number(sectionEnd) - Number(userRespond[i].txEnd))
             );
           }
           for (let i = 0; i < bedRespond.length; i++) {
             bedRespond[i].start =
               Number(startRegion) +
-              (Number(sectionEnd) - Number(gotResult[i].start));
+              (Number(sectionEnd) - Number(bedRespond[i].start));
             bedRespond[i].end = -(
               Number(startRegion) +
-              (Number(sectionEnd) - Number(gotResult[i].end))
+              (Number(sectionEnd) - Number(bedRespond[i].end))
             );
           }
           for (let i = 0; i < bigWigRespond.length; i++) {
@@ -536,11 +640,13 @@ function TrackManager(props) {
             );
           }
         }
+
         tmpMethylc = [...tmpMethylc, ...methylcRespond];
-        tmpResult = [...tmpResult, ...gotResult];
+        tmpResult = [...tmpResult, ...userRespond];
         tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
+        tmpHic = [...tmpHic, ...hicRespond];
       } catch {}
     }
 
@@ -553,12 +659,12 @@ function TrackManager(props) {
     tempObj['bigWigResult'] = bigWigResult;
     tempObj['dynseqResult'] = dynSeqResult;
     tempObj['methylcResult'] = tmpMethylc;
+    tempObj['hicResult'] = tmpHic;
     tempObj['side'] = 'left';
 
     tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
     ///////-__________________________________________________________________________________________________________________________
 
-    tempObj['side'] = 'left';
     setTrackData({ ...tempObj });
     if (minBp.current >= 0) {
       minBp.current = minBp.current - bpRegionSize;
@@ -593,14 +699,14 @@ function TrackManager(props) {
         whiteSpace: 'nowrap',
         //not using flex allows us to keep the position of the track
         width: '100%',
-        overflow: 'hidden',
+
         margin: 'auto',
       }}
     >
       <button onClick={handleClick}>add bed</button>
 
       <div>{bpX}</div>
-
+      <div>{dragX.current}</div>
       {isLoading ? (
         <CircularProgress
           variant="indeterminate"
@@ -652,9 +758,12 @@ function TrackManager(props) {
               trackData={trackData}
               side={side}
               windowWidth={windowWidth}
-              trackSize={rightSectionSize}
             />
           ))}
+          {
+            // DIDNT WORK BECAUSE THEY DIUDNT WHAT TRACK WIDTH Was}
+          }
+
           {/* <BigWigTrack
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}

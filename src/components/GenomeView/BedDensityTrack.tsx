@@ -303,7 +303,6 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
                 x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
                 y2={`${yCoord}`}
                 stroke={'blue'}
-                strokeWidth="20"
               />
             </React.Fragment>
           );
@@ -416,16 +415,12 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   }, [side]);
 
   useEffect(() => {
-    function handle() {
-      if (trackData!.location && trackData!.side === 'right') {
-        fetchGenomeData();
-      } else if (trackData!.location && trackData!.side === 'left') {
-        fetchGenomeData2();
-      }
+    if (trackData!.side === 'right') {
+      fetchGenomeData();
+    } else if (trackData!.side === 'left') {
+      fetchGenomeData2();
     }
-    handle();
   }, [trackData]);
-
   return (
     <div>
       {side === 'right'

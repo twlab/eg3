@@ -8,7 +8,6 @@ interface GenRefTrackProps {
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   windowWidth?: number;
-  trackSize: any;
 }
 const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   bpRegionSize,
@@ -16,7 +15,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   trackData,
   side,
   windowWidth = 0,
-  trackSize,
 }) {
   let start, end;
 
@@ -25,7 +23,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     [start, end] = trackData!.location.split(':');
     result = trackData!.result;
   }
-
+  console.log(result);
   start = Number(start);
   end = Number(end);
 
@@ -44,9 +42,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-
-  const [genomeTrackR, setGenomeTrackR] = useState(<></>);
-  const [genomeTrackL, setGenomeTrackL] = useState(<></>);
 
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
@@ -172,11 +167,11 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
         strandLevelList[j].push(strand);
       }
     }
-
+    console.log(start);
     let svgResult = setStrand({
       strandPos: [...strandLevelList],
       checkPrev: { ...prevOverflowStrand.current },
-      startTrackPos: end - bpRegionSize!,
+      startTrackPos: start,
     });
 
     setRightTrack([...rightTrackGenes, svgResult]);
@@ -495,7 +490,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 />
               );
             }
-
+            if (trackGeneData.startTrackPos > singleStrand.txStart) {
+              console.log(singleStrand, trackGeneData.startTrackPos);
+            }
             strandHtml.push(
               <React.Fragment key={singleStrand.txStart + singleStrand.txEnd}>
                 {children.map((item, index) => item)}
@@ -556,7 +553,8 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   }, [trackData]);
 
   return (
-    <div style={{ display: 'flex' }}>
+    //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
+    <div style={{ display: 'flex', overflowX: 'visible', overflowY: 'hidden' }}>
       {side === 'right'
         ? rightTrackGenes.map(
             (item, index) => (
@@ -565,8 +563,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 key={index}
                 width={`${windowWidth * 2}px`}
                 height={'250'}
-                style={{ display: 'inline-block' }}
-                overflow="visible"
+                style={{
+                  overflow: 'visible',
+                }}
               >
                 <line
                   x1={`${windowWidth * 2}px`}
@@ -574,7 +573,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                   x2={`${windowWidth * 2}px`}
                   y2={'100%'}
                   stroke="gray"
-                  strokeWidth="3"
+                  strokeWidth="1"
                 />
 
                 {rightTrackGenes[index]}
@@ -602,7 +601,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 x2={`${windowWidth * 2}px`}
                 y2={'100%'}
                 stroke="gray"
-                strokeWidth="3"
+                strokeWidth="1"
               />
 
               {leftTrackGenes[leftTrackGenes.length - index - 1]}
