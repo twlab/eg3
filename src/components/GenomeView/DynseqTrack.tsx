@@ -112,7 +112,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
       drawCanvas(
         0,
-        windowWidth * 2,
+        windowWidth,
         newCanvasRef,
         converted,
         scales,
@@ -197,7 +197,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
       );
       drawCanvas(
         0,
-        windowWidth * 2,
+        windowWidth,
         newCanvasRef,
         converted,
         scales,
@@ -432,7 +432,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
                 key={index}
                 ref={item}
                 height={'20'}
-                width={`${windowWidth * 2}px`}
+                width={`${windowWidth}px`}
                 style={{}}
               />
             ))}
@@ -443,7 +443,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
                 key={index + 32}
                 ref={item}
                 height={'20'}
-                width={`${windowWidth * 2}px`}
+                width={`${windowWidth}px`}
                 style={{}}
               />
             ))}
@@ -457,7 +457,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
                 key={canvasRefL.length - index - 1}
                 ref={canvasRefL[canvasRefL.length - index - 1]}
                 height={'20'}
-                width={`${windowWidth * 2}px`}
+                width={`${windowWidth}px`}
                 style={{}}
               />
             ))}
@@ -468,7 +468,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
                 key={canvasRefL2.length - index - 1 + 3343434}
                 ref={canvasRefL2[canvasRefL2.length - index - 1]}
                 height={'20'}
-                width={`${windowWidth * 2}px`}
+                width={`${windowWidth}px`}
                 style={{}}
               />
             ))}

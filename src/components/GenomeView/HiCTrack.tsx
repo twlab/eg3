@@ -59,6 +59,8 @@ interface BedTrackProps {
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   windowWidth?: number;
+  totalSize?: number;
+  trackData2?: { [key: string]: any }; // Replace with the actual type
 }
 const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   bpRegionSize,
@@ -66,15 +68,15 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   trackData,
   side,
   windowWidth = 0,
+  totalSize = 0,
+  trackData2,
 }) {
   let start, end;
 
   let result;
-  if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
-    result = trackData!.hicResult;
-    bpRegionSize = bpRegionSize;
-    bpToPx = bpToPx;
+  if (Object.keys(trackData2!).length > 0) {
+    [start, end] = trackData2!.location.split(':');
+    result = trackData2!.hicResult;
   }
 
   start = Number(start);
@@ -83,15 +85,14 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
-
+  const [hicOption, setHicOption] = useState(1);
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
-  const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
 
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
-  const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
+  const [option, setOption] = useState(1);
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
   // step 1 filtered
@@ -100,13 +101,15 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   // step 4 show both sides when hovering
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-
+    console.log(totalSize, result);
     let startPos;
     startPos = start;
-
+    if (result === undefined) {
+      return;
+    }
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result) {
+    if (result && hicOption === 0) {
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
@@ -142,8 +145,13 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     let tmpObj = {};
     tmpObj['placedInteraction'] = placedInteraction;
     tmpObj['polyCoord'] = polyCoord;
-
-    setRightTrack([...rightTrackGenes, tmpObj]);
+    if (hicOption === 0) {
+      setRightTrack([...rightTrackGenes, tmpObj]);
+      setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
+    } else {
+      setRightTrack([tmpObj]);
+      setCanvasRefR(new Array<any>(newCanvasRef));
+    }
 
     if (trackData!.initial) {
       const newCanvasRefL = createRef();
@@ -152,8 +160,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRefL]);
       setLeftTrack([...leftTrackGenes, tmpObj]);
     }
-
-    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
 
     // CHECK if there are overlapping strands to the next track
 
@@ -396,7 +402,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }
 
   useEffect(() => {
-    if (side === 'left' && leftTrackGenes.length > 0) {
+    if (side === 'left') {
       console.log(leftTrackGenes);
       leftTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefL[index].current) {
@@ -406,7 +412,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
           );
         }
       });
-    } else if (side === 'right' && rightTrackGenes.length > 0) {
+    } else if (side === 'right') {
       rightTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefR[index].current) {
           drawCanvas(
@@ -420,12 +426,13 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
+      console.log('ASDASDSA');
       drawCanvas(
         rightTrackGenes[rightTrackGenes.length - 1].polyCoord,
         canvasRefR[canvasRefR.length - 1].current
       );
     }
-  }, [rightTrackGenes]);
+  }, [canvasRefR]);
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {
@@ -438,12 +445,12 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }, [leftTrackGenes]);
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (side === 'right') {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (side === 'left') {
       fetchGenomeData2();
     }
-  }, [trackData]);
+  }, [trackData2]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
@@ -487,12 +494,12 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       )}
       {side === 'right' ? (
         <div style={{ display: 'flex' }}>
-          {canvasRefR.map((item, index) => (
+          {rightTrackGenes.map((item, index) => (
             <canvas
               key={index}
-              ref={item}
+              ref={canvasRefR[index]}
               height={'1000'}
-              width={`${windowWidth * 2}px`}
+              width={option === 0 ? windowWidth : totalSize}
               style={{}}
             />
           ))}
@@ -504,7 +511,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
               key={canvasRefL.length - index - 1}
               ref={canvasRefL[canvasRefL.length - index - 1]}
               height={'1000'}
-              width={`${windowWidth * 2}px`}
+              width={windowWidth}
               style={{}}
             />
           ))}

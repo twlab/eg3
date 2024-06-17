@@ -40,7 +40,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
       let dataIdxX = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
-      if (dataIdxX < windowWidth * 2 && dataIdxY < 1000) {
+      if (dataIdxX < windowWidth && dataIdxY < 1000) {
         const curPlacedInteraction = findPolygon(dataIdxX, dataIdxY);
         if (curPlacedInteraction) {
           const { xSpan1, xSpan2, interaction } = curPlacedInteraction;
@@ -128,7 +128,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
       ref={targetRef}
       style={{
         position: 'relative',
-        width: windowWidth * 2,
+        width: windowWidth,
         height: 1000,
       }}
     >

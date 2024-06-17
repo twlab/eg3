@@ -190,7 +190,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               // index <= rightTrackGenes.length - 1 ?
               <svg
                 key={index}
-                width={`${windowWidth * 2}px`}
+                width={`${windowWidth}px`}
                 height={'40'}
                 overflow="visible"
               >
@@ -198,7 +198,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               </svg>
             )
             // : (
-            //   <div style={{ display: 'flex', width: windowWidth * 2 }}>
+            //   <div style={{ display: 'flex', width: windowWidth }}>
             //     ....LOADING
             //   </div>
             // )
@@ -207,7 +207,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
             // index <= rightTrackGenes.length - 1 ?
             <svg
               key={leftTrackGenes.length - index - 1}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               height={'40'}
               style={{ display: 'inline-block' }}
               overflow="visible"

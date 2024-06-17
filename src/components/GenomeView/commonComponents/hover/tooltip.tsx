@@ -27,7 +27,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
-      if (dataIdx < windowWidth * 2) {
+      if (dataIdx < windowWidth) {
         setPosition({
           ...position,
           top: rect.bottom,
@@ -88,7 +88,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
         key={`tooltip-${trackIdx}`} // Use a unique key
         ref={targetRef}
         style={{
-          width: windowWidth * 2,
+          width: windowWidth,
           height: 80,
         }}
       ></div>
@@ -98,7 +98,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
           opacity: isVisible ? '1' : '0',
           display: 'flex',
 
-          left: -position.left + windowWidth / 3 + trackIdx * windowWidth * 2,
+          left: -position.left + windowWidth / 3 + trackIdx * windowWidth,
           position: 'absolute',
           backgroundColor: '#333',
           color: '#fff',

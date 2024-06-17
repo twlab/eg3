@@ -23,7 +23,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     [start, end] = trackData!.location.split(':');
     result = trackData!.result;
   }
-  console.log(result);
+
   start = Number(start);
   end = Number(end);
 
@@ -167,7 +167,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
         strandLevelList[j].push(strand);
       }
     }
-    console.log(start);
+
     let svgResult = setStrand({
       strandPos: [...strandLevelList],
       checkPrev: { ...prevOverflowStrand.current },
@@ -490,9 +490,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 />
               );
             }
-            if (trackGeneData.startTrackPos > singleStrand.txStart) {
-              console.log(singleStrand, trackGeneData.startTrackPos);
-            }
+
             strandHtml.push(
               <React.Fragment key={singleStrand.txStart + singleStrand.txEnd}>
                 {children.map((item, index) => item)}
@@ -561,16 +559,16 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               // index <= rightTrackGenes.length - 1 ?
               <svg
                 key={index}
-                width={`${windowWidth * 2}px`}
+                width={`${windowWidth}px`}
                 height={'250'}
                 style={{
                   overflow: 'visible',
                 }}
               >
                 <line
-                  x1={`${windowWidth * 2}px`}
+                  x1={`${windowWidth}px`}
                   y1="0"
-                  x2={`${windowWidth * 2}px`}
+                  x2={`${windowWidth}px`}
                   y2={'100%'}
                   stroke="gray"
                   strokeWidth="1"
@@ -581,7 +579,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               </svg>
             )
             //  : (
-            //   <div style={{ display: 'flex', width: windowWidth * 2 }}>
+            //   <div style={{ display: 'flex', width: windowWidth }}>
             //     ....LOADING
             //   </div>
             // )
@@ -590,15 +588,15 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             // index <= rightTrackGenes.length - 1 ?
             <svg
               key={leftTrackGenes.length - index - 1}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               height={'250'}
               style={{ display: 'inline-block' }}
               overflow="visible"
             >
               <line
-                x1={`${windowWidth * 2}px`}
+                x1={`${windowWidth}px`}
                 y1="0"
-                x2={`${windowWidth * 2}px`}
+                x2={`${windowWidth}px`}
                 y2={'100%'}
                 stroke="gray"
                 strokeWidth="1"
