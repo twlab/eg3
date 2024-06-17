@@ -13,7 +13,6 @@ import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
 import HiCTrack from './HiCTrack';
 import CircularProgress from '@mui/material/CircularProgress';
-import { left } from '@popperjs/core';
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 
@@ -167,7 +166,7 @@ function TrackManager(props) {
   const [isLoading2, setIsLoading2] = useState(true);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
-  const [bpX, setBpX] = useState(0);
+  const [bpX, setBpX] = useState(leftStartCoord);
 
   const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
@@ -310,10 +309,12 @@ function TrackManager(props) {
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2) {
+      console.log(bpX, bpX + windowWidth);
       let hicResult = await trackFetchFunction.hic({
         straw: genome.defaultTracks[5].straw,
 
         option: defaultHic,
+
         start: Number(bpX),
         end: Number(bpX + bpRegionSize),
       });
@@ -709,6 +710,7 @@ function TrackManager(props) {
     console.log(windowWidth);
     function getData() {
       fetchGenomeData(1);
+      fetchGenomeData(2);
     }
 
     getData();
@@ -791,7 +793,19 @@ function TrackManager(props) {
               trackData2={trackData2}
             />
           ))}
-
+          <HiCTrack
+            bpRegionSize={bpRegionSize}
+            bpToPx={bpToPx}
+            trackData={trackData}
+            side={side}
+            windowWidth={windowWidth}
+            totalSize={
+              side === 'right'
+                ? sumArray(rightSectionSize) + windowWidth
+                : sumArray(leftSectionSize) + windowWidth
+            }
+            trackData2={trackData2}
+          />
           {
             // DIDNT WORK BECAUSE THEY DIUDNT WHAT TRACK WIDTH Was}
           }

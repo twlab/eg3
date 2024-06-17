@@ -101,7 +101,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   // step 4 show both sides when hovering
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    console.log(totalSize, result);
+
     let startPos;
     startPos = start;
     if (result === undefined) {
@@ -110,6 +110,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result && hicOption === 0) {
+      
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
@@ -134,7 +135,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
         }
       }
     }
-
+console.log(result)
     const newCanvasRef = createRef();
 
     let placedInteraction = placeInteractions(result);
@@ -174,7 +175,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     for (const interaction of interactions) {
       let location1 = interaction.locus1;
       let location2 = interaction.locus2;
-
+      console.log(location1.start, start,bpToPx)
       const startX1 = (location1.start - start) / bpToPx!;
       const endX1 = (location1.end - start) / bpToPx!;
 
@@ -399,6 +400,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
         context.fill();
       }
     }
+
   }
 
   useEffect(() => {
@@ -426,13 +428,13 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
-      console.log('ASDASDSA');
+      console.log(rightTrackGenes);
       drawCanvas(
         rightTrackGenes[rightTrackGenes.length - 1].polyCoord,
         canvasRefR[canvasRefR.length - 1].current
       );
     }
-  }, [canvasRefR]);
+  }, [rightTrackGenes]);
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {
@@ -494,10 +496,10 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       )}
       {side === 'right' ? (
         <div style={{ display: 'flex' }}>
-          {rightTrackGenes.map((item, index) => (
+          {canvasRefR.map((item, index) => (
             <canvas
               key={index}
-              ref={canvasRefR[index]}
+              ref={item}
               height={'1000'}
               width={option === 0 ? windowWidth : totalSize}
               style={{}}
