@@ -34,7 +34,10 @@ function GenomeHub(props: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
       ...curGen.genome.defaultTracks,
-      { name: 'bed' },
+      {
+        name: 'bed',
+        url: 'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
+      },
     ];
     let newList = [curGen.genome];
 
