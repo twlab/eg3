@@ -110,20 +110,23 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.end
     );
   },
+  genomealign: function genomealignFetch(regionData: any) {
+    return GetTabixData(
+      regionData.url,
+      regionData.chr,
+      regionData.start,
+      regionData.end
+    );
+  },
 };
+//To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
+//TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
+// use interface key to get certain track function based on information the user clicked on.
+// We want to sent a defaultTrack List of component of trackcomponent already from genomerooot and use it in trackmanager instead of
+// creating the component in trackmanager/
+//LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
 
 function TrackManager(props) {
-  //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
-  //TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
-  // use interface key to get certain track function based on information the user clicked on.
-  // We want to sent a defaultTrack List of component of trackcomponent already from genomerooot and use it in trackmanager instead of
-  // creating the component in trackmanager/
-  //LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
-  // for ... track:
-  //if(genome.defaultTrack[i] = ref)
-  // else if (bigWig)
-  // else if (hic)
-  //getHic(genome.defaultTrack.staw,....)
   const genome = props.currGenome;
   const [region, coord] = genome.defaultRegion.split(':');
   const [leftStartStr, rightStartStr] = coord.split('-');
@@ -165,7 +168,7 @@ function TrackManager(props) {
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
 
-  for (let i = 0; i < genome.defaultTracks.length; i++) {
+  for (let i = 0; i < genome.defaultTracks.length - 1; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
 
@@ -377,7 +380,7 @@ function TrackManager(props) {
     let tmpBigWig: Array<any> = [];
     let tmpDynseq: Array<any> = [];
     let tmpHic: Array<any> = [];
-
+    let tmpGenomealign: Array<any> = [];
     for (let i = 0; i < tmpRegion.length; i++) {
       let sectionRegion = tmpRegion[i];
 
@@ -395,6 +398,7 @@ function TrackManager(props) {
           dynSeqRespond,
           methylcRespond,
           hicRespond,
+          genomealignRespond,
         ] = await Promise.all(
           genome.defaultTracks.map((item) => {
             const trackName = item.name;
@@ -449,6 +453,7 @@ function TrackManager(props) {
         tmpBed = [...tmpBed, ...bedRespond];
         tmpBigWig = [...tmpBigWig, ...bigWigRespond];
         tmpHic = [...tmpHic, ...hicRespond];
+        tmpGenomealign = [...tmpGenomealign, genomealignRespond];
       } catch {}
     }
     if (tempObj['location'] === undefined) {
@@ -456,7 +461,7 @@ function TrackManager(props) {
       tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
       maxBp.current = maxBp.current + bpRegionSize;
     }
-
+    console.log(tmpGenomealign);
     tempObj['result'] = tmpResult;
     tempObj['bedResult'] = tmpBed;
     tempObj['bigWigResult'] = tmpBigWig;
