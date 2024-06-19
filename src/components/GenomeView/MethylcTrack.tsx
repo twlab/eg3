@@ -407,7 +407,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                   key={index}
                   ref={item}
                   height={'40'}
-                  width={`${windowWidth * 2}px`}
+                  width={`${windowWidth}px`}
                   style={{}}
                 />
               ))}
@@ -419,7 +419,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                   key={index + 32}
                   ref={item}
                   height={'40'}
-                  width={`${windowWidth * 2}px`}
+                  width={`${windowWidth}px`}
                   style={{}}
                 />
               ))}
@@ -454,7 +454,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                   key={canvasRefL.length - index - 1}
                   ref={canvasRefL[canvasRefL.length - index - 1]}
                   height={'40'}
-                  width={`${windowWidth * 2}px`}
+                  width={`${windowWidth}px`}
                   style={{}}
                 />
               ))}
@@ -465,7 +465,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                   key={canvasRefL2.length - index - 1 + 3343434}
                   ref={canvasRefL2[canvasRefL2.length - index - 1]}
                   height={'40'}
-                  width={`${windowWidth * 2}px`}
+                  width={`${windowWidth}px`}
                   style={{}}
                 />
               ))}

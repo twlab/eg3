@@ -83,7 +83,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
-
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
@@ -91,7 +90,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
 
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
-  const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
+
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
   // step 1 filtered
@@ -492,7 +491,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
               key={index}
               ref={item}
               height={'1000'}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))}
@@ -504,7 +503,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
               key={canvasRefL.length - index - 1}
               ref={canvasRefL[canvasRefL.length - index - 1]}
               height={'1000'}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))}

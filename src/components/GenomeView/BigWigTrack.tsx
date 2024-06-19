@@ -120,7 +120,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       const aggFeature = event.data;
 
       var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-      drawCanvas(0, windowWidth * 2, newCanvasRef, aggFeature, scales);
+      drawCanvas(0, windowWidth, newCanvasRef, aggFeature, scales);
 
       setRightTrack([
         ...rightTrackGenes,
@@ -191,7 +191,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     worker.onmessage = (event) => {
       let converted = event.data;
       var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-      drawCanvas(0, windowWidth * 2, newCanvasRef, converted, scales);
+      drawCanvas(0, windowWidth, newCanvasRef, converted, scales);
       setLeftTrack([
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
@@ -255,7 +255,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
               key={index}
               ref={item}
               height={'40'}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))
@@ -264,7 +264,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
               key={canvasRefL.length - index - 1}
               ref={canvasRefL[canvasRefL.length - index - 1]}
               height={'40'}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))}

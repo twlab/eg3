@@ -13,7 +13,6 @@ import DynseqTrack from './DynseqTrack';
 import MethylcTrack from './MethylcTrack';
 import HiCTrack from './HiCTrack';
 import CircularProgress from '@mui/material/CircularProgress';
-import { drag } from 'd3';
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 
@@ -56,7 +55,6 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
   hic: HiCTrack,
-
   // Add more components as needed
 };
 
@@ -126,15 +124,13 @@ function TrackManager(props) {
   // else if (bigWig)
   // else if (hic)
   //getHic(genome.defaultTrack.staw,....)
-
   const genome = props.currGenome;
-
   const [region, coord] = genome.defaultRegion.split(':');
   const [leftStartStr, rightStartStr] = coord.split('-');
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
-  const bpRegionSize = (rightStartCoord - leftStartCoord) * 2;
-  const bpToPx = bpRegionSize / (windowWidth * 2);
+  const bpRegionSize = rightStartCoord - leftStartCoord;
+  const bpToPx = bpRegionSize / windowWidth;
   let allChrData = genome.chromosomes;
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -142,7 +138,6 @@ function TrackManager(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
-
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -166,12 +161,14 @@ function TrackManager(props) {
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [bpX, setBpX] = useState(0);
 
-  const maxBp = useRef(rightStartCoord + (rightStartCoord - leftStartCoord));
+  const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
+
   for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
+
   function sumArray(numbers) {
     let total = 0;
     for (let i = 0; i < numbers.length; i++) {
@@ -192,7 +189,7 @@ function TrackManager(props) {
       (isLoading &&
         deltaX > 0 &&
         side === 'right' &&
-        -tmpDragX > 2 * (rightSectionSize.length - 3) * windowWidth) ||
+        -tmpDragX > (rightSectionSize.length - 1) * windowWidth) ||
       (isLoading && deltaX < 0 && side === 'left')
     ) {
       return;
@@ -213,7 +210,7 @@ function TrackManager(props) {
       ':' +
       String(bpX) +
       '-' +
-      String(bpX + bpRegionSize / 2);
+      String(bpX + bpRegionSize);
     props.addTrack({
       region: curRegion,
       trackName: 'bed',
@@ -255,7 +252,7 @@ function TrackManager(props) {
       ':' +
       String(curStartBp + totalLength) +
       '-' +
-      String(curStartBp + bpRegionSize / 2 + totalLength);
+      String(curStartBp + bpRegionSize + totalLength);
 
     props.startBp(curRegion);
     setBpX(curBp);
@@ -276,7 +273,7 @@ function TrackManager(props) {
       console.log('trigger right');
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(windowWidth * 2);
+        t.push(windowWidth);
         return t;
       });
 
@@ -291,7 +288,7 @@ function TrackManager(props) {
       console.log('trigger left');
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        let size = windowWidth * 2;
+        let size = windowWidth;
         if (leftSectionSize.length === 0) {
           size = windowWidth;
         }
@@ -471,12 +468,9 @@ function TrackManager(props) {
       tempObj['initial'] = 0;
     } else {
       tempObj['initial'] = 1;
-
       minBp.current = minBp.current - bpRegionSize;
     }
-
     setTrackData({ ...tempObj });
-
     setIsLoading(false);
   }
 
@@ -661,10 +655,8 @@ function TrackManager(props) {
     tempObj['methylcResult'] = tmpMethylc;
     tempObj['hicResult'] = tmpHic;
     tempObj['side'] = 'left';
-
     tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
     ///////-__________________________________________________________________________________________________________________________
-
     setTrackData({ ...tempObj });
     if (minBp.current >= 0) {
       minBp.current = minBp.current - bpRegionSize;
@@ -736,7 +728,7 @@ function TrackManager(props) {
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
-          width: `${windowWidth * 2}px`,
+          width: `${windowWidth}px`,
           backgroundColor: 'gainsboro',
         }}
       >

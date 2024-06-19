@@ -430,7 +430,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
               key={index}
               ref={canvasRefR[index]}
               height={'100%'}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))
@@ -440,7 +440,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
               key={canvasRefL.length - 1 - index}
               ref={canvasRefL[canvasRefL.length - 1 - index]}
               height={'100%'}
-              width={`${windowWidth * 2}px`}
+              width={`${windowWidth}px`}
               style={{}}
             />
           ))}
