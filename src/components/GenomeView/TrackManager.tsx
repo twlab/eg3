@@ -171,8 +171,8 @@ function TrackManager(props) {
   const [isLoading2, setIsLoading2] = useState(true);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
-  const [bpX, setBpX] = useState(leftStartCoord);
 
+  const bpX = useRef(leftStartCoord);
   const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
@@ -218,9 +218,9 @@ function TrackManager(props) {
     let curRegion =
       chrData[chrIndexRight.current] +
       ':' +
-      String(bpX) +
+      String(bpX.current) +
       '-' +
-      String(bpX + bpRegionSize);
+      String(bpX.current + bpRegionSize);
     props.addTrack({
       region: curRegion,
       trackName: 'bed',
@@ -265,14 +265,18 @@ function TrackManager(props) {
       String(curStartBp + bpRegionSize + totalLength);
 
     props.startBp(curRegion);
-    setBpX(curBp);
+    bpX.current = curBp;
 
     if (dragX.current > 0 && side === 'right') {
       setSide('left');
     } else if (dragX.current <= 0 && side === 'left') {
       setSide('right');
     }
-    console.log(dragX.current, sumArray(rightSectionSize));
+    if (hicOption === 1) {
+      setIsLoading2(true);
+      console.log('ASDASD');
+      fetchGenomeData(2);
+    }
 
     if (
       // windowWidth needs to be changed to match the speed of the dragx else it has a differenace translate
@@ -299,11 +303,7 @@ function TrackManager(props) {
       console.log('trigger left');
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        let size = windowWidth;
-        if (leftSectionSize.length === 0) {
-          size = windowWidth;
-        }
-        t.push(size);
+        t.push(windowWidth);
         return t;
       });
 
@@ -319,14 +319,15 @@ function TrackManager(props) {
 
         option: defaultHic,
 
-        start: Number(bpX),
-        end: Number(bpX + bpRegionSize),
+        start: Number(bpX.current),
+        end: Number(bpX.current + bpRegionSize),
       });
 
       let tmpData2 = {};
       tmpData2['hicResult'] = [...hicResult];
-      tmpData2['location'] = `${bpX}:${bpX + bpRegionSize}`;
+      tmpData2['location'] = `${bpX.current}:${bpX.current + bpRegionSize}`;
       setTrackData2({ ...tmpData2 });
+      setIsLoading2(false);
     }
     if (initial === 0 || initial === 1) {
       let tmpRegion: Array<any> = [];
@@ -629,7 +630,7 @@ function TrackManager(props) {
             }
           })
         );
-
+        console.log(userRespond);
         if (i !== 0) {
           for (let i = 0; i < userRespond.length; i++) {
             userRespond[i].txStart = -(
@@ -690,10 +691,10 @@ function TrackManager(props) {
     tempObj['dynseqResult'] = dynSeqResult;
     tempObj['methylcResult'] = tmpMethylc;
     tempObj['hicResult'] = tmpHic;
-
+    tempObj['side'] = 'left';
     tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
     ///////-__________________________________________________________________________________________________________________________
-
+    console.log(tempObj);
     setTrackData({ ...tempObj });
     if (minBp.current >= 0) {
       minBp.current = minBp.current - bpRegionSize;
@@ -721,9 +722,7 @@ function TrackManager(props) {
     getData();
     setIsLoading(false);
   }, []);
-  useEffect(() => {
-    fetchGenomeData(2);
-  }, [bpX]);
+
   return (
     <div
       style={{
@@ -737,7 +736,7 @@ function TrackManager(props) {
     >
       <button onClick={handleClick}>add bed</button>
 
-      <div>{bpX}</div>
+      <div>{bpX.current}</div>
       <div>{dragX.current}</div>
       {isLoading ? (
         <CircularProgress
