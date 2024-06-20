@@ -66,16 +66,21 @@ const trackFetchFunction: { [key: string]: any } = {
       `${AWS_API}/${regionData.name}/genes/refGene/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
       { method: 'GET' }
     );
-    const data = await genRefResponse.json();
-    return data;
+
+    return genRefResponse.json();
   },
-  bed: function bedFetch(regionData: any) {
-    return GetTabixData(
+  bed: async function bedFetch(regionData: any) {
+    const result = await GetTabixData(
       regionData.url,
       regionData.chr,
       regionData.start,
       regionData.end
     );
+    if (result.length > 0) {
+      return result[0];
+    } else {
+      return result;
+    }
   },
 
   bigWig: function bigWigFetch(regionData: any) {
@@ -309,7 +314,6 @@ function TrackManager(props) {
   async function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2) {
-      console.log(bpX, bpX + windowWidth);
       let hicResult = await trackFetchFunction.hic({
         straw: genome.defaultTracks[5].straw,
 
@@ -318,10 +322,10 @@ function TrackManager(props) {
         start: Number(bpX),
         end: Number(bpX + bpRegionSize),
       });
-      console.log(hicResult);
+
       let tmpData2 = {};
       tmpData2['hicResult'] = [...hicResult];
-      tmpData2['location'] = `${leftStartCoord}:${rightStartCoord}`;
+      tmpData2['location'] = `${bpX}:${bpX + bpRegionSize}`;
       setTrackData2({ ...tmpData2 });
     }
     if (initial === 0 || initial === 1) {
@@ -491,6 +495,7 @@ function TrackManager(props) {
       tempObj['methylcResult'] = tmpMethylc;
       tempObj['hicResult'] = tmpHic;
       tempObj['side'] = 'right';
+      console.log(tempObj);
       if (initial === 0) {
         tempObj['initial'] = 0;
       } else {
@@ -790,22 +795,11 @@ function TrackManager(props) {
                   ? sumArray(rightSectionSize) + windowWidth
                   : sumArray(leftSectionSize) + windowWidth
               }
+              dragXDist={dragX.current}
               trackData2={trackData2}
             />
           ))}
-          <HiCTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={trackData}
-            side={side}
-            windowWidth={windowWidth}
-            totalSize={
-              side === 'right'
-                ? sumArray(rightSectionSize) + windowWidth
-                : sumArray(leftSectionSize) + windowWidth
-            }
-            trackData2={trackData2}
-          />
+
           {
             // DIDNT WORK BECAUSE THEY DIUDNT WHAT TRACK WIDTH Was}
           }

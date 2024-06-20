@@ -15,6 +15,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [toolTipData, setData] = useState<{ [key: string]: any }>({});
   const [toolTip, setToolTip] = useState({
     top: 0,
     left: 0,
@@ -34,9 +35,9 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
     return null;
   }
   const handleMouseEnter = (e) => {
-    if (Object.keys(data.polyCoord).length > 0) {
+    console.log(toolTipData);
+    if (Object.keys(toolTipData.polyCoord).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
-      let legendWidth = 120;
       let dataIdxX = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
@@ -104,8 +105,13 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   const handleMouseLeave = () => {
     setIsVisible(false);
   };
-
+  // when updating new data for same index components we have to remake the addeventlistener
+  // so it can use the new data.
   useEffect(() => {
+    if (Object.keys(data).length > 0) {
+      setData({ ...data });
+    }
+
     if (targetRef.current !== null) {
       targetRef.current.addEventListener('mousemove', handleMouseEnter);
       targetRef.current.addEventListener('mouseleave', handleMouseLeave);
@@ -116,7 +122,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
         targetRef.current.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
-  }, []);
+  }, [data]);
 
   return (
     //Need to have two separate div for hovering area and tooltip or else when tooltip is being displayed based on track actual x toolTip it will also move the hovering area when using
@@ -132,9 +138,14 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
         height: 1000,
       }}
     >
-      {toolTip.beamRight}
-
-      {toolTip.beamLeft}
+      {isVisible ? (
+        <>
+          {toolTip.beamRight}
+          {toolTip.beamLeft}
+        </>
+      ) : (
+        ' '
+      )}
 
       <div
         style={{

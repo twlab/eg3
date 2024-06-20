@@ -61,6 +61,7 @@ interface BedTrackProps {
   windowWidth?: number;
   totalSize?: number;
   trackData2?: { [key: string]: any }; // Replace with the actual type
+  dragXDist?: number;
 }
 const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   bpRegionSize,
@@ -70,6 +71,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   windowWidth = 0,
   totalSize = 0,
   trackData2,
+  dragXDist,
 }) {
   let start, end;
 
@@ -110,7 +112,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result && hicOption === 0) {
-      
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
@@ -135,7 +136,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
         }
       }
     }
-console.log(result)
+
     const newCanvasRef = createRef();
 
     let placedInteraction = placeInteractions(result);
@@ -175,7 +176,7 @@ console.log(result)
     for (const interaction of interactions) {
       let location1 = interaction.locus1;
       let location2 = interaction.locus2;
-      console.log(location1.start, start,bpToPx)
+
       const startX1 = (location1.start - start) / bpToPx!;
       const endX1 = (location1.end - start) / bpToPx!;
 
@@ -400,7 +401,6 @@ console.log(result)
         context.fill();
       }
     }
-
   }
 
   useEffect(() => {
@@ -456,14 +456,44 @@ console.log(result)
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        position: 'relative',
+      }}
+    >
+      {side === 'right' ? (
+        canvasRefR.map((item, index) => (
+          <canvas
+            key={index}
+            ref={item}
+            height={'1000'}
+            width={windowWidth}
+            style={{ position: 'absolute', left: `${-dragXDist!}px` }}
+          />
+        ))
+      ) : (
+        <div style={{ display: 'flex' }}>
+          {canvasRefL.map((item, index) => (
+            <canvas
+              key={canvasRefL.length - index - 1}
+              ref={canvasRefL[canvasRefL.length - index - 1]}
+              height={'1000'}
+              width={windowWidth}
+              style={{}}
+            />
+          ))}
+        </div>
+      )}
+
       {side === 'right' ? (
         <div
           key={'hicRight'}
           style={{
             opacity: 0.5,
-            display: 'flex',
+
             position: 'absolute',
+            left: `${-dragXDist!}px`,
           }}
         >
           {rightTrackGenes.map((item, index) => (
@@ -490,31 +520,6 @@ console.log(result)
               data={leftTrackGenes[leftTrackGenes.length - index - 1]}
               windowWidth={windowWidth}
               trackIdx={leftTrackGenes.length - index - 1}
-            />
-          ))}
-        </div>
-      )}
-      {side === 'right' ? (
-        <div style={{ display: 'flex' }}>
-          {canvasRefR.map((item, index) => (
-            <canvas
-              key={index}
-              ref={item}
-              height={'1000'}
-              width={option === 0 ? windowWidth : totalSize}
-              style={{}}
-            />
-          ))}
-        </div>
-      ) : (
-        <div style={{ display: 'flex' }}>
-          {canvasRefL.map((item, index) => (
-            <canvas
-              key={canvasRefL.length - index - 1}
-              ref={canvasRefL[canvasRefL.length - index - 1]}
-              height={'1000'}
-              width={windowWidth}
-              style={{}}
             />
           ))}
         </div>
