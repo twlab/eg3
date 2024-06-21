@@ -131,6 +131,8 @@ function TrackManager(props) {
   // else if (hic)
   //getHic(genome.defaultTrack.staw,....)
 
+  //fix old algo on hic, need to sent it new chr when mutli chr view
+  // fix data being [ [ ]] after fetching
   const genome = props.currGenome;
 
   const [region, coord] = genome.defaultRegion.split(":");
@@ -465,6 +467,7 @@ function TrackManager(props) {
       let tmpData2 = {};
       tmpData2["hicResult"] = [...hicResult];
       tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
+      console.log(tmpData2);
       setTrackData2({ ...tmpData2 });
       setIsLoading2(false);
     }
