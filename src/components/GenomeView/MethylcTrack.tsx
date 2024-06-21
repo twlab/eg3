@@ -341,7 +341,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         }
       });
     } else if (side === 'right') {
-      console.log('2');
       rightTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefR[index].current && canvasRefR2[index].current) {
           let length = rightTrackGenes[index].canvasData.length;

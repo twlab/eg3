@@ -546,7 +546,6 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     if (trackData!.side === 'right') {
       fetchGenomeData();
     } else if (trackData!.side === 'left') {
-      console.log(trackData);
       fetchGenomeData2();
     }
   }, [trackData]);

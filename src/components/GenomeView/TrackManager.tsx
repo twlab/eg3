@@ -496,7 +496,7 @@ function TrackManager(props) {
       tempObj['methylcResult'] = tmpMethylc;
       tempObj['hicResult'] = tmpHic;
       tempObj['side'] = 'right';
-      console.log(tempObj);
+      console.log(tempObj, 'right');
       if (initial === 0) {
         tempObj['initial'] = 0;
       } else {
@@ -630,7 +630,7 @@ function TrackManager(props) {
             }
           })
         );
-        console.log(userRespond);
+
         if (i !== 0) {
           for (let i = 0; i < userRespond.length; i++) {
             userRespond[i].txStart = -(

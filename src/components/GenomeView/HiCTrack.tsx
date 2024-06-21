@@ -405,7 +405,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (side === 'left') {
-      console.log(leftTrackGenes);
       leftTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefL[index].current) {
           drawCanvas(
@@ -428,7 +427,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
-      console.log(rightTrackGenes);
       drawCanvas(
         rightTrackGenes[rightTrackGenes.length - 1].polyCoord,
         canvasRefR[canvasRefR.length - 1].current
@@ -438,7 +436,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {
-      console.log(leftTrackGenes);
       drawCanvas(
         leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
         canvasRefL[canvasRefL.length - 1].current

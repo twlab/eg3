@@ -15,7 +15,6 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [toolTipData, setData] = useState<{ [key: string]: any }>({});
   const [toolTip, setToolTip] = useState({
     top: 0,
     left: 0,
@@ -35,8 +34,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
     return null;
   }
   const handleMouseEnter = (e) => {
-    console.log(toolTipData);
-    if (Object.keys(toolTipData.polyCoord).length > 0) {
+    if (Object.keys(data).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
       let dataIdxX = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
@@ -108,10 +106,6 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   // when updating new data for same index components we have to remake the addeventlistener
   // so it can use the new data.
   useEffect(() => {
-    if (Object.keys(data).length > 0) {
-      setData({ ...data });
-    }
-
     if (targetRef.current !== null) {
       targetRef.current.addEventListener('mousemove', handleMouseEnter);
       targetRef.current.addEventListener('mouseleave', handleMouseLeave);
