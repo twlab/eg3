@@ -746,13 +746,9 @@ function TrackManager(props) {
     >
       <button onClick={handleClick}>add bed</button>
 
-      <div>{bpX.current}</div>
-      <div>
-        {dragX.current <= 0
-          ? chrData[chrIndexRight.current]
-          : chrData[chrIndexLeft.current]}
-        __XPOS: {dragX.current}px
-      </div>
+      <div> {viewRegion.current}</div>
+
+      <div>Pixel distance from starting point : {dragX.current}px</div>
       {isLoading || isLoading2 ? (
         <CircularProgress
           variant="indeterminate"
