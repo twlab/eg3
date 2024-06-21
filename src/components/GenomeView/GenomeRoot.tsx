@@ -112,7 +112,7 @@ function GenomeHub(props: any) {
           name: 'genomealign',
 
           genome: 'hg38',
-          url: 'https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz.tbi',
+          url: 'https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz',
         },
       ];
       newList.chrOrder = items;
