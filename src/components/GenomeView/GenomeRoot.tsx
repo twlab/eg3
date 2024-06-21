@@ -150,7 +150,7 @@ function GenomeHub(props: any) {
 
           //chr7:27053397-27373765
           // chr7:10000-20000
-          defaultRegion: 'chr7:100000-200000',
+          defaultRegion: 'chr7:27053397-27373765',
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [

@@ -237,7 +237,7 @@ function TrackManager(props) {
     // This is to track viewRegion everytime a user moves.
     // We have similar logic in the fetch for getting data but it does not have the current view bp region.
     // so we need to have both.
-    let curIdx = side === 'right' ? initialChrIdx : initialChrIdx - 1;
+    let curIdx = initialChrIdx;
 
     let curStartBp = leftStartCoord + -dragX.current * bpToPx;
     const curBp = leftStartCoord + -dragX.current * bpToPx;
@@ -247,6 +247,7 @@ function TrackManager(props) {
         curIdx += 1;
       }
     } else if (side === 'left' && curBp < 0) {
+      curIdx--;
       while (curStartBp < -chrLength[curIdx]) {
         curStartBp += chrLength[curIdx];
         curIdx -= 1;
@@ -255,7 +256,7 @@ function TrackManager(props) {
     }
 
     let curRegion =
-      chrData[side === 'left' ? curIdx : curIdx - 1] +
+      chrData[curIdx] +
       ':' +
       String(curStartBp) +
       '-' +
