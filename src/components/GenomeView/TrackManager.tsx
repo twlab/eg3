@@ -233,35 +233,34 @@ function TrackManager(props) {
   }
   function handleMouseUp() {
     setDragging(false);
+
+    // This is to track viewRegion everytime a user moves.
+    // We have similar logic in the fetch for getting data but it does not have the current view bp region.
+    // so we need to have both.
     let curIdx = side === 'right' ? initialChrIdx : initialChrIdx - 1;
-    let totalLength = 0;
 
     let curStartBp = leftStartCoord + -dragX.current * bpToPx;
     const curBp = leftStartCoord + -dragX.current * bpToPx;
-    if (side === 'right' && curBp > totalLength) {
-      totalLength = chrLength[curIdx];
-
-      while (curStartBp > totalLength) {
+    if (side === 'right' && curBp >= chrLength[curIdx]) {
+      while (curStartBp > chrLength[curIdx]) {
         curStartBp -= chrLength[curIdx];
         curIdx += 1;
-        totalLength += chrLength[curIdx];
       }
     } else if (side === 'left' && curBp < 0) {
-      totalLength = chrLength[curIdx - 1];
-      while (curStartBp < totalLength) {
+      while (curStartBp < -chrLength[curIdx]) {
         curStartBp += chrLength[curIdx];
         curIdx -= 1;
-        totalLength += -chrLength[curIdx];
       }
-      curIdx += 1;
+      curStartBp = chrLength[curIdx] + curStartBp;
     }
-    console.log(curStartBp, totalLength);
+
     let curRegion =
-      chrData[side === 'left' ? curIdx + 1 : curIdx] +
+      chrData[side === 'left' ? curIdx : curIdx - 1] +
       ':' +
       String(curStartBp) +
       '-' +
       String(curStartBp + bpRegionSize);
+    console.log(curRegion);
     viewRegion.current = curRegion;
     props.startBp(curRegion);
     bpX.current = curBp;
@@ -748,7 +747,10 @@ function TrackManager(props) {
 
       <div>{bpX.current}</div>
       <div>
-        {chrData[chrIndexRight.current]}__XPOS: {dragX.current}px
+        {dragX.current <= 0
+          ? chrData[chrIndexRight.current]
+          : chrData[chrIndexLeft.current]}
+        __XPOS: {dragX.current}px
       </div>
       {isLoading || isLoading2 ? (
         <CircularProgress
