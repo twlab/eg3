@@ -5,7 +5,7 @@ import GetHicData from './getRemoteData/hicSource';
 const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-import GenRefTrack from './GenRefTrack';
+import RefGeneTrack from './RefGeneTrack';
 import BedTrack from './BedTrack';
 import BedDensityTrack from './BedDensityTrack';
 import BigWigTrack from './BigWigTrack';
@@ -48,7 +48,7 @@ interface MyComponentProps {
 }
 
 const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
-  refGene: GenRefTrack,
+  refGene: RefGeneTrack,
   bed: BedTrack,
   bedDensity: BedDensityTrack,
   bigWig: BigWigTrack,
@@ -160,8 +160,9 @@ function TrackManager(props) {
       chrLength.push(allChrData[chromosome]);
     }
   }
-  const initialChrIdx = chrData.indexOf(region);
 
+  const initialChrIdx = chrData.indexOf(region);
+  const viewRegion = useRef(genome.defaultRegion);
   const chrIndexRight = useRef(initialChrIdx);
   const chrIndexLeft = useRef(initialChrIdx);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
@@ -196,11 +197,14 @@ function TrackManager(props) {
     const tmpDragX = dragX.current - deltaX;
 
     if (
-      (isLoading &&
+      ((isLoading || isLoading2) &&
         deltaX > 0 &&
         side === 'right' &&
         -tmpDragX > (rightSectionSize.length - 1) * windowWidth) ||
-      (isLoading && deltaX < 0 && side === 'left')
+      (isLoading &&
+        deltaX < 0 &&
+        side === 'left' &&
+        tmpDragX > (leftSectionSize.length - 1) * windowWidth)
     ) {
       return;
     }
@@ -215,14 +219,8 @@ function TrackManager(props) {
     });
   }
   const handleClick = () => {
-    let curRegion =
-      chrData[chrIndexRight.current] +
-      ':' +
-      String(bpX.current) +
-      '-' +
-      String(bpX.current + bpRegionSize);
     props.addTrack({
-      region: curRegion,
+      region: viewRegion.current,
       trackName: 'bed',
       genome: genome,
     });
@@ -242,28 +240,29 @@ function TrackManager(props) {
     const curBp = leftStartCoord + -dragX.current * bpToPx;
     if (side === 'right' && curBp > totalLength) {
       totalLength = chrLength[curIdx];
-      while (leftStartCoord + -dragX.current * bpToPx > totalLength) {
+
+      while (curStartBp > totalLength) {
         curStartBp -= chrLength[curIdx];
         curIdx += 1;
         totalLength += chrLength[curIdx];
       }
     } else if (side === 'left' && curBp < 0) {
       totalLength = chrLength[curIdx - 1];
-      while (leftStartCoord + -dragX.current * bpToPx < totalLength) {
+      while (curStartBp < totalLength) {
         curStartBp += chrLength[curIdx];
         curIdx -= 1;
         totalLength += -chrLength[curIdx];
       }
       curIdx += 1;
     }
-
+    console.log(curStartBp, totalLength);
     let curRegion =
       chrData[side === 'left' ? curIdx + 1 : curIdx] +
       ':' +
-      String(curStartBp + totalLength) +
+      String(curStartBp) +
       '-' +
-      String(curStartBp + bpRegionSize + totalLength);
-
+      String(curStartBp + bpRegionSize);
+    viewRegion.current = curRegion;
     props.startBp(curRegion);
     bpX.current = curBp;
 
@@ -274,7 +273,7 @@ function TrackManager(props) {
     }
     if (hicOption === 1) {
       setIsLoading2(true);
-      console.log('ASDASD');
+
       fetchGenomeData(2);
     }
 
@@ -310,217 +309,84 @@ function TrackManager(props) {
       fetchGenomeData2();
     }
   }
+  function checkMultiChrRight(tempObj: any) {
+    let tmpRegion: Array<any> = [];
+    if (maxBp.current > chrLength[chrIndexRight.current]) {
+      let totalEndBp = Number(chrLength[chrIndexRight.current]);
+      let startBp = maxBp.current - bpRegionSize;
+      let tmpChrIdx = chrIndexRight.current;
 
-  async function fetchGenomeData(initial: number = 0) {
-    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    if (initial === 2) {
-      let hicResult = await trackFetchFunction.hic({
-        straw: genome.defaultTracks[5].straw,
+      tmpRegion.push(
+        `${chrData[chrIndexRight.current]}` +
+          ':' +
+          `${startBp}` +
+          '-' +
+          `${chrLength[chrIndexRight.current]}` +
+          '|' +
+          `${startBp}` +
+          '-' +
+          `${chrLength[chrIndexRight.current]}`
+      );
+      tmpChrIdx += 1;
+      let chrEnd = 0;
 
-        option: defaultHic,
+      while (maxBp.current > totalEndBp) {
+        let chrStart = 0;
 
-        start: Number(bpX.current),
-        end: Number(bpX.current + bpRegionSize),
-      });
-
-      let tmpData2 = {};
-      tmpData2['hicResult'] = [...hicResult];
-      tmpData2['location'] = `${bpX.current}:${bpX.current + bpRegionSize}`;
-      setTrackData2({ ...tmpData2 });
-      setIsLoading2(false);
-    }
-    if (initial === 0 || initial === 1) {
-      let tmpRegion: Array<any> = [];
-      let tempObj = {};
-      if (maxBp.current > chrLength[chrIndexRight.current]) {
-        let totalEndBp = Number(chrLength[chrIndexRight.current]);
-        let startBp = maxBp.current - bpRegionSize;
-        let tmpChrIdx = chrIndexRight.current;
-
-        tmpRegion.push(
-          `${chrData[chrIndexRight.current]}` +
-            ':' +
-            `${startBp}` +
-            '-' +
-            `${chrLength[chrIndexRight.current]}` +
-            '|' +
-            `${startBp}` +
-            '-' +
-            `${chrLength[chrIndexRight.current]}`
-        );
-        tmpChrIdx += 1;
-        let chrEnd = 0;
-        console.log(maxBp.current);
-        while (maxBp.current > totalEndBp) {
-          let chrStart = 0;
-
-          if (chrLength[tmpChrIdx] + totalEndBp < maxBp.current) {
-            chrEnd = chrLength[tmpChrIdx];
-          } else {
-            // maxBp.current is the end distance measured in bp moved
-            // totalEndBp is how many chromosome length maxBp is greater than
-            // subtracting the two will give us the starting point in the next chromosome in the next fetch
-            chrEnd = maxBp.current - totalEndBp;
-          }
-
-          tmpRegion.push(
-            `${chrData[tmpChrIdx]}` +
-              ':' +
-              `${chrStart + totalEndBp}` +
-              '-' +
-              `${totalEndBp + chrEnd}` +
-              '|' +
-              `${0}` +
-              '-' +
-              `${chrEnd}`
-          );
-          totalEndBp += chrEnd;
-
-          tmpChrIdx += 1;
+        if (chrLength[tmpChrIdx] + totalEndBp < maxBp.current) {
+          chrEnd = chrLength[tmpChrIdx];
+        } else {
+          // maxBp.current is the end distance measured in bp moved
+          // totalEndBp is how many chromosome length maxBp is greater than
+          // subtracting the two will give us the starting point in the next chromosome in the next fetch
+          chrEnd = maxBp.current - totalEndBp;
         }
-        chrIndexRight.current = tmpChrIdx - 1;
-        // Location is used to property align svg and coordinates. we set the overflow coordinates to the overflow region
-        // in order to correctly place all the genes in multiple chromosomes
-        // then we set maxBp.current to the next new region we will fetch next time
-        tempObj['location'] = `${maxBp.current - bpRegionSize}:${
-          maxBp.current
-        }`;
-        //maxBp.current will now be based on the new chromosome region
-        maxBp.current = chrEnd + bpRegionSize;
-      } else {
+
         tmpRegion.push(
-          `${chrData[chrIndexRight.current]}` +
+          `${chrData[tmpChrIdx]}` +
             ':' +
-            `${maxBp.current - bpRegionSize}` +
+            `${chrStart + totalEndBp}` +
             '-' +
-            `${maxBp.current}` +
+            `${totalEndBp + chrEnd}` +
             '|' +
-            +`${maxBp.current - bpRegionSize}` +
+            `${0}` +
             '-' +
-            `${maxBp.current}`
+            `${chrEnd}`
         );
+        totalEndBp += chrEnd;
+
+        tmpChrIdx += 1;
       }
+      chrIndexRight.current = tmpChrIdx - 1;
 
-      let tmpMethylc: Array<any> = [];
-      let tmpResult: Array<any> = [];
-      let tmpBed: Array<any> = [];
-      let tmpBigWig: Array<any> = [];
-      let tmpDynseq: Array<any> = [];
-      let tmpHic: Array<any> = [];
-
-      for (let i = 0; i < tmpRegion.length; i++) {
-        let sectionRegion = tmpRegion[i];
-
-        const [curChrName, bpCoord] = sectionRegion.split(':');
-        const [totalBp, sectionBp] = bpCoord.split('|');
-
-        const [startRegion, endRegion] = totalBp.split('-');
-        const [sectionStart, sectionEnd] = sectionBp.split('-');
-
-        try {
-          const [
-            userRespond,
-            bedRespond,
-            bigWigRespond,
-            dynSeqRespond,
-            methylcRespond,
-            hicRespond,
-          ] = await Promise.all(
-            genome.defaultTracks.map((item) => {
-              const trackName = item.name;
-              if (trackName === 'refGene') {
-                return trackFetchFunction[trackName]({
-                  name: genome.name,
-                  chr: curChrName,
-                  start: sectionStart,
-                  end: sectionEnd,
-                });
-              } else if (trackName === 'hic') {
-                return trackFetchFunction.hic({
-                  straw: genome.defaultTracks[5].straw,
-
-                  option: defaultHic,
-                  start: Number(sectionStart),
-                  end: Number(sectionEnd),
-                });
-              } else {
-                return trackFetchFunction[trackName]({
-                  url: item.url,
-                  chr: curChrName,
-                  start: Number(sectionStart),
-                  end: Number(sectionEnd),
-                });
-              }
-            })
-          );
-
-          if (i !== 0) {
-            for (let i = 0; i < userRespond.length; i++) {
-              userRespond[i].txStart += Number(startRegion);
-              userRespond[i].txEnd += Number(startRegion);
-            }
-            for (let i = 0; i < bedRespond.length; i++) {
-              bedRespond[i].start += Number(startRegion);
-              bedRespond[i].end += Number(startRegion);
-            }
-            for (let i = 0; i < bigWigRespond.length; i++) {
-              bigWigRespond[i].start += Number(startRegion);
-              bigWigRespond[i].end += Number(startRegion);
-            }
-            for (let i = 0; i < dynSeqRespond.length; i++) {
-              dynSeqRespond[i].start += Number(startRegion);
-              dynSeqRespond[i].end += Number(startRegion);
-            }
-          }
-
-          tmpMethylc = [...tmpMethylc, ...methylcRespond];
-          tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
-          tmpResult = [...tmpResult, ...userRespond];
-          tmpBed = [...tmpBed, ...bedRespond];
-          tmpBigWig = [...tmpBigWig, ...bigWigRespond];
-          tmpHic = [...tmpHic, ...hicRespond];
-        } catch {}
-      }
-      if (tempObj['location'] === undefined) {
-        // if location is undefined that means view does not contain multiple chromosome
-        tempObj['location'] = `${maxBp.current - bpRegionSize}:${
-          maxBp.current
-        }`;
-        maxBp.current = maxBp.current + bpRegionSize;
-      }
-
-      tempObj['result'] = tmpResult;
-      tempObj['bedResult'] = tmpBed;
-      tempObj['bigWigResult'] = tmpBigWig;
-      tempObj['dynseqResult'] = tmpDynseq;
-      tempObj['methylcResult'] = tmpMethylc;
-      tempObj['hicResult'] = tmpHic;
-      tempObj['side'] = 'right';
-      console.log(tempObj, 'right');
-      if (initial === 0) {
-        tempObj['initial'] = 0;
-      } else {
-        tempObj['initial'] = 1;
-
-        minBp.current = minBp.current - bpRegionSize;
-      }
-
-      setTrackData({ ...tempObj });
-
-      setIsLoading(false);
+      // Location is used to property align svg and coordinates. we set the overflow coordinates to the overflow region
+      // in order to correctly place all the genes in multiple chromosomes
+      // then we set maxBp.current to the next new region we will fetch next time
+      tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
+      //maxBp.current will now be based on the new chromosome region
+      maxBp.current = chrEnd + bpRegionSize;
+    } else {
+      tmpRegion.push(
+        `${chrData[chrIndexRight.current]}` +
+          ':' +
+          `${maxBp.current - bpRegionSize}` +
+          '-' +
+          `${maxBp.current}` +
+          '|' +
+          +`${maxBp.current - bpRegionSize}` +
+          '-' +
+          `${maxBp.current}`
+      );
+      // if location is undefined that means view does not contain multiple chromosome
+      tempObj['location'] = `${maxBp.current - bpRegionSize}:${maxBp.current}`;
+      maxBp.current = maxBp.current + bpRegionSize;
     }
+
+    return tmpRegion;
   }
 
-  //________________________________________________________________________________________________________________________________________________________
-  //________________________________________________________________________________________________________________________________________________________
-
-  async function fetchGenomeData2() {
-    ///////-__________________________________________________________________________________________________________________________
+  function checkMultiChrLeft(tempObj: any) {
     let tmpRegion: Array<any> = [];
-    let tempObj = {};
-    let bigWigRespond;
-
-    let tmpBigWig: Array<any> = [];
     if (minBp.current < 0) {
       let totalEndBp = 0;
       let endBp = minBp.current + bpRegionSize;
@@ -564,8 +430,9 @@ function TrackManager(props) {
 
         tmpChrIdx -= 1;
       }
-      chrIndexLeft.current = tmpChrIdx + 1;
 
+      chrIndexLeft.current = tmpChrIdx + 1;
+      tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
       minBp.current = chrEnd - bpRegionSize;
     } else {
       tmpRegion.push(
@@ -580,6 +447,146 @@ function TrackManager(props) {
           `${minBp.current + bpRegionSize}`
       );
     }
+
+    return tmpRegion;
+  }
+  async function fetchGenomeData(initial: number = 0) {
+    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
+    if (initial === 2 || initial === 1) {
+      let hicResult = await trackFetchFunction.hic({
+        straw: genome.defaultTracks[5].straw,
+
+        option: defaultHic,
+
+        start: Number(bpX.current),
+        end: Number(bpX.current + bpRegionSize),
+      });
+
+      let tmpData2 = {};
+      tmpData2['hicResult'] = [...hicResult];
+      tmpData2['location'] = `${bpX.current}:${bpX.current + bpRegionSize}`;
+      setTrackData2({ ...tmpData2 });
+      setIsLoading2(false);
+    }
+
+    if (initial === 0 || initial === 1) {
+      let tempObj = {};
+      let tmpRegion = checkMultiChrRight(tempObj);
+
+      let tmpMethylc: Array<any> = [];
+      let tmpRefGene: Array<any> = [];
+      let tmpBed: Array<any> = [];
+      let tmpBigWig: Array<any> = [];
+      let tmpDynseq: Array<any> = [];
+      let tmpHic: Array<any> = [];
+
+      for (let i = 0; i < tmpRegion.length; i++) {
+        let sectionRegion = tmpRegion[i];
+
+        const [curChrName, bpCoord] = sectionRegion.split(':');
+        const [totalBp, sectionBp] = bpCoord.split('|');
+
+        const [startRegion, endRegion] = totalBp.split('-');
+        const [sectionStart, sectionEnd] = sectionBp.split('-');
+
+        try {
+          const [
+            refGeneRespond,
+            bedRespond,
+            bigWigRespond,
+            dynSeqRespond,
+            methylcRespond,
+            hicRespond,
+          ] = await Promise.all(
+            genome.defaultTracks.map((item) => {
+              const trackName = item.name;
+              if (trackName === 'refGene') {
+                return trackFetchFunction[trackName]({
+                  name: genome.name,
+                  chr: curChrName,
+                  start: sectionStart,
+                  end: sectionEnd,
+                });
+              } else if (trackName === 'hic') {
+                return trackFetchFunction.hic({
+                  straw: genome.defaultTracks[5].straw,
+
+                  option: defaultHic,
+                  start: Number(sectionStart),
+                  end: Number(sectionEnd),
+                });
+              } else {
+                return trackFetchFunction[trackName]({
+                  url: item.url,
+                  chr: curChrName,
+                  start: Number(sectionStart),
+                  end: Number(sectionEnd),
+                });
+              }
+            })
+          );
+
+          if (i !== 0) {
+            for (let i = 0; i < refGeneRespond.length; i++) {
+              refGeneRespond[i].txStart += Number(startRegion);
+              refGeneRespond[i].txEnd += Number(startRegion);
+            }
+            for (let i = 0; i < bedRespond.length; i++) {
+              bedRespond[i].start += Number(startRegion);
+              bedRespond[i].end += Number(startRegion);
+            }
+            for (let i = 0; i < bigWigRespond.length; i++) {
+              bigWigRespond[i].start += Number(startRegion);
+              bigWigRespond[i].end += Number(startRegion);
+            }
+            for (let i = 0; i < dynSeqRespond.length; i++) {
+              dynSeqRespond[i].start += Number(startRegion);
+              dynSeqRespond[i].end += Number(startRegion);
+            }
+          }
+
+          tmpMethylc = [...tmpMethylc, ...methylcRespond];
+          tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
+          tmpRefGene = [...tmpRefGene, ...refGeneRespond];
+          tmpBed = [...tmpBed, ...bedRespond];
+          tmpBigWig = [...tmpBigWig, ...bigWigRespond];
+          tmpHic = [...tmpHic, ...hicRespond];
+        } catch {}
+      }
+
+      tempObj['refGeneResult'] = tmpRefGene;
+      tempObj['bedResult'] = tmpBed;
+      tempObj['bigWigResult'] = tmpBigWig;
+      tempObj['dynseqResult'] = tmpDynseq;
+      tempObj['methylcResult'] = tmpMethylc;
+      tempObj['hicResult'] = tmpHic;
+      tempObj['side'] = 'right';
+      console.log(tempObj, 'right');
+      if (initial === 0) {
+        tempObj['initial'] = 0;
+      } else {
+        tempObj['initial'] = 1;
+
+        minBp.current = minBp.current - bpRegionSize;
+      }
+
+      setTrackData({ ...tempObj });
+
+      setIsLoading(false);
+    }
+  }
+
+  //________________________________________________________________________________________________________________________________________________________
+  //________________________________________________________________________________________________________________________________________________________
+
+  async function fetchGenomeData2() {
+    ///////-__________________________________________________________________________________________________________________________
+
+    let tempObj = {};
+
+    let tmpRegion = checkMultiChrLeft(tempObj);
+
+    let tmpBigWig: Array<any> = [];
 
     let tmpMethylc: Array<any> = [];
     let tmpDynseq: Array<any> = [];
@@ -685,20 +692,24 @@ function TrackManager(props) {
     const result = tmpResult;
     const bigWigResult = tmpBigWig;
     const dynSeqResult = tmpDynseq;
-    tempObj['result'] = result;
+
+    if (tempObj['location'] === undefined) {
+      // if location is undefined that means view does not contain multiple chromosome
+      tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
+      minBp.current = minBp.current - bpRegionSize;
+    }
+    tempObj['refGeneResult'] = result;
     tempObj['bedResult'] = bedResult;
     tempObj['bigWigResult'] = bigWigResult;
     tempObj['dynseqResult'] = dynSeqResult;
     tempObj['methylcResult'] = tmpMethylc;
     tempObj['hicResult'] = tmpHic;
     tempObj['side'] = 'left';
-    tempObj['location'] = `${minBp.current}:${minBp.current + bpRegionSize}`;
+
     ///////-__________________________________________________________________________________________________________________________
-    console.log(tempObj);
+
     setTrackData({ ...tempObj });
-    if (minBp.current >= 0) {
-      minBp.current = minBp.current - bpRegionSize;
-    }
+
     setIsLoading(false);
   }
 
@@ -716,7 +727,6 @@ function TrackManager(props) {
     console.log(windowWidth);
     function getData() {
       fetchGenomeData(1);
-      fetchGenomeData(2);
     }
 
     getData();
@@ -737,8 +747,10 @@ function TrackManager(props) {
       <button onClick={handleClick}>add bed</button>
 
       <div>{bpX.current}</div>
-      <div>{dragX.current}</div>
-      {isLoading ? (
+      <div>
+        {chrData[chrIndexRight.current]}__XPOS: {dragX.current}px
+      </div>
+      {isLoading || isLoading2 ? (
         <CircularProgress
           variant="indeterminate"
           disableShrink
@@ -798,34 +810,6 @@ function TrackManager(props) {
               trackData2={trackData2}
             />
           ))}
-
-          {
-            // DIDNT WORK BECAUSE THEY DIUDNT WHAT TRACK WIDTH Was}
-          }
-
-          {/* <BigWigTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={trackData}
-            side={side}
-            HOXA10
-            
-            windowWidth={windowWidth}
-          />
-          <MethylcTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={trackData}
-            side={side}
-            windowWidth={windowWidth}
-          />
-          <DynseqTrack
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={trackData}
-            side={side}
-            windowWidth={windowWidth}
-          /> */}
         </div>
       </div>
     </div>

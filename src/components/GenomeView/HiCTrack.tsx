@@ -94,7 +94,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
 
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
-  const [option, setOption] = useState(1);
+
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
   // step 1 filtered

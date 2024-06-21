@@ -2,14 +2,14 @@ import React, { memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 
-interface GenRefTrackProps {
+interface RefGeneTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   windowWidth?: number;
 }
-const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
+const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
   bpRegionSize,
   bpToPx,
   trackData,
@@ -21,7 +21,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(':');
-    result = trackData!.result;
+    result = trackData!.refGeneResult;
   }
 
   start = Number(start);
@@ -546,6 +546,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     if (trackData!.side === 'right') {
       fetchGenomeData();
     } else if (trackData!.side === 'left') {
+      console.log(trackData);
       fetchGenomeData2();
     }
   }, [trackData]);
@@ -611,4 +612,4 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   );
 });
 
-export default memo(GenRefTrack);
+export default memo(RefGeneTrack);
