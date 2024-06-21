@@ -139,8 +139,7 @@ function TrackManager(props) {
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
   const bpToPx = bpRegionSize / windowWidth;
-  const bpRegionSize = rightStartCoord - leftStartCoord;
-  const bpToPx = bpRegionSize / windowWidth;
+
   let allChrData = genome.chromosomes;
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -782,7 +781,7 @@ function TrackManager(props) {
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth}px`,
-          width: `${windowWidth}px`,
+
           backgroundColor: 'gainsboro',
         }}
       >
