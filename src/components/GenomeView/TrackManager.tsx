@@ -290,7 +290,7 @@ function TrackManager(props) {
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
         t.push(windowWidth);
-        t.push(windowWidth);
+
         return t;
       });
 

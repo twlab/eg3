@@ -117,6 +117,7 @@ function GenomeHub(props: any) {
       ];
       newList.chrOrder = items;
       const serializedArray = JSON.stringify(newList);
+
       sessionStorage.setItem('myArray', serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {
         setGenomeList(new Array<any>(newList));
