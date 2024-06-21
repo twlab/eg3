@@ -108,6 +108,12 @@ function GenomeHub(props: any) {
 
           genome: 'hg19',
         },
+        {
+          name: 'genomealign',
+
+          genome: 'hg38',
+          url: 'https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz.tbi',
+        },
       ];
       newList.chrOrder = items;
       const serializedArray = JSON.stringify(newList);
@@ -189,6 +195,12 @@ function GenomeHub(props: any) {
 
               genome: 'hg19',
             },
+            {
+              name: 'genomealign',
+
+              genome: 'hg38',
+              url: 'https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz',
+            },
           ],
           annotationTrackData: AnnotationTrackData['HG19'],
           publicHubData: PublicHubAllData['HG19']['publicHubData'],
@@ -213,6 +225,7 @@ function GenomeHub(props: any) {
   useEffect(() => {
     async function handler() {
       if (genomeList.length !== 0) {
+        console.log(genomeList);
         setTrackManagerView(
           <TrackManager
             currGenome={genomeList[0]}

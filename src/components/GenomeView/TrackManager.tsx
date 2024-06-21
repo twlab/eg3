@@ -55,7 +55,6 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
   hic: HiCTrack,
-
   // Add more components as needed
 };
 
@@ -116,27 +115,30 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.end
     );
   },
+  genomealign: function genomealignFetch(regionData: any) {
+    return GetTabixData(
+      regionData.url,
+      regionData.chr,
+      regionData.start,
+      regionData.end
+    );
+  },
 };
+//To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
+//TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
+// use interface key to get certain track function based on information the user clicked on.
+// We want to sent a defaultTrack List of component of trackcomponent already from genomerooot and use it in trackmanager instead of
+// creating the component in trackmanager/
+//LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
 
 function TrackManager(props) {
-  //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
-  //TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
-  // use interface key to get certain track function based on information the user clicked on.
-  // We want to sent a defaultTrack List of component of trackcomponent already from genomerooot and use it in trackmanager instead of
-  // creating the component in trackmanager/
-  //LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
-  // for ... track:
-  //if(genome.defaultTrack[i] = ref)
-  // else if (bigWig)
-  // else if (hic)
-  //getHic(genome.defaultTrack.staw,....)
-
   const genome = props.currGenome;
-
   const [region, coord] = genome.defaultRegion.split(':');
   const [leftStartStr, rightStartStr] = coord.split('-');
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
+  const bpRegionSize = rightStartCoord - leftStartCoord;
+  const bpToPx = bpRegionSize / windowWidth;
   const bpRegionSize = rightStartCoord - leftStartCoord;
   const bpToPx = bpRegionSize / windowWidth;
   let allChrData = genome.chromosomes;
@@ -146,7 +148,6 @@ function TrackManager(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
-
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -177,9 +178,11 @@ function TrackManager(props) {
   const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
-  for (let i = 0; i < genome.defaultTracks.length; i++) {
+
+  for (let i = 0; i < genome.defaultTracks.length - 1; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
+
   function sumArray(numbers) {
     let total = 0;
     for (let i = 0; i < numbers.length; i++) {
@@ -287,6 +290,7 @@ function TrackManager(props) {
       console.log('trigger right');
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
+        t.push(windowWidth);
         t.push(windowWidth);
         return t;
       });
@@ -707,7 +711,6 @@ function TrackManager(props) {
     tempObj['side'] = 'left';
 
     ///////-__________________________________________________________________________________________________________________________
-
     setTrackData({ ...tempObj });
 
     setIsLoading(false);
@@ -778,6 +781,7 @@ function TrackManager(props) {
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
+          width: `${windowWidth}px`,
           width: `${windowWidth}px`,
           backgroundColor: 'gainsboro',
         }}

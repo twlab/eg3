@@ -335,7 +335,6 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
             }
             continue;
           }
-
           //loop to check which other intervals the current strand overlaps
           while (idx >= 0 && curStrand.txEnd >= strandIntervalList[idx][0]) {
             if (strandIntervalList[idx][2].length - 1 > curHighestLvl[1]) {
@@ -561,6 +560,7 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
               <svg
                 key={index}
                 width={`${windowWidth}px`}
+                width={`${windowWidth}px`}
                 height={'250'}
                 style={{
                   overflow: 'visible',
@@ -568,7 +568,9 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
               >
                 <line
                   x1={`${windowWidth}px`}
+                  x1={`${windowWidth}px`}
                   y1="0"
+                  x2={`${windowWidth}px`}
                   x2={`${windowWidth}px`}
                   y2={'100%'}
                   stroke="gray"
@@ -590,6 +592,7 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
             <svg
               key={leftTrackGenes.length - index - 1}
               width={`${windowWidth}px`}
+              width={`${windowWidth}px`}
               height={'250'}
               style={{
                 overflow: 'visible',
@@ -597,7 +600,9 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
             >
               <line
                 x1={`${windowWidth}px`}
+                x1={`${windowWidth}px`}
                 y1="0"
+                x2={`${windowWidth}px`}
                 x2={`${windowWidth}px`}
                 y2={'100%'}
                 stroke="gray"

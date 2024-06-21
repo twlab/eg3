@@ -2,6 +2,8 @@ import { TabixIndexedFile } from '@gmod/tabix';
 import { RemoteFile } from 'generic-filehandle';
 
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
+//This will get bed data .gz and add a .tbi if there url with tbi it will fail
+//to Do: make a check if url has .tbi
 function GetTabixData(url, chr, start, end) {
   function ensureMaxListLength<T>(list: T[], limit: number): T[] {
     if (list.length <= limit) {
