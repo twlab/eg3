@@ -2,14 +2,14 @@ import React, { memo } from 'react';
 import { useEffect, useRef, useState } from 'react';
 const AWS_API = 'https://lambda.epigenomegateway.org/v2';
 
-interface GenRefTrackProps {
+interface RefGeneTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   windowWidth?: number;
 }
-const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
+const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
   bpRegionSize,
   bpToPx,
   trackData,
@@ -21,9 +21,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(':');
-    result = trackData!.result;
+    result = trackData!.refGeneResult;
   }
-  console.log(result);
+
   start = Number(start);
   end = Number(end);
 
@@ -489,9 +489,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
                 />
               );
             }
-            if (trackGeneData.startTrackPos > singleStrand.txStart) {
-              console.log(singleStrand, trackGeneData.startTrackPos);
-            }
+
             strandHtml.push(
               <React.Fragment key={singleStrand.txStart + singleStrand.txEnd}>
                 {children.map((item, index) => item)}
@@ -547,6 +545,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
     if (trackData!.side === 'right') {
       fetchGenomeData();
     } else if (trackData!.side === 'left') {
+      console.log(trackData);
       fetchGenomeData2();
     }
   }, [trackData]);
@@ -561,6 +560,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               <svg
                 key={index}
                 width={`${windowWidth}px`}
+                width={`${windowWidth}px`}
                 height={'250'}
                 style={{
                   overflow: 'visible',
@@ -568,7 +568,9 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               >
                 <line
                   x1={`${windowWidth}px`}
+                  x1={`${windowWidth}px`}
                   y1="0"
+                  x2={`${windowWidth}px`}
                   x2={`${windowWidth}px`}
                   y2={'100%'}
                   stroke="gray"
@@ -580,7 +582,7 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
               </svg>
             )
             //  : (
-            //   <div style={{ display: 'flex', width: windowWidth  }}>
+            //   <div style={{ display: 'flex', width: windowWidth }}>
             //     ....LOADING
             //   </div>
             // )
@@ -590,13 +592,17 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
             <svg
               key={leftTrackGenes.length - index - 1}
               width={`${windowWidth}px`}
+              width={`${windowWidth}px`}
               height={'250'}
-              style={{ display: 'inline-block' }}
-              overflow="visible"
+              style={{
+                overflow: 'visible',
+              }}
             >
               <line
                 x1={`${windowWidth}px`}
+                x1={`${windowWidth}px`}
                 y1="0"
+                x2={`${windowWidth}px`}
                 x2={`${windowWidth}px`}
                 y2={'100%'}
                 stroke="gray"
@@ -611,4 +617,4 @@ const GenRefTrack: React.FC<GenRefTrackProps> = memo(function GenRefTrack({
   );
 });
 
-export default memo(GenRefTrack);
+export default memo(RefGeneTrack);

@@ -59,6 +59,9 @@ interface BedTrackProps {
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   windowWidth?: number;
+  totalSize?: number;
+  trackData2?: { [key: string]: any }; // Replace with the actual type
+  dragXDist?: number;
 }
 const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   bpRegionSize,
@@ -66,15 +69,16 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   trackData,
   side,
   windowWidth = 0,
+  totalSize = 0,
+  trackData2,
+  dragXDist,
 }) {
   let start, end;
 
   let result;
-  if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
-    result = trackData!.hicResult;
-    bpRegionSize = bpRegionSize;
-    bpToPx = bpToPx;
+  if (Object.keys(trackData2!).length > 0) {
+    [start, end] = trackData2!.location.split(':');
+    result = trackData2!.hicResult;
   }
 
   start = Number(start);
@@ -83,11 +87,11 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+  const [hicOption, setHicOption] = useState(1);
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
-  const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
 
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
 
@@ -102,10 +106,12 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
     let startPos;
     startPos = start;
-
+    if (result === undefined) {
+      return;
+    }
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result) {
+    if (result && hicOption === 0) {
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
@@ -141,8 +147,13 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     let tmpObj = {};
     tmpObj['placedInteraction'] = placedInteraction;
     tmpObj['polyCoord'] = polyCoord;
-
-    setRightTrack([...rightTrackGenes, tmpObj]);
+    if (hicOption === 0) {
+      setRightTrack([...rightTrackGenes, tmpObj]);
+      setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
+    } else {
+      setRightTrack([tmpObj]);
+      setCanvasRefR(new Array<any>(newCanvasRef));
+    }
 
     if (trackData!.initial) {
       const newCanvasRefL = createRef();
@@ -151,8 +162,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRefL]);
       setLeftTrack([...leftTrackGenes, tmpObj]);
     }
-
-    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
 
     // CHECK if there are overlapping strands to the next track
 
@@ -395,8 +404,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }
 
   useEffect(() => {
-    if (side === 'left' && leftTrackGenes.length > 0) {
-      console.log(leftTrackGenes);
+    if (side === 'left') {
       leftTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefL[index].current) {
           drawCanvas(
@@ -405,7 +413,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
           );
         }
       });
-    } else if (side === 'right' && rightTrackGenes.length > 0) {
+    } else if (side === 'right') {
       rightTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefR[index].current) {
           drawCanvas(
@@ -428,7 +436,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {
-      console.log(leftTrackGenes);
       drawCanvas(
         leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
         canvasRefL[canvasRefL.length - 1].current
@@ -437,23 +444,53 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }, [leftTrackGenes]);
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (side === 'right') {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (side === 'left') {
       fetchGenomeData2();
     }
-  }, [trackData]);
+  }, [trackData2]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        position: 'relative',
+      }}
+    >
+      {side === 'right' ? (
+        canvasRefR.map((item, index) => (
+          <canvas
+            key={index}
+            ref={item}
+            height={'1000'}
+            width={windowWidth}
+            style={{ position: 'absolute', left: `${-dragXDist!}px` }}
+          />
+        ))
+      ) : (
+        <div style={{ display: 'flex' }}>
+          {canvasRefL.map((item, index) => (
+            <canvas
+              key={canvasRefL.length - index - 1}
+              ref={canvasRefL[canvasRefL.length - index - 1]}
+              height={'1000'}
+              width={windowWidth}
+              style={{}}
+            />
+          ))}
+        </div>
+      )}
+
       {side === 'right' ? (
         <div
           key={'hicRight'}
           style={{
             opacity: 0.5,
-            display: 'flex',
+
             position: 'absolute',
+            left: `${-dragXDist!}px`,
           }}
         >
           {rightTrackGenes.map((item, index) => (
@@ -480,31 +517,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
               data={leftTrackGenes[leftTrackGenes.length - index - 1]}
               windowWidth={windowWidth}
               trackIdx={leftTrackGenes.length - index - 1}
-            />
-          ))}
-        </div>
-      )}
-      {side === 'right' ? (
-        <div style={{ display: 'flex' }}>
-          {canvasRefR.map((item, index) => (
-            <canvas
-              key={index}
-              ref={item}
-              height={'1000'}
-              width={`${windowWidth}px`}
-              style={{}}
-            />
-          ))}
-        </div>
-      ) : (
-        <div style={{ display: 'flex' }}>
-          {canvasRefL.map((item, index) => (
-            <canvas
-              key={canvasRefL.length - index - 1}
-              ref={canvasRefL[canvasRefL.length - index - 1]}
-              height={'1000'}
-              width={`${windowWidth}px`}
-              style={{}}
             />
           ))}
         </div>

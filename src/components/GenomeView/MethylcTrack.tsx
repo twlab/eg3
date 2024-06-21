@@ -341,6 +341,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         }
       });
     } else if (side === 'right') {
+      console.log('2');
       rightTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefR[index].current && canvasRefR2[index].current) {
           let length = rightTrackGenes[index].canvasData.length;
@@ -390,6 +391,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                 data={rightTrackGenes[index]}
                 windowWidth={windowWidth}
                 trackIdx={index}
+                side={'right'}
               />
             ))}
           </div>
@@ -444,6 +446,8 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                 data={leftTrackGenes[leftTrackGenes.length - 1 - index]}
                 windowWidth={windowWidth}
                 trackIdx={leftTrackGenes.length - 1 - index}
+                length={index}
+                side={'left'}
               />
             ))}
           </div>
@@ -462,7 +466,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
             <div style={{ display: 'flex', flexDirection: 'row' }}>
               {canvasRefL2.map((item, index) => (
                 <canvas
-                  key={canvasRefL2.length - index - 1 + 3343434}
+                  key={canvasRefL2.length - index - 1}
                   ref={canvasRefL2[canvasRefL2.length - index - 1]}
                   height={'40'}
                   width={`${windowWidth}px`}

@@ -45,7 +45,6 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result[0]) {
-      result = result[0];
       var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
@@ -94,12 +93,12 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     startPos = start;
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-
-    if (result !== undefined && result.length > 0) {
-      result[0].sort((a, b) => {
+    if (result[0]) {
+      var resultIdx = 0;
+      result.sort((a, b) => {
         return b.end - a.end;
       });
-      result = result[0];
+
       var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
@@ -191,6 +190,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               <svg
                 key={index}
                 width={`${windowWidth}px`}
+                width={`${windowWidth}px`}
                 height={'40'}
                 overflow="visible"
               >
@@ -198,7 +198,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
               </svg>
             )
             // : (
-            //   <div style={{ display: 'flex', width: windowWidth  }}>
+            //   <div style={{ display: 'flex', width: windowWidth }}>
             //     ....LOADING
             //   </div>
             // )
@@ -207,6 +207,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
             // index <= rightTrackGenes.length - 1 ?
             <svg
               key={leftTrackGenes.length - index - 1}
+              width={`${windowWidth}px`}
               width={`${windowWidth}px`}
               height={'40'}
               style={{ display: 'inline-block' }}

@@ -34,7 +34,10 @@ function GenomeHub(props: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
       ...curGen.genome.defaultTracks,
-      { name: 'bed' },
+      {
+        name: 'bed',
+        url: 'https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz',
+      },
     ];
     let newList = [curGen.genome];
 
@@ -150,6 +153,9 @@ function GenomeHub(props: any) {
           name: 'hg38',
           species: 'human',
           // testing mutiple chr 'chr7:150924404-152924404'
+
+          //chr7:27053397-27373765
+          // chr7:10000-20000
           defaultRegion: 'chr7:27053397-27373765',
           chrOrder: items,
           chromosomes: chrObj,

@@ -5,11 +5,15 @@ interface MethylcHoverProps {
   data: { [key: string]: any };
   windowWidth: number;
   trackIdx: number;
+  length?: number;
+  side: string;
 }
 const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
   data,
   windowWidth,
   trackIdx,
+  length = 0,
+  side,
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -27,7 +31,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
-      if (dataIdx < windowWidth * 2) {
+      if (dataIdx < windowWidth) {
         setPosition({
           ...position,
           top: rect.bottom,
@@ -88,30 +92,36 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
         key={`tooltip-${trackIdx}`} // Use a unique key
         ref={targetRef}
         style={{
-          width: windowWidth * 2,
+          width: windowWidth,
           height: 80,
         }}
       ></div>
+      {isVisible ? (
+        <div
+          style={{
+            // opacity: isVisible ? '1' : '0',
+            display: 'flex',
+            opacity: 1,
+            left:
+              side === 'right'
+                ? -position.left + windowWidth / 3 + trackIdx * windowWidth
+                : -position.left + windowWidth / 3 + length * windowWidth,
+            position: 'absolute',
+            backgroundColor: '#333',
+            color: '#fff',
+            padding: 8,
+            borderRadius: 4,
+            fontSize: 14,
 
-      <div
-        style={{
-          opacity: isVisible ? '1' : '0',
-          display: 'flex',
-
-          left: -position.left + windowWidth / 3 + trackIdx * windowWidth * 2,
-          position: 'absolute',
-          backgroundColor: '#333',
-          color: '#fff',
-          padding: 8,
-          borderRadius: 4,
-          fontSize: 14,
-
-          transition: 'opacity 0.1s',
-        }}
-      >
-        {trackIdx}
-        {position.toolTip}
-      </div>
+            transition: 'opacity 0.1s',
+          }}
+        >
+          {trackIdx}
+          {position.toolTip}
+        </div>
+      ) : (
+        ''
+      )}
     </div>
   );
 });
