@@ -336,21 +336,29 @@ function TrackManager(props) {
         let chrStart = 0;
 
         if (chrLength[tmpChrIdx] + totalEndBp < maxBp.current) {
+          // here we check if maxBp overflows into the next chr region. we do not set any value
+          // this is to determine if maxBp stop in the curr region or continues to overflow into the next chr..
           chrEnd = chrLength[tmpChrIdx];
         } else {
-          // maxBp.current is the end distance measured in bp moved
+          // maxBp.current is the end distance the size of the view region measured in bp moved
           // totalEndBp is how many chromosome length maxBp is greater than
-          // subtracting the two will give us the starting point in the next chromosome in the next fetch
+          // subtracting the two will give us the starting point in the next chromosome in the next fetch or
+          // the size of the next chr length if the end region of maxBp.current is still greater.
           chrEnd = maxBp.current - totalEndBp;
         }
 
         tmpRegion.push(
+          // if maxBp is not greater than the curr chr length then we take the cur chr length
+          // the start total bp coord is the totalEndBp which is all the fully chr length that maxBp is greater than
+          // the end is the totalEndBp added by chrEnd. chrEnd is the remainder that maxBp overflows into the next chr region because it is not greater than that region length
+
           `${chrData[tmpChrIdx]}` +
             ":" +
             `${chrStart + totalEndBp}` +
             "-" +
             `${totalEndBp + chrEnd}` +
             "|" +
+            // if maxBp is greater still than the curr chr length we just add the entire chr length
             `${0}` +
             "-" +
             `${chrEnd}`
@@ -529,6 +537,9 @@ function TrackManager(props) {
             })
           );
           console.log(bigWigRespond, methylcRespond);
+          // maybe move this part into the track component and let the coord get added as
+          // we compute the result into converted value to display
+          // just sent the value we need to add for the part.
           if (i !== 0) {
             for (let i = 0; i < refGeneRespond.length; i++) {
               refGeneRespond[i].txStart += Number(startRegion);
