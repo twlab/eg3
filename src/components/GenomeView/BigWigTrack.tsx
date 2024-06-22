@@ -1,7 +1,7 @@
-import { scaleLinear } from 'd3-scale';
-import React, { createRef, memo } from 'react';
-import { useEffect, useRef, useState } from 'react';
-import worker_script from '../../worker/bigWigWorker';
+import { scaleLinear } from "d3-scale";
+import React, { createRef, memo } from "react";
+import { useEffect, useRef, useState } from "react";
+import worker_script from "../../worker/bigWigWorker";
 let worker: Worker;
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -19,9 +19,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 }) {
   let start, end;
 
-  let result;
+  let result: Array<any> = [];
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
+    [start, end] = trackData!.location.split(":");
     result = trackData!.bigWigResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
@@ -53,7 +53,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     scales,
     height: number = 40
   ) {
-    let context = canvasRef.current.getContext('2d');
+    let context = canvasRef.current.getContext("2d");
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
     for (let i = startRange; i < endRange; i++) {
@@ -61,7 +61,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
         // going through width pixels
         // i = canvas pixel xpos
         const drawY = scales(aggFeatures[i]);
-        context.fillStyle = 'blue';
+        context.fillStyle = "blue";
         context.fillRect(i, 40 - drawY, 1, drawY);
       }
     }
@@ -75,8 +75,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result[0]) {
-      result = result[0];
+    if (result !== undefined && result.length > 0) {
       var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
@@ -206,7 +205,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }
 
   useEffect(() => {
-    if (side === 'left') {
+    if (side === "left") {
       if (leftTrackGenes.length != 0) {
         leftTrackGenes.forEach((canvasRef, index) => {
           if (canvasRefL[index].current) {
@@ -221,7 +220,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
           }
         });
       }
-    } else if (side === 'right') {
+    } else if (side === "right") {
       if (rightTrackGenes.length != 0) {
         rightTrackGenes.forEach((canvasRef, index) => {
           if (canvasRefR[index].current) {
@@ -240,21 +239,21 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [side]);
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (trackData!.side === "right") {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (trackData!.side === "left") {
       fetchGenomeData2();
     }
   }, [trackData]);
 
   return (
-    <div style={{ display: 'flex' }}>
-      {side === 'right'
+    <div style={{ display: "flex" }}>
+      {side === "right"
         ? canvasRefR.map((item, index) => (
             <canvas
               key={index}
               ref={item}
-              height={'40'}
+              height={"40"}
               width={`${windowWidth}px`}
               style={{}}
             />
@@ -263,7 +262,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
             <canvas
               key={canvasRefL.length - index - 1}
               ref={canvasRefL[canvasRefL.length - index - 1]}
-              height={'40'}
+              height={"40"}
               width={`${windowWidth}px`}
               style={{}}
             />

@@ -1,15 +1,15 @@
-import { scaleLinear } from 'd3-scale';
-import React, { createRef, memo } from 'react';
-import { useEffect, useRef, useState } from 'react';
-import worker_script from '../../worker/worker';
-import TestToolTip from './commonComponents/hover/tooltip';
+import { scaleLinear } from "d3-scale";
+import React, { createRef, memo } from "react";
+import { useEffect, useRef, useState } from "react";
+import worker_script from "../../worker/worker";
+import TestToolTip from "./commonComponents/hover/tooltip";
 // SCrolling to 80% view on current epi browser matches default in eg3
 let worker: Worker;
 const VERTICAL_PADDING = 0;
 const DEFAULT_COLORS_FOR_CONTEXT = {
-  CG: { color: 'rgb(100,139,216)', background: '#d9d9d9' },
-  CHG: { color: 'rgb(255,148,77)', background: '#ffe0cc' },
-  CHH: { color: 'rgb(255,0,255)', background: '#ffe5ff' },
+  CG: { color: "rgb(100,139,216)", background: "#d9d9d9" },
+  CHG: { color: "rgb(255,148,77)", background: "#ffe0cc" },
+  CHH: { color: "rgb(255,0,255)", background: "#ffe5ff" },
 };
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -29,7 +29,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
+    [start, end] = trackData!.location.split(":");
     result = trackData!.methylcResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
@@ -60,10 +60,8 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     startPos = start;
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-
-    if (result[0]) {
-      result = result[0];
-
+    console.log(result);
+    if (result !== undefined && result.length > 0) {
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
         const curStrand = result[i];
@@ -109,7 +107,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       let converted = event.data;
       let scales = computeScales(converted);
       let length = converted.length;
-
+      console.log(converted);
       drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
       setRightTrack([
         ...rightTrackGenes,
@@ -262,8 +260,9 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     scales,
     canvasRefReverse
   ) {
-    let context = canvasRef.current.getContext('2d');
-    let contextRev = canvasRefReverse.current.getContext('2d');
+    console.log(converted);
+    let context = canvasRef.current.getContext("2d");
+    let contextRev = canvasRefReverse.current.getContext("2d");
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
@@ -285,7 +284,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         const y1 = scales.depthToY(currRecord.depth);
         const y2 = scales.depthToY(nextRecord.depth);
 
-        context.strokeStyle = '#525252';
+        context.strokeStyle = "#525252";
         context.beginPath();
         context.moveTo(j, y1);
         context.lineTo(j + 1, y2);
@@ -294,7 +293,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         const y1Rev = scales.depthToY(currRecordRev.depth);
         const y2Rev = scales.depthToY(nextRecordRev.depth);
 
-        contextRev.strokeStyle = '#525252';
+        contextRev.strokeStyle = "#525252";
         contextRev.beginPath();
         contextRev.moveTo(j, 40 - y1Rev);
         contextRev.lineTo(j + 1, 40 - y2Rev);
@@ -326,7 +325,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   }
 
   useEffect(() => {
-    if (side === 'left') {
+    if (side === "left") {
       leftTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefL[index].current && canvasRefL2[index].current) {
           let length = leftTrackGenes[index].canvasData.length;
@@ -340,8 +339,8 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
           );
         }
       });
-    } else if (side === 'right') {
-      console.log('2');
+    } else if (side === "right") {
+      console.log("2");
       rightTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefR[index].current && canvasRefR2[index].current) {
           let length = rightTrackGenes[index].canvasData.length;
@@ -359,9 +358,9 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   }, [side]);
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (trackData!.side === "right") {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (trackData!.side === "left") {
       fetchGenomeData2();
     }
   }, [trackData]);
@@ -369,17 +368,17 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   return (
     <div
       style={{
-        height: '300px',
-        position: 'relative',
+        height: "300px",
+        position: "relative",
       }}
     >
-      {side === 'right' ? (
+      {side === "right" ? (
         <>
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'row',
-              position: 'absolute',
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
               opacity: 0.5,
 
               zIndex: 3,
@@ -391,36 +390,36 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                 data={rightTrackGenes[index]}
                 windowWidth={windowWidth}
                 trackIdx={index}
-                side={'right'}
+                side={"right"}
               />
             ))}
           </div>
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
+              display: "flex",
+              flexDirection: "column",
 
               zIndex: 2,
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'row' }}>
+            <div style={{ display: "flex", flexDirection: "row" }}>
               {canvasRefR.map((item, index) => (
                 <canvas
                   key={index}
                   ref={item}
-                  height={'40'}
+                  height={"40"}
                   width={`${windowWidth}px`}
                   style={{}}
                 />
               ))}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'row' }}>
+            <div style={{ display: "flex", flexDirection: "row" }}>
               {canvasRefR2.map((item, index) => (
                 <canvas
                   key={index + 32}
                   ref={item}
-                  height={'40'}
+                  height={"40"}
                   width={`${windowWidth}px`}
                   style={{}}
                 />
@@ -432,9 +431,9 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         <>
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'row',
-              position: 'absolute',
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
               opacity: 0.5,
 
               zIndex: 3,
@@ -447,28 +446,28 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
                 windowWidth={windowWidth}
                 trackIdx={leftTrackGenes.length - 1 - index}
                 length={index}
-                side={'left'}
+                side={"left"}
               />
             ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", flexDirection: "row" }}>
               {canvasRefL.map((item, index) => (
                 <canvas
                   key={canvasRefL.length - index - 1}
                   ref={canvasRefL[canvasRefL.length - index - 1]}
-                  height={'40'}
+                  height={"40"}
                   width={`${windowWidth}px`}
                   style={{}}
                 />
               ))}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'row' }}>
+            <div style={{ display: "flex", flexDirection: "row" }}>
               {canvasRefL2.map((item, index) => (
                 <canvas
                   key={canvasRefL2.length - index - 1}
                   ref={canvasRefL2[canvasRefL2.length - index - 1]}
-                  height={'40'}
+                  height={"40"}
                   width={`${windowWidth}px`}
                   style={{}}
                 />

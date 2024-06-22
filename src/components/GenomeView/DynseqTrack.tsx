@@ -1,8 +1,8 @@
-import { scaleLinear } from 'd3-scale';
-import React, { createRef, memo } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { scaleLinear } from "d3-scale";
+import React, { createRef, memo } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import worker_script from '../../worker/dynseqWorker';
+import worker_script from "../../worker/dynseqWorker";
 let worker: Worker;
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -22,7 +22,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
+    [start, end] = trackData!.location.split(":");
     result = trackData!.dynseqResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
@@ -59,8 +59,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result[0]) {
-      result = result[0];
+    if (result !== undefined && result.length > 0) {
       var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
@@ -242,15 +241,15 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     scales,
     canvasRefReverse
   ) {
-    let context = canvasRef.current.getContext('2d');
-    let contextRev = canvasRefReverse.current.getContext('2d');
+    let context = canvasRef.current.getContext("2d");
+    let contextRev = canvasRefReverse.current.getContext("2d");
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
     for (let i = startRange; i < endRange; i++) {
       if (converted.forward[i] !== 0) {
-        context.fillStyle = 'blue';
+        context.fillStyle = "blue";
         const drawY = scales.valueToY(converted.forward[i]);
 
         context.fillRect(i, drawY, 1, 20 - drawY);
@@ -258,7 +257,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
       if (converted.reverse[i] !== 0) {
         const height = scales.valueToYReverse(converted.reverse[i]);
 
-        contextRev.fillStyle = 'red';
+        contextRev.fillStyle = "red";
 
         contextRev.fillRect(i, 0, 1, height);
       }
@@ -270,7 +269,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     regionStart,
     regionEnd,
     height: number = 40,
-    yScale: string = 'auto',
+    yScale: string = "auto",
     yMin: number = 0,
     yMax: number = 10
   ) {
@@ -320,7 +319,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     if (
       xValues2.length > 0 &&
-      (yScale === 'auto' || (yScale === 'fixed' && yMin < 0))
+      (yScale === "auto" || (yScale === "fixed" && yMin < 0))
     ) {
       return {
         axisScale: scaleLinear()
@@ -378,7 +377,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }
 
   useEffect(() => {
-    if (side === 'left') {
+    if (side === "left") {
       if (leftTrackGenes.length != 0) {
         leftTrackGenes.forEach((canvasRef, index) => {
           if (canvasRefL[index].current && canvasRefL2[index].current) {
@@ -395,7 +394,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
           }
         });
       }
-    } else if (side === 'right') {
+    } else if (side === "right") {
       if (rightTrackGenes.length != 0) {
         rightTrackGenes.forEach((canvasRef, index) => {
           if (canvasRefR[index].current && canvasRefR2[index].current) {
@@ -415,34 +414,34 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   }, [side]);
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (trackData!.side === "right") {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (trackData!.side === "left") {
       fetchGenomeData2();
     }
   }, [trackData]);
 
   return (
-    <div style={{ height: '40px' }}>
-      {side === 'right' ? (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
+    <div style={{ height: "40px" }}>
+      {side === "right" ? (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", flexDirection: "row" }}>
             {canvasRefR.map((item, index) => (
               <canvas
                 key={index}
                 ref={item}
-                height={'20'}
+                height={"20"}
                 width={`${windowWidth}px`}
                 style={{}}
               />
             ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <div style={{ display: "flex", flexDirection: "row" }}>
             {canvasRefR2.map((item, index) => (
               <canvas
                 key={index + 32}
                 ref={item}
-                height={'20'}
+                height={"20"}
                 width={`${windowWidth}px`}
                 style={{}}
               />
@@ -450,24 +449,24 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", flexDirection: "row" }}>
             {canvasRefL.map((item, index) => (
               <canvas
                 key={canvasRefL.length - index - 1}
                 ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={'20'}
+                height={"20"}
                 width={`${windowWidth}px`}
                 style={{}}
               />
             ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <div style={{ display: "flex", flexDirection: "row" }}>
             {canvasRefL2.map((item, index) => (
               <canvas
                 key={canvasRefL2.length - index - 1 + 3343434}
                 ref={canvasRefL2[canvasRefL2.length - index - 1]}
-                height={'20'}
+                height={"20"}
                 width={`${windowWidth}px`}
                 style={{}}
               />

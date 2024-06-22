@@ -528,7 +528,7 @@ function TrackManager(props) {
               }
             })
           );
-
+          console.log(bigWigRespond, methylcRespond);
           if (i !== 0) {
             for (let i = 0; i < refGeneRespond.length; i++) {
               refGeneRespond[i].txStart += Number(startRegion);
@@ -538,21 +538,27 @@ function TrackManager(props) {
               bedRespond[i].start += Number(startRegion);
               bedRespond[i].end += Number(startRegion);
             }
-            for (let i = 0; i < bigWigRespond.length; i++) {
-              bigWigRespond[i].start += Number(startRegion);
-              bigWigRespond[i].end += Number(startRegion);
+            for (let i = 0; i < bigWigRespond[0].length; i++) {
+              bigWigRespond[0][i].start += Number(startRegion);
+              bigWigRespond[0][i].end += Number(startRegion);
             }
-            for (let i = 0; i < dynSeqRespond.length; i++) {
-              dynSeqRespond[i].start += Number(startRegion);
-              dynSeqRespond[i].end += Number(startRegion);
+            for (let i = 0; i < dynSeqRespond[0].length; i++) {
+              dynSeqRespond[0][i].start += Number(startRegion);
+              dynSeqRespond[0][i].end += Number(startRegion);
+            }
+
+            for (let i = 0; i < methylcRespond[0].length; i++) {
+              methylcRespond[0][i].start += Number(startRegion);
+              methylcRespond[0][i].end += Number(startRegion);
             }
           }
-
-          tmpMethylc = [...tmpMethylc, ...methylcRespond];
-          tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
+          // we use 0 index because those fetch data come in Array<Array> so change this later to make it
+          // better
+          tmpMethylc = [...tmpMethylc, ...methylcRespond[0]];
+          tmpDynseq = [...tmpDynseq, ...dynSeqRespond[0]];
           tmpRefGene = [...tmpRefGene, ...refGeneRespond];
           tmpBed = [...tmpBed, ...bedRespond];
-          tmpBigWig = [...tmpBigWig, ...bigWigRespond];
+          tmpBigWig = [...tmpBigWig, ...bigWigRespond[0]];
           tmpHic = [...tmpHic, ...hicRespond];
         } catch {}
       }
