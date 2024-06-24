@@ -23,7 +23,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
-    result = trackData!.dynseqResult;
+    result = trackData!.dynseq;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }

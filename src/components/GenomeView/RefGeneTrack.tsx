@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
-import { useEffect, useRef, useState } from 'react';
-const AWS_API = 'https://lambda.epigenomegateway.org/v2';
+import React, { memo } from "react";
+import { useEffect, useRef, useState } from "react";
+const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 interface RefGeneTrackProps {
   bpRegionSize?: number;
@@ -20,8 +20,8 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
 
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
-    result = trackData!.refGeneResult;
+    [start, end] = trackData!.location.split(":");
+    result = trackData!.refGene;
   }
 
   start = Number(start);
@@ -436,14 +436,14 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
             continue;
           } else {
             var strandColor;
-            if (singleStrand.transcriptionClass === 'coding') {
-              strandColor = 'purple';
+            if (singleStrand.transcriptionClass === "coding") {
+              strandColor = "purple";
             } else {
-              strandColor = 'green';
+              strandColor = "green";
             }
             const exonIntervals: Array<any> = [];
-            const exonStarts = singleStrand.exonStarts.split(',');
-            const exonEnds = singleStrand.exonEnds.split(',');
+            const exonStarts = singleStrand.exonStarts.split(",");
+            const exonEnds = singleStrand.exonEnds.split(",");
             for (let z = 0; z < exonStarts.length; z++) {
               exonIntervals.push([Number(exonStarts[z]), Number(exonEnds[z])]);
             }
@@ -457,7 +457,7 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
             const bottomY = 5;
             var placementStartX = startX - ARROW_WIDTH / 2;
             var placementEndX = endX;
-            if (singleStrand.strand === '+') {
+            if (singleStrand.strand === "+") {
               placementStartX += ARROW_WIDTH;
             } else {
               placementEndX -= ARROW_WIDTH;
@@ -471,7 +471,7 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
               arrowTipX += arrowSeparation
             ) {
               const arrowTailX =
-                singleStrand.strand === '+'
+                singleStrand.strand === "+"
                   ? arrowTipX - ARROW_WIDTH
                   : arrowTipX + ARROW_WIDTH;
               const arrowPoints = [
@@ -542,9 +542,9 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
   }
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (trackData!.side === "right") {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (trackData!.side === "left") {
       console.log(trackData);
       fetchGenomeData2();
     }
@@ -552,24 +552,24 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
-    <div style={{ display: 'flex', overflowX: 'visible', overflowY: 'hidden' }}>
-      {side === 'right'
+    <div style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}>
+      {side === "right"
         ? rightTrackGenes.map(
             (item, index) => (
               // index <= rightTrackGenes.length - 1 ?
               <svg
                 key={index}
                 width={`${windowWidth}px`}
-                height={'250'}
+                height={"250"}
                 style={{
-                  overflow: 'visible',
+                  overflow: "visible",
                 }}
               >
                 <line
                   x1={`${windowWidth}px`}
                   y1="0"
                   x2={`${windowWidth}px`}
-                  y2={'100%'}
+                  y2={"100%"}
                   stroke="gray"
                   strokeWidth="1"
                 />
@@ -589,16 +589,16 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
             <svg
               key={leftTrackGenes.length - index - 1}
               width={`${windowWidth}px`}
-              height={'250'}
+              height={"250"}
               style={{
-                overflow: 'visible',
+                overflow: "visible",
               }}
             >
               <line
                 x1={`${windowWidth}px`}
                 y1="0"
                 x2={`${windowWidth}px`}
-                y2={'100%'}
+                y2={"100%"}
                 stroke="gray"
                 strokeWidth="1"
               />

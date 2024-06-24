@@ -501,85 +501,87 @@ function TrackManager(props) {
         const [sectionStart, sectionEnd] = sectionBp.split("-");
 
         try {
-          const [
-            refGeneRespond,
-            bedRespond,
-            bigWigRespond,
-            dynSeqRespond,
-            methylcRespond,
-            hicRespond,
-          ] = await Promise.all(
-            genome.defaultTracks.map((item) => {
+          let fetchRespond = await Promise.all(
+            genome.defaultTracks.map(async (item) => {
               const trackName = item.name;
               if (trackName === "refGene") {
-                return trackFetchFunction[trackName]({
+                let result = await trackFetchFunction[trackName]({
                   name: genome.name,
                   chr: curChrName,
                   start: sectionStart,
                   end: sectionEnd,
                 });
+                return {
+                  trackData: result,
+                  trackName: trackName,
+                };
               } else if (trackName === "hic") {
-                return trackFetchFunction.hic({
+                let result = await trackFetchFunction.hic({
                   straw: genome.defaultTracks[5].straw,
 
                   option: defaultHic,
                   start: Number(sectionStart),
                   end: Number(sectionEnd),
                 });
+                return {
+                  trackData: result,
+                  trackName: trackName,
+                };
               } else {
-                return trackFetchFunction[trackName]({
+                let result = await trackFetchFunction[trackName]({
                   url: item.url,
                   chr: curChrName,
                   start: Number(sectionStart),
                   end: Number(sectionEnd),
                 });
+                return {
+                  trackData: result,
+                  trackName: trackName,
+                };
               }
             })
           );
-          console.log(bigWigRespond, methylcRespond);
-          // maybe move this part into the track component and let the coord get added as
-          // we compute the result into converted value to display
-          // just sent the value we need to add for the part.
-          if (i !== 0) {
-            for (let i = 0; i < refGeneRespond.length; i++) {
-              refGeneRespond[i].txStart += Number(startRegion);
-              refGeneRespond[i].txEnd += Number(startRegion);
+
+          for (let j = 0; j < fetchRespond.length; j++) {
+            let trackName = fetchRespond[j].trackName;
+            if (tempObj[trackName] === undefined) {
+              tempObj[trackName] = new Array<any>();
             }
-            for (let i = 0; i < bedRespond.length; i++) {
-              bedRespond[i].start += Number(startRegion);
-              bedRespond[i].end += Number(startRegion);
-            }
-            for (let i = 0; i < bigWigRespond[0].length; i++) {
-              bigWigRespond[0][i].start += Number(startRegion);
-              bigWigRespond[0][i].end += Number(startRegion);
-            }
-            for (let i = 0; i < dynSeqRespond[0].length; i++) {
-              dynSeqRespond[0][i].start += Number(startRegion);
-              dynSeqRespond[0][i].end += Number(startRegion);
+            if (i !== 0) {
+              if (trackName === "refGene") {
+                for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
+                  fetchRespond[j].trackData[z].txStart += Number(startRegion);
+                  fetchRespond[j].trackData[z].txEnd += Number(startRegion);
+                }
+              } else if (trackName === "bed") {
+                for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
+                  fetchRespond[j].trackData[z].start += Number(startRegion);
+                  fetchRespond[j].trackData[z].end += Number(startRegion);
+                }
+              } else {
+                for (let z = 0; z < fetchRespond[j].trackData[0].length; z++) {
+                  fetchRespond[j].trackData[0][z].start += Number(startRegion);
+                  fetchRespond[j].trackData[0][z].end += Number(startRegion);
+                }
+              }
             }
 
-            for (let i = 0; i < methylcRespond[0].length; i++) {
-              methylcRespond[0][i].start += Number(startRegion);
-              methylcRespond[0][i].end += Number(startRegion);
+            if (trackName === "refGene" || trackName === "bed") {
+              tempObj[trackName] = tempObj[trackName].concat(
+                fetchRespond[j].trackData
+              );
+            } else {
+              tempObj[trackName] = tempObj[trackName].concat(
+                fetchRespond[j].trackData[0]
+              );
             }
           }
+
           // we use 0 index because those fetch data come in Array<Array> so change this later to make it
           // better
-          tmpMethylc = [...tmpMethylc, ...methylcRespond[0]];
-          tmpDynseq = [...tmpDynseq, ...dynSeqRespond[0]];
-          tmpRefGene = [...tmpRefGene, ...refGeneRespond];
-          tmpBed = [...tmpBed, ...bedRespond];
-          tmpBigWig = [...tmpBigWig, ...bigWigRespond[0]];
-          tmpHic = [...tmpHic, ...hicRespond];
         } catch {}
       }
 
-      tempObj["refGeneResult"] = tmpRefGene;
-      tempObj["bedResult"] = tmpBed;
-      tempObj["bigWigResult"] = tmpBigWig;
-      tempObj["dynseqResult"] = tmpDynseq;
-      tempObj["methylcResult"] = tmpMethylc;
-      tempObj["hicResult"] = tmpHic;
       tempObj["side"] = "right";
       console.log(tempObj, "right");
       if (initial === 0) {

@@ -30,7 +30,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
-    result = trackData!.methylcResult;
+    result = trackData!.methylc;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }

@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import React, { memo } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -16,14 +16,14 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   windowWidth = 0,
 }) {
   let start, end;
-  let result;
+  let result: Array<any> = [];
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
-    result = trackData!.bedResult;
+    [start, end] = trackData!.location.split(":");
+    result = trackData!.bed;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
-
+  console.log(result);
   start = Number(start);
   end = Number(end);
 
@@ -160,7 +160,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
                 (singleStrand.end - trackGeneData.startTrackPos) / bpToPx!
               }`}
               y2={`${20}`}
-              stroke={'blue'}
+              stroke={"blue"}
               strokeWidth={40}
             />
           </React.Fragment>
@@ -174,23 +174,23 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   }
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (trackData!.side === "right") {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (trackData!.side === "left") {
       fetchGenomeData2();
     }
   }, [trackData]);
 
   return (
-    <div style={{ display: 'flex' }}>
-      {side === 'right'
+    <div style={{ display: "flex" }}>
+      {side === "right"
         ? rightTrackGenes.map(
             (item, index) => (
               // index <= rightTrackGenes.length - 1 ?
               <svg
                 key={index}
                 width={`${windowWidth}px`}
-                height={'40'}
+                height={"40"}
                 overflow="visible"
               >
                 {rightTrackGenes[index]}
@@ -207,8 +207,8 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
             <svg
               key={leftTrackGenes.length - index - 1}
               width={`${windowWidth}px`}
-              height={'40'}
-              style={{ display: 'inline-block' }}
+              height={"40"}
+              style={{ display: "inline-block" }}
               overflow="visible"
             >
               {leftTrackGenes[leftTrackGenes.length - index - 1]}
