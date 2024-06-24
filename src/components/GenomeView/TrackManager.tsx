@@ -120,19 +120,19 @@ const trackFetchFunction: { [key: string]: any } = {
 
 function TrackManager(props) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
-  //TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
+  // DONE !!!!!!!!!! TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
   // use interface key to get certain track function based on information the user clicked on.
   // We want to sent a defaultTrack List of component of trackcomponent already from genomerooot and use it in trackmanager instead of
   // creating the component in trackmanager/
-  //LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
+  // DONE !!!!!!!!!!LOOP through defaultTrack in fetchGenome and use interface with each specifics fetch function function based on the track name.
   // for ... track:
   //if(genome.defaultTrack[i] = ref)
   // else if (bigWig)
   // else if (hic)
-  //getHic(genome.defaultTrack.staw,....)
+  //getHic(genome.defaultTrack.staw,....
+  // DONE !!!!!!!!!! fix data being [ [ ]] after fetching
 
-  //fix old algo on hic, need to sent it new chr when mutli chr view
-  // fix data being [ [ ]] after fetching
+  //   //made working for left..... need to fix old algo on hic, need to sent it new chr when mutli chr view
   const genome = props.currGenome;
 
   const [region, coord] = genome.defaultRegion.split(":");
