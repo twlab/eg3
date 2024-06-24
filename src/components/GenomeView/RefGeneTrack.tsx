@@ -545,7 +545,6 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
     if (trackData!.side === "right") {
       fetchGenomeData();
     } else if (trackData!.side === "left") {
-      console.log(trackData);
       fetchGenomeData2();
     }
   }, [trackData]);

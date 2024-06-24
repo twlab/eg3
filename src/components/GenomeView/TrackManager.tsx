@@ -273,10 +273,12 @@ function TrackManager(props) {
     } else if (dragX.current <= 0 && side === "left") {
       setSide("right");
     }
-    if (hicOption === 1) {
+    if (hicOption === 1 && dragX.current <= 0) {
       setIsLoading2(true);
-
-      fetchGenomeData(2);
+      fetchGenomeData(2, "right");
+    } else {
+      setIsLoading2(true);
+      fetchGenomeData(2, "left");
     }
 
     if (
@@ -293,7 +295,7 @@ function TrackManager(props) {
         return t;
       });
 
-      fetchGenomeData();
+      fetchGenomeData(0, "right");
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
@@ -308,7 +310,7 @@ function TrackManager(props) {
         return t;
       });
 
-      fetchGenomeData2();
+      fetchGenomeData(0, "left");
     }
   }
   function checkMultiChrRight(tempObj: any) {
@@ -456,11 +458,13 @@ function TrackManager(props) {
           "-" +
           `${minBp.current + bpRegionSize}`
       );
+      tempObj["location"] = `${minBp.current}:${minBp.current + bpRegionSize}`;
+      minBp.current = minBp.current - bpRegionSize;
     }
 
     return tmpRegion;
   }
-  async function fetchGenomeData(initial: number = 0) {
+  async function fetchGenomeData(initial: number = 0, trackSide) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2 || initial === 1) {
       let hicResult = await trackFetchFunction.hic({
@@ -475,6 +479,11 @@ function TrackManager(props) {
       let tmpData2 = {};
       tmpData2["hicResult"] = [...hicResult];
       tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
+      if (trackSide === "right") {
+        tmpData2["side"] = "right";
+      } else {
+        tmpData2["side"] = "left";
+      }
       console.log(tmpData2);
       setTrackData2({ ...tmpData2 });
       setIsLoading2(false);
@@ -482,14 +491,14 @@ function TrackManager(props) {
 
     if (initial === 0 || initial === 1) {
       let tempObj = {};
-      let tmpRegion = checkMultiChrRight(tempObj);
-
-      let tmpMethylc: Array<any> = [];
-      let tmpRefGene: Array<any> = [];
-      let tmpBed: Array<any> = [];
-      let tmpBigWig: Array<any> = [];
-      let tmpDynseq: Array<any> = [];
-      let tmpHic: Array<any> = [];
+      let tmpRegion: Array<any> = [];
+      if (trackSide === "right") {
+        tempObj["side"] = "right";
+        tmpRegion = checkMultiChrRight(tempObj);
+      } else {
+        tempObj["side"] = "left";
+        tmpRegion = checkMultiChrLeft(tempObj);
+      }
 
       for (let i = 0; i < tmpRegion.length; i++) {
         let sectionRegion = tmpRegion[i];
@@ -550,18 +559,58 @@ function TrackManager(props) {
             if (i !== 0) {
               if (trackName === "refGene") {
                 for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
-                  fetchRespond[j].trackData[z].txStart += Number(startRegion);
-                  fetchRespond[j].trackData[z].txEnd += Number(startRegion);
+                  if (trackSide === "right") {
+                    fetchRespond[j].trackData[z].txStart += Number(startRegion);
+                    fetchRespond[j].trackData[z].txEnd += Number(startRegion);
+                  } else {
+                    fetchRespond[j].trackData[z].txStart = -(
+                      Number(startRegion) +
+                      (Number(sectionEnd) -
+                        Number(fetchRespond[j].trackData[z].txStart))
+                    );
+                    fetchRespond[j].trackData[z].txEnd = -(
+                      Number(startRegion) +
+                      (Number(sectionEnd) -
+                        Number(fetchRespond[j].trackData[z].txEnd))
+                    );
+                  }
                 }
               } else if (trackName === "bed") {
                 for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
-                  fetchRespond[j].trackData[z].start += Number(startRegion);
-                  fetchRespond[j].trackData[z].end += Number(startRegion);
+                  if (trackSide === "right") {
+                    fetchRespond[j].trackData[z].start += Number(startRegion);
+                    fetchRespond[j].trackData[z].end += Number(startRegion);
+                  } else {
+                    fetchRespond[j].trackData[z].start = -(
+                      Number(startRegion) +
+                      (Number(sectionEnd) -
+                        Number(fetchRespond[j].trackData[z].start))
+                    );
+                    fetchRespond[j].trackData[z].end = -(
+                      Number(startRegion) +
+                      (Number(sectionEnd) -
+                        Number(fetchRespond[j].trackData[z].end))
+                    );
+                  }
                 }
               } else {
                 for (let z = 0; z < fetchRespond[j].trackData[0].length; z++) {
-                  fetchRespond[j].trackData[0][z].start += Number(startRegion);
-                  fetchRespond[j].trackData[0][z].end += Number(startRegion);
+                  if (trackSide === "right") {
+                    fetchRespond[j].trackData[0][z].start +=
+                      Number(startRegion);
+                    fetchRespond[j].trackData[0][z].end += Number(startRegion);
+                  } else {
+                    fetchRespond[j].trackData[z].start = -(
+                      Number(startRegion) +
+                      (Number(sectionEnd) -
+                        Number(fetchRespond[j].trackData[z].start))
+                    );
+                    fetchRespond[j].trackData[0][z].end = -(
+                      Number(startRegion) +
+                      (Number(sectionEnd) -
+                        Number(fetchRespond[j].trackData[0][z].end))
+                    );
+                  }
                 }
               }
             }
@@ -582,8 +631,7 @@ function TrackManager(props) {
         } catch {}
       }
 
-      tempObj["side"] = "right";
-      console.log(tempObj, "right");
+      console.log(tempObj);
       if (initial === 0) {
         tempObj["initial"] = 0;
       } else {
@@ -596,143 +644,6 @@ function TrackManager(props) {
 
       setIsLoading(false);
     }
-  }
-
-  //________________________________________________________________________________________________________________________________________________________
-  //________________________________________________________________________________________________________________________________________________________
-
-  async function fetchGenomeData2() {
-    ///////-__________________________________________________________________________________________________________________________
-
-    let tempObj = {};
-
-    let tmpRegion = checkMultiChrLeft(tempObj);
-
-    let tmpBigWig: Array<any> = [];
-
-    let tmpMethylc: Array<any> = [];
-    let tmpDynseq: Array<any> = [];
-    let tmpResult: Array<any> = [];
-    let tmpBed: Array<any> = [];
-    let tmpHic: Array<any> = [];
-    for (let i = 0; i < tmpRegion.length; i++) {
-      let sectionRegion = tmpRegion[i];
-      const [curChrName, bpCoord] = sectionRegion.split(":");
-      const [totalBp, sectionBp] = bpCoord.split("|");
-
-      const [startRegion, endRegion] = totalBp.split("-");
-      const [sectionStart, sectionEnd] = sectionBp.split("-");
-
-      try {
-        const [
-          userRespond,
-          bedRespond,
-          bigWigRespond,
-          dynSeqRespond,
-          methylcRespond,
-          hicRespond,
-        ] = await Promise.all(
-          genome.defaultTracks.map((item) => {
-            const trackName = item.name;
-            if (trackName === "refGene") {
-              return trackFetchFunction[trackName]({
-                name: genome.name,
-                chr: curChrName,
-                start: sectionStart,
-                end: sectionEnd,
-              });
-            } else if (trackName === "hic") {
-              return trackFetchFunction.hic({
-                straw: genome.defaultTracks[5].straw,
-
-                option: defaultHic,
-                start: Number(sectionStart),
-                end: Number(sectionEnd),
-              });
-            } else {
-              return trackFetchFunction[trackName]({
-                url: item.url,
-                chr: curChrName,
-                start: Number(sectionStart),
-                end: Number(sectionEnd),
-              });
-            }
-          })
-        );
-
-        if (i !== 0) {
-          for (let i = 0; i < userRespond.length; i++) {
-            userRespond[i].txStart = -(
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(userRespond[i].txStart))
-            );
-            userRespond[i].txEnd = -(
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(userRespond[i].txEnd))
-            );
-          }
-          for (let i = 0; i < bedRespond.length; i++) {
-            bedRespond[i].start =
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(bedRespond[i].start));
-            bedRespond[i].end = -(
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(bedRespond[i].end))
-            );
-          }
-          for (let i = 0; i < bigWigRespond.length; i++) {
-            bigWigRespond[i].start =
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(bigWigRespond[i].start));
-            bigWigRespond[i].end = -(
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(bigWigRespond[i].end))
-            );
-          }
-
-          for (let i = 0; i < dynSeqRespond.length; i++) {
-            dynSeqRespond[i].start =
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(dynSeqRespond[i].start));
-            dynSeqRespond[i].end = -(
-              Number(startRegion) +
-              (Number(sectionEnd) - Number(dynSeqRespond[i].end))
-            );
-          }
-        }
-
-        tmpMethylc = [...tmpMethylc, ...methylcRespond];
-        tmpResult = [...tmpResult, ...userRespond];
-        tmpDynseq = [...tmpDynseq, ...dynSeqRespond];
-        tmpBed = [...tmpBed, ...bedRespond];
-        tmpBigWig = [...tmpBigWig, ...bigWigRespond];
-        tmpHic = [...tmpHic, ...hicRespond];
-      } catch {}
-    }
-
-    const bedResult = tmpBed;
-    const result = tmpResult;
-    const bigWigResult = tmpBigWig;
-    const dynSeqResult = tmpDynseq;
-
-    if (tempObj["location"] === undefined) {
-      // if location is undefined that means view does not contain multiple chromosome
-      tempObj["location"] = `${minBp.current}:${minBp.current + bpRegionSize}`;
-      minBp.current = minBp.current - bpRegionSize;
-    }
-    tempObj["refGeneResult"] = result;
-    tempObj["bedResult"] = bedResult;
-    tempObj["bigWigResult"] = bigWigResult;
-    tempObj["dynseqResult"] = dynSeqResult;
-    tempObj["methylcResult"] = tmpMethylc;
-    tempObj["hicResult"] = tmpHic;
-    tempObj["side"] = "left";
-
-    ///////-__________________________________________________________________________________________________________________________
-
-    setTrackData({ ...tempObj });
-
-    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -748,7 +659,7 @@ function TrackManager(props) {
   useEffect(() => {
     console.log(windowWidth);
     function getData() {
-      fetchGenomeData(1);
+      fetchGenomeData(1, "right");
     }
 
     getData();

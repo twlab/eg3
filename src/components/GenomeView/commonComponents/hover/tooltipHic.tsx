@@ -1,17 +1,19 @@
-import { useEffect, useRef, useState, memo } from 'react';
-import './Tooltip.css';
-import pointInPolygon from 'point-in-polygon';
-import React from 'react';
+import { useEffect, useRef, useState, memo } from "react";
+import "./Tooltip.css";
+import pointInPolygon from "point-in-polygon";
+import React from "react";
 
 interface HicHoverProp {
   data: any;
   windowWidth: number;
   trackIdx: number;
+  side;
 }
 const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   data,
   windowWidth,
   trackIdx,
+  side,
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -19,6 +21,8 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
     top: 0,
     left: 0,
     right: 0,
+    dataIdxX: 0,
+    dataIdxY: 0,
     toolTip: <></>,
     beamRight: <></>,
     beamLeft: <></>,
@@ -36,6 +40,12 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   const handleMouseEnter = (e) => {
     if (Object.keys(data).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
+      // pixel position of the mouse when entering a track regionview
+      // each track region are separate so their x positioning alway start at 0 to windowwith
+      // sometime the rect position holding the data is offscreen which makes it negative so we compute them to find the exact place in the rect the data is suppose to be because
+      // how much is offscreen - the x position of the mouse will give us the index for the data
+      // data is following 0 - windowwidth x pixel index positioning
+
       let dataIdxX = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
@@ -54,28 +64,28 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
             top: rect.top,
             left: rect.left,
             right: rect.right,
+            dataIdxX: dataIdxX,
+            dataIdxY: dataIdxY,
             toolTip: (
               <div>
                 {interaction.name && <div>{interaction.name}</div>}
                 <div>
-                  Locus1: {interaction.locus1.chr}
-                  {interaction.locus1.start}
-                  {interaction.locus1.end}
+                  Locus1: {interaction.locus1.chr}__
+                  {interaction.locus1.start}-{interaction.locus1.end}
                 </div>
-                Locus2: {interaction.locus2.chr}
-                {interaction.locus2.start}
-                {interaction.locus2.end}
+                Locus2: {interaction.locus2.chr}__
+                {interaction.locus2.start}-{interaction.locus2.end}
                 <div>Score: {interaction.score}</div>
               </div>
             ),
             beamRight: (
               <div
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
 
                   left: right,
                   width: rightWidth,
-                  backgroundColor: 'green',
+                  backgroundColor: "green",
                   height: 1000,
                 }}
               ></div>
@@ -83,8 +93,8 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
             beamLeft: (
               <div
                 style={{
-                  position: 'absolute',
-                  backgroundColor: 'red',
+                  position: "absolute",
+                  backgroundColor: "red",
                   left: left,
                   width: leftWidth,
                   height: 1000,
@@ -107,13 +117,13 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   // so it can use the new data.
   useEffect(() => {
     if (targetRef.current !== null) {
-      targetRef.current.addEventListener('mousemove', handleMouseEnter);
-      targetRef.current.addEventListener('mouseleave', handleMouseLeave);
+      targetRef.current.addEventListener("mousemove", handleMouseEnter);
+      targetRef.current.addEventListener("mouseleave", handleMouseLeave);
     }
     return () => {
       if (targetRef.current !== null) {
-        targetRef.current.removeEventListener('mousemove', handleMouseEnter);
-        targetRef.current.removeEventListener('mouseleave', handleMouseLeave);
+        targetRef.current.removeEventListener("mousemove", handleMouseEnter);
+        targetRef.current.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
   }, [data]);
@@ -127,7 +137,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
       key={`tooltipHic-${trackIdx}`} // Use a unique key
       ref={targetRef}
       style={{
-        position: 'relative',
+        position: "relative",
         width: windowWidth,
         height: 1000,
       }}
@@ -136,28 +146,29 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
         <>
           {toolTip.beamRight}
           {toolTip.beamLeft}
+          <div
+            style={{
+              opacity: isVisible ? 1 : 0,
+              display: "flex",
+
+              position: "absolute",
+              backgroundColor: "black",
+              color: "white",
+              height: "400",
+              left: toolTip.dataIdxX,
+              top: toolTip.dataIdxY,
+              fontSize: 14,
+
+              transition: "opacity 0.1s",
+            }}
+          >
+            {trackIdx}
+            {toolTip.toolTip}
+          </div>
         </>
       ) : (
-        ' '
+        " "
       )}
-
-      <div
-        style={{
-          opacity: isVisible ? 1 : 0,
-          display: 'flex',
-
-          position: 'absolute',
-          backgroundColor: '#333',
-          color: '#fff',
-
-          fontSize: 14,
-          top: toolTip.top - 200,
-          transition: 'opacity 0.1s',
-        }}
-      >
-        {trackIdx}
-        {toolTip.toolTip}
-      </div>
     </div>
   );
 });

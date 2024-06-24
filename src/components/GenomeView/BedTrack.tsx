@@ -23,7 +23,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
-  console.log(result);
+
   start = Number(start);
   end = Number(end);
 

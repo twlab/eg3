@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, memo } from 'react';
-import './Tooltip.css';
+import { useEffect, useRef, useState, memo } from "react";
+import "./Tooltip.css";
+import { relative } from "path";
 
 interface MethylcHoverProps {
   data: { [key: string]: any };
@@ -17,31 +18,35 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [position, setPosition] = useState({
+  const [rectPosition, setPosition] = useState({
     top: 0,
     left: 0,
     right: 0,
+    dataIdxX: 0,
+    dataIdxY: 0,
     toolTip: <></>,
   });
   const handleMouseEnter = (e) => {
     if (Object.keys(data).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
 
-      let dataIdx = Math.floor(e.pageX - rect.left);
+      let dataIdxX = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
-      if (dataIdx < windowWidth) {
+      if (dataIdxX < windowWidth) {
         setPosition({
-          ...position,
+          ...rectPosition,
           top: rect.bottom,
           left: rect.left,
           right: rect.right,
+          dataIdxX: dataIdxX,
+          dataIdxY: dataIdxY,
           toolTip: (
             <div>
               <div>Forward</div>
-              depth: {data.canvasData[dataIdx].forward.depth}
-              {data.canvasData[dataIdx].forward.contextValues.map(
+              depth: {data.canvasData[dataIdxX].forward.depth}
+              {data.canvasData[dataIdxX].forward.contextValues.map(
                 (item, index) => (
                   <div key={index}>
                     {item.context}: {item.value}
@@ -50,8 +55,8 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
               )}
               <div>________</div>
               <div>Reverse</div>
-              depth: {data.canvasData[dataIdx].reverse.depth}
-              {data.canvasData[dataIdx].reverse.contextValues.map(
+              depth: {data.canvasData[dataIdxX].reverse.depth}
+              {data.canvasData[dataIdxX].reverse.contextValues.map(
                 (item, index) => (
                   <div key={index}>
                     {item.context}: {item.value}
@@ -73,55 +78,46 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
   };
   useEffect(() => {
     if (targetRef.current !== null) {
-      targetRef.current.addEventListener('mousemove', handleMouseEnter);
-      targetRef.current.addEventListener('mouseleave', handleMouseLeave);
+      targetRef.current.addEventListener("mousemove", handleMouseEnter);
+      targetRef.current.addEventListener("mouseleave", handleMouseLeave);
     }
     return () => {
       if (targetRef.current !== null) {
-        targetRef.current.removeEventListener('mousemove', handleMouseEnter);
-        targetRef.current.removeEventListener('mouseleave', handleMouseLeave);
+        targetRef.current.removeEventListener("mousemove", handleMouseEnter);
+        targetRef.current.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
   }, []);
 
   return (
-    //Need to have two separate div for hovering area and tooltip or else when tooltip is being displayed based on track actual x position it will also move the hovering area when using
-    // absolute display and left in css styling
-    <div>
+    <div
+      key={`tooltip-${trackIdx}`} // Use a unique key
+      ref={targetRef}
+      style={{
+        width: windowWidth,
+        height: 80,
+        position: "relative",
+      }}
+    >
       <div
-        key={`tooltip-${trackIdx}`} // Use a unique key
-        ref={targetRef}
         style={{
-          width: windowWidth,
-          height: 80,
-        }}
-      ></div>
-      {isVisible ? (
-        <div
-          style={{
-            // opacity: isVisible ? '1' : '0',
-            display: 'flex',
-            opacity: 1,
-            left:
-              side === 'right'
-                ? -position.left + windowWidth / 3 + trackIdx * windowWidth
-                : -position.left + windowWidth / 3 + length * windowWidth,
-            position: 'absolute',
-            backgroundColor: '#333',
-            color: '#fff',
-            padding: 8,
-            borderRadius: 4,
-            fontSize: 14,
+          opacity: isVisible ? "1" : "0",
 
-            transition: 'opacity 0.1s',
-          }}
-        >
-          {trackIdx}
-          {position.toolTip}
-        </div>
-      ) : (
-        ''
-      )}
+          left: rectPosition.dataIdxX,
+          top: rectPosition.dataIdxY,
+          position: "absolute",
+          backgroundColor: "black",
+          color: "white",
+          padding: 8,
+          borderRadius: 4,
+          fontSize: 14,
+
+          transition: "opacity 0.1s",
+        }}
+      >
+        {trackIdx}
+        {rectPosition.toolTip}
+      </div>
     </div>
   );
 });

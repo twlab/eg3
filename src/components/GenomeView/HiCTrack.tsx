@@ -1,24 +1,24 @@
-import { scaleLinear } from 'd3-scale';
-import React, { createRef, memo } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { scaleLinear } from "d3-scale";
+import React, { createRef, memo } from "react";
+import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
-import TestToolTipHic from './commonComponents/hover/tooltipHic';
-import { InteractionDisplayMode } from './commonComponents/user-options/DisplayModes';
+import TestToolTipHic from "./commonComponents/hover/tooltipHic";
+import { InteractionDisplayMode } from "./commonComponents/user-options/DisplayModes";
 
-import { GenomeInteraction } from './getRemoteData/GenomeInteraction';
-import percentile from 'percentile';
+import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
+import percentile from "percentile";
 export enum ScaleChoices {
-  AUTO = 'auto',
-  FIXED = 'fixed',
+  AUTO = "auto",
+  FIXED = "fixed",
 }
 // SCrolling to 80% view on current epi browser matches default in eg3
 // let worker: Worker;
 let hmData: Array<any> = [];
 const TOP_PADDING = 2;
 const DEFAULT_OPTIONS = {
-  color: '#B8008A',
-  color2: '#006385',
-  backgroundColor: 'var(--bg-color)',
+  color: "#B8008A",
+  color2: "#006385",
+  backgroundColor: "var(--bg-color)",
   displayMode: InteractionDisplayMode.HEATMAP,
   scoreScale: ScaleChoices.AUTO,
   scoreMax: 10,
@@ -34,11 +34,11 @@ const DEFAULT_OPTIONS = {
 };
 
 let defaultHic = {
-  color: '#B8008A',
-  color2: '#006385',
-  backgroundColor: 'var(--bg-color)',
-  displayMode: 'heatmap',
-  scoreScale: 'auto',
+  color: "#B8008A",
+  color2: "#006385",
+  backgroundColor: "var(--bg-color)",
+  displayMode: "heatmap",
+  scoreScale: "auto",
   scoreMax: 10,
   scalePercentile: 95,
   scoreMin: 0,
@@ -50,8 +50,8 @@ let defaultHic = {
   isThereG3dTrack: false,
   clampHeight: false,
   binSize: 0,
-  normalization: 'NONE',
-  label: '',
+  normalization: "NONE",
+  label: "",
 };
 interface BedTrackProps {
   bpRegionSize?: number;
@@ -77,7 +77,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   let result;
   if (Object.keys(trackData2!).length > 0) {
-    [start, end] = trackData2!.location.split(':');
+    [start, end] = trackData2!.location.split(":");
     result = trackData2!.hicResult;
   }
 
@@ -101,7 +101,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   // step 2 change genomeInteraction in placedInteraction
   // step 3compute the value find the middle rect and display on screen
   // step 4 show both sides when hovering
-  function fetchGenomeData(initial: number = 0) {
+  function fetchGenomeData() {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
     let startPos;
@@ -145,28 +145,37 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       renderRect(item, index)
     );
     let tmpObj = {};
-    tmpObj['placedInteraction'] = placedInteraction;
-    tmpObj['polyCoord'] = polyCoord;
-    if (hicOption === 0) {
-      setRightTrack([...rightTrackGenes, tmpObj]);
-      setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-    } else {
-      setRightTrack([tmpObj]);
-      setCanvasRefR(new Array<any>(newCanvasRef));
-    }
+    tmpObj["placedInteraction"] = placedInteraction;
+    tmpObj["polyCoord"] = polyCoord;
 
-    if (trackData!.initial) {
-      const newCanvasRefL = createRef();
-      prevOverflowStrand2.current = { ...overflowStrand2.current };
-      overflowStrand2.current = {};
-      setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRefL]);
-      setLeftTrack([...leftTrackGenes, tmpObj]);
+    if (trackData2!.side === "right") {
+      if (hicOption === 0) {
+        setRightTrack([...rightTrackGenes, tmpObj]);
+        setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
+      } else {
+        setRightTrack([tmpObj]);
+        setCanvasRefR(new Array<any>(newCanvasRef));
+      }
+      prevOverflowStrand.current = { ...overflowStrand.current };
+      overflowStrand.current = {};
+    } else if (trackData2!.side === "left") {
+      if (hicOption === 0) {
+        setLeftTrack([...leftTrackGenes, tmpObj]);
+        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
+      } else {
+        setLeftTrack([tmpObj]);
+        setCanvasRefL(new Array<any>(newCanvasRef));
+      }
     }
+    // if (trackData!.initial) {
+    //   const newCanvasRefL = createRef();
+    //   prevOverflowStrand2.current = { ...overflowStrand2.current };
+    //   overflowStrand2.current = {};
+    //   setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRefL]);
+    //   setLeftTrack([...leftTrackGenes, tmpObj]);
+    // }
 
     // CHECK if there are overlapping strands to the next track
-
-    prevOverflowStrand.current = { ...overflowStrand.current };
-    overflowStrand.current = {};
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -238,7 +247,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     ];
 
     const key =
-      '' + xSpan1.start + xSpan1.end + xSpan2.start + xSpan2.end + index;
+      "" + xSpan1.start + xSpan1.end + xSpan2.start + xSpan2.end + index;
     // only push the points in screen
     if (topX + halfSpan2 > start && topX - halfSpan1 < end) {
       hmData.push({
@@ -301,8 +310,8 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       renderRect(item, index)
     );
     let tmpObj = {};
-    tmpObj['placedInteraction'] = placedInteraction;
-    tmpObj['polyCoord'] = polyCoord;
+    tmpObj["placedInteraction"] = placedInteraction;
+    tmpObj["polyCoord"] = polyCoord;
 
     setLeftTrack([...leftTrackGenes, tmpObj]);
 
@@ -385,11 +394,11 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   function drawCanvas(polyRegionData, canvasRef) {
     if (canvasRef) {
-      let context = canvasRef.getContext('2d');
+      let context = canvasRef.getContext("2d");
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
       for (let i = 0; i < polyRegionData.length; i++) {
         const points = polyRegionData[i].points;
-        context.fillStyle = '#B8008A';
+        context.fillStyle = "#B8008A";
         context.globalAlpha = 1;
 
         context.beginPath();
@@ -403,27 +412,27 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     }
   }
 
-  useEffect(() => {
-    if (side === 'left') {
-      leftTrackGenes.forEach((canvasRef, index) => {
-        if (canvasRefL[index].current) {
-          drawCanvas(
-            leftTrackGenes[index].polyCoord,
-            canvasRefL[index].current
-          );
-        }
-      });
-    } else if (side === 'right') {
-      rightTrackGenes.forEach((canvasRef, index) => {
-        if (canvasRefR[index].current) {
-          drawCanvas(
-            rightTrackGenes[index].polyCoord,
-            canvasRefR[index].current
-          );
-        }
-      });
-    }
-  }, [side]);
+  // useEffect(() => {
+  //   if (side === "left") {
+  //     leftTrackGenes.forEach((canvasRef, index) => {
+  //       if (canvasRefL[index].current) {
+  //         drawCanvas(
+  //           leftTrackGenes[index].polyCoord,
+  //           canvasRefL[index].current
+  //         );
+  //       }
+  //     });
+  //   } else if (side === "right") {
+  //     rightTrackGenes.forEach((canvasRef, index) => {
+  //       if (canvasRefR[index].current) {
+  //         drawCanvas(
+  //           rightTrackGenes[index].polyCoord,
+  //           canvasRefR[index].current
+  //         );
+  //       }
+  //     });
+  //   }
+  // }, [side]);
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
@@ -436,6 +445,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {
+      console.log(leftTrackGenes);
       drawCanvas(
         leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
         canvasRefL[canvasRefL.length - 1].current
@@ -444,52 +454,46 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }, [leftTrackGenes]);
 
   useEffect(() => {
-    if (side === 'right') {
-      fetchGenomeData();
-    } else if (side === 'left') {
-      fetchGenomeData2();
-    }
-  }, [trackData2]);
+    console.log("triger left ", trackData2);
+    fetchGenomeData();
+  }, [trackData2, side]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
     <div
       style={{
-        display: 'flex',
-        position: 'relative',
+        display: "flex",
+        position: "relative",
+        alignContent: side === "right" ? "start" : "end",
       }}
     >
-      {side === 'right' ? (
-        canvasRefR.map((item, index) => (
-          <canvas
-            key={index}
-            ref={item}
-            height={'1000'}
-            width={windowWidth}
-            style={{ position: 'absolute', left: `${-dragXDist!}px` }}
-          />
-        ))
-      ) : (
-        <div style={{ display: 'flex' }}>
-          {canvasRefL.map((item, index) => (
+      {side === "right"
+        ? canvasRefR.map((item, index) => (
+            <canvas
+              key={index}
+              ref={item}
+              height={"1000"}
+              width={windowWidth}
+              style={{ position: "absolute", left: `${-dragXDist!}px` }}
+            />
+          ))
+        : canvasRefL.map((item, index) => (
             <canvas
               key={canvasRefL.length - index - 1}
               ref={canvasRefL[canvasRefL.length - index - 1]}
-              height={'1000'}
+              height={"1000"}
               width={windowWidth}
-              style={{}}
+              style={{ position: "absolute", right: `${dragXDist!}px` }}
             />
           ))}
-        </div>
-      )}
 
-      {side === 'right' ? (
+      {side === "right" ? (
         <div
-          key={'hicRight'}
+          key={"hicRight"}
           style={{
             opacity: 0.5,
 
-            position: 'absolute',
+            position: "absolute",
             left: `${-dragXDist!}px`,
           }}
         >
@@ -499,16 +503,18 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
               data={rightTrackGenes[index]}
               windowWidth={windowWidth}
               trackIdx={index}
+              side={"right"}
             />
           ))}
         </div>
       ) : (
         <div
-          key={'hicLeft'}
+          key={"hicLeft"}
           style={{
             opacity: 0.5,
-            display: 'flex',
-            position: 'absolute',
+            display: "flex",
+            position: "absolute",
+            right: `${dragXDist!}px`,
           }}
         >
           {leftTrackGenes.map((item, index) => (
@@ -517,6 +523,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
               data={leftTrackGenes[leftTrackGenes.length - index - 1]}
               windowWidth={windowWidth}
               trackIdx={leftTrackGenes.length - index - 1}
+              side={"left"}
             />
           ))}
         </div>

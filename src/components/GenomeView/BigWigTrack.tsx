@@ -74,7 +74,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     startPos = start;
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(result);
+
     if (result.length > 0) {
       var resultIdx = 0;
 
@@ -154,11 +154,11 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result !== undefined && result.length > 0) {
-      result[0].sort((a, b) => {
+    if (result.length > 0) {
+      result.sort((a, b) => {
         return b.end - a.end;
       });
-      result = result[0];
+
       var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on

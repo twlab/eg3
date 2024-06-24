@@ -60,7 +60,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     startPos = start;
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    console.log(result);
+
     if (result !== undefined && result.length > 0) {
       // let checking for interval overlapping and determining what level each strand should be on
       for (let i = result.length - 1; i >= 0; i--) {
@@ -107,7 +107,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       let converted = event.data;
       let scales = computeScales(converted);
       let length = converted.length;
-      console.log(converted);
+
       drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
       setRightTrack([
         ...rightTrackGenes,
@@ -145,11 +145,11 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result !== undefined && result.length > 0) {
-      result[0].sort((a, b) => {
+    if (result.length > 0) {
+      result.sort((a, b) => {
         return b.end - a.end;
       });
-      result = result[0];
+
       var resultIdx = 0;
 
       // let checking for interval overlapping and determining what level each strand should be on
@@ -260,7 +260,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     scales,
     canvasRefReverse
   ) {
-    console.log(converted);
     let context = canvasRef.current.getContext("2d");
     let contextRev = canvasRefReverse.current.getContext("2d");
 
@@ -340,7 +339,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         }
       });
     } else if (side === "right") {
-      console.log("2");
       rightTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefR[index].current && canvasRefR2[index].current) {
           let length = rightTrackGenes[index].canvasData.length;
@@ -368,7 +366,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   return (
     <div
       style={{
-        height: "300px",
+        height: "150px",
         position: "relative",
       }}
     >
