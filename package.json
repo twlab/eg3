@@ -33,6 +33,7 @@
     "generic-filehandle": "^3.1.2",
     "grommet": "^2.37.0",
     "hic-straw": "^2.1.1",
+    "json5": "^2.2.3",
     "percentile": "^1.6.0",
     "point-in-polygon": "^1.1.0",
     "react": "^18.2.0",

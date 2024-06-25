@@ -100,6 +100,7 @@ function GenomeHub(props: any) {
           genome: "hg19",
           url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
         },
+
         {
           name: "hic",
           straw: straw,
@@ -107,6 +108,11 @@ function GenomeHub(props: any) {
           normOptions: normOptions,
 
           genome: "hg19",
+        },
+        {
+          name: "genomealign",
+          genome: "hg38",
+          url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
         },
       ];
       newList.chrOrder = items;
@@ -181,6 +187,7 @@ function GenomeHub(props: any) {
               genome: "hg19",
               url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
             },
+
             {
               name: "hic",
               straw: straw,
@@ -188,6 +195,11 @@ function GenomeHub(props: any) {
               normOptions: normOptions,
 
               genome: "hg19",
+            },
+            {
+              name: "genomealign",
+              genome: "hg38",
+              url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
             },
           ],
           annotationTrackData: AnnotationTrackData["HG19"],

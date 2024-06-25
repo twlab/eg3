@@ -12,10 +12,21 @@ import BigWigTrack from "./BigWigTrack";
 import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
 import HiCTrack from "./HiCTrack";
+import GenomeAlign from "./GenomeAlign";
 import CircularProgress from "@mui/material/CircularProgress";
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
-
+interface GenomeData {
+  id: number;
+  genomealign: {
+    chr: string;
+    start: number;
+    stop: number;
+    strand: string;
+    targetseq: string;
+    queryseq: string;
+  };
+}
 let defaultHic = {
   color: "#B8008A",
   color2: "#006385",
@@ -55,6 +66,7 @@ const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
   hic: HiCTrack,
+  genomealign: GenomeAlign,
 
   // Add more components as needed
 };
@@ -116,6 +128,14 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.end
     );
   },
+  genomealign: function genomeAlignFetch(regionData: any) {
+    return GetTabixData(
+      regionData.url,
+      regionData.chr,
+      regionData.start,
+      regionData.end
+    );
+  },
 };
 
 function TrackManager(props) {
@@ -171,7 +191,7 @@ function TrackManager(props) {
   const [side, setSide] = useState("right");
   const [isLoading, setIsLoading] = useState(true);
   const [hicOption, setHicOption] = useState(1);
-  const [isLoading2, setIsLoading2] = useState(true);
+
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
 
@@ -199,7 +219,7 @@ function TrackManager(props) {
     const tmpDragX = dragX.current - deltaX;
 
     if (
-      ((isLoading || isLoading2) &&
+      (isLoading &&
         deltaX > 0 &&
         side === "right" &&
         -tmpDragX > (rightSectionSize.length - 1) * windowWidth) ||
@@ -274,10 +294,8 @@ function TrackManager(props) {
       setSide("right");
     }
     if (hicOption === 1 && dragX.current <= 0) {
-      setIsLoading2(true);
       fetchGenomeData(2, "right");
     } else {
-      setIsLoading2(true);
       fetchGenomeData(2, "left");
     }
 
@@ -475,18 +493,25 @@ function TrackManager(props) {
         start: Number(bpX.current),
         end: Number(bpX.current + bpRegionSize),
       });
+      let genomealignResult = await trackFetchFunction.genomealign({
+        url: genome.defaultTracks[6].url,
+        chr: region,
+        start: Number(bpX.current),
+        end: Number(bpX.current + bpRegionSize),
+      });
 
       let tmpData2 = {};
+      tmpData2["genomealignResult"] = [...genomealignResult[0]];
       tmpData2["hicResult"] = [...hicResult];
       tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
+      tmpData2["xDist"] = dragX.current;
       if (trackSide === "right") {
         tmpData2["side"] = "right";
       } else {
         tmpData2["side"] = "left";
       }
-      console.log(tmpData2);
+
       setTrackData2({ ...tmpData2 });
-      setIsLoading2(false);
     }
 
     if (initial === 0 || initial === 1) {
@@ -525,17 +550,30 @@ function TrackManager(props) {
                   trackName: trackName,
                 };
               } else if (trackName === "hic") {
-                let result = await trackFetchFunction.hic({
-                  straw: genome.defaultTracks[5].straw,
-
-                  option: defaultHic,
-                  start: Number(sectionStart),
-                  end: Number(sectionEnd),
-                });
-                return {
-                  trackData: result,
-                  trackName: trackName,
-                };
+                // let result = await trackFetchFunction.hic({
+                //   straw: genome.defaultTracks[5].straw,
+                //   option: defaultHic,
+                //   start: Number(sectionStart),
+                //   end: Number(sectionEnd),
+                // });
+                // return {
+                //   trackData: result,
+                //   trackName: trackName,
+                // };
+              } else if (trackName === "genomealign") {
+                // let result = await trackFetchFunction[trackName]({
+                //   url: item.url,
+                //   chr: curChrName,
+                //   start: Number(sectionStart),
+                //   end: Number(sectionEnd),
+                // });
+                // for (const record of result[0]) {
+                //   let data = JSON5.parse("{" + record[3] + "}");
+                //   data.genomealign.targetseq = null;
+                //   data.genomealign.queryseq = null;
+                //   console.log(data);
+                //   record[3] = data;
+                // }
               } else {
                 let result = await trackFetchFunction[trackName]({
                   url: item.url,
@@ -631,7 +669,6 @@ function TrackManager(props) {
         } catch {}
       }
 
-      console.log(tempObj);
       if (initial === 0) {
         tempObj["initial"] = 0;
       } else {
@@ -682,7 +719,7 @@ function TrackManager(props) {
       <div> {viewRegion.current}</div>
 
       <div>Pixel distance from starting point : {dragX.current}px</div>
-      {isLoading || isLoading2 ? (
+      {isLoading ? (
         <CircularProgress
           variant="indeterminate"
           disableShrink

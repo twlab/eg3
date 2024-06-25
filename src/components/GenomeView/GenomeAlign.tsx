@@ -2,6 +2,7 @@ import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
+import JSON5 from "json5";
 import TestToolTipHic from "./commonComponents/hover/tooltipHic";
 import { InteractionDisplayMode } from "./commonComponents/user-options/DisplayModes";
 
@@ -63,7 +64,7 @@ interface BedTrackProps {
   trackData2?: { [key: string]: any }; // Replace with the actual type
   dragXDist?: number;
 }
-const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
+const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   bpRegionSize,
   bpToPx,
   trackData,
@@ -78,7 +79,8 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   let result;
   if (Object.keys(trackData2!).length > 0) {
     [start, end] = trackData2!.location.split(":");
-    result = trackData2!.hicResult;
+    console.log(trackData2!);
+    result = trackData2!.genomealignResult;
   }
 
   start = Number(start);
@@ -94,7 +96,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
 
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
-  const view = useRef(0);
+
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
   // step 1 filtered
@@ -137,36 +139,44 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
       }
     }
 
+    for (const record of result) {
+      let data = JSON5.parse("{" + record[3] + "}");
+      data.genomealign.targetseq = null;
+      data.genomealign.queryseq = null;
+
+      record[3] = data;
+    }
+    console.log(result);
     const newCanvasRef = createRef();
 
-    let placedInteraction = placeInteractions(result);
+    // let placedInteraction = placeInteractions(result);
 
-    let polyCoord = placedInteraction.map((item, index) =>
-      renderRect(item, index)
-    );
-    let tmpObj = {};
-    tmpObj["placedInteraction"] = placedInteraction;
-    tmpObj["polyCoord"] = polyCoord;
+    // let polyCoord = placedInteraction.map((item, index) =>
+    //   renderRect(item, index)
+    // );
+    // let tmpObj = {};
+    // tmpObj["placedInteraction"] = placedInteraction;
+    // tmpObj["polyCoord"] = polyCoord;
 
-    if (trackData2!.side === "right") {
-      if (hicOption === 0) {
-        setRightTrack([...rightTrackGenes, tmpObj]);
-        setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-      } else {
-        setRightTrack([tmpObj]);
-        setCanvasRefR(new Array<any>(newCanvasRef));
-      }
-      prevOverflowStrand.current = { ...overflowStrand.current };
-      overflowStrand.current = {};
-    } else if (trackData2!.side === "left") {
-      if (hicOption === 0) {
-        setLeftTrack([...leftTrackGenes, tmpObj]);
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-      } else {
-        setLeftTrack([tmpObj]);
-        setCanvasRefL(new Array<any>(newCanvasRef));
-      }
-    }
+    // if (trackData2!.side === "right") {
+    //   if (hicOption === 0) {
+    //     setRightTrack([...rightTrackGenes, tmpObj]);
+    //     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
+    //   } else {
+    //     setRightTrack([tmpObj]);
+    //     setCanvasRefR(new Array<any>(newCanvasRef));
+    //   }
+    //   prevOverflowStrand.current = { ...overflowStrand.current };
+    //   overflowStrand.current = {};
+    // } else if (trackData2!.side === "left") {
+    //   if (hicOption === 0) {
+    //     setLeftTrack([...leftTrackGenes, tmpObj]);
+    //     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
+    //   } else {
+    //     setLeftTrack([tmpObj]);
+    //     setCanvasRefL(new Array<any>(newCanvasRef));
+    //   }
+    // }
     // if (trackData!.initial) {
     //   const newCanvasRefL = createRef();
     //   prevOverflowStrand2.current = { ...overflowStrand2.current };
@@ -445,6 +455,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (leftTrackGenes.length > 0) {
+      console.log(leftTrackGenes);
       drawCanvas(
         leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
         canvasRefL[canvasRefL.length - 1].current
@@ -453,84 +464,87 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   }, [leftTrackGenes]);
 
   useEffect(() => {
+    console.log("triger left ", trackData2);
     fetchGenomeData();
-    console.log(trackData2);
-    view.current = trackData2!.xDist;
   }, [trackData2, side]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          position: "relative",
-          alignContent: side === "right" ? "start" : "end",
-        }}
-      >
-        {side === "right"
-          ? canvasRefR.map((item, index) => (
-              <canvas
-                key={index}
-                ref={item}
-                height={"1000"}
-                width={windowWidth}
-                style={{ position: "absolute", left: `${-view.current!}px` }}
-              />
-            ))
-          : canvasRefL.map((item, index) => (
-              <canvas
-                key={canvasRefL.length - index - 1}
-                ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={"1000"}
-                width={windowWidth}
-                style={{ position: "absolute", right: `${view.current!}px` }}
-              />
-            ))}
+    <div
+      style={{
+        height: "150px",
+        position: "relative",
+      }}
+    ></div>
+    // <div
+    //   style={{
+    //     display: "flex",
+    //     position: "relative",
+    //     alignContent: side === "right" ? "start" : "end",
+    //   }}
+    // >
+    //   {side === "right"
+    //     ? canvasRefR.map((item, index) => (
+    //         <canvas
+    //           key={index}
+    //           ref={item}
+    //           height={"1000"}
+    //           width={windowWidth}
+    //           style={{ position: "absolute", left: `${-dragXDist!}px` }}
+    //         />
+    //       ))
+    //     : canvasRefL.map((item, index) => (
+    //         <canvas
+    //           key={canvasRefL.length - index - 1}
+    //           ref={canvasRefL[canvasRefL.length - index - 1]}
+    //           height={"1000"}
+    //           width={windowWidth}
+    //           style={{ position: "absolute", right: `${dragXDist!}px` }}
+    //         />
+    //       ))}
 
-        {side === "right" ? (
-          <div
-            key={"hicRight"}
-            style={{
-              opacity: 0.5,
+    //   {side === "right" ? (
+    //     <div
+    //       key={"hicRight"}
+    //       style={{
+    //         opacity: 0.5,
 
-              position: "absolute",
-              left: `${-view.current!}px`,
-            }}
-          >
-            {rightTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={index}
-                data={rightTrackGenes[index]}
-                windowWidth={windowWidth}
-                trackIdx={index}
-                side={"right"}
-              />
-            ))}
-          </div>
-        ) : (
-          <div
-            key={"hicLeft"}
-            style={{
-              opacity: 0.5,
-              display: "flex",
-              position: "absolute",
-              right: `${view.current!}px`,
-            }}
-          >
-            {leftTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={leftTrackGenes.length - index - 1}
-                data={leftTrackGenes[leftTrackGenes.length - index - 1]}
-                windowWidth={windowWidth}
-                trackIdx={leftTrackGenes.length - index - 1}
-                side={"left"}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    //         position: "absolute",
+    //         left: `${-dragXDist!}px`,
+    //       }}
+    //     >
+    //       {rightTrackGenes.map((item, index) => (
+    //         <TestToolTipHic
+    //           key={index}
+    //           data={rightTrackGenes[index]}
+    //           windowWidth={windowWidth}
+    //           trackIdx={index}
+    //           side={"right"}
+    //         />
+    //       ))}
+    //     </div>
+    //   ) : (
+    //     <div
+    //       key={"hicLeft"}
+    //       style={{
+    //         opacity: 0.5,
+    //         display: "flex",
+    //         position: "absolute",
+    //         right: `${dragXDist!}px`,
+    //       }}
+    //     >
+    //       {leftTrackGenes.map((item, index) => (
+    //         <TestToolTipHic
+    //           key={leftTrackGenes.length - index - 1}
+    //           data={leftTrackGenes[leftTrackGenes.length - index - 1]}
+    //           windowWidth={windowWidth}
+    //           trackIdx={leftTrackGenes.length - index - 1}
+    //           side={"left"}
+    //         />
+    //       ))}
+    //     </div>
+    //   )}
+    // </div>
   );
 });
-export default memo(HiCTrack);
+export default memo(GenomeAlign);
