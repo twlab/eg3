@@ -146,11 +146,11 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
       record[3] = data;
     }
-    console.log(result);
+
     const newCanvasRef = createRef();
 
-    // let placedInteraction = placeInteractions(result);
-
+    let placements = placeInteractions(result);
+    console.log(placements);
     // let polyCoord = placedInteraction.map((item, index) =>
     //   renderRect(item, index)
     // );
@@ -190,21 +190,43 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
   //________________________________________________________________________________________________________________________________________________________
   //________________________________________________________________________________________________________________________________________________________
-  function placeInteractions(interactions: GenomeInteraction[]) {
+  // function baseSpanToXCenter(baseInterval) {
+  //       const span = this.baseSpanToXSpan(baseInterval);
+  //       const centerX = Math.round((span.start + span.end) / 2);
+  //       // const startX = this.baseToX(baseInterval.start);
+  //       // const endX = this.baseToX(baseInterval.end);
+  //       // const centerX = (startX + endX) / 2;
+  //       // Round centerx and return (centerX, centerX) to plot a single marker
+  //       return new OpenInterval(centerX, centerX);
+  //   }
+  function placeInteractions(features) {
     const mappedInteractions: Array<any> = [];
-    for (const interaction of interactions) {
-      let location1 = interaction.locus1;
-      let location2 = interaction.locus2;
+    for (const feature of features) {
+      // if (contextLocation) {
+      //   const xSpan = useCenter
+      //     ? drawModel.baseSpanToXCenter(contextLocation)
+      //     : drawModel.baseSpanToXSpan(contextLocation);
+      //   const { visiblePart, isReverse } = this._locatePlacement(
+      //     feature,
+      //     navContext,
+      //     contextLocation
+      //   );
+      //   placements.push({
+      //     feature,
+      //     visiblePart,
+      //     contextLocation,
+      //     xSpan,
+      //     isReverse,
+      //   });
+      // }
 
-      const startX1 = (location1.start - start) / bpToPx!;
-      const endX1 = (location1.end - start) / bpToPx!;
+      const startX = (feature.start - start) / bpToPx!;
+      const endX = (feature.end - start) / bpToPx!;
 
-      const startX2 = (location2.start - start) / bpToPx!;
-      const endX2 = (location2.end - start) / bpToPx!;
+      const xSpan = { start: startX, end: endX };
 
-      const xSpan1 = { start: startX1, end: endX1 };
-      const xSpan2 = { start: startX2, end: endX2 };
-      mappedInteractions.push({ interaction, xSpan1, xSpan2 });
+      const centerX = Math.round((startX + endX) / 2);
+      mappedInteractions.push({ feature, xSpan, centerX });
     }
 
     return mappedInteractions;

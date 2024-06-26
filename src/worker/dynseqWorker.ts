@@ -1,5 +1,6 @@
 //src/Worker/worker.ts
 
+// this is makeXMap then to placeFeatures from eg 2
 const workerFunction = function () {
   self.onmessage = (event: MessageEvent) => {
     function findFeatureInPixel(
@@ -86,8 +87,8 @@ const workerFunction = function () {
     avgHeightFeature(featureReverse);
 
     let aggResult = {};
-    aggResult['forward'] = featureForward;
-    aggResult['reverse'] = featureReverse;
+    aggResult["forward"] = featureForward;
+    aggResult["reverse"] = featureReverse;
 
     postMessage(aggResult);
   };
@@ -97,11 +98,11 @@ const workerFunction = function () {
 let codeToString = workerFunction.toString();
 //This brings out the code in the bracket in string
 let mainCode = codeToString.substring(
-  codeToString.indexOf('{') + 1,
-  codeToString.lastIndexOf('}')
+  codeToString.indexOf("{") + 1,
+  codeToString.lastIndexOf("}")
 );
 //convert the code into a raw data
-let blob = new Blob([mainCode], { type: 'application/javascript' });
+let blob = new Blob([mainCode], { type: "application/javascript" });
 //A url is made out of the blob object and we're good to go
 let worker_script2 = URL.createObjectURL(blob);
 

@@ -113,6 +113,13 @@ function GenomeHub(props: any) {
           name: "genomealign",
           genome: "hg38",
           url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+          trackModel: {
+            name: "hg38tomm10",
+            label: "Query mouse mm10 to hg38 blastz",
+            querygenome: "mm10",
+            filetype: "genomealign",
+            url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+          },
         },
       ];
       newList.chrOrder = items;
@@ -200,6 +207,13 @@ function GenomeHub(props: any) {
               name: "genomealign",
               genome: "hg38",
               url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+              trackModel: {
+                name: "hg38tomm10",
+                label: "Query mouse mm10 to hg38 blastz",
+                querygenome: "mm10",
+                filetype: "genomealign",
+                url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+              },
             },
           ],
           annotationTrackData: AnnotationTrackData["HG19"],

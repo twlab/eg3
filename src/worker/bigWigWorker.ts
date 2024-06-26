@@ -1,5 +1,6 @@
 //src/Worker/worker.ts
 import JSON5 from "json5";
+// this is makeXMap then to placeFeatures from eg 2
 const workerFunction = function () {
   self.onmessage = (event: MessageEvent) => {
     function getPixelAvg(regionData) {

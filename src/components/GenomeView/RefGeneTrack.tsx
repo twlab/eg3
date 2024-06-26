@@ -406,6 +406,7 @@ const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
   // check each strand interval on each level to see if they overlapp and place it there
   // they are already in order of not overlapp. so we just just check  Loop previousIndex <- (currentIndex interval)
   //update the previous level start and end
+  // placeFeatureSegments from e g 2
   function setStrand(trackGeneData: { [Key: string]: any }) {
     // Set up event listener for messages from the worker
     // const worker = new Worker('./worker', {
