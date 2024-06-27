@@ -148,7 +148,6 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
           {toolTip.beamLeft}
           <div
             style={{
-              opacity: isVisible ? 1 : 0,
               display: "flex",
 
               position: "absolute",
@@ -158,11 +157,10 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
               left: toolTip.dataIdxX,
               top: toolTip.dataIdxY,
               fontSize: 14,
-
-              transition: "opacity 0.1s",
+              padding: 8,
+              borderRadius: 4,
             }}
           >
-            {trackIdx}
             {toolTip.toolTip}
           </div>
         </>

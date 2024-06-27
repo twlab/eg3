@@ -454,82 +454,78 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     fetchGenomeData();
-    console.log(trackData2);
+
     view.current = trackData2!.xDist;
-  }, [trackData2, side]);
+  }, [trackData2]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          position: "relative",
-          alignContent: side === "right" ? "start" : "end",
-        }}
-      >
-        {side === "right"
-          ? canvasRefR.map((item, index) => (
-              <canvas
-                key={index}
-                ref={item}
-                height={"1000"}
-                width={windowWidth}
-                style={{ position: "absolute", left: `${-view.current!}px` }}
-              />
-            ))
-          : canvasRefL.map((item, index) => (
-              <canvas
-                key={canvasRefL.length - index - 1}
-                ref={canvasRefL[canvasRefL.length - index - 1]}
-                height={"1000"}
-                width={windowWidth}
-                style={{ position: "absolute", right: `${view.current!}px` }}
-              />
-            ))}
+    <div
+      style={{
+        position: "relative",
+      }}
+    >
+      {side === "right"
+        ? canvasRefR.map((item, index) => (
+            <canvas
+              key={index}
+              ref={item}
+              height={"1000"}
+              width={windowWidth}
+              style={{ position: "absolute", left: `${-view.current!}px` }}
+            />
+          ))
+        : canvasRefL.map((item, index) => (
+            <canvas
+              key={canvasRefL.length - index - 1}
+              ref={canvasRefL[canvasRefL.length - index - 1]}
+              height={"1000"}
+              width={windowWidth}
+              style={{ position: "absolute", right: `${view.current!}px` }}
+            />
+          ))}
 
-        {side === "right" ? (
-          <div
-            key={"hicRight"}
-            style={{
-              opacity: 0.5,
+      {side === "right" ? (
+        <div
+          key={"hicRight"}
+          style={{
+            opacity: 0.5,
 
-              position: "absolute",
-              left: `${-view.current!}px`,
-            }}
-          >
-            {rightTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={index}
-                data={rightTrackGenes[index]}
-                windowWidth={windowWidth}
-                trackIdx={index}
-                side={"right"}
-              />
-            ))}
-          </div>
-        ) : (
-          <div
-            key={"hicLeft"}
-            style={{
-              opacity: 0.5,
-              display: "flex",
-              position: "absolute",
-              right: `${view.current!}px`,
-            }}
-          >
-            {leftTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={leftTrackGenes.length - index - 1}
-                data={leftTrackGenes[leftTrackGenes.length - index - 1]}
-                windowWidth={windowWidth}
-                trackIdx={leftTrackGenes.length - index - 1}
-                side={"left"}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+            position: "absolute",
+            left: `${-view.current!}px`,
+          }}
+        >
+          {rightTrackGenes.map((item, index) => (
+            <TestToolTipHic
+              key={index}
+              data={rightTrackGenes[index]}
+              windowWidth={windowWidth}
+              trackIdx={index}
+              side={"right"}
+            />
+          ))}
+        </div>
+      ) : (
+        <div
+          key={"hicLeft"}
+          style={{
+            opacity: 0.5,
+            display: "flex",
+            position: "absolute",
+            right: `${view.current!}px`,
+          }}
+        >
+          {leftTrackGenes.map((item, index) => (
+            <TestToolTipHic
+              key={leftTrackGenes.length - index - 1}
+              data={leftTrackGenes[leftTrackGenes.length - index - 1]}
+              windowWidth={windowWidth}
+              trackIdx={leftTrackGenes.length - index - 1}
+              side={"left"}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 });

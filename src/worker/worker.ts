@@ -13,6 +13,7 @@ const workerFunction = function () {
           return isNaN(value) ? sum : sum + value;
         }, 0) / records.length;
 
+      // const groupedByContext = _.groupBy(records, "context") is equal to below;
       const groupedByContext: Record<string, Array<{}>> = records.reduce(
         (result, record) => {
           const context = record["3"] || "default"; // Default context if 'context' property is missing

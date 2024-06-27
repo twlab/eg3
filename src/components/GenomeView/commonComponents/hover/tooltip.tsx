@@ -99,25 +99,27 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
         position: "relative",
       }}
     >
-      <div
-        style={{
-          opacity: isVisible ? "1" : "0",
+      {isVisible ? (
+        <div
+          style={{
+            left: rectPosition.dataIdxX,
+            top: rectPosition.dataIdxY,
+            position: "absolute",
+            backgroundColor: "black",
+            color: "white",
+            padding: 8,
+            borderRadius: 4,
+            fontSize: 14,
 
-          left: rectPosition.dataIdxX,
-          top: rectPosition.dataIdxY,
-          position: "absolute",
-          backgroundColor: "black",
-          color: "white",
-          padding: 8,
-          borderRadius: 4,
-          fontSize: 14,
-
-          transition: "opacity 0.1s",
-        }}
-      >
-        {trackIdx}
-        {rectPosition.toolTip}
-      </div>
+            transition: "opacity 0.1s",
+          }}
+        >
+          {trackIdx}
+          {rectPosition.toolTip}
+        </div>
+      ) : (
+        " "
+      )}
     </div>
   );
 });
