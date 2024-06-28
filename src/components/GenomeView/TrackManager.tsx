@@ -486,7 +486,7 @@ function TrackManager(props) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2 || initial === 1) {
       let hicResult = await trackFetchFunction.hic({
-        straw: genome.defaultTracks[5].straw,
+        straw: genome.defaultTracks[4].straw,
 
         option: defaultHic,
 
@@ -494,7 +494,7 @@ function TrackManager(props) {
         end: Number(bpX.current + bpRegionSize),
       });
       let genomealignResult = await trackFetchFunction.genomealign({
-        url: genome.defaultTracks[6].url,
+        url: genome.defaultTracks[5].url,
         chr: region,
         start: Number(bpX.current),
         end: Number(bpX.current + bpRegionSize),
