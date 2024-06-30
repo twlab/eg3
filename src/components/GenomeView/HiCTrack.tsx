@@ -463,6 +463,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     <div
       style={{
         position: "relative",
+        height: 700,
       }}
     >
       {side === "right"

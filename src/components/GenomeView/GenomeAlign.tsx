@@ -8,6 +8,22 @@ import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 import percentile from "percentile";
 import { placements } from "@popperjs/core";
 
+export const DEFAULT_OPTIONS = {
+  height: 80,
+  primaryColor: "darkblue",
+  queryColor: "#B8008A",
+};
+
+// const FINE_MODE_HEIGHT = 80;
+const ALIGN_TRACK_MARGIN = 20; // The margin on top and bottom of alignment block
+// const ROUGH_MODE_HEIGHT = 80;
+const RECT_HEIGHT = 15;
+const TICK_MARGIN = 1;
+const FONT_SIZE = 10;
+// const PRIMARY_COLOR = 'darkblue';
+// const QUERY_COLOR = '#B8008A';
+const MAX_POLYGONS = 500;
+
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -42,7 +58,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   let result;
   if (Object.keys(trackData2!).length > 0) {
     [start, end] = trackData2!.location.split(":");
-    console.log(trackData2!);
+
     result = trackData2!.genomealignResult;
   }
 
@@ -57,7 +73,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
   const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
-
+  const view = useRef(0);
   const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
 
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
@@ -87,8 +103,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     // creating the alignmentRecords
     let placedRecords = placeInteractions(result);
 
-    console.log(placedRecords);
-
     //step 3 get mergeDistance
     const mergeDistance = MERGE_PIXEL_DISTANCE * bpToPx!;
 
@@ -103,7 +117,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         positive += item[3].genomealign.stop - item[3].genomealign.start;
       }
     }
-    console.log(positive, negative);
+
     const aggregateStrandsNumber = result.reduce(
       (aggregateStrand, record) =>
         aggregateStrand +
@@ -112,7 +126,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           : record[3].genomealign.stop - record[3].genomealign.start),
       0
     );
-    console.log(aggregateStrandsNumber);
+
     const plotStrand = aggregateStrandsNumber < 0 ? "-" : "+";
 
     //step 5 mergeAdvanced merge the alignments by query genome coordinates
@@ -135,7 +149,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       placedRecords,
       (obj) => obj.visiblePart.chr
     );
-    console.log(groupedByChromosome);
+
     //iteratee(a) == chromosomeinterval
     const merged: Array<any> = [];
     for (const chrName in groupedByChromosome) {
@@ -219,17 +233,19 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         ...placementsInMerge.map((segment) => segment.targetXSpan.end)
       );
       const mergeTargetXSpan = { targetXStart, targetEnd };
+      console.log(mergeTargetXSpan);
       const preferredStart = drawCenter - halfDrawWidth;
       const preferredEnd = drawCenter + halfDrawWidth;
       // Place it so it doesn't overlap other segments
+
       const mergeXSpan = intervalPlacer.place({ preferredStart, preferredEnd });
-      console.log(preferredStart, mergeTargetXSpan, preferredEnd);
+      console.log(mergeXSpan);
       // Put the actual secondary/query genome segments in the placed merged query locus from above
 
       const queryLoci = placementsInMerge.map(
         (placement) => placement.record.queryLocus
       );
-      console.log(plotStrand);
+
       const isReverse = plotStrand === "-" ? true : false;
       const lociXSpans = placeInternalLoci(
         mergeLocus,
@@ -249,10 +265,135 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       });
     }
     console.log(drawData);
+    let svgElements = drawData.map((placement) =>
+      renderRoughAlignment(placement, false, 80)
+    );
+    setRightTrack([...svgElements]);
+    console.log(svgElements);
+  }
+  function ensureMaxListLength(list, limit: number) {
+    if (list.length <= limit) {
+      return list;
+    }
+
+    const selectedItems: Array<any> = [];
+    for (let i = 0; i < limit; i++) {
+      const fractionIterated = i / limit;
+      const selectedIndex = Math.ceil(fractionIterated * list.length);
+      selectedItems.push(list[selectedIndex]);
+    }
+    return selectedItems;
+  }
+  function renderRoughAlignment(
+    placement: { [key: string]: any },
+    plotReverse: boolean,
+    roughHeight: number
+  ) {
+    const { queryFeature, queryXSpan, segments, targetXSpan } = placement;
+    const queryRectTopY = roughHeight - RECT_HEIGHT;
+    const targetGenomeRect = (
+      <rect
+        x={targetXSpan.targetXStart}
+        y={0}
+        width={targetXSpan.targetEnd - targetXSpan.targetXStart}
+        height={RECT_HEIGHT}
+        fill={DEFAULT_OPTIONS.primaryColor}
+        // tslint:disable-next-line:jsx-no-lambda
+        // onClick={() =>
+        //   console.log("You clicked on " + queryFeature.getLocus().toString())
+        // }
+      />
+    );
+    const queryGenomeRect = (
+      <rect
+        x={queryXSpan.preferredStart}
+        y={queryRectTopY}
+        width={queryXSpan.preferredEnd - queryXSpan.preferredStart}
+        height={RECT_HEIGHT}
+        fill={DEFAULT_OPTIONS.queryColor}
+        // tslint:disable-next-line:jsx-no-lambda
+        // onClick={() => console.log("You clicked on " + queryFeature.getLocus().toString())}
+      />
+    );
+
+    let label;
+    if (queryXSpan.preferredEnd - queryXSpan.preferredStart) {
+      label = (
+        <text
+          x={windowWidth / 2}
+          y={queryRectTopY + 0.5 * RECT_HEIGHT}
+          dominantBaseline="middle"
+          textAnchor="middle"
+          fill="white"
+          fontSize={12}
+        >
+          {queryFeature.mergeLocus.chrName}:{" "}
+          {queryFeature.mergeLocus.mergedStart}-
+          {queryFeature.mergeLocus.mergedEnd}
+        </text>
+      );
+    }
+    console.log(segments);
+    const curvePaths = segments.map((segment, i) => {
+      const x0 = Math.floor(segment.targetXSpan.start);
+      const y0 = RECT_HEIGHT;
+      const x1 =
+        (!plotReverse && segment.record.queryStrand === "-") ||
+        (plotReverse && segment.record.queryStrand === "+")
+          ? Math.ceil(segment.queryXSpan.xEnd)
+          : Math.floor(segment.queryXSpan.xStart);
+      const y1 = queryRectTopY;
+      const x2 =
+        (!plotReverse && segment.record.queryStrand === "-") ||
+        (plotReverse && segment.record.queryStrand === "+")
+          ? Math.floor(segment.queryXSpan.xStart)
+          : Math.ceil(segment.queryXSpan.xEnd);
+      // const y2 = queryRectTopY;
+
+      const x3 = segment.targetXSpan.end;
+      const targetGenome = "hg38";
+      const queryGenome = "mm10";
+      const y3 = RECT_HEIGHT;
+      const yhalf = (RECT_HEIGHT + queryRectTopY) / 2;
+      const d_string = `M ${x0} ${y0} 
+        C ${x0} ${yhalf}, ${x1} ${yhalf},${x1},${y1} 
+        H ${x2} 
+        C ${x2} ${yhalf}, ${x3} ${yhalf}, ${x3},${y3}
+        Z`;
+
+      return (
+        <path
+          key={i}
+          d={d_string}
+          fill={DEFAULT_OPTIONS.queryColor}
+          fillOpacity={0.5}
+          // tslint:disable-next-line:jsx-no-lambda
+          onClick={() =>
+            console.log(
+              targetGenome +
+                ":" +
+                segment.record.getLocus() +
+                " --- " +
+                queryGenome +
+                ":" +
+                segment.record.queryLocus.toString()
+            )
+          }
+        />
+      );
+    });
+
+    return (
+      <React.Fragment key={queryFeature.mergeLocus.toString()}>
+        {targetGenomeRect}
+        {queryGenomeRect}
+        {label}
+        {ensureMaxListLength(curvePaths, MAX_POLYGONS)}
+      </React.Fragment>
+    );
   }
 
   function placeInteractions(features) {
-    console.log(features);
     const placements: Array<any> = [];
     for (const feature of features) {
       const startX = (feature.start - start) / bpToPx!;
@@ -429,6 +570,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     }
 
     retrievePlacements() {
+      console.log(this._placements);
       return this._placements;
     }
   }
@@ -455,103 +597,86 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   //   }
   // }, [side]);
 
-  useEffect(() => {
-    if (rightTrackGenes.length > 0) {
-      drawCanvas(
-        rightTrackGenes[rightTrackGenes.length - 1].polyCoord,
-        canvasRefR[canvasRefR.length - 1].current
-      );
-    }
-  }, [rightTrackGenes]);
+  // useEffect(() => {
+  //   if (rightTrackGenes.length > 0) {
+  //     drawCanvas(
+  //       rightTrackGenes[rightTrackGenes.length - 1].polyCoord,
+  //       canvasRefR[canvasRefR.length - 1].current
+  //     );
+  //   }
+  // }, [rightTrackGenes]);
 
-  useEffect(() => {
-    if (leftTrackGenes.length > 0) {
-      console.log(leftTrackGenes);
-      drawCanvas(
-        leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
-        canvasRefL[canvasRefL.length - 1].current
-      );
-    }
-  }, [leftTrackGenes]);
+  // useEffect(() => {
+  //   if (leftTrackGenes.length > 0) {
+  //     drawCanvas(
+  //       leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
+  //       canvasRefL[canvasRefL.length - 1].current
+  //     );
+  //   }
+  // }, [leftTrackGenes]);
 
   useEffect(() => {
     console.log("triger left ", trackData2);
     fetchGenomeData();
+    view.current = trackData2!.xDist;
     // having two prop changes here side and data will cause JSON5 try to run twice causing an error because its already parsed
   }, [trackData2]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
-    <div></div>
-    // <div
-    //   style={{
-    //     display: "flex",
-    //     position: "relative",
-    //     alignContent: side === "right" ? "start" : "end",
-    //   }}
-    // >
-    //   {side === "right"
-    //     ? canvasRefR.map((item, index) => (
-    //         <canvas
-    //           key={index}
-    //           ref={item}
-    //           height={"1000"}
-    //           width={windowWidth}
-    //           style={{ position: "absolute", left: `${-dragXDist!}px` }}
-    //         />
-    //       ))
-    //     : canvasRefL.map((item, index) => (
-    //         <canvas
-    //           key={canvasRefL.length - index - 1}
-    //           ref={canvasRefL[canvasRefL.length - index - 1]}
-    //           height={"1000"}
-    //           width={windowWidth}
-    //           style={{ position: "absolute", right: `${dragXDist!}px` }}
-    //         />
-    //       ))}
+    <div
+      style={{
+        display: "flex",
+        overflowX: "visible",
+        overflowY: "hidden",
+      }}
+    >
+      <svg
+        width={`${windowWidth}px`}
+        height={"250"}
+        style={{
+          overflow: "visible",
 
-    //   {side === "right" ? (
-    //     <div
-    //       key={"hicRight"}
-    //       style={{
-    //         opacity: 0.5,
+          position: "absolute",
+          left: `${-view.current!}px`,
+        }}
+      >
+        {side === "right"
+          ? rightTrackGenes.map(
+              (item, index) =>
+                // index <= rightTrackGenes.length - 1 ?
 
-    //         position: "absolute",
-    //         left: `${-dragXDist!}px`,
-    //       }}
-    //     >
-    //       {rightTrackGenes.map((item, index) => (
-    //         <TestToolTipHic
-    //           key={index}
-    //           data={rightTrackGenes[index]}
-    //           windowWidth={windowWidth}
-    //           trackIdx={index}
-    //           side={"right"}
-    //         />
-    //       ))}
-    //     </div>
-    //   ) : (
-    //     <div
-    //       key={"hicLeft"}
-    //       style={{
-    //         opacity: 0.5,
-    //         display: "flex",
-    //         position: "absolute",
-    //         right: `${dragXDist!}px`,
-    //       }}
-    //     >
-    //       {leftTrackGenes.map((item, index) => (
-    //         <TestToolTipHic
-    //           key={leftTrackGenes.length - index - 1}
-    //           data={leftTrackGenes[leftTrackGenes.length - index - 1]}
-    //           windowWidth={windowWidth}
-    //           trackIdx={leftTrackGenes.length - index - 1}
-    //           side={"left"}
-    //         />
-    //       ))}
-    //     </div>
-    //   )}
-    // </div>
+                item
+              //  : (
+              //   <div style={{ display: 'flex', width: windowWidth }}>
+              //     ....LOADING
+              //   </div>
+              // )
+            )
+          : leftTrackGenes.map((item, index) => (
+              // index <= rightTrackGenes.length - 1 ?
+              <svg
+                key={leftTrackGenes.length - index - 1}
+                width={`${windowWidth}px`}
+                height={"250"}
+                style={{
+                  overflow: "visible",
+                }}
+              >
+                <line
+                  x1={`${windowWidth}px`}
+                  y1="0"
+                  x2={`${windowWidth}px`}
+                  y2={"100%"}
+                  stroke="gray"
+                  strokeWidth="1"
+                />
+
+                {leftTrackGenes[leftTrackGenes.length - index - 1]}
+              </svg>
+            ))}
+      </svg>
+    </div>
   );
 });
 export default memo(GenomeAlign);
