@@ -267,12 +267,17 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         segments: placementsInMerge,
       });
     }
-    console.log(drawData);
+    drawData;
     let svgElements = drawData.map((placement) =>
       renderRoughAlignment(placement, false, 80)
     );
-    setRightTrack([...svgElements]);
-    console.log(svgElements);
+
+    if (trackData2!.side === "right") {
+      setRightTrack([...svgElements]);
+    } else {
+      setLeftTrack([...svgElements]);
+    }
+    svgElements;
   }
   function ensureMaxListLength(list, limit: number) {
     if (list.length <= limit) {
@@ -621,7 +626,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           overflow: "visible",
 
           position: "absolute",
-          left: `${-view.current!}px`,
+          right: side === "left" ? `${view.current!}px` : "",
+          left: side === "right" ? `${-view.current!}px` : "",
         }}
       >
         {side === "right"
@@ -637,28 +643,18 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
               //   </div>
               // )
             )
-          : leftTrackGenes.map((item, index) => (
-              // index <= rightTrackGenes.length - 1 ?
-              <svg
-                key={leftTrackGenes.length - index - 1}
-                width={`${windowWidth}px`}
-                height={"250"}
-                style={{
-                  overflow: "visible",
-                }}
-              >
-                <line
-                  x1={`${windowWidth}px`}
-                  y1="0"
-                  x2={`${windowWidth}px`}
-                  y2={"100%"}
-                  stroke="gray"
-                  strokeWidth="1"
-                />
+          : leftTrackGenes.map(
+              (item, index) =>
+                // index <= rightTrackGenes.length - 1 ?
 
-                {leftTrackGenes[leftTrackGenes.length - index - 1]}
-              </svg>
-            ))}
+                item
+
+              //  : (
+              //   <div style={{ display: 'flex', width: windowWidth }}>
+              //     ....LOADING
+              //   </div>
+              // )
+            )}
       </svg>
     </div>
   );
