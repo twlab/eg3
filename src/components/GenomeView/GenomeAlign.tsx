@@ -238,8 +238,11 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       const preferredEnd = drawCenter + halfDrawWidth;
       // Place it so it doesn't overlap other segments
 
-      const mergeXSpan = intervalPlacer.place({ preferredStart, preferredEnd });
-      console.log(mergeXSpan);
+      const mergeXSpan = intervalPlacer.place({
+        start: preferredStart,
+        end: preferredEnd,
+      });
+
       // Put the actual secondary/query genome segments in the placed merged query locus from above
 
       const queryLoci = placementsInMerge.map(
@@ -289,6 +292,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     plotReverse: boolean,
     roughHeight: number
   ) {
+    console.log(placement);
     const { queryFeature, queryXSpan, segments, targetXSpan } = placement;
     const queryRectTopY = roughHeight - RECT_HEIGHT;
     const targetGenomeRect = (
@@ -306,9 +310,9 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     );
     const queryGenomeRect = (
       <rect
-        x={queryXSpan.preferredStart}
+        x={queryXSpan.start}
         y={queryRectTopY}
-        width={queryXSpan.preferredEnd - queryXSpan.preferredStart}
+        width={queryXSpan.end - queryXSpan.start}
         height={RECT_HEIGHT}
         fill={DEFAULT_OPTIONS.queryColor}
         // tslint:disable-next-line:jsx-no-lambda
@@ -317,7 +321,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     );
 
     let label;
-    if (queryXSpan.preferredEnd - queryXSpan.preferredStart) {
+    if (queryXSpan.end - queryXSpan.start) {
       label = (
         <text
           x={windowWidth / 2}
@@ -434,27 +438,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     return placements;
   }
 
-  function drawCanvas(polyRegionData, canvasRef) {
-    if (canvasRef) {
-      let context = canvasRef.getContext("2d");
-      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-      for (let i = 0; i < polyRegionData.length; i++) {
-        const points = polyRegionData[i].points;
-        context.fillStyle = "#B8008A";
-        context.globalAlpha = 1;
-
-        context.beginPath();
-        context.moveTo(points[0][0], points[0][1]);
-        context.lineTo(points[1][0], points[1][1]);
-        context.lineTo(points[2][0], points[2][1]);
-        context.lineTo(points[3][0], points[3][1]);
-        context.closePath();
-        context.fill();
-      }
-    }
-  }
-
   function getOverlap(other, placement) {
+    console.log(other, placement);
     const intersectionStart = Math.max(placement.start, other.start);
     const intersectionEnd = Math.min(placement.end, other.end);
     if (intersectionStart < intersectionEnd) {
@@ -484,39 +469,34 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     drawReverse: boolean
   ) {
     const xSpans: Array<any> = [];
-
+    console.log(parentXSpan);
     if (drawReverse) {
       // place segments from right to left if drawReverse
       for (const locus of internalLoci) {
         const distanceFromParent = locus.start - parentLocus.mergedStart;
         const xDistanceFromParent = distanceFromParent / bpToPx!;
 
-        const locusXEnd = parentXSpan.preferredEnd - xDistanceFromParent;
+        const locusXEnd = parentXSpan.end - xDistanceFromParent;
         const xWidth = (locus.end - locus.start) / bpToPx!;
-        const xEnd =
-          locusXEnd < parentXSpan.preferredEnd
-            ? locusXEnd
-            : parentXSpan.preferredEnd;
+        const xEnd = locusXEnd < parentXSpan.end ? locusXEnd : parentXSpan.end;
         const xStart =
-          locusXEnd - xWidth > parentXSpan.preferredStart
+          locusXEnd - xWidth > parentXSpan.start
             ? locusXEnd - xWidth
-            : parentXSpan.preferredStart;
+            : parentXSpan.start;
         xSpans.push({ xStart, xEnd });
       }
     } else {
       for (const locus of internalLoci) {
         const distanceFromParent = locus.start - parentLocus.mergedStart;
         const xDistanceFromParent = distanceFromParent / bpToPx!;
-        const locusXStart = parentXSpan.preferredStart + xDistanceFromParent;
+        const locusXStart = parentXSpan.start + xDistanceFromParent;
         const xWidth = (locus.end - locus.start) / bpToPx!;
         const xStart =
-          locusXStart > parentXSpan.preferredStart
-            ? locusXStart
-            : parentXSpan.preferredStart;
+          locusXStart > parentXSpan.start ? locusXStart : parentXSpan.start;
         const xEnd =
-          locusXStart + xWidth < parentXSpan.preferredEnd
+          locusXStart + xWidth < parentXSpan.end
             ? locusXStart + xWidth
-            : parentXSpan.preferredEnd;
+            : parentXSpan.end;
         xSpans.push({ xStart, xEnd });
       }
     }
@@ -549,12 +529,16 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           Math.abs(center - this.rightExtent);
         finalLocation = isInsertLeft
           ? {
-              start: this.leftExtent - preferredLocation.getLength(),
+              start:
+                this.leftExtent -
+                (preferredLocation.end - preferredLocation.start),
               end: this.leftExtent,
             }
           : {
               start: this.rightExtent,
-              end: this.rightExtent + preferredLocation.getLength(),
+              end:
+                this.rightExtent +
+                (preferredLocation.end - preferredLocation.start),
             };
       }
 
@@ -570,7 +554,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     }
 
     retrievePlacements() {
-      console.log(this._placements);
       return this._placements;
     }
   }
@@ -647,6 +630,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
                 // index <= rightTrackGenes.length - 1 ?
 
                 item
+
               //  : (
               //   <div style={{ display: 'flex', width: windowWidth }}>
               //     ....LOADING
