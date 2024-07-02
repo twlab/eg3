@@ -738,7 +738,7 @@ function TrackManager(props) {
       ) : (
         <div>DATA READY LETS GO</div>
       )}
-
+      <div>1pixel to {bpToPx}bp</div>
       <div
         style={{
           display: "flex",
