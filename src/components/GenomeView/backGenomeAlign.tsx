@@ -1,3 +1,4 @@
+
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
@@ -96,15 +97,13 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     let drawData: Array<any> = [];
     //check if 1 pixel >= 10bp
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
-
-    //step  1 check bp and get the gaps
+   
+    //step  1 check bp and get the gaps 
     if (bpToPx! <= 10) {
-      const { newRecordsArray, allGaps } = refineRecordsArray(result);
-      console.log(allGaps);
+     const { newRecordsArray, allGaps }  =  refineRecordsArray(result);
     }
-
     //step 2 use the gap data after refinedRecordArray to create a new visData
-    // const primaryVisData = calculatePrimaryVis(allGaps);
+const primaryVisData = calculatePrimaryVis(allGaps);
     //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
     else {
       //step 2 ._computeContextLocations ->   placeFeature(): get x base interval converted to pixels
@@ -291,51 +290,51 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     svgElements;
   }
   //fineMode FUNCTIONS __________________________________________________________________________________________________________________________________________________________
-  //   function calculatePrimaryVis(allGaps: Array<any>){
-  //   // Calculate primary visData that have all the primary gaps from different alignemnts insertions.
-  //   const { visRegion, viewWindow, viewWindowRegion } = visData;
-  //   const oldNavContext = visRegion.getNavigationContext();
-  //   const navContextBuilder = new NavContextBuilder(oldNavContext);
-  //   navContextBuilder.setGaps(allGaps);
-  //       setGaps(allGaps);
-  //   const newNavContext = navContextBuilder.build();
-  //   // Calculate new DisplayedRegionModel and LinearDrawingModel from the new nav context
-  //   const newVisRegion = convertOldVisRegion(visRegion);
-  //   const newViewWindowRegion = convertOldVisRegion(viewWindowRegion);
-  //   const newPixelsPerBase =
-  //     viewWindow.getLength() / newViewWindowRegion.getWidth();
-  //   const newVisWidth = newVisRegion.getWidth() * newPixelsPerBase;
-  //   const newDrawModel = new LinearDrawingModel(newVisRegion, newVisWidth);
-  //   const newViewWindow = newDrawModel.baseSpanToXSpan(
-  //     newViewWindowRegion.getContextCoordinates()
-  //   );
+    function calculatePrimaryVis(allGaps: Array<any>){
+    // Calculate primary visData that have all the primary gaps from different alignemnts insertions.
+    const { visRegion, viewWindow, viewWindowRegion } = visData;
+    const oldNavContext = visRegion.getNavigationContext();
+    const navContextBuilder = new NavContextBuilder(oldNavContext);
+    navContextBuilder.setGaps(allGaps);
+        setGaps(allGaps);
+    const newNavContext = navContextBuilder.build();
+    // Calculate new DisplayedRegionModel and LinearDrawingModel from the new nav context
+    const newVisRegion = convertOldVisRegion(visRegion);
+    const newViewWindowRegion = convertOldVisRegion(viewWindowRegion);
+    const newPixelsPerBase =
+      viewWindow.getLength() / newViewWindowRegion.getWidth();
+    const newVisWidth = newVisRegion.getWidth() * newPixelsPerBase;
+    const newDrawModel = new LinearDrawingModel(newVisRegion, newVisWidth);
+    const newViewWindow = newDrawModel.baseSpanToXSpan(
+      newViewWindowRegion.getContextCoordinates()
+    );
 
-  //   return {
-  //     visRegion: newVisRegion,
-  //     visWidth: newVisWidth,
-  //     viewWindowRegion: newViewWindowRegion,
-  //     viewWindow: newViewWindow,
-  //   };
-  //   function setGaps(gaps: Array<any>) {
-  //     gaps = gaps.slice().sort((a, b) => a.contextBase - b.contextBase);
-  //       let cumulativeGapBases: Array<any> = [];
-  //       let sum = 0;
-  //       for (const gap of gaps) {
-  //           cumulativeGapBases.push(sum);
-  //           sum += gap.length;
-  //       }
-  //   cumulativeGapBases.push(sum);
-  //   }
+    return {
+      visRegion: newVisRegion,
+      visWidth: newVisWidth,
+      viewWindowRegion: newViewWindowRegion,
+      viewWindow: newViewWindow,
+    };
+    function setGaps(gaps: Gap[]) {
+        this._gaps = gaps.slice().sort((a, b) => a.contextBase - b.contextBase);
+        this._cumulativeGapBases = [];
+        let sum = 0;
+        for (const gap of this._gaps) {
+            this._cumulativeGapBases.push(sum);
+            sum += gap.length;
+        }
+        this._cumulativeGapBases.push(sum);
+    }
 
-  //   function convertOldVisRegion(visRegion: DisplayedRegionModel) {
-  //     const [contextStart, contextEnd] = visRegion.getContextCoordinates();
-  //     return new DisplayedRegionModel(
-  //       newNavContext,
-  //       navContextBuilder.convertOldCoordinates(contextStart),
-  //       navContextBuilder.convertOldCoordinates(contextEnd)
-  //     );
-  //   }
-  // }
+    function convertOldVisRegion(visRegion: DisplayedRegionModel) {
+      const [contextStart, contextEnd] = visRegion.getContextCoordinates();
+      return new DisplayedRegionModel(
+        newNavContext,
+        navContextBuilder.convertOldCoordinates(contextStart),
+        navContextBuilder.convertOldCoordinates(contextEnd)
+      );
+    }
+  }
   function refineRecordsArray(recordsArray: Array<any>) {
     const minGapLength = MIN_GAP_LENGTH;
 
@@ -343,8 +342,10 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     // Combine all gaps from all alignments into a new array:
     const refineRecords: Array<any> = [];
     const allGapsObj = {};
+    console.log(recordsArray);
 
     const placements: Array<any> = placeFeatures(recordsArray);
+    console.log(placements);
     const primaryGaps: Array<any> = getPrimaryGenomeGaps(
       placements,
       minGapLength

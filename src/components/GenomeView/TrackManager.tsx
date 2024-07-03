@@ -200,9 +200,7 @@ function TrackManager(props) {
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
   for (let i = 0; i < genome.defaultTracks.length; i++) {
-    if (i === genome.defaultTracks.length - 1) {
-      trackComponent.push(componentMap[genome.defaultTracks[i].name]);
-    }
+    trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
   function sumArray(numbers) {
     let total = 0;

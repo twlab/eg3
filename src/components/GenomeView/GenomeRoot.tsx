@@ -164,7 +164,7 @@ function GenomeHub(props: any) {
           //chr7:27053397-27373765
           // chr7:10000-20000
           //testing finemode  27215671-27218875
-          defaultRegion: "chr7:27053397-27373765",
+          defaultRegion: "chr7:27215671-27218875",
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [
@@ -254,9 +254,9 @@ function GenomeHub(props: any) {
 
   return (
     <>
-      <div style={{ display: "flex" }}>
+      {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
-      </div>
+      </div> */}
 
       <div>{TrackManagerView}</div>
     </>
