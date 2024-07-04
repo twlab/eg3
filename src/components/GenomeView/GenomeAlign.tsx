@@ -99,8 +99,13 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
+      // refineRecordArray - find all the gaps for the data
+      //To-Do: Fixed placements data, made visiblepart equivalent to eg2 data
+      // figured out how to get those data inside of _computeContextLocations
       const { newRecordsArray, allGaps } = refineRecordsArray(result);
       console.log(allGaps);
+
+      // calcualtePrimaryVis
     }
 
     //step 2 use the gap data after refinedRecordArray to create a new visData
@@ -109,7 +114,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     else {
       //step 2 ._computeContextLocations ->   placeFeature(): get x base interval converted to pixels
       // creating the alignmentRecords
-      let placedRecords = placeFeatures(result);
+      let placedRecords = computeContextLocations(result);
       console.log(placedRecords);
       //step 3 get mergeDistance
       const mergeDistance = MERGE_PIXEL_DISTANCE * bpToPx!;
@@ -291,13 +296,12 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     svgElements;
   }
   //fineMode FUNCTIONS __________________________________________________________________________________________________________________________________________________________
-  //   function calculatePrimaryVis(allGaps: Array<any>){
+  // function calculatePrimaryVis(allGaps: Array<any>) {
   //   // Calculate primary visData that have all the primary gaps from different alignemnts insertions.
   //   const { visRegion, viewWindow, viewWindowRegion } = visData;
   //   const oldNavContext = visRegion.getNavigationContext();
   //   const navContextBuilder = new NavContextBuilder(oldNavContext);
   //   navContextBuilder.setGaps(allGaps);
-  //       setGaps(allGaps);
   //   const newNavContext = navContextBuilder.build();
   //   // Calculate new DisplayedRegionModel and LinearDrawingModel from the new nav context
   //   const newVisRegion = convertOldVisRegion(visRegion);
@@ -316,16 +320,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   //     viewWindowRegion: newViewWindowRegion,
   //     viewWindow: newViewWindow,
   //   };
-  //   function setGaps(gaps: Array<any>) {
-  //     gaps = gaps.slice().sort((a, b) => a.contextBase - b.contextBase);
-  //       let cumulativeGapBases: Array<any> = [];
-  //       let sum = 0;
-  //       for (const gap of gaps) {
-  //           cumulativeGapBases.push(sum);
-  //           sum += gap.length;
-  //       }
-  //   cumulativeGapBases.push(sum);
-  //   }
 
   //   function convertOldVisRegion(visRegion: DisplayedRegionModel) {
   //     const [contextStart, contextEnd] = visRegion.getContextCoordinates();
@@ -344,7 +338,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     const refineRecords: Array<any> = [];
     const allGapsObj = {};
 
-    const placements: Array<any> = placeFeatures(recordsArray);
+    const placements: Array<any> = computeContextLocations(recordsArray);
     const primaryGaps: Array<any> = getPrimaryGenomeGaps(
       placements,
       minGapLength
@@ -376,8 +370,9 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         length: allGapsObj[contextBase],
       });
     }
+
     allPrimaryGaps.sort((a, b) => a.contextBase - b.contextBase); // ascending.
-    console.log(allPrimaryGaps);
+
     // For each records, insertion gaps to sequences if for contextBase only in allGapsSet:
     if (refineRecords.length > 1) {
       // skip this part for pairwise alignment.
@@ -436,7 +431,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       }
     }
     const newRecords = refineRecords.map((final) => final.recordsObj);
-    console.log({ newRecordsArray: newRecords, allGaps: allPrimaryGaps });
+    console.log(allPrimaryGaps);
     return { newRecordsArray: newRecords, allGaps: allPrimaryGaps };
 
     function indexLookup(sequence: string, base: number): number {
@@ -458,6 +453,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     console.log(placements);
     for (const placement of placements) {
       const { visiblePart, contextSpan } = placement;
+      console.log(visiblePart);
       const segments = segmentSequence(
         placement.record.targetSeq,
         minGapLength,
@@ -659,11 +655,17 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     );
   }
 
-  function placeFeatures(features) {
+  function computeContextLocations(features) {
     const placements: Array<any> = [];
+    console.log(features);
     for (const feature of features) {
-      const startX = (feature.start - start) / bpToPx!;
-      const endX = (feature.end - start) / bpToPx!;
+      let contextXSpan = getOverlap(
+        { start, end },
+        { start: feature.start, end: feature.end }
+      );
+      console.log(contextXSpan);
+      const startX = (contextXSpan!.intersectionStart - start) / bpToPx!;
+      const endX = (contextXSpan!.intersectionEnd - start) / bpToPx!;
 
       const targetXSpan = { start: startX, end: endX };
 
@@ -671,8 +673,11 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       const centerX = Math.round((startX + endX) / 2);
       // locatePlacement
 
+      // we have to fit the primary genome coordinates to the window screen
+      // so we need to also make the same adjustments in bp also to the secondary genome
+
       // First, get the genomic coordinates of the context location, i.e. the "context locus"
-      const contextFeatureCoord = feature.start;
+      const contextFeatureCoord = contextXSpan!.intersectionStart;
       const placedBase = start;
 
       // We have a base number, but it could be the end or the beginning of the context locus.
@@ -680,15 +685,41 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
       contextLocusStart = placedBase;
 
-      // Now, we can compare the context location locus to the feature's locus.
+      // relativeStart and relativeEnd are the numbers that we need to cut our primary
+      // genome coordinates to fit in side the window view.
+      // in relativeStart if primaryGenome Start is less than window view bp region start then relativeStart
+      // is the different between the two numbers. and we add relativeStart to the secondary genome so
+      // the secondarying genome start position will also fit inside the view window
+      // basically relativeStart is how much bp we need to add to secondarying genome start to fit
+      // inside window view bp region
+
+      // for relativeEnd is the distance between primary genome start and end
+      // since we need to match the prime movement. we add the relativeStart to secondgenome
+      // to fit into bp region view and then add the diff between prime start and end to
+      // second genome start
+
+      // we use the starting
       const distFromFeatureLocus = contextLocusStart - feature.start;
       const relativeStart = Math.max(0, distFromFeatureLocus);
+      // for relative end we use the contextXspan because feature.end could be outside the end view
+      let relativeEnd =
+        relativeStart +
+        contextXSpan!.intersectionEnd -
+        contextXSpan!.intersectionStart;
 
+      let secondaryGenomeStart = feature[3].genomealign.start + relativeStart;
+      let secondaryGenomeEnd = Math.min(
+        feature[3].genomealign.start + relativeEnd,
+        feature[3].genomealign.stop
+      );
+      // the visible part of the secondary genome on screen
       const visiblePart = {
         feature: feature,
         chr: feature[3].genomealign.chr,
-        start: feature[3].genomealign.start + relativeStart,
-        end: feature[3].genomealign.stop,
+        start: secondaryGenomeStart,
+        end: secondaryGenomeEnd,
+        relativeStart,
+        relativeEnd,
       };
 
       let tmpRecord = {
@@ -714,7 +745,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   }
 
   function getOverlap(other, placement) {
-    console.log(other, placement);
     const intersectionStart = Math.max(placement.start, other.start);
     const intersectionEnd = Math.min(placement.end, other.end);
     if (intersectionStart < intersectionEnd) {
