@@ -777,6 +777,7 @@ function TrackManager(props) {
               }
               dragXDist={dragX.current}
               trackData2={trackData2}
+              featureArray={genome.featureArray}
             />
           ))}
         </div>

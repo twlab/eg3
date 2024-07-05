@@ -10,7 +10,11 @@ import { AnnotationTrackData } from "../../localdata/annotationtrackdata";
 import { PublicHubAllData } from "../../localdata/publichub";
 import { TwoBitUrlData } from "../../localdata/twobiturl";
 import HicStraw from "hic-straw/dist/hic-straw.min.js";
+import NavigationContext from "../../models/NavigationContext";
+import ChromosomeInterval from "../../localdata/ChromosomeInterval";
+
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
+
 /**
  * The GenomeHub root component. This is where track component are gathered and organized
  * for the genomes that the user selected
@@ -131,7 +135,16 @@ function GenomeHub(props: any) {
       }
     }
   }
-
+  function makeNavContext(name) {
+    const features = ChromosomeData[name].map((chr) => {
+      const name = chr.getName();
+      return {
+        name,
+        locus: new ChromosomeInterval(name, 0, chr.getLength()),
+      };
+    });
+    return { name: "HG38", features };
+  }
   useEffect(() => {
     async function handler() {
       // const storedArray = sessionStorage.getItem("myArray");
@@ -156,6 +169,8 @@ function GenomeHub(props: any) {
         });
         let metadata = straw.getMetaData();
         let normOptions = straw.getNormalizationOptions();
+        let featureArray = makeNavContext("HG38");
+
         let testGen: any = {
           name: "hg38",
           species: "human",
@@ -163,8 +178,9 @@ function GenomeHub(props: any) {
 
           //chr7:27053397-27373765
           // chr7:10000-20000
-          //testing finemode  27215039-27215647
-          defaultRegion: "chr7:27215039-27215647",
+          //testing finemode  27213325-27213837
+          featureArray,
+          defaultRegion: "chr7:27213325-27213837",
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [

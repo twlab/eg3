@@ -3,12 +3,9 @@ import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import JSON5 from "json5";
 import _ from "lodash";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
-import Feature from "../../models/Feature";
+
+import { AlignmentIterator } from "./AlignmentStringUtils";
 import { FeatureSegment } from "../../models/FeatureSegment";
-import NavigationContext from "../../models/NavigationContext";
-import OpenInterval from "../../models/OpenInterval";
-import { countBases, AlignmentIterator } from "./AlignmentStringUtils";
 export const DEFAULT_OPTIONS = {
   height: 80,
   primaryColor: "darkblue",
@@ -34,6 +31,7 @@ interface BedTrackProps {
   totalSize?: number;
   trackData2?: { [key: string]: any }; // Replace with the actual type
   dragXDist?: number;
+  featureArray?: any;
 }
 
 // multiAlignCal defaults
@@ -53,6 +51,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   totalSize = 0,
   trackData2,
   dragXDist,
+  featureArray,
 }) {
   let start, end;
 
@@ -106,6 +105,12 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       console.log(allGaps);
 
       // calcualtePrimaryVis
+      // setGap
+      let cumulativeGapBases = setGaps(allGaps);
+      // build function: which add the gaps to the feature genome
+      build(allGaps);
+
+      console.log(cumulativeGapBases);
     }
 
     //step 2 use the gap data after refinedRecordArray to create a new visData
@@ -296,40 +301,90 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     svgElements;
   }
   //fineMode FUNCTIONS __________________________________________________________________________________________________________________________________________________________
-  // function calculatePrimaryVis(allGaps: Array<any>) {
-  //   // Calculate primary visData that have all the primary gaps from different alignemnts insertions.
-  //   const { visRegion, viewWindow, viewWindowRegion } = visData;
-  //   const oldNavContext = visRegion.getNavigationContext();
-  //   const navContextBuilder = new NavContextBuilder(oldNavContext);
-  //   navContextBuilder.setGaps(allGaps);
-  //   const newNavContext = navContextBuilder.build();
-  //   // Calculate new DisplayedRegionModel and LinearDrawingModel from the new nav context
-  //   const newVisRegion = convertOldVisRegion(visRegion);
-  //   const newViewWindowRegion = convertOldVisRegion(viewWindowRegion);
-  //   const newPixelsPerBase =
-  //     viewWindow.getLength() / newViewWindowRegion.getWidth();
-  //   const newVisWidth = newVisRegion.getWidth() * newPixelsPerBase;
-  //   const newDrawModel = new LinearDrawingModel(newVisRegion, newVisWidth);
-  //   const newViewWindow = newDrawModel.baseSpanToXSpan(
-  //     newViewWindowRegion.getContextCoordinates()
-  //   );
 
-  //   return {
-  //     visRegion: newVisRegion,
-  //     visWidth: newVisWidth,
-  //     viewWindowRegion: newViewWindowRegion,
-  //     viewWindow: newViewWindow,
-  //   };
+  function setGaps(gaps: Array<any>) {
+    gaps.sort((a, b) => a.contextBase - b.contextBase);
+    let cumulativeGapBases: Array<any> = [];
+    let sum = 0;
+    for (const gap of gaps) {
+      cumulativeGapBases.push(sum);
+      sum += gap.length;
+    }
+    cumulativeGapBases.push(sum);
+    return cumulativeGapBases;
+  }
+  function build(gaps: Array<any>) {
+    const baseFeatures = featureArray.features;
+    console.log(baseFeatures);
+    const indexForFeature = new Map();
+    for (let i = 0; i < baseFeatures!.length; i++) {
+      indexForFeature.set(baseFeatures![i], i);
+    }
 
-  //   function convertOldVisRegion(visRegion: DisplayedRegionModel) {
-  //     const [contextStart, contextEnd] = visRegion.getContextCoordinates();
-  //     return new DisplayedRegionModel(
-  //       newNavContext,
-  //       navContextBuilder.convertOldCoordinates(contextStart),
-  //       navContextBuilder.convertOldCoordinates(contextEnd)
-  //     );
-  //   }
-  // }
+    const resultFeatures: Array<any> = [];
+    let prevSplitIndex = -1;
+    let prevSplitBase = 0;
+    for (const gap of gaps) {
+      // const featureCoordinate = new FeatureSegment();
+      // const featureToSplit = featureCoordinate.feature;
+      // const indexToSplit = indexForFeature.get(featureToSplit);
+      // const splitBase = featureCoordinate.relativeStart;
+      // resultFeatures.push(
+      //   ...baseFeatures.slice(prevSplitIndex + 1, indexToSplit)
+      // ); // Might push nothing
+      // if (indexToSplit === prevSplitIndex && prevSplitBase > 0) {
+      //   // We're splitting the same feature again.  Due to sorting, this split lies within the last feature of
+      //   // resultFeatures.  Remove it.
+      //   resultFeatures.pop();
+      // }
+      // prevSplitBase = prevSplitBase > splitBase ? 0 : prevSplitBase;
+      // console.log({
+      //   featureCoordinate,
+      //   featureToSplit,
+      //   indexToSplit,
+      //   splitBase,
+      // });
+      // const leftLocus = new FeatureSegment(
+      //   featureToSplit,
+      //   prevSplitBase,
+      //   splitBase
+      // ).getLocus();
+      // const rightLocus = new FeatureSegment(
+      //   featureToSplit,
+      //   splitBase
+      // ).getLocus();
+      // if (leftLocus.getLength() > 0) {
+      //   resultFeatures.push(
+      //     new Feature(
+      //       featureToSplit.getName(),
+      //       leftLocus,
+      //       featureToSplit.getStrand()
+      //     )
+      //   );
+      // }
+      // resultFeatures.push(
+      //   NavigationContext.makeGap(gap.length, `${niceBpCount(gap.length)} gap`)
+      // );
+      // if (rightLocus.getLength() > 0) {
+      //   resultFeatures.push(
+      //     new Feature(
+      //       featureToSplit.getName(),
+      //       rightLocus,
+      //       featureToSplit.getStrand()
+      //     )
+      //   );
+      // }
+      // prevSplitIndex = indexToSplit;
+      // prevSplitBase = splitBase;
+    }
+
+    // resultFeatures.push(...baseFeatures.slice(prevSplitIndex + 1));
+    // console.log(this._baseNavContext.getName(), resultFeatures);
+    // return new NavigationContext(
+    //   this._baseNavContext.getName(),
+    //   resultFeatures
+    // );
+  }
   function refineRecordsArray(recordsArray: Array<any>) {
     const minGapLength = MIN_GAP_LENGTH;
 
@@ -345,8 +400,14 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       minGapLength
     );
     const primaryGapsObj = primaryGaps.reduce((resultObj, gap) => {
-      return { ...resultObj, ...{ [gap.contextBase]: gap.length } };
+      return {
+        ...resultObj,
+        ...{
+          [gap.contextBase]: { length: gap.length, chr: gap.chr },
+        },
+      };
     }, {});
+
     refineRecords.push({
       recordsObj: recordsArray,
       placements: placements,
@@ -354,10 +415,14 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     });
     for (const contextBase of Object.keys(primaryGapsObj)) {
       if (contextBase in allGapsObj) {
-        allGapsObj[contextBase] = Math.max(
-          allGapsObj[contextBase],
-          primaryGapsObj[contextBase]
-        );
+        let tmpObj = {
+          length: Math.max(
+            allGapsObj[contextBase].length,
+            primaryGapsObj[contextBase].length
+          ),
+          chr: primaryGapsObj[contextBase].chr,
+        };
+        allGapsObj[contextBase] = tmpObj;
       } else {
         allGapsObj[contextBase] = primaryGapsObj[contextBase];
       }
@@ -368,7 +433,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     for (const contextBase of Object.keys(allGapsObj)) {
       allPrimaryGaps.push({
         contextBase: Number(contextBase),
-        length: allGapsObj[contextBase],
+        length: allGapsObj[contextBase].length,
+        chr: allGapsObj[contextBase].chr,
       });
     }
 
@@ -469,7 +535,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
     for (const placement of placements) {
       const { visiblePart, contextSpan } = placement;
-
+      console.log(placement);
       const segments = segmentSequence(
         getTargetSequence(visiblePart),
         minGapLength,
@@ -483,6 +549,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         gaps.push({
           contextBase: baseLookup[segment.index],
           length: segment.length,
+          chr: visiblePart.chr,
         });
       }
     }

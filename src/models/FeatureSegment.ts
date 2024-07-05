@@ -10,7 +10,7 @@ import { Feature } from "./Feature";
  */
 export class FeatureSegment {
   public readonly relativeStart: number; // Start base of the interval, relative to the feature's start
-  public readonly relativeEnd: number; // End base of the interval, relative to the feature's start
+  public readonly relativeEnd: number | undefined; // End base of the interval, relative to the feature's start
 
   /**
    * Makes a new instance, attaching a interval to a Feature.  If start and end are not provided, the interval
@@ -22,15 +22,11 @@ export class FeatureSegment {
    * @param {number} [end] - end base of the interval, relative to the feature's start
    * @throws {RangeError} if end is before start or the interval lies outside the feature
    */
-  constructor(
-    public readonly feature: Feature,
-    start: number = 0,
-    end?: number
-  ) {
+  constructor(public readonly feature: any, start: number = 0, end?: number) {
     if (end === undefined) {
       end = feature.getLength();
     }
-    if (end < start) {
+    if (end! < start) {
       throw new RangeError("End cannot be less than start");
     }
     this.feature = feature;
@@ -39,7 +35,7 @@ export class FeatureSegment {
 
     if (start < 0) {
       throw new RangeError(`Start base ${start} must be at least 0`);
-    } else if (end > feature.getLength()) {
+    } else if (end! > feature.getLength()) {
       throw new RangeError(
         `End base ${end} specifies a base past the end of the feature`
       );
@@ -64,7 +60,7 @@ export class FeatureSegment {
    * @return {OpenInterval} new OpenInterval containing this segment's relative start and end.
    */
   toOpenInterval(): OpenInterval {
-    return new OpenInterval(this.relativeStart, this.relativeEnd);
+    return new OpenInterval(this.relativeStart, this.relativeEnd!);
   }
 
   /**
@@ -78,7 +74,7 @@ export class FeatureSegment {
    * @return {number} this interval's length
    */
   getLength(): number {
-    return this.relativeEnd - this.relativeStart;
+    return this.relativeEnd! - this.relativeStart;
   }
 
   /**
