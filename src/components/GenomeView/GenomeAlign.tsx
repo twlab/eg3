@@ -8,7 +8,7 @@ import Feature from "../../models/Feature";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import NavigationContext from "../../models/NavigationContext";
 import OpenInterval from "../../models/OpenInterval";
-
+import { countBases, AlignmentIterator } from "./AlignmentStringUtils";
 export const DEFAULT_OPTIONS = {
   height: 80,
   primaryColor: "darkblue",
@@ -339,6 +339,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     const allGapsObj = {};
 
     const placements: Array<any> = computeContextLocations(recordsArray);
+    console.log(placements);
     const primaryGaps: Array<any> = getPrimaryGenomeGaps(
       placements,
       minGapLength
@@ -448,20 +449,35 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       return index;
     }
   }
+  function getTargetSequence(visiblePart: any) {
+    const alignIter = new AlignmentIterator(
+      visiblePart.feature[3].genomealign.targetseq
+    );
+    // +1 because AlignmentIterator starts on string index -1.
+    const substringStart = alignIter.advanceN(visiblePart.relativeStart + 1);
+    const substringEnd = alignIter.advanceN(
+      visiblePart.relativeEnd - visiblePart.relativeStart
+    );
+
+    return visiblePart.feature[3].genomealign.targetseq.substring(
+      substringStart,
+      substringEnd
+    );
+  }
   function getPrimaryGenomeGaps(placements: Array<any>, minGapLength: number) {
     const gaps: Array<any> = [];
-    console.log(placements);
+
     for (const placement of placements) {
       const { visiblePart, contextSpan } = placement;
-      console.log(visiblePart);
+
       const segments = segmentSequence(
-        placement.record.targetSeq,
+        getTargetSequence(visiblePart),
         minGapLength,
         true
       );
       const baseLookup = makeBaseNumberLookup(
-        placement.record.targetSeq,
-        placement.record.locus.start
+        getTargetSequence(visiblePart),
+        contextSpan.start
       );
       for (const segment of segments) {
         gaps.push({
