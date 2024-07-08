@@ -10,7 +10,7 @@ import { Feature } from "./Feature";
  */
 export class FeatureSegment {
   public readonly relativeStart: number; // Start base of the interval, relative to the feature's start
-  public readonly relativeEnd: number | undefined; // End base of the interval, relative to the feature's start
+  public readonly relativeEnd: number; // End base of the interval, relative to the feature's start
 
   /**
    * Makes a new instance, attaching a interval to a Feature.  If start and end are not provided, the interval
@@ -22,9 +22,14 @@ export class FeatureSegment {
    * @param {number} [end] - end base of the interval, relative to the feature's start
    * @throws {RangeError} if end is before start or the interval lies outside the feature
    */
-  constructor(public readonly feature: any, start: number = 0, end?: number) {
+  constructor(
+    public readonly feature: any,
+    start: number = 0,
+    end?: number | undefined
+  ) {
     if (end === undefined) {
-      end = feature.getLength();
+      console.log("ASDASDASDSAd");
+      end = feature.locus.end - feature.locus.start;
     }
     if (end! < start) {
       throw new RangeError("End cannot be less than start");
@@ -32,14 +37,14 @@ export class FeatureSegment {
     this.feature = feature;
     this.relativeStart = start;
     this.relativeEnd = end;
-
-    if (start < 0) {
-      throw new RangeError(`Start base ${start} must be at least 0`);
-    } else if (end! > feature.getLength()) {
-      throw new RangeError(
-        `End base ${end} specifies a base past the end of the feature`
-      );
-    }
+    console.log(end);
+    // if (start < 0) {
+    //   throw new RangeError(`Start base ${start} must be at least 0`);
+    // } else if (end! > feature.getLength()) {
+    //   throw new RangeError(
+    //     `End base ${end} specifies a base past the end of the feature`
+    //   );
+    // }
   }
 
   get start() {
@@ -66,9 +71,9 @@ export class FeatureSegment {
   /**
    * @return {string} the attached feature's name
    */
-  getName(): string {
-    return this.feature.getName();
-  }
+  // getName(): string {
+  //   return this.feature.getName();
+  // }
 
   /**
    * @return {number} this interval's length
@@ -81,7 +86,8 @@ export class FeatureSegment {
    * @return {ChromosomeInterval} the genomic location that this segment covers
    */
   getLocus(): ChromosomeInterval {
-    const featureLocus = this.feature.getLocus();
+    const featureLocus = this.feature.locus;
+    console.log(this.relativeEnd);
     return new ChromosomeInterval(
       featureLocus.chr,
       featureLocus.start + this.relativeStart,
@@ -114,37 +120,37 @@ export class FeatureSegment {
    * @param {ChromosomeInterval} chrInterval - input genome location
    * @return {FeatureSegment} intersection of this and the input genomic location
    */
-  getGenomeOverlap(chrInterval: ChromosomeInterval): FeatureSegment | null {
-    const featureLocus = this.feature.getLocus();
-    const genomeLocation = this.getLocus();
-    const overlap = genomeLocation.getOverlap(chrInterval);
-    if (!overlap) {
-      return null;
-    }
-    const relativeStart = overlap.start - featureLocus.start;
-    const relativeEnd = overlap.end - featureLocus.start;
-    return new FeatureSegment(this.feature, relativeStart, relativeEnd);
-  }
+  // getGenomeOverlap(chrInterval: ChromosomeInterval): FeatureSegment | null {
+  //   const featureLocus = this.feature.getLocus();
+  //   const genomeLocation = this.getLocus();
+  //   const overlap = genomeLocation.getOverlap(chrInterval);
+  //   if (!overlap) {
+  //     return null;
+  //   }
+  //   const relativeStart = overlap.start - featureLocus.start;
+  //   const relativeEnd = overlap.end - featureLocus.start;
+  //   return new FeatureSegment(this.feature, relativeStart, relativeEnd);
+  // }
 
   /**
    * @return {string} human-readable representation of this interval
    */
-  toString(): string {
-    // web 1 based
-    return `${this.getName()}:${this.relativeStart + 1}-${this.relativeEnd}`;
-  }
+  // toString(): string {
+  //   // web 1 based
+  //   return `${this.getName()}:${this.relativeStart + 1}-${this.relativeEnd}`;
+  // }
 
-  /**
-   * Interprets this and another interval as a multi-feature interval, with this being the start and the other being
-   * the end.  Returns a human-readable representation of that interpretation.
-   *
-   * @param {FeatureSegment} other - the end of the multi-feature interval
-   * @return {string} a human-readable representation of a multi-feature interval
-   */
-  toStringWithOther(other: FeatureSegment): string {
-    // web 1 based
-    return `${this.getName()}:${this.relativeStart + 1}-${other.getName()}:${
-      other.relativeEnd
-    }`;
-  }
+  // /**
+  //  * Interprets this and another interval as a multi-feature interval, with this being the start and the other being
+  //  * the end.  Returns a human-readable representation of that interpretation.
+  //  *
+  //  * @param {FeatureSegment} other - the end of the multi-feature interval
+  //  * @return {string} a human-readable representation of a multi-feature interval
+  //  */
+  // toStringWithOther(other: FeatureSegment): string {
+  //   // web 1 based
+  //   return `${this.getName()}:${this.relativeStart + 1}-${other.getName()}:${
+  //     other.relativeEnd
+  //   }`;
+  // }
 }

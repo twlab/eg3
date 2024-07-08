@@ -6,6 +6,7 @@ import _ from "lodash";
 
 import { AlignmentIterator } from "./AlignmentStringUtils";
 import { FeatureSegment } from "../../models/FeatureSegment";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
 export const DEFAULT_OPTIONS = {
   height: 80,
   primaryColor: "darkblue",
@@ -32,6 +33,7 @@ interface BedTrackProps {
   trackData2?: { [key: string]: any }; // Replace with the actual type
   dragXDist?: number;
   featureArray?: any;
+  chrIndex?: number;
 }
 
 // multiAlignCal defaults
@@ -52,6 +54,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   trackData2,
   dragXDist,
   featureArray,
+  chrIndex,
 }) {
   let start, end;
 
@@ -99,17 +102,17 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
       // refineRecordArray - find all the gaps for the data
-      //To-Do: Fixed placements data, made visiblepart equivalent to eg2 data
+      //
       // figured out how to get those data inside of _computeContextLocations
       const { newRecordsArray, allGaps } = refineRecordsArray(result);
       console.log(allGaps);
 
-      // calcualtePrimaryVis
-      // setGap
       let cumulativeGapBases = setGaps(allGaps);
-      // build function: which add the gaps to the feature genome
-      build(allGaps);
 
+      // calcualtePrimaryVis:  below are sub functions
+      // build function: which add the gaps to the feature genome: FINISHED
+      build(allGaps);
+      // setGap
       console.log(cumulativeGapBases);
     }
 
@@ -324,7 +327,37 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     const resultFeatures: Array<any> = [];
     let prevSplitIndex = -1;
     let prevSplitBase = 0;
+    let featureToSplit;
+    let indexToSplit;
+    let splitBase;
+    let testarray: Array<any> = [];
     for (const gap of gaps) {
+      let currplacement = gap.placement[0];
+      for (const feat of baseFeatures) {
+        if (feat.name === currplacement.record.locus.chr) {
+          const featureCoordinate = new FeatureSegment(
+            feat,
+            gap.contextBase,
+            gap.contextBase + 1
+          );
+          featureToSplit = featureCoordinate.feature;
+          indexToSplit = indexForFeature.get(featureToSplit);
+          splitBase = featureCoordinate.relativeStart;
+
+          break;
+        }
+      }
+      console.log(...baseFeatures.slice(prevSplitIndex + 1, indexToSplit));
+      resultFeatures.push(
+        ...baseFeatures.slice(prevSplitIndex + 1, indexToSplit)
+      ); // Might push nothing
+      if (indexToSplit === prevSplitIndex && prevSplitBase > 0) {
+        // We're splitting the same feature again.  Due to sorting, this split lies within the last feature of
+        // resultFeatures.  Remove it.
+
+        resultFeatures.pop();
+      }
+      console.log(featureToSplit, indexToSplit, splitBase);
       // const featureCoordinate = new FeatureSegment();
       // const featureToSplit = featureCoordinate.feature;
       // const indexToSplit = indexForFeature.get(featureToSplit);
@@ -338,52 +371,70 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       //   resultFeatures.pop();
       // }
       // prevSplitBase = prevSplitBase > splitBase ? 0 : prevSplitBase;
-      // console.log({
-      //   featureCoordinate,
-      //   featureToSplit,
-      //   indexToSplit,
-      //   splitBase,
-      // });
-      // const leftLocus = new FeatureSegment(
-      //   featureToSplit,
-      //   prevSplitBase,
-      //   splitBase
-      // ).getLocus();
-      // const rightLocus = new FeatureSegment(
-      //   featureToSplit,
-      //   splitBase
-      // ).getLocus();
-      // if (leftLocus.getLength() > 0) {
-      //   resultFeatures.push(
-      //     new Feature(
-      //       featureToSplit.getName(),
-      //       leftLocus,
-      //       featureToSplit.getStrand()
-      //     )
-      //   );
-      // }
-      // resultFeatures.push(
-      //   NavigationContext.makeGap(gap.length, `${niceBpCount(gap.length)} gap`)
-      // );
-      // if (rightLocus.getLength() > 0) {
-      //   resultFeatures.push(
-      //     new Feature(
-      //       featureToSplit.getName(),
-      //       rightLocus,
-      //       featureToSplit.getStrand()
-      //     )
-      //   );
-      // }
-      // prevSplitIndex = indexToSplit;
-      // prevSplitBase = splitBase;
-    }
 
-    // resultFeatures.push(...baseFeatures.slice(prevSplitIndex + 1));
-    // console.log(this._baseNavContext.getName(), resultFeatures);
+      const leftLocus = new FeatureSegment(
+        featureToSplit,
+        prevSplitBase,
+        splitBase
+      ).getLocus();
+      console.log(leftLocus);
+      const rightLocus = new FeatureSegment(
+        featureToSplit,
+        splitBase
+      ).getLocus();
+      console.log(rightLocus);
+      if (leftLocus.getLength() > 0) {
+        resultFeatures.push({
+          name: featureToSplit.name,
+          locus: leftLocus,
+          strand: "",
+        });
+      }
+
+      let tmpCountGap = makeGap(gap.length, `${niceBpCount(gap.length)} gap`);
+      testarray.push(tmpCountGap);
+
+      resultFeatures.push(tmpCountGap);
+      if (rightLocus.getLength() > 0) {
+        console.log(rightLocus);
+        resultFeatures.push({
+          name: featureToSplit.name,
+          locus: rightLocus,
+          strand: "",
+        });
+      }
+      prevSplitIndex = indexToSplit;
+      prevSplitBase = splitBase;
+    }
+    console.log(testarray);
+    resultFeatures.push(...baseFeatures.slice(prevSplitIndex + 1));
+    console.log(resultFeatures);
     // return new NavigationContext(
     //   this._baseNavContext.getName(),
     //   resultFeatures
     // );
+  }
+
+  function makeGap(length: number, name = "Gap") {
+    let tmpChrInt = new ChromosomeInterval("", 0, Math.round(length));
+    console.log({ name, chromosomeInterval: tmpChrInt });
+    return { name, chromosomeInterval: tmpChrInt };
+  }
+  function niceBpCount(bases: number, useMinus = false) {
+    const rounded = bases >= 1000 ? Math.floor(bases) : Math.round(bases);
+    if (rounded >= 750000) {
+      return `${(rounded / 1000000).toFixed(1)} Mb`;
+    } else if (rounded >= 10000) {
+      return `${(rounded / 1000).toFixed(1)} Kb`;
+    } else if (rounded > 0) {
+      return `${rounded} bp`;
+    } else {
+      if (useMinus) {
+        return "<1 bp";
+      } else {
+        return "0 bp";
+      }
+    }
   }
   function refineRecordsArray(recordsArray: Array<any>) {
     const minGapLength = MIN_GAP_LENGTH;
@@ -403,7 +454,11 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       return {
         ...resultObj,
         ...{
-          [gap.contextBase]: { length: gap.length, chr: gap.chr },
+          [gap.contextBase]: {
+            length: gap.length,
+            chr: gap.chr,
+            placement: gap.placement,
+          },
         },
       };
     }, {});
@@ -421,6 +476,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
             primaryGapsObj[contextBase].length
           ),
           chr: primaryGapsObj[contextBase].chr,
+          placement: primaryGapsObj[contextBase].placement,
         };
         allGapsObj[contextBase] = tmpObj;
       } else {
@@ -435,6 +491,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         contextBase: Number(contextBase),
         length: allGapsObj[contextBase].length,
         chr: allGapsObj[contextBase].chr,
+        placement: allGapsObj[contextBase].placement,
       });
     }
 
@@ -550,6 +607,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           contextBase: baseLookup[segment.index],
           length: segment.length,
           chr: visiblePart.chr,
+          placement: [placement],
         });
       }
     }
