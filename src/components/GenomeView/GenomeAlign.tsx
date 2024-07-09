@@ -74,7 +74,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const view = useRef(0);
-
+  const newBpToPx = useRef(bpToPx!);
   const overflowStrand2 = useRef<{ [key: string]: any }>({});
 
   // We will do MultiAlignmentViewCalculator here for rough mode
@@ -101,19 +101,43 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
+      //step 2
       // refineRecordArray - find all the gaps for the data
       //
       // figured out how to get those data inside of _computeContextLocations
-      const { newRecordsArray, allGaps } = refineRecordsArray(result);
+      const { placements, newRecordsArray, allGaps } =
+        refineRecordsArray(result);
       console.log(allGaps);
-
+      console.log(placements);
+      //step 3
+      // calcualtePrimaryVis:  below are sub functions
+      // find out how much gap spaces are needed to be added with index
       let cumulativeGapBases = setGaps(allGaps);
 
-      // calcualtePrimaryVis:  below are sub functions
-      // build function: which add the gaps to the feature genome: FINISHED
-      build(allGaps);
-      // setGap
-      console.log(cumulativeGapBases);
+      // build function:  add the gaps to the feature genome:
+      let newNavContext = build(allGaps);
+      console.log(newNavContext);
+      //
+      let newVisRegion = convertOldVisRegion(allGaps, cumulativeGapBases);
+
+      // const newPixelsPerBase =
+      //   windowWidth / (newVisRegion.end - newVisRegion.start);
+      // const newVisWidth =
+      //   (newVisRegion.end - newVisRegion.start) * newPixelsPerBase;
+      // console.log(windowWidth, newVisWidth);
+      newBpToPx.current = (newVisRegion.end - newVisRegion.start) / windowWidth;
+      //step 4  fineMode function
+      let oldVisRegionLen = end - start;
+      let newVisRegionLen = newVisRegion.end - newVisRegion.start;
+      let placement2 = computeContextLocations(result);
+      console.log(newVisRegion);
+      alignFine(
+        trackData2!.queryGenomeName,
+        placements,
+        newVisRegion,
+        allGaps,
+        cumulativeGapBases
+      );
     }
 
     //step 2 use the gap data after refinedRecordArray to create a new visData
@@ -304,7 +328,192 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     svgElements;
   }
   //fineMode FUNCTIONS __________________________________________________________________________________________________________________________________________________________
+  function alignFine(
+    query: string,
+    placements: Array<any>,
+    newVisRegion: any,
+    allGaps: Array<any>,
+    cumulativeGapBases: Array<any>
+  ) {
+    // There's a lot of steps, so bear with me...
 
+    // drawModel is derived from visData:
+    // const minGapLength = drawModel.xWidthToBases(MIN_GAP_DRAW_WIDTH);
+    const minGapLength = MIN_GAP_LENGTH;
+
+    // With the draw model, we can set x spans for each placed alignment
+    // Adjust contextSpan and xSpan in placements using visData:
+    function placeSequenceSegments(
+      sequence: string,
+      minGapLength: number,
+      startX: number
+    ) {
+      const segments = segmentSequence(sequence, minGapLength);
+      segments.sort((a, b) => a.index - b.index);
+      let x = startX;
+      for (const segment of segments) {
+        const bases = segment.isGap
+          ? segment.length
+          : countBases(sequence.substr(segment.index, segment.length));
+        const xSpanLength = bases / newBpToPx.current;
+        segment.xSpan = { start: x, end: x + xSpanLength };
+        x += xSpanLength;
+      }
+      return segments;
+    }
+    for (const placement of placements) {
+      const oldContextSpan = placement.contextSpan;
+      const visiblePart = placement.visiblePart;
+      const newContextSpan = {
+        start: convertOldCoordinates(
+          oldContextSpan.start,
+          allGaps,
+          cumulativeGapBases
+        ),
+        end: convertOldCoordinates(
+          oldContextSpan.end,
+          allGaps,
+          cumulativeGapBases
+        ),
+      };
+      console.log(newContextSpan);
+      const startX =
+        (newContextSpan.start - newVisRegion.start) / newBpToPx.current;
+      const endX =
+        (newContextSpan.end - newVisRegion.start) / newBpToPx.current;
+      let xSpan = { start: startX, end: endX };
+      console.log(xSpan);
+      const targetSeq = getTargetSequence(visiblePart);
+      placement.contextSpan = newContextSpan;
+
+      placement.targetXSpan = xSpan;
+      placement.queryXSpan = xSpan;
+      const querySeq = getQuerySequence(visiblePart);
+
+      placement.targetSegments = placeSequenceSegments(
+        targetSeq,
+        minGapLength,
+        xSpan.start
+      );
+
+      placement.querySegments = placeSequenceSegments(
+        querySeq,
+        minGapLength,
+        xSpan.start
+      );
+      console.log(start, end);
+      console.log(placement);
+    }
+    // const drawGapTexts = [];
+    // const targetIntervalPlacer = new IntervalPlacer(MARGIN);
+    // const queryIntervalPlacer = new IntervalPlacer(MARGIN);
+    // for (let i = 1; i < placements.length; i++) {
+    //   const lastPlacement = placements[i - 1];
+    //   const placement = placements[i];
+    //   const lastXEnd = lastPlacement.targetXSpan.end;
+    //   const xStart = placement.targetXSpan.start;
+    //   const lastTargetChr = lastPlacement.record.locus.chr;
+    //   const lastTargetEnd = lastPlacement.record.locus.end;
+    //   const lastQueryChr = lastPlacement.record.queryLocus.chr;
+    //   const lastStrand = lastPlacement.record.queryStrand;
+    //   const lastQueryEnd =
+    //     lastStrand === "+"
+    //       ? lastPlacement.record.queryLocus.end
+    //       : lastPlacement.record.queryLocus.start;
+    //   const targetChr = placement.record.locus.chr;
+    //   const targetStart = placement.record.locus.start;
+    //   const queryChr = placement.record.queryLocus.chr;
+    //   const queryStrand = placement.record.queryStrand;
+    //   const queryStart =
+    //     queryStrand === "+"
+    //       ? placement.record.queryLocus.start
+    //       : placement.record.queryLocus.end;
+    //   let placementQueryGap: string;
+    //   if (lastQueryChr === queryChr) {
+    //     if (lastStrand === "+" && queryStrand === "+") {
+    //       placementQueryGap = queryStart >= lastQueryEnd ? "" : "overlap ";
+    //       placementQueryGap += niceBpCount(Math.abs(queryStart - lastQueryEnd));
+    //     } else if (lastStrand === "-" && queryStrand === "-") {
+    //       placementQueryGap = lastQueryEnd >= queryStart ? "" : "overlap ";
+    //       placementQueryGap += niceBpCount(Math.abs(lastQueryEnd - queryStart));
+    //     } else {
+    //       placementQueryGap = "reverse direction";
+    //     }
+    //   } else {
+    //     placementQueryGap = "not connected";
+    //   }
+    //   const placementGapX = (lastXEnd + xStart) / 2;
+    //   const queryPlacementGapX =
+    //     (lastPlacement.queryXSpan.end + placement.queryXSpan.start) / 2;
+    //   const placementTargetGap =
+    //     lastTargetChr === targetChr
+    //       ? niceBpCount(targetStart - lastTargetEnd)
+    //       : "not connected";
+
+    //   const targetTextWidth = placementTargetGap.length * 5; // use font size 10...
+    //   const halfTargetTextWidth = 0.5 * targetTextWidth;
+    //   const preferredTargetStart = placementGapX - halfTargetTextWidth;
+    //   const preferredTargetEnd = placementGapX + halfTargetTextWidth;
+    //   // shift text position only if the width of text is bigger than the gap size:
+    //   const shiftTargetTxt =
+    //     preferredTargetStart <= lastXEnd || preferredTargetEnd >= xStart;
+    //   const targetGapTextXSpan = shiftTargetTxt
+    //     ? targetIntervalPlacer.place(
+    //         new OpenInterval(preferredTargetStart, preferredTargetEnd)
+    //       )
+    //     : new OpenInterval(preferredTargetStart, preferredTargetEnd);
+    //   const targetGapXSpan = new OpenInterval(lastXEnd, xStart);
+
+    //   const queryTextWidth = placementQueryGap.length * 5; // use font size 10...
+    //   const halfQueryTextWidth = 0.5 * queryTextWidth;
+    //   const preferredQueryStart = queryPlacementGapX - halfQueryTextWidth;
+    //   const preferredQueryEnd = queryPlacementGapX + halfQueryTextWidth;
+    //   // shift text position only if the width of text is bigger than the gap size:
+    //   const shiftQueryTxt =
+    //     preferredQueryStart <= lastPlacement.queryXSpan.end ||
+    //     preferredQueryEnd >= placement.queryXSpan.start;
+    //   const queryGapTextXSpan = shiftQueryTxt
+    //     ? queryIntervalPlacer.place(
+    //         new OpenInterval(preferredQueryStart, preferredQueryEnd)
+    //       )
+    //     : new OpenInterval(preferredQueryStart, preferredQueryEnd);
+    //   const queryGapXSpan = new OpenInterval(
+    //     lastPlacement.queryXSpan.end,
+    //     placement.queryXSpan.start
+    //   );
+    //   drawGapTexts.push({
+    //     targetGapText: placementTargetGap,
+    //     targetXSpan: targetGapXSpan,
+    //     targetTextXSpan: targetGapTextXSpan,
+    //     queryGapText: placementQueryGap,
+    //     queryXSpan: queryGapXSpan,
+    //     queryTextXSpan: queryGapTextXSpan,
+    //     shiftTarget: shiftTargetTxt,
+    //     shiftQuery: shiftQueryTxt,
+    //   });
+    // }
+    // // Finally, using the x coordinates, construct the query nav context
+    // const queryPieces = this._getQueryPieces(placements);
+    // const queryRegion = this._makeQueryGenomeRegion(
+    //   queryPieces,
+    //   visWidth,
+    //   drawModel
+    // );
+    // return {
+    //   isFineMode: true,
+    //   primaryVisData: visData,
+    //   queryRegion,
+    //   drawData: placements,
+    //   drawGapText: drawGapTexts,
+    //   primaryGenome: this.primaryGenome,
+    //   queryGenome: query,
+    //   basesPerPixel: drawModel.xWidthToBases(1),
+    //   navContextBuilder,
+    // };
+  }
+  function countBases(sequence: string): number {
+    return _.sumBy(sequence, (char) => (char === "-" ? 0 : 1));
+  }
   function setGaps(gaps: Array<any>) {
     gaps.sort((a, b) => a.contextBase - b.contextBase);
     let cumulativeGapBases: Array<any> = [];
@@ -316,9 +525,27 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     cumulativeGapBases.push(sum);
     return cumulativeGapBases;
   }
+
+  function convertOldVisRegion(gap: any, cumulativeGapBases: any) {
+    return {
+      start: convertOldCoordinates(start, gap, cumulativeGapBases),
+      end: convertOldCoordinates(end, gap, cumulativeGapBases),
+    };
+  }
+  function convertOldCoordinates(
+    base: number,
+    gaps: any,
+    cumulativeGapBases: any
+  ): number {
+    const index = _.sortedIndexBy(gaps, { contextBase: base }, "contextBase");
+
+    const gapBases = cumulativeGapBases[index] || 0; // Out-of-bounds index can happen if there are no gaps.
+    console.log(base, base + gapBases);
+    return base + gapBases;
+  }
   function build(gaps: Array<any>) {
     const baseFeatures = featureArray.features;
-    console.log(baseFeatures);
+
     const indexForFeature = new Map();
     for (let i = 0; i < baseFeatures!.length; i++) {
       indexForFeature.set(baseFeatures![i], i);
@@ -347,7 +574,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           break;
         }
       }
-      console.log(...baseFeatures.slice(prevSplitIndex + 1, indexToSplit));
+
       resultFeatures.push(
         ...baseFeatures.slice(prevSplitIndex + 1, indexToSplit)
       ); // Might push nothing
@@ -357,7 +584,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
         resultFeatures.pop();
       }
-      console.log(featureToSplit, indexToSplit, splitBase);
+
       // const featureCoordinate = new FeatureSegment();
       // const featureToSplit = featureCoordinate.feature;
       // const indexToSplit = indexForFeature.get(featureToSplit);
@@ -377,12 +604,12 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         prevSplitBase,
         splitBase
       ).getLocus();
-      console.log(leftLocus);
+
       const rightLocus = new FeatureSegment(
         featureToSplit,
         splitBase
       ).getLocus();
-      console.log(rightLocus);
+
       if (leftLocus.getLength() > 0) {
         resultFeatures.push({
           name: featureToSplit.name,
@@ -396,7 +623,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
       resultFeatures.push(tmpCountGap);
       if (rightLocus.getLength() > 0) {
-        console.log(rightLocus);
         resultFeatures.push({
           name: featureToSplit.name,
           locus: rightLocus,
@@ -406,18 +632,14 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       prevSplitIndex = indexToSplit;
       prevSplitBase = splitBase;
     }
-    console.log(testarray);
+
     resultFeatures.push(...baseFeatures.slice(prevSplitIndex + 1));
-    console.log(resultFeatures);
-    // return new NavigationContext(
-    //   this._baseNavContext.getName(),
-    //   resultFeatures
-    // );
+    return { name: trackData2!.genomeName, resultFeatures };
   }
 
   function makeGap(length: number, name = "Gap") {
     let tmpChrInt = new ChromosomeInterval("", 0, Math.round(length));
-    console.log({ name, chromosomeInterval: tmpChrInt });
+
     return { name, chromosomeInterval: tmpChrInt };
   }
   function niceBpCount(bases: number, useMinus = false) {
@@ -445,7 +667,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     const allGapsObj = {};
 
     const placements: Array<any> = computeContextLocations(recordsArray);
-    console.log(placements);
+
     const primaryGaps: Array<any> = getPrimaryGenomeGaps(
       placements,
       minGapLength
@@ -556,7 +778,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     }
     const newRecords = refineRecords.map((final) => final.recordsObj);
     console.log(allPrimaryGaps);
-    return { newRecordsArray: newRecords, allGaps: allPrimaryGaps };
+    return { placements, newRecordsArray: newRecords, allGaps: allPrimaryGaps };
 
     function indexLookup(sequence: string, base: number): number {
       let index = 0;
@@ -583,6 +805,22 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     );
 
     return visiblePart.feature[3].genomealign.targetseq.substring(
+      substringStart,
+      substringEnd
+    );
+  }
+
+  function getQuerySequence(visiblePart: any) {
+    const alignIter = new AlignmentIterator(
+      visiblePart.feature[3].genomealign.targetseq
+    );
+    // +1 because AlignmentIterator starts on string index -1.
+    const substringStart = alignIter.advanceN(visiblePart.relativeStart + 1);
+    const substringEnd = alignIter.advanceN(
+      visiblePart.relativeEnd - visiblePart.relativeStart
+    );
+
+    return visiblePart.feature[3].genomealign.queryseq.substring(
       substringStart,
       substringEnd
     );
@@ -881,7 +1119,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         contextSpan: { start, end },
       });
     }
-
+    console.log(placements);
     return placements;
   }
 

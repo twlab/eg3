@@ -28,7 +28,6 @@ export class FeatureSegment {
     end?: number | undefined
   ) {
     if (end === undefined) {
-      console.log("ASDASDASDSAd");
       end = feature.locus.end - feature.locus.start;
     }
     if (end! < start) {
@@ -37,7 +36,7 @@ export class FeatureSegment {
     this.feature = feature;
     this.relativeStart = start;
     this.relativeEnd = end;
-    console.log(end);
+
     // if (start < 0) {
     //   throw new RangeError(`Start base ${start} must be at least 0`);
     // } else if (end! > feature.getLength()) {

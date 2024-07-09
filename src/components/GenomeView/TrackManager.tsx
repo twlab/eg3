@@ -505,6 +505,11 @@ function TrackManager(props) {
       tmpData2["hicResult"] = [...hicResult];
       tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
       tmpData2["xDist"] = dragX.current;
+      if (genome.defaultTracks[5].name === "genomealign") {
+        tmpData2["genomeName"] = genome.defaultTracks[5].genome;
+        tmpData2["queryGenomeName"] =
+          genome.defaultTracks[5].trackModel.querygenome;
+      }
       if (trackSide === "right") {
         tmpData2["side"] = "right";
       } else {
@@ -778,6 +783,7 @@ function TrackManager(props) {
               dragXDist={dragX.current}
               trackData2={trackData2}
               featureArray={genome.featureArray}
+              genomeName={genome.name}
               chrIndex={
                 side === "right" ? chrIndexRight.current : chrIndexLeft.current
               }
