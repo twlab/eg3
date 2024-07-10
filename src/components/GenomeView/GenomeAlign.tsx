@@ -7,6 +7,7 @@ import _ from "lodash";
 import { AlignmentIterator } from "./AlignmentStringUtils";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
+import { Sequence } from "./Sequence";
 export const DEFAULT_OPTIONS = {
   height: 80,
   primaryColor: "darkblue",
@@ -107,8 +108,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       // figured out how to get those data inside of _computeContextLocations
       const { placements, newRecordsArray, allGaps } =
         refineRecordsArray(result);
-      console.log(allGaps);
-      console.log(placements);
+
       //step 3
       // calcualtePrimaryVis:  below are sub functions
       // find out how much gap spaces are needed to be added with index
@@ -116,7 +116,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
       // build function:  add the gaps to the feature genome:
       let newNavContext = build(allGaps);
-      console.log(newNavContext);
+
       //
       let newVisRegion = convertOldVisRegion(allGaps, cumulativeGapBases);
 
@@ -130,14 +130,27 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       let oldVisRegionLen = end - start;
       let newVisRegionLen = newVisRegion.end - newVisRegion.start;
       let placement2 = computeContextLocations(result);
-      console.log(newVisRegion);
-      alignFine(
+
+      let drawDataObj = alignFine(
         trackData2!.queryGenomeName,
         placements,
         newVisRegion,
         allGaps,
         cumulativeGapBases
       );
+      let drawData: Array<any> = [];
+      drawData.push(drawDataObj);
+
+      let svgElements = drawData.map((placement, index) =>
+        renderFineAlignment(placement.drawData, index)
+      );
+
+      if (trackData2!.side === "right") {
+        setRightTrack([...svgElements]);
+      } else {
+        setLeftTrack([...svgElements]);
+      }
+      svgElements;
     }
 
     //step 2 use the gap data after refinedRecordArray to create a new visData
@@ -147,7 +160,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       //step 2 ._computeContextLocations ->   placeFeature(): get x base interval converted to pixels
       // creating the alignmentRecords
       let placedRecords = computeContextLocations(result);
-      console.log(placedRecords);
+
       //step 3 get mergeDistance
       const mergeDistance = MERGE_PIXEL_DISTANCE * bpToPx!;
 
@@ -280,7 +293,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           ...placementsInMerge.map((segment) => segment.targetXSpan.end)
         );
         const mergeTargetXSpan = { targetXStart, targetEnd };
-        console.log(mergeTargetXSpan);
+
         const preferredStart = drawCenter - halfDrawWidth;
         const preferredEnd = drawCenter + halfDrawWidth;
         // Place it so it doesn't overlap other segments
@@ -314,18 +327,17 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           segments: placementsInMerge,
         });
       }
-    }
+      let svgElements = drawData.map((placement) =>
+        renderRoughAlignment(placement, false, 80)
+      );
 
-    let svgElements = drawData.map((placement) =>
-      renderRoughAlignment(placement, false, 80)
-    );
-
-    if (trackData2!.side === "right") {
-      setRightTrack([...svgElements]);
-    } else {
-      setLeftTrack([...svgElements]);
+      if (trackData2!.side === "right") {
+        setRightTrack([...svgElements]);
+      } else {
+        setLeftTrack([...svgElements]);
+      }
+      svgElements;
     }
-    svgElements;
   }
   //fineMode FUNCTIONS __________________________________________________________________________________________________________________________________________________________
   function alignFine(
@@ -376,13 +388,13 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
           cumulativeGapBases
         ),
       };
-      console.log(newContextSpan);
+
       const startX =
         (newContextSpan.start - newVisRegion.start) / newBpToPx.current;
       const endX =
         (newContextSpan.end - newVisRegion.start) / newBpToPx.current;
       let xSpan = { start: startX, end: endX };
-      console.log(xSpan);
+
       const targetSeq = getTargetSequence(visiblePart);
       placement.contextSpan = newContextSpan;
 
@@ -401,8 +413,16 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         minGapLength,
         xSpan.start
       );
-      console.log(start, end);
-      console.log(placement);
+
+      return {
+        isFineMode: true,
+
+        drawData: placements,
+
+        primaryGenome: trackData2!.genomeName,
+        queryGenome: query,
+        basesPerPixel: newBpToPx.current,
+      };
     }
     // const drawGapTexts = [];
     // const targetIntervalPlacer = new IntervalPlacer(MARGIN);
@@ -511,6 +531,149 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     //   navContextBuilder,
     // };
   }
+  function renderFineAlignment(placement: { [key: string]: any }, i: number) {
+    placement = placement[i];
+    const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
+    const targetXSpan = placement.targetXSpan;
+    const targetSegments = placement.targetSegments;
+    const querySegments = placement.querySegments;
+    const xStart = targetXSpan.start;
+    const xEnd = targetXSpan.end;
+    console.log(xStart, xEnd);
+    const targetSequence = getTargetSequence(placement.visiblePart);
+    const querySequence = getQuerySequence(placement.visiblePart);
+    const baseWidth = (xEnd - xStart) / targetSequence.length;
+
+    const targetLocus =
+      `${placement.visiblePart.feature.chr}` +
+      ":" +
+      `${
+        placement.visiblePart.feature.start +
+        placement.visiblePart.relativeStart
+      }` +
+      "-" +
+      `${
+        placement.visiblePart.feature.start + placement.visiblePart.relativeEnd
+      }`;
+
+    console.log(targetLocus);
+    // const targetLocus = placement.visiblePart.getLocus().toString();
+    const queryLocus =
+      `${placement.visiblePart.chr}` +
+      ":" +
+      `${placement.visiblePart.start}` +
+      "-" +
+      `${placement.visiblePart.end}`;
+
+    return (
+      <React.Fragment key={i}>
+        {renderSequenceSegments(
+          targetLocus,
+          targetSequence,
+          targetSegments,
+          ALIGN_TRACK_MARGIN,
+          primaryColor,
+          false
+        )}
+
+        {renderSequenceSegments(
+          queryLocus,
+          querySequence,
+          querySegments,
+          height - RECT_HEIGHT - ALIGN_TRACK_MARGIN,
+          queryColor,
+          true
+        )}
+      </React.Fragment>
+    );
+
+    function renderAlignTicks() {
+      const ticks: Array<any> = [];
+      let x = targetXSpan.start;
+      for (i = 0; i < targetSequence.length; i++) {
+        if (
+          targetSequence.charAt(i).toUpperCase() ===
+          querySequence.charAt(i).toUpperCase()
+        ) {
+          ticks.push(
+            <line
+              key={i}
+              x1={x + baseWidth / 2}
+              y1={ALIGN_TRACK_MARGIN + RECT_HEIGHT + TICK_MARGIN}
+              x2={x + baseWidth / 2}
+              y2={height - ALIGN_TRACK_MARGIN - RECT_HEIGHT - TICK_MARGIN}
+              stroke="black"
+              strokeOpacity={0.7}
+            />
+          );
+        }
+        x += baseWidth;
+      }
+      return ticks;
+    }
+
+    function renderSequenceSegments(
+      locus: string,
+      sequence: string,
+      segments: Array<{ [key: string]: any }>,
+      y: number,
+      color: string,
+      isQuery: boolean
+    ) {
+      console.log(segments);
+      const nonGaps = segments.filter((segment) => !segment.isGap);
+      const rects = nonGaps.map((segment, i) => (
+        <rect
+          key={i}
+          x={segment.xSpan.start}
+          y={y}
+          width={segment.xSpan.end - segment.xSpan.start}
+          height={RECT_HEIGHT}
+          fill={color}
+          onClick={() => console.log("You clicked on " + locus)}
+        />
+      ));
+      const letters = nonGaps.map((segment, i) => (
+        <Sequence
+          key={i}
+          sequence={sequence.substr(segment.index, segment.length)}
+          xSpan={segment.xSpan}
+          y={y}
+          isDrawBackground={false}
+          height={RECT_HEIGHT}
+        />
+      ));
+      // const arrows = nonGaps.map((segment, i) => (
+      //   <AnnotationArrows
+      //     key={i}
+      //     startX={segment.xSpan.start}
+      //     endX={segment.xSpan.end}
+      //     y={y}
+      //     height={RECT_HEIGHT}
+      //     opacity={0.75}
+      //     isToRight={!(isQuery && placement.record.getIsReverseStrandQuery())}
+      //     color="white"
+      //     separation={baseWidth}
+      //   />
+      // ));
+
+      return (
+        <React.Fragment>
+          <line
+            x1={xStart + baseWidth / 4}
+            y1={y + 0.5 * RECT_HEIGHT}
+            x2={xEnd}
+            y2={y + 0.5 * RECT_HEIGHT}
+            stroke={color}
+            strokeDasharray={baseWidth / 2}
+          />
+          {rects}
+          {/* {arrows} */}
+          {letters}
+        </React.Fragment>
+      );
+    }
+  }
   function countBases(sequence: string): number {
     return _.sumBy(sequence, (char) => (char === "-" ? 0 : 1));
   }
@@ -540,7 +703,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     const index = _.sortedIndexBy(gaps, { contextBase: base }, "contextBase");
 
     const gapBases = cumulativeGapBases[index] || 0; // Out-of-bounds index can happen if there are no gaps.
-    console.log(base, base + gapBases);
+
     return base + gapBases;
   }
   function build(gaps: Array<any>) {
@@ -777,7 +940,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       }
     }
     const newRecords = refineRecords.map((final) => final.recordsObj);
-    console.log(allPrimaryGaps);
+
     return { placements, newRecordsArray: newRecords, allGaps: allPrimaryGaps };
 
     function indexLookup(sequence: string, base: number): number {
@@ -830,7 +993,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
     for (const placement of placements) {
       const { visiblePart, contextSpan } = placement;
-      console.log(placement);
+
       const segments = segmentSequence(
         getTargetSequence(visiblePart),
         minGapLength,
@@ -929,7 +1092,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     plotReverse: boolean,
     roughHeight: number
   ) {
-    console.log(placement);
     const { queryFeature, queryXSpan, segments, targetXSpan } = placement;
     const queryRectTopY = roughHeight - RECT_HEIGHT;
     const targetGenomeRect = (
@@ -974,7 +1136,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         </text>
       );
     }
-    console.log(segments);
+
     const curvePaths = segments.map((segment, i) => {
       const x0 = Math.floor(segment.targetXSpan.start);
       const y0 = RECT_HEIGHT;
@@ -1042,7 +1204,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         { start, end },
         { start: feature.start, end: feature.end }
       );
-      console.log(contextXSpan);
+
       const startX = (contextXSpan!.intersectionStart - start) / bpToPx!;
       const endX = (contextXSpan!.intersectionEnd - start) / bpToPx!;
 
@@ -1119,7 +1281,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
         contextSpan: { start, end },
       });
     }
-    console.log(placements);
+
     return placements;
   }
 
@@ -1153,7 +1315,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     drawReverse: boolean
   ) {
     const xSpans: Array<any> = [];
-    console.log(parentXSpan);
+
     if (drawReverse) {
       // place segments from right to left if drawReverse
       for (const locus of internalLoci) {

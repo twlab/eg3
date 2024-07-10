@@ -86,7 +86,7 @@ export class FeatureSegment {
    */
   getLocus(): ChromosomeInterval {
     const featureLocus = this.feature.locus;
-    console.log(this.relativeEnd);
+
     return new ChromosomeInterval(
       featureLocus.chr,
       featureLocus.start + this.relativeStart,
