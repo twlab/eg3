@@ -328,7 +328,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       svgElements;
     }
   }
-  //fineMode FUNCTIONS __________________________________________________________________________________________________________________________________________________________
+  //fineMode FUNCTIONS ______s____________________________________________________________________________________________________________________________________________________
   function alignFine(
     query: string,
     placements: Array<any>,
@@ -1187,88 +1187,89 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
 
   function computeContextLocations(features) {
     const placements: Array<any> = [];
-    console.log(features);
+
     for (const feature of features) {
       let contextXSpan = getOverlap(
         { start, end },
         { start: feature.start, end: feature.end }
       );
+      if (contextXSpan) {
+        const startX = (contextXSpan!.intersectionStart - start) / bpToPx!;
+        const endX = (contextXSpan!.intersectionEnd - start) / bpToPx!;
 
-      const startX = (contextXSpan!.intersectionStart - start) / bpToPx!;
-      const endX = (contextXSpan!.intersectionEnd - start) / bpToPx!;
+        const targetXSpan = { start: startX, end: endX };
 
-      const targetXSpan = { start: startX, end: endX };
+        // has option to use center otherwise xspan is start and end
+        const centerX = Math.round((startX + endX) / 2);
+        // locatePlacement
 
-      // has option to use center otherwise xspan is start and end
-      const centerX = Math.round((startX + endX) / 2);
-      // locatePlacement
+        // we have to fit the primary genome coordinates to the window screen
+        // so we need to also make the same adjustments in bp also to the secondary genome
 
-      // we have to fit the primary genome coordinates to the window screen
-      // so we need to also make the same adjustments in bp also to the secondary genome
+        // First, get the genomic coordinates of the context location, i.e. the "context locus"
+        const contextFeatureCoord = contextXSpan!.intersectionStart;
+        const placedBase = start;
 
-      // First, get the genomic coordinates of the context location, i.e. the "context locus"
-      const contextFeatureCoord = contextXSpan!.intersectionStart;
-      const placedBase = start;
+        // We have a base number, but it could be the end or the beginning of the context locus.
+        let contextLocusStart;
 
-      // We have a base number, but it could be the end or the beginning of the context locus.
-      let contextLocusStart;
+        contextLocusStart = placedBase;
 
-      contextLocusStart = placedBase;
+        // relativeStart and relativeEnd are the numbers that we need to cut our primary
+        // genome coordinates to fit in side the window view.
+        // in relativeStart if primaryGenome Start is less than window view bp region start then relativeStart
+        // is the different between the two numbers. and we add relativeStart to the secondary genome so
+        // the secondarying genome start position will also fit inside the view window
+        // basically relativeStart is how much bp we need to add to secondarying genome start to fit
+        // inside window view bp region
 
-      // relativeStart and relativeEnd are the numbers that we need to cut our primary
-      // genome coordinates to fit in side the window view.
-      // in relativeStart if primaryGenome Start is less than window view bp region start then relativeStart
-      // is the different between the two numbers. and we add relativeStart to the secondary genome so
-      // the secondarying genome start position will also fit inside the view window
-      // basically relativeStart is how much bp we need to add to secondarying genome start to fit
-      // inside window view bp region
+        // for relativeEnd is the distance between primary genome start and end
+        // since we need to match the prime movement. we add the relativeStart to secondgenome
+        // to fit into bp region view and then add the diff between prime start and end to
+        // second genome start
 
-      // for relativeEnd is the distance between primary genome start and end
-      // since we need to match the prime movement. we add the relativeStart to secondgenome
-      // to fit into bp region view and then add the diff between prime start and end to
-      // second genome start
+        // we use the starting
+        const distFromFeatureLocus = contextLocusStart - feature.start;
+        const relativeStart = Math.max(0, distFromFeatureLocus);
+        // for relative end we use the contextXspan because feature.end could be outside the end view
+        let relativeEnd =
+          relativeStart +
+          contextXSpan!.intersectionEnd -
+          contextXSpan!.intersectionStart;
 
-      // we use the starting
-      const distFromFeatureLocus = contextLocusStart - feature.start;
-      const relativeStart = Math.max(0, distFromFeatureLocus);
-      // for relative end we use the contextXspan because feature.end could be outside the end view
-      let relativeEnd =
-        relativeStart +
-        contextXSpan!.intersectionEnd -
-        contextXSpan!.intersectionStart;
-
-      let secondaryGenomeStart = feature[3].genomealign.start + relativeStart;
-      let secondaryGenomeEnd = Math.min(
-        feature[3].genomealign.start + relativeEnd,
-        feature[3].genomealign.stop
-      );
-      // the visible part of the secondary genome on screen
-      const visiblePart = {
-        feature: feature,
-        chr: feature[3].genomealign.chr,
-        start: secondaryGenomeStart,
-        end: secondaryGenomeEnd,
-        relativeStart,
-        relativeEnd,
-      };
-
-      let tmpRecord = {
-        locus: { chr: feature.chr, start: feature.start, end: feature.end },
-        queryLocus: {
+        let secondaryGenomeStart = feature[3].genomealign.start + relativeStart;
+        let secondaryGenomeEnd = Math.min(
+          feature[3].genomealign.start + relativeEnd,
+          feature[3].genomealign.stop
+        );
+        // the visible part of the secondary genome on screen
+        const visiblePart = {
+          feature: feature,
           chr: feature[3].genomealign.chr,
-          start: feature[3].genomealign.start,
-          end: feature[3].genomealign.stop,
-        },
-        querySeq: feature[3].genomealign.queryseq,
-        targetSeq: feature[3].genomealign.targetseq,
-        queryStrand: feature[3].genomealign.strand,
-      };
-      placements.push({
-        record: tmpRecord,
-        targetXSpan,
-        visiblePart,
-        contextSpan: { start, end },
-      });
+          start: secondaryGenomeStart,
+          end: secondaryGenomeEnd,
+          relativeStart,
+          relativeEnd,
+        };
+
+        let tmpRecord = {
+          locus: { chr: feature.chr, start: feature.start, end: feature.end },
+          queryLocus: {
+            chr: feature[3].genomealign.chr,
+            start: feature[3].genomealign.start,
+            end: feature[3].genomealign.stop,
+          },
+          querySeq: feature[3].genomealign.queryseq,
+          targetSeq: feature[3].genomealign.targetseq,
+          queryStrand: feature[3].genomealign.strand,
+        };
+        placements.push({
+          record: tmpRecord,
+          targetXSpan,
+          visiblePart,
+          contextSpan: { start, end },
+        });
+      }
     }
 
     return placements;
