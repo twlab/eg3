@@ -767,7 +767,7 @@ function TrackManager(props) {
             alignItems: side == "right" ? "start" : "end",
           }}
         >
-          {trackComponent.map((Component, index) => (
+          {/* {trackComponent.map((Component, index) => (
             <Component
               key={index}
               bpRegionSize={bpRegionSize}
@@ -788,7 +788,26 @@ function TrackManager(props) {
                 side === "right" ? chrIndexRight.current : chrIndexLeft.current
               }
             />
-          ))}
+          ))} */}
+          <GenomeAlign
+            bpRegionSize={bpRegionSize}
+            bpToPx={bpToPx}
+            trackData={trackData}
+            side={side}
+            windowWidth={windowWidth}
+            totalSize={
+              side === "right"
+                ? sumArray(rightSectionSize) + windowWidth
+                : sumArray(leftSectionSize) + windowWidth
+            }
+            dragXDist={dragX.current}
+            trackData2={trackData2}
+            featureArray={genome.featureArray}
+            genomeName={genome.name}
+            chrIndex={
+              side === "right" ? chrIndexRight.current : chrIndexLeft.current
+            }
+          />
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ interface MethylcHoverProps {
   length?: number;
   side: string;
 }
-const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
+const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
   data,
   windowWidth,
   trackIdx,
@@ -41,29 +41,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
           right: rect.right,
           dataIdxX: dataIdxX,
           dataIdxY: dataIdxY,
-          toolTip: (
-            <div>
-              <div>Forward</div>
-              depth: {data.canvasData[dataIdxX].forward.depth}
-              {data.canvasData[dataIdxX].forward.contextValues.map(
-                (item, index) => (
-                  <div key={index}>
-                    {item.context}: {item.value}
-                  </div>
-                )
-              )}
-              <div>________</div>
-              <div>Reverse</div>
-              depth: {data.canvasData[dataIdxX].reverse.depth}
-              {data.canvasData[dataIdxX].reverse.contextValues.map(
-                (item, index) => (
-                  <div key={index}>
-                    {item.context}: {item.value}
-                  </div>
-                )
-              )}
-            </div>
-          ),
+          toolTip: <div>{dataIdxX}</div>,
         });
         setIsVisible(true);
       }
@@ -113,7 +91,6 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
             transition: "opacity 0.1s",
           }}
         >
-          {trackIdx}
           {rectPosition.toolTip}
         </div>
       ) : (
@@ -123,4 +100,4 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
   );
 });
 
-export default memo(TestToolTip);
+export default memo(TooltipGenomealign);
