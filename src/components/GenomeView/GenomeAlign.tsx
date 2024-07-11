@@ -76,7 +76,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const view = useRef(0);
   const newBpToPx = useRef(bpToPx!);
-  const overflowStrand2 = useRef<{ [key: string]: any }>({});
 
   // We will do MultiAlignmentViewCalculator here for rough mode
 
@@ -86,8 +85,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     if (result === undefined) {
       return;
     }
-    // This is for rough mode for compare genome alignment track
-    //step 1 AlignSourceWorker
+    // This is for rough mode  and fine for compare genome alignment track where we parse data after fetch
+    //step 0 AlignSourceWorker
     for (const record of result) {
       let data = JSON5.parse("{" + record[3] + "}");
       // if (options.isRoughMode) {
@@ -97,9 +96,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     }
 
     let drawData: Array<any> = [];
-    //check if 1 pixel >= 10bp
-    //FINEMODE __________________________________________________________________________________________________________________________________________________________
 
+    //FINEMODE __________________________________________________________________________________________________________________________________________________________
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
       //step 2
@@ -120,16 +118,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       //
       let newVisRegion = convertOldVisRegion(allGaps, cumulativeGapBases);
 
-      // const newPixelsPerBase =
-      //   windowWidth / (newVisRegion.end - newVisRegion.start);
-      // const newVisWidth =
-      //   (newVisRegion.end - newVisRegion.start) * newPixelsPerBase;
-      // console.log(windowWidth, newVisWidth);
       newBpToPx.current = (newVisRegion.end - newVisRegion.start) / windowWidth;
       //step 4  fineMode function
-      let oldVisRegionLen = end - start;
-      let newVisRegionLen = newVisRegion.end - newVisRegion.start;
-      let placement2 = computeContextLocations(result);
 
       let drawDataObj = alignFine(
         trackData2!.queryGenomeName,
@@ -153,9 +143,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       svgElements;
     }
 
-    //step 2 use the gap data after refinedRecordArray to create a new visData
-    // const primaryVisData = calculatePrimaryVis(allGaps);
     //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
+    //step 1
     else {
       //step 2 ._computeContextLocations ->   placeFeature(): get x base interval converted to pixels
       // creating the alignmentRecords
@@ -1403,46 +1392,6 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       return this._placements;
     }
   }
-
-  // useEffect(() => {
-  //   if (side === "left") {
-  //     leftTrackGenes.forEach((canvasRef, index) => {
-  //       if (canvasRefL[index].current) {
-  //         drawCanvas(
-  //           leftTrackGenes[index].polyCoord,
-  //           canvasRefL[index].current
-  //         );
-  //       }
-  //     });
-  //   } else if (side === "right") {
-  //     rightTrackGenes.forEach((canvasRef, index) => {
-  //       if (canvasRefR[index].current) {
-  //         drawCanvas(
-  //           rightTrackGenes[index].polyCoord,
-  //           canvasRefR[index].current
-  //         );
-  //       }
-  //     });
-  //   }
-  // }, [side]);
-
-  // useEffect(() => {
-  //   if (rightTrackGenes.length > 0) {
-  //     drawCanvas(
-  //       rightTrackGenes[rightTrackGenes.length - 1].polyCoord,
-  //       canvasRefR[canvasRefR.length - 1].current
-  //     );
-  //   }
-  // }, [rightTrackGenes]);
-
-  // useEffect(() => {
-  //   if (leftTrackGenes.length > 0) {
-  //     drawCanvas(
-  //       leftTrackGenes[leftTrackGenes.length - 1].polyCoord,
-  //       canvasRefL[canvasRefL.length - 1].current
-  //     );
-  //   }
-  // }, [leftTrackGenes]);
 
   useEffect(() => {
     console.log("triger left ", trackData2);
