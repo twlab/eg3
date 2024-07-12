@@ -128,8 +128,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       //step 4  fineMode function
 
       let drawDataObj = alignFine(
+        result,
         trackData2!.queryGenomeName,
-        placements,
         newVisRegion,
         allGaps,
         cumulativeGapBases
@@ -337,8 +337,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
   }
   //fineMode FUNCTIONS ______s____________________________________________________________________________________________________________________________________________________
   function alignFine(
+    records: any,
     query: string,
-    placements: Array<any>,
     newVisRegion: any,
     allGaps: Array<any>,
     cumulativeGapBases: Array<any>
@@ -359,6 +359,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       const segments = segmentSequence(sequence, minGapLength);
       segments.sort((a, b) => a.index - b.index);
       let x = startX;
+      console.log(segments);
       for (const segment of segments) {
         const bases = segment.isGap
           ? segment.length
@@ -369,6 +370,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       }
       return segments;
     }
+    let placements = computeContextLocations(records);
     for (let placement of placements) {
       const oldContextSpan = placement.contextSpan;
       const visiblePart = placement.visiblePart;
@@ -390,14 +392,14 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       const endX =
         (newContextSpan.end - newVisRegion.start) / newBpToPx.current;
       let xSpan = { start: startX, end: endX };
-
-      const targetSeq = getTargetSequence(visiblePart);
       placement.contextSpan = newContextSpan;
 
       placement.targetXSpan = xSpan;
       placement.queryXSpan = xSpan;
-      const querySeq = getQuerySequence(visiblePart);
+      const targetSeq = getTargetSequence(visiblePart);
 
+      const querySeq = getQuerySequence(visiblePart);
+      console.log(targetSeq, querySeq);
       placement.targetSegments = placeSequenceSegments(
         targetSeq,
         minGapLength,
