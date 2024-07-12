@@ -1047,7 +1047,7 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
       visiblePart.feature[3].genomealign.targetseq
     );
     // +1 because AlignmentIterator starts on string index -1.
-    const substringStart = alignIter.advanceN(visiblePart.relativeStart + 1);
+    const substringStart = alignIter.advanceN(visiblePart.relativeStart);
     const substringEnd = alignIter.advanceN(
       visiblePart.relativeEnd - visiblePart.relativeStart
     );
@@ -1062,8 +1062,8 @@ const GenomeAlign: React.FC<BedTrackProps> = memo(function GenomeAlign({
     const alignIter = new AlignmentIterator(
       visiblePart.feature[3].genomealign.targetseq
     );
-    // +1 because AlignmentIterator starts on string index -1.
-    const substringStart = alignIter.advanceN(visiblePart.relativeStart + 1);
+    // +1 because AlignmentIterator starts on string index -1. old comment//// new comment doing this made my code misalsign so we changed it to start at 0 index and not substract -1
+    const substringStart = alignIter.advanceN(visiblePart.relativeStart);
     const substringEnd = alignIter.advanceN(
       visiblePart.relativeEnd - visiblePart.relativeStart
     );

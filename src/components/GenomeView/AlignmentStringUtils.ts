@@ -123,7 +123,7 @@ export class AlignmentIterator {
    * Resets this instance's index pointer to the beginning of the string
    */
   reset(): void {
-    this._currentIndex = -1;
+    this._currentIndex = 0;
   }
 
   /**
@@ -161,7 +161,6 @@ export class AlignmentIterator {
    */
   advanceN(n: number): number {
     let value = this._currentIndex;
-
     for (let i = 0; i < n; i++) {
       value = this.getIndexOfNextBase();
     }
