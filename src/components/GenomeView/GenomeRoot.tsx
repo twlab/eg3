@@ -11,7 +11,7 @@ import { PublicHubAllData } from "../../localdata/publichub";
 import { TwoBitUrlData } from "../../localdata/twobiturl";
 import HicStraw from "hic-straw/dist/hic-straw.min.js";
 import NavigationContext from "../../models/NavigationContext";
-import ChromosomeInterval from "../../localdata/ChromosomeInterval";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";

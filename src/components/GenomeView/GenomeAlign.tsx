@@ -14,6 +14,9 @@ import { ViewExpansion } from "../../models/RegionExpander";
 import { NavContextBuilder } from "../../models/NavContextBuilder";
 import LinearDrawingModel from "../../models/LinearDrawingModel";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import OpenInterval from "../../models/OpenInterval";
+import Feature from "../../models/Feature";
+import AlignmentRecord from "../../models/AlignmentRecord";
 
 export const DEFAULT_OPTIONS = {
   height: 80,
@@ -98,14 +101,16 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     }
     // This is for rough mode  and fine for compare genome alignment track where we parse data after fetch
     //step 0 AlignSourceWorker
+    let records: AlignmentRecord[] = [];
     for (const record of result) {
       let data = JSON5.parse("{" + record[3] + "}");
       // if (options.isRoughMode) {
 
       // }
       record[3] = data;
+      records.push(new AlignmentRecord(record));
     }
-
+    console.log(records);
     let drawData: Array<any> = [];
 
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
@@ -115,12 +120,14 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       // refineRecordArray - find all the gaps for the data
       //
       // figured out how to get those data inside of _computeContextLocations
-      const { placements, newRecordsArray, allGaps } =
-        refineRecordsArray(result);
-      console.log(allGaps);
+      const { placements, newRecordsArray, allGaps } = refineRecordsArray(
+        result,
+        records
+      );
+
       let cumulativeGapBases = setGaps(allGaps);
       console.log(allGaps, cumulativeGapBases);
-
+      console.log(visData);
       //step 3
       // calcualtePrimaryVis:  below are sub functions
       // find out how much gap spaces are needed to be added with index
@@ -128,7 +135,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       // build function:  add the gaps to the feature genome:
       let newNavContext = build(allGaps);
 
-      //
+      console.log(placements);
       let newVisRegion = convertOldVisRegion(
         allGaps,
         cumulativeGapBases,
@@ -139,7 +146,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
         cumulativeGapBases,
         0
       );
-      console.log(newVisRegion.end - newVisRegion.start + 1);
+
       newBpToPx.current =
         (newVisRegion.end - newVisRegion.start + 1) / windowWidth;
       //step 4  fineMode function
@@ -148,16 +155,26 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       const newVisWidth =
         (newVisRegion.end - newVisRegion.start + 3) * newPixelsPerBase;
       console.log(
+        newVisRegion,
         newVisRegion.end - newVisRegion.start + 3,
         newVisWidth,
         windowWidth
       );
+
+      let newVisData = {};
+      newVisData["newContextSpan"] = new OpenInterval(
+        newVisRegion.start,
+        newVisRegion.end
+      );
+      newVisData["oldContextSpan"] = new OpenInterval(start, end);
+      newVisData["visData"] = newVisData["oldVisData"] = visData;
       let drawDataObj = alignFine(
         result,
         trackData2!.queryGenomeName,
         newVisRegion,
         allGaps,
-        cumulativeGapBases
+        cumulativeGapBases,
+        placements
       );
 
       let svgElements = drawDataObj.drawData.map((placement, index) =>
@@ -361,10 +378,10 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
   }
   function calculatePrimaryVis(
     allGaps: Array<any>,
-    visData: ViewExpansion
+    oldVisData: ViewExpansion
   ): ViewExpansion {
     // Calculate primary visData that have all the primary gaps from different alignemnts insertions.
-    const { visRegion, viewWindow, viewWindowRegion } = visData;
+    const { visRegion, viewWindow, viewWindowRegion } = oldVisData;
     const oldNavContext = visRegion.getNavigationContext();
     const navContextBuilder = new NavContextBuilder(oldNavContext);
     navContextBuilder.setGaps(allGaps);
@@ -406,12 +423,33 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     }
   }
   //fineMode FUNCTIONS ______s____________________________________________________________________________________________________________________________________________________
+  function placeSequenceSegments(
+    sequence: string,
+    minGapLength: number,
+    startX: number
+  ) {
+    const segments = segmentSequence(sequence, minGapLength);
+    segments.sort((a, b) => a.index - b.index);
+    let x = startX;
+
+    for (const segment of segments) {
+      const bases = segment.isGap
+        ? segment.length
+        : countBases(sequence.substr(segment.index, segment.length));
+      const xSpanLength = bases / newBpToPx.current;
+      segment.xSpan = { start: x, end: x + xSpanLength };
+      x += xSpanLength;
+    }
+    return segments;
+  }
+
   function alignFine(
     records: any,
     query: string,
     newVisRegion: any,
     allGaps: Array<any>,
-    cumulativeGapBases: Array<any>
+    cumulativeGapBases: Array<any>,
+    placements: any
   ) {
     // There's a lot of steps, so bear with me...
 
@@ -421,26 +459,8 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
 
     // With the draw model, we can set x spans for each placed alignment
     // Adjust contextSpan and xSpan in placements using visData:
-    function placeSequenceSegments(
-      sequence: string,
-      minGapLength: number,
-      startX: number
-    ) {
-      const segments = segmentSequence(sequence, minGapLength);
-      segments.sort((a, b) => a.index - b.index);
-      let x = startX;
 
-      for (const segment of segments) {
-        const bases = segment.isGap
-          ? segment.length
-          : countBases(sequence.substr(segment.index, segment.length));
-        const xSpanLength = bases / newBpToPx.current;
-        segment.xSpan = { start: x, end: x + xSpanLength };
-        x += xSpanLength;
-      }
-      return segments;
-    }
-    let placements = computeContextLocations(records);
+    console.log(placements);
     for (let placement of placements) {
       const oldContextSpan = placement.contextSpan;
       const visiblePart = placement.visiblePart;
@@ -978,7 +998,10 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       }
     }
   }
-  function refineRecordsArray(recordsArray: Array<any>) {
+  function refineRecordsArray(
+    recordsArray: Array<any>,
+    records: AlignmentRecord[]
+  ) {
     const minGapLength = MIN_GAP_LENGTH;
 
     // use a new array of objects to manipulate later, and
@@ -986,7 +1009,10 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     const refineRecords: Array<any> = [];
     const allGapsObj = {};
 
-    const placements: Array<any> = computeContextLocations(recordsArray);
+    const placements: Array<any> = computeContextLocations(
+      recordsArray,
+      records
+    );
 
     const primaryGaps: Array<any> = getPrimaryGenomeGaps(
       placements,
@@ -1356,9 +1382,42 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     );
   }
 
-  function computeContextLocations(features) {
+  function computeContextLocations(
+    features: Array<any>,
+    featureRecords: Feature[]
+  ) {
     const placements: Array<any> = [];
 
+    const drawModel = new LinearDrawingModel(visData!.visRegion, width);
+    const viewRegionBounds = visData!.visRegion.getContextCoordinates();
+    const navContext = visData!.visRegion.getNavigationContext();
+    console.log(navContext, viewRegionBounds);
+
+    for (const feature of featureRecords) {
+      for (let contextLocation of feature.computeNavContextCoordinates(
+        navContext
+      )) {
+        console.log(contextLocation);
+        contextLocation = contextLocation.getOverlap(viewRegionBounds)!; // Clamp the location to view region
+        if (contextLocation) {
+          const xSpan = useCenter
+            ? drawModel.baseSpanToXCenter(contextLocation)
+            : drawModel.baseSpanToXSpan(contextLocation);
+          const { visiblePart, isReverse } = this._locatePlacement(
+            feature,
+            navContext,
+            contextLocation
+          );
+          placements.push({
+            feature,
+            visiblePart,
+            contextLocation,
+            xSpan,
+            isReverse,
+          });
+        }
+      }
+    }
     for (const feature of features) {
       let contextXSpan = getOverlap(
         { start: start - bpRegionSize!, end: end + bpRegionSize },
