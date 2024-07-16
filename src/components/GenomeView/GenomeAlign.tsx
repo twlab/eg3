@@ -129,11 +129,29 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       let newNavContext = build(allGaps);
 
       //
-      let newVisRegion = convertOldVisRegion(allGaps, cumulativeGapBases);
-
-      newBpToPx.current = (newVisRegion.end - newVisRegion.start) / windowWidth;
+      let newVisRegion = convertOldVisRegion(
+        allGaps,
+        cumulativeGapBases,
+        bpRegionSize!
+      );
+      const newViewWindowRegion = convertOldVisRegion(
+        allGaps,
+        cumulativeGapBases,
+        0
+      );
+      console.log(newVisRegion.end - newVisRegion.start + 1);
+      newBpToPx.current =
+        (newVisRegion.end - newVisRegion.start + 1) / windowWidth;
       //step 4  fineMode function
-
+      const newPixelsPerBase =
+        windowWidth / (newViewWindowRegion.end - newViewWindowRegion.start + 1);
+      const newVisWidth =
+        (newVisRegion.end - newVisRegion.start + 3) * newPixelsPerBase;
+      console.log(
+        newVisRegion.end - newVisRegion.start + 3,
+        newVisWidth,
+        windowWidth
+      );
       let drawDataObj = alignFine(
         result,
         trackData2!.queryGenomeName,
@@ -824,14 +842,14 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     return cumulativeGapBases;
   }
 
-  function convertOldVisRegion(gap: any, cumulativeGapBases: any) {
+  function convertOldVisRegion(
+    gap: any,
+    cumulativeGapBases: any,
+    bpLength: number
+  ) {
     return {
-      start: convertOldCoordinates(
-        start - bpRegionSize!,
-        gap,
-        cumulativeGapBases
-      ),
-      end: convertOldCoordinates(end + bpRegionSize!, gap, cumulativeGapBases),
+      start: convertOldCoordinates(start - bpLength, gap, cumulativeGapBases),
+      end: convertOldCoordinates(end + bpLength, gap, cumulativeGapBases),
     };
   }
   function convertOldCoordinates(
