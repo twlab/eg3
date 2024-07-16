@@ -119,17 +119,17 @@ export class FeatureSegment {
    * @param {ChromosomeInterval} chrInterval - input genome location
    * @return {FeatureSegment} intersection of this and the input genomic location
    */
-  // getGenomeOverlap(chrInterval: ChromosomeInterval): FeatureSegment | null {
-  //   const featureLocus = this.feature.getLocus();
-  //   const genomeLocation = this.getLocus();
-  //   const overlap = genomeLocation.getOverlap(chrInterval);
-  //   if (!overlap) {
-  //     return null;
-  //   }
-  //   const relativeStart = overlap.start - featureLocus.start;
-  //   const relativeEnd = overlap.end - featureLocus.start;
-  //   return new FeatureSegment(this.feature, relativeStart, relativeEnd);
-  // }
+  getGenomeOverlap(chrInterval: ChromosomeInterval): FeatureSegment | null {
+    const featureLocus = this.feature.getLocus();
+    const genomeLocation = this.getLocus();
+    const overlap = genomeLocation.getOverlap(chrInterval);
+    if (!overlap) {
+      return null;
+    }
+    const relativeStart = overlap.start - featureLocus.start;
+    const relativeEnd = overlap.end - featureLocus.start;
+    return new FeatureSegment(this.feature, relativeStart, relativeEnd);
+  }
 
   /**
    * @return {string} human-readable representation of this interval

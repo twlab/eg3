@@ -12,7 +12,31 @@ import { TwoBitUrlData } from "../../localdata/twobiturl";
 import HicStraw from "hic-straw/dist/hic-straw.min.js";
 import NavigationContext from "../../models/NavigationContext";
 import ChromosomeInterval from "../../localdata/ChromosomeInterval";
+import Feature from "../../models/Feature";
+import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import OpenInterval from "../../models/OpenInterval";
+import HG38 from "../../models/genomes/hg38/hg38";
+interface ViewExpansion {
+  /**
+   * Total width, in pixels, of the expanded view
+   */
+  visWidth: number;
 
+  /**
+   * Expanded region
+   */
+  visRegion: DisplayedRegionModel;
+
+  /**
+   * The X range of pixels that would display the unexpanded region
+   */
+  viewWindow: OpenInterval;
+
+  /**
+   * Unexpanded region; the region displayed in the viewWindow
+   */
+  viewWindowRegion: DisplayedRegionModel;
+}
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 /**
@@ -138,12 +162,12 @@ function GenomeHub(props: any) {
   function makeNavContext(name) {
     const features = ChromosomeData[name].map((chr) => {
       const name = chr.getName();
-      return {
+      return new Feature(
         name,
-        locus: new ChromosomeInterval(name, 0, chr.getLength()),
-      };
+        new ChromosomeInterval(name, 0, chr.getLength())
+      );
     });
-    return { name: "HG38", features };
+    return new NavigationContext("HG38", features);
   }
   useEffect(() => {
     async function handler() {
@@ -170,10 +194,32 @@ function GenomeHub(props: any) {
         let metadata = straw.getMetaData();
         let normOptions = straw.getNormalizationOptions();
         let featureArray = makeNavContext("HG38");
+        console.log(
+          Number(HG38.defaultRegion.start) -
+            (HG38.defaultRegion.end - HG38.defaultRegion.start)
+        );
+
+        let visData: ViewExpansion = {
+          visWidth: 1314 * 3,
+          visRegion: new DisplayedRegionModel(
+            HG38.navContext,
+            HG38.defaultRegion.start -
+              (HG38.defaultRegion.end - HG38.defaultRegion.start),
+            HG38.defaultRegion.end +
+              (HG38.defaultRegion.end - HG38.defaultRegion.start)
+          ),
+          viewWindow: new OpenInterval(1314, 2628),
+          viewWindowRegion: new DisplayedRegionModel(
+            HG38.navContext,
+            HG38.defaultRegion.start,
+            HG38.defaultRegion.end
+          ),
+        };
 
         let testGen: any = {
           name: "hg38",
           species: "human",
+          visData,
           // testing mutiple chr 'chr7:150924404-152924404'
 
           //chr7:27053397-27373765

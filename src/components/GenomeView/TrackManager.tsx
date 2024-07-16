@@ -47,7 +47,7 @@ let defaultHic = {
   normalization: "NONE",
   label: "",
 };
-const windowWidth = window.innerWidth;
+const windowWidth = 1314;
 
 interface MyComponentProps {
   bpRegionSize?: number;
@@ -129,6 +129,7 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
   genomealign: function genomeAlignFetch(regionData: any) {
+    console.log(regionData);
     return GetTabixData(
       regionData.url,
       regionData.chr,
@@ -496,8 +497,8 @@ function TrackManager(props) {
       let genomealignResult = await trackFetchFunction.genomealign({
         url: genome.defaultTracks[5].url,
         chr: region,
-        start: Number(bpX.current),
-        end: Number(bpX.current + bpRegionSize),
+        start: Number(bpX.current) - bpRegionSize,
+        end: Number(bpX.current + bpRegionSize) + bpRegionSize,
       });
 
       let tmpData2 = {};
@@ -790,6 +791,7 @@ function TrackManager(props) {
             />
           ))} */}
           <GenomeAlign
+            visData={genome.visData}
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={trackData}
