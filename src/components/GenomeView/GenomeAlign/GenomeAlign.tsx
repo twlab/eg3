@@ -202,7 +202,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     else {
       //step 2 ._computeContextLocations ->   placeFeature(): get x base interval converted to pixels
       // creating the alignmentRecords
-      let placedRecords = computeContextLocations2(
+      let placedRecords = computeContextLocations(
         oldRecordsArray[0].records,
         visData!
       );
@@ -383,6 +383,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       svgElements;
     }
   }
+
   function calculatePrimaryVis(
     allGaps: Array<any>,
     oldVisData: ViewExpansion
@@ -448,7 +449,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     // Calculate context coordinates of the records and gaps within.
     // calculate navContext and placements using oldVisData so small gaps won't seperate different features:
     const navContext = oldVisData.visRegion.getNavigationContext();
-    const placements = computeContextLocations2(records, oldVisData);
+    const placements = computeContextLocations(records, oldVisData);
     // const primaryGaps = this._getPrimaryGenomeGaps(placements, minGapLength);
     const navContextBuilder = new NavContextBuilder(navContext);
     navContextBuilder.setGaps(allGaps); // Use allGaps instead of primaryGaps here so gaps between placements were also included here.
@@ -979,7 +980,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     const placementsArr: Array<any> = [];
     for (const recordsObj of recordsArray) {
       // Calculate context coordinates of the records and gaps within.
-      const placements = computeContextLocations2(recordsObj.records, visData!);
+      const placements = computeContextLocations(recordsObj.records, visData!);
       const primaryGaps = getPrimaryGenomeGaps(placements, minGapLength);
       const primaryGapsObj = primaryGaps.reduce((resultObj, gap) => {
         return { ...resultObj, ...{ [gap.contextBase]: gap.length } };
@@ -1207,6 +1208,105 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
   //ROUGHMODEFUNCTIONS __________________________________________________________________________________________________________________________________________________________
   //ROUGHMODEFUNCTIONS __________________________________________________________________________________________________________________________________________________________
   //ROUGHMODEFUNCTIONS __________________________________________________________________________________________________________________________________________________________
+
+  function alignRough(
+    query: string,
+    alignmentRecords: AlignmentRecord[],
+    visData: ViewExpansion
+  ) {
+    const { visRegion, visWidth } = visData;
+    const drawModel = new LinearDrawingModel(visRegion, visWidth);
+    const mergeDistance = drawModel.xWidthToBases(MERGE_PIXEL_DISTANCE);
+
+    // Count how many bases are in positive strand and how many of them are in negative strand.
+    // More in negative strand (<0) => plotStrand = "-".
+    const aggregateStrandsNumber = alignmentRecords.reduce(
+      (aggregateStrand, record) =>
+        aggregateStrand +
+        (record.getIsReverseStrandQuery()
+          ? -1 * record.getLength()
+          : record.getLength()),
+      0
+    );
+    const plotStrand = aggregateStrandsNumber < 0 ? "-" : "+";
+
+    const placedRecords = computeContextLocations(alignmentRecords, visData!);
+    // First, merge the alignments by query genome coordinates
+    let queryLocusMerges = ChromosomeInterval.mergeAdvanced(
+      // Note that the third parameter gets query loci
+      placedRecords,
+      mergeDistance,
+      (placement) => placement.visiblePart.getQueryLocus()
+    );
+
+    // Sort so we place the largest query loci first in the next step
+    queryLocusMerges = queryLocusMerges.sort(
+      (a, b) => b.locus.getLength() - a.locus.getLength()
+    );
+
+    const intervalPlacer = new IntervalPlacer(MARGIN);
+    const drawData: Array<any> = [];
+    for (const merge of queryLocusMerges) {
+      const mergeLocus = merge.locus;
+      const placementsInMerge = merge.sources; // Placements that made the merged locus
+      const mergeDrawWidth = drawModel.basesToXWidth(mergeLocus.getLength());
+      const halfDrawWidth = 0.5 * mergeDrawWidth;
+      if (mergeDrawWidth < MIN_MERGE_DRAW_WIDTH) {
+        continue;
+      }
+
+      // Find the center of the primary segments, and try to center the merged query locus there too.
+      const drawCenter = computeCentroid(
+        placementsInMerge.map((segment) => segment.targetXSpan)
+      );
+      const targetXStart = Math.min(
+        ...placementsInMerge.map((segment) => segment.targetXSpan.start)
+      );
+      const targetEnd = Math.max(
+        ...placementsInMerge.map((segment) => segment.targetXSpan.end)
+      );
+      const mergeTargetXSpan = new OpenInterval(targetXStart, targetEnd);
+      const preferredStart = drawCenter - halfDrawWidth;
+      const preferredEnd = drawCenter + halfDrawWidth;
+      // Place it so it doesn't overlap other segments
+      const mergeXSpan = intervalPlacer.place(
+        new OpenInterval(preferredStart, preferredEnd)
+      );
+
+      // Put the actual secondary/query genome segments in the placed merged query locus from above
+      const queryLoci = placementsInMerge.map(
+        (placement) => placement.record.queryLocus
+      );
+      const isReverse = plotStrand === "-" ? true : false;
+      const lociXSpans = placeInternalLoci(
+        mergeLocus,
+        queryLoci,
+        mergeXSpan,
+        isReverse,
+        drawModel
+      );
+      for (let i = 0; i < queryLoci.length; i++) {
+        placementsInMerge[i].queryXSpan = lociXSpans[i];
+      }
+
+      drawData.push({
+        queryFeature: new Feature(" ", mergeLocus, plotStrand),
+        targetXSpan: mergeTargetXSpan,
+        queryXSpan: mergeXSpan,
+        segments: placementsInMerge,
+      });
+    }
+
+    return {
+      isFineMode: false,
+      primaryVisData: visData,
+      drawData,
+      plotStrand,
+      primaryGenome: trackData2!.genomeName,
+      queryGenome: query,
+      basesPerPixel: drawModel.xWidthToBases(1),
+    };
+  }
   function ensureMaxListLength(list, limit: number) {
     if (list.length <= limit) {
       return list;
@@ -1328,7 +1428,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       </React.Fragment>
     );
   }
-  function computeContextLocations2(
+  function computeContextLocations(
     records: AlignmentRecord[],
     visData: ViewExpansion
   ): PlacedAlignment[] {
@@ -1440,44 +1540,42 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
   }
 
   function placeInternalLoci(
-    parentLocus: { [key: string]: any },
-    internalLoci: Array<{ [key: string]: any }>,
-    parentXSpan: { [key: string]: any },
-    drawReverse: boolean
+    parentLocus: ChromosomeInterval,
+    internalLoci: ChromosomeInterval[],
+    parentXSpan: OpenInterval,
+    drawReverse: boolean,
+    drawModel: LinearDrawingModel
   ) {
     const xSpans: Array<any> = [];
-
     if (drawReverse) {
       // place segments from right to left if drawReverse
       for (const locus of internalLoci) {
-        const distanceFromParent = locus.start - parentLocus.mergedStart;
-        const xDistanceFromParent = distanceFromParent / bpToPx!;
-
+        const distanceFromParent = locus.start - parentLocus.start;
+        const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
         const locusXEnd = parentXSpan.end - xDistanceFromParent;
-        const xWidth = (locus.end - locus.start) / bpToPx!;
+        const xWidth = drawModel.basesToXWidth(locus.getLength());
         const xEnd = locusXEnd < parentXSpan.end ? locusXEnd : parentXSpan.end;
         const xStart =
           locusXEnd - xWidth > parentXSpan.start
             ? locusXEnd - xWidth
             : parentXSpan.start;
-        xSpans.push({ xStart, xEnd });
+        xSpans.push(new OpenInterval(xStart, xEnd));
       }
     } else {
       for (const locus of internalLoci) {
-        const distanceFromParent = locus.start - parentLocus.mergedStart;
-        const xDistanceFromParent = distanceFromParent / bpToPx!;
+        const distanceFromParent = locus.start - parentLocus.start;
+        const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
         const locusXStart = parentXSpan.start + xDistanceFromParent;
-        const xWidth = (locus.end - locus.start) / bpToPx!;
+        const xWidth = drawModel.basesToXWidth(locus.getLength());
         const xStart =
           locusXStart > parentXSpan.start ? locusXStart : parentXSpan.start;
         const xEnd =
           locusXStart + xWidth < parentXSpan.end
             ? locusXStart + xWidth
             : parentXSpan.end;
-        xSpans.push({ xStart, xEnd });
+        xSpans.push(new OpenInterval(xStart, xEnd));
       }
     }
-
     return xSpans;
   }
   class IntervalPlacer {
