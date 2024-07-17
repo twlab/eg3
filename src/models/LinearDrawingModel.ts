@@ -22,9 +22,9 @@ class LinearDrawingModel {
   constructor(viewRegion: DisplayedRegionModel, drawWidth: number) {
     this._viewRegion = viewRegion;
     this._drawWidth = drawWidth;
-
-    this._pixelsPerBase = this._drawWidth / this._viewRegion.getWidth();
-    this._basesPerPixel = this._viewRegion.getWidth() / this._drawWidth;
+    console.log(this._drawWidth, viewRegion.getNavigationContext());
+    this._pixelsPerBase = drawWidth / viewRegion.getWidth();
+    this._basesPerPixel = viewRegion.getWidth() / drawWidth;
   }
 
   /**

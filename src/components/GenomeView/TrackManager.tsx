@@ -41,7 +41,6 @@ let defaultHic = {
   normalization: "NONE",
   label: "",
 };
-const windowWidth = 1314;
 
 interface MyComponentProps {
   bpRegionSize?: number;
@@ -123,7 +122,6 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
   genomealign: function genomeAlignFetch(regionData: any) {
-    console.log(regionData);
     return GetTabixData(
       regionData.url,
       regionData.chr,
@@ -148,21 +146,22 @@ function TrackManager(props) {
   // DONE !!!!!!!!!! fix data being [ [ ]] after fetching
 
   //   //made working for left..... need to fix old algo on hic, need to sent it new chr when mutli chr view
+  const frameID = useRef(0);
+  const lastX = useRef(0);
+  const dragX = useRef(0);
+  const windowWidth = useRef(props.windowWidth);
   const genome = props.currGenome;
-  console.log(genome);
+
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
-  const bpToPx = bpRegionSize / windowWidth;
+  const bpToPx = bpRegionSize / windowWidth.current;
   let allChrData = genome.chromosomes;
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const block = useRef<HTMLInputElement>(null);
-  const frameID = useRef(0);
-  const lastX = useRef(0);
-  const dragX = useRef(0);
   const curVisData = useRef(genome.visData);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -217,11 +216,11 @@ function TrackManager(props) {
       (isLoading &&
         deltaX > 0 &&
         side === "right" &&
-        -tmpDragX > (rightSectionSize.length - 1) * windowWidth) ||
+        -tmpDragX > (rightSectionSize.length - 1) * windowWidth.current) ||
       (isLoading &&
         deltaX < 0 &&
         side === "left" &&
-        tmpDragX > (leftSectionSize.length - 1) * windowWidth)
+        tmpDragX > (leftSectionSize.length - 1) * windowWidth.current)
     ) {
       return;
     }
@@ -478,10 +477,6 @@ function TrackManager(props) {
     return tmpRegion;
   }
   async function fetchGenomeData(initial: number = 0, trackSide) {
-    console.log(
-      Math.floor(Number(bpX.current)),
-      Math.floor(Number(bpX.current + bpRegionSize))
-    );
     let navContextCoord = HG38.navContext.parse(
       `${region}` +
         ":" +
@@ -491,13 +486,16 @@ function TrackManager(props) {
     );
 
     let newVisData: ViewExpansion = {
-      visWidth: windowWidth * 3,
+      visWidth: windowWidth.current * 3,
       visRegion: new DisplayedRegionModel(
         HG38.navContext,
-        navContextCoord.start - bpRegionSize,
-        navContextCoord.end + bpRegionSize + 2
+        navContextCoord.start - (navContextCoord.end - navContextCoord.start),
+        navContextCoord.end + (navContextCoord.end - navContextCoord.start)
       ),
-      viewWindow: new OpenInterval(1314, 2628),
+      viewWindow: new OpenInterval(
+        windowWidth.current,
+        windowWidth.current * 2
+      ),
       viewWindowRegion: new DisplayedRegionModel(
         HG38.navContext,
         navContextCoord.start,
@@ -818,11 +816,11 @@ function TrackManager(props) {
             bpToPx={bpToPx}
             trackData={trackData}
             side={side}
-            windowWidth={windowWidth}
+            windowWidth={windowWidth.current}
             totalSize={
               side === "right"
-                ? sumArray(rightSectionSize) + windowWidth
-                : sumArray(leftSectionSize) + windowWidth
+                ? sumArray(rightSectionSize) + windowWidth.current
+                : sumArray(leftSectionSize) + windowWidth.current
             }
             dragXDist={dragX.current}
             trackData2={trackData2}

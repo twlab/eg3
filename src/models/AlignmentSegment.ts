@@ -67,12 +67,6 @@ export class AlignmentSegment extends FeatureSegment {
     //     queryStrand === "+" ? queryLocus.start + this.relativeEnd : queryLocus.end - this.relativeStart
     // );
 
-    if (
-      queryLocus.start + this.relativeStart >
-      Math.min(queryLocus.start + this.relativeEnd, queryLocus.end)
-    ) {
-      console.log(queryLocus, this.relativeStart, this.relativeEnd);
-    }
     return new ChromosomeInterval(
       queryLocus.chr,
       queryStrand === "+"

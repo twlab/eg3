@@ -200,7 +200,7 @@ function GenomeHub(props: any) {
         );
 
         let visData: ViewExpansion = {
-          visWidth: 1314 * 3,
+          visWidth: windowWidth * 3,
           visRegion: new DisplayedRegionModel(
             HG38.navContext,
             HG38.defaultRegion.start -
@@ -208,7 +208,7 @@ function GenomeHub(props: any) {
             HG38.defaultRegion.end +
               (HG38.defaultRegion.end - HG38.defaultRegion.start)
           ),
-          viewWindow: new OpenInterval(1314, 2628),
+          viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
           viewWindowRegion: new DisplayedRegionModel(
             HG38.navContext,
             HG38.defaultRegion.start,
@@ -227,7 +227,7 @@ function GenomeHub(props: any) {
           //testing finemode  27213325-27213837
           //chr7:159159564-chr8:224090
           featureArray,
-          defaultRegion: "chr7:27053397-27373765",
+          defaultRegion: "chr7:27213325-27213837",
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [
@@ -308,6 +308,7 @@ function GenomeHub(props: any) {
             currGenome={genomeList[0]}
             addTrack={addTrack}
             startBp={startBp}
+            windowWidth={windowWidth}
           />
         );
       }

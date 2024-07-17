@@ -34,7 +34,7 @@ class AnnotationArrows extends React.PureComponent<ArrowProps> {
       color,
       clipId,
       opacity,
-      separation,
+      separation = 0,
     } = this.props;
     if (endX - startX < ARROW_WIDTH) {
       return null;
