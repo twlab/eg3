@@ -34,7 +34,15 @@ export const DEFAULT_OPTIONS = {
   primaryColor: "darkblue",
   queryColor: "#B8008A",
 };
+interface QueryGenomePiece {
+  queryFeature: Feature;
+  queryXSpan: OpenInterval;
+}
 
+export interface PlacedMergedAlignment extends QueryGenomePiece {
+  segments: PlacedAlignment[];
+  targetXSpan: OpenInterval;
+}
 // const FINE_MODE_HEIGHT = 80;
 const ALIGN_TRACK_MARGIN = 20; // The margin on top and bottom of alignment block
 // const ROUGH_MODE_HEIGHT = 80;
@@ -202,176 +210,16 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     else {
       //step 2 ._computeContextLocations ->   placeFeature(): get x base interval converted to pixels
       // creating the alignmentRecords
-      let placedRecords = computeContextLocations(
-        oldRecordsArray[0].records,
-        visData!
+      let alignmentData: { [key: string]: any } = oldRecordsArray.reduce(
+        (multiAlign, records) => ({
+          ...multiAlign,
+          [records.query]: alignRough(records.query, records.records, visData!),
+        }),
+        {}
       );
-
-      //step 3 get mergeDistance
-      const mergeDistance = MERGE_PIXEL_DISTANCE * bpToPx!;
-
-      // step 4 Count how many bases are in positive strand and how many of them are in negative strand.
-      // More in negative strand (<0) => plotStrand = "-".
-      let negative = 0;
-      let positive = 0;
-      for (let item of result) {
-        if (item[3].genomealign.strand === "-") {
-          negative += item[3].genomealign.stop - item[3].genomealign.start;
-        } else {
-          positive += item[3].genomealign.stop - item[3].genomealign.start;
-        }
-      }
-
-      const aggregateStrandsNumber = result.reduce(
-        (aggregateStrand, record) =>
-          aggregateStrand +
-          (record[3].genomealign.strand === "-"
-            ? -1 * (record[3].genomealign.stop - record[3].genomealign.start)
-            : record[3].genomealign.stop - record[3].genomealign.start),
-        0
-      );
-
-      const plotStrand = aggregateStrandsNumber < 0 ? "-" : "+";
-
-      //step 5 mergeAdvanced merge the alignments by query genome coordinates
-      // in eg2 placedRecord, MergeDistance, and individial value of placedRecord (AlignmentRecord)
-      // placedRecord (AlignmentRecord) -> visiblePart: has relative start and end -> alignmentSegment class ->
-      // -> getQueryLocus() => returns new ChromosomeInterval(
-      //   queryLocus.chr,
-      //   queryStrand === "+"
-      //     ? queryLocus.start + this.relativeStart
-      //     : Math.max(0, queryLocus.end - this.relativeEnd),
-      //   queryStrand === "+"
-      //     ? Math.min(queryLocus.start + this.relativeEnd, queryLocus.end)
-      //     : queryLocus.end - this.relativeStart
-      // );
-      // relative start is the diff of the viewRegion genomic coord start - the primary genomic coord start
-      // query locus is the non primary genome genomic interval and we add the relative start that we got
-      // from the primary genome so that it all aligns.
-
-      const groupedByChromosome = _.groupBy(
-        placedRecords,
-        (obj) => obj.visiblePart.chr
-      );
-
-      //iteratee(a) == chromosomeinterval
-      const merged: Array<any> = [];
-      for (const chrName in groupedByChromosome) {
-        const objectsForChromosome = groupedByChromosome[chrName];
-        objectsForChromosome.sort(
-          (a, b) => a.visiblePart.start - b.visiblePart.start
-        );
-
-        const loci = objectsForChromosome.map(
-          (item, index) => item.visiblePart
-        );
-
-        // Merge loci for this chromosome
-        let mergeStartIndex = 0;
-        while (mergeStartIndex < loci.length) {
-          // Initialize a new merged locus
-
-          const mergedStart = loci[mergeStartIndex].start;
-          let mergedEnd = loci[mergeStartIndex].end;
-          let mergeEndIndex = mergeStartIndex + 1;
-
-          // Find the end of the merged locus
-          while (mergeEndIndex < loci.length) {
-            const start = loci[mergeEndIndex].start;
-            const end = loci[mergeEndIndex].end;
-            // Found the end: this locus is far enough from the current merged locus
-            if (start - mergedEnd > mergeDistance) {
-              break;
-              // else this record should be merged into the current locus
-            } else if (end > mergedEnd) {
-              // Update the end of the merged locus if necessary
-              mergedEnd = end;
-            }
-            mergeEndIndex++;
-          }
-
-          // Push a new merged locus
-          merged.push({
-            locus: { chrName, mergedStart, mergedEnd },
-            sources: objectsForChromosome.slice(mergeStartIndex, mergeEndIndex),
-          });
-          mergeStartIndex = mergeEndIndex;
-        }
-      }
-      let queryLocusMerges = [...merged];
-
-      // for (let item of queryLocusMerges) {
-      //   console.log(item, item.locus.mergedEnd - item.locus.mergedStart);
-      // }
-
-      //step 6
-      // Sort so we place the largest query loci first in the next ste
-      queryLocusMerges = queryLocusMerges.sort(
-        (a, b) =>
-          b.locus.mergedEnd -
-          b.locus.mergedStart -
-          (a.locus.mergedEnd - a.locus.mergedStart)
-      );
-
-      //step 7
-      const intervalPlacer = new IntervalPlacer(MARGIN);
-
-      for (const merge of queryLocusMerges) {
-        const mergeLocus = merge.locus;
-
-        const placementsInMerge = merge.sources; // Placements that made the merged locus
-        const mergeDrawWidth =
-          (mergeLocus.mergedEnd - mergeLocus.mergedStart) / bpToPx!;
-        const halfDrawWidth = 0.5 * mergeDrawWidth;
-        if (mergeDrawWidth < MIN_MERGE_DRAW_WIDTH) {
-          continue;
-        }
-
-        // Find the center of the primary segments, and try to center the merged query locus there too.
-        const drawCenter = computeCentroid(
-          placementsInMerge.map((segment) => segment.targetXSpan)
-        );
-
-        const targetXStart = Math.min(
-          ...placementsInMerge.map((segment) => segment.targetXSpan.start)
-        );
-        const targetEnd = Math.max(
-          ...placementsInMerge.map((segment) => segment.targetXSpan.end)
-        );
-        const mergeTargetXSpan = { targetXStart, targetEnd };
-
-        const preferredStart = drawCenter - halfDrawWidth;
-        const preferredEnd = drawCenter + halfDrawWidth;
-        // Place it so it doesn't overlap other segments
-        console.log(preferredStart, preferredEnd, "wtf");
-        const mergeXSpan = intervalPlacer.place(
-          new OpenInterval(preferredStart, preferredEnd)
-        );
-        // Put the actual secondary/query genome segments in the placed merged query locus from above
-
-        const queryLoci = placementsInMerge.map(
-          (placement) => placement.record.queryLocus
-        );
-
-        const isReverse = plotStrand === "-" ? true : false;
-        const lociXSpans = placeInternalLoci(
-          mergeLocus,
-          queryLoci,
-          mergeXSpan,
-          isReverse
-        );
-        for (let i = 0; i < queryLoci.length; i++) {
-          placementsInMerge[i].queryXSpan = lociXSpans[i];
-        }
-
-        drawData.push({
-          queryFeature: { name: undefined, mergeLocus, plotStrand },
-          targetXSpan: mergeTargetXSpan,
-          queryXSpan: mergeXSpan,
-          segments: placementsInMerge,
-        });
-      }
-      let svgElements = drawData.map((placement) =>
+      let drawDataObj: { [key: string]: any } = Object.values(alignmentData)[0];
+      console.log(alignmentData);
+      let svgElements = drawDataObj.drawData.map((placement) =>
         renderRoughAlignment(placement, false, 80)
       );
 
@@ -1321,7 +1169,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     return selectedItems;
   }
   function renderRoughAlignment(
-    placement: { [key: string]: any },
+    placement: PlacedMergedAlignment,
     plotReverse: boolean,
     roughHeight: number
   ) {
@@ -1329,9 +1177,9 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     const queryRectTopY = roughHeight - RECT_HEIGHT;
     const targetGenomeRect = (
       <rect
-        x={targetXSpan.targetXStart}
+        x={targetXSpan.start}
         y={0}
-        width={targetXSpan.targetEnd - targetXSpan.targetXStart}
+        width={targetXSpan.getLength()}
         height={RECT_HEIGHT}
         fill={DEFAULT_OPTIONS.primaryColor}
         // tslint:disable-next-line:jsx-no-lambda
@@ -1344,7 +1192,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       <rect
         x={queryXSpan.start}
         y={queryRectTopY}
-        width={queryXSpan.end - queryXSpan.start}
+        width={queryXSpan.getLength()}
         height={RECT_HEIGHT}
         fill={DEFAULT_OPTIONS.queryColor}
         // tslint:disable-next-line:jsx-no-lambda
@@ -1352,20 +1200,19 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       />
     );
 
+    const estimatedLabelWidth = queryFeature.toString().length * FONT_SIZE;
     let label;
-    if (queryXSpan.end - queryXSpan.start) {
+    if (estimatedLabelWidth < queryXSpan.getLength()) {
       label = (
         <text
-          x={windowWidth / 2}
+          x={0.5 * (queryXSpan.start + queryXSpan.end)}
           y={queryRectTopY + 0.5 * RECT_HEIGHT}
           dominantBaseline="middle"
           textAnchor="middle"
           fill="white"
           fontSize={12}
         >
-          {queryFeature.mergeLocus.chrName}:{" "}
-          {queryFeature.mergeLocus.mergedStart}-
-          {queryFeature.mergeLocus.mergedEnd}
+          {queryFeature.getLocus().toString()}
         </text>
       );
     }
@@ -1376,19 +1223,19 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       const x1 =
         (!plotReverse && segment.record.queryStrand === "-") ||
         (plotReverse && segment.record.queryStrand === "+")
-          ? Math.ceil(segment.queryXSpan.xEnd)
-          : Math.floor(segment.queryXSpan.xStart);
+          ? Math.ceil(segment.queryXSpan!.end)
+          : Math.floor(segment.queryXSpan!.start);
       const y1 = queryRectTopY;
       const x2 =
         (!plotReverse && segment.record.queryStrand === "-") ||
         (plotReverse && segment.record.queryStrand === "+")
-          ? Math.floor(segment.queryXSpan.xStart)
-          : Math.ceil(segment.queryXSpan.xEnd);
+          ? Math.floor(segment.queryXSpan!.start)
+          : Math.ceil(segment.queryXSpan!.end);
       // const y2 = queryRectTopY;
 
       const x3 = segment.targetXSpan.end;
-      const targetGenome = "hg38";
-      const queryGenome = "mm10";
+      const targetGenome = trackData2!.genomeName;
+      const queryGenome = trackData2!.queryGenomeName;
       const y3 = RECT_HEIGHT;
       const yhalf = (RECT_HEIGHT + queryRectTopY) / 2;
       const d_string = `M ${x0} ${y0} 
@@ -1420,7 +1267,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     });
 
     return (
-      <React.Fragment key={queryFeature.mergeLocus.toString()}>
+      <React.Fragment key={queryFeature.getLocus().toString()}>
         {targetGenomeRect}
         {queryGenomeRect}
         {label}
@@ -1452,7 +1299,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const viewRegionBounds = viewRegion.getContextCoordinates();
     const navContext = viewRegion.getNavigationContext();
-
+    console.log(drawModel, viewRegionBounds, navContext);
     const placements: Array<any> = [];
 
     for (const feature of features) {
