@@ -12,21 +12,15 @@ import BigWigTrack from "./BigWigTrack";
 import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
 import HiCTrack from "./HiCTrack";
-import GenomeAlign from "./GenomeAlign";
+import GenomeAlign from "./GenomeAlign/GenomeAlign";
 import CircularProgress from "@mui/material/CircularProgress";
+import { ViewExpansion } from "../../models/RegionExpander";
+import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import HG38 from "../../models/genomes/hg38/hg38";
+import OpenInterval from "../../models/OpenInterval";
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
-interface GenomeData {
-  id: number;
-  genomealign: {
-    chr: string;
-    start: number;
-    stop: number;
-    strand: string;
-    targetseq: string;
-    queryseq: string;
-  };
-}
+
 let defaultHic = {
   color: "#B8008A",
   color2: "#006385",
@@ -155,7 +149,7 @@ function TrackManager(props) {
 
   //   //made working for left..... need to fix old algo on hic, need to sent it new chr when mutli chr view
   const genome = props.currGenome;
-
+  console.log(genome);
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
@@ -169,7 +163,7 @@ function TrackManager(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
-
+  const curVisData = useRef(genome.visData);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -484,6 +478,33 @@ function TrackManager(props) {
     return tmpRegion;
   }
   async function fetchGenomeData(initial: number = 0, trackSide) {
+    console.log(
+      Math.floor(Number(bpX.current)),
+      Math.floor(Number(bpX.current + bpRegionSize))
+    );
+    let navContextCoord = HG38.navContext.parse(
+      `${region}` +
+        ":" +
+        `${Math.floor(Number(bpX.current))}` +
+        "-" +
+        `${Math.ceil(Number(bpX.current + bpRegionSize))}`
+    );
+
+    let newVisData: ViewExpansion = {
+      visWidth: windowWidth * 3,
+      visRegion: new DisplayedRegionModel(
+        HG38.navContext,
+        navContextCoord.start - bpRegionSize,
+        navContextCoord.end + bpRegionSize + 2
+      ),
+      viewWindow: new OpenInterval(1314, 2628),
+      viewWindowRegion: new DisplayedRegionModel(
+        HG38.navContext,
+        navContextCoord.start,
+        navContextCoord.end
+      ),
+    };
+    curVisData.current = newVisData;
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2 || initial === 1) {
       let hicResult = await trackFetchFunction.hic({
@@ -503,6 +524,7 @@ function TrackManager(props) {
 
       let tmpData2 = {};
       tmpData2["genomealignResult"] = [...genomealignResult[0]];
+
       tmpData2["hicResult"] = [...hicResult];
       tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
       tmpData2["xDist"] = dragX.current;
@@ -791,7 +813,7 @@ function TrackManager(props) {
             />
           ))} */}
           <GenomeAlign
-            visData={genome.visData}
+            visData={curVisData.current}
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={trackData}

@@ -23,6 +23,7 @@ export default class OpenInterval implements IOpenInterval {
    */
   constructor(public readonly start: number, public readonly end: number) {
     if (end < start) {
+      console.log(end, start);
       throw new RangeError("End cannot be less than start");
     }
     this.start = start;
