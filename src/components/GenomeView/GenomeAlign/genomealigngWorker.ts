@@ -1,6 +1,7 @@
 //src/Worker/worker.ts
 
 import _ from "lodash";
+import JSON5 from "json5";
 import { Feature } from "../../../models/Feature";
 import { PlacedAlignment, PlacedSequenceSegment } from "./GenomeAlign";
 import AlignmentRecord from "../../../models/AlignmentRecord";
@@ -18,7 +19,7 @@ const DEFAULT_OPTIONS = {
   primaryColor: "darkblue",
   queryColor: "#B8008A",
 };
-
+const RECT_HEIGHT = 15;
 // multiAlignCal defaults
 interface RecordsObj {
   query: string;
@@ -28,7 +29,7 @@ interface RecordsObj {
 const MAX_FINE_MODE_BASES_PER_PIXEL = 10;
 const MARGIN = 5;
 // const MIN_GAP_DRAW_WIDTH = 3;
-
+const FONT_SIZE = 10;
 const MERGE_PIXEL_DISTANCE = 200;
 const MIN_MERGE_DRAW_WIDTH = 5;
 
@@ -38,13 +39,14 @@ self.onmessage = (event: MessageEvent) => {
   let records: AlignmentRecord[] = [];
   console.log(event.data.result);
   for (const record of event.data.result) {
-    let data = record[3];
+    let data = JSON5.parse("{" + record[3] + "}");
     // if (options.isRoughMode) {
 
     // }
     record[3] = data;
     records.push(new AlignmentRecord(record));
   }
+
   let oldRecordsArray: Array<RecordsObj> = [];
   oldRecordsArray.push({
     query: event.data.queryGenomeName,
@@ -716,66 +718,226 @@ self.onmessage = (event: MessageEvent) => {
     }
   }
 
-  const { newRecordsArray, allGaps } = refineRecordsArray(oldRecordsArray);
+  //______________________________________________________________________________________________________________________________________ROUGHMODE FUNCTION
+  function alignRough(
+    query: string,
+    alignmentRecords: AlignmentRecord[],
+    visData: ViewExpansion
+  ) {
+    const { visRegion, visWidth } = visData;
+    const drawModel = new LinearDrawingModel(visRegion, visWidth);
+    const mergeDistance = drawModel.xWidthToBases(MERGE_PIXEL_DISTANCE);
 
-  // use the gaps in bp to create  new  visdata. The gap will cause  the windowWidth to change increasing or decreasing
-  const primaryVisData = calculatePrimaryVis(allGaps, newVisData);
+    // Count how many bases are in positive strand and how many of them are in negative strand.
+    // More in negative strand (<0) => plotStrand = "-".
+    const aggregateStrandsNumber = alignmentRecords.reduce(
+      (aggregateStrand, record) =>
+        aggregateStrand +
+        (record.getIsReverseStrandQuery()
+          ? -1 * record.getLength()
+          : record.getLength()),
+      0
+    );
+    const plotStrand = aggregateStrandsNumber < 0 ? "-" : "+";
 
-  let alignmentDatas = newRecordsArray.reduce(
-    (multiAlign, records) => ({
-      ...multiAlign,
-      [records.query]: alignFine(
-        records.query,
-        records.records,
-        newVisData,
-        primaryVisData,
-        allGaps
-      ),
-    }),
-    {}
-  );
-
-  const drawDataArr: Array<{ [key: string]: any }> =
-    Object.values(alignmentDatas);
-
-  let drawData = drawDataArr[0].drawData;
-
-  for (let i = 0; i < drawData.length; i++) {
-    let placement = drawData[i];
-
-    const { targetXSpan } = placement;
-
-    let tmpObj = {};
-    tmpObj["xStart"] = targetXSpan.start;
-    tmpObj["xEnd"] = targetXSpan.end;
-    tmpObj["targetSequence"] = placement.visiblePart.getTargetSequence();
-    tmpObj["querySequence"] = placement.visiblePart.getTargetSequence();
-    tmpObj["baseWidth"] =
-      targetXSpan.getLength() / tmpObj["targetSequence"].length;
-    tmpObj["targetLocus"] = placement.visiblePart.getLocus().toString();
-    tmpObj["queryLocus"] = placement.visiblePart.getQueryLocus().toString();
-    const nonGapsTarget = placement.targetSegments.filter(
-      (segment) => !segment.isGap
+    const placedRecords = computeContextLocations(alignmentRecords, visData!);
+    // First, merge the alignments by query genome coordinates
+    let queryLocusMerges = ChromosomeInterval.mergeAdvanced(
+      // Note that the third parameter gets query loci
+      placedRecords,
+      mergeDistance,
+      (placement) => placement.visiblePart.getQueryLocus()
     );
 
-    tmpObj["nonGapTargetData"] = nonGapsTarget.map((segment) => ({
-      index: segment.index,
-      segXSpanStart: segment.xSpan.start,
-      segXSpanEnd: segment.xSpan.end,
-      segLength: segment.xSpan.getLength(),
-    }));
-
-    const nonGapsQuery = placement.querySegments.filter(
-      (segment) => !segment.isGap
+    // Sort so we place the largest query loci first in the next step
+    queryLocusMerges = queryLocusMerges.sort(
+      (a, b) => b.locus.getLength() - a.locus.getLength()
     );
-    tmpObj["nonGapQueryData"] = nonGapsQuery.map((segment) => ({
-      index: segment.index,
-      segXSpanStart: segment.xSpan.start,
-      segXSpanEnd: segment.xSpan.end,
-      segLength: segment.xSpan.getLength(),
-    }));
-    drawData[i] = { ...drawData[0], ...tmpObj };
+
+    const intervalPlacer = new IntervalPlacer(MARGIN);
+    const drawData: Array<any> = [];
+    for (const merge of queryLocusMerges) {
+      const mergeLocus = merge.locus;
+      const placementsInMerge = merge.sources; // Placements that made the merged locus
+      const mergeDrawWidth = drawModel.basesToXWidth(mergeLocus.getLength());
+      const halfDrawWidth = 0.5 * mergeDrawWidth;
+      if (mergeDrawWidth < MIN_MERGE_DRAW_WIDTH) {
+        continue;
+      }
+
+      // Find the center of the primary segments, and try to center the merged query locus there too.
+      const drawCenter = computeCentroid(
+        placementsInMerge.map((segment) => segment.targetXSpan)
+      );
+      const targetXStart = Math.min(
+        ...placementsInMerge.map((segment) => segment.targetXSpan.start)
+      );
+      const targetEnd = Math.max(
+        ...placementsInMerge.map((segment) => segment.targetXSpan.end)
+      );
+      const mergeTargetXSpan = new OpenInterval(targetXStart, targetEnd);
+      const preferredStart = drawCenter - halfDrawWidth;
+      const preferredEnd = drawCenter + halfDrawWidth;
+      // Place it so it doesn't overlap other segments
+      const mergeXSpan = intervalPlacer.place(
+        new OpenInterval(preferredStart, preferredEnd)
+      );
+
+      // Put the actual secondary/query genome segments in the placed merged query locus from above
+      const queryLoci = placementsInMerge.map(
+        (placement) => placement.record.queryLocus
+      );
+      const isReverse = plotStrand === "-" ? true : false;
+      const lociXSpans = placeInternalLoci(
+        mergeLocus,
+        queryLoci,
+        mergeXSpan,
+        isReverse,
+        drawModel
+      );
+      for (let i = 0; i < queryLoci.length; i++) {
+        placementsInMerge[i].queryXSpan = lociXSpans[i];
+      }
+
+      drawData.push({
+        queryFeature: new Feature(" ", mergeLocus, plotStrand),
+        targetXSpan: mergeTargetXSpan,
+        queryXSpan: mergeXSpan,
+        segments: placementsInMerge,
+      });
+    }
+
+    return {
+      isFineMode: false,
+      primaryVisData: visData,
+      drawData,
+      plotStrand,
+      primaryGenome: event.data.genomeName,
+      queryGenome: query,
+      basesPerPixel: drawModel.xWidthToBases(1),
+    };
+  }
+  function placeInternalLoci(
+    parentLocus: ChromosomeInterval,
+    internalLoci: ChromosomeInterval[],
+    parentXSpan: OpenInterval,
+    drawReverse: boolean,
+    drawModel: LinearDrawingModel
+  ) {
+    const xSpans: Array<any> = [];
+    if (drawReverse) {
+      // place segments from right to left if drawReverse
+      for (const locus of internalLoci) {
+        const distanceFromParent = locus.start - parentLocus.start;
+        const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
+        const locusXEnd = parentXSpan.end - xDistanceFromParent;
+        const xWidth = drawModel.basesToXWidth(locus.getLength());
+        const xEnd = locusXEnd < parentXSpan.end ? locusXEnd : parentXSpan.end;
+        const xStart =
+          locusXEnd - xWidth > parentXSpan.start
+            ? locusXEnd - xWidth
+            : parentXSpan.start;
+        xSpans.push(new OpenInterval(xStart, xEnd));
+      }
+    } else {
+      for (const locus of internalLoci) {
+        const distanceFromParent = locus.start - parentLocus.start;
+        const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
+        const locusXStart = parentXSpan.start + xDistanceFromParent;
+        const xWidth = drawModel.basesToXWidth(locus.getLength());
+        const xStart =
+          locusXStart > parentXSpan.start ? locusXStart : parentXSpan.start;
+        const xEnd =
+          locusXStart + xWidth < parentXSpan.end
+            ? locusXStart + xWidth
+            : parentXSpan.end;
+        xSpans.push(new OpenInterval(xStart, xEnd));
+      }
+    }
+    return xSpans;
   }
 
+  //______________________________________________________________________________________________________________________________
+
+  // use align fine function or align rough function to create draw Data
+  let drawDataArr: Array<{ [key: string]: any }> = [];
+  if (event.data.viewMode === "fineMode") {
+    const { newRecordsArray, allGaps } = refineRecordsArray(oldRecordsArray);
+
+    // use the gaps in bp to create  new  visdata. The gap will cause  the windowWidth to change increasing or decreasing
+    const primaryVisData = calculatePrimaryVis(allGaps, newVisData);
+
+    let alignmentDatas = newRecordsArray.reduce(
+      (multiAlign, records) => ({
+        ...multiAlign,
+        [records.query]: alignFine(
+          records.query,
+          records.records,
+          newVisData,
+          primaryVisData,
+          allGaps
+        ),
+      }),
+      {}
+    );
+
+    drawDataArr = Object.values(alignmentDatas);
+
+    let drawData = drawDataArr[0].drawData;
+
+    for (let i = 0; i < drawData.length; i++) {
+      let placement = drawData[i];
+
+      const { targetXSpan } = placement;
+
+      let tmpObj = {};
+      tmpObj["xStart"] = targetXSpan.start;
+      tmpObj["xEnd"] = targetXSpan.end;
+      tmpObj["targetSequence"] = placement.visiblePart.getTargetSequence();
+      tmpObj["querySequence"] = placement.visiblePart.getTargetSequence();
+      tmpObj["baseWidth"] =
+        targetXSpan.getLength() / tmpObj["targetSequence"].length;
+      tmpObj["targetLocus"] = placement.visiblePart.getLocus().toString();
+      tmpObj["queryLocus"] = placement.visiblePart.getQueryLocus().toString();
+      const nonGapsTarget = placement.targetSegments.filter(
+        (segment) => !segment.isGap
+      );
+
+      tmpObj["nonGapTargetData"] = nonGapsTarget.map((segment) => ({
+        index: segment.index,
+        segXSpanStart: segment.xSpan.start,
+        segXSpanEnd: segment.xSpan.end,
+        segLength: segment.xSpan.getLength(),
+      }));
+
+      const nonGapsQuery = placement.querySegments.filter(
+        (segment) => !segment.isGap
+      );
+      tmpObj["nonGapQueryData"] = nonGapsQuery.map((segment) => ({
+        index: segment.index,
+        segXSpanStart: segment.xSpan.start,
+        segXSpanEnd: segment.xSpan.end,
+        segLength: segment.xSpan.getLength(),
+      }));
+      drawData[i] = { ...drawData[0], ...tmpObj };
+    }
+  } else {
+    let alignmentDatas: { [key: string]: any } = oldRecordsArray.reduce(
+      (multiAlign, records) => ({
+        ...multiAlign,
+        [records.query]: alignRough(
+          records.query,
+          records.records,
+          newVisData!
+        ),
+      }),
+      {}
+    );
+
+    drawDataArr = Object.values(alignmentDatas);
+    let drawData = drawDataArr[0].drawData;
+
+    //default datas
+  }
   postMessage(drawDataArr);
 };

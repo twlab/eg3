@@ -1,7 +1,7 @@
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
-import JSON5 from "json5";
+
 import _ from "lodash";
 
 import { SequenceSegment } from "../../../models/AlignmentStringUtils";
@@ -32,7 +32,7 @@ interface WorkerData {
 
   visRegion: { [key: string]: Feature[] | any };
   viewWindowRegion: { [key: string]: Feature[] | any };
-
+  viewMode: string;
   viewWindow: { [key: string]: any };
 }
 interface RecordsObj {
@@ -131,59 +131,52 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     if (result === undefined) {
       return;
     }
+
+    let newCoord = visData!.visRegion.getContextCoordinates();
+    let newNav = visData!.visRegion.getNavigationContext();
+
+    let newCoordWindow = visData!.viewWindowRegion.getContextCoordinates();
+    let newNavWindow = visData!.viewWindowRegion.getNavigationContext();
+
+    let newWorkerData: WorkerData = {
+      genomeName: trackData2!.genomeName,
+      viewMode: " ",
+      queryGenomeName: trackData2!.queryGenomeName,
+      result: result,
+
+      visRegion: {
+        name: newNav.getName(),
+        featureArray: newNav.getFeatures(),
+        start: newCoord.start,
+        end: newCoord.end,
+      },
+      viewWindowRegion: {
+        name: newNav.getName(),
+        featureArray: newNavWindow.getFeatures(),
+        start: newCoordWindow.start,
+        end: newCoordWindow.end,
+      },
+      visWidth: visData!.visWidth,
+      viewWindow: {
+        start: visData!.viewWindow.start,
+        end: visData!.viewWindow.end,
+      },
+    };
     // This is for rough mode  and fine for compare genome alignment track where we parse data after fetch
     //step 0 AlignSourceWorker
-    let records: AlignmentRecord[] = [];
-    for (const record of result) {
-      let data = JSON5.parse("{" + record[3] + "}");
-      // if (options.isRoughMode) {
 
-      // }
-      record[3] = data;
-      records.push(new AlignmentRecord(record));
-    }
-    let oldRecordsArray: Array<RecordsObj> = [];
-    oldRecordsArray.push({
-      query: trackData2!.queryGenomeName,
-      records: records,
-      isBigChain: false,
-    });
+    // let oldRecordsArray: Array<RecordsObj> = [];
+    // oldRecordsArray.push({
+    //   query: trackData2!.queryGenomeName,
+    //   records: records,
+    //   isBigChain: false,
+    // });
 
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
       //  find the gap for primary genome in bp
-
-      let newCoord = visData!.visRegion.getContextCoordinates();
-      let newNav = visData!.visRegion.getNavigationContext();
-
-      let newCoordWindow = visData!.viewWindowRegion.getContextCoordinates();
-      let newNavWindow = visData!.viewWindowRegion.getNavigationContext();
-
-      let newWorkerData: WorkerData = {
-        genomeName: trackData2!.genomeName,
-        queryGenomeName: trackData2!.queryGenomeName,
-        result: result,
-
-        visRegion: {
-          name: newNav.getName(),
-          featureArray: newNav.getFeatures(),
-          start: newCoord.start,
-          end: newCoord.end,
-        },
-        viewWindowRegion: {
-          name: newNav.getName(),
-          featureArray: newNavWindow.getFeatures(),
-          start: newCoordWindow.start,
-          end: newCoordWindow.end,
-        },
-        visWidth: visData!.visWidth,
-        viewWindow: {
-          start: visData!.viewWindow.start,
-          end: visData!.viewWindow.end,
-        },
-      };
-
+      newWorkerData["viewMode"] = "fineMode";
       worker.postMessage(newWorkerData);
 
       worker.onmessage = (event) => {
@@ -209,36 +202,58 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
     //step 1
     else {
-      let alignmentData: { [key: string]: any } = oldRecordsArray.reduce(
-        (multiAlign, records) => ({
-          ...multiAlign,
-          [records.query]: alignRough(records.query, records.records, visData!),
-        }),
-        {}
-      );
-      let alignment: { [key: string]: any } = Object.values(alignmentData)[0];
+      newWorkerData["viewMode"] = "roughMode";
+      worker.postMessage(newWorkerData);
 
-      let svgElements = alignment.drawData.map((placement) =>
-        renderRoughAlignment(placement, false, 80)
-      );
-      const arrows = renderRoughStrand("+", 0, visData!.viewWindow, false);
-      svgElements.push(arrows);
-      const primaryViewWindow = alignment.primaryVisData.viewWindow;
-      const strand = alignment.plotStrand;
-      const height = 80;
-      const primaryArrows = renderRoughStrand(
-        strand,
-        height - RECT_HEIGHT,
-        primaryViewWindow,
-        true
-      );
-      svgElements.push(primaryArrows);
-      if (trackData2!.side === "right") {
-        setRightTrack([...svgElements]);
-      } else {
-        setLeftTrack([...svgElements]);
-      }
-      svgElements;
+      worker.onmessage = (event) => {
+        let drawDataArr = event.data;
+        console.log(drawDataArr);
+        newTrackWidth.current = drawDataArr[0].primaryVisData;
+
+        let drawData = drawDataArr[0].drawData;
+        console.log(drawData);
+        // let svgElements = drawData.map((placement, index) =>
+        //   renderFineAlignment(placement, index)
+        // );
+        // const drawGapText = drawDataArr[0].drawGapText;
+        // svgElements.push(...drawGapText.map(renderGapText));
+        // if (trackData2!.side === "right") {
+        //   setRightTrack([...svgElements]);
+        // } else {
+        //   setLeftTrack([...svgElements]);
+        // }
+      };
+
+      // let alignmentData: { [key: string]: any } = oldRecordsArray.reduce(
+      //   (multiAlign, records) => ({
+      //     ...multiAlign,
+      //     [records.query]: alignRough(records.query, records.records, visData!),
+      //   }),
+      //   {}
+      // );
+      // let alignment: { [key: string]: any } = Object.values(alignmentData)[0];
+
+      // let svgElements = alignment.drawData.map((placement) =>
+      //   renderRoughAlignment(placement, false, 80)
+      // );
+      // const arrows = renderRoughStrand("+", 0, visData!.viewWindow, false);
+      // svgElements.push(arrows);
+      // const primaryViewWindow = alignment.primaryVisData.viewWindow;
+      // const strand = alignment.plotStrand;
+      // const height = 80;
+      // const primaryArrows = renderRoughStrand(
+      //   strand,
+      //   height - RECT_HEIGHT,
+      //   primaryViewWindow,
+      //   true
+      // );
+      // svgElements.push(primaryArrows);
+      // if (trackData2!.side === "right") {
+      //   setRightTrack([...svgElements]);
+      // } else {
+      //   setLeftTrack([...svgElements]);
+      // }
+      // svgElements;
     }
   }
 
@@ -793,45 +808,6 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
     return numerator / denominator;
   }
 
-  function placeInternalLoci(
-    parentLocus: ChromosomeInterval,
-    internalLoci: ChromosomeInterval[],
-    parentXSpan: OpenInterval,
-    drawReverse: boolean,
-    drawModel: LinearDrawingModel
-  ) {
-    const xSpans: Array<any> = [];
-    if (drawReverse) {
-      // place segments from right to left if drawReverse
-      for (const locus of internalLoci) {
-        const distanceFromParent = locus.start - parentLocus.start;
-        const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
-        const locusXEnd = parentXSpan.end - xDistanceFromParent;
-        const xWidth = drawModel.basesToXWidth(locus.getLength());
-        const xEnd = locusXEnd < parentXSpan.end ? locusXEnd : parentXSpan.end;
-        const xStart =
-          locusXEnd - xWidth > parentXSpan.start
-            ? locusXEnd - xWidth
-            : parentXSpan.start;
-        xSpans.push(new OpenInterval(xStart, xEnd));
-      }
-    } else {
-      for (const locus of internalLoci) {
-        const distanceFromParent = locus.start - parentLocus.start;
-        const xDistanceFromParent = drawModel.basesToXWidth(distanceFromParent);
-        const locusXStart = parentXSpan.start + xDistanceFromParent;
-        const xWidth = drawModel.basesToXWidth(locus.getLength());
-        const xStart =
-          locusXStart > parentXSpan.start ? locusXStart : parentXSpan.start;
-        const xEnd =
-          locusXStart + xWidth < parentXSpan.end
-            ? locusXStart + xWidth
-            : parentXSpan.end;
-        xSpans.push(new OpenInterval(xStart, xEnd));
-      }
-    }
-    return xSpans;
-  }
   class IntervalPlacer {
     public leftExtent: number;
     public rightExtent: number;
