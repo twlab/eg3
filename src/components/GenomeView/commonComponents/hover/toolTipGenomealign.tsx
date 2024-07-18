@@ -1,17 +1,83 @@
 import { useEffect, useRef, useState, memo } from "react";
 import "./Tooltip.css";
-
+import AlignmentSequence from "./AlignmentCoordinate";
+import { PlacedAlignment } from "../../GenomeAlign/GenomeAlign";
 interface MethylcHoverProps {
-  data: { [key: string]: any };
+  data: any;
   windowWidth: number;
-  trackIdx: number;
+  trackIdx?: number;
   length?: number;
   side: string;
+  trackType: string;
 }
+const getToolTip: { [key: string]: any } = {
+  refGene: async function refGeneFetch(regionData: any) {
+    return;
+  },
+  bed: async function bedFetch(regionData: any) {},
+
+  bigWig: function bigWigFetch(regionData: any) {
+    return;
+  },
+
+  dynseq: function dynseqFetch(regionData: any) {
+    return;
+  },
+  methylc: function methylcFetch(regionData: any) {
+    return;
+  },
+  hic: function hicFetch(regionData: any) {
+    return;
+  },
+  genomealign: function genomeAlignFetch(alignment: any, relativeX: number) {
+    const { basesPerPixel, primaryGenome, queryGenome } = alignment;
+    const drawData = alignment.drawData;
+
+    // Which segment in drawData cusor lands on:
+    const indexOfCusorSegment = drawData.reduce(
+      (iCusor, x, i) =>
+        x.targetXSpan.start < relativeX && x.targetXSpan.end >= relativeX
+          ? i
+          : iCusor,
+      NaN
+    );
+    const cusorSegment = drawData[indexOfCusorSegment];
+
+    const sequenceHalfLength = 10; // The length of alignment in the hoverbox.
+
+    return (
+      <AlignmentSequence
+        alignment={cusorSegment}
+        x={relativeX}
+        halfLength={sequenceHalfLength}
+        target={primaryGenome}
+        query={queryGenome}
+        basesPerPixel={basesPerPixel}
+      />
+    );
+  },
+};
+function isObjectNotEmpty(data: any): boolean {
+  return (
+    data &&
+    typeof data === "object" &&
+    !Array.isArray(data) &&
+    Object.keys(data).length > 0
+  );
+}
+
+function isArrayNotEmpty(data: any): boolean {
+  return Array.isArray(data) && data.length > 0;
+}
+function isDataValid(data: any): boolean {
+  return isObjectNotEmpty(data) || isArrayNotEmpty(data);
+}
+
 const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
   data,
   windowWidth,
   trackIdx,
+  trackType,
   length = 0,
   side,
 }) {
@@ -26,13 +92,18 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
     toolTip: <></>,
   });
   const handleMouseEnter = (e) => {
-    if (Object.keys(data).length > 0) {
+    if (
+      isArrayNotEmpty(data) ||
+      (isObjectNotEmpty(data) && isDataValid(data))
+    ) {
       const rect = targetRef.current!.getBoundingClientRect();
 
       let dataIdxX = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
-      console.log(e.pageX - rect.left);
+
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
+      let tooltipsv = getToolTip[trackType](data, e.pageX - rect.left);
+
       if (dataIdxX < windowWidth) {
         setPosition({
           ...rectPosition,
@@ -41,7 +112,7 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
           right: rect.right,
           dataIdxX: dataIdxX,
           dataIdxY: dataIdxY,
-          toolTip: <div>{dataIdxX}</div>,
+          toolTip: tooltipsv,
         });
         setIsVisible(true);
       }
@@ -54,6 +125,7 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
     setIsVisible(false);
   };
   useEffect(() => {
+    setIsVisible(false);
     if (targetRef.current !== null) {
       targetRef.current.addEventListener("mousemove", handleMouseEnter);
       targetRef.current.addEventListener("mouseleave", handleMouseLeave);
@@ -64,7 +136,7 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
         targetRef.current.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
-  }, []);
+  }, [data]);
 
   return (
     <div
@@ -82,19 +154,18 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
             left: rectPosition.dataIdxX,
             top: rectPosition.dataIdxY,
             position: "absolute",
-            backgroundColor: "black",
-            color: "white",
+            backgroundColor: "lightBlue",
+            // color: "white",
             padding: 8,
             borderRadius: 4,
             fontSize: 14,
-
-            transition: "opacity 0.1s",
           }}
         >
+          {rectPosition.dataIdxX}
           {rectPosition.toolTip}
         </div>
       ) : (
-        " "
+        ""
       )}
     </div>
   );

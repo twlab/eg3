@@ -42,16 +42,17 @@ let defaultHic = {
   label: "",
 };
 
-interface MyComponentProps {
+interface TrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   trackWidth: number;
   trackSize: any;
+  trackIdx: number;
 }
 
-const componentMap: { [key: string]: React.FC<MyComponentProps> } = {
+const componentMap: { [key: string]: React.FC<TrackProps> } = {
   refGene: RefGeneTrack,
   bed: BedTrack,
   bedDensity: BedDensityTrack,
@@ -183,13 +184,13 @@ function TrackManager(props) {
   const chrIndexRight = useRef(initialChrIdx);
   const chrIndexLeft = useRef(initialChrIdx);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
-  const [side, setSide] = useState("right");
+
   const [isLoading, setIsLoading] = useState(true);
   const [hicOption, setHicOption] = useState(1);
 
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
-
+  const side = useRef("right");
   const bpX = useRef(leftStartCoord);
   const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
@@ -216,11 +217,11 @@ function TrackManager(props) {
     if (
       (isLoading &&
         deltaX > 0 &&
-        side === "right" &&
+        side.current === "right" &&
         -tmpDragX > (rightSectionSize.length - 1) * windowWidth.current) ||
       (isLoading &&
         deltaX < 0 &&
-        side === "left" &&
+        side.current === "left" &&
         tmpDragX > (leftSectionSize.length - 1) * windowWidth.current)
     ) {
       return;
@@ -258,12 +259,12 @@ function TrackManager(props) {
 
     let curStartBp = leftStartCoord + -dragX.current * bpToPx;
     const curBp = leftStartCoord + -dragX.current * bpToPx;
-    if (side === "right" && curBp >= chrLength[curIdx]) {
+    if (side.current === "right" && curBp >= chrLength[curIdx]) {
       while (curStartBp > chrLength[curIdx]) {
         curStartBp -= chrLength[curIdx];
         curIdx += 1;
       }
-    } else if (side === "left" && curBp < 0) {
+    } else if (side.current === "left" && curBp < 0) {
       curIdx--;
       while (curStartBp < -chrLength[curIdx]) {
         curStartBp += chrLength[curIdx];
@@ -283,11 +284,6 @@ function TrackManager(props) {
     props.startBp(curRegion);
     bpX.current = curBp;
 
-    if (dragX.current > 0 && side === "right") {
-      setSide("left");
-    } else if (dragX.current <= 0 && side === "left") {
-      setSide("right");
-    }
     if (hicOption === 1 && dragX.current <= 0) {
       fetchGenomeData(2, "right");
     } else {
@@ -522,9 +518,13 @@ function TrackManager(props) {
       });
 
       let tmpData2 = {};
-      tmpData2["genomealignResult"] = [...genomealignResult[0]];
 
-      tmpData2["hicResult"] = [...hicResult];
+      tmpData2["genomealignResult"] = {
+        fetchData: genomealignResult[0],
+        trackType: genome.defaultTracks[5].name,
+      };
+
+      tmpData2["hicResult"] = hicResult;
       tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
       tmpData2["xDist"] = dragX.current;
       if (genome.defaultTracks[5].name === "genomealign") {
@@ -711,6 +711,14 @@ function TrackManager(props) {
   }
 
   useEffect(() => {
+    if (dragX.current > 0 && side.current === "right") {
+      side.current = "left";
+    } else if (dragX.current <= 0 && side.current === "left") {
+      side.current = "right";
+    }
+  }, [trackData, trackData2]);
+
+  useEffect(() => {
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
 
@@ -768,7 +776,7 @@ function TrackManager(props) {
         style={{
           display: "flex",
           //makes element align right
-          justifyContent: side == "right" ? "start" : "end",
+          justifyContent: side.current == "right" ? "start" : "end",
 
           flexDirection: "row",
 
@@ -786,7 +794,7 @@ function TrackManager(props) {
             display: "flex",
             flexDirection: "column",
             //makes element align right
-            alignItems: side == "right" ? "start" : "end",
+            alignItems: side.current == "right" ? "start" : "end",
           }}
         >
           {/* {trackComponent.map((Component, index) => (
@@ -812,14 +820,15 @@ function TrackManager(props) {
             />
           ))} */}
           <GenomeAlign
+            trackIdx={4}
             visData={curVisData.current}
             bpRegionSize={bpRegionSize}
             bpToPx={bpToPx}
             trackData={trackData}
-            side={side}
+            side={side.current}
             windowWidth={windowWidth.current}
             totalSize={
-              side === "right"
+              side.current === "right"
                 ? sumArray(rightSectionSize) + windowWidth.current
                 : sumArray(leftSectionSize) + windowWidth.current
             }
@@ -828,7 +837,9 @@ function TrackManager(props) {
             featureArray={genome.featureArray}
             genomeName={genome.name}
             chrIndex={
-              side === "right" ? chrIndexRight.current : chrIndexLeft.current
+              side.current === "right"
+                ? chrIndexRight.current
+                : chrIndexLeft.current
             }
           />
         </div>

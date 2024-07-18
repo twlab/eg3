@@ -37,7 +37,7 @@ self.onmessage = (event: MessageEvent) => {
   const MIN_GAP_LENGTH = 0.99;
 
   let records: AlignmentRecord[] = [];
-  console.log(event.data.result);
+
   for (const record of event.data.result) {
     let data = JSON5.parse("{" + record[3] + "}");
     // if (options.isRoughMode) {
@@ -146,9 +146,6 @@ self.onmessage = (event: MessageEvent) => {
       const targetSeq = visiblePart.getTargetSequence();
       const querySeq = visiblePart.getQuerySequence();
 
-      console.log(
-        "______________________________________________________________________________________________________________________________________________________________________________________________________________________________"
-      );
       placement.contextSpan = newContextSpan;
       placement.targetXSpan = xSpan;
       placement.queryXSpan = xSpan;
@@ -309,15 +306,7 @@ self.onmessage = (event: MessageEvent) => {
     const newViewWindow = newDrawModel.baseSpanToXSpan(
       newViewWindowRegion.getContextCoordinates()
     );
-    console.log({
-      windowWith: viewWindow.getLength(),
-      newthreeWidth: newVisWidth,
-      oldBpWidth: visRegion.getWidth(),
-      newBpWidth: newVisRegion.getWidth(),
-      oldBpViewWidth: viewWindowRegion.getWidth(),
-      newBpViewWidth: newViewWindowRegion.getWidth(),
-      viewWindow: newViewWindow,
-    });
+
     return {
       visRegion: newVisRegion,
       visWidth: newVisWidth,
@@ -894,7 +883,7 @@ self.onmessage = (event: MessageEvent) => {
       tmpObj["xStart"] = targetXSpan.start;
       tmpObj["xEnd"] = targetXSpan.end;
       tmpObj["targetSequence"] = placement.visiblePart.getTargetSequence();
-      tmpObj["querySequence"] = placement.visiblePart.getTargetSequence();
+      tmpObj["querySequence"] = placement.visiblePart.getQuerySequence();
       tmpObj["baseWidth"] =
         targetXSpan.getLength() / tmpObj["targetSequence"].length;
       tmpObj["targetLocus"] = placement.visiblePart.getLocus().toString();
@@ -913,13 +902,15 @@ self.onmessage = (event: MessageEvent) => {
       const nonGapsQuery = placement.querySegments.filter(
         (segment) => !segment.isGap
       );
+      tmpObj["queryLocusFine"] = placement.visiblePart.getQueryLocusFine();
       tmpObj["nonGapQueryData"] = nonGapsQuery.map((segment) => ({
         index: segment.index,
         segXSpanStart: segment.xSpan.start,
         segXSpanEnd: segment.xSpan.end,
         segLength: segment.xSpan.getLength(),
       }));
-      drawData[i] = { ...drawData[0], ...tmpObj };
+
+      drawData[i] = { ...drawData[i], ...tmpObj };
     }
   } else {
     let alignmentDatas: { [key: string]: any } = oldRecordsArray.reduce(
@@ -935,7 +926,6 @@ self.onmessage = (event: MessageEvent) => {
     );
 
     drawDataArr = Object.values(alignmentDatas);
-    let drawData = drawDataArr[0].drawData;
 
     //default datas
   }

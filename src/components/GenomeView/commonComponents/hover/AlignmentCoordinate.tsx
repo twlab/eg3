@@ -1,5 +1,5 @@
 import React from "react";
-import "./tooltip/Tooltip.css";
+import "./Tooltip.css";
 
 /**
  * Calculates genomic coordinates/sequences for both query and target alignment
@@ -7,7 +7,8 @@ import "./tooltip/Tooltip.css";
  *
  * @author Xiaoyu Zhuo
  */
-function makeBaseNumberLookup(
+const GAP_CHAR = "-";
+export function makeBaseNumberLookup(
   sequence: string,
   baseAtStart: number,
   isReverse = false
@@ -18,7 +19,7 @@ function makeBaseNumberLookup(
   let currentBase = baseAtStart;
   for (const char of sequence) {
     bases.push(currentBase);
-    if (char !== "-") {
+    if (char !== GAP_CHAR) {
       currentBase += diff;
     }
   }
@@ -45,13 +46,15 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
       const highlightLength = Math.max(Math.round(basesPerPixel), 1);
       const halfHighlightLength = Math.floor(highlightLength / 2);
       const { visiblePart, record } = alignment;
-      const [start, end] = visiblePart.sequenceInterval;
+      const { start, end } = visiblePart.sequenceInterval;
+
       const length = end - start;
       const cusorLocus = Math.floor(
         ((x - alignment.targetXSpan.start) /
           (alignment.targetXSpan.end - alignment.targetXSpan.start)) *
           length
       );
+
       const relativeDisplayStart =
         cusorLocus - halfLength > 0 ? cusorLocus - halfLength : 0;
       const relativeDisplayEnd =
@@ -98,7 +101,7 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
         .toUpperCase();
 
       const targetBaseLookup = makeBaseNumberLookup(
-        visiblePart.getTargetSequence(),
+        alignment.targetSequence,
         visiblePart.relativeStart
       );
       const targetStart =
@@ -109,14 +112,17 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
         record.locus.start + targetBaseLookup[relativeHighlightStart];
       const targetHighlightEnd =
         record.locus.start + targetBaseLookup[relativeHighlightEnd];
-      const isReverse = record.getIsReverseStrandQuery();
-      const queryLocus = visiblePart.getQueryLocusFine();
-      const queryLookupStart = isReverse ? queryLocus.end : queryLocus.start;
+      const isReverse = record.queryStrand === "-" ? true : false;
+
+      const queryLookupStart = isReverse
+        ? alignment.queryLocusFine.end
+        : alignment.queryLocusFine.start;
       const queryBaseLookup = makeBaseNumberLookup(
-        visiblePart.getQuerySequence(),
+        alignment.querySequence,
         queryLookupStart,
         isReverse
       );
+
       const queryStart = queryBaseLookup[relativeDisplayStart];
       const queryEnd = queryBaseLookup[relativeDisplayEnd];
       const queryHighlightStart = queryBaseLookup[relativeHighlightStart];
