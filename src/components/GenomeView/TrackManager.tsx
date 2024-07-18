@@ -149,6 +149,7 @@ function TrackManager(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
+
   const windowWidth = useRef(props.windowWidth);
   const genome = props.currGenome;
 

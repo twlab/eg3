@@ -904,7 +904,10 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
           overflow: "visible",
 
           position: "absolute",
-          right: side === "left" ? `${view.current!}px` : "",
+          right:
+            side === "left"
+              ? `${view.current! - newTrackWidth.current!.viewWindow.start}px`
+              : "",
           left:
             side === "right"
               ? `${-view.current! - newTrackWidth.current!.viewWindow.start}px`
