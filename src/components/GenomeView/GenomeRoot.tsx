@@ -118,11 +118,11 @@ function GenomeHub(props: any) {
           url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
         },
 
-        // {
-        //   name: "dynseq",
-        //   genome: "hg19",
-        //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-        // },
+        {
+          name: "dynseq",
+          genome: "hg19",
+          url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+        },
         {
           name: "methylc",
           genome: "hg19",
@@ -244,11 +244,11 @@ function GenomeHub(props: any) {
               url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
             },
 
-            // {
-            //   name: "dynseq",
-            //   genome: "hg19",
-            //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-            // },
+            {
+              name: "dynseq",
+              genome: "hg19",
+              url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+            },
             {
               name: "methylc",
               genome: "hg19",

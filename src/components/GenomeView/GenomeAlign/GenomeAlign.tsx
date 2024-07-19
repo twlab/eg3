@@ -661,47 +661,49 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
               : "",
         }}
       >
-        {side === "right"
-          ? rightTrackGenes.map(
-              (drawData) =>
-                // index <= rightTrackGenes.length - 1 ?
+        {bpToPx! <= 10
+          ? side === "right"
+            ? rightTrackGenes.map(
+                (drawData) =>
+                  // index <= rightTrackGenes.length - 1 ?
 
-                drawData["drawDataArr"].map((drawDataArr) => (
-                  <ToolTipGenomealign
-                    key={"genomeAlignRight" + `${trackIdx}`}
-                    trackType={trackType}
-                    data={drawDataArr}
-                    windowWidth={newTrackWidth.current!.visWidth}
-                    side={"right"}
-                  />
-                ))
+                  drawData["drawDataArr"].map((drawDataArr) => (
+                    <ToolTipGenomealign
+                      key={"genomeAlignRight" + `${trackIdx}`}
+                      trackType={trackType}
+                      data={drawDataArr}
+                      windowWidth={newTrackWidth.current!.visWidth}
+                      side={"right"}
+                    />
+                  ))
 
-              //  : (
-              //   <div style={{ display: 'flex', width: windowWidth }}>
-              //     ....LOADING
-              //   </div>
-              // )
-            )
-          : leftTrackGenes.map(
-              (drawData) =>
-                // index <= rightTrackGenes.length - 1 ?
+                //  : (
+                //   <div style={{ display: 'flex', width: windowWidth }}>
+                //     ....LOADING
+                //   </div>
+                // )
+              )
+            : leftTrackGenes.map(
+                (drawData) =>
+                  // index <= rightTrackGenes.length - 1 ?
 
-                drawData["drawDataArr"].map((drawDataArr) => (
-                  <ToolTipGenomealign
-                    key={"genomealignLeft" + `${trackIdx}`}
-                    trackType={trackType}
-                    data={drawDataArr}
-                    windowWidth={newTrackWidth.current!.visWidth}
-                    side={"left"}
-                  />
-                ))
+                  drawData["drawDataArr"].map((drawDataArr) => (
+                    <ToolTipGenomealign
+                      key={"genomealignLeft" + `${trackIdx}`}
+                      trackType={trackType}
+                      data={drawDataArr}
+                      windowWidth={newTrackWidth.current!.visWidth}
+                      side={"left"}
+                    />
+                  ))
 
-              //  : (
-              //   <div style={{ display: 'flex', width: windowWidth }}>
-              //     ....LOADING
-              //   </div>
-              // )
-            )}
+                //  : (
+                //   <div style={{ display: 'flex', width: windowWidth }}>
+                //     ....LOADING
+                //   </div>
+                // )
+              )
+          : " "}
       </div>
     </div>
   );

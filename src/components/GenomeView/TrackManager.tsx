@@ -195,7 +195,7 @@ function TrackManager(props) {
   const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
-  for (let i = 0; i < genome.defaultTracks.length - 1; i++) {
+  for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
   function sumArray(numbers) {
@@ -502,36 +502,41 @@ function TrackManager(props) {
     curVisData.current = newVisData;
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2 || initial === 1) {
-      let hicResult = await trackFetchFunction.hic({
-        straw: genome.defaultTracks[4].straw,
-
-        option: defaultHic,
-
-        start: Number(bpX.current),
-        end: Number(bpX.current + bpRegionSize),
-      });
-      let genomealignResult = await trackFetchFunction.genomealign({
-        url: genome.defaultTracks[5].url,
-        chr: region,
-        start: Number(bpX.current) - bpRegionSize,
-        end: Number(bpX.current + bpRegionSize) + bpRegionSize,
-      });
-
       let tmpData2 = {};
 
-      tmpData2["genomealignResult"] = {
-        fetchData: genomealignResult[0],
-        trackType: genome.defaultTracks[5].name,
-      };
+      await Promise.all(
+        genome.defaultTracks.map(async (item, index) => {
+          const trackName = item.name;
+          if (trackName === "hic") {
+            let hicResult = await trackFetchFunction.hic({
+              straw: genome.defaultTracks[index].straw,
 
-      tmpData2["hicResult"] = hicResult;
+              option: defaultHic,
+
+              start: Number(bpX.current),
+              end: Number(bpX.current + bpRegionSize),
+            });
+            tmpData2["hicResult"] = hicResult;
+          } else if (trackName === "genomealign") {
+            let genomealignResult = await trackFetchFunction.genomealign({
+              url: genome.defaultTracks[index].url,
+              chr: region,
+              start: Number(bpX.current) - bpRegionSize,
+              end: Number(bpX.current + bpRegionSize) + bpRegionSize,
+            });
+            tmpData2["genomealignResult"] = {
+              fetchData: genomealignResult[0],
+              trackType: genome.defaultTracks[index].name,
+            };
+            tmpData2["genomeName"] = genome.defaultTracks[index].genome;
+            tmpData2["queryGenomeName"] =
+              genome.defaultTracks[index].trackModel.querygenome;
+          }
+        })
+      );
+
       tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
       tmpData2["xDist"] = dragX.current;
-      if (genome.defaultTracks[5].name === "genomealign") {
-        tmpData2["genomeName"] = genome.defaultTracks[5].genome;
-        tmpData2["queryGenomeName"] =
-          genome.defaultTracks[5].trackModel.querygenome;
-      }
       if (trackSide === "right") {
         tmpData2["side"] = "right";
       } else {
@@ -565,7 +570,9 @@ function TrackManager(props) {
           let fetchRespond = await Promise.all(
             genome.defaultTracks.map(async (item) => {
               const trackName = item.name;
-              if (trackName === "refGene") {
+              if (trackName === "hic" || trackName === "genomealign") {
+                return;
+              } else if (trackName === "refGene") {
                 let result = await trackFetchFunction[trackName]({
                   name: genome.name,
                   chr: curChrName,
@@ -576,31 +583,6 @@ function TrackManager(props) {
                   trackData: result,
                   trackName: trackName,
                 };
-              } else if (trackName === "hic") {
-                // let result = await trackFetchFunction.hic({
-                //   straw: genome.defaultTracks[5].straw,
-                //   option: defaultHic,
-                //   start: Number(sectionStart),
-                //   end: Number(sectionEnd),
-                // });
-                // return {
-                //   trackData: result,
-                //   trackName: trackName,
-                // };
-              } else if (trackName === "genomealign") {
-                // let result = await trackFetchFunction[trackName]({
-                //   url: item.url,
-                //   chr: curChrName,
-                //   start: Number(sectionStart),
-                //   end: Number(sectionEnd),
-                // });
-                // for (const record of result[0]) {
-                //   let data = JSON5.parse("{" + record[3] + "}");
-                //   data.genomealign.targetseq = null;
-                //   data.genomealign.queryseq = null;
-                //   console.log(data);
-                //   record[3] = data;
-                // }
               } else {
                 let result = await trackFetchFunction[trackName]({
                   url: item.url,
@@ -811,7 +793,6 @@ function TrackManager(props) {
                   : sumArray(leftSectionSize) + windowWidth.current
               }
               dragXDist={dragX.current}
-              trackData2={trackData2}
               featureArray={genome.featureArray}
               genomeName={genome.name}
               chrIndex={
@@ -819,31 +800,12 @@ function TrackManager(props) {
                   ? chrIndexRight.current
                   : chrIndexLeft.current
               }
+              // movement type track data
+              trackData2={trackData2}
+              trackIdx={index}
+              visData={curVisData.current}
             />
           ))}
-          <GenomeAlign
-            trackIdx={4}
-            visData={curVisData.current}
-            bpRegionSize={bpRegionSize}
-            bpToPx={bpToPx}
-            trackData={trackData}
-            side={side.current}
-            windowWidth={windowWidth.current}
-            totalSize={
-              side.current === "right"
-                ? sumArray(rightSectionSize) + windowWidth.current
-                : sumArray(leftSectionSize) + windowWidth.current
-            }
-            dragXDist={dragX.current}
-            trackData2={trackData2}
-            featureArray={genome.featureArray}
-            genomeName={genome.name}
-            chrIndex={
-              side.current === "right"
-                ? chrIndexRight.current
-                : chrIndexLeft.current
-            }
-          />
         </div>
       </div>
     </div>
