@@ -634,10 +634,10 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
               // )
             )
           : leftTrackGenes.map(
-              (item) =>
+              (drawData) =>
                 // index <= rightTrackGenes.length - 1 ?
 
-                item
+                drawData["svgElements"].map((svgData) => svgData)
 
               //  : (
               //   <div style={{ display: 'flex', width: windowWidth }}>

@@ -195,7 +195,7 @@ function TrackManager(props) {
   const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
   let trackComponent: Array<any> = [];
-  for (let i = 0; i < genome.defaultTracks.length; i++) {
+  for (let i = 0; i < genome.defaultTracks.length - 1; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
   function sumArray(numbers) {
@@ -300,7 +300,7 @@ function TrackManager(props) {
       console.log("trigger right");
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(windowWidth);
+        t.push(windowWidth.current);
         return t;
       });
 
@@ -315,7 +315,7 @@ function TrackManager(props) {
       console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(windowWidth);
+        t.push(windowWidth.current);
         return t;
       });
 
@@ -729,7 +729,7 @@ function TrackManager(props) {
   }, [isDragging]);
 
   useEffect(() => {
-    console.log(windowWidth);
+    console.log(windowWidth.current);
     function getData() {
       fetchGenomeData(1, "right");
     }
@@ -783,7 +783,7 @@ function TrackManager(props) {
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
-          width: `${windowWidth}px`,
+          width: `${windowWidth.current}px`,
           backgroundColor: "gainsboro",
         }}
       >
@@ -797,28 +797,30 @@ function TrackManager(props) {
             alignItems: side.current == "right" ? "start" : "end",
           }}
         >
-          {/* {trackComponent.map((Component, index) => (
+          {trackComponent.map((Component, index) => (
             <Component
               key={index}
               bpRegionSize={bpRegionSize}
               bpToPx={bpToPx}
               trackData={trackData}
-              side={side}
-              windowWidth={windowWidth}
+              side={side.current}
+              windowWidth={windowWidth.current}
               totalSize={
-                side === "right"
-                  ? sumArray(rightSectionSize) + windowWidth
-                  : sumArray(leftSectionSize) + windowWidth
+                side.current === "right"
+                  ? sumArray(rightSectionSize) + windowWidth.current
+                  : sumArray(leftSectionSize) + windowWidth.current
               }
               dragXDist={dragX.current}
               trackData2={trackData2}
               featureArray={genome.featureArray}
               genomeName={genome.name}
               chrIndex={
-                side === "right" ? chrIndexRight.current : chrIndexLeft.current
+                side.current === "right"
+                  ? chrIndexRight.current
+                  : chrIndexLeft.current
               }
             />
-          ))} */}
+          ))}
           <GenomeAlign
             trackIdx={4}
             visData={curVisData.current}
