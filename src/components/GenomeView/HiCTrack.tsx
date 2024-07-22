@@ -454,7 +454,8 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     fetchGenomeData();
-
+    // create a new state change here to change change between left and right track
+    // or make view a state
     view.current = trackData2!.xDist;
   }, [trackData2]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
@@ -466,7 +467,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
         height: 700,
       }}
     >
-      {side === "right"
+      {view.current <= 0
         ? canvasRefR.map((item, index) => (
             <canvas
               key={index}
