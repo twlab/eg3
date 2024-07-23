@@ -3,8 +3,11 @@ import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import worker_script from "../../worker/worker";
 import TestToolTip from "./commonComponents/hover/tooltip";
+import { right } from "@popperjs/core";
 // SCrolling to 80% view on current epi browser matches default in eg3
 let worker: Worker;
+
+worker = new Worker(worker_script);
 const VERTICAL_PADDING = 0;
 const DEFAULT_COLORS_FOR_CONTEXT = {
   CG: { color: "rgb(100,139,216)", background: "#d9d9d9" },
@@ -92,8 +95,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
 
-    worker = new Worker(worker_script);
-
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -106,9 +107,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     worker.onmessage = (event) => {
       let converted = event.data;
       let scales = computeScales(converted);
-      let length = converted.length;
-
-      drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
       setRightTrack([
         ...rightTrackGenes,
         { canvasData: converted, scaleData: scales },
@@ -117,16 +115,14 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         const newCanvasRevRef = createRef();
         const newCanvasRevRef2 = createRef();
         prevOverflowStrand2.current = { ...overflowStrand2.current };
+        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
+        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
         setLeftTrack([
           ...leftTrackGenes,
           { canvasData: converted, scaleData: scales },
         ]);
         overflowStrand2.current = {};
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
-
-        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
       }
-      worker.terminate();
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
@@ -173,8 +169,6 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
 
-    worker = new Worker(worker_script);
-
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -186,14 +180,11 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     worker.onmessage = (event) => {
       let converted = event.data;
       let scales = computeScales(converted);
-      let length = converted.length;
 
-      drawCanvas(0, length, newCanvasRef, converted, scales, newCanvasRef2);
       setLeftTrack([
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
-      worker.terminate();
     };
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
@@ -260,6 +251,9 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
     scales,
     canvasRefReverse
   ) {
+    if (canvasRef.current === null || !canvasRefReverse.current === null) {
+      return;
+    }
     let context = canvasRef.current.getContext("2d");
     let contextRev = canvasRefReverse.current.getContext("2d");
 
@@ -354,7 +348,31 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
       });
     }
   }, [side]);
+  useEffect(() => {
+    if (rightTrackGenes.length > 0) {
+      drawCanvas(
+        0,
+        rightTrackGenes[rightTrackGenes.length - 1].canvasData.length,
+        canvasRefR[canvasRefR.length - 1],
+        rightTrackGenes[rightTrackGenes.length - 1].canvasData,
+        rightTrackGenes[rightTrackGenes.length - 1].scaleData,
+        canvasRefR2[canvasRefR2.length - 1]
+      );
+    }
+  }, [rightTrackGenes]);
 
+  useEffect(() => {
+    if (leftTrackGenes.length > 0) {
+      drawCanvas(
+        0,
+        leftTrackGenes[leftTrackGenes.length - 1].canvasData.length,
+        canvasRefL[canvasRefL.length - 1],
+        leftTrackGenes[leftTrackGenes.length - 1].canvasData,
+        leftTrackGenes[leftTrackGenes.length - 1].scaleData,
+        canvasRefL2[canvasRefL2.length - 1]
+      );
+    }
+  }, [leftTrackGenes]);
   useEffect(() => {
     if (trackData!.side === "right") {
       fetchGenomeData();
