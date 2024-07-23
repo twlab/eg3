@@ -147,11 +147,6 @@ function TrackManager(props) {
   // DONE !!!!!!!!!! fix data being [ [ ]] after fetching
 
   //   //made working for left..... need to fix old algo on hic, need to sent it new chr when mutli chr view
-  const frameID = useRef(0);
-  const lastX = useRef(0);
-  const dragX = useRef(0);
-
-  const windowWidth = useRef(props.windowWidth);
   const genome = props.currGenome;
 
   const [region, coord] = genome.defaultRegion.split(":");
@@ -159,17 +154,8 @@ function TrackManager(props) {
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
-  const bpToPx = bpRegionSize / windowWidth.current;
+  const bpToPx = bpRegionSize / props.windowWidth;
   let allChrData = genome.chromosomes;
-  //useRef to store data between states without re render the component
-  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
-  const block = useRef<HTMLInputElement>(null);
-  const curVisData = useRef(genome.visData);
-  // These states are used to update the tracks with new fetched data
-  // new track sections are added as the user moves left (lower regions) and right (higher region)
-  // New data are fetched only if the user drags to the either ends of the track
-  const [isDragging, setDragging] = useState(false);
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
   let chrData: Array<any> = [];
   let chrLength: Array<any> = [];
   for (const chromosome of genome.chrOrder) {
@@ -180,24 +166,41 @@ function TrackManager(props) {
   }
 
   const initialChrIdx = chrData.indexOf(region);
+
+  const frameID = useRef(0);
+  const lastX = useRef(0);
+  const dragX = useRef(0);
+  const block = useRef<HTMLInputElement>(null);
+  const curVisData = useRef(genome.visData);
   const viewRegion = useRef(genome.defaultRegion);
   const chrIndexRight = useRef(initialChrIdx);
   const chrIndexLeft = useRef(initialChrIdx);
+  const bpX = useRef(leftStartCoord);
+  const maxBp = useRef(rightStartCoord);
+  const minBp = useRef(leftStartCoord);
+
+  const [isDragging, setDragging] = useState(false);
+  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [hicOption, setHicOption] = useState(1);
-
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
   const [side, setSide] = useState("right");
-  const bpX = useRef(leftStartCoord);
-  const maxBp = useRef(rightStartCoord);
-  const minBp = useRef(leftStartCoord);
+
+  //useRef to store data between states without re render the component
+  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
+
+  // These states are used to update the tracks with new fetched data
+  // new track sections are added as the user moves left (lower regions) and right (higher region)
+  // New data are fetched only if the user drags to the either ends of the track
+
   let trackComponent: Array<any> = [];
   for (let i = 0; i < genome.defaultTracks.length; i++) {
     trackComponent.push(componentMap[genome.defaultTracks[i].name]);
   }
+
   function sumArray(numbers) {
     let total = 0;
     for (let i = 0; i < numbers.length; i++) {
@@ -218,11 +221,11 @@ function TrackManager(props) {
       (isLoading &&
         deltaX > 0 &&
         side === "right" &&
-        -tmpDragX > (rightSectionSize.length - 1) * windowWidth.current) ||
+        -tmpDragX > (rightSectionSize.length - 1) * props.windowWidth) ||
       (isLoading &&
         deltaX < 0 &&
         side === "left" &&
-        tmpDragX > (leftSectionSize.length - 1) * windowWidth.current)
+        tmpDragX > (leftSectionSize.length - 1) * props.windowWidth)
     ) {
       return;
     }
@@ -305,7 +308,7 @@ function TrackManager(props) {
       console.log("trigger right");
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(windowWidth.current);
+        t.push(props.windowWidth);
         return t;
       });
 
@@ -320,7 +323,7 @@ function TrackManager(props) {
       console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(windowWidth.current);
+        t.push(props.windowWidth);
         return t;
       });
 
@@ -488,16 +491,13 @@ function TrackManager(props) {
     );
 
     let newVisData: ViewExpansion = {
-      visWidth: windowWidth.current * 3,
+      visWidth: props.windowWidth * 3,
       visRegion: new DisplayedRegionModel(
         HG38.navContext,
         navContextCoord.start - (navContextCoord.end - navContextCoord.start),
         navContextCoord.end + (navContextCoord.end - navContextCoord.start)
       ),
-      viewWindow: new OpenInterval(
-        windowWidth.current,
-        windowWidth.current * 2
-      ),
+      viewWindow: new OpenInterval(props.windowWidth, props.windowWidth * 2),
       viewWindowRegion: new DisplayedRegionModel(
         HG38.navContext,
         navContextCoord.start,
@@ -708,7 +708,7 @@ function TrackManager(props) {
   }, [isDragging]);
 
   useEffect(() => {
-    console.log(windowWidth.current);
+    console.log(props.windowWidth);
     function getData() {
       fetchGenomeData(1, "right");
     }
@@ -762,7 +762,7 @@ function TrackManager(props) {
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
-          width: `${windowWidth.current}px`,
+          width: `${props.windowWidth}px`,
           backgroundColor: "gainsboro",
         }}
       >
@@ -783,7 +783,7 @@ function TrackManager(props) {
               bpToPx={bpToPx}
               trackData={trackData}
               side={side}
-              windowWidth={windowWidth.current}
+              windowWidth={props.windowWidth}
               dragXDist={dragX.current}
               // movement type track data
               trackData2={trackData2}
