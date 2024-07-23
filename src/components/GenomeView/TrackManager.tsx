@@ -283,7 +283,12 @@ function TrackManager(props) {
     viewRegion.current = curRegion;
     props.startBp(curRegion);
     bpX.current = curBp;
-
+    //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
+    if (dragX.current > 0 && side === "right") {
+      setSide("left");
+    } else if (dragX.current <= 0 && side === "left") {
+      setSide("right");
+    }
     if (hicOption === 1 && dragX.current <= 0) {
       fetchGenomeData(2, "right");
     } else {
@@ -693,14 +698,6 @@ function TrackManager(props) {
   }
 
   useEffect(() => {
-    if (dragX.current > 0 && side === "right") {
-      setSide("left");
-    } else if (dragX.current <= 0 && side === "left") {
-      setSide("right");
-    }
-  }, [trackData, trackData2]);
-
-  useEffect(() => {
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
 
@@ -787,17 +784,7 @@ function TrackManager(props) {
               trackData={trackData}
               side={side}
               windowWidth={windowWidth.current}
-              totalSize={
-                side === "right"
-                  ? sumArray(rightSectionSize) + windowWidth.current
-                  : sumArray(leftSectionSize) + windowWidth.current
-              }
               dragXDist={dragX.current}
-              featureArray={genome.featureArray}
-              genomeName={genome.name}
-              chrIndex={
-                side === "right" ? chrIndexRight.current : chrIndexLeft.current
-              }
               // movement type track data
               trackData2={trackData2}
               trackIdx={index}
