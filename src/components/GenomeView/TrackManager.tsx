@@ -18,7 +18,9 @@ import { ViewExpansion } from "../../models/RegionExpander";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import HG38 from "../../models/genomes/hg38/hg38";
 import OpenInterval from "../../models/OpenInterval";
-
+const worker = new Worker(new URL("./genomeAlignWorker.ts", import.meta.url), {
+  type: "module",
+});
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 
 let defaultHic = {
@@ -76,17 +78,12 @@ const trackFetchFunction: { [key: string]: any } = {
     return genRefResponse.json();
   },
   bed: async function bedFetch(regionData: any) {
-    const result = await GetTabixData(
+    return GetTabixData(
       regionData.url,
       regionData.chr,
       regionData.start,
       regionData.end
     );
-    if (result.length > 0) {
-      return result[0];
-    } else {
-      return result;
-    }
   },
 
   bigWig: function bigWigFetch(regionData: any) {

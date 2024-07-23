@@ -1,5 +1,5 @@
-import { TabixIndexedFile } from '@gmod/tabix';
-import { RemoteFile } from 'generic-filehandle';
+import { TabixIndexedFile } from "@gmod/tabix";
+import { RemoteFile } from "generic-filehandle";
 
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
 //This will get bed data .gz and add a .tbi if there url with tbi it will fail
@@ -20,21 +20,23 @@ function GetTabixData(url, chr, start, end) {
   }
 
   async function getData(loci, options) {
+    console.log(location);
     // let promises = loci.map(this.getDataForLocus);
     const promises = loci.map((locus) => {
       // graph container uses this source directly w/o initial track, so options is null
       let chrom =
         options && options.ensemblStyle
-          ? locus.chr.replace('chr', '')
+          ? locus.chr.replace("chr", "")
           : locus.chr;
-      if (chrom === 'M') {
-        chrom = 'MT';
+      if (chrom === "M") {
+        chrom = "MT";
       }
 
       return getDataForLocus(chrom, locus.start, locus.end);
     });
 
     const dataForEachLocus = await Promise.all(promises);
+
     if (options && options.ensemblStyle) {
       loci.forEach((locus, index) => {
         dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
@@ -55,7 +57,7 @@ function GetTabixData(url, chr, start, end) {
     const fetch = window.fetch.bind(window);
     let tabix = new TabixIndexedFile({
       filehandle: new RemoteFile(url, { fetch }),
-      tbiFilehandle: new RemoteFile(url + '.tbi', {
+      tbiFilehandle: new RemoteFile(url + ".tbi", {
         fetch,
       }),
     });
@@ -68,14 +70,15 @@ function GetTabixData(url, chr, start, end) {
     } else {
       lines = rawlines;
     }
-    return lines.map(parseLine);
+
+    return lines;
   }
 
   /**
    * @param {string} line - raw string the bed-like file
    */
   function parseLine(line) {
-    const columns = line.split('\t');
+    const columns = line.split("\t");
     if (columns.length < 3) {
       return;
     }
@@ -94,14 +97,14 @@ function GetTabixData(url, chr, start, end) {
 
   function handle() {
     let data = getData([{ chr: chr, end: end, start: start }], {
-      displayMode: 'full',
-      color: 'blue',
-      color2: 'red',
+      displayMode: "full",
+      color: "blue",
+      color2: "red",
       maxRows: 20,
       height: 40,
       hideMinimalItems: false,
       sortItems: false,
-      label: '',
+      label: "",
     });
     return data;
   }
