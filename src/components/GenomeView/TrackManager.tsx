@@ -190,7 +190,7 @@ function TrackManager(props) {
 
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
-  const side = useRef("right");
+  const [side, setSide] = useState("right");
   const bpX = useRef(leftStartCoord);
   const maxBp = useRef(rightStartCoord);
   const minBp = useRef(leftStartCoord);
@@ -217,11 +217,11 @@ function TrackManager(props) {
     if (
       (isLoading &&
         deltaX > 0 &&
-        side.current === "right" &&
+        side === "right" &&
         -tmpDragX > (rightSectionSize.length - 1) * windowWidth.current) ||
       (isLoading &&
         deltaX < 0 &&
-        side.current === "left" &&
+        side === "left" &&
         tmpDragX > (leftSectionSize.length - 1) * windowWidth.current)
     ) {
       return;
@@ -259,12 +259,12 @@ function TrackManager(props) {
 
     let curStartBp = leftStartCoord + -dragX.current * bpToPx;
     const curBp = leftStartCoord + -dragX.current * bpToPx;
-    if (side.current === "right" && curBp >= chrLength[curIdx]) {
+    if (side === "right" && curBp >= chrLength[curIdx]) {
       while (curStartBp > chrLength[curIdx]) {
         curStartBp -= chrLength[curIdx];
         curIdx += 1;
       }
-    } else if (side.current === "left" && curBp < 0) {
+    } else if (side === "left" && curBp < 0) {
       curIdx--;
       while (curStartBp < -chrLength[curIdx]) {
         curStartBp += chrLength[curIdx];
@@ -693,10 +693,10 @@ function TrackManager(props) {
   }
 
   useEffect(() => {
-    if (dragX.current > 0 && side.current === "right") {
-      side.current = "left";
-    } else if (dragX.current <= 0 && side.current === "left") {
-      side.current = "right";
+    if (dragX.current > 0 && side === "right") {
+      setSide("left");
+    } else if (dragX.current <= 0 && side === "left") {
+      setSide("right");
     }
   }, [trackData, trackData2]);
 
@@ -758,7 +758,7 @@ function TrackManager(props) {
         style={{
           display: "flex",
           //makes element align right
-          justifyContent: side.current == "right" ? "start" : "end",
+          justifyContent: side == "right" ? "start" : "end",
 
           flexDirection: "row",
 
@@ -776,7 +776,7 @@ function TrackManager(props) {
             display: "flex",
             flexDirection: "column",
             //makes element align right
-            alignItems: side.current == "right" ? "start" : "end",
+            alignItems: side == "right" ? "start" : "end",
           }}
         >
           {trackComponent.map((Component, index) => (
@@ -785,10 +785,10 @@ function TrackManager(props) {
               bpRegionSize={bpRegionSize}
               bpToPx={bpToPx}
               trackData={trackData}
-              side={side.current}
+              side={side}
               windowWidth={windowWidth.current}
               totalSize={
-                side.current === "right"
+                side === "right"
                   ? sumArray(rightSectionSize) + windowWidth.current
                   : sumArray(leftSectionSize) + windowWidth.current
               }
@@ -796,9 +796,7 @@ function TrackManager(props) {
               featureArray={genome.featureArray}
               genomeName={genome.name}
               chrIndex={
-                side.current === "right"
-                  ? chrIndexRight.current
-                  : chrIndexLeft.current
+                side === "right" ? chrIndexRight.current : chrIndexLeft.current
               }
               // movement type track data
               trackData2={trackData2}
