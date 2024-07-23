@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 import worker_script from "../../worker/dynseqWorker";
 let worker: Worker;
+
+worker = new Worker(worker_script);
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -88,8 +90,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
 
-    worker = new Worker(worker_script);
-
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -100,22 +100,12 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
 
     // Listen for messages from the web worker
     worker.onmessage = (event) => {
-      const converted = event.data;
-
+      let converted = event.data;
       let scales = computeScales(
         converted.forward,
         converted.reverse,
         0,
         bpRegionSize
-      );
-
-      drawCanvas(
-        0,
-        windowWidth,
-        newCanvasRef,
-        converted,
-        scales,
-        newCanvasRef2
       );
       setRightTrack([
         ...rightTrackGenes,
@@ -125,24 +115,22 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         const newCanvasRevRef = createRef();
         const newCanvasRevRef2 = createRef();
         prevOverflowStrand2.current = { ...overflowStrand2.current };
+        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
+        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
         setLeftTrack([
           ...leftTrackGenes,
           { canvasData: converted, scaleData: scales },
         ]);
         overflowStrand2.current = {};
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
-
-        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
       }
-
-      worker.terminate();
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
+    // CHECK if there are overlapping strands to the next track
+
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
   }
-
   //________________________________________________________________________________________________________________________________________________________
   //________________________________________________________________________________________________________________________________________________________
 
@@ -176,8 +164,6 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     const newCanvasRef = createRef();
     const newCanvasRef2 = createRef();
 
-    worker = new Worker(worker_script);
-
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -194,19 +180,11 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
         0,
         bpRegionSize
       );
-      drawCanvas(
-        0,
-        windowWidth,
-        newCanvasRef,
-        converted,
-        scales,
-        newCanvasRef2
-      );
+
       setLeftTrack([
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
-      worker.terminate();
     };
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
     setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
@@ -241,6 +219,9 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
     scales,
     canvasRefReverse
   ) {
+    if (canvasRef.current === null || !canvasRefReverse.current === null) {
+      return;
+    }
     let context = canvasRef.current.getContext("2d");
     let contextRev = canvasRefReverse.current.getContext("2d");
 
@@ -420,7 +401,31 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
       fetchGenomeData2();
     }
   }, [trackData]);
+  useEffect(() => {
+    if (rightTrackGenes.length > 0) {
+      drawCanvas(
+        0,
+        windowWidth,
+        canvasRefR[canvasRefR.length - 1],
+        rightTrackGenes[rightTrackGenes.length - 1].canvasData,
+        rightTrackGenes[rightTrackGenes.length - 1].scaleData,
+        canvasRefR2[canvasRefR2.length - 1]
+      );
+    }
+  }, [rightTrackGenes]);
 
+  useEffect(() => {
+    if (leftTrackGenes.length > 0) {
+      drawCanvas(
+        0,
+        windowWidth,
+        canvasRefL[canvasRefL.length - 1],
+        leftTrackGenes[leftTrackGenes.length - 1].canvasData,
+        leftTrackGenes[leftTrackGenes.length - 1].scaleData,
+        canvasRefL2[canvasRefL2.length - 1]
+      );
+    }
+  }, [leftTrackGenes]);
   return (
     <div style={{ height: "40px" }}>
       {side === "right" ? (
@@ -439,7 +444,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
           <div style={{ display: "flex", flexDirection: "row" }}>
             {canvasRefR2.map((item, index) => (
               <canvas
-                key={index + 32}
+                key={index}
                 ref={item}
                 height={"20"}
                 width={`${windowWidth}px`}
@@ -464,7 +469,7 @@ const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
           <div style={{ display: "flex", flexDirection: "row" }}>
             {canvasRefL2.map((item, index) => (
               <canvas
-                key={canvasRefL2.length - index - 1 + 3343434}
+                key={canvasRefL2.length - index - 1}
                 ref={canvasRefL2[canvasRefL2.length - index - 1]}
                 height={"20"}
                 width={`${windowWidth}px`}

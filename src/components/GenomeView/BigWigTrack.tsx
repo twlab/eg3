@@ -3,6 +3,8 @@ import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import worker_script from "../../worker/bigWigWorker";
 let worker: Worker;
+
+worker = new Worker(worker_script);
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -53,6 +55,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     scales,
     height: number = 40
   ) {
+    if (canvasRef.current === null) {
+      return;
+    }
     let context = canvasRef.current.getContext("2d");
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
@@ -104,8 +109,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
     const newCanvasRef = createRef();
 
-    worker = new Worker(worker_script);
-
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -116,30 +119,28 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
     // Listen for messages from the web worker
     worker.onmessage = (event) => {
-      const aggFeature = event.data;
-
+      let converted = event.data;
       var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-      drawCanvas(0, windowWidth, newCanvasRef, aggFeature, scales);
-
       setRightTrack([
         ...rightTrackGenes,
-        { canvasData: aggFeature, scaleData: scales },
+        { canvasData: converted, scaleData: scales },
       ]);
-
       if (trackData!.initial) {
-        const newCanvasLeftRef = createRef();
+        const newCanvasRevRef = createRef();
         prevOverflowStrand2.current = { ...overflowStrand2.current };
+        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
+
         setLeftTrack([
           ...leftTrackGenes,
-          { canvasData: aggFeature, scaleData: scales },
+          { canvasData: converted, scaleData: scales },
         ]);
         overflowStrand2.current = {};
-
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasLeftRef]);
       }
-      worker.terminate();
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
+
+    // CHECK if there are overlapping strands to the next track
+
     prevOverflowStrand.current = { ...overflowStrand.current };
     overflowStrand.current = {};
   }
@@ -177,7 +178,6 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     }
 
     const newCanvasRef = createRef();
-    worker = new Worker(worker_script);
 
     worker.postMessage({
       trackGene: result,
@@ -189,13 +189,12 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
 
     worker.onmessage = (event) => {
       let converted = event.data;
-      var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-      drawCanvas(0, windowWidth, newCanvasRef, converted, scales);
+      let scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
+
       setLeftTrack([
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
-      worker.terminate();
     };
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
 
@@ -245,7 +244,29 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
       fetchGenomeData2();
     }
   }, [trackData]);
+  useEffect(() => {
+    if (rightTrackGenes.length > 0) {
+      drawCanvas(
+        0,
+        windowWidth,
+        canvasRefR[canvasRefR.length - 1],
+        rightTrackGenes[rightTrackGenes.length - 1].canvasData,
+        rightTrackGenes[rightTrackGenes.length - 1].scaleData
+      );
+    }
+  }, [rightTrackGenes]);
 
+  useEffect(() => {
+    if (leftTrackGenes.length > 0) {
+      drawCanvas(
+        0,
+        windowWidth,
+        canvasRefL[canvasRefL.length - 1],
+        leftTrackGenes[leftTrackGenes.length - 1].canvasData,
+        leftTrackGenes[leftTrackGenes.length - 1].scaleData
+      );
+    }
+  }, [leftTrackGenes]);
   return (
     <div style={{ display: "flex" }}>
       {side === "right"
