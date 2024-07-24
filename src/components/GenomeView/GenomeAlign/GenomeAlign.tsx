@@ -31,7 +31,7 @@ interface WorkerData {
   queryGenomeName: string;
   result: Array<any>; // Adjust the type according to the structure of your records
   visWidth: number;
-
+  loci: { [key: string]: Feature[] | any };
   visRegion: { [key: string]: Feature[] | any };
   viewWindowRegion: { [key: string]: Feature[] | any };
   viewMode: string;
@@ -101,11 +101,13 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
   let start, end;
   let result;
   let trackType;
+  let loci;
   if (Object.keys(trackData2!).length > 0) {
     [start, end] = trackData2!.location.split(":");
 
     result = trackData2!.genomealignResult.fetchData;
     trackType = trackData2!.genomealignResult.trackType;
+    loci = trackData2!.genomealignResult.loci;
     start = Number(start);
     end = Number(end);
   }
@@ -140,6 +142,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
       viewMode: " ",
       queryGenomeName: trackData2!.queryGenomeName,
       result: result,
+      loci,
 
       visRegion: {
         name: newNav.getName(),
@@ -620,7 +623,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
               : "",
         }}
       >
-        {side === "right"
+        {view.current <= 0
           ? rightTrackGenes.map(
               (drawData) =>
                 // index <= rightTrackGenes.length - 1 ?
@@ -662,7 +665,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
         }}
       >
         {bpToPx! <= 10
-          ? side === "right"
+          ? view.current <= 0
             ? rightTrackGenes.map(
                 (drawData) =>
                   // index <= rightTrackGenes.length - 1 ?

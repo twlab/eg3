@@ -1,10 +1,21 @@
 import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
 
+const worker = new Worker(new URL("./fetchWorker.ts", import.meta.url), {
+  type: "module",
+});
+
 //epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz
 //This will get bed data .gz and add a .tbi if there url with tbi it will fail
 //to Do: make a check if url has .tbi
 function GetTabixData(url, chr, start, end) {
+  const fetch = window.fetch.bind(window);
+  let tabix = new TabixIndexedFile({
+    filehandle: new RemoteFile(url, { fetch }),
+    tbiFilehandle: new RemoteFile(url + ".tbi", {
+      fetch,
+    }),
+  });
   function ensureMaxListLength<T>(list: T[], limit: number): T[] {
     if (list.length <= limit) {
       return list;
@@ -20,7 +31,6 @@ function GetTabixData(url, chr, start, end) {
   }
 
   async function getData(loci, options) {
-    console.log(location);
     // let promises = loci.map(this.getDataForLocus);
     const promises = loci.map((locus) => {
       // graph container uses this source directly w/o initial track, so options is null
@@ -36,12 +46,6 @@ function GetTabixData(url, chr, start, end) {
     });
 
     const dataForEachLocus = await Promise.all(promises);
-
-    if (options && options.ensemblStyle) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
     return dataForEachLocus;
   }
 
@@ -54,13 +58,6 @@ function GetTabixData(url, chr, start, end) {
    * @return {Promise<BedRecord[]>} Promise for the data
    */
   async function getDataForLocus(chr, start, end) {
-    const fetch = window.fetch.bind(window);
-    let tabix = new TabixIndexedFile({
-      filehandle: new RemoteFile(url, { fetch }),
-      tbiFilehandle: new RemoteFile(url + ".tbi", {
-        fetch,
-      }),
-    });
     // const { chr, start, end } = locus;
     const rawlines: Array<any> = [];
     await tabix.getLines(chr, start, end, (line) => rawlines.push(line));
@@ -77,23 +74,6 @@ function GetTabixData(url, chr, start, end) {
   /**
    * @param {string} line - raw string the bed-like file
    */
-  function parseLine(line) {
-    const columns = line.split("\t");
-    if (columns.length < 3) {
-      return;
-    }
-    let feature = {
-      chr: columns[0],
-      start: Number.parseInt(columns[1], 10),
-      end: Number.parseInt(columns[2], 10),
-      n: columns.length, // number of columns in initial data row
-    };
-    for (let i = 3; i < columns.length; i++) {
-      // Copy the rest of the columns to the feature
-      feature[i] = columns[i];
-    }
-    return feature;
-  }
 
   function handle() {
     let data = getData([{ chr: chr, end: end, start: start }], {

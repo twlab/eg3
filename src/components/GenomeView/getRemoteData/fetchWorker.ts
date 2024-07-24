@@ -3,21 +3,6 @@
 import _ from "lodash";
 
 self.onmessage = (event) => {
-  console.log(event.data);
-  function ensureMaxListLength(list, limit) {
-    if (list.length <= limit) {
-      return list;
-    }
-
-    const selectedItems: Array<any> = [];
-    for (let i = 0; i < limit; i++) {
-      const fractionIterated = i / limit;
-      const selectedIndex = Math.ceil(fractionIterated * list.length);
-      selectedItems.push(list[selectedIndex]);
-    }
-    return selectedItems;
-  }
-
   /**
    * Prepares to fetch data from a bed file located at the input url.  Assumes the index is located at the same url,
    * plus a file extension of ".tbi".  This method will request and store the tabix index from this url immediately.
@@ -31,10 +16,12 @@ self.onmessage = (event) => {
    * @param {ChromosomeInterval[]} loci - locations for which to fetch data
    * @return {Promise<BedRecord[]>} Promise for the data
    */
-  async function getData(loci) {
+  function getData(loci) {
     // let promises = loci.map(getDataForLocus);
     let options = event.data.options;
-    const dataForEachLocus = getDataForLocus(event.data.rawData);
+    const dataForEachLocus = event.data.rawDataForEachLocus.map((item) =>
+      item.map(_parseLine)
+    );
     if (options && options.ensemblStyle) {
       loci.forEach((locus, index) => {
         dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
@@ -51,18 +38,6 @@ self.onmessage = (event) => {
    * @param {stnumberring} end - genome coordinates
    * @return {Promise<BedRecord[]>} Promise for the data
    */
-  function getDataForLocus(rawlines) {
-    // const { chr, start, end } = locus;
-
-    let lines;
-    if (rawlines.length > 100000) {
-      lines = ensureMaxListLength(rawlines, 100000);
-    } else {
-      lines = rawlines;
-    }
-    console.log(lines);
-    return lines.map(_parseLine);
-  }
 
   /**
    * @param {string} line - raw string the bed-like file
@@ -84,6 +59,6 @@ self.onmessage = (event) => {
     }
     return feature;
   }
-  console.log(getData(event.data.loci));
-  postMessage("drawDataArr");
+
+  postMessage(getData(event.data.loci));
 };

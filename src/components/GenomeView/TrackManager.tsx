@@ -526,9 +526,17 @@ function TrackManager(props) {
               start: Number(bpX.current) - bpRegionSize,
               end: Number(bpX.current + bpRegionSize) + bpRegionSize,
             });
+            console.log(genomealignResult);
             tmpData2["genomealignResult"] = {
               fetchData: genomealignResult[0],
               trackType: genome.defaultTracks[index].name,
+              loci: [
+                {
+                  chr: region,
+                  start: Number(bpX.current) - bpRegionSize,
+                  end: Number(bpX.current + bpRegionSize) + bpRegionSize,
+                },
+              ],
             };
             tmpData2["genomeName"] = genome.defaultTracks[index].genome;
             tmpData2["queryGenomeName"] =
