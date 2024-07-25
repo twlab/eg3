@@ -20,6 +20,7 @@ const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
     result = trackData!.bed;
+    trackData!.bed;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }

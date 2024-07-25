@@ -190,6 +190,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
         } else {
           setLeftTrack(new Array<any>(tmpObj));
         }
+        view.current = trackData2!.xDist;
       };
     }
 
@@ -229,6 +230,7 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
         } else {
           setLeftTrack(new Array<any>(tmpObj));
         }
+        view.current = trackData2!.xDist;
       };
     }
   }
@@ -594,7 +596,6 @@ const GenomeAlign: React.FC<GenomeAlignProps> = memo(function GenomeAlign({
 
   useEffect(() => {
     fetchGenomeData();
-    view.current = trackData2!.xDist;
     // having two prop changes here side and data will cause JSON5 try to run twice causing an error because its already parsed
   }, [trackData2]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position

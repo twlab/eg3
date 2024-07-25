@@ -1,7 +1,6 @@
 import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
-// import worker_script from '../../Worker/worker';
 import TestToolTipHic from "./commonComponents/hover/tooltipHic";
 import { InteractionDisplayMode } from "./commonComponents/user-options/DisplayModes";
 
@@ -175,6 +174,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
         setLeftTrack(new Array<any>(currData));
       }
     }
+    view.current = trackData2!.xDist;
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -396,7 +396,6 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     fetchGenomeData();
     // create a new state change here to change change between left and right track
     // or make view a state
-    view.current = trackData2!.xDist;
   }, [trackData2]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute

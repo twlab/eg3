@@ -18,9 +18,11 @@ import { ViewExpansion } from "../../models/RegionExpander";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import HG38 from "../../models/genomes/hg38/hg38";
 import OpenInterval from "../../models/OpenInterval";
-const worker = new Worker(new URL("./genomeAlignWorker.ts", import.meta.url), {
-  type: "module",
-});
+import { handleData } from "./WorkerFactory";
+<MethylcTrack />;
+import Worker from "web-worker";
+import test from "node:test";
+
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 
 let defaultHic = {
@@ -167,6 +169,7 @@ function TrackManager(props) {
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
+  const isLoading = useRef(true);
   const block = useRef<HTMLInputElement>(null);
   const curVisData = useRef(genome.visData);
   const viewRegion = useRef(genome.defaultRegion);
@@ -180,7 +183,6 @@ function TrackManager(props) {
   const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
 
-  const [isLoading, setIsLoading] = useState(true);
   const [hicOption, setHicOption] = useState(1);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
@@ -212,17 +214,17 @@ function TrackManager(props) {
     }
 
     const deltaX = lastX.current - e.pageX;
-    const tmpDragX = dragX.current - deltaX;
 
     if (
-      (isLoading &&
-        deltaX > 0 &&
-        side === "right" &&
-        -tmpDragX > (rightSectionSize.length - 1) * props.windowWidth) ||
-      (isLoading &&
-        deltaX < 0 &&
-        side === "left" &&
-        tmpDragX > (leftSectionSize.length - 1) * props.windowWidth)
+      // (isLoading &&
+      //   deltaX > 0 &&
+      //   side === "right" &&
+      //   -tmpDragX > (rightSectionSize.length - 1) * props.windowWidth) ||
+      // (isLoading &&
+      //   deltaX < 0 &&
+      //   side === "left" &&
+      //   tmpDragX > (leftSectionSize.length - 1) * props.windowWidth)
+      isLoading.current
     ) {
       return;
     }
@@ -251,7 +253,20 @@ function TrackManager(props) {
   }
   function handleMouseUp() {
     setDragging(false);
-
+    if (
+      // (isLoading &&
+      //   deltaX > 0 &&
+      //   side === "right" &&
+      //   -tmpDragX > (rightSectionSize.length - 1) * props.windowWidth) ||
+      // (isLoading &&
+      //   deltaX < 0 &&
+      //   side === "left" &&
+      //   tmpDragX > (leftSectionSize.length - 1) * props.windowWidth)
+      isLoading.current
+    ) {
+      return;
+    }
+    console.log(isLoading.current);
     // This is to track viewRegion everytime a user moves.
     // We have similar logic in the fetch for getting data but it does not have the current view bp region.
     // so we need to have both.
@@ -290,8 +305,10 @@ function TrackManager(props) {
       setSide("right");
     }
     if (hicOption === 1 && dragX.current <= 0) {
+      isLoading.current = true;
       fetchGenomeData(2, "right");
     } else {
+      isLoading.current = true;
       fetchGenomeData(2, "left");
     }
 
@@ -301,7 +318,7 @@ function TrackManager(props) {
       -dragX.current >= sumArray(rightSectionSize) &&
       dragX.current < 0
     ) {
-      setIsLoading(true);
+      isLoading.current = true;
       console.log("trigger right");
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
@@ -316,7 +333,7 @@ function TrackManager(props) {
       dragX.current >= sumArray(leftSectionSize) &&
       dragX.current > 0
     ) {
-      setIsLoading(true);
+      isLoading.current = true;
       console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
@@ -486,7 +503,20 @@ function TrackManager(props) {
         "-" +
         `${Math.ceil(Number(bpX.current + bpRegionSize))}`
     );
-
+    console.log(
+      navContextCoord,
+      `${region}` +
+        ":" +
+        `${Math.floor(Number(bpX.current))}` +
+        "-" +
+        `${Math.ceil(Number(bpX.current + bpRegionSize))}`,
+      curVisData.current
+    );
+    console.log(
+      Math.ceil(Number(bpX.current + bpRegionSize)) -
+        Math.floor(Number(bpX.current)),
+      navContextCoord.end - navContextCoord.start
+    );
     let newVisData: ViewExpansion = {
       visWidth: props.windowWidth * 3,
       visRegion: new DisplayedRegionModel(
@@ -520,27 +550,87 @@ function TrackManager(props) {
             });
             tmpData2["hicResult"] = hicResult;
           } else if (trackName === "genomealign") {
-            let genomealignResult = await trackFetchFunction.genomealign({
-              url: genome.defaultTracks[index].url,
-              chr: region,
-              start: Number(bpX.current) - bpRegionSize,
-              end: Number(bpX.current + bpRegionSize) + bpRegionSize,
-            });
-            console.log(genomealignResult);
-            tmpData2["genomealignResult"] = {
-              fetchData: genomealignResult[0],
-              trackType: genome.defaultTracks[index].name,
-              loci: [
+            const worker = new Worker(
+              new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
+              {
+                type: "module",
+              }
+            );
+            // let testData = await handleData([
+            //   {
+            //     url: genome.defaultTracks[index].url,
+            //     chr: region,
+            //     start:
+            //       bpToPx! <= 10
+            //         ? Number(bpX.current) - bpRegionSize
+            //         : Number(bpX.current),
+            //     end:
+            //       bpToPx! <= 10
+            //         ? Number(bpX.current + bpRegionSize) + bpRegionSize
+            //         : bpX.current + bpRegionSize,
+            //   },
+            // ]);
+            // console.log(testData);
+            worker.postMessage({
+              records: [
                 {
+                  url: genome.defaultTracks[index].url,
                   chr: region,
-                  start: Number(bpX.current) - bpRegionSize,
-                  end: Number(bpX.current + bpRegionSize) + bpRegionSize,
+                  start:
+                    bpToPx! <= 10
+                      ? Number(bpX.current) - bpRegionSize
+                      : Number(bpX.current),
+                  end:
+                    bpToPx! <= 10
+                      ? Number(bpX.current + bpRegionSize) + bpRegionSize
+                      : bpX.current + bpRegionSize,
                 },
               ],
-            };
-            tmpData2["genomeName"] = genome.defaultTracks[index].genome;
-            tmpData2["queryGenomeName"] =
-              genome.defaultTracks[index].trackModel.querygenome;
+            });
+
+            // let genomealignResult = await trackFetchFunction.genomealign({
+            //   url: genome.defaultTracks[index].url,
+            //   chr: region,
+            //   start:
+            //     bpToPx! <= 10
+            //       ? Number(bpX.current) - bpRegionSize
+            //       : Number(bpX.current),
+            //   end:
+            //     bpToPx! <= 10
+            //       ? Number(bpX.current + bpRegionSize) + bpRegionSize
+            //       : bpX.current + bpRegionSize,
+            // });
+            function waitForWorkerMessage(worker: Worker): Promise<any> {
+              return new Promise((resolve) => {
+                worker.addEventListener("message", (event) => {
+                  console.log(event.data);
+                  resolve(event.data); // Resolve the promise with the worker's result
+                });
+              });
+            }
+
+            try {
+              const result = await waitForWorkerMessage(worker);
+              tmpData2["genomealignResult"] = {
+                fetchData: result,
+                trackType: genome.defaultTracks[index].name,
+                loci: [
+                  {
+                    chr: region,
+                    start: Number(bpX.current) - bpRegionSize,
+                    end: Number(bpX.current + bpRegionSize) + bpRegionSize,
+                  },
+                ],
+              };
+
+              tmpData2["genomeName"] = genome.defaultTracks[index].genome;
+              tmpData2["queryGenomeName"] =
+                genome.defaultTracks[index].trackModel.querygenome;
+            } catch (error) {
+              console.error("Error waiting for worker message:", error);
+            } finally {
+              worker.terminate(); // Clean up the worker
+            }
           }
         })
       );
@@ -566,7 +656,7 @@ function TrackManager(props) {
         tempObj["side"] = "left";
         tmpRegion = checkMultiChrLeft(tempObj);
       }
-
+      console.log(tmpRegion);
       for (let i = 0; i < tmpRegion.length; i++) {
         let sectionRegion = tmpRegion[i];
 
@@ -672,15 +762,9 @@ function TrackManager(props) {
               }
             }
 
-            if (trackName === "refGene" || trackName === "bed") {
-              tempObj[trackName] = tempObj[trackName].concat(
-                fetchRespond[j].trackData
-              );
-            } else {
-              tempObj[trackName] = tempObj[trackName].concat(
-                fetchRespond[j].trackData[0]
-              );
-            }
+            tempObj[trackName] = tempObj[trackName].concat(
+              fetchRespond[j].trackData
+            );
           }
 
           // we use 0 index because those fetch data come in Array<Array> so change this later to make it
@@ -697,9 +781,8 @@ function TrackManager(props) {
       }
 
       setTrackData({ ...tempObj });
-
-      setIsLoading(false);
     }
+    isLoading.current = false;
   }
 
   useEffect(() => {
@@ -719,7 +802,6 @@ function TrackManager(props) {
     }
 
     getData();
-    setIsLoading(false);
   }, []);
 
   return (
@@ -738,7 +820,7 @@ function TrackManager(props) {
       <div> {viewRegion.current}</div>
 
       <div>Pixel distance from starting point : {dragX.current}px</div>
-      {isLoading ? (
+      {isLoading.current ? (
         <CircularProgress
           variant="indeterminate"
           disableShrink

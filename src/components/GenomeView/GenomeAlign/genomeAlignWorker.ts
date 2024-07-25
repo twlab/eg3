@@ -34,11 +34,10 @@ const MERGE_PIXEL_DISTANCE = 200;
 const MIN_MERGE_DRAW_WIDTH = 5;
 
 self.onmessage = (event: MessageEvent) => {
-  console.log(event.data);
   const MIN_GAP_LENGTH = 0.99;
 
   let records: AlignmentRecord[] = [];
-  let recordArr: any = getData();
+  let recordArr: any = event.data.result;
 
   for (const record of recordArr) {
     let data = JSON5.parse("{" + record[3] + "}");
@@ -71,7 +70,8 @@ self.onmessage = (event: MessageEvent) => {
     event.data.visRegion.name,
     newFeatures
   );
-  let newVisViewDisplay = new DisplayedRegionModel(
+  let newVisViewDisplay;
+  newVisViewDisplay = new DisplayedRegionModel(
     newNavContext,
     event.data.visRegion.start,
     event.data.visRegion.end
@@ -113,50 +113,6 @@ self.onmessage = (event: MessageEvent) => {
      */
     viewWindowRegion: newVisDataWindowDisplay,
   };
-  function getData() {
-    // let promises = loci.map(getDataForLocus);
-    let options = event.data.options;
-
-    let rawData = event.data.result;
-    const dataForEachLocus = rawData.map(_parseLine);
-    if (options && options.ensemblStyle) {
-      event.data.loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-      });
-    }
-
-    return _.flatten(dataForEachLocus);
-  }
-
-  /**
-   * Gets data for a single chromosome interval.
-   *
-   * @param {string} chr - genome coordinates
-   * @param {number} start - genome coordinates
-   * @param {stnumberring} end - genome coordinates
-   * @return {Promise<BedRecord[]>} Promise for the data
-   */
-
-  /**
-   * @param {string} line - raw string the bed-like file
-   */
-  function _parseLine(line) {
-    const columns = line.split("\t");
-    if (columns.length < 3) {
-      return;
-    }
-    let feature = {
-      chr: columns[0],
-      start: Number.parseInt(columns[1], 10),
-      end: Number.parseInt(columns[2], 10),
-      n: columns.length, // number of columns in initial data row
-    };
-    for (let i = 3; i < columns.length; i++) {
-      // Copy the rest of the columns to the feature
-      feature[i] = columns[i];
-    }
-    return feature;
-  }
 
   function alignFine(
     query: string,

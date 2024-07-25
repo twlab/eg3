@@ -155,6 +155,7 @@ class NavigationContext {
    */
   getFeatureStart(feature: Feature): number {
     const coordinate = this._minCoordinateForFeature.get(feature);
+
     if (coordinate === undefined) {
       throw new RangeError(
         `Feature "${feature.getName()}" not in this navigation context`
@@ -270,6 +271,7 @@ class NavigationContext {
    */
   parse(str: string): OpenInterval {
     const feature = this._features.find((feature) => feature.getName() === str);
+
     if (feature) {
       const contextCoords = this.convertFeatureSegmentToContextCoordinates(
         new FeatureSegment(feature)

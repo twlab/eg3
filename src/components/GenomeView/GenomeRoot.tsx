@@ -223,7 +223,7 @@ function GenomeHub(props: any) {
           //testing finemode  27213325-27213837
           //chr7:159159564-chr8:224090
           featureArray,
-          defaultRegion: "chr7:27053397-27373765",
+          defaultRegion: "chr7:150924404-152924404",
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [

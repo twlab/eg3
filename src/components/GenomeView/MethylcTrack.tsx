@@ -1,13 +1,12 @@
 import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
-import worker_script from "../../worker/worker";
-import TestToolTip from "./commonComponents/hover/tooltip";
-import { right } from "@popperjs/core";
-// SCrolling to 80% view on current epi browser matches default in eg3
-let worker: Worker;
 
-worker = new Worker(worker_script);
+import TestToolTip from "./commonComponents/hover/tooltip";
+
+const worker = new Worker(new URL("../../worker/worker.ts", import.meta.url), {
+  type: "module",
+});
 const VERTICAL_PADDING = 0;
 const DEFAULT_COLORS_FOR_CONTEXT = {
   CG: { color: "rgb(100,139,216)", background: "#d9d9d9" },
