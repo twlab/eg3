@@ -21,7 +21,12 @@ import OpenInterval from "../../models/OpenInterval";
 import { handleData } from "./WorkerFactory";
 <MethylcTrack />;
 import Worker from "web-worker";
-import test from "node:test";
+const worker = new Worker(
+  new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
+  {
+    type: "module",
+  }
+);
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 
@@ -253,20 +258,9 @@ function TrackManager(props) {
   }
   function handleMouseUp() {
     setDragging(false);
-    if (
-      // (isLoading &&
-      //   deltaX > 0 &&
-      //   side === "right" &&
-      //   -tmpDragX > (rightSectionSize.length - 1) * props.windowWidth) ||
-      // (isLoading &&
-      //   deltaX < 0 &&
-      //   side === "left" &&
-      //   tmpDragX > (leftSectionSize.length - 1) * props.windowWidth)
-      isLoading.current
-    ) {
+    if (isLoading.current) {
       return;
     }
-    console.log(isLoading.current);
     // This is to track viewRegion everytime a user moves.
     // We have similar logic in the fetch for getting data but it does not have the current view bp region.
     // so we need to have both.
@@ -305,10 +299,10 @@ function TrackManager(props) {
       setSide("right");
     }
     if (hicOption === 1 && dragX.current <= 0) {
-      isLoading.current = true;
+      // isLoading.current = true;
       fetchGenomeData(2, "right");
     } else {
-      isLoading.current = true;
+      // isLoading.current = true;
       fetchGenomeData(2, "left");
     }
 
@@ -501,7 +495,7 @@ function TrackManager(props) {
         ":" +
         `${Math.floor(Number(bpX.current))}` +
         "-" +
-        `${Math.ceil(Number(bpX.current + bpRegionSize))}`
+        `${Math.floor(Number(bpX.current + bpRegionSize))}`
     );
     console.log(
       navContextCoord,
@@ -540,22 +534,15 @@ function TrackManager(props) {
         genome.defaultTracks.map(async (item, index) => {
           const trackName = item.name;
           if (trackName === "hic") {
-            let hicResult = await trackFetchFunction.hic({
-              straw: genome.defaultTracks[index].straw,
-
-              option: defaultHic,
-
-              start: Number(bpX.current),
-              end: Number(bpX.current + bpRegionSize),
-            });
-            tmpData2["hicResult"] = hicResult;
+            // let hicResult = await trackFetchFunction.hic({
+            //   straw: genome.defaultTracks[index].straw,
+            //   option: defaultHic,
+            //   start: Number(bpX.current),
+            //   end: Number(bpX.current + bpRegionSize),
+            // });
+            // tmpData2["hicResult"] = hicResult;
+            return " ";
           } else if (trackName === "genomealign") {
-            const worker = new Worker(
-              new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
-              {
-                type: "module",
-              }
-            );
             // let testData = await handleData([
             //   {
             //     url: genome.defaultTracks[index].url,
@@ -588,31 +575,9 @@ function TrackManager(props) {
               ],
             });
 
-            // let genomealignResult = await trackFetchFunction.genomealign({
-            //   url: genome.defaultTracks[index].url,
-            //   chr: region,
-            //   start:
-            //     bpToPx! <= 10
-            //       ? Number(bpX.current) - bpRegionSize
-            //       : Number(bpX.current),
-            //   end:
-            //     bpToPx! <= 10
-            //       ? Number(bpX.current + bpRegionSize) + bpRegionSize
-            //       : bpX.current + bpRegionSize,
-            // });
-            function waitForWorkerMessage(worker: Worker): Promise<any> {
-              return new Promise((resolve) => {
-                worker.addEventListener("message", (event) => {
-                  console.log(event.data);
-                  resolve(event.data); // Resolve the promise with the worker's result
-                });
-              });
-            }
-
-            try {
-              const result = await waitForWorkerMessage(worker);
+            worker.addEventListener("message", (event) => {
               tmpData2["genomealignResult"] = {
-                fetchData: result,
+                fetchData: event.data,
                 trackType: genome.defaultTracks[index].name,
                 loci: [
                   {
@@ -622,28 +587,24 @@ function TrackManager(props) {
                   },
                 ],
               };
-
               tmpData2["genomeName"] = genome.defaultTracks[index].genome;
               tmpData2["queryGenomeName"] =
                 genome.defaultTracks[index].trackModel.querygenome;
-            } catch (error) {
-              console.error("Error waiting for worker message:", error);
-            } finally {
-              worker.terminate(); // Clean up the worker
-            }
+              tmpData2["location"] = `${bpX.current}:${
+                bpX.current + bpRegionSize
+              }`;
+              tmpData2["xDist"] = dragX.current;
+              if (trackSide === "right") {
+                tmpData2["side"] = "right";
+              } else {
+                tmpData2["side"] = "left";
+              }
+
+              setTrackData2({ ...tmpData2 });
+            });
           }
         })
       );
-
-      tmpData2["location"] = `${bpX.current}:${bpX.current + bpRegionSize}`;
-      tmpData2["xDist"] = dragX.current;
-      if (trackSide === "right") {
-        tmpData2["side"] = "right";
-      } else {
-        tmpData2["side"] = "left";
-      }
-
-      setTrackData2({ ...tmpData2 });
     }
 
     if (initial === 0 || initial === 1) {
@@ -656,7 +617,7 @@ function TrackManager(props) {
         tempObj["side"] = "left";
         tmpRegion = checkMultiChrLeft(tempObj);
       }
-      console.log(tmpRegion);
+
       for (let i = 0; i < tmpRegion.length; i++) {
         let sectionRegion = tmpRegion[i];
 
@@ -781,8 +742,8 @@ function TrackManager(props) {
       }
 
       setTrackData({ ...tempObj });
+      isLoading.current = false;
     }
-    isLoading.current = false;
   }
 
   useEffect(() => {
