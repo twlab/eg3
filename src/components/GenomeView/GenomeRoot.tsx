@@ -102,11 +102,11 @@ function GenomeHub(props: any) {
           name: "refGene",
           genome: newList.name,
         },
-        {
-          name: "bed",
-          genome: newList.name,
-          url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        },
+        // {
+        //   name: "bed",
+        //   genome: newList.name,
+        //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+        // },
 
         {
           name: "bigWig",
@@ -225,11 +225,11 @@ function GenomeHub(props: any) {
               name: "refGene",
               genome: "hg19",
             },
-            {
-              name: "bed",
-              genome: "hg19",
-              url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-            },
+            // {
+            //   name: "bed",
+            //   genome: "hg19",
+            //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+            // },
 
             {
               name: "bigWig",
@@ -291,7 +291,7 @@ function GenomeHub(props: any) {
       if (genomeList.length !== 0) {
         setTrackManagerView(
           <TrackManager
-            currGenome={genomeList[0]}
+            genome={genomeList[0]}
             addTrack={addTrack}
             startBp={startBp}
             windowWidth={windowWidth}

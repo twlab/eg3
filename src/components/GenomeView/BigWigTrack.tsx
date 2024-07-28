@@ -25,6 +25,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
     result = trackData!.bigWig;
+    console.log(trackData!);
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -108,9 +109,9 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     }
 
     const newCanvasRef = createRef();
-
+    // fix fetch data to return only one data because right now we sent mutiple fetched data
     worker.postMessage({
-      trackGene: result,
+      trackGene: result[0],
       windowWidth: windowWidth,
       bpToPx: bpToPx!,
       bpRegionSize: bpRegionSize!,
@@ -120,6 +121,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     // Listen for messages from the web worker
     worker.onmessage = (event) => {
       let converted = event.data;
+      console.log(converted);
       var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
       setRightTrack([
         ...rightTrackGenes,
@@ -156,7 +158,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     if (result.length > 0) {
-      result.sort((a, b) => {
+      result[0].sort((a, b) => {
         return b.end - a.end;
       });
 
@@ -180,7 +182,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
     const newCanvasRef = createRef();
 
     worker.postMessage({
-      trackGene: result,
+      trackGene: result[0],
       windowWidth: windowWidth,
       bpToPx: bpToPx!,
       bpRegionSize: bpRegionSize!,
@@ -246,6 +248,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [trackData]);
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
+      console.log("hi", rightTrackGenes);
       drawCanvas(
         0,
         windowWidth,

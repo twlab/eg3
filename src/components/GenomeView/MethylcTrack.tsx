@@ -19,6 +19,7 @@ interface BedTrackProps {
   trackData?: { [key: string]: any }; // Replace with the actual type
   side?: string;
   windowWidth?: number;
+  trackComponents: Array<any>;
 }
 const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   bpRegionSize,
@@ -26,6 +27,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   trackData,
   side,
   windowWidth = 0,
+  trackComponents,
 }) {
   let start, end;
 
@@ -318,6 +320,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
 
   useEffect(() => {
     if (side === "left") {
+      console.log("HERE WORK PLEASE", leftTrackGenes);
       leftTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefL[index].current && canvasRefL2[index].current) {
           let length = leftTrackGenes[index].canvasData.length;
@@ -346,7 +349,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         }
       });
     }
-  }, [side]);
+  }, [side, trackComponents]);
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
       drawCanvas(

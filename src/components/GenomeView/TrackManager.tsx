@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import GetTabixData from "./getRemoteData/tabixSource";
 import GetBigData from "./getRemoteData/bigSource";
 import GetHicData from "./getRemoteData/hicSource";
@@ -19,7 +19,7 @@ import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import HG38 from "../../models/genomes/hg38/hg38";
 import OpenInterval from "../../models/OpenInterval";
 import { handleData } from "./WorkerFactory";
-<MethylcTrack />;
+import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
 const worker = new Worker(
   new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
@@ -59,6 +59,7 @@ interface TrackProps {
   trackWidth: number;
   trackSize: any;
   trackIdx: number;
+  trackComponents: Array<any>;
 }
 
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
@@ -135,8 +136,18 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
 };
-
-function TrackManager(props) {
+interface TrackManagerProps {
+  genome: { [key: string]: any };
+  addTrack: any;
+  startBp: any;
+  windowWidth: number;
+}
+const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
+  genome,
+  addTrack,
+  startBp,
+  windowWidth,
+}) {
   //To-Do: MOVED THIS PART TO GENOMEROOT SO THAT THESE DAta are INILIZED ONLY ONCE.
   // DONE !!!!!!!!!! TO-DO: 2: Create an interface that has all specific functions for each track. I.E. the unique function to fetch data. When a new track is added
   // use interface key to get certain track function based on information the user clicked on.
@@ -151,14 +162,13 @@ function TrackManager(props) {
   // DONE !!!!!!!!!! fix data being [ [ ]] after fetching
 
   //   //made working for left..... need to fix old algo on hic, need to sent it new chr when mutli chr view
-  const genome = props.currGenome;
 
   const [region, coord] = genome.defaultRegion.split(":");
   const [leftStartStr, rightStartStr] = coord.split("-");
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
-  const bpToPx = bpRegionSize / props.windowWidth;
+  const bpToPx = bpRegionSize / windowWidth;
   let allChrData = genome.chromosomes;
   let chrData: Array<any> = [];
   let chrLength: Array<any> = [];
@@ -170,7 +180,7 @@ function TrackManager(props) {
   }
 
   const initialChrIdx = chrData.indexOf(region);
-  const trackId = useRef(0);
+
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
@@ -187,7 +197,7 @@ function TrackManager(props) {
   const [isDragging, setDragging] = useState(false);
   const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
-
+  const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [hicOption, setHicOption] = useState(1);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
@@ -199,11 +209,6 @@ function TrackManager(props) {
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-
-  let trackComponent: Array<any> = [];
-  for (let i = 0; i < genome.defaultTracks.length; i++) {
-    trackComponent.push(componentMap[genome.defaultTracks[i].name]);
-  }
 
   function sumArray(numbers) {
     let total = 0;
@@ -224,11 +229,11 @@ function TrackManager(props) {
       // (isLoading &&
       //   deltaX > 0 &&
       //   side === "right" &&
-      //   -tmpDragX > (rightSectionSize.length - 1) * props.windowWidth) ||
+      //   -tmpDragX > (rightSectionSize.length - 1) * windowWidth) ||
       // (isLoading &&
       //   deltaX < 0 &&
       //   side === "left" &&
-      //   tmpDragX > (leftSectionSize.length - 1) * props.windowWidth)
+      //   tmpDragX > (leftSectionSize.length - 1) * windowWidth)
       isLoading.current
     ) {
       return;
@@ -244,7 +249,7 @@ function TrackManager(props) {
     });
   }
   const handleClick = () => {
-    props.addTrack({
+    addTrack({
       region: viewRegion.current,
       trackName: "bed",
       genome: genome,
@@ -290,7 +295,7 @@ function TrackManager(props) {
       String(curStartBp + bpRegionSize);
     console.log(curRegion);
     viewRegion.current = curRegion;
-    props.startBp(curRegion);
+    startBp(curRegion);
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
     if (dragX.current > 0 && side === "right") {
@@ -316,7 +321,7 @@ function TrackManager(props) {
       console.log("trigger right");
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(props.windowWidth);
+        t.push(windowWidth);
         return t;
       });
 
@@ -331,7 +336,7 @@ function TrackManager(props) {
       console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(props.windowWidth);
+        t.push(windowWidth);
         return t;
       });
 
@@ -489,6 +494,9 @@ function TrackManager(props) {
 
     return tmpRegion;
   }
+  //______________________________________________________
+  //TO-DO IMPORTANT: fix return mutiple arrays after fetching data.
+  // should sent around of mutiple chr regions, but all the chr region gene datas should return in one array.
   async function fetchGenomeData(initial: number = 0, trackSide) {
     let navContextCoord = HG38.navContext.parse(
       `${region}` +
@@ -512,13 +520,13 @@ function TrackManager(props) {
       navContextCoord.end - navContextCoord.start
     );
     let newVisData: ViewExpansion = {
-      visWidth: props.windowWidth * 3,
+      visWidth: windowWidth * 3,
       visRegion: new DisplayedRegionModel(
         HG38.navContext,
         navContextCoord.start - (navContextCoord.end - navContextCoord.start),
         navContextCoord.end + (navContextCoord.end - navContextCoord.start)
       ),
-      viewWindow: new OpenInterval(props.windowWidth, props.windowWidth * 2),
+      viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
       viewWindowRegion: new DisplayedRegionModel(
         HG38.navContext,
         navContextCoord.start,
@@ -557,10 +565,11 @@ function TrackManager(props) {
                     trackType: genome.defaultTracks[index].name,
                   })
               );
-              console.log(tmpData2);
-              tmpData2["genomeName"] = genome.defaultTracks[index].genome;
+
+              tmpData2["genomeName"] =
+                genome.defaultTracks[genome.defaultTracks.length - 1].genome;
               tmpData2["queryGenomeName"] =
-                genome.defaultTracks[index].trackModel.querygenome;
+                genome.defaultTracks[genome.defaultTracks.length - 1].genome;
               tmpData2["location"] = `${bpX.current}:${
                 bpX.current + bpRegionSize
               }`;
@@ -716,6 +725,17 @@ function TrackManager(props) {
       isLoading.current = false;
     }
   }
+  function handleDelete(id: number) {
+    genome.defaultTracks = genome.defaultTracks.filter((items, index) => {
+      return index !== id;
+    });
+
+    setTrackComponents((prevTracks) => {
+      return prevTracks.filter((items, index) => {
+        return index !== id;
+      });
+    });
+  }
 
   useEffect(() => {
     document.addEventListener("mousemove", handleMove);
@@ -728,12 +748,15 @@ function TrackManager(props) {
   }, [isDragging]);
 
   useEffect(() => {
-    console.log(props.windowWidth);
-    function getData() {
-      fetchGenomeData(1, "right");
+    let newTrackComponents: Array<any> = [];
+    for (let i = 0; i < genome.defaultTracks.length; i++) {
+      newTrackComponents.push({
+        id: uuidv4(),
+        component: componentMap[genome.defaultTracks[i].name],
+      });
     }
-
-    getData();
+    setTrackComponents([...newTrackComponents]);
+    fetchGenomeData(1, "right");
   }, []);
 
   return (
@@ -769,7 +792,9 @@ function TrackManager(props) {
       ) : (
         <div>DATA READY LETS GO</div>
       )}
+
       <div>1pixel to {bpToPx}bp</div>
+      <button onClick={() => handleDelete(1)}>Delete</button>
       <div
         style={{
           display: "flex",
@@ -781,8 +806,11 @@ function TrackManager(props) {
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
-          width: `${props.windowWidth}px`,
+          width: `${windowWidth}px`,
           backgroundColor: "gainsboro",
+
+          overflowX: "hidden",
+          overflowY: "visible",
         }}
       >
         <div
@@ -795,25 +823,28 @@ function TrackManager(props) {
             alignItems: side == "right" ? "start" : "end",
           }}
         >
-          {trackComponent.map((Component, index) => (
-            <Component
-              key={index}
-              bpRegionSize={bpRegionSize}
-              bpToPx={bpToPx}
-              trackData={trackData}
-              side={side}
-              windowWidth={props.windowWidth}
-              dragXDist={dragX.current}
-              // movement type track data
-              trackData2={trackData2}
-              trackIdx={index}
-              visData={curVisData.current}
-            />
-          ))}
+          {trackComponents.map((item, index) => {
+            let Component = item.component;
+            return (
+              <Component
+                key={item.id}
+                bpRegionSize={bpRegionSize}
+                trackComponents={trackComponents}
+                bpToPx={bpToPx}
+                trackData={trackData}
+                side={side}
+                windowWidth={windowWidth}
+                dragXDist={dragX.current}
+                // movement type track data
+                trackData2={trackData2}
+                trackIdx={index}
+                visData={curVisData.current}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
   );
-}
-
-export default TrackManager;
+});
+export default memo(TrackManager);
