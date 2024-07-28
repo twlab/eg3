@@ -170,7 +170,7 @@ function TrackManager(props) {
   }
 
   const initialChrIdx = chrData.indexOf(region);
-
+  const trackId = useRef(0);
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
@@ -533,60 +533,31 @@ function TrackManager(props) {
       await Promise.all(
         genome.defaultTracks.map(async (item, index) => {
           const trackName = item.name;
-          if (trackName === "hic") {
-            // let hicResult = await trackFetchFunction.hic({
-            //   straw: genome.defaultTracks[index].straw,
-            //   option: defaultHic,
-            //   start: Number(bpX.current),
-            //   end: Number(bpX.current + bpRegionSize),
-            // });
-            // tmpData2["hicResult"] = hicResult;
-            return " ";
-          } else if (trackName === "genomealign") {
-            // let testData = await handleData([
-            //   {
-            //     url: genome.defaultTracks[index].url,
-            //     chr: region,
-            //     start:
-            //       bpToPx! <= 10
-            //         ? Number(bpX.current) - bpRegionSize
-            //         : Number(bpX.current),
-            //     end:
-            //       bpToPx! <= 10
-            //         ? Number(bpX.current + bpRegionSize) + bpRegionSize
-            //         : bpX.current + bpRegionSize,
-            //   },
-            // ]);
-            // console.log(testData);
+          if (trackName === "genomealign") {
             worker.postMessage({
-              records: [
-                {
-                  url: genome.defaultTracks[index].url,
-                  chr: region,
-                  start:
-                    bpToPx! <= 10
-                      ? Number(bpX.current) - bpRegionSize
-                      : Number(bpX.current),
-                  end:
-                    bpToPx! <= 10
-                      ? Number(bpX.current + bpRegionSize) + bpRegionSize
-                      : bpX.current + bpRegionSize,
-                },
-              ],
+              trackArray: genome.defaultTracks,
+              loci: {
+                chr: region,
+                start:
+                  bpToPx! <= 10
+                    ? Number(bpX.current) - bpRegionSize
+                    : Number(bpX.current),
+                end:
+                  bpToPx! <= 10
+                    ? Number(bpX.current + bpRegionSize) + bpRegionSize
+                    : bpX.current + bpRegionSize,
+              },
             });
 
             worker.addEventListener("message", (event) => {
-              tmpData2["genomealignResult"] = {
-                fetchData: event.data,
-                trackType: genome.defaultTracks[index].name,
-                loci: [
-                  {
-                    chr: region,
-                    start: Number(bpX.current) - bpRegionSize,
-                    end: Number(bpX.current + bpRegionSize) + bpRegionSize,
-                  },
-                ],
-              };
+              event.data.map(
+                (item, index) =>
+                  (tmpData2[item.name] = {
+                    fetchData: item.result,
+                    trackType: genome.defaultTracks[index].name,
+                  })
+              );
+              console.log(tmpData2);
               tmpData2["genomeName"] = genome.defaultTracks[index].genome;
               tmpData2["queryGenomeName"] =
                 genome.defaultTracks[index].trackModel.querygenome;

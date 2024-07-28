@@ -95,11 +95,7 @@ function GenomeHub(props: any) {
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {
       let newList = props.selectedGenome[0];
-      let straw = new HicStraw({
-        url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-      });
-      let metadata = straw.getMetaData();
-      let normOptions = straw.getNormalizationOptions();
+
       newList.defaultTracks = [
         {
           type: "geneAnnotation",
@@ -131,10 +127,7 @@ function GenomeHub(props: any) {
 
         {
           name: "hic",
-          straw: straw,
-          metadata: metadata,
-          normOptions: normOptions,
-
+          createStraw: false,
           genome: "hg19",
         },
         {
@@ -188,11 +181,11 @@ function GenomeHub(props: any) {
         for (const chromosome of ChromosomeData["HG38"]) {
           chrObj[chromosome.getName()] = chromosome.getLength();
         }
-        let straw = new HicStraw({
-          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-        });
-        let metadata = straw.getMetaData();
-        let normOptions = straw.getNormalizationOptions();
+        // let straw = new HicStraw({
+        //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+        // });
+        // let metadata = straw.getMetaData();
+        // let normOptions = straw.getNormalizationOptions();
         let featureArray = makeNavContext("HG38");
 
         let visData: ViewExpansion = {
@@ -257,10 +250,7 @@ function GenomeHub(props: any) {
 
             {
               name: "hic",
-              straw: straw,
-              metadata: metadata,
-              normOptions: normOptions,
-
+              createStraw: false,
               genome: "hg19",
             },
             {

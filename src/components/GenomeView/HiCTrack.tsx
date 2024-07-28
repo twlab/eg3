@@ -77,7 +77,8 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
   let result;
   if (Object.keys(trackData2!).length > 0) {
     [start, end] = trackData2!.location.split(":");
-    result = trackData2!.hicResult;
+    console.log(trackData2!.hicResult.fetchData);
+    result = trackData2!.hicResult.fetchData;
   }
 
   start = Number(start);
