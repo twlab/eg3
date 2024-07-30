@@ -312,7 +312,6 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
 
   useEffect(() => {
     if (side === "left") {
-      console.log("HERE WORK PLEASE", leftTrackGenes);
       leftTrackGenes.forEach((canvasRef, index) => {
         if (canvasRefL[index].current && canvasRefL2[index].current) {
           let length = leftTrackGenes[index].canvasData.length;

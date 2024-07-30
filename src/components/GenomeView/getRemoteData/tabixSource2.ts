@@ -3,9 +3,8 @@ import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
 import fetch from "isomorphic-fetch";
 
-function getTabixData(loci, options) {
+function getTabixData(loci, options, url) {
   let dataLimit = 100000;
-  let url = loci[0].url;
 
   let tabix = new TabixIndexedFile({
     filehandle: new RemoteFile(url, { fetch }),

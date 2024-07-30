@@ -18,7 +18,6 @@ function getAvailableWorker(data) {
   const availableWorker = workers.find((worker) => !workers["inUse"]); // You'll need to track this flag
 
   if (availableWorker) {
-    console.log("YOASDASD");
     availableWorker["inUse"] = true; // Mark it as in use
     availableWorker["worker"].postMessage({ records: data });
   } else {

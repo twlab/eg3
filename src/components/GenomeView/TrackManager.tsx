@@ -471,6 +471,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //______________________________________________________
   //TO-DO IMPORTANT: fix return mutiple arrays after fetching data.
   // should sent around of mutiple chr regions, but all the chr region gene datas should return in one array.
+  // step 1 first, find the mutiple coord regions and add them to array. Need to convert from nav Coord to genomic coord, each index value will the coord of each
+  // chr region adn their genomic interval
+  //step 2 in the worker sent the region array to the fetch functions,
+  // step 3 map and fetch each region from the array, returns flatten which means all the interval will be all in one array
+
   async function fetchGenomeData(initial: number = 0, trackSide) {
     let navContextCoord = HG38.navContext.parse(
       `${region}` +
@@ -511,13 +516,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2 || initial === 1) {
       let tmpData2 = {};
-
+      let sentData = false;
+      console.log(genome);
       await Promise.all(
-        genome.defaultTracks.map(async (item, index) => {
+        genome.defaultTracks.map((item, index) => {
           const trackName = item.name;
-          if (trackName === "genomealign" || trackName === "hic") {
+          if (
+            (trackName === "genomealign" || trackName === "hic") &&
+            !sentData
+          ) {
+            sentData = true;
             worker.postMessage({
               trackArray: genome.defaultTracks,
+              // TO DO?????????????need to sent loci as a array of all chr regions, after converting it from navcoord
               loci: {
                 chr: region,
                 start:
@@ -533,20 +544,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             worker.addEventListener("message", (event) => {
               event.data.map((item, index) => {
-                tmpData2[item.name] = {
+                tmpData2[item.nameResult] = {
                   fetchData: item.result,
-                  trackType: genome.defaultTracks[index].name,
+                  trackType: item.name,
                 };
 
-                if (item.name === "genomeAlignResult") {
-                  tmpData2["genomeName"] =
-                    genome.defaultTracks[
-                      genome.defaultTracks.length - 1
-                    ].genome;
-                  tmpData2["queryGenomeName"] =
-                    genome.defaultTracks[
-                      genome.defaultTracks.length - 1
-                    ].genome;
+                if (item.nameResult === "genomealignResult") {
+                  tmpData2["genomeName"] = item.genomeName;
+                  tmpData2["queryGenomeName"] = item.querygenomeName;
                 }
               });
 
@@ -559,7 +564,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               } else {
                 tmpData2["side"] = "left";
               }
-
+              console.log(tmpData2);
               setTrackData2({ ...tmpData2 });
             });
           }
@@ -662,18 +667,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   }
                 }
               } else {
-                for (let z = 0; z < fetchRespond[j].trackData[0].length; z++) {
+                for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
                   if (trackSide === "right") {
-                    fetchRespond[j].trackData[0][z].start +=
-                      Number(startRegion);
-                    fetchRespond[j].trackData[0][z].end += Number(startRegion);
+                    fetchRespond[j].trackData[z].start += Number(startRegion);
+                    fetchRespond[j].trackData[z].end += Number(startRegion);
                   } else {
                     fetchRespond[j].trackData[z].start = -(
                       Number(startRegion) +
                       (Number(sectionEnd) -
                         Number(fetchRespond[j].trackData[z].start))
                     );
-                    fetchRespond[j].trackData[0][z].end = -(
+                    fetchRespond[j].trackData[z].end = -(
                       Number(startRegion) +
                       (Number(sectionEnd) -
                         Number(fetchRespond[j].trackData[0][z].end))

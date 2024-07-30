@@ -223,7 +223,7 @@ function GenomeHub(props: any) {
             {
               type: "geneAnnotation",
               name: "refGene",
-              genome: "hg19",
+              genome: "hg38",
             },
             // {
             //   name: "bed",
