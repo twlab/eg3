@@ -21,7 +21,14 @@ import OpenInterval from "../../models/OpenInterval";
 import { handleData } from "./WorkerFactory";
 import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
+import { TrackProps } from "../../models/trackModels/trackProps";
 const worker = new Worker(
+  new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
+  {
+    type: "module",
+  }
+);
+const infiniteScrollWorker = new Worker(
   new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
   {
     type: "module",
@@ -29,39 +36,6 @@ const worker = new Worker(
 );
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
-
-let defaultHic = {
-  color: "#B8008A",
-  color2: "#006385",
-  backgroundColor: "var(--bg-color)",
-  displayMode: "heatmap",
-  scoreScale: "auto",
-  scoreMax: 10,
-  scalePercentile: 95,
-  scoreMin: 0,
-  height: 500,
-  lineWidth: 2,
-  greedyTooltip: false,
-  fetchViewWindowOnly: false,
-  bothAnchorsInView: false,
-  isThereG3dTrack: false,
-  clampHeight: false,
-  binSize: 0,
-  normalization: "NONE",
-  label: "",
-};
-
-interface TrackProps {
-  bpRegionSize?: number;
-  bpToPx?: number;
-  trackData?: { [key: string]: any }; // Replace with the actual type
-  side?: string;
-  trackWidth: number;
-  trackSize: any;
-  trackIdx: number;
-  trackComponents: Array<any>;
-}
-
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
   refGene: RefGeneTrack,
   bed: BedTrack,
@@ -138,8 +112,8 @@ const trackFetchFunction: { [key: string]: any } = {
 };
 interface TrackManagerProps {
   genome: { [key: string]: any };
-  addTrack: any;
-  startBp: any;
+  addTrack: (track: any) => void;
+  startBp: (bp: string) => void;
   windowWidth: number;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
@@ -541,7 +515,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       await Promise.all(
         genome.defaultTracks.map(async (item, index) => {
           const trackName = item.name;
-          if (trackName === "genomealign") {
+          if (trackName === "genomealign" || trackName === "hic") {
             worker.postMessage({
               trackArray: genome.defaultTracks,
               loci: {
@@ -558,18 +532,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             });
 
             worker.addEventListener("message", (event) => {
-              event.data.map(
-                (item, index) =>
-                  (tmpData2[item.name] = {
-                    fetchData: item.result,
-                    trackType: genome.defaultTracks[index].name,
-                  })
-              );
+              event.data.map((item, index) => {
+                tmpData2[item.name] = {
+                  fetchData: item.result,
+                  trackType: genome.defaultTracks[index].name,
+                };
 
-              tmpData2["genomeName"] =
-                genome.defaultTracks[genome.defaultTracks.length - 1].genome;
-              tmpData2["queryGenomeName"] =
-                genome.defaultTracks[genome.defaultTracks.length - 1].genome;
+                if (item.name === "genomeAlignResult") {
+                  tmpData2["genomeName"] =
+                    genome.defaultTracks[
+                      genome.defaultTracks.length - 1
+                    ].genome;
+                  tmpData2["queryGenomeName"] =
+                    genome.defaultTracks[
+                      genome.defaultTracks.length - 1
+                    ].genome;
+                }
+              });
+
               tmpData2["location"] = `${bpX.current}:${
                 bpX.current + bpRegionSize
               }`;
@@ -750,11 +730,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     let newTrackComponents: Array<any> = [];
     for (let i = 0; i < genome.defaultTracks.length; i++) {
+      const uniqueKey = uuidv4();
+      genome.defaultTracks[i]["id"] = uniqueKey;
       newTrackComponents.push({
-        id: uuidv4(),
+        id: uniqueKey,
         component: componentMap[genome.defaultTracks[i].name],
       });
     }
+    console.log(genome.defaultTracks);
     setTrackComponents([...newTrackComponents]);
     fetchGenomeData(1, "right");
   }, []);
@@ -794,7 +777,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       )}
 
       <div>1pixel to {bpToPx}bp</div>
-      <button onClick={() => handleDelete(1)}>Delete</button>
+
       <div
         style={{
           display: "flex",
@@ -835,6 +818,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 side={side}
                 windowWidth={windowWidth}
                 dragXDist={dragX.current}
+                handleDelete={handleDelete}
                 // movement type track data
                 trackData2={trackData2}
                 trackIdx={index}

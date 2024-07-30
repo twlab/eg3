@@ -1,7 +1,7 @@
 import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
-
+import { TrackProps } from "../../models/trackModels/trackProps";
 import TestToolTip from "./commonComponents/hover/tooltip";
 
 const worker = new Worker(new URL("../../worker/worker.ts", import.meta.url), {
@@ -13,21 +13,13 @@ const DEFAULT_COLORS_FOR_CONTEXT = {
   CHG: { color: "rgb(255,148,77)", background: "#ffe0cc" },
   CHH: { color: "rgb(255,0,255)", background: "#ffe5ff" },
 };
-interface BedTrackProps {
-  bpRegionSize?: number;
-  bpToPx?: number;
-  trackData?: { [key: string]: any }; // Replace with the actual type
-  side?: string;
-  windowWidth?: number;
-  trackComponents: Array<any>;
-}
-const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
+
+const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
   windowWidth = 0,
-  trackComponents,
 }) {
   let start, end;
 
@@ -349,7 +341,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
         }
       });
     }
-  }, [side, trackComponents]);
+  }, [side]);
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
       drawCanvas(
@@ -386,7 +378,7 @@ const MethylcTrack: React.FC<BedTrackProps> = memo(function MethylcTrack({
   return (
     <div
       style={{
-        height: "150px",
+        height: "100px",
         position: "relative",
       }}
     >

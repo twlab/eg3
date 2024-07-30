@@ -1,15 +1,9 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
+import { TrackProps } from "../../models/trackModels/trackProps";
 
-interface RefGeneTrackProps {
-  bpRegionSize?: number;
-  bpToPx?: number;
-  trackData?: { [key: string]: any }; // Replace with the actual type
-  side?: string;
-  windowWidth?: number;
-}
-const RefGeneTrack: React.FC<RefGeneTrackProps> = memo(function RefGeneTrack({
+const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   bpRegionSize,
   bpToPx,
   trackData,

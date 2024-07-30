@@ -1,21 +1,15 @@
 import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
-
+import { TrackProps } from "../../models/trackModels/trackProps";
 const worker = new Worker(
   new URL("../../worker/dynseqWorker.ts", import.meta.url),
   {
     type: "module",
   }
 );
-interface BedTrackProps {
-  bpRegionSize?: number;
-  bpToPx?: number;
-  trackData?: { [key: string]: any }; // Replace with the actual type
-  side?: string;
-  windowWidth?: number;
-}
-const DynseqTrack: React.FC<BedTrackProps> = memo(function DynseqTrack({
+
+const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   bpRegionSize,
   bpToPx,
   trackData,

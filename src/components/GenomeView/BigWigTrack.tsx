@@ -1,23 +1,20 @@
 import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
+import { TrackProps } from "../../models/trackModels/trackProps";
 import { useEffect, useRef, useState } from "react";
 import worker_script from "../../worker/bigWigWorker";
 let worker: Worker;
 
 worker = new Worker(worker_script);
-interface BedTrackProps {
-  bpRegionSize?: number;
-  bpToPx?: number;
-  trackData?: { [key: string]: any }; // Replace with the actual type
-  side?: string;
-  windowWidth?: number;
-}
-const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
+
+const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
   windowWidth = 0,
+  handleDelete,
+  trackIdx,
 }) {
   let start, end;
 
@@ -272,6 +269,7 @@ const BigWigTrack: React.FC<BedTrackProps> = memo(function BigWigTrack({
   }, [leftTrackGenes]);
   return (
     <div style={{ display: "flex" }}>
+      <button onClick={() => handleDelete(trackIdx)}>Delete</button>
       {side === "right"
         ? canvasRefR.map((item, index) => (
             <canvas

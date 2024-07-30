@@ -10,23 +10,29 @@ import HicStraw from "hic-straw/dist/hic-straw.min.js";
  *
  * @author Daofeng Li based on Silas's version
  */
-let straw = new HicStraw({
-  url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-});
-let metadata = straw.getMetaData();
-let normOptions = straw.getNormalizationOptions();
+
+let strawCache: { [key: string]: any } = {};
+
 self.onmessage = async (event: MessageEvent) => {
   let resultResult: Array<any> = [];
-  console.log(event.data);
+
   let newtrackDefault = event.data.trackArray;
   await Promise.all(
     newtrackDefault.map(async (item, index) => {
       const trackName = item.name;
-      if (trackName === "hic") {
-        newtrackDefault["createStraw"] = true;
 
+      const id = item.id;
+
+      if (trackName === "hic") {
+        if (!(id in strawCache)) {
+          //   let metadata = straw.getMetaData();
+          //   let normOptions = straw.getNormalizationOptions();
+          strawCache[id] = new HicStraw({
+            url: item.url,
+          });
+        }
         let result = await GetHicData(
-          straw,
+          strawCache[id],
           {
             color: "#B8008A",
             color2: "#006385",
@@ -88,8 +94,6 @@ self.onmessage = async (event: MessageEvent) => {
       }
     })
   );
-
-  console.log(resultResult);
 
   postMessage(resultResult);
 };

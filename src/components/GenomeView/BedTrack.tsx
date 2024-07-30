@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
-
+import { TrackProps } from "../../models/trackModels/trackProps";
 interface BedTrackProps {
   bpRegionSize?: number;
   bpToPx?: number;
@@ -8,7 +8,7 @@ interface BedTrackProps {
   side?: string;
   windowWidth?: number;
 }
-const BedTrack: React.FC<BedTrackProps> = memo(function BedTrack({
+const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   bpRegionSize,
   bpToPx,
   trackData,

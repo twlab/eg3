@@ -127,7 +127,7 @@ function GenomeHub(props: any) {
 
         {
           name: "hic",
-          createStraw: false,
+
           genome: "hg19",
         },
         {
@@ -247,10 +247,14 @@ function GenomeHub(props: any) {
               genome: "hg19",
               url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
             },
-
             {
               name: "hic",
-              createStraw: false,
+              url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+              genome: "hg19",
+            },
+            {
+              name: "hic",
+              url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
               genome: "hg19",
             },
             {

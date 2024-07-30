@@ -1,14 +1,8 @@
-import React, { createRef, memo } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import React, { createRef, memo } from "react";
+import { useEffect, useRef, useState } from "react";
+import { TrackProps } from "../../models/trackModels/trackProps";
 
-interface BedTrackProps {
-  bpRegionSize?: number;
-  bpToPx?: number;
-  trackData?: { [key: string]: any }; // Replace with the actual type
-  side?: string;
-  windowWidth?: number;
-}
-const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
+const BedDensityTrack: React.FC<TrackProps> = memo(function BedDensityTrack({
   bpRegionSize,
   bpToPx,
   trackData,
@@ -19,7 +13,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
 
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(':');
+    [start, end] = trackData!.location.split(":");
     result = trackData!.bedResult;
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
@@ -302,7 +296,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
                 y1={`${yCoord}`}
                 x2={`${(singleStrand.end - props.startTrackPos) / bpToPx!}`}
                 y2={`${yCoord}`}
-                stroke={'blue'}
+                stroke={"blue"}
               />
             </React.Fragment>
           );
@@ -323,7 +317,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
     if (rightTrackGenes.length > 0) {
       if (canvasRefR[canvasRefR.length - 1].current) {
         let context =
-          canvasRefR[canvasRefR.length - 1].current.getContext('2d');
+          canvasRefR[canvasRefR.length - 1].current.getContext("2d");
 
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
@@ -340,7 +334,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
           ) {
             let singleStrand = rightTrackGenes[canvasRefR.length - 1][0][j];
 
-            context.fillStyle = 'red';
+            context.fillStyle = "red";
 
             context.fillRect(
               (singleStrand.start - startPos) / bpToPx!,
@@ -358,14 +352,14 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   useEffect(() => {
     canvasRefL.map((canvasRef, index) => {
       if (canvasRef.current) {
-        let context = canvasRefL[index].current.getContext('2d');
+        let context = canvasRefL[index].current.getContext("2d");
 
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
         for (let i = 0; i < leftTrackGenes[index][1].length; i++) {
           let startPos = leftTrackGenes[index][2];
           for (let j = 0; j < leftTrackGenes[index][1][i].length; j++) {
             let singleStrand = leftTrackGenes[index][1][i][j];
-            context.fillStyle = 'red';
+            context.fillStyle = "red";
 
             context.fillRect(
               (singleStrand.start - startPos) / bpToPx!,
@@ -381,11 +375,11 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   }, [leftTrackGenes]);
 
   useEffect(() => {
-    if (side === 'left') {
+    if (side === "left") {
       if (canvasRefL.length != 0) {
         canvasRefL.forEach((canvasRef, index) => {
           if (canvasRef.current) {
-            let context = canvasRef.current.getContext('2d');
+            let context = canvasRef.current.getContext("2d");
             context.clearRect(
               0,
               0,
@@ -396,11 +390,11 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
         });
         setLeftTrack([...leftTrackGenes]);
       }
-    } else if (side === 'right') {
+    } else if (side === "right") {
       if (canvasRefR.length != 0) {
         canvasRefR.forEach((canvasRef, index) => {
           if (canvasRef.current) {
-            let context = canvasRef.current.getContext('2d');
+            let context = canvasRef.current.getContext("2d");
             context.clearRect(
               0,
               0,
@@ -415,21 +409,21 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
   }, [side]);
 
   useEffect(() => {
-    if (trackData!.side === 'right') {
+    if (trackData!.side === "right") {
       fetchGenomeData();
-    } else if (trackData!.side === 'left') {
+    } else if (trackData!.side === "left") {
       fetchGenomeData2();
     }
   }, [trackData]);
   return (
     <div>
-      {side === 'right'
+      {side === "right"
         ? rightTrackGenes.map((item, index) => (
             <canvas
               id="canvas1"
               key={index}
               ref={canvasRefR[index]}
-              height={'100%'}
+              height={"100%"}
               width={`${windowWidth}px`}
               style={{}}
             />
@@ -439,7 +433,7 @@ const BedDensityTrack: React.FC<BedTrackProps> = memo(function BedDensityTrack({
               id="canvas2"
               key={canvasRefL.length - 1 - index}
               ref={canvasRefL[canvasRefL.length - 1 - index]}
-              height={'100%'}
+              height={"100%"}
               width={`${windowWidth}px`}
               style={{}}
             />

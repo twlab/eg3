@@ -3,7 +3,7 @@ import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import TestToolTipHic from "./commonComponents/hover/tooltipHic";
 import { InteractionDisplayMode } from "./commonComponents/user-options/DisplayModes";
-
+import { TrackProps } from "../../models/trackModels/trackProps";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 import percentile from "percentile";
 export enum ScaleChoices {
@@ -41,7 +41,7 @@ let defaultHic = {
   scoreMax: 10,
   scalePercentile: 95,
   scoreMin: 0,
-  height: 1000,
+  height: 100,
   lineWidth: 2,
   greedyTooltip: false,
   fetchViewWindowOnly: false,
@@ -52,23 +52,14 @@ let defaultHic = {
   normalization: "NONE",
   label: "",
 };
-interface BedTrackProps {
-  bpRegionSize?: number;
-  bpToPx?: number;
-  trackData?: { [key: string]: any }; // Replace with the actual type
-  side?: string;
-  windowWidth?: number;
-  totalSize?: number;
-  trackData2?: { [key: string]: any }; // Replace with the actual type
-  dragXDist?: number;
-}
-const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
+
+const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
   windowWidth = 0,
-  totalSize = 0,
+
   trackData2,
   dragXDist,
 }) {
@@ -404,7 +395,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
     <div
       style={{
         position: "relative",
-        height: 700,
+        height: 120,
       }}
     >
       {side === "right"
@@ -412,7 +403,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
             <canvas
               key={index}
               ref={item.canvasRef}
-              height={"1000"}
+              height={"120"}
               width={windowWidth}
               style={{ position: "absolute", left: `${-view.current!}px` }}
             />
@@ -421,7 +412,7 @@ const HiCTrack: React.FC<BedTrackProps> = memo(function HiCTrack({
             <canvas
               key={leftTrackGenes.length - index - 1}
               ref={leftTrackGenes[leftTrackGenes.length - index - 1].canvasRef}
-              height={"1000"}
+              height={"120"}
               width={windowWidth}
               style={{ position: "absolute", right: `${view.current!}px` }}
             />

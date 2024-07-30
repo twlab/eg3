@@ -86,7 +86,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
                   left: right,
                   width: rightWidth,
                   backgroundColor: "green",
-                  height: 1000,
+                  height: 120,
                 }}
               ></div>
             ),
@@ -97,7 +97,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
                   backgroundColor: "red",
                   left: left,
                   width: leftWidth,
-                  height: 1000,
+                  height: 120,
                 }}
               ></div>
             ),
@@ -139,7 +139,7 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
       style={{
         position: "relative",
         width: windowWidth,
-        height: 1000,
+        height: 120,
       }}
     >
       {isVisible ? (
