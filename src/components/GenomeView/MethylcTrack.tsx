@@ -99,6 +99,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     // Listen for messages from the web worker
     worker.onmessage = (event) => {
       let converted = event.data;
+      console.log(converted, "multi?");
       let scales = computeScales(converted);
       setRightTrack([
         ...rightTrackGenes,

@@ -240,7 +240,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       return b.txEnd - a.txEnd;
     });
 
-    if (result) {
+    if (result.length > 0) {
       var resultIdx = 0;
 
       if (

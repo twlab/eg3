@@ -1,8 +1,8 @@
-import _ from "lodash";
+import _, { initial } from "lodash";
 
 import getTabixData from "./tabixSource2";
 import GetHicData from "./hicSource2";
-
+import getBigData from "./bigSource2";
 // import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
 import HicStraw from "hic-straw/dist/hic-straw.min.js";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
@@ -19,32 +19,31 @@ const trackFetchFunction: { [key: string]: any } = {
       { method: "GET" }
     );
 
-    return genRefResponse.json();
+    return await genRefResponse.json();
   },
-  // bed: async function bedFetch(regionData: any) {
-  //   return GetTabixData(
-  //     regionData.url,
-  //     regionData.chr,
-  //     regionData.start,
-  //     regionData.end
-  //   );
-  // },
+  bed: async function bedFetch(
+    loci: Array<{ [key: string]: any }>,
+    options: { [key: string]: any },
+    url: string
+  ) {
+    return getTabixData(loci, options, url);
+  },
 
-  // bigWig: function bigWigFetch(
-  //   loci: Array<{ [key: string]: any }>,
-  //   options: { [key: string]: any },
-  //   url: string
-  // ) {
-  //   return GetBigData(loci, options, url);
-  // },
+  bigWig: function bigWigFetch(
+    loci: Array<{ [key: string]: any }>,
+    options: { [key: string]: any },
+    url: string
+  ) {
+    return getBigData(loci, options, url);
+  },
 
-  // dynseq: function dynseqFetch(
-  //   loci: Array<{ [key: string]: any }>,
-  //   options: { [key: string]: any },
-  //   url: string
-  // ) {
-  //   return GetBigData(loci, options, url);
-  // },
+  dynseq: function dynseqFetch(
+    loci: Array<{ [key: string]: any }>,
+    options: { [key: string]: any },
+    url: string
+  ) {
+    return getBigData(loci, options, url);
+  },
   methylc: function methylcFetch(
     loci: Array<{ [key: string]: any }>,
     options: { [key: string]: any },
@@ -66,7 +65,7 @@ const trackFetchFunction: { [key: string]: any } = {
 let strawCache: { [key: string]: any } = {};
 
 self.onmessage = async (event: MessageEvent) => {
-  let resultResult: Array<any> = [];
+  let fetchResults: Array<any> = [];
   const regionStart = event.data.loci.start;
   const regionEnd = event.data.loci.end;
   const regionChr = event.data.loci.chr;
@@ -111,7 +110,7 @@ self.onmessage = async (event: MessageEvent) => {
           regionStart,
           regionEnd
         );
-        resultResult.push({ name: trackName, nameResult: "hicResult", result });
+        fetchResults.push({ name: trackName, nameResult: "hicResult", result });
       } else if (trackName === "genomealign") {
         let result = await trackFetchFunction[trackName](
           [
@@ -145,48 +144,54 @@ self.onmessage = async (event: MessageEvent) => {
           },
           url
         );
-        resultResult.push({
+        fetchResults.push({
           name: trackName,
           nameResult: "genomealignResult",
           result,
           genomeName: genomeName,
           querygenomeName: item.trackModel.querygenome,
         });
-      }
-      // else if (trackName === "refGene") {
-      //   const genRefResponse = trackFetchFunction[trackName]({
-      //     name: genomeName,
-      //     chr: regionChr,
-      //     start: regionStart,
-      //     end: regionEnd,
-      //   });
-      //   resultResult.push(genRefResponse.json());
-      // } else {
-      //   let result = await trackFetchFunction[trackName](
-      //     [
-      //       {
-      //         chr: regionChr,
-      //         start: regionStart,
-      //         end: regionEnd,
-      //       },
-      //     ],
-      //     {
-      //       displayMode: "full",
-      //       color: "blue",
-      //       color2: "red",
-      //       maxRows: 20,
-      //       height: 40,
-      //       hideMinimalItems: false,
-      //       sortItems: false,
-      //       label: "",
-      //     },
-      //     url
-      //   );
+      } else if (trackName === "refGene") {
+        const genRefResponse = await trackFetchFunction[trackName]({
+          name: genomeName,
+          chr: regionChr,
+          start: regionStart,
+          end: regionEnd,
+        });
 
-      //   resultResult.push(result);
-      // }
+        fetchResults.push({ name: trackName, result: genRefResponse });
+      } else {
+        let result = await trackFetchFunction[trackName](
+          [
+            {
+              chr: regionChr,
+              start: regionStart,
+              end: regionEnd,
+            },
+          ],
+          {
+            displayMode: "full",
+            color: "blue",
+            color2: "red",
+            maxRows: 20,
+            height: 40,
+            hideMinimalItems: false,
+            sortItems: false,
+            label: "",
+          },
+          url
+        );
+
+        fetchResults.push({ name: trackName, result });
+      }
     })
   );
 
-  postMessage(resultResult);
+  postMessage({
+    fetchResults,
+    side: event.data.trackSide,
+    xDist: event.data.xDist,
+    location: event.data.location,
+    initial: event.data.initial,
+  });
 };

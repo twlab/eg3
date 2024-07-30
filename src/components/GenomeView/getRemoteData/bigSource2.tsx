@@ -1,14 +1,10 @@
+import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
 import { RemoteFile } from "generic-filehandle";
-import _ from "lodash";
-/**
- * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
- *
- * @author Daofeng Li
- * @author Chanrung Seng
- */
-function GetBigData(loci, options, url) {
-  const fetch = window.fetch.bind(window);
+
+import fetch from "isomorphic-fetch";
+
+function getBigData(loci, options, url) {
   let bw = new BigWig({
     filehandle: new RemoteFile(url, { fetch }),
   });
@@ -39,4 +35,4 @@ function GetBigData(loci, options, url) {
   return handle();
 }
 
-export default GetBigData;
+export default getBigData;

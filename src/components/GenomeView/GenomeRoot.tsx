@@ -96,21 +96,21 @@ function GenomeHub(props: any) {
     if (props.selectedGenome != undefined) {
       let newList = props.selectedGenome[0];
 
-      newList.defaultTracks = [
+      (newList.defaultTracks = [
         {
           type: "geneAnnotation",
           name: "refGene",
-          genome: newList.name,
+          genome: "hg38",
         },
         // {
         //   name: "bed",
-        //   genome: newList.name,
+        //   genome: "hg19",
         //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
         // },
 
         {
           name: "bigWig",
-          genome: newList.name,
+          genome: "hg19",
           url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
         },
 
@@ -124,10 +124,14 @@ function GenomeHub(props: any) {
           genome: "hg19",
           url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
         },
-
         {
           name: "hic",
-
+          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+          genome: "hg19",
+        },
+        {
+          name: "hic",
+          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
           genome: "hg19",
         },
         {
@@ -142,8 +146,8 @@ function GenomeHub(props: any) {
             url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
           },
         },
-      ];
-      newList.chrOrder = items;
+      ]),
+        (newList.chrOrder = items);
       const serializedArray = JSON.stringify(newList);
       sessionStorage.setItem("myArray", serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {

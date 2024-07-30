@@ -4,38 +4,6 @@
 import _ from "lodash";
 
 self.onmessage = (event: MessageEvent) => {
-  let recordArr: any = getData();
-  function getData() {
-    // let options = event.data.options;
-
-    let rawData = event.data.trackGene;
-    const dataForEachLocus = rawData.map((lines) => lines.map(_parseLine));
-    // if (options && options.ensemblStyle) {
-    //   event.data.loci.forEach((locus, index) => {
-    //     dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-    //   });
-    // }
-
-    return _.flatten(dataForEachLocus);
-  }
-
-  function _parseLine(line) {
-    const columns = line.split("\t");
-    if (columns.length < 3) {
-      return;
-    }
-    let feature = {
-      chr: columns[0],
-      start: Number.parseInt(columns[1], 10),
-      end: Number.parseInt(columns[2], 10),
-      n: columns.length, // number of columns in initial data row
-    };
-    for (let i = 3; i < columns.length; i++) {
-      // Copy the rest of the columns to the feature
-      feature[i] = columns[i];
-    }
-    return feature;
-  }
   function aggregateRecords(records: Array<any>) {
     if (records.length === 0) {
       return { depth: 0, contextValues: [] };
@@ -91,8 +59,8 @@ self.onmessage = (event: MessageEvent) => {
     );
 
     let startPos = event.data.startBpRegion;
-    for (let j = 0; j < recordArr.length; j++) {
-      let singleStrand = recordArr[j];
+    for (let j = 0; j < event.data.trackGene.length; j++) {
+      let singleStrand = event.data.trackGene[j];
 
       {
         if (Object.keys(singleStrand).length > 0) {

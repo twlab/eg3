@@ -61,15 +61,13 @@ self.onmessage = (event: MessageEvent) => {
   let dataForward: Array<any> = [];
   let dataReverse: Array<any> = [];
 
-  for (let i = 0; i < trackData.trackGene.length; i++) {
-    for (let j = 0; j < trackData.trackGene[i].length; j++) {
-      let singleStrand = trackData.trackGene[i][j];
+  for (let j = 0; j < trackData.trackGene.length; j++) {
+    let singleStrand = trackData.trackGene[j];
 
-      if (singleStrand.score < 0) {
-        dataReverse.push(singleStrand);
-      } else {
-        dataForward.push(singleStrand);
-      }
+    if (singleStrand.score < 0) {
+      dataReverse.push(singleStrand);
+    } else {
+      dataForward.push(singleStrand);
     }
   }
 

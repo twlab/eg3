@@ -519,31 +519,33 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let tmpData2 = {};
       let sentData = false;
 
-      await Promise.all(
-        genome.defaultTracks.map((item, index) => {
-          const trackName = item.name;
-          if (!sentData) {
-            sentData = true;
-            worker.postMessage({
-              trackArray: genome.defaultTracks.filter((items, index) => {
-                return items.name === "genomealign" || items.name === "hic";
-              }),
-              // TO DO?????????????need to sent loci as a array of all chr regions, after converting it from navcoord
-              loci: {
-                chr: region,
-                start:
-                  bpToPx! <= 10
-                    ? Number(bpX.current) - bpRegionSize
-                    : Number(bpX.current),
-                end:
-                  bpToPx! <= 10
-                    ? Number(bpX.current + bpRegionSize) + bpRegionSize
-                    : bpX.current + bpRegionSize,
-              },
-            });
-
-            worker.addEventListener("message", (event) => {
-              event.data.map((item, index) => {
+      genome.defaultTracks.map((item, index) => {
+        if (!sentData) {
+          sentData = true;
+          worker.postMessage({
+            trackArray: genome.defaultTracks.filter((items, index) => {
+              return items.name === "genomealign" || items.name === "hic";
+            }),
+            // TO DO?????????????need to sent loci as a array of all chr regions, after converting it from navcoord
+            loci: {
+              chr: region,
+              start:
+                bpToPx! <= 10
+                  ? Number(bpX.current) - bpRegionSize
+                  : Number(bpX.current),
+              end:
+                bpToPx! <= 10
+                  ? Number(bpX.current + bpRegionSize) + bpRegionSize
+                  : bpX.current + bpRegionSize,
+            },
+            trackSide,
+            location: `${bpX.current}:${bpX.current + bpRegionSize}`,
+            xDist: dragX.current,
+            initial,
+          });
+          if (initial === 1) {
+            worker.onmessage = (event) => {
+              event.data.fetchResults.map((item, index) => {
                 tmpData2[item.nameResult] = {
                   fetchData: item.result,
                   trackType: item.name,
@@ -554,35 +556,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   tmpData2["queryGenomeName"] = item.querygenomeName;
                 }
               });
+              tmpData2["location"] = event.data.location;
+              tmpData2["xDist"] = event.data.xDist;
+              tmpData2["side"] = event.data.side;
 
-              tmpData2["location"] = `${bpX.current}:${
-                bpX.current + bpRegionSize
-              }`;
-              tmpData2["xDist"] = dragX.current;
-              if (trackSide === "right") {
-                tmpData2["side"] = "right";
-              } else {
-                tmpData2["side"] = "left";
-              }
-              console.log(tmpData2);
               setTrackData2({ ...tmpData2 });
-            });
+            };
           }
-        })
-      );
+        }
+      });
     }
 
     if (initial === 0 || initial === 1) {
       let tempObj = {};
+
       let tmpRegion: Array<any> = [];
       if (trackSide === "right") {
-        tempObj["side"] = "right";
         tmpRegion = checkMultiChrRight(tempObj);
       } else {
-        tempObj["side"] = "left";
         tmpRegion = checkMultiChrLeft(tempObj);
       }
-
+      console.log(tempObj);
       for (let i = 0; i < tmpRegion.length; i++) {
         let sectionRegion = tmpRegion[i];
 
@@ -591,122 +585,160 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         const [startRegion, endRegion] = totalBp.split("-");
         const [sectionStart, sectionEnd] = sectionBp.split("-");
-
+        let sentData = false;
         try {
-          let fetchRespond = await Promise.all(
-            genome.defaultTracks.map(async (item) => {
-              const trackName = item.name;
-              if (trackName === "hic" || trackName === "genomealign") {
-                return;
-              } else if (trackName === "refGene") {
-                let result = await trackFetchFunction[trackName]({
-                  name: genome.name,
-                  chr: curChrName,
-                  start: sectionStart,
-                  end: sectionEnd,
-                });
-                return {
-                  trackData: result,
-                  trackName: trackName,
-                };
-              } else {
-                let result = await trackFetchFunction[trackName]({
-                  url: item.url,
+          genome.defaultTracks.map((item, index) => {
+            if (!sentData) {
+              sentData = true;
+              infiniteScrollWorker.postMessage({
+                trackArray: genome.defaultTracks.filter((items, index) => {
+                  return items.name !== "genomealign" && items.name !== "hic";
+                }),
+
+                loci: {
                   chr: curChrName,
                   start: Number(sectionStart),
                   end: Number(sectionEnd),
-                });
-                return {
-                  trackData: result,
-                  trackName: trackName,
+                },
+                trackSide,
+                location: tempObj["location"],
+                xDist: dragX.current,
+                initial,
+              });
+              if (initial === 1) {
+                infiniteScrollWorker.onmessage = (event) => {
+                  event.data.fetchResults.map(
+                    (item, index) => (tempObj[item.name] = item.result)
+                  );
+
+                  tempObj["initial"] = event.data.initial;
+                  tempObj["side"] = event.data.side;
+                  tempObj["location"] = event.data.location;
+                  console.log(minBp.current);
+
+                  setTrackData({ ...tempObj });
+                  isLoading.current = false;
                 };
-              }
-            })
-          );
-
-          for (let j = 0; j < fetchRespond.length; j++) {
-            let trackName = fetchRespond[j].trackName;
-            if (tempObj[trackName] === undefined) {
-              tempObj[trackName] = new Array<any>();
-            }
-            if (i !== 0) {
-              if (trackName === "refGene") {
-                for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
-                  if (trackSide === "right") {
-                    fetchRespond[j].trackData[z].txStart += Number(startRegion);
-                    fetchRespond[j].trackData[z].txEnd += Number(startRegion);
-                  } else {
-                    fetchRespond[j].trackData[z].txStart = -(
-                      Number(startRegion) +
-                      (Number(sectionEnd) -
-                        Number(fetchRespond[j].trackData[z].txStart))
-                    );
-                    fetchRespond[j].trackData[z].txEnd = -(
-                      Number(startRegion) +
-                      (Number(sectionEnd) -
-                        Number(fetchRespond[j].trackData[z].txEnd))
-                    );
-                  }
-                }
-              } else if (trackName === "bed") {
-                for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
-                  if (trackSide === "right") {
-                    fetchRespond[j].trackData[z].start += Number(startRegion);
-                    fetchRespond[j].trackData[z].end += Number(startRegion);
-                  } else {
-                    fetchRespond[j].trackData[z].start = -(
-                      Number(startRegion) +
-                      (Number(sectionEnd) -
-                        Number(fetchRespond[j].trackData[z].start))
-                    );
-                    fetchRespond[j].trackData[z].end = -(
-                      Number(startRegion) +
-                      (Number(sectionEnd) -
-                        Number(fetchRespond[j].trackData[z].end))
-                    );
-                  }
-                }
-              } else {
-                for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
-                  if (trackSide === "right") {
-                    fetchRespond[j].trackData[z].start += Number(startRegion);
-                    fetchRespond[j].trackData[z].end += Number(startRegion);
-                  } else {
-                    fetchRespond[j].trackData[z].start = -(
-                      Number(startRegion) +
-                      (Number(sectionEnd) -
-                        Number(fetchRespond[j].trackData[z].start))
-                    );
-                    fetchRespond[j].trackData[z].end = -(
-                      Number(startRegion) +
-                      (Number(sectionEnd) -
-                        Number(fetchRespond[j].trackData[0][z].end))
-                    );
-                  }
-                }
+                minBp.current = minBp.current - bpRegionSize;
               }
             }
+          });
 
-            tempObj[trackName] = tempObj[trackName].concat(
-              fetchRespond[j].trackData
-            );
-          }
+          //_______________________________________________________________________________________________________________
+          // let fetchRespond = await Promise.all(
+          //   genome.defaultTracks.map(async (item) => {
+          //     const trackName = item.name;
+          //     if (trackName === "hic" || trackName === "genomealign") {
+          //       return;
+          //     } else if (trackName === "refGene") {
+          //       let result = await trackFetchFunction[trackName]({
+          //         name: genome.name,
+          //         chr: curChrName,
+          //         start: sectionStart,
+          //         end: sectionEnd,
+          //       });
+          //       return {
+          //         trackData: result,
+          //         trackName: trackName,
+          //       };
+          //     } else {
+          //       let result = await trackFetchFunction[trackName]({
+          //         url: item.url,
+          //         chr: curChrName,
+          //         start: Number(sectionStart),
+          //         end: Number(sectionEnd),
+          //       });
+          //       return {
+          //         trackData: result,
+          //         trackName: trackName,
+          //       };
+          //     }
+          //   })
+          // );
+
+          // for (let j = 0; j < fetchRespond.length; j++) {
+          //   let trackName = fetchRespond[j].trackName;
+          //   if (tempObj[trackName] === undefined) {
+          //     tempObj[trackName] = new Array<any>();
+          //   }
+          //   if (i !== 0) {
+          //     if (trackName === "refGene") {
+          //       for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
+          //         if (trackSide === "right") {
+          //           fetchRespond[j].trackData[z].txStart += Number(startRegion);
+          //           fetchRespond[j].trackData[z].txEnd += Number(startRegion);
+          //         } else {
+          //           fetchRespond[j].trackData[z].txStart = -(
+          //             Number(startRegion) +
+          //             (Number(sectionEnd) -
+          //               Number(fetchRespond[j].trackData[z].txStart))
+          //           );
+          //           fetchRespond[j].trackData[z].txEnd = -(
+          //             Number(startRegion) +
+          //             (Number(sectionEnd) -
+          //               Number(fetchRespond[j].trackData[z].txEnd))
+          //           );
+          //         }
+          //       }
+          //     } else if (trackName === "bed") {
+          //       for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
+          //         if (trackSide === "right") {
+          //           fetchRespond[j].trackData[z].start += Number(startRegion);
+          //           fetchRespond[j].trackData[z].end += Number(startRegion);
+          //         } else {
+          //           fetchRespond[j].trackData[z].start = -(
+          //             Number(startRegion) +
+          //             (Number(sectionEnd) -
+          //               Number(fetchRespond[j].trackData[z].start))
+          //           );
+          //           fetchRespond[j].trackData[z].end = -(
+          //             Number(startRegion) +
+          //             (Number(sectionEnd) -
+          //               Number(fetchRespond[j].trackData[z].end))
+          //           );
+          //         }
+          //       }
+          //     } else {
+          //       for (let z = 0; z < fetchRespond[j].trackData.length; z++) {
+          //         if (trackSide === "right") {
+          //           fetchRespond[j].trackData[z].start += Number(startRegion);
+          //           fetchRespond[j].trackData[z].end += Number(startRegion);
+          //         } else {
+          //           fetchRespond[j].trackData[z].start = -(
+          //             Number(startRegion) +
+          //             (Number(sectionEnd) -
+          //               Number(fetchRespond[j].trackData[z].start))
+          //           );
+          //           fetchRespond[j].trackData[z].end = -(
+          //             Number(startRegion) +
+          //             (Number(sectionEnd) -
+          //               Number(fetchRespond[j].trackData[0][z].end))
+          //           );
+          //         }
+          //       }
+          //     }
+          //   }
+
+          //   tempObj[trackName] = tempObj[trackName].concat(
+          //     fetchRespond[j].trackData
+          //   );
+          // }
 
           // we use 0 index because those fetch data come in Array<Array> so change this later to make it
           // better
         } catch {}
+
+        // if (initial === 0) {
+        //   tempObj["initial"] = 0;
+        // } else {
+        //   tempObj["initial"] = 1;
+
+        //   minBp.current = minBp.current - bpRegionSize;
+        // }
+        // console.log(tempObj, "old");
+        // setTrackData({ ...tempObj });
+        // isLoading.current = false;
       }
-
-      if (initial === 0) {
-        tempObj["initial"] = 0;
-      } else {
-        tempObj["initial"] = 1;
-
-        minBp.current = minBp.current - bpRegionSize;
-      }
-
-      setTrackData({ ...tempObj });
-      isLoading.current = false;
     }
   }
   function handleDelete(id: number) {
@@ -742,7 +774,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         component: componentMap[genome.defaultTracks[i].name],
       });
     }
-    console.log(genome.defaultTracks);
     setTrackComponents([...newTrackComponents]);
     fetchGenomeData(1, "right");
   }, []);
