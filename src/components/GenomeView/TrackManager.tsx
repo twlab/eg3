@@ -475,6 +475,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // chr region adn their genomic interval
   //step 2 in the worker sent the region array to the fetch functions,
   // step 3 map and fetch each region from the array, returns flatten which means all the interval will be all in one array
+  // FIX WINDOWWIDTH COUNTING THE SCROLL BAR!!! LIKE IN HPCR
 
   async function fetchGenomeData(initial: number = 0, trackSide) {
     let navContextCoord = HG38.navContext.parse(
@@ -517,17 +518,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (initial === 2 || initial === 1) {
       let tmpData2 = {};
       let sentData = false;
-      console.log(genome);
+
       await Promise.all(
         genome.defaultTracks.map((item, index) => {
           const trackName = item.name;
-          if (
-            (trackName === "genomealign" || trackName === "hic") &&
-            !sentData
-          ) {
+          if (!sentData) {
             sentData = true;
             worker.postMessage({
-              trackArray: genome.defaultTracks,
+              trackArray: genome.defaultTracks.filter((items, index) => {
+                return items.name === "genomealign" || items.name === "hic";
+              }),
               // TO DO?????????????need to sent loci as a array of all chr regions, after converting it from navcoord
               loci: {
                 chr: region,
@@ -732,6 +732,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [isDragging]);
 
   useEffect(() => {
+    console.log(windowWidth);
     let newTrackComponents: Array<any> = [];
     for (let i = 0; i < genome.defaultTracks.length; i++) {
       const uniqueKey = uuidv4();
@@ -752,7 +753,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-        width: "100%",
+        width: windowWidth,
 
         margin: "auto",
       }}
