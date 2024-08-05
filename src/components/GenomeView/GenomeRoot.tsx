@@ -168,131 +168,128 @@ function GenomeHub(props: any) {
     return new NavigationContext("HG38", features);
   }
   useEffect(() => {
-    async function handler() {
-      // const storedArray = sessionStorage.getItem("myArray");
-      // const chrOrderStorage = sessionStorage.getItem("chrOrder");
-      // if (storedArray !== null) {
-      //   const parsedArray = JSON.parse(storedArray);
-      //   if (chrOrderStorage !== null) {
-      //     setItems([...JSON.parse(chrOrderStorage)]);
-      //     parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
-      //   }
-      //   setGenomeList(new Array<any>(parsedArray));
-      // } else
-      if (props.selectedGenome.length !== 0) {
-        getSelectedGenome();
-      } else {
-        let chrObj = {};
-        for (const chromosome of ChromosomeData["HG38"]) {
-          chrObj[chromosome.getName()] = chromosome.getLength();
-        }
-        // let straw = new HicStraw({
-        //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-        // });
-        // let metadata = straw.getMetaData();
-        // let normOptions = straw.getNormalizationOptions();
-        let featureArray = makeNavContext("HG38");
-
-        let visData: ViewExpansion = {
-          visWidth: size.width * 0.8 * 3,
-          visRegion: new DisplayedRegionModel(
-            HG38.navContext,
-            HG38.defaultRegion.start -
-              (HG38.defaultRegion.end - HG38.defaultRegion.start),
-            HG38.defaultRegion.end +
-              (HG38.defaultRegion.end - HG38.defaultRegion.start)
-          ),
-          viewWindow: new OpenInterval(size.width * 0.8, size.width * 0.8 * 2),
-          viewWindowRegion: new DisplayedRegionModel(
-            HG38.navContext,
-            HG38.defaultRegion.start,
-            HG38.defaultRegion.end
-          ),
-        };
-
-        let testGen: any = {
-          name: "hg38",
-          species: "human",
-          visData,
-          // testing mutiple chr 'chr7:150924404-152924404'
-
-          //chr7:27053397-27373765
-          // chr7:10000-20000
-          //testing finemode  27213325-27213837
-          //chr7:159159564-chr8:224090
-          featureArray,
-          defaultRegion: "chr7:27053397-27373765",
-          chrOrder: items,
-          chromosomes: chrObj,
-          defaultTracks: [
-            {
-              type: "geneAnnotation",
-              name: "refGene",
-              genome: "hg38",
-            },
-            // {
-            //   name: "bed",
-            //   genome: "hg19",
-            //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-            // },
-
-            {
-              name: "bigWig",
-              genome: "hg19",
-              url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-            },
-
-            {
-              name: "dynseq",
-              genome: "hg19",
-              url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-            },
-            {
-              name: "methylc",
-              genome: "hg19",
-              url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-            },
-            {
-              name: "hic",
-              url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-              genome: "hg19",
-            },
-            {
-              name: "hic",
-              url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-              genome: "hg19",
-            },
-            {
-              name: "genomealign",
-              genome: "hg38",
-              url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-              trackModel: {
-                name: "hg38tomm10",
-                label: "Query mouse mm10 to hg38 blastz",
-                querygenome: "mm10",
-                filetype: "genomealign",
-                url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-              },
-            },
-          ],
-          annotationTrackData: AnnotationTrackData["HG19"],
-          publicHubData: PublicHubAllData["HG19"]["publicHubData"],
-          publicHubList: PublicHubAllData["HG19"]["publicHubList"],
-          twoBitURL: TwoBitUrlData["HG19"],
-        };
-        setGenomeList([...genomeList, testGen]);
-        // setTrackManagerView(
-        //   <TrackManager
-        //     currGenome={testGen}
-        //     addTrack={addTrack}
-        //     startBp={startBp}
-        //   />
-        // );
-
-        // }
+    // const storedArray = sessionStorage.getItem("myArray");
+    // const chrOrderStorage = sessionStorage.getItem("chrOrder");
+    // if (storedArray !== null) {
+    //   const parsedArray = JSON.parse(storedArray);
+    //   if (chrOrderStorage !== null) {
+    //     setItems([...JSON.parse(chrOrderStorage)]);
+    //     parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
+    //   }
+    //   setGenomeList(new Array<any>(parsedArray));
+    // } else
+    if (props.selectedGenome.length !== 0) {
+      getSelectedGenome();
+    } else {
+      let chrObj = {};
+      for (const chromosome of ChromosomeData["HG38"]) {
+        chrObj[chromosome.getName()] = chromosome.getLength();
       }
+      // let straw = new HicStraw({
+      //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+      // });
+      // let metadata = straw.getMetaData();
+      // let normOptions = straw.getNormalizationOptions();
+      let featureArray = makeNavContext("HG38");
+
+      let visData: ViewExpansion = {
+        visWidth: size.width * 0.8 * 3,
+        visRegion: new DisplayedRegionModel(
+          HG38.navContext,
+          HG38.defaultRegion.start -
+            (HG38.defaultRegion.end - HG38.defaultRegion.start),
+          HG38.defaultRegion.end +
+            (HG38.defaultRegion.end - HG38.defaultRegion.start)
+        ),
+        viewWindow: new OpenInterval(size.width * 0.8, size.width * 0.8 * 2),
+        viewWindowRegion: new DisplayedRegionModel(
+          HG38.navContext,
+          HG38.defaultRegion.start,
+          HG38.defaultRegion.end
+        ),
+      };
+
+      let testGen: any = {
+        name: "hg38",
+        species: "human",
+        visData,
+        // testing mutiple chr 'chr7:150924404-152924404'
+
+        //chr7:27053397-27373765
+        // chr7:10000-20000
+        //testing finemode  27213325-27213837
+        //chr7:159159564-chr8:224090
+        featureArray,
+        defaultRegion: "chr7:27053397-27373765",
+        chrOrder: items,
+        chromosomes: chrObj,
+        defaultTracks: [
+          {
+            type: "geneAnnotation",
+            name: "refGene",
+            genome: "hg38",
+          },
+          // {
+          //   name: "bed",
+          //   genome: "hg19",
+          //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          // },
+
+          {
+            name: "bigWig",
+            genome: "hg19",
+            url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+          },
+
+          {
+            name: "dynseq",
+            genome: "hg19",
+            url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+          },
+          {
+            name: "methylc",
+            genome: "hg19",
+            url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+          },
+          {
+            name: "hic",
+            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+            genome: "hg19",
+          },
+          {
+            name: "hic",
+            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+            genome: "hg19",
+          },
+          {
+            name: "genomealign",
+            genome: "hg38",
+            url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+            trackModel: {
+              name: "hg38tomm10",
+              label: "Query mouse mm10 to hg38 blastz",
+              querygenome: "mm10",
+              filetype: "genomealign",
+              url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+            },
+          },
+        ],
+        annotationTrackData: AnnotationTrackData["HG19"],
+        publicHubData: PublicHubAllData["HG19"]["publicHubData"],
+        publicHubList: PublicHubAllData["HG19"]["publicHubList"],
+        twoBitURL: TwoBitUrlData["HG19"],
+      };
+      setGenomeList(new Array<any>(testGen));
+      // setTrackManagerView(
+      //   <TrackManager
+      //     currGenome={testGen}
+      //     addTrack={addTrack}
+      //     startBp={startBp}
+      //   />
+      // );
+
+      // }
     }
-    handler();
   }, []);
 
   useEffect(() => {
