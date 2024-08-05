@@ -687,12 +687,12 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             : " "}
         </div>
       </div>
-      <button
+      {/* <button
         style={{ display: "flex", position: "relative" }}
         onClick={() => handleDelete(trackIdx)}
       >
         Delete
-      </button>
+      </button> */}
     </div>
   );
 });

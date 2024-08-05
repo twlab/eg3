@@ -16,6 +16,7 @@ import Feature from "../../models/Feature";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 import HG38 from "../../models/genomes/hg38/hg38";
+import useResizeObserver from "./Resize";
 interface ViewExpansion {
   /**
    * Total width, in pixels, of the expanded view
@@ -49,14 +50,14 @@ export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 // sent track type json to the the track manager to decide what track to display
 // using track type sent use the indicator to use the right methods from json fetch and setstrand.
 //
-const windowWidth = window.innerWidth;
+
 function GenomeHub(props: any) {
   const [items, setItems] = useState(chrType);
   const [genomeList, setGenomeList] = useState<Array<any>>(
     props.selectedGenome
   );
   const [TrackManagerView, setTrackManagerView] = useState<any>();
-
+  const [ref, size] = useResizeObserver();
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
@@ -193,7 +194,7 @@ function GenomeHub(props: any) {
         let featureArray = makeNavContext("HG38");
 
         let visData: ViewExpansion = {
-          visWidth: windowWidth * 3,
+          visWidth: size.width * 0.8 * 3,
           visRegion: new DisplayedRegionModel(
             HG38.navContext,
             HG38.defaultRegion.start -
@@ -201,7 +202,7 @@ function GenomeHub(props: any) {
             HG38.defaultRegion.end +
               (HG38.defaultRegion.end - HG38.defaultRegion.start)
           ),
-          viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+          viewWindow: new OpenInterval(size.width * 0.8, size.width * 0.8 * 2),
           viewWindowRegion: new DisplayedRegionModel(
             HG38.navContext,
             HG38.defaultRegion.start,
@@ -220,7 +221,7 @@ function GenomeHub(props: any) {
           //testing finemode  27213325-27213837
           //chr7:159159564-chr8:224090
           featureArray,
-          defaultRegion: "chr7:150924404-152924404",
+          defaultRegion: "chr7:27053397-27373765",
           chrOrder: items,
           chromosomes: chrObj,
           defaultTracks: [
@@ -302,20 +303,30 @@ function GenomeHub(props: any) {
             genome={genomeList[0]}
             addTrack={addTrack}
             startBp={startBp}
-            windowWidth={windowWidth}
+            windowWidth={size}
           />
         );
       }
     }
     handler();
   }, [genomeList]);
+  useEffect(() => {
+    if (genomeList.length > 0) {
+      console.log(size);
+      setGenomeList(new Array<any>(genomeList[0]));
+      setTrackManagerView("");
+    }
+  }, [size]);
 
   return (
     <>
       {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
-
+      <div ref={ref} style={{ border: "1px solid black", padding: "10px" }}>
+        <p>Width: {size.width}px</p>
+        <p>Height: {size.height}px</p>
+      </div>
       <div>{TrackManagerView}</div>
     </>
   );

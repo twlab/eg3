@@ -28,45 +28,45 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
   const handleMouseEnter = (e) => {
     if (Object.keys(data).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
-
-      let dataIdxX = Math.floor(e.pageX - rect.left);
+      console.log(e.pageX, rect.left + window.scrollX);
+      let dataIdxX = Math.ceil(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
-      if (dataIdxX < windowWidth) {
-        setPosition({
-          ...rectPosition,
-          top: rect.bottom,
-          left: rect.left,
-          right: rect.right,
-          dataIdxX: dataIdxX,
-          dataIdxY: dataIdxY,
-          toolTip: (
-            <div>
-              <div>Forward</div>
-              depth: {data.canvasData[dataIdxX].forward.depth}
-              {data.canvasData[dataIdxX].forward.contextValues.map(
-                (item, index) => (
-                  <div key={index}>
-                    {item.context}: {item.value}
-                  </div>
-                )
-              )}
-              <div>________</div>
-              <div>Reverse</div>
-              depth: {data.canvasData[dataIdxX].reverse.depth}
-              {data.canvasData[dataIdxX].reverse.contextValues.map(
-                (item, index) => (
-                  <div key={index}>
-                    {item.context}: {item.value}
-                  </div>
-                )
-              )}
-            </div>
-          ),
-        });
-        setIsVisible(true);
-      }
+
+      console.log(dataIdxX);
+      setPosition({
+        ...rectPosition,
+        top: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        dataIdxX: dataIdxX,
+        dataIdxY: dataIdxY,
+        toolTip: (
+          <div>
+            <div>Forward</div>
+            depth: {data.canvasData[dataIdxX].forward.depth}
+            {data.canvasData[dataIdxX].forward.contextValues.map(
+              (item, index) => (
+                <div key={index}>
+                  {item.context}: {item.value}
+                </div>
+              )
+            )}
+            <div>________</div>
+            <div>Reverse</div>
+            depth: {data.canvasData[dataIdxX].reverse.depth}
+            {data.canvasData[dataIdxX].reverse.contextValues.map(
+              (item, index) => (
+                <div key={index}>
+                  {item.context}: {item.value}
+                </div>
+              )
+            )}
+          </div>
+        ),
+      });
+      setIsVisible(true);
     }
   };
   // when creating mouse behavior and events for separate component you have to create handler function outside the useeffect or else state is based

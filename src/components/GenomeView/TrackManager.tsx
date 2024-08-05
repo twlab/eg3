@@ -18,10 +18,11 @@ import { ViewExpansion } from "../../models/RegionExpander";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import HG38 from "../../models/genomes/hg38/hg38";
 import OpenInterval from "../../models/OpenInterval";
-import { handleData } from "./WorkerFactory";
+
 import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
+
 const worker = new Worker(
   new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
   {
@@ -114,7 +115,7 @@ interface TrackManagerProps {
   genome: { [key: string]: any };
   addTrack: (track: any) => void;
   startBp: (bp: string) => void;
-  windowWidth: number;
+  windowWidth: { [key: string]: any };
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genome,
@@ -142,7 +143,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const leftStartCoord = Number(leftStartStr);
   const rightStartCoord = Number(rightStartStr);
   const bpRegionSize = rightStartCoord - leftStartCoord;
-  const bpToPx = bpRegionSize / windowWidth;
+  const bpToPx = bpRegionSize / windowWidth.width;
   let allChrData = genome.chromosomes;
   let chrData: Array<any> = [];
   let chrLength: Array<any> = [];
@@ -176,7 +177,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
   const [side, setSide] = useState("right");
-
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
@@ -295,7 +295,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       console.log("trigger right");
       setRightSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(windowWidth);
+        t.push(windowWidth.width);
         return t;
       });
 
@@ -310,7 +310,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       console.log("trigger left");
       setLeftSectionSize((prevStrandInterval) => {
         const t = [...prevStrandInterval];
-        t.push(windowWidth);
+        t.push(windowWidth.width);
         return t;
       });
 
@@ -500,13 +500,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       navContextCoord.end - navContextCoord.start
     );
     let newVisData: ViewExpansion = {
-      visWidth: windowWidth * 3,
+      visWidth: windowWidth.width * 3,
       visRegion: new DisplayedRegionModel(
         HG38.navContext,
         navContextCoord.start - (navContextCoord.end - navContextCoord.start),
         navContextCoord.end + (navContextCoord.end - navContextCoord.start)
       ),
-      viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+      viewWindow: new OpenInterval(windowWidth.width, windowWidth.width * 2),
       viewWindowRegion: new DisplayedRegionModel(
         HG38.navContext,
         navContextCoord.start,
@@ -784,8 +784,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         flexDirection: "row",
         whiteSpace: "nowrap",
         //not using flex allows us to keep the position of the track
-        width: windowWidth,
-
+        width: windowWidth.width,
+        height: windowWidth.height,
         margin: "auto",
       }}
     >
@@ -825,7 +825,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           // div width has to match a single track width or the alignment will be off
           // in order to smoothly tranverse need to fetch info offscreen maybe?????
           // 1. try add more blocks so the fetch is offscreen
-          width: `${windowWidth}px`,
+          width: `${windowWidth.width}px`,
           backgroundColor: "gainsboro",
 
           overflowX: "hidden",
@@ -852,7 +852,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 bpToPx={bpToPx}
                 trackData={trackData}
                 side={side}
-                windowWidth={windowWidth}
+                windowWidth={windowWidth.width}
                 dragXDist={dragX.current}
                 handleDelete={handleDelete}
                 // movement type track data

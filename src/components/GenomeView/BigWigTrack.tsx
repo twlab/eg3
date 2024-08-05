@@ -268,7 +268,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   }, [leftTrackGenes]);
   return (
     <div style={{ display: "flex" }}>
-      <button onClick={() => handleDelete(trackIdx)}>Delete</button>
+      {/* <button onClick={() => handleDelete(trackIdx)}>Delete</button> */}
       {side === "right"
         ? canvasRefR.map((item, index) => (
             <canvas
