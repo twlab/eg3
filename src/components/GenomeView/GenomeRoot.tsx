@@ -17,6 +17,7 @@ import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 import HG38 from "../../models/genomes/hg38/hg38";
 import { v4 as uuidv4 } from "uuid";
+import useResizeObserver from "./Resize";
 interface ViewExpansion {
   /**
    * Total width, in pixels, of the expanded view
@@ -56,7 +57,7 @@ function GenomeHub(props: any) {
   const [genomeList, setGenomeList] = useState<Array<any>>(
     props.selectedGenome
   );
-
+  const [ref, size] = useResizeObserver();
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
@@ -165,6 +166,7 @@ function GenomeHub(props: any) {
     });
     return new NavigationContext("HG38", features);
   }
+  useEffect(() => {}, [size]);
   useEffect(() => {
     // const storedArray = sessionStorage.getItem("myArray");
     // const chrOrderStorage = sessionStorage.getItem("chrOrder");
@@ -288,6 +290,17 @@ function GenomeHub(props: any) {
       {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
+      <div
+        ref={ref as React.RefObject<HTMLDivElement>}
+        style={{
+          border: "1px solid black",
+          paddingLeft: "20px",
+          paddingRight: "20px",
+        }}
+      >
+        <p>Width: {size.width}px</p>
+        <p>Height: {size.height}px</p>
+      </div>
       {genomeList.map((item, index) => (
         <TrackManager
           key={index}

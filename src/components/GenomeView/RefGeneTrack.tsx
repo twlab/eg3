@@ -13,6 +13,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   let start, end;
 
   let result;
+  console.log(trackData);
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
     result = trackData!.refGene;
