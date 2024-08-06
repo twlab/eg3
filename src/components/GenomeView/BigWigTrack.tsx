@@ -20,7 +20,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
     result = trackData!.bigWig;
-    console.log(result);
+
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -243,7 +243,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
 
   useEffect(() => {
     if (trackData!.side === "right") {
-      console.log(rightTrackGenes);
       fetchGenomeData();
     } else if (trackData!.side === "left") {
       fetchGenomeData2();

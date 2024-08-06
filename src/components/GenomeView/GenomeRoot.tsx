@@ -166,7 +166,13 @@ function GenomeHub(props: any) {
     });
     return new NavigationContext("HG38", features);
   }
-  useEffect(() => {}, [size]);
+  useEffect(() => {
+    let tempGenomeArr = [...genomeList];
+    for (let genome of tempGenomeArr) {
+      genome["id"] = uuidv4();
+    }
+    setGenomeList([...tempGenomeArr]);
+  }, [size]);
   useEffect(() => {
     // const storedArray = sessionStorage.getItem("myArray");
     // const chrOrderStorage = sessionStorage.getItem("chrOrder");
