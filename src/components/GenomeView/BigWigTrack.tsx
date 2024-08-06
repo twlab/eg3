@@ -3,9 +3,6 @@ import React, { createRef, memo } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { useEffect, useRef, useState } from "react";
 import worker_script from "../../worker/bigWigWorker";
-let worker: Worker;
-
-worker = new Worker(worker_script);
 
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   bpRegionSize,
@@ -15,6 +12,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   windowWidth = 0,
   handleDelete,
   trackIdx,
+  id,
 }) {
   let start, end;
 
@@ -22,7 +20,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
     result = trackData!.bigWig;
-
+    console.log(result);
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
@@ -106,6 +104,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     }
 
     const newCanvasRef = createRef();
+    let worker: Worker;
+
+    worker = new Worker(worker_script);
     // fix fetch data to return only one data because right now we sent mutiple fetched data
     worker.postMessage({
       trackGene: result,
@@ -135,6 +136,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         ]);
         overflowStrand2.current = {};
       }
+      worker.terminate();
     };
     setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
 
@@ -177,7 +179,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     }
 
     const newCanvasRef = createRef();
+    let worker: Worker;
 
+    worker = new Worker(worker_script);
     worker.postMessage({
       trackGene: result,
       windowWidth: windowWidth,
@@ -194,6 +198,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         ...leftTrackGenes,
         { canvasData: converted, scaleData: scales },
       ]);
+      worker.terminate();
     };
     setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
 
@@ -238,6 +243,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
 
   useEffect(() => {
     if (trackData!.side === "right") {
+      console.log(rightTrackGenes);
       fetchGenomeData();
     } else if (trackData!.side === "left") {
       fetchGenomeData2();
@@ -272,7 +278,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       {side === "right"
         ? canvasRefR.map((item, index) => (
             <canvas
-              key={index}
+              key={"" + index + id}
               ref={item}
               height={"40"}
               width={`${windowWidth}px`}
@@ -281,7 +287,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           ))
         : canvasRefL.map((item, index) => (
             <canvas
-              key={canvasRefL.length - index - 1}
+              key={"" + (canvasRefL.length - index - 1) + id}
               ref={canvasRefL[canvasRefL.length - index - 1]}
               height={"40"}
               width={`${windowWidth}px`}

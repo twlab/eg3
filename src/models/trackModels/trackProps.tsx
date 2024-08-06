@@ -1,6 +1,7 @@
 import { ViewExpansion } from "../RegionExpander";
 
 export interface TrackProps {
+  id: String;
   trackIdx: number;
   bpRegionSize: number;
   bpToPx: number;

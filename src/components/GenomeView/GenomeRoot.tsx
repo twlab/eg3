@@ -9,14 +9,14 @@ import { ChromosomeData } from "../../localdata/chromosomedata";
 import { AnnotationTrackData } from "../../localdata/annotationtrackdata";
 import { PublicHubAllData } from "../../localdata/publichub";
 import { TwoBitUrlData } from "../../localdata/twobiturl";
-import HicStraw from "hic-straw/dist/hic-straw.min.js";
+
 import NavigationContext from "../../models/NavigationContext";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 import HG38 from "../../models/genomes/hg38/hg38";
-import useResizeObserver from "./Resize";
+import { v4 as uuidv4 } from "uuid";
 interface ViewExpansion {
   /**
    * Total width, in pixels, of the expanded view
@@ -56,25 +56,25 @@ function GenomeHub(props: any) {
   const [genomeList, setGenomeList] = useState<Array<any>>(
     props.selectedGenome
   );
-  const [TrackManagerView, setTrackManagerView] = useState<any>();
-  const { ref, width, height } = useResizeObserver();
+
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
       ...curGen.genome.defaultTracks,
       {
-        name: "bed",
-        url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+        name: "bigWig",
+        genome: "hg19",
+        url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
       },
     ];
-    let newList = [curGen.genome];
+    let newList = curGen.genome;
 
     const serializedArray = JSON.stringify(newList);
 
     sessionStorage.setItem("myArray", serializedArray);
-    setGenomeList([...newList]);
-    setTrackManagerView("");
+    console.log(newList);
+    setGenomeList(new Array<any>(newList));
   }
   function startBp(region: string) {
     let newList = { ...genomeList[0] };
@@ -91,69 +91,67 @@ function GenomeHub(props: any) {
     const serializedArray = JSON.stringify(chrArr);
 
     sessionStorage.setItem("chrOrder", serializedArray);
-    setTrackManagerView("");
   }
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {
       let newList = props.selectedGenome[0];
-
-      (newList.defaultTracks = [
-        {
-          type: "geneAnnotation",
-          name: "refGene",
-          genome: "hg38",
-        },
-        // {
-        //   name: "bed",
-        //   genome: "hg19",
-        //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        // },
-
-        {
-          name: "bigWig",
-          genome: "hg19",
-          url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-        },
-
-        {
-          name: "dynseq",
-          genome: "hg19",
-          url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-        },
-        {
-          name: "methylc",
-          genome: "hg19",
-          url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-        },
-        {
-          name: "hic",
-          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-          genome: "hg19",
-        },
-        {
-          name: "hic",
-          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-          genome: "hg19",
-        },
-        {
-          name: "genomealign",
-          genome: "hg38",
-          url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-          trackModel: {
-            name: "hg38tomm10",
-            label: "Query mouse mm10 to hg38 blastz",
-            querygenome: "mm10",
-            filetype: "genomealign",
-            url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+      (newList["id"] = uuidv4()),
+        (newList.defaultTracks = [
+          {
+            type: "geneAnnotation",
+            name: "refGene",
+            genome: "hg38",
           },
-        },
-      ]),
+          // {
+          //   name: "bed",
+          //   genome: "hg19",
+          //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+          // },
+
+          {
+            name: "bigWig",
+            genome: "hg19",
+            url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+          },
+
+          {
+            name: "dynseq",
+            genome: "hg19",
+            url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+          },
+          {
+            name: "methylc",
+            genome: "hg19",
+            url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+          },
+          {
+            name: "hic",
+            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+            genome: "hg19",
+          },
+          {
+            name: "hic",
+            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+            genome: "hg19",
+          },
+          {
+            name: "genomealign",
+            genome: "hg38",
+            url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+            trackModel: {
+              name: "hg38tomm10",
+              label: "Query mouse mm10 to hg38 blastz",
+              querygenome: "mm10",
+              filetype: "genomealign",
+              url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+            },
+          },
+        ]),
         (newList.chrOrder = items);
       const serializedArray = JSON.stringify(newList);
       sessionStorage.setItem("myArray", serializedArray);
       for (let i = 0; i < props.selectedGenome.length; i++) {
         setGenomeList(new Array<any>(newList));
-        setTrackManagerView("");
       }
     }
   }
@@ -193,7 +191,7 @@ function GenomeHub(props: any) {
       let featureArray = makeNavContext("HG38");
 
       let visData: ViewExpansion = {
-        visWidth: width * 0.8 * 3,
+        visWidth: 1280 * 3,
         visRegion: new DisplayedRegionModel(
           HG38.navContext,
           HG38.defaultRegion.start -
@@ -201,7 +199,7 @@ function GenomeHub(props: any) {
           HG38.defaultRegion.end +
             (HG38.defaultRegion.end - HG38.defaultRegion.start)
         ),
-        viewWindow: new OpenInterval(width * 0.8, width * 0.8 * 2),
+        viewWindow: new OpenInterval(1280 * 0.8, 1280 * 0.8 * 2),
         viewWindowRegion: new DisplayedRegionModel(
           HG38.navContext,
           HG38.defaultRegion.start,
@@ -212,6 +210,7 @@ function GenomeHub(props: any) {
       let testGen: any = {
         name: "hg38",
         species: "human",
+        genomeId: uuidv4(),
         visData,
         // testing mutiple chr 'chr7:150924404-152924404'
 
@@ -280,54 +279,25 @@ function GenomeHub(props: any) {
         twoBitURL: TwoBitUrlData["HG19"],
       };
       setGenomeList(new Array<any>(testGen));
-      setTrackManagerView("");
-      console.log("hey 1");
       // }
     }
   }, []);
-
-  useEffect(() => {
-    if (genomeList.length !== 0 && width > 0) {
-      console.log(window.innerWidth);
-      console.log("wtf 3");
-      setTrackManagerView(
-        <TrackManager
-          genome={genomeList[0]}
-          addTrack={addTrack}
-          startBp={startBp}
-          windowWidth={{ width }}
-        />
-      );
-    }
-  }, [genomeList]);
-  //we have to get the full width including scrollbar because.
-  // on initial width is 0 , then the width of the div will be the full width without scrollbar this will trigger the first render
-  // then it will account for the scroll and change width again causing another rerender and mess up the track components data
-  useEffect(() => {
-    if (genomeList.length > 0 && width > 0) {
-      console.log("hey 2");
-      setGenomeList(new Array<any>(genomeList[0]));
-      setTrackManagerView("");
-    }
-  }, [width]);
 
   return (
     <>
       {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
-      <div
-        ref={ref as React.RefObject<HTMLDivElement>}
-        style={{
-          border: "1px solid black",
-          paddingLeft: "20px",
-          paddingRight: "20px",
-        }}
-      >
-        <p>Width: {width}px</p>
-        <p>Height: {height}px</p>
-      </div>
-      <div>{TrackManagerView}</div>
+      {genomeList.map((item, index) => (
+        <TrackManager
+          key={index}
+          genomeIdx={index}
+          addTrack={addTrack}
+          startBp={startBp}
+          windowWidth={1280}
+          genomeArr={genomeList}
+        />
+      ))}
     </>
   );
 }
