@@ -300,6 +300,9 @@ function GenomeHub(props: any) {
       );
     }
   }, [genomeList]);
+  //we have to get the full width including scrollbar because.
+  // on initial width is 0 , then the width of the div will be the full width without scrollbar this will trigger the first render
+  // then it will account for the scroll and change width again causing another rerender and mess up the track components data
   useEffect(() => {
     if (genomeList.length > 0 && width > 0) {
       console.log("hey 2");
