@@ -65,6 +65,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //useRef to store data between states without re render the component
   const region = useRef("");
   const coord = useRef("");
+  const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
   const bpRegionSize = useRef(0);
@@ -746,7 +747,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     chrIndexRight.current = initialChrIdx.current;
     chrIndexLeft.current = initialChrIdx.current;
-    curVisData.current = genome.visData;
+
     viewRegion.current = genome.defaultRegion;
 
     bpX.current = leftStartCoord.current;

@@ -53,10 +53,9 @@ export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 //
 
 function GenomeHub(props: any) {
+  const initialRender = useRef(true);
   const [items, setItems] = useState(chrType);
-  const [genomeList, setGenomeList] = useState<Array<any>>(
-    props.selectedGenome
-  );
+  const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
@@ -96,58 +95,58 @@ function GenomeHub(props: any) {
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {
       let newList = props.selectedGenome[0];
-      (newList["id"] = uuidv4()),
-        (newList.defaultTracks = [
-          {
-            type: "geneAnnotation",
-            name: "refGene",
-            genome: "hg38",
-          },
-          // {
-          //   name: "bed",
-          //   genome: "hg19",
-          //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-          // },
+      newList["id"] = uuidv4();
+      (newList.defaultTracks = [
+        {
+          type: "geneAnnotation",
+          name: "refGene",
+          genome: "hg38",
+        },
+        // {
+        //   name: "bed",
+        //   genome: "hg19",
+        //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+        // },
 
-          {
-            name: "bigWig",
-            genome: "hg19",
-            url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-          },
+        {
+          name: "bigWig",
+          genome: "hg19",
+          url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+        },
 
-          {
-            name: "dynseq",
-            genome: "hg19",
-            url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-          },
-          {
-            name: "methylc",
-            genome: "hg19",
-            url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-          },
-          {
-            name: "hic",
-            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-            genome: "hg19",
-          },
-          {
-            name: "hic",
-            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-            genome: "hg19",
-          },
-          {
-            name: "genomealign",
-            genome: "hg38",
+        {
+          name: "dynseq",
+          genome: "hg19",
+          url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+        },
+        {
+          name: "methylc",
+          genome: "hg19",
+          url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+        },
+        {
+          name: "hic",
+          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+          genome: "hg19",
+        },
+        {
+          name: "hic",
+          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+          genome: "hg19",
+        },
+        {
+          name: "genomealign",
+          genome: "hg38",
+          url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+          trackModel: {
+            name: "hg38tomm10",
+            label: "Query mouse mm10 to hg38 blastz",
+            querygenome: "mm10",
+            filetype: "genomealign",
             url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-            trackModel: {
-              name: "hg38tomm10",
-              label: "Query mouse mm10 to hg38 blastz",
-              querygenome: "mm10",
-              filetype: "genomealign",
-              url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-            },
           },
-        ]),
+        },
+      ]),
         (newList.chrOrder = items);
       const serializedArray = JSON.stringify(newList);
       sessionStorage.setItem("myArray", serializedArray);
@@ -167,11 +166,25 @@ function GenomeHub(props: any) {
     return new NavigationContext("HG38", features);
   }
   useEffect(() => {
-    let tempGenomeArr = [...genomeList];
-    for (let genome of tempGenomeArr) {
-      genome["id"] = uuidv4();
+    console.log(size, initialRender.current, "count");
+    if (!initialRender.current && genomeList.length > 0) {
+      {
+        let tempGenomeArr = [...genomeList];
+        console.log(tempGenomeArr);
+        for (let genome of tempGenomeArr) {
+          console.log(genome);
+          let newUniqueKey = uuidv4();
+          console.log(newUniqueKey, genome["id"]);
+          genome["id"] = newUniqueKey;
+          genome["size"] = true;
+        }
+
+        console.log(tempGenomeArr);
+        setGenomeList([...tempGenomeArr]);
+      }
+    } else {
+      initialRender.current = false;
     }
-    setGenomeList([...tempGenomeArr]);
   }, [size]);
   useEffect(() => {
     // const storedArray = sessionStorage.getItem("myArray");
@@ -198,28 +211,12 @@ function GenomeHub(props: any) {
       // let normOptions = straw.getNormalizationOptions();
       let featureArray = makeNavContext("HG38");
 
-      let visData: ViewExpansion = {
-        visWidth: 1280 * 3,
-        visRegion: new DisplayedRegionModel(
-          HG38.navContext,
-          HG38.defaultRegion.start -
-            (HG38.defaultRegion.end - HG38.defaultRegion.start),
-          HG38.defaultRegion.end +
-            (HG38.defaultRegion.end - HG38.defaultRegion.start)
-        ),
-        viewWindow: new OpenInterval(1280 * 0.8, 1280 * 0.8 * 2),
-        viewWindowRegion: new DisplayedRegionModel(
-          HG38.navContext,
-          HG38.defaultRegion.start,
-          HG38.defaultRegion.end
-        ),
-      };
-
       let testGen: any = {
         name: "hg38",
         species: "human",
-        genomeId: uuidv4(),
-        visData,
+        id: uuidv4(),
+
+        visData: "",
         // testing mutiple chr 'chr7:150924404-152924404'
 
         //chr7:27053397-27373765
@@ -230,6 +227,7 @@ function GenomeHub(props: any) {
         defaultRegion: "chr7:27053397-27373765",
         chrOrder: items,
         chromosomes: chrObj,
+        size: false,
         defaultTracks: [
           {
             type: "geneAnnotation",
@@ -286,7 +284,8 @@ function GenomeHub(props: any) {
         publicHubList: PublicHubAllData["HG19"]["publicHubList"],
         twoBitURL: TwoBitUrlData["HG19"],
       };
-      setGenomeList(new Array<any>(testGen));
+      console.log("wut2", testGen);
+
       // }
     }
   }, []);
@@ -309,12 +308,12 @@ function GenomeHub(props: any) {
       </div>
       {genomeList.map((item, index) => (
         <TrackManager
-          key={index}
+          key={item.id}
           genomeIdx={index}
           addTrack={addTrack}
           startBp={startBp}
-          windowWidth={1280}
           genomeArr={genomeList}
+          windowWidth={1280}
         />
       ))}
     </>
