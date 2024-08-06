@@ -1,31 +1,35 @@
-import { useState, useEffect, useRef } from "react";
+// useResizeObserver.ts
+import { useEffect, useRef, useState } from "react";
+import { ResizeObserver } from "@juggle/resize-observer";
 
-const useResizeObserver = () => {
-  const [size, setSize] = useState({ width: 0, height: 0 });
+function useResizeObserver(): {
+  ref: React.RefObject<HTMLElement>;
+  width: number;
+  height: number;
+} {
   const ref = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState<number>(0);
+  const [height, setHeight] = useState<number>(0);
 
   useEffect(() => {
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        setSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
+    if (!ref.current) return;
+
+    const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      for (const entry of entries) {
+        // You can access entry.contentRect.width and entry.contentRect.height here
+        setWidth(Math.floor(entry.contentRect.width));
+        setHeight(Math.floor(entry.contentRect.height));
       }
     });
 
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
+    observer.observe(ref.current);
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
+      observer.unobserve(ref.current!);
     };
   }, []);
 
-  return [ref, size] as const;
-};
+  return { ref, width, height };
+}
 
 export default useResizeObserver;

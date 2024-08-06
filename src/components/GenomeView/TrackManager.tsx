@@ -827,7 +827,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           // 1. try add more blocks so the fetch is offscreen
           width: `${windowWidth.width}px`,
           backgroundColor: "gainsboro",
-
+          height: 1000,
           overflowX: "hidden",
           overflowY: "visible",
         }}

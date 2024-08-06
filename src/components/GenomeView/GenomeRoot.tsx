@@ -57,7 +57,7 @@ function GenomeHub(props: any) {
     props.selectedGenome
   );
   const [TrackManagerView, setTrackManagerView] = useState<any>();
-  const [ref, size] = useResizeObserver();
+  const { ref, width, height } = useResizeObserver();
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
@@ -193,7 +193,7 @@ function GenomeHub(props: any) {
       let featureArray = makeNavContext("HG38");
 
       let visData: ViewExpansion = {
-        visWidth: size.width * 0.8 * 3,
+        visWidth: width * 0.8 * 3,
         visRegion: new DisplayedRegionModel(
           HG38.navContext,
           HG38.defaultRegion.start -
@@ -201,7 +201,7 @@ function GenomeHub(props: any) {
           HG38.defaultRegion.end +
             (HG38.defaultRegion.end - HG38.defaultRegion.start)
         ),
-        viewWindow: new OpenInterval(size.width * 0.8, size.width * 0.8 * 2),
+        viewWindow: new OpenInterval(width * 0.8, width * 0.8 * 2),
         viewWindowRegion: new DisplayedRegionModel(
           HG38.navContext,
           HG38.defaultRegion.start,
@@ -280,49 +280,49 @@ function GenomeHub(props: any) {
         twoBitURL: TwoBitUrlData["HG19"],
       };
       setGenomeList(new Array<any>(testGen));
-      // setTrackManagerView(
-      //   <TrackManager
-      //     currGenome={testGen}
-      //     addTrack={addTrack}
-      //     startBp={startBp}
-      //   />
-      // );
-
+      setTrackManagerView("");
+      console.log("hey 1");
       // }
     }
   }, []);
 
   useEffect(() => {
-    async function handler() {
-      if (genomeList.length !== 0) {
-        setTrackManagerView(
-          <TrackManager
-            genome={genomeList[0]}
-            addTrack={addTrack}
-            startBp={startBp}
-            windowWidth={size}
-          />
-        );
-      }
+    if (genomeList.length !== 0 && width > 0) {
+      console.log(window.innerWidth);
+      console.log("wtf 3");
+      setTrackManagerView(
+        <TrackManager
+          genome={genomeList[0]}
+          addTrack={addTrack}
+          startBp={startBp}
+          windowWidth={{ width }}
+        />
+      );
     }
-    handler();
   }, [genomeList]);
   useEffect(() => {
-    if (genomeList.length > 0) {
-      console.log(size);
+    if (genomeList.length > 0 && width > 0) {
+      console.log("hey 2");
       setGenomeList(new Array<any>(genomeList[0]));
       setTrackManagerView("");
     }
-  }, [size]);
+  }, [width]);
 
   return (
     <>
       {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
-      <div ref={ref} style={{ border: "1px solid black", padding: "10px" }}>
-        <p>Width: {size.width}px</p>
-        <p>Height: {size.height}px</p>
+      <div
+        ref={ref as React.RefObject<HTMLDivElement>}
+        style={{
+          border: "1px solid black",
+          paddingLeft: "20px",
+          paddingRight: "20px",
+        }}
+      >
+        <p>Width: {width}px</p>
+        <p>Height: {height}px</p>
       </div>
       <div>{TrackManagerView}</div>
     </>
