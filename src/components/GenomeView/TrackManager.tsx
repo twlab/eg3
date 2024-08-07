@@ -726,7 +726,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (trackManagerId.current === "") {
       // on initial and when our genome data changes we set the default values here
-      console.log("hey", genomeArr);
+
       let genome = genomeArr[genomeIdx];
 
       [region.current, coord.current] = genome.defaultRegion.split(":");

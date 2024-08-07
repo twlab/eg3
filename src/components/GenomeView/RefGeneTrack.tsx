@@ -19,13 +19,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     start = Number(start);
     end = Number(end);
-    console.log(
-      bpRegionSize,
-      windowWidth,
-      bpRegionSize / windowWidth,
-      start,
-      end
-    );
+    console.log("checking", result, start, end);
     console.log(bpToPx);
   }
 
