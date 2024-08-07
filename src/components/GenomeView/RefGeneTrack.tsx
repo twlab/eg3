@@ -13,14 +13,21 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   let start, end;
 
   let result;
-
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
     result = trackData!.refGene;
-  }
 
-  start = Number(start);
-  end = Number(end);
+    start = Number(start);
+    end = Number(end);
+    console.log(
+      bpRegionSize,
+      windowWidth,
+      bpRegionSize / windowWidth,
+      start,
+      end
+    );
+    console.log(bpToPx);
+  }
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -485,18 +492,27 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 />
               );
             }
-
+            if (
+              (singleStrand.txStart - trackGeneData.startTrackPos) / bpToPx <
+              0
+            ) {
+              console.log(
+                trackData!.refGene,
+                singleStrand.txStart,
+                trackGeneData.startTrackPos
+              );
+            }
             strandHtml.push(
               <React.Fragment key={singleStrand.txStart + singleStrand.txEnd}>
                 {children.map((item, index) => item)}
                 <line
                   x1={`${
                     (singleStrand.txStart - trackGeneData.startTrackPos) /
-                    bpToPx!
+                    bpToPx
                   }`}
                   y1={`${yCoord}`}
                   x2={`${
-                    (singleStrand.txEnd - trackGeneData.startTrackPos) / bpToPx!
+                    (singleStrand.txEnd - trackGeneData.startTrackPos) / bpToPx
                   }`}
                   y2={`${yCoord}`}
                   stroke={`${strandColor}`}
@@ -505,9 +521,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 {exonIntervals.map((coord, index) => (
                   <line
                     key={index}
-                    x1={`${(coord[0] - trackGeneData.startTrackPos) / bpToPx!}`}
+                    x1={`${(coord[0] - trackGeneData.startTrackPos) / bpToPx}`}
                     y1={`${yCoord}`}
-                    x2={`${(coord[1] - trackGeneData.startTrackPos) / bpToPx!}`}
+                    x2={`${(coord[1] - trackGeneData.startTrackPos) / bpToPx}`}
                     y2={`${yCoord}`}
                     stroke={`${strandColor}`}
                     strokeWidth="7"

@@ -14,4 +14,6 @@ export interface TrackProps {
   featureArray?: any;
   genomeName?: string;
   visData?: ViewExpansion;
+  trackManagerId: string;
+  trackComponents: any;
 }

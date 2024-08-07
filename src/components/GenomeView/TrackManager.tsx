@@ -20,19 +20,6 @@ import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
 
-const worker = new Worker(
-  new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
-  {
-    type: "module",
-  }
-);
-const infiniteScrollWorker = new Worker(
-  new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
-  {
-    type: "module",
-  }
-);
-
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
   refGene: RefGeneTrack,
@@ -65,6 +52,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //useRef to store data between states without re render the component
   const region = useRef("");
   const coord = useRef("");
+  const worker = useRef(
+    new Worker(
+      new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
+      {
+        type: "module",
+      }
+    )
+  );
+  const infiniteScrollWorker = useRef(
+    new Worker(
+      new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
+      {
+        type: "module",
+      }
+    )
+  );
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
@@ -472,7 +475,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       genomeArr[genomeIdx].defaultTracks.map((item, index) => {
         if (!sentData) {
           sentData = true;
-          worker.postMessage({
+          worker.current.postMessage({
             trackArray: genomeArr[genomeIdx].defaultTracks.filter(
               (items, index) => {
                 return items.name === "genomealign" || items.name === "hic";
@@ -497,7 +500,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             initial,
           });
           if (initial === 1) {
-            worker.onmessage = (event) => {
+            worker.current.onmessage = (event) => {
               event.data.fetchResults.map((item, index) => {
                 tmpData2[item.nameResult] = {
                   fetchData: item.result,
@@ -544,7 +547,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genomeArr[genomeIdx].defaultTracks.map((item, index) => {
             if (!sentData) {
               sentData = true;
-              infiniteScrollWorker.postMessage({
+              infiniteScrollWorker.current.postMessage({
                 trackArray: genomeArr[genomeIdx].defaultTracks.filter(
                   (items, index) => {
                     return items.name !== "genomealign" && items.name !== "hic";
@@ -562,7 +565,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 initial,
               });
               if (initial === 1) {
-                infiniteScrollWorker.onmessage = (event) => {
+                infiniteScrollWorker.current.onmessage = (event) => {
                   event.data.fetchResults.map(
                     (item, index) => (tempObj[item.name] = item.result)
                   );
@@ -721,62 +724,65 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, [isDragging]);
   useEffect(() => {
-    // on initial and when our genome data changes we set the default values here
-    console.log("hey", genomeArr);
-    let genome = genomeArr[genomeIdx];
+    if (trackManagerId.current === "") {
+      // on initial and when our genome data changes we set the default values here
+      console.log("hey", genomeArr);
+      let genome = genomeArr[genomeIdx];
 
-    [region.current, coord.current] = genome.defaultRegion.split(":");
+      [region.current, coord.current] = genome.defaultRegion.split(":");
 
-    const [leftStartStr, rightStartStr] = coord.current.split("-");
+      const [leftStartStr, rightStartStr] = coord.current.split("-");
 
-    leftStartCoord.current = Number(leftStartStr);
-    rightStartCoord.current = Number(rightStartStr);
-    bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
-    bpToPx.current = bpRegionSize.current / windowWidth;
+      leftStartCoord.current = Number(leftStartStr);
+      rightStartCoord.current = Number(rightStartStr);
+      bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
+      bpToPx.current = bpRegionSize.current / windowWidth;
 
-    let allChrData = genome.chromosomes;
+      let allChrData = genome.chromosomes;
 
-    for (const chromosome of genome.chrOrder) {
-      if (allChrData[chromosome] !== undefined) {
-        chrData.current.push(chromosome);
-        chrLength.current.push(allChrData[chromosome]);
+      for (const chromosome of genome.chrOrder) {
+        if (allChrData[chromosome] !== undefined) {
+          chrData.current.push(chromosome);
+          chrLength.current.push(allChrData[chromosome]);
+        }
       }
-    }
 
-    initialChrIdx.current = chrData.current.indexOf(region.current);
+      initialChrIdx.current = chrData.current.indexOf(region.current);
 
-    chrIndexRight.current = initialChrIdx.current;
-    chrIndexLeft.current = initialChrIdx.current;
+      chrIndexRight.current = initialChrIdx.current;
+      chrIndexLeft.current = initialChrIdx.current;
 
-    viewRegion.current = genome.defaultRegion;
+      viewRegion.current = genome.defaultRegion;
 
-    bpX.current = leftStartCoord.current;
-    maxBp.current = rightStartCoord.current;
-    minBp.current = leftStartCoord.current;
-    // go through genome defaultTrack to see what track components we need and give each component
-    // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
+      bpX.current = leftStartCoord.current;
+      maxBp.current = rightStartCoord.current;
+      minBp.current = leftStartCoord.current;
+      // go through genome defaultTrack to see what track components we need and give each component
+      // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
 
-    let newTrackComponents: Array<any> = [];
-    for (let i = 0; i < genome.defaultTracks.length; i++) {
-      if (!genome.defaultTracks[i]["id"]) {
-        const uniqueKey = uuidv4();
-        genome.defaultTracks[i]["id"] = uniqueKey;
-        newTrackComponents.push({
-          id: uniqueKey,
-          component: componentMap[genome.defaultTracks[i].name],
-        });
-      } else {
-        newTrackComponents.push({
-          id: genome.defaultTracks[i]["id"],
-          component: componentMap[genome.defaultTracks[i].name],
-        });
+      let newTrackComponents: Array<any> = [];
+      for (let i = 0; i < genome.defaultTracks.length; i++) {
+        if (!genome.defaultTracks[i]["id"]) {
+          const uniqueKey = uuidv4();
+          genome.defaultTracks[i]["id"] = uniqueKey;
+          newTrackComponents.push({
+            id: uniqueKey,
+            component: componentMap[genome.defaultTracks[i].name],
+          });
+        } else {
+          newTrackComponents.push({
+            id: genome.defaultTracks[i]["id"],
+            component: componentMap[genome.defaultTracks[i].name],
+          });
+        }
       }
-    }
-    setTrackComponents([...newTrackComponents]);
+      setTrackComponents([...newTrackComponents]);
 
-    if (initialStart.current) {
-      fetchGenomeData(1, "right");
-      initialStart.current = false;
+      if (initialStart.current) {
+        fetchGenomeData(1, "right");
+        initialStart.current = false;
+      }
+      trackManagerId.current = genome.id;
     }
   }, [genomeArr]);
 

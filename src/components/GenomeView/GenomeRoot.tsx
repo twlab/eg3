@@ -73,7 +73,7 @@ function GenomeHub(props: any) {
     const serializedArray = JSON.stringify(newList);
 
     sessionStorage.setItem("myArray", serializedArray);
-    console.log(newList);
+
     setGenomeList(new Array<any>(newList));
   }
   function startBp(region: string) {
@@ -166,27 +166,6 @@ function GenomeHub(props: any) {
     return new NavigationContext("HG38", features);
   }
   useEffect(() => {
-    console.log(size, initialRender.current, "count");
-    if (!initialRender.current && genomeList.length > 0) {
-      {
-        let tempGenomeArr = [...genomeList];
-        console.log(tempGenomeArr);
-        for (let genome of tempGenomeArr) {
-          console.log(genome);
-          let newUniqueKey = uuidv4();
-          console.log(newUniqueKey, genome["id"]);
-          genome["id"] = newUniqueKey;
-          genome["size"] = true;
-        }
-
-        console.log(tempGenomeArr);
-        setGenomeList([...tempGenomeArr]);
-      }
-    } else {
-      initialRender.current = false;
-    }
-  }, [size]);
-  useEffect(() => {
     // const storedArray = sessionStorage.getItem("myArray");
     // const chrOrderStorage = sessionStorage.getItem("chrOrder");
     // if (storedArray !== null) {
@@ -200,95 +179,103 @@ function GenomeHub(props: any) {
     if (props.selectedGenome.length !== 0) {
       getSelectedGenome();
     } else {
-      let chrObj = {};
-      for (const chromosome of ChromosomeData["HG38"]) {
-        chrObj[chromosome.getName()] = chromosome.getLength();
-      }
-      // let straw = new HicStraw({
-      //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-      // });
-      // let metadata = straw.getMetaData();
-      // let normOptions = straw.getNormalizationOptions();
-      let featureArray = makeNavContext("HG38");
+      if (!initialRender.current) {
+        let chrObj = {};
+        for (const chromosome of ChromosomeData["HG38"]) {
+          chrObj[chromosome.getName()] = chromosome.getLength();
+        }
+        // let straw = new HicStraw({
+        //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+        // });
+        // let metadata = straw.getMetaData();
+        // let normOptions = straw.getNormalizationOptions();
+        let featureArray = makeNavContext("HG38");
 
-      let testGen: any = {
-        name: "hg38",
-        species: "human",
-        id: uuidv4(),
+        let testGen: any = {
+          name: "hg38",
+          species: "human",
+          id: uuidv4(),
+          windowWidth: size.width,
+          visData: "",
+          // testing mutiple chr 'chr7:150924404-152924404'
 
-        visData: "",
-        // testing mutiple chr 'chr7:150924404-152924404'
-
-        //chr7:27053397-27373765
-        // chr7:10000-20000
-        //testing finemode  27213325-27213837
-        //chr7:159159564-chr8:224090
-        featureArray,
-        defaultRegion: "chr7:27053397-27373765",
-        chrOrder: items,
-        chromosomes: chrObj,
-        size: false,
-        defaultTracks: [
-          {
-            type: "geneAnnotation",
-            name: "refGene",
-            genome: "hg38",
-          },
-          // {
-          //   name: "bed",
-          //   genome: "hg19",
-          //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-          // },
-
-          {
-            name: "bigWig",
-            genome: "hg19",
-            url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-          },
-
-          {
-            name: "dynseq",
-            genome: "hg19",
-            url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-          },
-          {
-            name: "methylc",
-            genome: "hg19",
-            url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-          },
-          {
-            name: "hic",
-            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-            genome: "hg19",
-          },
-          {
-            name: "hic",
-            url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-            genome: "hg19",
-          },
-          {
-            name: "genomealign",
-            genome: "hg38",
-            url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-            trackModel: {
-              name: "hg38tomm10",
-              label: "Query mouse mm10 to hg38 blastz",
-              querygenome: "mm10",
-              filetype: "genomealign",
-              url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+          //chr7:27053397-27373765
+          // chr7:10000-20000
+          //testing finemode  27213325-27213837
+          //chr7:159159564-chr8:224090
+          featureArray,
+          defaultRegion: "chr7:27053397-27373765",
+          chrOrder: items,
+          chromosomes: chrObj,
+          size: false,
+          defaultTracks: [
+            {
+              type: "geneAnnotation",
+              name: "refGene",
+              genome: "hg38",
             },
-          },
-        ],
-        annotationTrackData: AnnotationTrackData["HG19"],
-        publicHubData: PublicHubAllData["HG19"]["publicHubData"],
-        publicHubList: PublicHubAllData["HG19"]["publicHubList"],
-        twoBitURL: TwoBitUrlData["HG19"],
-      };
-      console.log("wut2", testGen);
+            // {
+            //   name: "bed",
+            //   genome: "hg19",
+            //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+            // },
 
+            {
+              name: "bigWig",
+              genome: "hg19",
+              url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+            },
+
+            {
+              name: "dynseq",
+              genome: "hg19",
+              url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+            },
+            {
+              name: "methylc",
+              genome: "hg19",
+              url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+            },
+            {
+              name: "hic",
+              url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+              genome: "hg19",
+            },
+            {
+              name: "hic",
+              url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+              genome: "hg19",
+            },
+            {
+              name: "genomealign",
+              genome: "hg38",
+              url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+              trackModel: {
+                name: "hg38tomm10",
+                label: "Query mouse mm10 to hg38 blastz",
+                querygenome: "mm10",
+                filetype: "genomealign",
+                url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+              },
+            },
+          ],
+          annotationTrackData: AnnotationTrackData["HG19"],
+          publicHubData: PublicHubAllData["HG19"]["publicHubData"],
+          publicHubList: PublicHubAllData["HG19"]["publicHubList"],
+          twoBitURL: TwoBitUrlData["HG19"],
+        };
+
+        {
+          let tempGenomeArr = new Array<any>(testGen);
+
+          setGenomeList([...tempGenomeArr]);
+        }
+      } else {
+        initialRender.current = false;
+      }
       // }
     }
-  }, []);
+  }, [size]);
 
   return (
     <>
@@ -313,7 +300,7 @@ function GenomeHub(props: any) {
           addTrack={addTrack}
           startBp={startBp}
           genomeArr={genomeList}
-          windowWidth={1280}
+          windowWidth={item.windowWidth}
         />
       ))}
     </>

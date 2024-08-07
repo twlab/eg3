@@ -13,6 +13,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   handleDelete,
   trackIdx,
   id,
+  trackManagerId,
 }) {
   let start, end;
 
@@ -114,6 +115,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       bpToPx: bpToPx!,
       bpRegionSize: bpRegionSize!,
       startBpRegion: start,
+      trackManagerId,
     });
 
     // Listen for messages from the web worker
@@ -121,10 +123,13 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       let converted = event.data;
 
       var scales = scaleLinear().domain([0, 1]).range([2, 40]).clamp(true);
-      setRightTrack([
-        ...rightTrackGenes,
+
+      setRightTrack((prev) => [
+        ...prev,
         { canvasData: converted, scaleData: scales },
       ]);
+      console.log(rightTrackGenes, "check");
+
       if (trackData!.initial) {
         const newCanvasRevRef = createRef();
         prevOverflowStrand2.current = { ...overflowStrand2.current };
