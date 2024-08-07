@@ -1,9 +1,9 @@
-import Feature from "./Feature";
-import NavigationContext from "./NavigationContext";
-import ChromosomeInterval from "./ChromosomeInterval";
+import Feature from "../Feature";
+import NavigationContext from "../NavigationContext";
+import ChromosomeInterval from "../ChromosomeInterval";
 // import OpenInterval from '../interval/OpenInterval';
 // import TrackModel from '../TrackModel';
-import Chromosome from "./Chromosome";
+import Chromosome from "../Chromosome";
 
 // export interface GenomeConfig {
 //     genome: Genome;
