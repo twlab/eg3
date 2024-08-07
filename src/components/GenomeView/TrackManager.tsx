@@ -408,29 +408,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // step 3 map and fetch each region from the array, returns flatten which means all the interval will be all in one array
 
   async function fetchGenomeData(initial: number = 0, trackSide) {
-    console.log(
-      region,
-      coord,
-      leftStartCoord,
-      rightStartCoord,
-      bpRegionSize,
-
-      bpToPx,
-
-      curVisData,
-      viewRegion,
-      chrIndexRight,
-      chrIndexLeft,
-      initialChrIdx,
-      bpX,
-      maxBp,
-      minBp,
-      initialStart,
-
-      chrData,
-      chrLength
-    );
-
     let navContextCoord = HG38.navContext.parse(
       `${region.current}` +
         ":" +
@@ -438,20 +415,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         "-" +
         `${Math.floor(Number(bpX.current + bpRegionSize.current))}`
     );
-    console.log(
-      navContextCoord,
-      `${region.current}` +
-        ":" +
-        `${Math.floor(Number(bpX.current))}` +
-        "-" +
-        `${Math.ceil(Number(bpX.current + bpRegionSize.current))}`,
-      curVisData.current
-    );
-    console.log(
-      Math.ceil(Number(bpX.current + bpRegionSize.current)) -
-        Math.floor(Number(bpX.current)),
-      navContextCoord.end - navContextCoord.start
-    );
+
     let newVisData: ViewExpansion = {
       visWidth: windowWidth * 3,
       visRegion: new DisplayedRegionModel(
@@ -578,6 +542,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   setTrackData({ ...tempObj });
                   isLoading.current = false;
                 };
+                //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
                 minBp.current = minBp.current - bpRegionSize.current;
               }
             }
@@ -699,6 +664,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // isLoading.current = false;
       }
     }
+    console.log(maxBp.current, minBp.current);
   }
   function handleDelete(id: number) {
     genomeArr[genomeIdx].defaultTracks = genomeArr[
