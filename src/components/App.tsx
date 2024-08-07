@@ -37,7 +37,7 @@ function App() {
   const [homeView, setHomeView] = useState(<></>);
 
   // list of genome the user has choosen to view
-  const [selectedGenome, setSelectedGenome] = useState(Array<any>);
+  const [selectedGenome, setSelectedGenome] = useState<Array<any>>([]);
 
   // all current genome data and url from aws database or local database
   const [allGenome, setAllGenome] = useState<{ [key: string]: any }>({});
@@ -76,7 +76,7 @@ function App() {
     if (
       !currSelectGenome[obj.genome.getName() as keyof typeof currSelectGenome]
     ) {
-      if (selectedGenome.length < 3) {
+      if (selectedGenome.length < 1) {
         setSelectedGenome((prevList: any) => {
           return [...prevList, obj];
         });

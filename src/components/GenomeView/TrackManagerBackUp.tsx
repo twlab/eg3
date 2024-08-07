@@ -689,7 +689,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [isDragging]);
   useEffect(() => {
     if (trackManagerId.current === "") {
-      console.log(genomeArr);
       // on initial and when our genome data changes we set the default values here
 
       let genome = genomeArr[genomeIdx];

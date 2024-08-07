@@ -66,7 +66,6 @@ function GenomePicker(props: any) {
       <Box>
         <Grid container spacing={0.5} item xs={12}>
           {props.selectedGenome.map((genomeItem: any, key: number) => {
-            console.log(props.selectedGenome);
             return (
               <Grid item key={key}>
                 <Card>
