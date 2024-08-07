@@ -164,7 +164,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // We have similar logic in the fetch for getting data but it does not have the current view bp region.
     // so we need to have both.
     let curIdx = initialChrIdx.current;
-    console.log(curIdx);
+
     let curStartBp = leftStartCoord.current + -dragX.current * bpToPx.current;
     const curBp = leftStartCoord.current + -dragX.current * bpToPx.current;
     if (side === "right" && curBp >= chrLength.current[curIdx]) {
@@ -186,7 +186,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       String(curStartBp) +
       "-" +
       String(curStartBp + bpRegionSize.current);
-    console.log(curRegion);
+
     viewRegion.current = curRegion;
     startBp(curRegion);
     bpX.current = curBp;
@@ -479,7 +479,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               tmpData2["location"] = event.data.location;
               tmpData2["xDist"] = event.data.xDist;
               tmpData2["side"] = event.data.side;
-              console.log(tmpData2);
+
               setTrackData2({ ...tmpData2 });
             };
           }
@@ -496,7 +496,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         tmpRegion = checkMultiChrLeft(tempObj);
       }
-      console.log(tempObj);
+
       for (let i = 0; i < tmpRegion.length; i++) {
         let sectionRegion = tmpRegion[i];
 
@@ -507,7 +507,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const [sectionStart, sectionEnd] = sectionBp.split("-");
         let sentData = false;
         try {
-          console.log(genomeArr[genomeIdx].defaultTracks);
           genomeArr[genomeIdx].defaultTracks.map((item, index) => {
             if (!sentData) {
               sentData = true;
@@ -537,8 +536,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   tempObj["initial"] = event.data.initial;
                   tempObj["side"] = event.data.side;
                   tempObj["location"] = event.data.location;
-                  console.log(minBp.current);
-                  console.log(tempObj);
+
                   setTrackData({ ...tempObj });
                   isLoading.current = false;
                 };

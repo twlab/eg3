@@ -95,7 +95,6 @@ function GenomeHub(props: any) {
   }
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {
-      console.log(props.selectedGenome);
       let newList = props.selectedGenome[0];
       newList["id"] = uuidv4();
       (newList.defaultTracks = [
@@ -168,7 +167,6 @@ function GenomeHub(props: any) {
     return new NavigationContext("HG38", features);
   }
   useEffect(() => {
-    console.log(genomeNameToConfig);
     // const storedArray = sessionStorage.getItem("myArray");
     // const chrOrderStorage = sessionStorage.getItem("chrOrder");
     // if (storedArray !== null) {

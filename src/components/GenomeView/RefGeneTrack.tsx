@@ -19,8 +19,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     start = Number(start);
     end = Number(end);
-    console.log("checking", result, start, end);
-    console.log(bpToPx);
   }
 
   //useRef to store data between states without re render the component
@@ -486,16 +484,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 />
               );
             }
-            if (
-              (singleStrand.txStart - trackGeneData.startTrackPos) / bpToPx <
-              0
-            ) {
-              console.log(
-                trackData!.refGene,
-                singleStrand.txStart,
-                trackGeneData.startTrackPos
-              );
-            }
+
             strandHtml.push(
               <React.Fragment key={singleStrand.txStart + singleStrand.txEnd}>
                 {children.map((item, index) => item)}

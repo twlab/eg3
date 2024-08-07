@@ -72,7 +72,7 @@ function App() {
   // }
   function addGenomeView(obj: any) {
     sessionStorage.clear();
-    console.log(obj);
+
     if (
       !currSelectGenome[obj.genome.getName() as keyof typeof currSelectGenome]
     ) {

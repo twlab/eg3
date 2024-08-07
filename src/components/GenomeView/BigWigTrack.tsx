@@ -128,7 +128,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         ...prev,
         { canvasData: converted, scaleData: scales },
       ]);
-      console.log(rightTrackGenes, "check");
 
       if (trackData!.initial) {
         const newCanvasRevRef = createRef();
