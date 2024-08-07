@@ -1,55 +1,34 @@
-import { useEffect, useState } from 'react';
-import Homepage from './Home/Homepage';
-import { BrowserRouter, Link, Switch, Route } from 'react-router-dom';
-import GenomeView from './GenomeView/GenomeRoot';
-import { treeOfLifeObj } from '../localdata/treeoflife';
-import { DefaultRegionData } from '../localdata/defaultregiondata';
-import mainLogo from '../assets/images/icon.png';
-import '../assets/main.css';
-import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { genName, genKeyName, chrType } from '../localdata/genomename';
-import { DefaultTrack } from '../localdata/defaulttrack';
-import { ChromosomeData } from '../localdata/chromosomedata';
-import { AnnotationTrackData } from '../localdata/annotationtrackdata';
-import { TwoBitUrlData } from '../localdata/twobiturl';
-import { PublicHubAllData } from '../localdata/publichub';
-
+import { useEffect, useState } from "react";
+import Homepage from "./Home/Homepage";
+import { BrowserRouter, Link, Switch, Route } from "react-router-dom";
+import GenomeView from "./GenomeView/GenomeRoot";
+import { treeOfLifeObj } from "../localdata/treeoflife";
+import { DefaultRegionData } from "../localdata/defaultregiondata";
+import mainLogo from "../assets/images/icon.png";
+import "../assets/main.css";
+import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { genName, genKeyName, chrType } from "../localdata/genomename";
+import { DefaultTrack } from "../localdata/defaulttrack";
+import { ChromosomeData } from "../localdata/chromosomedata";
+import { AnnotationTrackData } from "../localdata/annotationtrackdata";
+import { TwoBitUrlData } from "../localdata/twobiturl";
+import { PublicHubAllData } from "../localdata/publichub";
+import { genomeNameToConfig } from "../models/genomes/allGenomes";
 // this section needs to be moved to a backend if we want to access
 // aws backend because it need access key and secret key
 // if you  are trying to pull data from aws bucket then create an access token and input them here
 // ---------------------------------------------------------------------------------------------------------------------
 var s3Config = new S3Client({
-  region: 'abc',
+  region: "abc",
   credentials: {
-    accessKeyId: '123',
-    secretAccessKey: '123',
+    accessKeyId: "123",
+    secretAccessKey: "123",
   },
 });
 // ---------------------------------------------------------------------------------------------------------------------
 
 const isLocal = 1;
-let chrObj = {};
-for (const chromosome of ChromosomeData['HG38']) {
-  chrObj[chromosome.getName()] = chromosome.getLength();
-}
-let testGen: any = {
-  name: 'hg38',
-  species: 'human',
-  defaultRegion: 'chr7:27053397-27373765',
-  chrOrder: chrType,
-  chromosomes: chrObj,
-  defaultTracks: [
-    {
-      type: 'geneAnnotation',
-      name: 'refGene',
-      genome: 'hg38',
-    },
-  ],
-  annotationTrackData: AnnotationTrackData['HG38'],
-  publicHubData: PublicHubAllData['HG38']['publicHubData'],
-  publicHubList: PublicHubAllData['HG38']['publicHubList'],
-  twoBitURL: TwoBitUrlData['HG38'],
-};
+
 function App() {
   // Used to display the home screen and GenomeView
   // if a user add or update a new genome to aws bucket the homeView will be updated with a new state and render the newly added genome
@@ -93,14 +72,17 @@ function App() {
   // }
   function addGenomeView(obj: any) {
     sessionStorage.clear();
-    if (!currSelectGenome[obj.name as keyof typeof currSelectGenome]) {
+    console.log(obj);
+    if (
+      !currSelectGenome[obj.genome.getName() as keyof typeof currSelectGenome]
+    ) {
       if (selectedGenome.length < 3) {
         setSelectedGenome((prevList: any) => {
           return [...prevList, obj];
         });
       }
       let newObj: { [key: string]: any } = currSelectGenome;
-      newObj[obj.name as keyof typeof newObj] = ' ';
+      newObj[obj.name as keyof typeof newObj] = " ";
       setCurrSelectGenome(newObj);
     }
   }
@@ -119,8 +101,8 @@ function App() {
     // This is using aws sdk to get genome data from the bucket, if you are testing using local data look at else statement
     if (!isLocal) {
       var command = new ListObjectsV2Command({
-        Bucket: 'GenomeViews',
-        StartAfter: '/',
+        Bucket: "GenomeViews",
+        StartAfter: "/",
 
         MaxKeys: 1000,
       });
@@ -132,21 +114,20 @@ function App() {
           await s3Config.send(command);
         for (var i = 0; i < Contents!.length; i++) {
           var arrStr = Contents![i].Key?.split(/[//]/);
-          if (!tempObj[arrStr![1]] && arrStr![1] !== '') {
-            var awsApiPathUrl = '/' + arrStr![0] + '/' + arrStr![1] + '/';
-            tempTree[arrStr![0]]['assemblies'].push(arrStr![1]);
+          if (!tempObj[arrStr![1]] && arrStr![1] !== "") {
+            var awsApiPathUrl = "/" + arrStr![0] + "/" + arrStr![1] + "/";
+            tempTree[arrStr![0]]["assemblies"].push(arrStr![1]);
             tempObj[arrStr![1]] = {
               name: arrStr![1],
               species: arrStr![0],
-              cytoBandUrl: awsApiPathUrl + 'cytoBand.json',
-              annotationUrl: awsApiPathUrl + 'annotationTracks.json',
-              genomeDataUrl: awsApiPathUrl + arrStr![1] + '.json',
+              cytoBandUrl: awsApiPathUrl + "cytoBand.json",
+              annotationUrl: awsApiPathUrl + "annotationTracks.json",
+              genomeDataUrl: awsApiPathUrl + arrStr![1] + ".json",
             };
           }
         }
         const updatedData = {
-          ...allGenome,
-          ...tempObj,
+          ...genomeNameToConfig,
         };
         const updatedTree = {
           ...treeOfLife,
@@ -176,15 +157,14 @@ function App() {
             chromosomes: chrObj,
             defaultTracks: DefaultTrack[genKey],
             annotationTrackData: AnnotationTrackData[genKey],
-            publicHubData: PublicHubAllData[genKey]['publicHubData'],
-            publicHubList: PublicHubAllData[genKey]['publicHubList'],
+            publicHubData: PublicHubAllData[genKey]["publicHubData"],
+            publicHubList: PublicHubAllData[genKey]["publicHubList"],
             twoBitURL: TwoBitUrlData[genKey],
           };
         }
       }
       const updatedData = {
-        ...allGenome,
-        ...tempObj,
+        ...genomeNameToConfig,
       };
       const updatedTree = {
         ...treeOfLife,

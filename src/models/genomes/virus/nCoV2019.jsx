@@ -473,7 +473,7 @@ const publicHubData = {
         "SNV tracks of all SARS-CoV-2 strains from Nextstrain, displaying their sequence variation from the reference",
     "GISAID database":
         "SNV tracks of SARS-CoV-2 strains from GISAID, displaying their sequence variation from the reference",
-    Diagnostics: "Primers, gRNAs, etc. for diagnostic tests",
+   "Diagnostics": "Primers, gRNAs, etc. for diagnostic tests",
     "Epitope predictions": "SARS-CoV-2 Epitope Predictions Across HLA-1 Alleles",
     "Recombination events": "Recombination events detected by junction-spanning RNA-seq",
     "Viral RNA modifications": "RNA modifications detected using Nanopore direct RNA sequencing",

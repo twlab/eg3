@@ -15,9 +15,10 @@ import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
-import HG38 from "../../models/genomes/hg38/hg38";
 import { v4 as uuidv4 } from "uuid";
 import useResizeObserver from "./Resize";
+import { getGenomeConfig } from "../../models/genomes/allGenomes";
+import { genomeNameToConfig } from "../../models/genomes/allGenomes";
 interface ViewExpansion {
   /**
    * Total width, in pixels, of the expanded view
@@ -94,6 +95,7 @@ function GenomeHub(props: any) {
   }
   function getSelectedGenome() {
     if (props.selectedGenome != undefined) {
+      console.log(props.selectedGenome);
       let newList = props.selectedGenome[0];
       newList["id"] = uuidv4();
       (newList.defaultTracks = [
@@ -166,6 +168,7 @@ function GenomeHub(props: any) {
     return new NavigationContext("HG38", features);
   }
   useEffect(() => {
+    console.log(genomeNameToConfig);
     // const storedArray = sessionStorage.getItem("myArray");
     // const chrOrderStorage = sessionStorage.getItem("chrOrder");
     // if (storedArray !== null) {

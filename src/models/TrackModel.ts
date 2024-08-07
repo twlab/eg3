@@ -37,13 +37,14 @@ interface ITrackModel {
   name: string;
   type?: string;
   filetype?: string;
-  options: TrackOptions;
-  url: string;
+  options?: TrackOptions;
+  url?: string;
   indexUrl?: string;
-  metadata: ITrackModelMetadata;
+  metadata?: ITrackModelMetadata;
   fileObj?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
+  genome?: string;
 }
 
 let nextId = 0;
