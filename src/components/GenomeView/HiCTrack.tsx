@@ -62,6 +62,8 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
   trackData2,
   dragXDist,
+  genomeArr,
+  genomeIdx,
 }) {
   let start, end;
 
@@ -74,6 +76,8 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
   start = Number(start);
   end = Number(end);
+
+  console.log(result, start, end);
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
@@ -129,7 +133,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     }
 
     const newCanvasRef = createRef();
-
+    console.log(result);
     let placedInteraction = placeInteractions(result);
 
     let polyCoord = placedInteraction.map((item, index) =>
@@ -176,18 +180,33 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     for (const interaction of interactions) {
       let location1 = interaction.locus1;
       let location2 = interaction.locus2;
+      console.log(location1.start, start, bpToPx);
 
-      const startX1 = (location1.start - start) / bpToPx!;
-      const endX1 = (location1.end - start) / bpToPx!;
+      let location1Nav = genomeArr![genomeIdx!].navContext.parse(
+        `${"chr7"}` +
+          ":" +
+          `${Math.floor(Number(location1.start))}` +
+          "-" +
+          `${Math.floor(Number(location1.end))}`
+      );
+      let location2Nav = genomeArr![genomeIdx!].navContext.parse(
+        `${"chr7"}` +
+          ":" +
+          `${Math.floor(Number(location2.start))}` +
+          "-" +
+          `${Math.floor(Number(location2.end))}`
+      );
+      const startX1 = (location1Nav.start - start) / bpToPx;
+      const endX1 = (location1Nav.end - start) / bpToPx;
 
-      const startX2 = (location2.start - start) / bpToPx!;
-      const endX2 = (location2.end - start) / bpToPx!;
+      const startX2 = (location2Nav.start - start) / bpToPx;
+      const endX2 = (location2Nav.end - start) / bpToPx;
 
       const xSpan1 = { start: startX1, end: endX1 };
       const xSpan2 = { start: startX2, end: endX2 };
       mappedInteractions.push({ interaction, xSpan1, xSpan2 });
     }
-
+    console.log(mappedInteractions);
     return mappedInteractions;
   }
 
@@ -368,6 +387,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
+      console.log(rightTrackGenes);
       drawCanvas(
         rightTrackGenes[rightTrackGenes.length - 1].drawData.polyCoord,
         rightTrackGenes[rightTrackGenes.length - 1].canvasRef.current

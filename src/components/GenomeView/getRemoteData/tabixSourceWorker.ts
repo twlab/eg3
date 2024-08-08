@@ -66,9 +66,10 @@ let strawCache: { [key: string]: any } = {};
 
 self.onmessage = async (event: MessageEvent) => {
   let fetchResults: Array<any> = [];
-  const regionStart = event.data.loci.start;
-  const regionEnd = event.data.loci.end;
-  const regionChr = event.data.loci.chr;
+  const regionStart = event.data.loci[0].start;
+  const regionEnd = event.data.loci[0].end;
+  const regionChr = event.data.loci[0].chr;
+  console.log(regionStart, regionEnd, regionChr);
   let newtrackDefault = event.data.trackArray;
   await Promise.all(
     newtrackDefault.map(async (item, index) => {
@@ -85,6 +86,7 @@ self.onmessage = async (event: MessageEvent) => {
             url: item.url,
           });
         }
+        // CHANGE THIS PART TO GET A LIST OF GENOMIC COORD
         let result = await trackFetchFunction[trackName](
           strawCache[id],
           {
@@ -113,13 +115,7 @@ self.onmessage = async (event: MessageEvent) => {
         fetchResults.push({ name: trackName, nameResult: "hicResult", result });
       } else if (trackName === "genomealign") {
         let result = await trackFetchFunction[trackName](
-          [
-            {
-              chr: regionChr,
-              start: regionStart,
-              end: regionEnd,
-            },
-          ],
+          event.data.loci,
           {
             height: 40,
             isCombineStrands: false,
@@ -151,6 +147,8 @@ self.onmessage = async (event: MessageEvent) => {
           genomeName: genomeName,
           querygenomeName: item.trackModel.querygenome,
         });
+
+        // CHANGE THIS PART TO GET A LIST OF GENOMIC COORD
       } else if (trackName === "refGene") {
         const genRefResponse = await trackFetchFunction[trackName]({
           name: genomeName,
@@ -162,13 +160,7 @@ self.onmessage = async (event: MessageEvent) => {
         fetchResults.push({ name: trackName, result: genRefResponse });
       } else {
         let result = await trackFetchFunction[trackName](
-          [
-            {
-              chr: regionChr,
-              start: regionStart,
-              end: regionEnd,
-            },
-          ],
+          event.data.loci,
           {
             displayMode: "full",
             color: "blue",

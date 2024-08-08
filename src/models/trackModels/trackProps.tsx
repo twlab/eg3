@@ -16,4 +16,6 @@ export interface TrackProps {
   visData?: ViewExpansion;
   trackManagerId: string;
   trackComponents: any;
+  genomeArr?: Array<any>;
+  genomeIdx?: number;
 }

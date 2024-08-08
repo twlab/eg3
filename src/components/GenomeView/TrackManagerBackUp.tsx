@@ -416,7 +416,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         `${Math.floor(Number(bpX.current + bpRegionSize.current))}`
     );
 
-    let newVisData: ViewExpansion = {
+    let newVisData: { [key: string]: any } = {
       visWidth: windowWidth * 3,
       visRegion: new DisplayedRegionModel(
         HG38.navContext,
