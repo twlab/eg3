@@ -21,6 +21,7 @@ import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
+import { size } from "lodash";
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
@@ -296,9 +297,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (initial === 0 || initial === 1) {
       let tempObj = {};
 
+      if (trackSide === "right") {
+        tempObj["location"] = `${maxBp.current - bpRegionSize.current}:${
+          maxBp.current
+        }`;
+        maxBp.current = maxBp.current + bpRegionSize.current;
+        console.log(maxBp.current);
+      } else {
+        tempObj["location"] = `${minBp.current}:${
+          minBp.current + bpRegionSize.current
+        }`;
+        minBp.current = minBp.current - bpRegionSize.current;
+      }
+
       for (let i = 0; i < genomeCoordLocus.length; i++) {
         let sentData = false;
         try {
+          const [start, end] = tempObj["location"].split(":");
           genomeArr[genomeIdx].defaultTracks.map((item, index) => {
             if (!sentData) {
               sentData = true;
@@ -309,14 +324,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   }
                 ),
 
-                loci: genomeCoordLocus,
+                loci: [
+                  new ChromosomeInterval("chr7", Number(start), Number(end)),
+                ],
                 trackSide,
-                location: `${bpX.current}:${
-                  bpX.current + bpRegionSize.current
-                }`,
+                location: tempObj["location"],
                 xDist: dragX.current,
                 initial,
               });
+
               if (initial === 1) {
                 infiniteScrollWorker.current.onmessage = (event) => {
                   event.data.fetchResults.map(
@@ -349,6 +365,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // isLoading.current = false;
       }
     }
+
     console.log(maxBp.current, minBp.current);
   }
   function handleDelete(id: number) {
@@ -417,8 +434,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       viewRegion.current = genomeLocus.toString();
       bpX.current = leftStartCoord.current;
-      maxBp.current = rightStartCoord.current;
-      minBp.current = leftStartCoord.current;
+      maxBp.current = genomeLocus[0].end;
+      minBp.current = genomeLocus[0].start;
 
       // go through genome defaultTrack to see what track components we need and give each component
       // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr

@@ -1,5 +1,5 @@
-import Chromosome from "../Chromosome";
-import Genome from "../Genome";
+import Chromosome from "../../Chromosome";
+import Genome from "../../Genome";
 import TrackModel from "../../TrackModel";
 import cytobands from "./chm13v2.0_cytobands_allchrs.bed.json";
 import annotationTracks from "./annotationTracks.json";

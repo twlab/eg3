@@ -1,5 +1,5 @@
-import Chromosome from "../Chromosome";
-import Genome from "../Genome";
+import Chromosome from "../../Chromosome";
+import Genome from "../../Genome";
 import TrackModel from "../../TrackModel";
 
 const genome = new Genome("Ebola", [new Chromosome("KM034562.1", 18957)]);

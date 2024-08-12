@@ -1,5 +1,5 @@
-import Chromosome from "../Chromosome";
-import Genome from "../Genome";
+import Chromosome from "../../Chromosome";
+import Genome from "../../Genome";
 import TrackModel from "../../TrackModel";
 
 const genome = new Genome("hpv16", [new Chromosome("NC_001526.4", 7906)]);

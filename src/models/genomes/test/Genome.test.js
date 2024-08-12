@@ -1,4 +1,4 @@
-import { Chromosome, Genome } from '../Genome';
+import { Chromosome, Genome } from '../../Genome';
 import ChromosomeInterval from '../../interval/ChromosomeInterval';
 
 const CHROMOSOMES = [

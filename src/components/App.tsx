@@ -3,16 +3,12 @@ import Homepage from "./Home/Homepage";
 import { BrowserRouter, Link, Switch, Route } from "react-router-dom";
 import GenomeView from "./GenomeView/GenomeRoot";
 import { treeOfLifeObj } from "../localdata/treeoflife";
-import { DefaultRegionData } from "../localdata/defaultregiondata";
+
 import mainLogo from "../assets/images/icon.png";
 import "../assets/main.css";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { genName, genKeyName, chrType } from "../localdata/genomename";
-import { DefaultTrack } from "../localdata/defaulttrack";
-import { ChromosomeData } from "../localdata/chromosomedata";
-import { AnnotationTrackData } from "../localdata/annotationtrackdata";
-import { TwoBitUrlData } from "../localdata/twobiturl";
-import { PublicHubAllData } from "../localdata/publichub";
+import { genName, genKeyName, chrType } from "./GenomeView/genomename";
+
 import { genomeNameToConfig } from "../models/genomes/allGenomes";
 // this section needs to be moved to a backend if we want to access
 // aws backend because it need access key and secret key
@@ -143,25 +139,24 @@ function App() {
     // on tracks
     else {
       for (const key in treeOfLifeObj) {
-        for (let genomeName of treeOfLifeObj[key].assemblies) {
-          const genKey = createGenKey(genomeName);
-          let chrObj = {};
-          for (const chromosome of ChromosomeData[genKey]) {
-            chrObj[chromosome.getName()] = chromosome.getLength();
-          }
-
-          tempObj[genomeName] = {
-            name: genomeName,
-            species: key,
-            defaultRegion: DefaultRegionData[genKey],
-            chromosomes: chrObj,
-            defaultTracks: DefaultTrack[genKey],
-            annotationTrackData: AnnotationTrackData[genKey],
-            publicHubData: PublicHubAllData[genKey]["publicHubData"],
-            publicHubList: PublicHubAllData[genKey]["publicHubList"],
-            twoBitURL: TwoBitUrlData[genKey],
-          };
-        }
+        // for (let genomeName of treeOfLifeObj[key].assemblies) {
+        //   const genKey = createGenKey(genomeName);
+        //   let chrObj = {};
+        //   for (const chromosome of ChromosomeData[genKey]) {
+        //     chrObj[chromosome.getName()] = chromosome.getLength();
+        //   }
+        //   tempObj[genomeName] = {
+        //     name: genomeName,
+        //     species: key,
+        //     defaultRegion: DefaultRegionData[genKey],
+        //     chromosomes: chrObj,
+        //     defaultTracks: DefaultTrack[genKey],
+        //     annotationTrackData: AnnotationTrackData[genKey],
+        //     publicHubData: PublicHubAllData[genKey]["publicHubData"],
+        //     publicHubList: PublicHubAllData[genKey]["publicHubList"],
+        //     twoBitURL: TwoBitUrlData[genKey],
+        //   };
+        // }
       }
       const updatedData = {
         ...genomeNameToConfig,

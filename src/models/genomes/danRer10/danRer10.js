@@ -1,6 +1,6 @@
 import SCAFFOLDS from './scaffolds';
-import Chromosome from '../Chromosome';
-import { Genome } from '../Genome';
+import Chromosome from '../../Chromosome';
+import { Genome } from '../../Genome';
 import TrackModel from '../../TrackModel';
 import annotationTracks from "./annotationTracks.json";
 

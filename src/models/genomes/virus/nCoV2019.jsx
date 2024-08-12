@@ -1,6 +1,6 @@
 import React from "react";
-import Chromosome from "../Chromosome";
-import Genome from "../Genome";
+import Chromosome from "../../Chromosome";
+import Genome from "../../Genome";
 import TrackModel from "../../TrackModel";
 
 const genome = new Genome("SARS-CoV-2", [new Chromosome("NC_045512.2", 29903)]);

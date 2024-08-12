@@ -4,20 +4,13 @@
 import { useEffect, useRef, useState } from "react";
 import TrackManager from "./TrackManager";
 import Drag from "./commonComponents/chr-order/ChrOrder";
-import { chrType } from "../../localdata/genomename";
-import { ChromosomeData } from "../../localdata/chromosomedata";
-import { AnnotationTrackData } from "../../localdata/annotationtrackdata";
-import { PublicHubAllData } from "../../localdata/publichub";
-import { TwoBitUrlData } from "../../localdata/twobiturl";
+import { chrType } from "./genomename";
 
 import NavigationContext from "../../models/NavigationContext";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import { v4 as uuidv4 } from "uuid";
 import useResizeObserver from "./Resize";
-import { getGenomeConfig } from "../../models/genomes/allGenomes";
-import { genomeNameToConfig } from "../../models/genomes/allGenomes";
-import TrackModel from "../../models/TrackModel";
 import TrackManagerBackUp from "./TrackManagerBackUp";
 
 import HG38 from "../../models/genomes/hg38/hg38";
@@ -78,20 +71,20 @@ function GenomeHub(props: any) {
       );
       const serializedArray = JSON.stringify(props.selectedGenome);
       sessionStorage.setItem("myArray", serializedArray);
-      console.log(tempGeneArr);
+
       setGenomeList(tempGeneArr);
     }
   }
-  function makeNavContext(name) {
-    const features = ChromosomeData[name].map((chr) => {
-      const name = chr.getName();
-      return new Feature(
-        name,
-        new ChromosomeInterval(name, 0, chr.getLength())
-      );
-    });
-    return new NavigationContext("HG38", features);
-  }
+  // function makeNavContext(name) {
+  //   const features = ChromosomeData[name].map((chr) => {
+  //     const name = chr.getName();
+  //     return new Feature(
+  //       name,
+  //       new ChromosomeInterval(name, 0, chr.getLength())
+  //     );
+  //   });
+  //   return new NavigationContext("HG38", features);
+  // }
   // this useEffect trigger twice, once at initial render, and when it resize from 0 to the user window screens, so we need to account for two changing of states
   // changing genomeList state twice will mess up the data sent to trackManager.
   // having an intial render [] will cause setGenomeList to be sent twice messing up the data because they happen at the same time because the Id get changed immdeiately
@@ -205,7 +198,6 @@ function GenomeHub(props: any) {
     }
 
     stateChangeCount.current++;
-    console.log("change", stateChangeCount.current);
 
     // if(props.selectedGenome.length === 0)
     // const storedArray = sessionStorage.getItem("myArray");

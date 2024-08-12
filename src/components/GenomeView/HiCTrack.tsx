@@ -77,7 +77,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   start = Number(start);
   end = Number(end);
 
-  console.log(result, start, end);
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
@@ -133,7 +132,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     }
 
     const newCanvasRef = createRef();
-    console.log(result);
+
     let placedInteraction = placeInteractions(result);
 
     let polyCoord = placedInteraction.map((item, index) =>
@@ -180,7 +179,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     for (const interaction of interactions) {
       let location1 = interaction.locus1;
       let location2 = interaction.locus2;
-      console.log(location1.start, start, bpToPx);
 
       let location1Nav = genomeArr![genomeIdx!].navContext.parse(
         `${"chr7"}` +
@@ -206,7 +204,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       const xSpan2 = { start: startX2, end: endX2 };
       mappedInteractions.push({ interaction, xSpan1, xSpan2 });
     }
-    console.log(mappedInteractions);
+
     return mappedInteractions;
   }
 
@@ -387,7 +385,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
   useEffect(() => {
     if (rightTrackGenes.length > 0) {
-      console.log(rightTrackGenes);
       drawCanvas(
         rightTrackGenes[rightTrackGenes.length - 1].drawData.polyCoord,
         rightTrackGenes[rightTrackGenes.length - 1].canvasRef.current

@@ -1,4 +1,4 @@
-import Chromosome from '../Chromosome';
+import Chromosome from '../../Chromosome';
 
 const SCAFFOLDS = [
     new Chromosome("chrUn_KN149696v1", 368637),

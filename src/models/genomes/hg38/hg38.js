@@ -1,5 +1,5 @@
-import Chromosome from "../Chromosome";
-import Genome from "../Genome";
+import Chromosome from "../../Chromosome";
+import Genome from "../../Genome";
 import TrackModel from "../../TrackModel";
 import cytobands from "./cytoBand.json";
 import annotationTracks from "./annotationTracks.json";
@@ -35,11 +35,11 @@ const genome = new Genome("hg38", [
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
-        // new TrackModel({
-        //   type: "geneAnnotation",
-        //   name: "refGene",
-        //   genome: "hg38",
-        // }),
+        new TrackModel({
+          type: "geneAnnotation",
+          name: "refGene",
+          genome: "hg38",
+        }),
         // {
         //   name: "bed",
         //   genome: "hg19",
