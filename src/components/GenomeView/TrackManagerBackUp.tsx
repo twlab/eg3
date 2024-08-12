@@ -53,20 +53,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const region = useRef("");
   const coord = useRef("");
   const worker = useRef(
-    new Worker(
-      new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
-      {
-        type: "module",
-      }
-    )
+    new Worker(new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url), {
+      type: "module",
+    })
   );
   const infiniteScrollWorker = useRef(
-    new Worker(
-      new URL("./getRemoteData/tabixSourceWorker.ts", import.meta.url),
-      {
-        type: "module",
-      }
-    )
+    new Worker(new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url), {
+      type: "module",
+    })
   );
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
