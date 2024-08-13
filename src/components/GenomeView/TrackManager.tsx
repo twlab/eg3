@@ -160,7 +160,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let genomeCoordLocus = genomeFeatureSegment.map((item, index) =>
       item.getLocus()
     );
-    console.log(genomeCoordLocus);
 
     viewRegion.current = genomeCoordLocus;
     startBp(viewRegion.current.toString());
@@ -291,22 +290,41 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let tempObj = {};
 
       if (trackSide === "right") {
-        tempObj["location"] = `${maxBp.current - bpRegionSize.current}:${
-          maxBp.current
-        }`;
+        const navStart = genomeArr[
+          genomeIdx
+        ].navContext.convertBaseToFeatureCoordinate(maxBp.current);
+        tempObj["location"] = `${
+          navStart.relativeStart - bpRegionSize.current
+        }:${navStart.relativeStart}`;
         maxBp.current = maxBp.current + bpRegionSize.current;
-        console.log(maxBp.current);
       } else {
-        tempObj["location"] = `${minBp.current}:${
+        let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+          genomeIdx
+        ].navContext.getFeaturesInInterval(
+          minBp.current,
           minBp.current + bpRegionSize.current
+        );
+
+        let genomeCoordLocus = genomeFeatureSegment.map((item, index) =>
+          item.getLocus()
+        );
+        console.log(genomeCoordLocus);
+        const navStart = genomeArr[
+          genomeIdx
+        ].navContext.convertBaseToFeatureCoordinate(minBp.current);
+
+        tempObj["location"] = `${navStart.relativeStart}:${
+          navStart.relativeStart + bpRegionSize.current
         }`;
+
         minBp.current = minBp.current - bpRegionSize.current;
       }
 
       for (let i = 0; i < genomeCoordLocus.length; i++) {
         let sentData = false;
         try {
-          const [start, end] = tempObj["location"].split(":");
+          let [start, end] = tempObj["location"].split(":");
+          console.log(start, end);
           genomeArr[genomeIdx].defaultTracks.map((item, index) => {
             if (!sentData) {
               sentData = true;
@@ -463,8 +481,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       viewRegion.current = genomeLocus;
       bpX.current = leftStartCoord.current;
-      maxBp.current = genomeLocus[0].end;
-      minBp.current = genomeLocus[0].start;
+      maxBp.current = genome.defaultRegion.end;
+      minBp.current = genome.defaultRegion.start;
 
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
@@ -501,7 +519,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       >
         <button onClick={handleClick}>add bed</button>
 
-        <div> {viewRegion.current}</div>
+        <div> {viewRegion.current?.toString()}</div>
         <div>Pixel distance from starting point : {dragX.current}px</div>
         {isLoading.current ? (
           <CircularProgress
