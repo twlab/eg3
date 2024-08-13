@@ -55,30 +55,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //useRef to store data between states without re render the component
   const region = useRef("");
 
-  const worker = useRef(
-    new Worker(new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url), {
-      type: "module",
-    })
-  );
-  const infiniteScrollWorker = useRef(
-    new Worker(new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url), {
-      type: "module",
-    })
-  );
+  const worker = useRef<Worker>();
+  const infiniteScrollWorker = useRef<Worker>();
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
   const bpRegionSize = useRef(0);
   const block = useRef<HTMLInputElement>(null);
   const curVisData = useRef<{ [key: string]: any }>({});
-  const viewRegion = useRef("");
+  const viewRegion = useRef<ChromosomeInterval[]>();
   // const chrIndexRight = useRef(0);
   // const chrIndexLeft = useRef(0);
   // const initialChrIdx = useRef(0);
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
-  const initialStart = useRef(true);
+
   // const chrData = useRef<Array<any>>([]);
   // const chrLength = useRef<Array<any>>([]);
 
@@ -92,6 +84,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
+  const [initialStart, setInitialStart] = useState(true);
   const [isDragging, setDragging] = useState(false);
   const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
@@ -169,8 +162,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     );
     console.log(genomeCoordLocus);
 
-    viewRegion.current = genomeCoordLocus.toString();
-    startBp(viewRegion.current);
+    viewRegion.current = genomeCoordLocus;
+    startBp(viewRegion.current.toString());
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
     if (dragX.current > 0 && side === "right") {
@@ -257,7 +250,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       genomeArr[genomeIdx].defaultTracks.map((item, index) => {
         if (!sentData) {
           sentData = true;
-          worker.current.postMessage({
+          worker.current!.postMessage({
             trackArray: genomeArr[genomeIdx].defaultTracks.filter(
               (items, index) => {
                 return items.name === "genomealign" || items.name === "hic";
@@ -271,7 +264,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             initial,
           });
           if (initial === 1) {
-            worker.current.onmessage = (event) => {
+            worker.current!.onmessage = (event) => {
               event.data.fetchResults.map((item, index) => {
                 tmpData2[item.nameResult] = {
                   fetchData: item.result,
@@ -317,7 +310,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genomeArr[genomeIdx].defaultTracks.map((item, index) => {
             if (!sentData) {
               sentData = true;
-              infiniteScrollWorker.current.postMessage({
+              infiniteScrollWorker.current!.postMessage({
                 trackArray: genomeArr[genomeIdx].defaultTracks.filter(
                   (items, index) => {
                     return items.name !== "genomealign" && items.name !== "hic";
@@ -334,7 +327,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               });
 
               if (initial === 1) {
-                infiniteScrollWorker.current.onmessage = (event) => {
+                infiniteScrollWorker.current!.onmessage = (event) => {
                   event.data.fetchResults.map(
                     (item, index) => (tempObj[item.name] = item.result)
                   );
@@ -391,6 +384,42 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
+
+  useEffect(() => {
+    // terminate the work when the component is unmounted
+    return () => {
+      worker.current!.terminate();
+      infiniteScrollWorker.current!.terminate();
+      console.log("trackmanager terminate");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!initialStart) {
+      // go through genome defaultTrack to see what track components we need and give each component
+      // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
+      let genome = genomeArr[genomeIdx];
+
+      let newTrackComponents: Array<any> = [];
+      for (let i = 0; i < genome.defaultTracks.length; i++) {
+        if (!genome.defaultTracks[i]["id"]) {
+          const uniqueKey = uuidv4();
+          genome.defaultTracks[i]["id"] = uniqueKey;
+          newTrackComponents.push({
+            id: uniqueKey,
+            component: componentMap[genome.defaultTracks[i].name],
+          });
+        } else {
+          newTrackComponents.push({
+            id: genome.defaultTracks[i]["id"],
+            component: componentMap[genome.defaultTracks[i].name],
+          });
+        }
+      }
+      setTrackComponents([...newTrackComponents]);
+      fetchGenomeData(1, "right", viewRegion.current!);
+    }
+  }, [initialStart]);
   useEffect(() => {
     if (trackManagerId.current === "") {
       console.log(genomeArr);
@@ -432,35 +461,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // chrIndexLeft.current = initialChrIdx.current;
       //-------------------------------------------------------------------------------------------------------------------
 
-      viewRegion.current = genomeLocus.toString();
+      viewRegion.current = genomeLocus;
       bpX.current = leftStartCoord.current;
       maxBp.current = genomeLocus[0].end;
       minBp.current = genomeLocus[0].start;
 
-      // go through genome defaultTrack to see what track components we need and give each component
-      // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
-
-      let newTrackComponents: Array<any> = [];
-      for (let i = 0; i < genome.defaultTracks.length; i++) {
-        if (!genome.defaultTracks[i]["id"]) {
-          const uniqueKey = uuidv4();
-          genome.defaultTracks[i]["id"] = uniqueKey;
-          newTrackComponents.push({
-            id: uniqueKey,
-            component: componentMap[genome.defaultTracks[i].name],
-          });
-        } else {
-          newTrackComponents.push({
-            id: genome.defaultTracks[i]["id"],
-            component: componentMap[genome.defaultTracks[i].name],
-          });
-        }
-      }
-      setTrackComponents([...newTrackComponents]);
-
-      if (initialStart.current) {
-        fetchGenomeData(1, "right", genomeLocus);
-        initialStart.current = false;
+      // create the worker and trigger state change before we can actually use them takes one re render to acutally
+      // start working.Thats why we need the initialStart state.
+      if (initialStart) {
+        worker.current = new Worker(
+          new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url),
+          {
+            type: "module",
+          }
+        );
+        infiniteScrollWorker.current = new Worker(
+          new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url),
+          {
+            type: "module",
+          }
+        );
+        setInitialStart(false);
       }
       trackManagerId.current = genome.id;
     }
