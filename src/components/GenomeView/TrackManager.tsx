@@ -288,14 +288,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (initial === 0 || initial === 1) {
       let tempObj = {};
-
+      let sectionGenomicLocus: Array<ChromosomeInterval> = [];
       if (trackSide === "right") {
+        let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+          genomeIdx
+        ].navContext.getFeaturesInInterval(
+          maxBp.current - bpRegionSize.current,
+          maxBp.current
+        );
+
+        sectionGenomicLocus = genomeFeatureSegment.map((item, index) =>
+          item.getLocus()
+        );
+        console.log(sectionGenomicLocus, "hio");
+        //_____________________________________________________________________________
         const navStart = genomeArr[
           genomeIdx
         ].navContext.convertBaseToFeatureCoordinate(maxBp.current);
         tempObj["location"] = `${
           navStart.relativeStart - bpRegionSize.current
         }:${navStart.relativeStart}`;
+        //___________________________________________________________________________________'
+
         maxBp.current = maxBp.current + bpRegionSize.current;
       } else {
         let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
@@ -305,10 +319,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           minBp.current + bpRegionSize.current
         );
 
-        let genomeCoordLocus = genomeFeatureSegment.map((item, index) =>
+        let sectionGenomicLocus = genomeFeatureSegment.map((item, index) =>
           item.getLocus()
         );
-        console.log(genomeCoordLocus);
+        console.log(sectionGenomicLocus, "left");
+        //_____________________________________________________________________________
+
         const navStart = genomeArr[
           genomeIdx
         ].navContext.convertBaseToFeatureCoordinate(minBp.current);
@@ -316,65 +332,63 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         tempObj["location"] = `${navStart.relativeStart}:${
           navStart.relativeStart + bpRegionSize.current
         }`;
-
+        //_____________________________________________________________________________
         minBp.current = minBp.current - bpRegionSize.current;
       }
 
-      for (let i = 0; i < genomeCoordLocus.length; i++) {
-        let sentData = false;
-        try {
-          let [start, end] = tempObj["location"].split(":");
-          console.log(start, end);
-          genomeArr[genomeIdx].defaultTracks.map((item, index) => {
-            if (!sentData) {
-              sentData = true;
-              infiniteScrollWorker.current!.postMessage({
-                trackArray: genomeArr[genomeIdx].defaultTracks.filter(
-                  (items, index) => {
-                    return items.name !== "genomealign" && items.name !== "hic";
-                  }
-                ),
+      let sentData = false;
+      try {
+        let [start, end] = tempObj["location"].split(":");
+        console.log(start, end);
+        genomeArr[genomeIdx].defaultTracks.map((item, index) => {
+          if (!sentData) {
+            sentData = true;
+            infiniteScrollWorker.current!.postMessage({
+              trackArray: genomeArr[genomeIdx].defaultTracks.filter(
+                (items, index) => {
+                  return items.name !== "genomealign" && items.name !== "hic";
+                }
+              ),
 
-                loci: [
-                  new ChromosomeInterval("chr7", Number(start), Number(end)),
-                ],
-                trackSide,
-                location: tempObj["location"],
-                xDist: dragX.current,
-                initial,
-              });
+              loci: [
+                new ChromosomeInterval("chr7", Number(start), Number(end)),
+              ],
+              trackSide,
+              location: tempObj["location"],
+              xDist: dragX.current,
+              initial,
+            });
 
-              if (initial === 1) {
-                infiniteScrollWorker.current!.onmessage = (event) => {
-                  event.data.fetchResults.map(
-                    (item, index) => (tempObj[item.name] = item.result)
-                  );
+            if (initial === 1) {
+              infiniteScrollWorker.current!.onmessage = (event) => {
+                event.data.fetchResults.map(
+                  (item, index) => (tempObj[item.name] = item.result)
+                );
 
-                  tempObj["initial"] = event.data.initial;
-                  tempObj["side"] = event.data.side;
-                  tempObj["location"] = event.data.location;
+                tempObj["initial"] = event.data.initial;
+                tempObj["side"] = event.data.side;
+                tempObj["location"] = event.data.location;
 
-                  setTrackData({ ...tempObj });
-                  isLoading.current = false;
-                };
-                //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
-                minBp.current = minBp.current - bpRegionSize.current;
-              }
+                setTrackData({ ...tempObj });
+                isLoading.current = false;
+              };
+              //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
+              minBp.current = minBp.current - bpRegionSize.current;
             }
-          });
-        } catch {}
+          }
+        });
+      } catch {}
 
-        // if (initial === 0) {
-        //   tempObj["initial"] = 0;
-        // } else {
-        //   tempObj["initial"] = 1;
+      // if (initial === 0) {
+      //   tempObj["initial"] = 0;
+      // } else {
+      //   tempObj["initial"] = 1;
 
-        //   minBp.current = minBp.current - bpRegionSize;
-        // }
-        // console.log(tempObj, "old");
-        // setTrackData({ ...tempObj });
-        // isLoading.current = false;
-      }
+      //   minBp.current = minBp.current - bpRegionSize;
+      // }
+      // console.log(tempObj, "old");
+      // setTrackData({ ...tempObj });
+      // isLoading.current = false;
     }
 
     console.log(maxBp.current, minBp.current);

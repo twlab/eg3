@@ -46,27 +46,27 @@ const defaultTracks = [
         //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
         // },(
 
-    //    new TrackModel ({
-    //       name: "bigWig",
-    //       genome: "hg19",
-    //       url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    //     }),
+       new TrackModel ({
+          name: "bigWig",
+          genome: "hg19",
+          url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+        }),
 
-    //    new TrackModel ({
-    //       name: "dynseq",
-    //       genome: "hg19",
-    //       url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-    //     }),
-    //     new TrackModel({
-    //       name: "methylc",
-    //       genome: "hg19",
-    //       url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-    //     }),
-    //    new TrackModel ({
-    //       name: "hic",
-    //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    //       genome: "hg19",
-    //     }),
+       new TrackModel ({
+          name: "dynseq",
+          genome: "hg19",
+          url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+        }),
+        new TrackModel({
+          name: "methylc",
+          genome: "hg19",
+          url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+        }),
+       new TrackModel ({
+          name: "hic",
+          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+          genome: "hg19",
+        }),
        new TrackModel ({
           name: "hic",
           url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
