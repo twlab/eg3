@@ -153,6 +153,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
+    //view genomic coord_________________________________________________
     let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
       genomeIdx
     ].navContext.getFeaturesInInterval(curBp, curBp + bpRegionSize.current);
@@ -160,7 +161,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let genomeCoordLocus = genomeFeatureSegment.map((item, index) =>
       item.getLocus()
     );
+    //view genomic coord_________________________________________________
 
+    let expandedGenomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+      genomeIdx
+    ].navContext.getFeaturesInInterval(
+      curBp - bpRegionSize.current,
+      curBp + bpRegionSize.current * 2
+    );
+
+    let expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
+      (item, index) => item.getLocus()
+    );
+    console.log(expandedGenomeCoordLocus, expandedGenomeFeatureSegment);
     viewRegion.current = genomeCoordLocus;
     startBp(viewRegion.current.toString());
     bpX.current = curBp;
@@ -172,10 +185,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     if (hicOption === 1 && dragX.current <= 0) {
       // isLoading.current = true;
-      fetchGenomeData(2, "right", genomeCoordLocus);
+      fetchGenomeData(2, "right", genomeCoordLocus, expandedGenomeCoordLocus);
     } else {
       // isLoading.current = true;
-      fetchGenomeData(2, "left", genomeCoordLocus);
+      fetchGenomeData(2, "left", genomeCoordLocus, expandedGenomeCoordLocus);
     }
 
     if (
@@ -222,9 +235,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   async function fetchGenomeData(
     initial: number = 0,
     trackSide,
-    genomeCoordLocus: Array<ChromosomeInterval>
+    genomeCoordLocus: Array<ChromosomeInterval>,
+    expandedGenomeCoordLocus?: Array<ChromosomeInterval>
   ) {
-    console.log(bpX.current, genomeCoordLocus);
+    console.log(bpX.current, genomeCoordLocus, expandedGenomeCoordLocus);
 
     let newVisData: ViewExpansion = {
       visWidth: windowWidth * 3,
@@ -257,10 +271,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             ),
             // TO DO?????????????need to sent loci as a array of all chr regions, after converting it from navcoord
             loci: genomeCoordLocus,
+            expandedLoci: expandedGenomeCoordLocus,
             trackSide,
             location: `${bpX.current}:${bpX.current + bpRegionSize.current}`,
             xDist: dragX.current,
             initial,
+            basePerPixel: basePerPixel.current,
+            regionLength: curVisData.current.visRegion.getWidth(),
           });
           if (initial === 1) {
             worker.current!.onmessage = (event) => {
@@ -319,7 +336,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           minBp.current + bpRegionSize.current
         );
 
-        let sectionGenomicLocus = genomeFeatureSegment.map((item, index) =>
+        sectionGenomicLocus = genomeFeatureSegment.map((item, index) =>
           item.getLocus()
         );
         console.log(sectionGenomicLocus, "left");
@@ -338,8 +355,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       let sentData = false;
       try {
-        let [start, end] = tempObj["location"].split(":");
-        console.log(start, end);
         genomeArr[genomeIdx].defaultTracks.map((item, index) => {
           if (!sentData) {
             sentData = true;
@@ -350,9 +365,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               ),
 
-              loci: [
-                new ChromosomeInterval("chr7", Number(start), Number(end)),
-              ],
+              loci: sectionGenomicLocus,
               trackSide,
               location: tempObj["location"],
               xDist: dragX.current,
@@ -448,8 +461,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
         }
       }
+
+      let expandedGenomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+        genomeIdx
+      ].navContext.getFeaturesInInterval(
+        bpX.current - bpRegionSize.current,
+        bpX.current + bpRegionSize.current * 2
+      );
+
+      let expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
+        (item, index) => item.getLocus()
+      );
       setTrackComponents([...newTrackComponents]);
-      fetchGenomeData(1, "right", viewRegion.current!);
+      fetchGenomeData(
+        1,
+        "right",
+        viewRegion.current!,
+        expandedGenomeCoordLocus
+      );
     }
   }, [initialStart]);
   useEffect(() => {

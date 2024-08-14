@@ -1,11 +1,13 @@
+import _ from "lodash";
 // import Straw from 'hic-straw/src/straw';
 // import HicStraw from "hic-straw/dist/hic-straw";
 // import HicStraw from "hic-straw/dist/hic-straw.esm.js";
+import HicStraw from "hic-straw/dist/hic-straw.min.js";
 
-// import DataSource from './DataSource';
-// import ChromosomeInterval from '../model/interval/ChromosomeInterval';
+import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import { NormalizationMode } from "./HicDataModes";
 import { GenomeInteraction } from "./GenomeInteraction";
+import { findClosestNumber } from "../../../models/util";
 
 /**
  * First, some monkey patching for juicebox.js
@@ -38,31 +40,37 @@ const MIN_BINS_PER_REGION = 50;
  *
  * @author Silas Hsu
  */
-function GetHicData(straw, options, start, end) {
+export class HicSource {
+  currentBinSize: number;
+  normOptions: any;
+  metadata: any;
+  straw: any;
+  regionLength: number;
   /**
    * Makes a new instance specialized in serving data from one URL
    *
    * @param {string} url - the URL to fetch data from
    */
-  // constructor(url) {
-  //   let config;
-  //   if (typeof url === 'string') {
-  //     config = { url };
-  //     // if(url.includes('4dnucleome')) {
-  //     //     config = {url, headers: {Authorization : process.env.REACT_APP_4DN_KEY}}
-  //     // }
-  //   } else {
-  //     config = { blob: url };
-  //   }
-  //   // console.log(config)
-  //   this.straw = new HicStraw(config);
-  //   // this.datasetPromise = this.straw.reader.loadDataset({});
-  //   // this.metadataPromise = null;
-  //   // this.normVectorsPromise = null;
-  //   this.metadata = null;
-  //   this.normOptions = null;
-  //   this.currentBinSize = 0;
-  // }
+  constructor(url, regionLength) {
+    let config;
+    if (typeof url === "string") {
+      config = { url };
+      // if(url.includes('4dnucleome')) {
+      //     config = {url, headers: {Authorization : process.env.REACT_APP_4DN_KEY}}
+      // }
+    } else {
+      config = { blob: url };
+    }
+    // console.log(config)
+    this.straw = new HicStraw(config);
+    // this.datasetPromise = this.straw.reader.loadDataset({});
+    // this.metadataPromise = null;
+    // this.normVectorsPromise = null;
+    this.metadata = null;
+    this.normOptions = null;
+    this.currentBinSize = 0;
+    this.regionLength = regionLength;
+  }
 
   /**
    * Loading normalization data is an expensive operation that takes a long time.  In order for `getData()` to return
@@ -85,25 +93,17 @@ function GetHicData(straw, options, start, end) {
    * @param {DisplayedRegionModel} region - the region
    * @returns {number} the index of the recommended bin size for the region
    */
-  // function getAutoBinSize(region) {
-  //   const SORTED_BIN_SIZES = this.metadata.resolutions;
-  //   const regionLength = region.getWidth();
-  //   for (const binSize of SORTED_BIN_SIZES) {
-  //     // SORTED_BIN_SIZES must be sorted from largest to smallest!
-  //     if (MIN_BINS_PER_REGION * binSize < regionLength) {
-  //       return binSize;
-  //     }
-  //   }
-  //   return SORTED_BIN_SIZES[SORTED_BIN_SIZES.length - 1];
-  // }
-  function findClosestNumber(arr: number[], num: number) {
-    if (arr.includes(num)) {
-      return num;
+  getAutoBinSize() {
+    const SORTED_BIN_SIZES = this.metadata!.resolutions;
+    for (const binSize of SORTED_BIN_SIZES) {
+      // SORTED_BIN_SIZES must be sorted from largest to smallest!
+      if (MIN_BINS_PER_REGION * binSize < this.regionLength) {
+        return binSize;
+      }
     }
-    return arr.reduce((prev, curr) => {
-      return Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev;
-    });
+    return SORTED_BIN_SIZES[SORTED_BIN_SIZES.length - 1];
   }
+
   /**
    * Gets the bin size to use during data fetch
    *
@@ -111,12 +111,12 @@ function GetHicData(straw, options, start, end) {
    * @param {DisplayedRegionModel} region - region to fetch, to be used in case of auto bin size
    * @return {number} bin size to use during data fetch
    */
-  // function getBinSize(options, region) {
-  //   const numberBinSize = Number(options.binSize) || 0;
-  //   return numberBinSize <= 0
-  //     ? this.getAutoBinSize(region)
-  //     : this.findClosestNumber(this.metadata.resolutions, numberBinSize);
-  // }
+  getBinSize(options) {
+    const numberBinSize = Number(options.binSize) || 0;
+    return numberBinSize <= 0
+      ? this.getAutoBinSize()
+      : findClosestNumber(this.metadata.resolutions, numberBinSize);
+  }
 
   /**
    * FIXME this doesn't do well in region set view.  Errors abound from Juicebox.
@@ -127,7 +127,7 @@ function GetHicData(straw, options, start, end) {
    * @param {NormalizationMode} normalization
    * @return {GenomeInteraction[]}
    */
-  async function getInteractionsBetweenLoci(
+  async getInteractionsBetweenLoci(
     queryLocus1,
     queryLocus2,
     binSize,
@@ -137,8 +137,11 @@ function GetHicData(straw, options, start, end) {
     //     await this.fetchNormalizationData();
     // }
     // console.log(this.normOptions)
+    if (!this.normOptions.includes(normalization)) {
+      return [];
+    }
     // console.log(normalization, queryLocus1, queryLocus2, "BP", binSize)
-    const records = await straw.getContactRecords(
+    const records = await this.straw.getContactRecords(
       normalization,
       queryLocus1,
       queryLocus2,
@@ -148,16 +151,16 @@ function GetHicData(straw, options, start, end) {
     // console.log(records)
     const interactions: Array<any> = [];
     for (const record of records) {
-      const recordLocus1 = {
-        chr: queryLocus1.chr,
-        start: record.bin1 * binSize,
-        end: (record.bin1 + 1) * binSize,
-      };
-      const recordLocus2 = {
-        chr: queryLocus2.chr,
-        start: record.bin2 * binSize,
-        end: (record.bin2 + 1) * binSize,
-      };
+      const recordLocus1 = new ChromosomeInterval(
+        queryLocus1.chr,
+        record.bin1 * binSize,
+        (record.bin1 + 1) * binSize
+      );
+      const recordLocus2 = new ChromosomeInterval(
+        queryLocus2.chr,
+        record.bin2 * binSize,
+        (record.bin2 + 1) * binSize
+      );
       interactions.push(
         new GenomeInteraction(recordLocus1, recordLocus2, record.counts)
       );
@@ -173,26 +176,31 @@ function GetHicData(straw, options, start, end) {
    * @param {Object} options - rendering options
    * @return {Promise<GenomeInteraction[]>} a Promise for the data
    */
-  async function getData() {
-    // const binSize =getBinSize(options, region);
-    // let currentBinSize = binSize;
-    // const promises: Array<any> = [];
-    let normalization = NormalizationMode.NONE;
-    // NEED TO BE INCLUSIVE TO INTERACTIONS THAT DONT SHOW UP WHEN THEIR START ISNT IN RANGE OF REGION
-    // SO WE NEED TO MAKE START 0 TO MAKE SURE WE GET EVERY INTERACTION
-    // BIN SIDE IS THE OVERALL SIZE OF THE INTERACTION. WHEN ITS 10000 WE ARE TRYING TO RQUERY EVERY BEAM WITH A DISTANCE OF 10000 IN THE CHROMOSOME
-    // to be inclusive of bins to the left size of track we need to subtract start by binsize + binsize/2
-    const dataForEachSegment = await getInteractionsBetweenLoci(
-      { start: start - 20000, end: end + 20000, chr: "chr7" },
-      { start: start - 20000, end: end + 20000, chr: "chr7" },
-      10000,
-      options.normalization
-    );
-    // const dataForEachSegment = await Promise.all(promises);
-    // return _.flatMap(dataForEachSegment);
+  async getData(region, basesPerPixel, options) {
+    await this.straw.hicFile.init();
+    this.metadata = await this.straw.getMetaData();
+    this.normOptions = await this.straw.getNormalizationOptions();
+    // console.log(this.metadata, this.normOptions);
+    const binSize = this.getBinSize(options);
+    this.currentBinSize = binSize;
+    const promises: Array<any> = [];
+    const loci = region;
+    console.log(loci);
+    for (let i = 0; i < loci.length; i++) {
+      for (let j = i; j < loci.length; j++) {
+        promises.push(
+          this.getInteractionsBetweenLoci(
+            loci[i],
+            loci[j],
+            binSize,
+            options.normalization
+          )
+        );
+      }
+    }
+    const dataForEachSegment = await Promise.all(promises);
+    return _.flatMap(dataForEachSegment);
     // return ensureMaxListLength(_.flatMap(dataForEachSegment), 5000);
-
-    return dataForEachSegment;
   }
 
   /**
@@ -203,19 +211,19 @@ function GetHicData(straw, options, start, end) {
    * @param {Object} options - rendering options
    * @return {} a meta object
    */
-  // function getCurrentMeta(region, basesPerPixel, options) {
-  //   return {
-  //     resolution: this.currentBinSize,
-  //     normalization: options.normalization,
-  //   };
-  // }
+  getCurrentMeta(options) {
+    return {
+      resolution: this.currentBinSize,
+      normalization: options.normalization,
+    };
+  }
 
-  // function getFileInfo = () => {
-  //   return {
-  //     resolutions: this.metadata.resolutions,
-  //     normOptions: this.normOptions,
-  //   };
-  // };
+  getFileInfo = () => {
+    return {
+      resolutions: this.metadata.resolutions,
+      normOptions: this.normOptions,
+    };
+  };
 
   /**
    * Gets the genome-wide interaction map from the HiC file.
@@ -223,41 +231,31 @@ function GetHicData(straw, options, start, end) {
    * @param {NavigationContext} genome - genome metadata
    * @return {Promise<GenomeInteraction[]>} a Promise for the data
    */
-  // async function getDataAll(genome) {
-  //   if (!this.metadata) {
-  //     this.metadata = await this.straw.getMetaData();
-  //   }
-  //   const binSize = this.straw.hicFile.wholeGenomeChromosome.size * 2;
-  //   const allRecords = await this.straw.getContactRecords(
-  //     NormalizationMode.NONE,
-  //     { chr: 'ALL' },
-  //     { chr: 'ALL' },
-  //     'BP'
-  //   );
-  //   const interactions = [];
-  //   for (const record of allRecords) {
-  //     const locus1 = binToLocus(record.bin1);
-  //     const locus2 = binToLocus(record.bin2);
-  //     if (locus1 && locus2) {
-  //       interactions.push(new GenomeInteraction(locus1, locus2, record.counts));
-  //     }
-  //   }
-  //   return interactions;
+  async getDataAll(genome) {
+    if (!this.metadata) {
+      this.metadata = await this.straw.getMetaData();
+    }
+    const binSize = this.straw.hicFile.wholeGenomeChromosome.size * 2;
+    const allRecords = await this.straw.getContactRecords(
+      NormalizationMode.NONE,
+      { chr: "ALL" },
+      { chr: "ALL" },
+      "BP"
+    );
+    const interactions: Array<any> = [];
+    for (const record of allRecords) {
+      const locus1 = binToLocus(record.bin1);
+      const locus2 = binToLocus(record.bin2);
+      if (locus1 && locus2) {
+        interactions.push(new GenomeInteraction(locus1, locus2, record.counts));
+      }
+    }
+    return interactions;
 
-  //   function binToLocus(bin) {
-  //     const absStart = bin * binSize;
-  //     const absEnd = (bin + 1) * binSize;
-  //     return genome.getLociInInterval(absStart, absEnd)[0];
-  //   }
-  // }
-
-  function handle() {
-    let data = getData();
-
-    return data;
+    function binToLocus(bin) {
+      const absStart = bin * binSize;
+      const absEnd = (bin + 1) * binSize;
+      return genome.getLociInInterval(absStart, absEnd)[0];
+    }
   }
-
-  return handle();
 }
-
-export default GetHicData;

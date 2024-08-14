@@ -134,7 +134,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     const newCanvasRef = createRef();
 
     let placedInteraction = placeInteractions(result);
-
+    console.log(placedInteraction);
     let polyCoord = placedInteraction.map((item, index) =>
       renderRect(item, index)
     );

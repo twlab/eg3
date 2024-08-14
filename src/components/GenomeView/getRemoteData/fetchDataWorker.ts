@@ -1,17 +1,12 @@
-import _, { initial } from "lodash";
+import _ from "lodash";
 
-import getTabixData from "./tabixSource2";
-import GetHicData from "./hicSource2";
-import getBigData from "./bigSource2";
+import getTabixData from "./tabixSource";
+import { HicSource } from "./hicSource";
+import getBigData from "./bigSource";
 // import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
 import HicStraw from "hic-straw/dist/hic-straw.min.js";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
-/**
- * A DataSource that gets BedRecords from remote bed files.  Designed to run in webworker context.  Only indexed bed
- * files supported.
- *
- * @author Daofeng Li based on Silas's version
- */
+
 const trackFetchFunction: { [key: string]: any } = {
   refGene: async function refGeneFetch(regionData: any) {
     const genRefResponse = await fetch(
@@ -51,8 +46,9 @@ const trackFetchFunction: { [key: string]: any } = {
   ) {
     return getTabixData(loci, options, url);
   },
-  hic: function hicFetch(straw, options, start, end) {
-    return GetHicData(straw, options, start, end);
+  hic: function hicFetch(straw, options, loci, basesPerPixel) {
+    console.log(loci);
+    return straw.getData(loci, basesPerPixel, options);
   },
   genomealign: function genomeAlignFetch(
     loci: Array<{ [key: string]: any }>,
@@ -66,10 +62,10 @@ let strawCache: { [key: string]: any } = {};
 
 self.onmessage = async (event: MessageEvent) => {
   let fetchResults: Array<any> = [];
-  const regionStart = event.data.loci[0].start;
-  const regionEnd = event.data.loci[0].end;
-  const regionChr = event.data.loci[0].chr;
-  console.log(regionStart, regionEnd, regionChr);
+  let genomicLoci = event.data.loci;
+  let expandGenomicLoci = event.data.expandedLoci;
+  let basesPerPixel = event.data.basesPerPixel;
+  let regionLength = event.data.regionLength;
   let newtrackDefault = event.data.trackArray;
   await Promise.all(
     newtrackDefault.map(async (item, index) => {
@@ -80,13 +76,9 @@ self.onmessage = async (event: MessageEvent) => {
 
       if (trackName === "hic") {
         if (!(id in strawCache)) {
-          //   let metadata = straw.getMetaData();
-          //   let normOptions = straw.getNormalizationOptions();
-          strawCache[id] = new HicStraw({
-            url: item.url,
-          });
+          strawCache[id] = new HicSource(item.url, regionLength);
         }
-        // CHANGE THIS PART TO GET A LIST OF GENOMIC COORD
+
         let result = await trackFetchFunction[trackName](
           strawCache[id],
           {
@@ -109,13 +101,13 @@ self.onmessage = async (event: MessageEvent) => {
             normalization: "NONE",
             label: "",
           },
-          regionStart,
-          regionEnd
+          expandGenomicLoci,
+          basesPerPixel
         );
         fetchResults.push({ name: trackName, nameResult: "hicResult", result });
       } else if (trackName === "genomealign") {
         let result = await trackFetchFunction[trackName](
-          event.data.loci,
+          basesPerPixel < 10 ? expandGenomicLoci : genomicLoci,
           {
             height: 40,
             isCombineStrands: false,
@@ -147,20 +139,25 @@ self.onmessage = async (event: MessageEvent) => {
           genomeName: genomeName,
           querygenomeName: item.trackModel.querygenome,
         });
-
-        // CHANGE THIS PART TO GET A LIST OF GENOMIC COORD
       } else if (trackName === "refGene") {
-        const genRefResponse = await trackFetchFunction[trackName]({
-          name: genomeName,
-          chr: regionChr,
-          start: regionStart,
-          end: regionEnd,
-        });
+        const genRefResponses = await Promise.all(
+          genomicLoci.map((item, index) =>
+            trackFetchFunction[trackName]({
+              name: genomeName,
+              chr: item.chr,
+              start: item.start,
+              end: item.end,
+            })
+          )
+        );
 
-        fetchResults.push({ name: trackName, result: genRefResponse });
+        fetchResults.push({
+          name: trackName,
+          result: _.flatten(genRefResponses),
+        });
       } else {
         let result = await trackFetchFunction[trackName](
-          event.data.loci,
+          genomicLoci,
           {
             displayMode: "full",
             color: "blue",
