@@ -12,7 +12,7 @@ const ARROW_SEPARATION = 12;
 interface ArrowProps {
   startX: number; // X location to start drawing arrows
   endX: number; // X location to stop drawing arrows
-  y: number; // Y location to draw arrows (optional)
+  y?: number; // Y location to draw arrows (optional)
   height: number; // Height of arrows
   isToRight?: boolean; // Arrow point direction. If true, point right; otherwise, point left.
   color?: string; // Color of the arrows
@@ -21,14 +21,14 @@ interface ArrowProps {
    */
   clipId?: string;
   opacity?: number;
-  separation: number;
+  separation?: number;
 }
 class AnnotationArrows extends React.PureComponent<ArrowProps> {
   render() {
     const {
       startX,
       endX,
-      y,
+      y = 0,
       height,
       isToRight,
       color,

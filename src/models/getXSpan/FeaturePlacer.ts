@@ -95,6 +95,7 @@ export class FeaturePlacer {
 
     const placements: Array<any> = [];
     for (const feature of features) {
+      console.log(feature);
       for (let contextLocation of feature.computeNavContextCoordinates(
         navContext
       )) {

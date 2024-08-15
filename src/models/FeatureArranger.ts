@@ -129,8 +129,7 @@ export class FeatureArranger {
   ): FeatureArrangementResult {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const visibleFeatures = features.filter(
-      (feature) => feature
-      // drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
+      (feature) => drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
     );
 
     const results: PlacedFeatureGroup[] = [];

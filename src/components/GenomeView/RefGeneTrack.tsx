@@ -1,14 +1,19 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
-const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import { TrackProps } from "../../models/trackModels/trackProps";
+import { FeaturePlacer } from "../../models/getXSpan/FeaturePlacer";
+import FeatureArranger from "../../models/FeatureArranger";
+import Gene from "../../models/Gene";
 
+let featurePlacer = new FeaturePlacer();
+let featureArrange = new FeatureArranger();
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   bpRegionSize,
   bpToPx,
   trackData,
   side,
   windowWidth = 0,
+  visData,
 }) {
   let start, end;
 
@@ -43,8 +48,16 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     var strandIntervalList: Array<any> = [];
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (result) {
+      let testData = result.map((record) => new Gene(record));
+
       var resultIdx = 0;
 
+      let placeFeatureData = featureArrange.arrange(
+        testData,
+        visData!.viewWindowRegion,
+        windowWidth
+      );
+      console.log(placeFeatureData);
       if (
         resultIdx < result.length &&
         !(result[resultIdx].id in prevOverflowStrand.current)
@@ -161,7 +174,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         strandLevelList[j].push(strand);
       }
     }
-
+    console.log(strandLevelList);
     let svgResult = setStrand({
       strandPos: [...strandLevelList],
       checkPrev: { ...prevOverflowStrand.current },
