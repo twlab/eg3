@@ -183,8 +183,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       worker.onmessage = (event) => {
         let drawDataArr = event.data;
 
-        newTrackWidth.current = drawDataArr[0].primaryVisData;
-
         let drawData = drawDataArr[0].drawData;
 
         svgElements = drawData.map((placement) =>
@@ -651,7 +649,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
               ? rightTrackGenes.map(
                   (drawData) =>
                     // index <= rightTrackGenes.length - 1 ?
-                    drawData["drawDataArr"].map((drawDataArr) => (
+                    drawData["drawDataArr"].map((drawDataArr, index) => (
                       <ToolTipGenomealign
                         key={"genomeAlignRight" + `${trackIdx}`}
                         trackType={trackType}

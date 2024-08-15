@@ -29,14 +29,18 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   });
 
   function findPolygon(x: number, y: number): any {
+    console.log(data);
     for (let i = 0; i < data.polyCoord.length; i++) {
-      if (pointInPolygon([x, y], data.polyCoord[i].points)) {
-        return data.placedInteraction[i];
+      if (data.polyCoord[i]) {
+        if (pointInPolygon([x, y], data.polyCoord[i].points)) {
+          return data.testInter[i];
+        }
       }
     }
 
     return null;
   }
+
   const handleMouseEnter = (e) => {
     if (Object.keys(data).length > 0) {
       const rect = targetRef.current!.getBoundingClientRect();
@@ -49,61 +53,62 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
       let dataIdxX = Math.floor(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
 
-      if (dataIdxX < windowWidth && dataIdxY < 1000) {
-        const curPlacedInteraction = findPolygon(dataIdxX, dataIdxY);
-        if (curPlacedInteraction) {
-          const { xSpan1, xSpan2, interaction } = curPlacedInteraction;
+      const curPlacedInteraction = findPolygon(dataIdxX, dataIdxY);
 
-          const left = xSpan1.start;
-          const right = xSpan2.start;
-          const leftWidth = Math.max(xSpan1.end - xSpan1.start, 1);
-          const rightWidth = Math.max(xSpan2.end - xSpan2.start, 1);
+      if (curPlacedInteraction) {
+        const { xSpan1, xSpan2, interaction } = curPlacedInteraction;
 
-          setToolTip({
-            ...toolTip,
-            top: rect.top,
-            left: rect.left,
-            right: rect.right,
-            dataIdxX: dataIdxX,
-            dataIdxY: dataIdxY,
-            toolTip: (
+        const left = xSpan1.start;
+        const right = xSpan2.start;
+        const leftWidth = Math.max(xSpan1.end - xSpan1.start, 1);
+        const rightWidth = Math.max(xSpan2.end - xSpan2.start, 1);
+
+        setToolTip({
+          ...toolTip,
+          top: rect.top,
+          left: rect.left,
+          right: rect.right,
+          dataIdxX: dataIdxX,
+          dataIdxY: dataIdxY,
+          toolTip: (
+            <div>
+              {interaction.name && <div>{interaction.name}</div>}
               <div>
-                {interaction.name && <div>{interaction.name}</div>}
-                <div>
-                  Locus1: {interaction.locus1.chr}__
-                  {interaction.locus1.start}-{interaction.locus1.end}
-                </div>
-                Locus2: {interaction.locus2.chr}__
-                {interaction.locus2.start}-{interaction.locus2.end}
-                <div>Score: {interaction.score}</div>
+                Locus1: {interaction.locus1.chr}__
+                {interaction.locus1.start}-{interaction.locus1.end}
               </div>
-            ),
-            beamRight: (
-              <div
-                style={{
-                  position: "absolute",
+              Locus2: {interaction.locus2.chr}__
+              {interaction.locus2.start}-{interaction.locus2.end}
+              <div>Score: {interaction.score}</div>
+            </div>
+          ),
+          beamRight: (
+            <div
+              style={{
+                position: "absolute",
 
-                  left: right,
-                  width: rightWidth,
-                  backgroundColor: "green",
-                  height: 120,
-                }}
-              ></div>
-            ),
-            beamLeft: (
-              <div
-                style={{
-                  position: "absolute",
-                  backgroundColor: "red",
-                  left: left,
-                  width: leftWidth,
-                  height: 120,
-                }}
-              ></div>
-            ),
-          });
-          setIsVisible(true);
-        }
+                left: right,
+                width: rightWidth,
+                backgroundColor: "green",
+                height: 120,
+              }}
+            ></div>
+          ),
+          beamLeft: (
+            <div
+              style={{
+                position: "absolute",
+                backgroundColor: "red",
+                left: left,
+                width: leftWidth,
+                height: 120,
+              }}
+            ></div>
+          ),
+        });
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
       }
     }
   };

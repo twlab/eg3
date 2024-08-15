@@ -17,7 +17,7 @@ const useResizeObserver = () => {
       }
     }, 100); // Adjust the debounce delay as needed
 
-    const observer = new ResizeObserver(handleResize);
+    const observer = new ResizeObserver(handleResize as any);
 
     if (ref.current) {
       observer.observe(ref.current);

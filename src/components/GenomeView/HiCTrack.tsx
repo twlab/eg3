@@ -6,6 +6,7 @@ import { InteractionDisplayMode } from "./commonComponents/user-options/DisplayM
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 import percentile from "percentile";
+import { FeaturePlacer } from "../../models/getXSpan/FeaturePlacer";
 export enum ScaleChoices {
   AUTO = "auto",
   FIXED = "fixed",
@@ -52,7 +53,7 @@ let defaultHic = {
   normalization: "NONE",
   label: "",
 };
-
+let featurePlacer = new FeaturePlacer();
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   bpRegionSize,
   bpToPx,
@@ -64,33 +65,24 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   dragXDist,
   genomeArr,
   genomeIdx,
+  visData,
+  trackIdx,
 }) {
-  let start, end;
-
   let result;
   if (Object.keys(trackData2!).length > 0) {
-    [start, end] = trackData2!.location.split(":");
-
     result = trackData2!.hicResult.fetchData;
   }
-
-  start = Number(start);
-  end = Number(end);
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
-  const [hicOption, setHicOption] = useState(1);
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
-  const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
 
-  const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
   const view = useRef(0);
-  const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
-  const overflowStrand2 = useRef<{ [key: string]: any }>({});
+
   // step 1 filtered
   // step 2 change genomeInteraction in placedInteraction
   // step 3compute the value find the middle rect and display on screen
@@ -98,114 +90,37 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   function fetchGenomeData() {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
-    let startPos;
-    startPos = start;
     if (result === undefined) {
       return;
     }
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
-    if (result && hicOption === 0) {
-      // let checking for interval overlapping and determining what level each strand should be on
-      for (let i = result.length - 1; i >= 0; i--) {
-        const curStrand = result[i];
-        if (curStrand.end > end) {
-          const strandId = curStrand.start + curStrand.end;
-          overflowStrand.current[strandId] = {
-            level: i,
-            strand: curStrand,
-          };
-        }
-
-        if (trackData!.initial) {
-          if (curStrand.txStart < start) {
-            overflowStrand2.current[curStrand.id] = {
-              level: i,
-              strand: curStrand,
-            };
-          }
-        }
-        if (!trackData!.initial && curStrand.end < end) {
-          break;
-        }
-      }
-    }
-
     const newCanvasRef = createRef();
-
-    let placedInteraction = placeInteractions(result);
-    console.log(placedInteraction);
-    let polyCoord = placedInteraction.map((item, index) =>
-      renderRect(item, index)
+    let testInter = featurePlacer.placeInteractions(
+      result,
+      visData!.visRegion,
+      visData!.visWidth
     );
-    let tmpObj = {};
+
+    let polyCoord = testInter.map((item, index) => renderRect(item, index));
 
     if (trackData2!.side === "right") {
-      if (hicOption === 0) {
-        //        let currData = {
-        //          drawData:  new Array<any>({ placedInteraction, polyCoord }),
-        //          canvasRefsArr: new Array<any>(newCanvasRef),
-        //        };
-        // setRightTrack({...rightTrackGenes.drawData, tmpObj});
-        // setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-      } else {
-        let currData = {
-          drawData: { placedInteraction, polyCoord },
-          canvasRef: newCanvasRef,
-        };
-        setRightTrack(new Array<any>(currData));
-      }
+      let currData = {
+        drawData: { testInter, polyCoord },
+        canvasRef: newCanvasRef,
+      };
+      setRightTrack(new Array<any>(currData));
+
       prevOverflowStrand.current = { ...overflowStrand.current };
       overflowStrand.current = {};
     } else if (trackData2!.side === "left") {
-      if (hicOption === 0) {
-        setLeftTrack([...leftTrackGenes, tmpObj]);
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-      } else {
-        let currData = {
-          drawData: { placedInteraction, polyCoord },
-          canvasRef: newCanvasRef,
-        };
-        setLeftTrack(new Array<any>(currData));
-      }
+      let currData = {
+        drawData: { testInter, polyCoord },
+        canvasRef: newCanvasRef,
+      };
+      setLeftTrack(new Array<any>(currData));
     }
     view.current = trackData2!.xDist;
-  }
-
-  //________________________________________________________________________________________________________________________________________________________
-  //________________________________________________________________________________________________________________________________________________________
-  function placeInteractions(interactions: GenomeInteraction[]) {
-    const mappedInteractions: Array<any> = [];
-    for (const interaction of interactions) {
-      let location1 = interaction.locus1;
-      let location2 = interaction.locus2;
-
-      let location1Nav = genomeArr![genomeIdx!].navContext.parse(
-        `${"chr7"}` +
-          ":" +
-          `${Math.floor(Number(location1.start))}` +
-          "-" +
-          `${Math.floor(Number(location1.end))}`
-      );
-      let location2Nav = genomeArr![genomeIdx!].navContext.parse(
-        `${"chr7"}` +
-          ":" +
-          `${Math.floor(Number(location2.start))}` +
-          "-" +
-          `${Math.floor(Number(location2.end))}`
-      );
-      const startX1 = (location1Nav.start - start) / bpToPx;
-      const endX1 = (location1Nav.end - start) / bpToPx;
-
-      const startX2 = (location2Nav.start - start) / bpToPx;
-      const endX2 = (location2Nav.end - start) / bpToPx;
-
-      const xSpan1 = { start: startX1, end: endX1 };
-      const xSpan2 = { start: startX2, end: endX2 };
-      mappedInteractions.push({ interaction, xSpan1, xSpan2 });
-    }
-
-    return mappedInteractions;
   }
 
   function renderRect(placedInteraction: any, index: number) {
@@ -221,7 +136,10 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     }
 
     const { xSpan1, xSpan2 } = placedInteraction;
-    if (xSpan1.end < start && xSpan2.start > end) {
+    if (
+      xSpan1.end < visData!.viewWindow.start &&
+      xSpan2.start > visData!.viewWindow.end
+    ) {
       return null;
     }
     // if (bothAnchorsInView) {
@@ -251,7 +169,10 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     const key =
       "" + xSpan1.start + xSpan1.end + xSpan2.start + xSpan2.end + index;
     // only push the points in screen
-    if (topX + halfSpan2 > start && topX - halfSpan1 < end) {
+    if (
+      topX + halfSpan2 > visData!.viewWindow.start &&
+      topX - halfSpan1 < visData!.viewWindow.end
+    ) {
       hmData.push({
         points,
         interaction: placedInteraction.interaction,
@@ -343,24 +264,45 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
   function drawCanvas(polyRegionData, canvasRef) {
     if (canvasRef) {
+      const pixelRatio = getPixelRatioSafely();
+      if (pixelRatio !== 1) {
+        const width = visData!.visWidth;
+        const height = 120;
+        // this.canvasNode.parentNode.style.width = width + 'px';
+        // this.canvasNode.parentNode.style.height = height + 'px';
+        canvasRef.style.width = width + "px";
+        canvasRef.style.height = height + "px";
+        canvasRef.setAttribute("width", width * pixelRatio);
+        canvasRef.setAttribute("height", height * pixelRatio);
+      }
       let context = canvasRef.getContext("2d");
+      context.scale(pixelRatio, pixelRatio);
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
       for (let i = 0; i < polyRegionData.length; i++) {
-        const points = polyRegionData[i].points;
-        context.fillStyle = "#B8008A";
-        context.globalAlpha = 1;
+        if (polyRegionData[i] !== null) {
+          const points = polyRegionData[i].points;
+          context.fillStyle = "#B8008A";
+          context.globalAlpha = 1 / polyRegionData[i].opacity;
 
-        context.beginPath();
-        context.moveTo(points[0][0], points[0][1]);
-        context.lineTo(points[1][0], points[1][1]);
-        context.lineTo(points[2][0], points[2][1]);
-        context.lineTo(points[3][0], points[3][1]);
-        context.closePath();
-        context.fill();
+          context.beginPath();
+          context.moveTo(points[0][0], points[0][1]);
+          context.lineTo(points[1][0], points[1][1]);
+          context.lineTo(points[2][0], points[2][1]);
+          context.lineTo(points[3][0], points[3][1]);
+          context.closePath();
+          context.fill();
+        }
       }
     }
   }
-
+  function getPixelRatioSafely() {
+    const pixelRatio = window.devicePixelRatio;
+    if (Number.isFinite(pixelRatio) && pixelRatio > 0) {
+      return pixelRatio;
+    } else {
+      return 1;
+    }
+  }
   // useEffect(() => {
   //   if (side === "left") {
   //     leftTrackGenes.forEach((canvasRef, index) => {
@@ -411,71 +353,82 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   return (
     <div
       style={{
+        display: "flex",
         position: "relative",
         height: 120,
       }}
     >
-      {side === "right"
-        ? rightTrackGenes.map((item, index) => (
-            <canvas
-              key={index}
-              ref={item.canvasRef}
-              height={"120"}
-              width={windowWidth}
-              style={{ position: "absolute", left: `${-view.current!}px` }}
-            />
-          ))
-        : leftTrackGenes.map((item, index) => (
-            <canvas
-              key={leftTrackGenes.length - index - 1}
-              ref={leftTrackGenes[leftTrackGenes.length - index - 1].canvasRef}
-              height={"120"}
-              width={windowWidth}
-              style={{ position: "absolute", right: `${view.current!}px` }}
-            />
-          ))}
+      <div
+        style={{
+          overflow: "visible",
 
-      {side === "right" ? (
-        <div
-          key={"hicRight"}
-          style={{
-            opacity: 0.5,
-
-            position: "absolute",
-            left: `${-view.current!}px`,
-          }}
-        >
-          {rightTrackGenes.map((item, index) => (
-            <TestToolTipHic
-              key={index}
-              data={rightTrackGenes[index].drawData}
-              windowWidth={windowWidth}
-              trackIdx={index}
-              side={"right"}
-            />
-          ))}
-        </div>
-      ) : (
-        <div
-          key={"hicLeft"}
-          style={{
-            opacity: 0.5,
-            display: "flex",
-            position: "absolute",
-            right: `${view.current!}px`,
-          }}
-        >
-          {leftTrackGenes.map((item, index) => (
-            <TestToolTipHic
-              key={leftTrackGenes.length - index - 1}
-              data={leftTrackGenes[leftTrackGenes.length - index - 1].drawData}
-              windowWidth={windowWidth}
-              trackIdx={leftTrackGenes.length - index - 1}
-              side={"left"}
-            />
-          ))}
-        </div>
-      )}
+          position: "absolute",
+          right:
+            side === "left"
+              ? `${view.current! - visData!.viewWindow.start}px`
+              : "",
+          left:
+            side === "right"
+              ? `${-view.current! - visData!.viewWindow.start}px`
+              : "",
+        }}
+      >
+        {side === "right"
+          ? rightTrackGenes.map((item, index) => (
+              <canvas
+                key={index}
+                ref={item.canvasRef}
+                height={"120"}
+                width={visData!.visWidth}
+              />
+            ))
+          : leftTrackGenes.map((item, index) => (
+              <canvas
+                key={leftTrackGenes.length - index - 1}
+                ref={
+                  leftTrackGenes[leftTrackGenes.length - index - 1].canvasRef
+                }
+                height={"120"}
+                width={visData!.visWidth}
+              />
+            ))}
+      </div>
+      <div
+        style={{
+          opacity: 0.5,
+          right:
+            side === "left"
+              ? `${view.current! - visData!.viewWindow.start}px`
+              : "",
+          position: "absolute",
+          left:
+            side === "right"
+              ? `${-view.current! - visData!.viewWindow.start}px`
+              : "",
+        }}
+      >
+        {side === "right"
+          ? rightTrackGenes.map((item, index) => (
+              <TestToolTipHic
+                key={"hicRight" + trackIdx}
+                data={rightTrackGenes[index].drawData}
+                windowWidth={visData!.visWidth}
+                trackIdx={index}
+                side={"right"}
+              />
+            ))
+          : leftTrackGenes.map((item, index) => (
+              <TestToolTipHic
+                key={"hicLeft" + +trackIdx}
+                data={
+                  leftTrackGenes[leftTrackGenes.length - index - 1].drawData
+                }
+                windowWidth={visData!.visWidth}
+                trackIdx={leftTrackGenes.length - index - 1}
+                side={"left"}
+              />
+            ))}
+      </div>
     </div>
   );
 });
