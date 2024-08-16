@@ -29,7 +29,6 @@ const TestToolTipHic: React.FC<HicHoverProp> = memo(function TestToolTipHic({
   });
 
   function findPolygon(x: number, y: number): any {
-    console.log(data);
     for (let i = 0; i < data.polyCoord.length; i++) {
       if (data.polyCoord[i]) {
         if (pointInPolygon([x, y], data.polyCoord[i].points)) {

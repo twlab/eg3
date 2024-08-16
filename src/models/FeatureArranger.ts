@@ -139,6 +139,7 @@ export class FeatureArranger {
         viewRegion,
         width
       );
+      console.log(placements);
       results.push(...this._combineAdjacent(placements));
     }
     const numRowsAssigned = this._assignRows(results, padding, sortItems);

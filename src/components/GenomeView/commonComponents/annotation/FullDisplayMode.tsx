@@ -93,7 +93,7 @@ class FullDisplayMode extends React.Component<FullDisplayModeProps> {
       getAnnotationElement,
     } = this.props;
     // Important: it is ok to arrange() every render only because we memoized the function in the constructor.
-    console.log(data);
+
     const arrangeResult = this.featureArranger.arrange(
       data,
       visRegion,
@@ -168,7 +168,7 @@ class FullVisualizer extends React.PureComponent<FullVisualizerProps> {
 
   render() {
     const { placements, width, height } = this.props;
-    console.log(placements, width, height);
+
     return (
       <svg width={width} height={height} style={SVG_STYLE}>
         {placements.map(this.renderAnnotation)}

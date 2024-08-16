@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Children } from "react";
 import OpenInterval from "../../../models/OpenInterval";
 import Gene from "../../../models/Gene";
 import { GeneAnnotation } from "./GeneAnnotation";
@@ -17,7 +17,7 @@ interface GeneAnnotationScaffoldProps {
     italicizeText?: boolean;
     hideMinimalItems?: boolean;
   };
-
+  children: React.ReactNode;
   /**
    * Callback for click events
    *
@@ -45,6 +45,7 @@ export class GeneAnnotationScaffold extends React.PureComponent<GeneAnnotationSc
 
   constructor(props: GeneAnnotationScaffoldProps) {
     super(props);
+
     // this.handleClick = this.handleClick.bind(this);
   }
 
@@ -53,7 +54,8 @@ export class GeneAnnotationScaffold extends React.PureComponent<GeneAnnotationSc
   // }
 
   render(): JSX.Element {
-    const { gene, xSpan, viewWindow, y, isMinimal, options } = this.props;
+    const { gene, xSpan, viewWindow, y, isMinimal, options, children } =
+      this.props;
     const [xStart, xEnd] = xSpan;
     const { color, backgroundColor, italicizeText } =
       GeneAnnotation.getDrawColors(gene, this.props.options);
@@ -135,7 +137,7 @@ export class GeneAnnotationScaffold extends React.PureComponent<GeneAnnotationSc
       <TranslatableG y={y}>
         {coveringRect}
         {centerLine}
-
+        {children}
         {label}
       </TranslatableG>
     );

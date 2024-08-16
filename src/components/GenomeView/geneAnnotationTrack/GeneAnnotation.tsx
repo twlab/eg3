@@ -39,6 +39,7 @@ interface GeneDisplayOptions {
 interface GeneAnnotationProps {
   placedGene: PlacedFeature; // Gene and its placement
   options?: GeneDisplayOptions;
+  y?: number;
 }
 
 /**

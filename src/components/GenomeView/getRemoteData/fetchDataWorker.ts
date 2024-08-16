@@ -47,7 +47,6 @@ const trackFetchFunction: { [key: string]: any } = {
     return getTabixData(loci, options, url);
   },
   hic: function hicFetch(straw, options, loci, basesPerPixel) {
-    console.log(loci);
     return straw.getData(loci, basesPerPixel, options);
   },
   genomealign: function genomeAlignFetch(

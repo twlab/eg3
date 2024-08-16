@@ -2,11 +2,51 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeaturePlacer } from "../../models/getXSpan/FeaturePlacer";
-import FeatureArranger from "../../models/FeatureArranger";
+import FeatureArranger, {
+  PlacedFeatureGroup,
+} from "../../models/FeatureArranger";
 import Gene from "../../models/Gene";
+import { GeneAnnotationScaffold } from "./geneAnnotationTrack/GeneAnnotationScaffold";
+import { GeneAnnotation } from "./geneAnnotationTrack/GeneAnnotation";
 
+import {
+  AnnotationDisplayModes,
+  FiberDisplayModes,
+  NumericalDisplayModes,
+  VcfDisplayModes,
+} from "./DisplayModes";
+import { right } from "@popperjs/core";
+
+export const DEFAULT_OPTIONS = {
+  displayMode: AnnotationDisplayModes.FULL,
+  color: "blue",
+  color2: "red",
+  maxRows: 20,
+  height: 40, // For density display mode
+  hideMinimalItems: false,
+  sortItems: false,
+
+  backgroundColor: "var(--bg-color)",
+  categoryColors: {
+    coding: "rgb(101,1,168)",
+    protein_coding: "rgb(101,1,168)",
+    nonCoding: "rgb(1,193,75)",
+    pseudogene: "rgb(230,0,172)",
+    pseudo: "rgb(230,0,172)",
+    problem: "rgb(224,2,2)",
+    polyA: "rgb(237,127,2)",
+    other: "rgb(128,128,128)",
+  },
+  hiddenPixels: 0.5,
+  italicizeText: false,
+};
+
+const ROW_VERTICAL_PADDING = 5;
+const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
+const getGenePadding = (gene) => gene.getName().length * GeneAnnotation.HEIGHT;
 let featurePlacer = new FeaturePlacer();
 let featureArrange = new FeatureArranger();
+const TOP_PADDING = 2;
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   bpRegionSize,
   bpToPx,
@@ -30,6 +70,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
+  const [test, setTest] = useState<Array<any>>([]);
+
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
 
@@ -41,7 +83,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-
+  function getHeight(numRows: number): number {
+    let rowHeight = ROW_HEIGHT;
+    let options = DEFAULT_OPTIONS;
+    let rowsToDraw = Math.min(numRows, options.maxRows);
+    if (options.hideMinimalItems) {
+      rowsToDraw -= 1;
+    }
+    if (rowsToDraw < 1) {
+      rowsToDraw = 1;
+    }
+    return rowsToDraw * rowHeight + TOP_PADDING;
+  }
   function fetchGenomeData(initial: number = 0) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
@@ -55,9 +108,23 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       let placeFeatureData = featureArrange.arrange(
         testData,
         visData!.viewWindowRegion,
-        windowWidth
+        windowWidth,
+        getGenePadding,
+        DEFAULT_OPTIONS.hiddenPixels
       );
       console.log(placeFeatureData);
+      const height = getHeight(placeFeatureData.numRowsAssigned);
+      let svgDATA = createFullVisualizer(
+        placeFeatureData.placements,
+        windowWidth,
+        height,
+        ROW_HEIGHT,
+        DEFAULT_OPTIONS.maxRows,
+        DEFAULT_OPTIONS
+      );
+
+      setTest([...test, ...[svgDATA]]);
+
       if (
         resultIdx < result.length &&
         !(result[resultIdx].id in prevOverflowStrand.current)
@@ -161,7 +228,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         }
       }
     }
-
+    console.log(strandIntervalList);
     //SORT our interval data into levels to be place on the track
     let strandLevelList: Array<any> = [];
     for (var i = 0; i < strandIntervalList.length; i++) {
@@ -182,7 +249,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     });
 
     setRightTrack([...rightTrackGenes, svgResult]);
-
+    console.log(rightTrackGenes);
     trackRegionR.current.push(
       <text fontSize={30} x={200} y={400} fill="black">
         {`${start} - ${end}`}
@@ -414,6 +481,53 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   // they are already in order of not overlapp. so we just just check  Loop previousIndex <- (currentIndex interval)
   //update the previous level start and end
   // placeFeatureSegments from e g 2
+  function createFullVisualizer(
+    placements,
+    width,
+    height,
+    rowHeight,
+    maxRows,
+    options
+  ) {
+    function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
+      const maxRowIndex = (maxRows || Infinity) - 1;
+      // Compute y
+      const rowIndex = Math.min(placedGroup.row, maxRowIndex);
+      const y = rowIndex * rowHeight + TOP_PADDING;
+      return getAnnotationElement(placedGroup, y, rowIndex === maxRowIndex, i);
+    }
+
+    return (
+      <svg width={width} height={height}>
+        {placements.map(renderAnnotation)}
+      </svg>
+    );
+  }
+  function getAnnotationElement(placedGroup, y, isLastRow, index) {
+    const gene = placedGroup.feature;
+    // const { viewWindow, options } = this.props;
+    return (
+      <GeneAnnotationScaffold
+        key={index}
+        gene={gene}
+        xSpan={placedGroup.xSpan}
+        viewWindow={visData?.viewWindow}
+        y={y}
+        isMinimal={isLastRow}
+        options={DEFAULT_OPTIONS}
+        // onClick={this.renderTooltip}
+      >
+        {placedGroup.placedFeatures.map((placedGene, i) => (
+          <GeneAnnotation
+            key={i}
+            placedGene={placedGene}
+            y={y}
+            options={DEFAULT_OPTIONS}
+          />
+        ))}
+      </GeneAnnotationScaffold>
+    );
+  }
   function setStrand(trackGeneData: { [Key: string]: any }) {
     // Set up event listener for messages from the worker
     // const worker = new Worker('./worker', {
@@ -559,13 +673,48 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
-    <div style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}>
-      {side === "right"
-        ? rightTrackGenes.map(
-            (item, index) => (
+
+    <>
+      <div>{test}</div>
+
+      <div
+        style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
+      >
+        {side === "right"
+          ? rightTrackGenes.map(
+              (item, index) => (
+                // index <= rightTrackGenes.length - 1 ?
+                <svg
+                  key={index}
+                  width={`${windowWidth}px`}
+                  height={"250"}
+                  style={{
+                    overflow: "visible",
+                  }}
+                >
+                  <line
+                    x1={`${windowWidth}px`}
+                    y1="0"
+                    x2={`${windowWidth}px`}
+                    y2={"100%"}
+                    stroke="gray"
+                    strokeWidth="1"
+                  />
+
+                  {rightTrackGenes[index]}
+                  {trackRegionR.current[index]}
+                </svg>
+              )
+              //  : (
+              //   <div style={{ display: 'flex', width: windowWidth }}>
+              //     ....LOADING
+              //   </div>
+              // )
+            )
+          : leftTrackGenes.map((item, index) => (
               // index <= rightTrackGenes.length - 1 ?
               <svg
-                key={index}
+                key={leftTrackGenes.length - index - 1}
                 width={`${windowWidth}px`}
                 height={"250"}
                 style={{
@@ -581,40 +730,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                   strokeWidth="1"
                 />
 
-                {rightTrackGenes[index]}
-                {trackRegionR.current[index]}
+                {leftTrackGenes[leftTrackGenes.length - index - 1]}
+                {trackRegionL.current[trackRegionL.current.length - index - 1]}
               </svg>
-            )
-            //  : (
-            //   <div style={{ display: 'flex', width: windowWidth }}>
-            //     ....LOADING
-            //   </div>
-            // )
-          )
-        : leftTrackGenes.map((item, index) => (
-            // index <= rightTrackGenes.length - 1 ?
-            <svg
-              key={leftTrackGenes.length - index - 1}
-              width={`${windowWidth}px`}
-              height={"250"}
-              style={{
-                overflow: "visible",
-              }}
-            >
-              <line
-                x1={`${windowWidth}px`}
-                y1="0"
-                x2={`${windowWidth}px`}
-                y2={"100%"}
-                stroke="gray"
-                strokeWidth="1"
-              />
-
-              {leftTrackGenes[leftTrackGenes.length - index - 1]}
-              {trackRegionL.current[trackRegionL.current.length - index - 1]}
-            </svg>
-          ))}
-    </div>
+            ))}
+      </div>
+    </>
   );
 });
 
