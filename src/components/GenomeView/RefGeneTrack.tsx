@@ -103,8 +103,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     if (result) {
       let testData = result.map((record) => new Gene(record));
 
-      var resultIdx = 0;
-
       let placeFeatureData = featureArrange.arrange(
         testData,
         visData!.viewWindowRegion,
@@ -124,107 +122,118 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       );
 
       setTest([...test, ...[svgDATA]]);
-
-      if (
-        resultIdx < result.length &&
-        !(result[resultIdx].id in prevOverflowStrand.current)
-      ) {
-        strandIntervalList.push([
-          result[resultIdx].txStart,
-          result[resultIdx].txEnd,
-          new Array<any>(result[resultIdx]),
-        ]);
+      // check initial feature  in the region and add the first interval into strandIntervalList
+      if (0 < result.length && !(result[0].id in prevOverflowStrand.current)) {
+        strandIntervalList.push({
+          start: result[0].txStart,
+          end: result[0].txEnd,
+          group: new Array<any>(result[0]),
+        });
       } else if (
-        resultIdx < result.length &&
-        result[resultIdx].id in prevOverflowStrand.current
+        0 < result.length &&
+        result[0].id in prevOverflowStrand.current
       ) {
-        strandIntervalList.push([
-          result[resultIdx].txStart,
-          result[resultIdx].txEnd,
-          new Array<any>(),
-        ]);
+        strandIntervalList.push({
+          start: result[0].txStart,
+          end: result[0].txEnd,
+          group: new Array<any>(),
+        });
 
         while (
-          strandIntervalList[resultIdx][2].length <
-          prevOverflowStrand.current[result[resultIdx].id].level
+          strandIntervalList[0].group.length <
+          prevOverflowStrand.current[result[0].id].level
         ) {
-          strandIntervalList[resultIdx][2].push({});
+          strandIntervalList[0].group.push({});
         }
-        strandIntervalList[resultIdx][2].splice(
-          prevOverflowStrand.current[result[resultIdx].id].level,
+        strandIntervalList[0].group.splice(
+          prevOverflowStrand.current[result[0].id].level,
           0,
-          prevOverflowStrand.current[result[resultIdx].id].strand
+          prevOverflowStrand.current[result[0].id].strand
         );
       }
 
-      // let checking for interval overlapping and determining what level each strand should be on
-      for (let i = resultIdx + 1; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
+      //After the initial interval let checking for interval overlapping and determining what level each strand should be on
+      for (let i = 1; i < result.length; i++) {
+        var currLevelIdx = strandIntervalList.length - 1;
         const curStrand = result[i];
-        var curHighestLvl = [idx, strandIntervalList[idx][2]];
+        var curHighestLvl = [
+          currLevelIdx,
+          strandIntervalList[currLevelIdx].group,
+        ];
 
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.txStart <= strandIntervalList[idx][1]) {
+        if (curStrand.txStart <= strandIntervalList[currLevelIdx].end) {
           // combine the intervals into one larger interval that encompass the strands
-          if (curStrand.txEnd > strandIntervalList[idx][1]) {
-            strandIntervalList[idx][1] = curStrand.txEnd;
+          if (curStrand.txEnd > strandIntervalList[currLevelIdx].end) {
+            strandIntervalList[currLevelIdx].end = curStrand.txEnd;
           }
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand.current) {
             while (
-              strandIntervalList[idx][2].length <
+              strandIntervalList[currLevelIdx].group.length <
               prevOverflowStrand.current[curStrand.id].level
             ) {
-              strandIntervalList[idx][2].push({});
+              strandIntervalList[currLevelIdx].group.push({});
             }
-            strandIntervalList[idx][2].splice(
+            strandIntervalList[currLevelIdx].group.splice(
               prevOverflowStrand.current[curStrand.id].level,
               0,
               prevOverflowStrand.current[curStrand.id].strand
             );
 
-            idx--;
+            currLevelIdx--;
             while (
-              idx >= 0 &&
+              currLevelIdx >= 0 &&
               prevOverflowStrand.current[curStrand.id].strand.txStart <=
-                strandIntervalList[idx][1]
+                strandIntervalList[currLevelIdx].end
             ) {
               if (
-                strandIntervalList[idx][2].length >
+                strandIntervalList[currLevelIdx].group.length >
                 prevOverflowStrand.current[curStrand.id].level
               ) {
-                if (curStrand.txEnd > strandIntervalList[idx][1]) {
-                  strandIntervalList[idx][1] = curStrand.txEnd;
+                if (curStrand.txEnd > strandIntervalList[currLevelIdx].end) {
+                  strandIntervalList[currLevelIdx].end = curStrand.txEnd;
                 }
-                strandIntervalList[idx][2].splice(
+                strandIntervalList[currLevelIdx].group.splice(
                   prevOverflowStrand.current[curStrand.id].level,
                   0,
                   new Array<any>()
                 );
               }
-              idx--;
+              currLevelIdx--;
             }
             continue;
           }
 
           //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.txStart <= strandIntervalList[idx][1]) {
-            if (strandIntervalList[idx][2].length > curHighestLvl[1].length) {
-              if (curStrand.txEnd > strandIntervalList[idx][1]) {
-                strandIntervalList[idx][1] = curStrand.txEnd;
+          else {
+            while (
+              currLevelIdx >= 0 &&
+              curStrand.txStart <= strandIntervalList[currLevelIdx].end
+            ) {
+              if (
+                strandIntervalList[currLevelIdx].group.length >
+                curHighestLvl[1].length
+              ) {
+                if (curStrand.txEnd > strandIntervalList[currLevelIdx].end) {
+                  strandIntervalList[currLevelIdx].end = curStrand.txEnd;
+                }
+                curHighestLvl = [
+                  currLevelIdx,
+                  strandIntervalList[currLevelIdx].group,
+                ];
               }
-              curHighestLvl = [idx, strandIntervalList[idx][2]];
+              currLevelIdx--;
             }
-            idx--;
-          }
 
-          strandIntervalList[curHighestLvl[0]][2].push(curStrand);
+            strandIntervalList[curHighestLvl[0]].group.push(curStrand);
+          }
         } else {
-          strandIntervalList.push([
-            result[i].txStart,
-            result[i].txEnd,
-            new Array<any>(curStrand),
-          ]);
+          strandIntervalList.push({
+            start: result[i].txStart,
+            end: result[i].txEnd,
+            group: new Array<any>(curStrand),
+          });
         }
       }
     }
@@ -232,7 +241,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //SORT our interval data into levels to be place on the track
     let strandLevelList: Array<any> = [];
     for (var i = 0; i < strandIntervalList.length; i++) {
-      var intervalLevelData = strandIntervalList[i][2];
+      var intervalLevelData = strandIntervalList[i].group;
       for (var j = 0; j < intervalLevelData.length; j++) {
         var strand = intervalLevelData[j];
         while (strandLevelList.length - 1 < j) {
@@ -321,104 +330,108 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     });
 
     if (result.length > 0) {
-      var resultIdx = 0;
-
-      if (
-        resultIdx < result.length &&
-        !(result[resultIdx].id in prevOverflowStrand2.current)
-      ) {
+      if (0 < result.length && !(result[0].id in prevOverflowStrand2.current)) {
         strandIntervalList.push([
-          result[resultIdx].txStart,
-          result[resultIdx].txEnd,
-          new Array<any>(result[resultIdx]),
+          result[0].txStart,
+          result[0].txEnd,
+          new Array<any>(result[0]),
         ]);
       } else if (
-        resultIdx < result.length &&
-        result[resultIdx].id in prevOverflowStrand2.current
+        0 < result.length &&
+        result[0].id in prevOverflowStrand2.current
       ) {
         strandIntervalList.push([
-          result[resultIdx].txStart,
-          result[resultIdx].txEnd,
+          result[0].txStart,
+          result[0].txEnd,
           new Array<any>(),
         ]);
 
         while (
-          strandIntervalList[resultIdx][2].length <
-          prevOverflowStrand2.current[result[resultIdx].id].level
+          strandIntervalList[0].group.length <
+          prevOverflowStrand2.current[result[0].id].level
         ) {
-          strandIntervalList[resultIdx][2].push({});
+          strandIntervalList[0].group.push({});
         }
-        strandIntervalList[resultIdx][2].splice(
-          prevOverflowStrand2.current[result[resultIdx].id].level,
+        strandIntervalList[0].group.splice(
+          prevOverflowStrand2.current[result[0].id].level,
           0,
-          prevOverflowStrand2.current[result[resultIdx].id].strand
+          prevOverflowStrand2.current[result[0].id].strand
         );
       }
       //START THE LOOP TO CHECK IF Prev interval overlapp with curr
-      for (let i = resultIdx + 1; i < result.length; i++) {
-        var idx = strandIntervalList.length - 1;
+      for (let i = 0 + 1; i < result.length; i++) {
+        var currLevelIdx = strandIntervalList.length - 1;
         var curStrand = result[i];
 
         var curHighestLvl = [
-          idx,
-          strandIntervalList[idx][2].length - 1, //
+          currLevelIdx,
+          strandIntervalList[currLevelIdx].group.length - 1, //
         ];
 
         // if current starting coord is less than previous ending coord then they overlap
-        if (curStrand.txEnd >= strandIntervalList[idx][0]) {
+        if (curStrand.txEnd >= strandIntervalList[currLevelIdx][0]) {
           // combine the intervals into one larger interval that encompass the strands
-          if (strandIntervalList[idx][0] > curStrand.txStart) {
-            strandIntervalList[idx][0] = curStrand.txStart;
+          if (strandIntervalList[currLevelIdx][0] > curStrand.txStart) {
+            strandIntervalList[currLevelIdx][0] = curStrand.txStart;
           }
 
           //NOW CHECK IF THE STRAND IS OVERFLOWING FROM THE LAST TRACK
           if (curStrand.id in prevOverflowStrand2.current) {
             while (
-              strandIntervalList[idx][2].length - 1 <
+              strandIntervalList[currLevelIdx].group.length - 1 <
               prevOverflowStrand2.current[curStrand.id].level
             ) {
-              strandIntervalList[idx][2].push({});
+              strandIntervalList[currLevelIdx].group.push({});
             }
-            strandIntervalList[idx][2].splice(
+            strandIntervalList[currLevelIdx].group.splice(
               prevOverflowStrand2.current[curStrand.id].level,
               0,
               prevOverflowStrand2.current[curStrand.id].strand
             );
 
-            idx--;
+            currLevelIdx--;
             while (
-              idx >= 0 &&
+              currLevelIdx >= 0 &&
               prevOverflowStrand2.current[curStrand.id].strand.txEnd >=
-                strandIntervalList[idx][0]
+                strandIntervalList[currLevelIdx][0]
             ) {
               if (
-                strandIntervalList[idx][2].length >
+                strandIntervalList[currLevelIdx].group.length >
                 prevOverflowStrand2.current[curStrand.id].level
               ) {
-                if (strandIntervalList[idx][0] > curStrand.txStart) {
-                  strandIntervalList[idx][0] = curStrand.txStart;
+                if (strandIntervalList[currLevelIdx][0] > curStrand.txStart) {
+                  strandIntervalList[currLevelIdx][0] = curStrand.txStart;
                 }
-                strandIntervalList[idx][2].splice(
+                strandIntervalList[currLevelIdx].group.splice(
                   prevOverflowStrand2.current[curStrand.id].level,
                   0,
                   new Array<any>()
                 );
               }
 
-              idx--;
+              currLevelIdx--;
             }
             continue;
           }
           //loop to check which other intervals the current strand overlaps
-          while (idx >= 0 && curStrand.txEnd >= strandIntervalList[idx][0]) {
-            if (strandIntervalList[idx][2].length - 1 > curHighestLvl[1]) {
-              if (strandIntervalList[idx][0] > curStrand.txStart) {
-                strandIntervalList[idx][0] = curStrand.txStart;
+          while (
+            currLevelIdx >= 0 &&
+            curStrand.txEnd >= strandIntervalList[currLevelIdx][0]
+          ) {
+            if (
+              strandIntervalList[currLevelIdx].group.length - 1 >
+              curHighestLvl[1]
+            ) {
+              if (strandIntervalList[currLevelIdx][0] > curStrand.txStart) {
+                strandIntervalList[currLevelIdx][0] = curStrand.txStart;
               }
 
-              curHighestLvl = [idx, strandIntervalList[idx][2].length];
+              curHighestLvl = [
+                currLevelIdx,
+                strandIntervalList[currLevelIdx].group.length,
+              ];
             }
-            idx--;
+            currLevelIdx--;
           }
 
           strandIntervalList[curHighestLvl[0]][2].push(curStrand);
