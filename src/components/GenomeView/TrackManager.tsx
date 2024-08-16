@@ -304,9 +304,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (initial === 0 || initial === 1) {
+      let curRegionCoord;
       let tempObj = {};
       let sectionGenomicLocus: Array<ChromosomeInterval> = [];
       if (trackSide === "right") {
+        curRegionCoord = new DisplayedRegionModel(
+          genomeArr[genomeIdx].navContext,
+          maxBp.current - bpRegionSize.current,
+          maxBp.current
+        );
         let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
           genomeIdx
         ].navContext.getFeaturesInInterval(
@@ -317,7 +323,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         sectionGenomicLocus = genomeFeatureSegment.map((item, index) =>
           item.getLocus()
         );
-        console.log(sectionGenomicLocus, "hio");
+
         //_____________________________________________________________________________
         const navStart = genomeArr[
           genomeIdx
@@ -329,6 +335,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         maxBp.current = maxBp.current + bpRegionSize.current;
       } else {
+        curRegionCoord = new DisplayedRegionModel(
+          genomeArr[genomeIdx].navContext,
+          minBp.current,
+          minBp.current + bpRegionSize.current
+        );
         let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
           genomeIdx
         ].navContext.getFeaturesInInterval(
@@ -340,6 +351,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           item.getLocus()
         );
         console.log(sectionGenomicLocus, "left");
+
         //_____________________________________________________________________________
 
         const navStart = genomeArr[
@@ -368,6 +380,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               loci: sectionGenomicLocus,
               trackSide,
               location: tempObj["location"],
+              curRegionCoord,
               xDist: dragX.current,
               initial,
             });
@@ -377,7 +390,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 event.data.fetchResults.map(
                   (item, index) => (tempObj[item.name] = item.result)
                 );
-
+                console.log(event.data);
+                tempObj["regionNavCoord"] = new DisplayedRegionModel(
+                  genomeArr[genomeIdx].navContext,
+                  event.data.curRegionCoord._startBase,
+                  event.data.curRegionCoord._endBase
+                );
                 tempObj["initial"] = event.data.initial;
                 tempObj["side"] = event.data.side;
                 tempObj["location"] = event.data.location;

@@ -1,4 +1,5 @@
 import ChromosomeInterval, { IChromosomeInterval } from "./ChromosomeInterval";
+import Gene from "./Gene";
 import NavigationContext from "./NavigationContext";
 
 export type Strand = "+" | "-" | string;
@@ -10,6 +11,7 @@ export interface IFeature {
   name: string;
   locus: IChromosomeInterval;
   strand: Strand;
+  id?: string;
 }
 
 export const FORWARD_STRAND_CHAR = "+";
@@ -24,6 +26,7 @@ export const REVERSE_STRAND_CHAR = "-";
 export class Feature {
   name: string; // - name of the feature
   score?: any;
+  id?: string;
   /**
    * Makes a new instance with specified name and locus.  Empty names are valid.  If given `undefined` or `null`, it
    * defaults to the locus as a string.

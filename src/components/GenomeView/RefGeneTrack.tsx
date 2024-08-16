@@ -8,7 +8,7 @@ import FeatureArranger, {
 import Gene from "../../models/Gene";
 import { GeneAnnotationScaffold } from "./geneAnnotationTrack/GeneAnnotationScaffold";
 import { GeneAnnotation } from "./geneAnnotationTrack/GeneAnnotation";
-
+import { SortItemsOptions } from "../../models/SortItemsOptions";
 import {
   AnnotationDisplayModes,
   FiberDisplayModes,
@@ -45,7 +45,6 @@ const ROW_VERTICAL_PADDING = 5;
 const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
 const getGenePadding = (gene) => gene.getName().length * GeneAnnotation.HEIGHT;
 let featurePlacer = new FeaturePlacer();
-let featureArrange = new FeatureArranger();
 const TOP_PADDING = 2;
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   bpRegionSize,
@@ -69,10 +68,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const [test, setTest] = useState<Array<any>>([]);
 
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
+  const testPrevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});
 
   const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
@@ -102,15 +103,17 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (result) {
       let testData = result.map((record) => new Gene(record));
-
+      let featureArrange = new FeatureArranger();
       let placeFeatureData = featureArrange.arrange(
         testData,
-        visData!.viewWindowRegion,
+        trackData!.regionNavCoord,
         windowWidth,
         getGenePadding,
-        DEFAULT_OPTIONS.hiddenPixels
+        DEFAULT_OPTIONS.hiddenPixels,
+        SortItemsOptions.NONE,
+        testPrevOverflowStrand.current
       );
-      console.log(placeFeatureData);
+      console.log(placeFeatureData, trackData!.regionNavCoord);
       const height = getHeight(placeFeatureData.numRowsAssigned);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
@@ -120,8 +123,34 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         DEFAULT_OPTIONS.maxRows,
         DEFAULT_OPTIONS
       );
-
+      for (var i = 0; i < placeFeatureData.placements.length; i++) {
+        let curFeature = placeFeatureData.placements[i];
+        console.log(
+          curFeature.placedFeatures[0].contextLocation.end,
+          trackData!.regionNavCoord._endBase
+        );
+        if (
+          curFeature.placedFeatures[0].contextLocation.end ===
+          trackData!.regionNavCoord._endBase
+        ) {
+          console.log(curFeature);
+        }
+        if (
+          curFeature.placedFeatures[0].contextLocation.end >
+          trackData!.regionNavCoord._endBase
+        ) {
+          console.log(curFeature);
+        }
+        // if (strand.txEnd > end) {
+        //   overflowStrand.current[strand.id] = {
+        //     level: i,
+        //     strand: strand,
+        //   };
+        // }
+      }
       setTest([...test, ...[svgDATA]]);
+
+      //_____________________________________________________________________________________________________________________________________________
       // check initial feature  in the region and add the first interval into strandIntervalList
       if (0 < result.length && !(result[0].id in prevOverflowStrand.current)) {
         strandIntervalList.push({
@@ -688,8 +717,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <>
-      <div>{test}</div>
-
+      <div style={{ display: "flex" }}>{test.map((item, index) => item)}</div>
       <div
         style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
       >

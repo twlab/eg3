@@ -5,6 +5,7 @@ import { FeaturePlacer, PlacedFeature } from "./getXSpan/FeaturePlacer";
 import LinearDrawingModel from "./LinearDrawingModel";
 import OpenInterval from "./OpenInterval";
 import { SortItemsOptions } from "./SortItemsOptions";
+import Gene from "./Gene";
 
 export interface PlacedFeatureGroup {
   feature: Feature;
@@ -37,7 +38,8 @@ export class FeatureArranger {
   _assignRows(
     groups: PlacedFeatureGroup[],
     padding: number | PaddingFunc,
-    sortItems: SortItemsOptions
+    sortItems: SortItemsOptions,
+    prevRegionOverflow?: { [key: string]: any }
   ): number {
     if (sortItems === SortItemsOptions.NONE) {
       groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
@@ -55,6 +57,17 @@ export class FeatureArranger {
       const startX = group.xSpan.start - horizontalPadding;
       const endX = group.xSpan.end + horizontalPadding;
       // Find the first row where the interval won't overlap with others in the row
+      console.log(
+        prevRegionOverflow,
+        group,
+        group.placedFeatures[0].feature.id,
+        horizontalPadding
+      );
+      if (
+        prevRegionOverflow &&
+        group.placedFeatures[0].feature.id! in prevRegionOverflow
+      ) {
+      }
       let row = maxXsForRows.findIndex((maxX) => maxX < startX);
       if (row === -1) {
         // Couldn't find a row -- make a new one
@@ -125,7 +138,8 @@ export class FeatureArranger {
     width: number,
     padding: number | PaddingFunc = 0,
     hiddenPixels: number = 0.5,
-    sortItems: SortItemsOptions = SortItemsOptions.NONE
+    sortItems: SortItemsOptions = SortItemsOptions.NONE,
+    prevRegionOverflow?: { [key: string]: any }
   ): FeatureArrangementResult {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const visibleFeatures = features.filter(
@@ -143,7 +157,12 @@ export class FeatureArranger {
       results.push(...this._combineAdjacent(placements));
     }
     console.log(results);
-    const numRowsAssigned = this._assignRows(results, padding, sortItems);
+    const numRowsAssigned = this._assignRows(
+      results,
+      padding,
+      sortItems,
+      prevRegionOverflow
+    );
     return {
       placements: results,
       numRowsAssigned,

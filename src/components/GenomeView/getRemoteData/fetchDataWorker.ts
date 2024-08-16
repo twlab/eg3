@@ -181,5 +181,6 @@ self.onmessage = async (event: MessageEvent) => {
     xDist: event.data.xDist,
     location: event.data.location,
     initial: event.data.initial,
+    curRegionCoord: event.data.curRegionCoord,
   });
 };
