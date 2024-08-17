@@ -110,7 +110,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         windowWidth,
         getGenePadding,
         DEFAULT_OPTIONS.hiddenPixels,
-        SortItemsOptions.NONE,
+        SortItemsOptions.ASC,
         testPrevOverflowStrand.current
       );
       console.log(placeFeatureData, trackData!.regionNavCoord);
@@ -123,31 +123,19 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         DEFAULT_OPTIONS.maxRows,
         DEFAULT_OPTIONS
       );
+      let tempOverFlow = {};
+      console.log(placeFeatureData);
       for (var i = 0; i < placeFeatureData.placements.length; i++) {
         let curFeature = placeFeatureData.placements[i];
-        console.log(
-          curFeature.placedFeatures[0].contextLocation.end,
-          trackData!.regionNavCoord._endBase
-        );
         if (
-          curFeature.placedFeatures[0].contextLocation.end ===
+          curFeature.placedFeatures[0].contextLocation.end >=
           trackData!.regionNavCoord._endBase
         ) {
-          console.log(curFeature);
+          tempOverFlow[curFeature.feature.id!] = curFeature;
         }
-        if (
-          curFeature.placedFeatures[0].contextLocation.end >
-          trackData!.regionNavCoord._endBase
-        ) {
-          console.log(curFeature);
-        }
-        // if (strand.txEnd > end) {
-        //   overflowStrand.current[strand.id] = {
-        //     level: i,
-        //     strand: strand,
-        //   };
-        // }
       }
+
+      testPrevOverflowStrand.current = tempOverFlow;
       setTest([...test, ...[svgDATA]]);
 
       //_____________________________________________________________________________________________________________________________________________

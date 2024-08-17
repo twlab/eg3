@@ -50,35 +50,62 @@ export class FeatureArranger {
     }
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
-    for (const group of groups) {
-      const horizontalPadding = isConstPadding
-        ? (padding as number)
-        : (padding as PaddingFunc)(group.feature, group.xSpan);
-      const startX = group.xSpan.start - horizontalPadding;
-      const endX = group.xSpan.end + horizontalPadding;
-      // Find the first row where the interval won't overlap with others in the row
-      console.log(
-        prevRegionOverflow,
-        group,
-        group.placedFeatures[0].feature.id,
-        horizontalPadding
-      );
-      if (
-        prevRegionOverflow &&
-        group.placedFeatures[0].feature.id! in prevRegionOverflow
-      ) {
-      }
-      let row = maxXsForRows.findIndex((maxX) => maxX < startX);
-      if (row === -1) {
-        // Couldn't find a row -- make a new one
-        maxXsForRows.push(endX);
-        row = maxXsForRows.length - 1;
-      } else {
-        maxXsForRows[row] = endX;
-      }
-      group.row = row;
-    }
 
+    if (prevRegionOverflow) {
+      let maxXsForRowsLen = maxXsForRows.length - 1;
+
+      for (const key in prevRegionOverflow) {
+        for (const group of groups) {
+          if (key === group.feature.id!) {
+            let row;
+            const horizontalPadding = isConstPadding
+              ? (padding as number)
+              : (padding as PaddingFunc)(group.feature, group.xSpan);
+            const startX = group.xSpan.start - horizontalPadding;
+            const endX = group.xSpan.end + horizontalPadding;
+            if (prevRegionOverflow[key].row > maxXsForRowsLen) {
+              while (prevRegionOverflow[key].row > maxXsForRowsLen) {
+                maxXsForRowsLen++;
+                if (maxXsForRowsLen === prevRegionOverflow[key].row) {
+                  maxXsForRows.push(endX);
+                  row = prevRegionOverflow[key].row;
+                } else {
+                  maxXsForRows.push(Number.NEGATIVE_INFINITY);
+                }
+              }
+            } else {
+              row = prevRegionOverflow[key].row;
+              maxXsForRows[row] = endX;
+            }
+            group.row = row;
+            break;
+          }
+        }
+      }
+    }
+    console.log(maxXsForRows, groups);
+    for (const group of groups) {
+      if (!(group.feature.id! in prevRegionOverflow!)) {
+        const horizontalPadding = isConstPadding
+          ? (padding as number)
+          : (padding as PaddingFunc)(group.feature, group.xSpan);
+        const startX = group.xSpan.start - horizontalPadding;
+        const endX = group.xSpan.end + horizontalPadding;
+        // Find the first row where the interval won't overlap with others in the row
+
+        let row = maxXsForRows.findIndex((maxX) => maxX < startX);
+
+        if (row === -1) {
+          // Couldn't find a row -- make a new one
+          maxXsForRows.push(endX);
+          row = maxXsForRows.length - 1;
+        } else {
+          maxXsForRows[row] = endX;
+        }
+        group.row = row;
+      }
+    }
+    console.log(groups);
     return maxXsForRows.length;
   }
 
