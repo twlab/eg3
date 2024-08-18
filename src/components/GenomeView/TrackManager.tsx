@@ -612,7 +612,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             width: `${windowWidth}px`,
             backgroundColor: "gainsboro",
-            height: 1000,
+            height: "2000px",
             overflowX: "hidden",
             overflowY: "visible",
           }}

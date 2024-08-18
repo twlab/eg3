@@ -39,15 +39,16 @@ export class FeatureArranger {
     groups: PlacedFeatureGroup[],
     padding: number | PaddingFunc,
     sortItems: SortItemsOptions,
-    prevRegionOverflow?: { [key: string]: any }
+    prevRegionOverflow?: { [key: string]: any },
+    trackSide?: string
   ): number {
-    if (sortItems === SortItemsOptions.NONE) {
-      groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
-    } else if (sortItems === SortItemsOptions.ASC) {
-      groups.sort((a, b) => a.feature.score - b.feature.score);
-    } else if (sortItems === SortItemsOptions.DESC) {
-      groups.sort((a, b) => b.feature.score - a.feature.score);
-    }
+    // if (sortItems === SortItemsOptions.NONE) {
+    //   groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    // } else if (sortItems === SortItemsOptions.ASC) {
+    //   groups.sort((a, b) => a.feature.score - b.feature.score);
+    // } else if (sortItems === SortItemsOptions.DESC) {
+    //   groups.sort((a, b) => b.feature.score - a.feature.score);
+    // }
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
 
@@ -67,7 +68,7 @@ export class FeatureArranger {
               while (prevRegionOverflow[key].row > maxXsForRowsLen) {
                 maxXsForRowsLen++;
                 if (maxXsForRowsLen === prevRegionOverflow[key].row) {
-                  maxXsForRows.push(endX);
+                  maxXsForRows.push(trackSide === "right" ? endX : startX);
                   row = prevRegionOverflow[key].row;
                 } else {
                   maxXsForRows.push(Number.NEGATIVE_INFINITY);
@@ -75,7 +76,7 @@ export class FeatureArranger {
               }
             } else {
               row = prevRegionOverflow[key].row;
-              maxXsForRows[row] = endX;
+              maxXsForRows[row] = trackSide === "right" ? endX : startX;
             }
             group.row = row;
             break;
@@ -93,14 +94,16 @@ export class FeatureArranger {
         const endX = group.xSpan.end + horizontalPadding;
         // Find the first row where the interval won't overlap with others in the row
 
-        let row = maxXsForRows.findIndex((maxX) => maxX < startX);
+        let row = maxXsForRows.findIndex((maxX) =>
+          trackSide === "right" ? maxX < startX : maxX > endX
+        );
 
         if (row === -1) {
           // Couldn't find a row -- make a new one
-          maxXsForRows.push(endX);
+          maxXsForRows.push(trackSide === "right" ? endX : startX);
           row = maxXsForRows.length - 1;
         } else {
-          maxXsForRows[row] = endX;
+          maxXsForRows[row] = trackSide === "right" ? endX : startX;
         }
         group.row = row;
       }
@@ -166,7 +169,8 @@ export class FeatureArranger {
     padding: number | PaddingFunc = 0,
     hiddenPixels: number = 0.5,
     sortItems: SortItemsOptions = SortItemsOptions.NONE,
-    prevRegionOverflow?: { [key: string]: any }
+    prevRegionOverflow?: { [key: string]: any },
+    trackSide?: string
   ): FeatureArrangementResult {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const visibleFeatures = features.filter(
@@ -188,7 +192,8 @@ export class FeatureArranger {
       results,
       padding,
       sortItems,
-      prevRegionOverflow
+      prevRegionOverflow,
+      trackSide
     );
     return {
       placements: results,

@@ -2,11 +2,9 @@ body {
 
 
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+  font-family: 
     sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+
 }
 
 a {
@@ -30,22 +28,18 @@ a {
   margin: 0;
 }
 .Typography-h3 {
-  font-size: 3rem;
+
   font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-  font-weight: 400;
-  line-height: 1.167;
-  letter-spacing: 0em;
+
 }
 
 .bottom-space {
-  margin-top: -7vh;
-  margin-bottom: 1vh;
+
 }
 
 .root-1 {
   color: white;
   height: 100%;
-  flex-grow: 1;
   background: #141416;
 }
 
@@ -86,7 +80,7 @@ a {
 }
 
 .app-root-1 {
-  flex-grow: 1;
+
 }
 .header-navButtons-3 {
   color: #777e90;
