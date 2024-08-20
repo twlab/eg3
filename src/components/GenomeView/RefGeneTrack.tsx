@@ -18,6 +18,7 @@ import {
 import { right } from "@popperjs/core";
 import OpenInterval from "../../models/OpenInterval";
 
+import { getToolTip } from "./commonComponents/hover/toolTipGenomealign";
 export const DEFAULT_OPTIONS = {
   displayMode: AnnotationDisplayModes.FULL,
   color: "blue",
@@ -54,6 +55,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   side,
   windowWidth = 0,
   visData,
+  genomeArr,
+  genomeIdx,
 }) {
   let start, end;
 
@@ -73,6 +76,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
+  const [toolTip, setToolTip] = useState<HTMLDivElement | null>(null);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const testPrevOverflowStrand = useRef<{ [key: string]: any }>({});
   const testPrevOverflowStrandLeft = useRef<{ [key: string]: any }>({});
@@ -609,7 +613,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         y={y}
         isMinimal={isLastRow}
         options={DEFAULT_OPTIONS}
-        // onClick={this.renderTooltip}
+        onClick={renderTooltip}
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
           <GeneAnnotation
@@ -621,6 +625,19 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         ))}
       </GeneAnnotationScaffold>
     );
+  }
+
+  function renderTooltip(event, gene) {
+    console.log("HUGGGGGGGGGGGGG");
+    console.log(genomeArr![genomeIdx!]);
+    const currtooltip = getToolTip["refGene"](
+      gene,
+      event.pageX,
+      event.pageY,
+      genomeArr![genomeIdx!].genome._name
+    );
+
+    setToolTip(currtooltip);
   }
   function setStrand(trackGeneData: { [Key: string]: any }) {
     // Set up event listener for messages from the worker
@@ -770,15 +787,23 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <>
-      <div style={{ display: "flex" }}>
+      <div
+        style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
+      >
         {side === "right"
-          ? rightHTML.map((item, index) => <div key={index}>{item}</div>)
+          ? rightHTML.map((item, index) => (
+              <div key={index}>
+                {item} {toolTip}
+              </div>
+            ))
           : leftHTML.map((item, index) => (
               <div key={leftHTML.length - index - 1}>
                 {leftHTML[leftHTML.length - index - 1]}
+                {toolTip}
               </div>
             ))}
       </div>
+
       <div
         style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
       >

@@ -399,6 +399,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 tempObj["initial"] = event.data.initial;
                 tempObj["side"] = event.data.side;
                 tempObj["location"] = event.data.location;
+                tempObj["xDist"] = event.data.xDist;
 
                 setTrackData({ ...tempObj });
                 isLoading.current = false;

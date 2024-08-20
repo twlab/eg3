@@ -24,7 +24,7 @@ interface GeneAnnotationScaffoldProps {
    * @param {React.MouseEvent} event - the triggering event
    * @param {Gene} gene - the model of the clicked gene
    */
-  onClick?(event: React.MouseEvent, gene: Gene): void;
+  onClick(event: React.MouseEvent, gene: Gene): void;
 }
 
 const HEIGHT = GeneAnnotation.HEIGHT;
@@ -46,12 +46,12 @@ export class GeneAnnotationScaffold extends React.PureComponent<GeneAnnotationSc
   constructor(props: GeneAnnotationScaffoldProps) {
     super(props);
 
-    // this.handleClick = this.handleClick.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
-  // handleClick(event: React.MouseEvent) {
-  //     this.props.onClick(event, this.props.gene);
-  // }
+  handleClick(event: React.MouseEvent) {
+    this.props.onClick(event, this.props.gene);
+  }
 
   render(): JSX.Element {
     const { gene, xSpan, viewWindow, y, isMinimal, options, children } =
@@ -134,7 +134,7 @@ export class GeneAnnotationScaffold extends React.PureComponent<GeneAnnotationSc
     );
 
     return (
-      <TranslatableG y={y}>
+      <TranslatableG y={y} onClick={this.handleClick}>
         {coveringRect}
         {centerLine}
         {children}

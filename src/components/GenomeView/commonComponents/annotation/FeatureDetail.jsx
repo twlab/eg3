@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
 import React from "react";
 import _ from "lodash";
-import Feature from "../../../../model/Feature";
-import "../../commonComponents/tooltip/Tooltip.css";
-import { CopyToClip } from "../../../../components/CopyToClipboard";
+import Feature from "../../../../models/Feature";
+import "../hover/Tooltip.css"
+// import { CopyToClip } from "../../../../components/CopyToClipboard";
 
 /**
  * Box that contains feature details when an annotation is clicked.
@@ -62,7 +62,7 @@ class FeatureDetail extends React.PureComponent {
             <div>
                 {featureName ? (
                     <div className="Tooltip-major-text">
-                        {featureName} <CopyToClip value={featureName} />{" "}
+                        {/* {featureName} <CopyToClip value={featureName} />{" "} */}
                     </div>
                 ) : null}
                 {feature.id ? (

@@ -2,6 +2,20 @@ import { useEffect, useRef, useState, memo } from "react";
 import "./Tooltip.css";
 import AlignmentSequence from "./AlignmentCoordinate";
 import { PlacedAlignment } from "../../GenomeAlign/GenomeAlign";
+
+import GeneDetail from "../../geneAnnotationTrack/GeneDetail";
+const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
+const ARROW_SIZE = 15;
+const ARROW_STYLE = {
+  // This is for a upwards-pointing arrow; other directions will require more code.
+  width: 0,
+  height: 0,
+  position: "absolute",
+  top: -ARROW_SIZE,
+  borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+  borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+  borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+};
 interface MethylcHoverProps {
   data: any;
   windowWidth: number;
@@ -10,9 +24,13 @@ interface MethylcHoverProps {
   side: string;
   trackType: string;
 }
-const getToolTip: { [key: string]: any } = {
-  refGene: async function refGeneFetch(regionData: any) {
-    return;
+export const getToolTip: { [key: string]: any } = {
+  refGene: function refGeneFetch(gene: any, pageX, pageY, name) {
+    return (
+      <>
+        <GeneDetail gene={gene} collectionName={name} queryEndpoint={{}} />
+      </>
+    );
   },
   bed: async function bedFetch(regionData: any) {},
 
