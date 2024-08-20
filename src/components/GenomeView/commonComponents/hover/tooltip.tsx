@@ -31,7 +31,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
       // console.log(e.pageX, rect.left + window.scrollX);
       let dataIdxX = Math.ceil(e.pageX - rect.left);
       let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
-
+      console.log(e.pageX, rect.left);
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
 
       // console.log(dataIdxX);

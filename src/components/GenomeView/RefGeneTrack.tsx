@@ -57,6 +57,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   visData,
   genomeArr,
   genomeIdx,
+  dragXDist,
 }) {
   let start, end;
 
@@ -636,7 +637,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       event.pageY,
       genomeArr![genomeIdx!].genome._name
     );
-
+    console.log(event.pageX, event.pageY, dragXDist);
     setToolTip(currtooltip);
   }
   function setStrand(trackGeneData: { [Key: string]: any }) {

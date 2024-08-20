@@ -4,6 +4,7 @@ import AlignmentSequence from "./AlignmentCoordinate";
 import { PlacedAlignment } from "../../GenomeAlign/GenomeAlign";
 
 import GeneDetail from "../../geneAnnotationTrack/GeneDetail";
+import ReactDOM from "react-dom";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 15;
 const ARROW_STYLE = {
@@ -26,10 +27,11 @@ interface MethylcHoverProps {
 }
 export const getToolTip: { [key: string]: any } = {
   refGene: function refGeneFetch(gene: any, pageX, pageY, name) {
-    return (
-      <>
+    return ReactDOM.createPortal(
+      <div style={{ position: "absolute", left: pageX, top: pageY }}>
         <GeneDetail gene={gene} collectionName={name} queryEndpoint={{}} />
-      </>
+      </div>,
+      document.body
     );
   },
   bed: async function bedFetch(regionData: any) {},
