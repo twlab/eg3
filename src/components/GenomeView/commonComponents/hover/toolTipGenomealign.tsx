@@ -82,14 +82,13 @@ export const getToolTip: { [key: string]: any } = {
                   style={{
                     ...arrowProps.style,
                     position: "absolute",
-                    width: "10px",
-                    height: "10px",
-                    backgroundColor: "#f9f9f9",
-                    transform: "rotate(45deg)",
+
+                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
                     top: `${pageY}px`,
-                    right: "0",
+
                     left: `${pageX}px`,
-                    border: "1px solid #ddd",
                   }}
                 />,
                 document.body
