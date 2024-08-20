@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, memo } from "react";
 import "./Tooltip.css";
 import AlignmentSequence from "./AlignmentCoordinate";
-import { PlacedAlignment } from "../../GenomeAlign/GenomeAlign";
-
+import { Manager, Reference, Popper } from "react-popper";
+import OutsideClickDetector from "../OutsideClickDetector";
 import GeneDetail from "../../geneAnnotationTrack/GeneDetail";
 import ReactDOM from "react-dom";
+
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 15;
 const ARROW_STYLE = {
@@ -26,11 +27,77 @@ interface MethylcHoverProps {
   trackType: string;
 }
 export const getToolTip: { [key: string]: any } = {
-  refGene: function refGeneFetch(gene: any, pageX, pageY, name) {
+  refGene: function refGeneFetch(gene: any, pageX, pageY, name, onClose) {
+    const contentStyle = Object.assign({
+      marginTop: ARROW_SIZE,
+      pointerEvents: "auto",
+    });
+    const arrow = document.querySelector("#arrow");
+    console.log(pageX, pageY);
     return ReactDOM.createPortal(
-      <div style={{ position: "absolute", left: pageX, top: pageY }}>
-        <GeneDetail gene={gene} collectionName={name} queryEndpoint={{}} />
-      </div>,
+      <Manager>
+        <Reference>
+          {({ ref }) => (
+            <div
+              ref={ref}
+              style={{ position: "absolute", left: pageX, top: pageY }}
+            />
+          )}
+        </Reference>
+        <Popper
+          placement="bottom-start"
+          modifiers={[
+            {
+              name: "offset",
+              options: {},
+            },
+            {
+              name: "arrow",
+              options: { padding: 5 },
+            },
+          ]}
+        >
+          {({ ref, style, placement, arrowProps }) => (
+            <div
+              ref={ref}
+              style={{
+                ...style,
+                ...contentStyle,
+                backgroundColor: "#f9f9f9",
+                padding: "10px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+              }}
+            >
+              <OutsideClickDetector onOutsideClick={onClose}>
+                <GeneDetail
+                  gene={gene}
+                  collectionName={name}
+                  queryEndpoint={{}}
+                />
+              </OutsideClickDetector>
+              {ReactDOM.createPortal(
+                <div
+                  ref={arrowProps.ref}
+                  style={{
+                    ...arrowProps.style,
+                    position: "absolute",
+                    width: "10px",
+                    height: "10px",
+                    backgroundColor: "#f9f9f9",
+                    transform: "rotate(45deg)",
+                    top: `${pageY}px`,
+                    right: "0",
+                    left: `${pageX}px`,
+                    border: "1px solid #ddd",
+                  }}
+                />,
+                document.body
+              )}
+            </div>
+          )}
+        </Popper>
+      </Manager>,
       document.body
     );
   },

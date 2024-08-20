@@ -42,7 +42,13 @@ class AnnotationArrows extends React.PureComponent<ArrowProps> {
     const arrowSeparation = separation > 10 ? separation : ARROW_SEPARATION;
     const centerY = height / 2;
     const bottomY = height;
-    let placementStartX = startX - ARROW_WIDTH / 2;
+    let placementStartX = 0;
+    if (startX - ARROW_WIDTH / 2 > 0) {
+      placementStartX = startX - ARROW_WIDTH / 2;
+    } else {
+      placementStartX = ARROW_WIDTH / 2;
+    }
+
     let placementEndX = endX;
     if (isToRight) {
       placementStartX += ARROW_WIDTH;

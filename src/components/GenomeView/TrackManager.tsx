@@ -80,7 +80,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastX = useRef(0);
   const dragX = useRef(0);
   const isLoading = useRef(true);
-
+  const lastDragX = useRef(0);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -125,6 +125,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     lastX.current = e.pageX;
 
     dragX.current -= deltaX;
+
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 =
     cancelAnimationFrame(frameID.current);
@@ -147,10 +148,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   function handleMouseUp() {
     setDragging(false);
-    if (isLoading.current) {
+    if (isLoading.current || lastDragX.current === dragX.current) {
       return;
     }
-
+    lastDragX.current = dragX.current;
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
     //view genomic coord_________________________________________________
