@@ -5,10 +5,24 @@ import { Manager, Reference, Popper } from "react-popper";
 import OutsideClickDetector from "../OutsideClickDetector";
 import GeneDetail from "../../geneAnnotationTrack/GeneDetail";
 import ReactDOM from "react-dom";
+import { createPopper } from "@popperjs/core";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 15;
-
+const ARROW_STYLE = {
+  // This is for a upwards-pointing arrow; other directions will require more code.
+  width: 0,
+  height: 0,
+  position: "absolute",
+  top: -ARROW_SIZE,
+  borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+  borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+  borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+};
+const contentStyle = Object.assign({
+  marginTop: ARROW_SIZE,
+  pointerEvents: "auto",
+});
 interface MethylcHoverProps {
   data: any;
   windowWidth: number;
@@ -18,65 +32,108 @@ interface MethylcHoverProps {
   trackType: string;
 }
 export const getToolTip: { [key: string]: any } = {
-  refGene: function refGeneFetch(gene: any, pageX, pageY, name, onClose) {
-    const contentStyle = Object.assign({
-      marginTop: ARROW_SIZE,
-      pointerEvents: "none",
-    });
+  refGene: function RefGeneFetch(props) {
+    const [tooltipVisible, setTooltipVisible] = useState(true);
+    const targetRef = useRef(null);
+    const popperRef = useRef(null);
+
+    useEffect(() => {
+      if (targetRef.current && popperRef.current) {
+        createPopper(targetRef.current, popperRef.current, {
+          placement: "bottom-start",
+          modifiers: [{ name: "flip", enabled: false }],
+        });
+      }
+    }, []);
 
     return ReactDOM.createPortal(
-      <Manager>
-        <Reference>
-          {({ ref }) => (
-            <div
-              ref={ref}
-              style={{ position: "absolute", left: pageX - 7.5, top: pageY }}
-            />
-          )}
-        </Reference>
-        <Popper
-          placement="bottom-start"
-          modifiers={[{ name: "flip", enabled: false }]}
+      <div>
+        <div
+          ref={popperRef}
+          className="Tooltip"
+          style={{
+            ...contentStyle,
+            position: "absolute", // or 'relative' if the parent is positioned
+            left: props.pageX,
+            top: props.pageY,
+          }}
         >
-          {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <GeneDetail
-                  gene={gene}
-                  collectionName={name}
-                  queryEndpoint={{}}
-                />
-              </OutsideClickDetector>
-              {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 7.5,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
-                document.body
-              )}
-            </div>
-          )}
-        </Popper>
-      </Manager>,
+          <OutsideClickDetector onOutsideClick={props.onClose}>
+            <GeneDetail
+              gene={props.gene}
+              collectionName={props.name}
+              queryEndpoint={{}}
+            />
+          </OutsideClickDetector>
+          {/* Your tooltip content */}
+        </div>
+      </div>,
       document.body
     );
+
+    // const arrow = document.querySelector("#arrow");
+    // console.log(pageX, pageY);
+    // return ReactDOM.createPortal(
+    //   <Manager>
+    //     <Reference>
+    //       {({ ref }) => (
+    //         <div
+    //           ref={ref}
+    //           style={{ position: "absolute", left: pageX, top: pageY }}
+    //         />
+    //       )}
+    //     </Reference>
+    //     <Popper
+    //       placement="bottom-start"
+    //       modifiers={[
+    //         {
+    //           name: "offset",
+    //           options: {},
+    //         },
+    //       ]}
+    //     >
+    //       {({ ref, style, placement, arrowProps }) => (
+    //         <div
+    //           ref={ref}
+    //           style={{
+    //             ...style,
+    //             ...contentStyle,
+    //             backgroundColor: "#f9f9f9",
+
+    //             border: "1px solid #ddd",
+    //           }}
+    //         >
+    //           <OutsideClickDetector onOutsideClick={onClose}>
+    //             <GeneDetail
+    //               gene={gene}
+    //               collectionName={name}
+    //               queryEndpoint={{}}
+    //             />
+    //           </OutsideClickDetector>
+    //           {ReactDOM.createPortal(
+    //             <div
+    //               ref={arrowProps.ref}
+    //               style={{
+    //                 ...arrowProps.style,
+    //                 position: "absolute",
+    //                 width: 0,
+    //                 height: 0,
+    //                 borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+    //                 borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+    //                 borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+    //                 top: `${pageY}px`,
+
+    //                 left: `${pageX}px`,
+    //               }}
+    //             />,
+    //             document.body
+    //           )}
+    //         </div>
+    //       )}
+    //     </Popper>
+    //   </Manager>,
+    //   document.body
+    // );
   },
   bed: async function bedFetch(regionData: any) {},
 
