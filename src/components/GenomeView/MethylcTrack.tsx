@@ -2,7 +2,7 @@ import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import TestToolTip from "./commonComponents/hover/tooltip";
+import TestToolTip from "./commonComponents/hover-and-tooltip/tooltip";
 
 const worker = new Worker(new URL("../../worker/worker.ts", import.meta.url), {
   type: "module",

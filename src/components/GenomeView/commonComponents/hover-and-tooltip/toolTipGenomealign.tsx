@@ -7,7 +7,7 @@ import GeneDetail from "../../geneAnnotationTrack/GeneDetail";
 import ReactDOM from "react-dom";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
-const ARROW_SIZE = 15;
+const ARROW_SIZE = 16;
 
 interface MethylcHoverProps {
   data: any;
@@ -30,7 +30,7 @@ export const getToolTip: { [key: string]: any } = {
           {({ ref }) => (
             <div
               ref={ref}
-              style={{ position: "absolute", left: pageX - 7.5, top: pageY }}
+              style={{ position: "absolute", left: pageX - 8 * 2, top: pageY }}
             />
           )}
         </Reference>
@@ -62,7 +62,7 @@ export const getToolTip: { [key: string]: any } = {
                     width: 0,
                     height: 0,
                     position: "absolute",
-                    left: pageX - 7.5,
+                    left: pageX - 8,
                     top: pageY,
                     borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
                     borderRight: `${ARROW_SIZE / 2}px solid transparent`,

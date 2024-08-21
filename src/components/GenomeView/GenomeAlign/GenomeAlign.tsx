@@ -14,7 +14,7 @@ import AlignmentRecord from "../../../models/AlignmentRecord";
 
 import { AlignmentSegment } from "../../../models/AlignmentSegment";
 
-import ToolTipGenomealign from "../commonComponents/hover/toolTipGenomealign";
+import ToolTipGenomealign from "../commonComponents/hover-and-tooltip/toolTipGenomealign";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 const worker = new Worker(new URL("./genomeAlignWorker.ts", import.meta.url), {
   type: "module",

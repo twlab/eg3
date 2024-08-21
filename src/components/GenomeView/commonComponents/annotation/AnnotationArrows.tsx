@@ -24,29 +24,45 @@ interface ArrowProps {
   separation?: number;
 }
 class AnnotationArrows extends React.PureComponent<ArrowProps> {
+  static propTypes = {
+    startX: PropTypes.number.isRequired, // X location to start drawing arrows
+    endX: PropTypes.number.isRequired, // X location to stop drawing arrows
+    y: PropTypes.number, // y location to draw arrows
+    height: PropTypes.number.isRequired, // Height of arrows
+    isToRight: PropTypes.bool, // Arrow point direction.  If true, point right; otherwise, point left.
+    color: PropTypes.string, // Color of the arrows
+    /**
+     * Id for a clipPath element.  If valid, arrows will only appear in the clipPath's region.
+     */
+    clipId: PropTypes.string,
+    opacity: PropTypes.number,
+  };
+  static defaultProps = {
+    y: 0,
+    opacity: 1,
+  };
+
   render() {
     const {
       startX,
       endX,
-      y = 0,
+      y,
       height,
       isToRight,
       color,
       clipId,
       opacity,
-      separation = 0,
+      separation,
     } = this.props;
     if (endX - startX < ARROW_WIDTH) {
       return null;
     }
-    const arrowSeparation = separation > 10 ? separation : ARROW_SEPARATION;
+    const arrowSeparation = separation! > 10 ? separation : ARROW_SEPARATION;
     const centerY = height / 2;
     const bottomY = height;
     let placementStartX = 0;
     if (startX - ARROW_WIDTH / 2 > 0) {
       placementStartX = startX - ARROW_WIDTH / 2;
-    } else {
-      placementStartX = ARROW_WIDTH / 2;
     }
 
     let placementEndX = endX;
@@ -61,16 +77,16 @@ class AnnotationArrows extends React.PureComponent<ArrowProps> {
     for (
       let arrowTipX = placementStartX;
       arrowTipX <= placementEndX;
-      arrowTipX += arrowSeparation
+      arrowTipX += arrowSeparation!
     ) {
       // Is forward strand ? point to the right : point to the left
       const arrowTailX = isToRight
         ? arrowTipX - ARROW_WIDTH
         : arrowTipX + ARROW_WIDTH;
       const arrowPoints = [
-        [arrowTailX, y + 1],
-        [arrowTipX, centerY + y],
-        [arrowTailX, bottomY + y - 1],
+        [arrowTailX, y! + 1],
+        [arrowTipX, centerY + y!],
+        [arrowTailX, bottomY + y! - 1],
       ];
       children.push(
         <polyline

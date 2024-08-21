@@ -13,7 +13,6 @@ import GenomeAlign from "./GenomeAlign/GenomeAlign";
 import CircularProgress from "@mui/material/CircularProgress";
 import { ViewExpansion } from "../../models/RegionExpander";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-
 import OpenInterval from "../../models/OpenInterval";
 
 import { v4 as uuidv4 } from "uuid";
@@ -620,6 +619,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }}
         >
           <div
+            data-theme={"light"}
             ref={block}
             onMouseDown={handleMouseDown}
             style={{

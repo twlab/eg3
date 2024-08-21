@@ -1,7 +1,6 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { FeaturePlacer } from "../../models/getXSpan/FeaturePlacer";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
@@ -9,16 +8,10 @@ import Gene from "../../models/Gene";
 import { GeneAnnotationScaffold } from "./geneAnnotationTrack/GeneAnnotationScaffold";
 import { GeneAnnotation } from "./geneAnnotationTrack/GeneAnnotation";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
-import {
-  AnnotationDisplayModes,
-  FiberDisplayModes,
-  NumericalDisplayModes,
-  VcfDisplayModes,
-} from "./DisplayModes";
-import { right } from "@popperjs/core";
 import OpenInterval from "../../models/OpenInterval";
+import { getToolTip } from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
+import { AnnotationDisplayModes } from "./commonComponents/track-context-menu/DisplayModes";
 
-import { getToolTip } from "./commonComponents/hover/toolTipGenomealign";
 export const DEFAULT_OPTIONS = {
   displayMode: AnnotationDisplayModes.FULL,
   color: "blue",
@@ -48,7 +41,6 @@ const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
 const getGenePadding = (gene) => gene.getName().length * GeneAnnotation.HEIGHT;
 const TOP_PADDING = 2;
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
-  bpToPx,
   trackData,
   side,
   windowWidth = 0,
@@ -69,9 +61,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
-  const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
 
-  const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
@@ -123,7 +113,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           DEFAULT_OPTIONS
         );
         let tempOverFlow = {};
-        console.log(placeFeatureData);
+
         for (var i = 0; i < placeFeatureData.placements.length; i++) {
           let curFeature = placeFeatureData.placements[i];
           if (
@@ -167,7 +157,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           testPrevOverflowStrandLeft.current,
           trackData!.side
         );
-        console.log(placeFeatureData, trackData!.regionNavCoord);
+
         const height = getHeight(placeFeatureData.numRowsAssigned);
         let svgDATA = createFullVisualizer(
           placeFeatureData.placements,
@@ -224,7 +214,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     return (
       <svg
-        style={{ display: "flex", overflow: "visible" }}
+        style={{
+          display: "block",
+          // overflow: "visible",
+        }}
         width={width}
         height={height}
       >

@@ -107,7 +107,7 @@ export class GeneAnnotationScaffold extends React.PureComponent<GeneAnnotationSc
       // Yay, we can put it on the right!
       labelX = xEnd + 4;
       textAnchor = "start";
-    } else {
+    } else if (!isBlockedLeft && !isBlockedRight) {
       // Just put it directly on top of the annotation
       labelX = viewWindow!.start + 4;
       textAnchor = "start";

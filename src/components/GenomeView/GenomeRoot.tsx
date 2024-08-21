@@ -4,15 +4,10 @@
 import { useEffect, useRef, useState } from "react";
 import TrackManager from "./TrackManager";
 import Drag from "./commonComponents/chr-order/ChrOrder";
-import { chrType } from "./genomename";
+import { chrType } from "../../localdata/genomename";
 
-import NavigationContext from "../../models/NavigationContext";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
-import Feature from "../../models/Feature";
 import { v4 as uuidv4 } from "uuid";
 import useResizeObserver from "./Resize";
-import TrackManagerBackUp from "./TrackManagerBackUp";
-
 import HG38 from "../../models/genomes/hg38/hg38";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
@@ -219,7 +214,7 @@ function GenomeHub(props: any) {
   }, [size]);
 
   return (
-    <>
+    <div data-theme={"light"}>
       {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
@@ -244,18 +239,7 @@ function GenomeHub(props: any) {
           windowWidth={item.windowWidth}
         />
       ))}
-
-      {/* {genomeList.map((item, index) => (
-        <TrackManagerBackUp
-          key={item.id}
-          genomeIdx={index}
-          addTrack={addTrack}
-          startBp={startBp}
-          genomeArr={genomeList}
-          windowWidth={item.windowWidth}
-        />
-      ))} */}
-    </>
+    </div>
   );
 }
 

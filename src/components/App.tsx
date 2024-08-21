@@ -3,11 +3,12 @@ import Homepage from "./Home/Homepage";
 import { BrowserRouter, Link, Switch, Route } from "react-router-dom";
 import GenomeView from "./GenomeView/GenomeRoot";
 import { treeOfLifeObj } from "../localdata/treeoflife";
-
+import "./App.css";
+import "./DarkMode.css";
 import mainLogo from "../assets/images/icon.png";
 import "../assets/main.css";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { genName, genKeyName, chrType } from "./GenomeView/genomename";
+import { genName, genKeyName, chrType } from "../localdata/genomename";
 
 import { genomeNameToConfig } from "../models/genomes/allGenomes";
 // this section needs to be moved to a backend if we want to access
@@ -206,7 +207,7 @@ function App() {
   }, [selectedGenome]);
 
   return (
-    <div>
+    <div data-theme={"light"}>
       <BrowserRouter>
         <div className="app-root-1">
           <header className="Paper-root AppBar-root AppBar-positionStatic AppBar-colorPrimary Paper-elevation4">
