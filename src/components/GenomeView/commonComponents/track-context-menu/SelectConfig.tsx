@@ -2,14 +2,23 @@ import React from "react";
 import PropTypes from "prop-types";
 import SingleInputConfig from "./SingleInputConfig";
 
-const UNKNOWN_VALUE = "Wat is this";
+const UNKNOWN_VALUE = "Wat is this"; // Special value for unknown selection
 
-/**
- * Menu item that uses an <select> element.
- *
- * @author Silas Hsu
- */
-class SelectConfig extends React.Component {
+interface Option {
+  label: string;
+  value: string;
+}
+
+interface SelectConfigProps {
+  choices: any;
+  defaultValue?: string | number;
+  optionName: string;
+  optionsObjects: any[]; // You can replace 'any' with a more specific type if needed
+  label: string;
+  onOptionSet: (optionName: string, value: string | number) => void;
+}
+
+class SelectConfig extends React.Component<SelectConfigProps> {
   static propTypes = {
     /**
      * <option> choices.  Keys become choice names and values are those passed to the onOptionSet handler.
@@ -47,7 +56,7 @@ class SelectConfig extends React.Component {
    */
   renderInputElement(inputValue, setNewValue) {
     const choices = this.props.choices;
-    let optionElements = [];
+    let optionElements: Array<any> = [];
     if (inputValue === UNKNOWN_VALUE) {
       optionElements.push(<option key={UNKNOWN_VALUE} value={UNKNOWN_VALUE} />);
     }
@@ -64,6 +73,10 @@ class SelectConfig extends React.Component {
       <select
         value={inputValue}
         onChange={(event) => setNewValue(event.target.value)}
+        onClick={(e) => {
+          console.log("child");
+          e.stopPropagation();
+        }}
       >
         {optionElements}
       </select>

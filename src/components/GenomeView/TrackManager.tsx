@@ -390,7 +390,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 event.data.fetchResults.map(
                   (item, index) => (tempObj[item.name] = item.result)
                 );
-                console.log(event.data);
+
                 tempObj["regionNavCoord"] = new DisplayedRegionModel(
                   genomeArr[genomeIdx].navContext,
                   event.data.curRegionCoord._startBase,
@@ -410,17 +410,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         });
       } catch {}
-
-      // if (initial === 0) {
-      //   tempObj["initial"] = 0;
-      // } else {
-      //   tempObj["initial"] = 1;
-
-      //   minBp.current = minBp.current - bpRegionSize;
-      // }
-      // console.log(tempObj, "old");
-      // setTrackData({ ...tempObj });
-      // isLoading.current = false;
     }
 
     console.log(maxBp.current, minBp.current);
@@ -582,6 +571,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <button onClick={handleClick}>add bed</button>
 
         <div> {viewRegion.current?.toString()}</div>
+
         <div>Pixel distance from starting point : {dragX.current}px</div>
         {isLoading.current ? (
           <CircularProgress

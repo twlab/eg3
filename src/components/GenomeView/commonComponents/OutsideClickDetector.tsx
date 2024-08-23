@@ -21,6 +21,7 @@ const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
   };
 
   const detectOutsideClick = (event: MouseEvent) => {
+    console.log("HUHHH");
     if (
       nodeRef.current &&
       !nodeRef.current.contains(event.target as Node) &&

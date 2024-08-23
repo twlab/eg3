@@ -1,7 +1,6 @@
 import React from "react";
 import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
-
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import Gene from "../../../models/Gene";
 import {

@@ -21,7 +21,7 @@ export const getToolTip: { [key: string]: any } = {
   refGene: function refGeneFetch(gene: any, pageX, pageY, name, onClose) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
-      pointerEvents: "none",
+      pointerEvents: "auto",
     });
 
     return ReactDOM.createPortal(
@@ -44,6 +44,7 @@ export const getToolTip: { [key: string]: any } = {
               style={{
                 ...style,
                 ...contentStyle,
+                zIndex: 1001,
               }}
               className="Tooltip"
             >

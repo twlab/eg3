@@ -32,6 +32,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+  const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
   const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
   const prevOverflowStrand = useRef<{ [key: string]: any }>({});
   const overflowStrand = useRef<{ [key: string]: any }>({});

@@ -11,7 +11,11 @@ import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import { getToolTip } from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
 import { AnnotationDisplayModes } from "./commonComponents/track-context-menu/DisplayModes";
-
+import { AnnotationDisplayModeConfig } from "./commonComponents/track-context-menu/DisplayModeConfig";
+import ReactDOM from "react-dom";
+import { Manager, Popper, Reference } from "react-popper";
+import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
+import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 export const DEFAULT_OPTIONS = {
   displayMode: AnnotationDisplayModes.FULL,
   color: "blue",
@@ -35,7 +39,37 @@ export const DEFAULT_OPTIONS = {
   hiddenPixels: 0.5,
   italicizeText: false,
 };
-
+const canvasOptions = {
+  aggregateMethod: "COUNT",
+  displayMode: "auto",
+  height: 40,
+  color: "blue",
+  colorAboveMax: "red",
+  color2: "red",
+  color2BelowMin: "darkgreen",
+  yScale: "auto",
+  yMax: 10,
+  yMin: 0,
+  smooth: 0,
+  ensemblStyle: false,
+  maxRows: 20,
+  hideMinimalItems: false,
+  sortItems: false,
+  backgroundColor: "var(--bg-color)",
+  categoryColors: {
+    coding: "rgb(101,1,168)",
+    protein_coding: "rgb(101,1,168)",
+    nonCoding: "rgb(1,193,75)",
+    pseudogene: "rgb(230,0,172)",
+    pseudo: "rgb(230,0,172)",
+    problem: "rgb(224,2,2)",
+    polyA: "rgb(237,127,2)",
+    other: "rgb(128,128,128)",
+  },
+  hiddenPixels: 0.5,
+  italicizeText: false,
+  label: "refGene",
+};
 const ROW_VERTICAL_PADDING = 5;
 const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
 const getGenePadding = (gene) => gene.getName().length * GeneAnnotation.HEIGHT;
@@ -63,9 +97,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
+  const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState<any>(false);
+
+  const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const testPrevOverflowStrand = useRef<{ [key: string]: any }>({});
   const testPrevOverflowStrandLeft = useRef<{ [key: string]: any }>({});
 
@@ -91,6 +128,20 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     if (result) {
       if (trackData!.side === "right") {
         let testData = result.map((record) => new Gene(record));
+
+        let canvasElements = (
+          <NumericalTrack
+            data={testData}
+            options={canvasOptions}
+            viewWindow={new OpenInterval(0, windowWidth * 3)}
+            viewRegion={trackData!.regionNavCoord}
+            width={windowWidth}
+            forceSvg={false}
+          />
+        );
+
+        setRightCanvas([...rightCanvas, canvasElements]);
+        //_____________________________________________________________________________________________________________________
         let featureArrange = new FeatureArranger();
         let placeFeatureData = featureArrange.arrange(
           testData,
@@ -102,7 +153,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           testPrevOverflowStrand.current,
           trackData!.side
         );
-        console.log(placeFeatureData, trackData!.regionNavCoord);
+
         const height = getHeight(placeFeatureData.numRowsAssigned);
         let svgDATA = createFullVisualizer(
           placeFeatureData.placements,
@@ -179,7 +230,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         }
         testPrevOverflowStrandLeft.current = tempOverFlow;
         setLeftHTML([...leftHTML, ...[svgDATA]]);
-        console.log(leftHTML);
       } else {
         return;
       }
@@ -208,7 +258,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       // Compute y
       const rowIndex = Math.min(placedGroup.row, maxRowIndex);
       const y = rowIndex * rowHeight + TOP_PADDING;
-      console.log(y);
+
       return getAnnotationElement(placedGroup, y, rowIndex === maxRowIndex, i);
     }
 
@@ -251,7 +301,16 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       </GeneAnnotationScaffold>
     );
   }
+  function onChange() {}
+  function getMenuComponents() {
+    const items = [AnnotationDisplayModeConfig];
+    setConfigMenu([...items]);
+  }
+  const handleRightClick = (event) => {
+    event.preventDefault(); // Prevent the default context menu
 
+    getMenuComponents();
+  };
   function renderTooltip(event, gene) {
     const currtooltip = getToolTip["refGene"](
       gene,
@@ -282,6 +341,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
       >
         {side === "right"
+          ? rightCanvas.map((item, index) => <div key={index}>{item}</div>)
+          : leftHTML.map((item, index) => (
+              <div key={leftHTML.length - index - 1}>
+                {leftHTML[leftHTML.length - index - 1]}
+              </div>
+            ))}
+      </div>
+      <div
+        style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
+        onContextMenu={handleRightClick}
+      >
+        {side === "right"
           ? rightHTML.map((item, index) => <div key={index}>{item}</div>)
           : leftHTML.map((item, index) => (
               <div key={leftHTML.length - index - 1}>
@@ -289,6 +360,50 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               </div>
             ))}
         {toolTipVisible ? toolTip : ""}
+        {configMenu.map((MenuComponent, index) =>
+          ReactDOM.createPortal(
+            <Manager>
+              <Reference>
+                {({ ref }) => (
+                  <div
+                    ref={ref}
+                    style={{
+                      position: "absolute",
+                      left: 300 - 8 * 2,
+                      top: 300,
+                    }}
+                  />
+                )}
+              </Reference>
+              <Popper
+                placement="bottom-start"
+                modifiers={[{ name: "flip", enabled: false }]}
+              >
+                {({ ref, style, placement, arrowProps }) => (
+                  <div
+                    ref={ref}
+                    style={{
+                      ...style,
+                    }}
+                    className="Tooltip"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    <OutsideClickDetector onOutsideClick={onClose}>
+                      <MenuComponent
+                        key={index}
+                        optionsObjects={[DEFAULT_OPTIONS]}
+                        onOptionSet={onChange}
+                      />
+                    </OutsideClickDetector>
+                  </div>
+                )}
+              </Popper>
+            </Manager>,
+            document.body
+          )
+        )}
       </div>
     </>
   );
