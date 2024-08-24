@@ -68,8 +68,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
-  const [toolTipVisible, setToolTipVisible] = useState<any>(false);
+  const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
+  const [configMenuVisible, setConfigMenuVisible] = useState(false);
   const testPrevOverflowStrand = useRef<{ [key: string]: any }>({});
   const testPrevOverflowStrandLeft = useRef<{ [key: string]: any }>({});
 
@@ -255,16 +256,60 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       </GeneAnnotationScaffold>
     );
   }
-  function onChange() {}
-  function getMenuComponents() {
-    const items = [AnnotationDisplayModeConfig];
-    setConfigMenu([...items]);
+  function onChange(value, value2) {
+    console.log(value, value2);
   }
-  const handleRightClick = (event) => {
+  function renderConfigMenu(event) {
     event.preventDefault(); // Prevent the default context menu
-    console.log("HI)E#");
-    getMenuComponents();
-  };
+    const items = [AnnotationDisplayModeConfig];
+
+    let menu = items.map((MenuComponent, index) =>
+      ReactDOM.createPortal(
+        <Manager>
+          <Reference>
+            {({ ref }) => (
+              <div
+                ref={ref}
+                style={{
+                  position: "absolute",
+                  left: event.pageX,
+                  top: event.pageY,
+                }}
+              />
+            )}
+          </Reference>
+          <Popper
+            placement="bottom-start"
+            modifiers={[{ name: "flip", enabled: false }]}
+          >
+            {({ ref, style, placement, arrowProps }) => (
+              <div
+                ref={ref}
+                style={{
+                  ...style,
+                }}
+                className="Tooltip"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <OutsideClickDetector onOutsideClick={onCloseMenu}>
+                  <MenuComponent
+                    key={index}
+                    optionsObjects={[DEFAULT_OPTIONS]}
+                    onOptionSet={onChange}
+                  />
+                </OutsideClickDetector>
+              </div>
+            )}
+          </Popper>
+        </Manager>,
+        document.body
+      )
+    );
+    setConfigMenuVisible(true);
+    setConfigMenu([...menu]);
+  }
   function renderTooltip(event, gene) {
     const currtooltip = getToolTip["refGene"](
       gene,
@@ -278,6 +323,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   function onClose() {
     setToolTipVisible(false);
+  }
+  function onCloseMenu() {
+    setConfigMenuVisible(false);
   }
   useEffect(() => {
     fetchGenomeData();
@@ -293,7 +341,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     <>
       <div
         style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
-        onContextMenu={handleRightClick}
+        onContextMenu={renderConfigMenu}
       >
         {side === "right"
           ? rightHTML.map((item, index) => <div key={index}>{item}</div>)
@@ -303,7 +351,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               </div>
             ))}
         {toolTipVisible ? toolTip : ""}
-        {configMenu.map((MenuComponent, index) =>
+        {configMenuVisible ? configMenu : ""}
+        {/* {configMenu.map((MenuComponent, index) =>
           ReactDOM.createPortal(
             <Manager>
               <Reference>
@@ -346,7 +395,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             </Manager>,
             document.body
           )
-        )}
+        )} */}
       </div>
     </>
   );
