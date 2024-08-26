@@ -143,8 +143,6 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
   windowWidth,
   trackIdx,
   trackType,
-  length = 0,
-  side,
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -163,8 +161,8 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
     ) {
       const rect = targetRef.current!.getBoundingClientRect();
 
-      let dataIdxX = Math.floor(e.pageX - rect.left);
-      let dataIdxY = Math.floor(e.pageY - (window.scrollY + rect.top - 1));
+      let dataIdxX = Math.round(e.pageX - rect.left);
+      let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
 
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
       let tooltipsv = getToolTip[trackType](data, e.pageX - rect.left);

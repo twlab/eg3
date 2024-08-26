@@ -11,10 +11,7 @@ import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import { getToolTip } from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
 import { AnnotationDisplayModes } from "./commonComponents/track-context-menu/DisplayModes";
-import { AnnotationDisplayModeConfig } from "./commonComponents/track-context-menu/DisplayModeConfig";
-import ReactDOM from "react-dom";
-import { Manager, Popper, Reference } from "react-popper";
-import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
+
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import { AnnotationDisplayModeConfig } from "./commonComponents/track-context-menu/DisplayModeConfig";
 import ReactDOM from "react-dom";
@@ -104,9 +101,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
-  const [toolTipVisible, setToolTipVisible] = useState<any>(false);
 
-  const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
@@ -140,7 +135,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           <NumericalTrack
             data={testData}
             options={canvasOptions}
-            viewWindow={new OpenInterval(0, windowWidth * 3)}
+            viewWindow={new OpenInterval(0, windowWidth)}
             viewRegion={trackData!.regionNavCoord}
             width={windowWidth}
             forceSvg={false}
@@ -308,7 +303,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       </GeneAnnotationScaffold>
     );
   }
-  function onChange() {}
+
   function getMenuComponents() {
     const items = [AnnotationDisplayModeConfig];
     setConfigMenu([...items]);
@@ -414,7 +409,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       </div>
       <div
         style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
-        onContextMenu={handleRightClick}
         onContextMenu={renderConfigMenu}
       >
         {side === "right"
@@ -425,95 +419,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               </div>
             ))}
         {toolTipVisible ? toolTip : ""}
-        {configMenu.map((MenuComponent, index) =>
-          ReactDOM.createPortal(
-            <Manager>
-              <Reference>
-                {({ ref }) => (
-                  <div
-                    ref={ref}
-                    style={{
-                      position: "absolute",
-                      left: 300 - 8 * 2,
-                      top: 300,
-                    }}
-                  />
-                )}
-              </Reference>
-              <Popper
-                placement="bottom-start"
-                modifiers={[{ name: "flip", enabled: false }]}
-              >
-                {({ ref, style, placement, arrowProps }) => (
-                  <div
-                    ref={ref}
-                    style={{
-                      ...style,
-                    }}
-                    className="Tooltip"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <OutsideClickDetector onOutsideClick={onClose}>
-                      <MenuComponent
-                        key={index}
-                        optionsObjects={[DEFAULT_OPTIONS]}
-                        onOptionSet={onChange}
-                      />
-                    </OutsideClickDetector>
-                  </div>
-                )}
-              </Popper>
-            </Manager>,
-            document.body
-          )
-        )}
         {configMenuVisible ? configMenu : ""}
-        {/* {configMenu.map((MenuComponent, index) =>
-          ReactDOM.createPortal(
-            <Manager>
-              <Reference>
-                {({ ref }) => (
-                  <div
-                    ref={ref}
-                    style={{
-                      position: "absolute",
-                      left: 300 - 8 * 2,
-                      top: 300,
-                    }}
-                  />
-                )}
-              </Reference>
-              <Popper
-                placement="bottom-start"
-                modifiers={[{ name: "flip", enabled: false }]}
-              >
-                {({ ref, style, placement, arrowProps }) => (
-                  <div
-                    ref={ref}
-                    style={{
-                      ...style,
-                    }}
-                    className="Tooltip"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <OutsideClickDetector onOutsideClick={onClose}>
-                      <MenuComponent
-                        key={index}
-                        optionsObjects={[DEFAULT_OPTIONS]}
-                        onOptionSet={onChange}
-                      />
-                    </OutsideClickDetector>
-                  </div>
-                )}
-              </Popper>
-            </Manager>,
-            document.body
-          )
-        )} */}
       </div>
     </>
   );
