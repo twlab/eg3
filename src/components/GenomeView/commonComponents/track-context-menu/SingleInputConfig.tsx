@@ -1,4 +1,4 @@
-import React, { PureComponent } from "react";
+import React, { PureComponent, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import aggregateOptions from "./aggregateOptions";
@@ -19,11 +19,6 @@ export const ITEM_PROP_TYPES = {
 
 import "./TrackContextMenu.css";
 
-interface Option {
-  label: string;
-  value: string;
-}
-
 interface SingleInputConfigProps {
   onOptionSet: any;
   optionsObjects: any;
@@ -38,85 +33,49 @@ interface SingleInputConfigProps {
   ) => JSX.Element;
 }
 
-interface SingleInputConfigState {
-  inputValue: any;
-}
+function SingleInputConfig({
+  optionsObjects,
+  optionName,
+  defaultValue = "",
+  multiValue = "[multiple values]",
+  hasSetButton,
+  label,
+  getInputElement,
+  onOptionSet,
+}: SingleInputConfigProps) {
+  const [inputValue, setInputValue] = useState<any>(
+    aggregateOptions(optionsObjects, optionName, defaultValue, multiValue)
+  );
 
-class SingleInputConfig extends PureComponent<
-  SingleInputConfigProps,
-  SingleInputConfigState
-> {
-  static defaultProps = {
-    defaultValue: "",
-    multiValue: "[multiple values]",
-  };
-  state: { inputValue: any };
-
-  constructor(props: SingleInputConfigProps) {
-    super(props);
-    const { optionsObjects, optionName, defaultValue, multiValue } = props;
-    this.state = {
-      inputValue: aggregateOptions(
-        optionsObjects,
-        optionName,
-        defaultValue,
-        multiValue
-      ),
-    };
-  }
-
-  componentDidUpdate(prevProps: SingleInputConfigProps) {
-    if (this.props.optionsObjects !== prevProps.optionsObjects) {
-      const { optionsObjects, optionName, defaultValue, multiValue } =
-        this.props;
-      this.setState({
-        inputValue: aggregateOptions(
-          optionsObjects,
-          optionName,
-          defaultValue,
-          multiValue
-        ),
-      });
-    }
-  }
-
-  handleInputChange = (newValue: any) => {
-    if (!this.props.hasSetButton) {
-      this.makeOptionSetRequest(newValue);
-    }
-    this.setState({ inputValue: newValue });
-  };
-
-  makeOptionSetRequest = (newValue: any) => {
-    this.props.onOptionSet(this.props.optionName, newValue);
-  };
-
-  render() {
-    const { label, hasSetButton, getInputElement } = this.props;
-    const inputElement = getInputElement(
-      this.state.inputValue,
-      this.handleInputChange
+  useEffect(() => {
+    setInputValue(
+      aggregateOptions(optionsObjects, optionName, defaultValue, multiValue)
     );
-    const setButton = hasSetButton ? (
-      <button onClick={() => this.makeOptionSetRequest(this.state.inputValue)}>
-        Set
-      </button>
-    ) : null;
+  }, [optionsObjects, optionName, defaultValue, multiValue]);
 
-    return (
-      <div
-        className="TrackContextMenu-item"
-        onClick={(e) => {
-          console.log("child");
-          e.stopPropagation();
-        }}
-      >
-        <label style={{ margin: 0 }}>
-          {label} {inputElement} {setButton}
-        </label>
-      </div>
-    );
+  function handleInputChange(newValue: any) {
+    if (!hasSetButton) {
+      makeOptionSetRequest(newValue);
+    }
+    setInputValue(newValue);
   }
+
+  function makeOptionSetRequest(newValue: any) {
+    onOptionSet(optionName, newValue);
+  }
+
+  const inputElement = getInputElement(inputValue, handleInputChange);
+  const setButton = hasSetButton ? (
+    <button onClick={() => makeOptionSetRequest(inputValue)}>Set</button>
+  ) : null;
+
+  return (
+    <div className="TrackContextMenu-item">
+      <label style={{ margin: 0 }}>
+        {label} {inputElement} {setButton}
+      </label>
+    </div>
+  );
 }
 
 export default SingleInputConfig;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import SingleInputConfig from "./SingleInputConfig";
 
@@ -18,45 +18,19 @@ interface SelectConfigProps {
   onOptionSet: (optionName: string, value: string | number) => void;
 }
 
-class SelectConfig extends React.Component<SelectConfigProps> {
-  static propTypes = {
-    /**
-     * <option> choices.  Keys become choice names and values are those passed to the onOptionSet handler.
-     */
-    choices: PropTypes.objectOf(
-      PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    ).isRequired,
-    defaultValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // Default selected choice VALUE
-
-    // For the following, see SingleInputConfig
-    optionName: PropTypes.string.isRequired,
-    optionsObjects: PropTypes.array,
-    label: PropTypes.string,
-    onOptionSet: PropTypes.func,
-  };
-
-  static defaultProps = {
-    defaultValue: UNKNOWN_VALUE,
-    onOptionSet: (optionName, value) => undefined,
-  };
-
-  constructor(props) {
-    super(props);
-    this.renderInputElement = this.renderInputElement.bind(this);
-    this.handleOptionSet = this.handleOptionSet.bind(this);
-  }
-
-  /**
-   * Renders the <select> element.  If the selected value is the special value of UNKNOWN_VALUE, it renders a special
-   * blank <option> for it.
-   *
-   * @param {string} inputValue - selected value
-   * @param {function} setNewValue - function to call when input value changes
-   * @return {JSX.Element} <select> to render
-   */
-  renderInputElement(inputValue, setNewValue) {
-    const choices = this.props.choices;
-    let optionElements: Array<any> = [];
+const SelectConfig: React.FC<SelectConfigProps> = ({
+  choices,
+  defaultValue = UNKNOWN_VALUE,
+  optionName,
+  optionsObjects,
+  label,
+  onOptionSet = () => undefined,
+}) => {
+  const renderInputElement = (
+    inputValue: string | number,
+    setNewValue: (value: string | number) => void
+  ) => {
+    let optionElements: Array<JSX.Element> = [];
     if (inputValue === UNKNOWN_VALUE) {
       optionElements.push(<option key={UNKNOWN_VALUE} value={UNKNOWN_VALUE} />);
     }
@@ -81,32 +55,26 @@ class SelectConfig extends React.Component<SelectConfigProps> {
         {optionElements}
       </select>
     );
-  }
+  };
 
-  /**
-   * Calls the parent's onOptionSet handler, but only if the new value is not UNKNOWN_VALUE.
-   *
-   * @param {string} optionName - track option prop name to modify
-   * @param {string} value - selected value
-   */
-  handleOptionSet(optionName, newValue) {
+  const handleOptionSet = (optionName: string, newValue: string | number) => {
     if (newValue === UNKNOWN_VALUE) {
       return;
     } else {
-      this.props.onOptionSet(optionName, newValue);
+      onOptionSet(optionName, newValue);
     }
-  }
+  };
 
-  render() {
-    return (
-      <SingleInputConfig
-        {...this.props}
-        multiValue={UNKNOWN_VALUE}
-        onOptionSet={this.handleOptionSet}
-        getInputElement={this.renderInputElement}
-      />
-    );
-  }
-}
-
+  return (
+    <SingleInputConfig
+      defaultValue={defaultValue}
+      optionName={optionName}
+      optionsObjects={optionsObjects}
+      label={label}
+      multiValue={UNKNOWN_VALUE}
+      onOptionSet={handleOptionSet}
+      getInputElement={renderInputElement}
+    />
+  );
+};
 export default SelectConfig;
