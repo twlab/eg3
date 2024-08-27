@@ -14,6 +14,7 @@ import { DefaultAggregators } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
+import ToolTipGenomealign from "../hover-and-tooltip/toolTipGenomealign";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data: Feature[]; // Replace 'Feature' with the actual type of your data
@@ -250,6 +251,27 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
       this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap
     const visualizer = this.hasReverse ? (
       <React.Fragment>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+
+            zIndex: 3,
+          }}
+        >
+          <ToolTipGenomealign
+            data={this.xToValue}
+            data2={this.xToValue2}
+            windowWidth={width}
+            trackType={"refGene"}
+            trackModel={trackModel}
+            height={DEFAULT_OPTIONS.height}
+            viewRegion={viewRegion}
+            unit={unit}
+            hasReverse={true}
+          />
+        </div>
         <ValuePlot
           xToValue={this.xToValue}
           scales={this.scales}
@@ -271,15 +293,37 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
         />
       </React.Fragment>
     ) : (
-      <ValuePlot
-        xToValue={this.xToValue}
-        scales={this.scales}
-        height={height}
-        color={color}
-        colorOut={colorAboveMax}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-      />
+      <React.Fragment>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+
+            zIndex: 3,
+          }}
+        >
+          <ToolTipGenomealign
+            data={this.xToValue}
+            windowWidth={width}
+            trackType={"refGene"}
+            trackModel={trackModel}
+            height={DEFAULT_OPTIONS.height}
+            viewRegion={viewRegion}
+            unit={unit}
+            hasReverse={false}
+          />
+        </div>
+        <ValuePlot
+          xToValue={this.xToValue}
+          scales={this.scales}
+          height={this.scales.zeroLine}
+          color={color}
+          colorOut={colorAboveMax}
+          isDrawingBars={isDrawingBars}
+          forceSvg={forceSvg}
+        />
+      </React.Fragment>
     );
     return visualizer;
   }

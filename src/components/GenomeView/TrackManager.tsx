@@ -461,11 +461,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           newTrackComponents.push({
             id: uniqueKey,
             component: componentMap[genome.defaultTracks[i].name],
+            trackModel: genome.defaultTracks[i],
           });
         } else {
           newTrackComponents.push({
             id: genome.defaultTracks[i]["id"],
             component: componentMap[genome.defaultTracks[i].name],
+            trackModel: genome.defaultTracks[i],
           });
         }
       }
@@ -600,8 +602,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             justifyContent: side == "right" ? "start" : "end",
 
             flexDirection: "row",
-
-            width: `${windowWidth}px`,
+            // full windowwidth will make canvas only loop 0-windowidth
+            // the last value will have no data.
+            // so we have to subtract from the size of the canvas
+            width: `${windowWidth - 1}px`,
             backgroundColor: "gainsboro",
             height: "2000px",
             overflowX: "hidden",
@@ -626,6 +630,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   //infinitescroll type track data
                   key={item.id}
                   id={item.id}
+                  trackModel={item.trackModel}
                   bpRegionSize={bpRegionSize.current}
                   trackComponents={trackComponents}
                   bpToPx={basePerPixel.current}

@@ -656,6 +656,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
                         data={drawDataArr}
                         windowWidth={newTrackWidth.current!.visWidth}
                         side={"right"}
+                        height={DEFAULT_OPTIONS.height}
                       />
                     ))
                   //  : (
@@ -674,6 +675,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
                         data={drawDataArr}
                         windowWidth={newTrackWidth.current!.visWidth}
                         side={"left"}
+                        height={DEFAULT_OPTIONS.height}
                       />
                     ))
                   //  : (

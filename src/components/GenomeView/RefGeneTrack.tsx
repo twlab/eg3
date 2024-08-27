@@ -11,12 +11,16 @@ import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import { getToolTip } from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
 import { AnnotationDisplayModes } from "./commonComponents/track-context-menu/DisplayModes";
-
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import { AnnotationDisplayModeConfig } from "./commonComponents/track-context-menu/DisplayModeConfig";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
+import TooltipGenomealign from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
+import GeneDetail from "./geneAnnotationTrack/GeneDetail";
+const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
+const ARROW_SIZE = 16;
+
 export const DEFAULT_OPTIONS = {
   displayMode: AnnotationDisplayModes.FULL,
   color: "blue",
@@ -82,6 +86,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   genomeArr,
   genomeIdx,
   dragXDist,
+  trackModel,
 }) {
   let start, end;
 
@@ -98,6 +103,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
 
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
+  const [rightData, setRightData] = useState<Array<any>>([]);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
@@ -130,7 +136,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     if (result) {
       if (trackData!.side === "right") {
         let testData = result.map((record) => new Gene(record));
-
+        setRightData([...rightData, testData]);
         let canvasElements = (
           <NumericalTrack
             data={testData}
@@ -139,6 +145,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             viewRegion={trackData!.regionNavCoord}
             width={windowWidth}
             forceSvg={false}
+            trackModel={trackModel}
           />
         );
 
@@ -155,7 +162,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           testPrevOverflowStrand.current,
           trackData!.side
         );
-
+        console.log(placeFeatureData);
         const height = getHeight(placeFeatureData.numRowsAssigned);
         let svgDATA = createFullVisualizer(
           placeFeatureData.placements,
@@ -303,7 +310,67 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       </GeneAnnotationScaffold>
     );
   }
+  function refGeneClickTooltip(gene: any, pageX, pageY, name, onClose) {
+    const contentStyle = Object.assign({
+      marginTop: ARROW_SIZE,
+      pointerEvents: "auto",
+    });
 
+    return ReactDOM.createPortal(
+      <Manager>
+        <Reference>
+          {({ ref }) => (
+            <div
+              ref={ref}
+              style={{ position: "absolute", left: pageX - 8 * 2, top: pageY }}
+            />
+          )}
+        </Reference>
+        <Popper
+          placement="bottom-start"
+          modifiers={[{ name: "flip", enabled: false }]}
+        >
+          {({ ref, style, placement, arrowProps }) => (
+            <div
+              ref={ref}
+              style={{
+                ...style,
+                ...contentStyle,
+                zIndex: 1001,
+              }}
+              className="Tooltip"
+            >
+              <OutsideClickDetector onOutsideClick={onClose}>
+                <GeneDetail
+                  gene={gene}
+                  collectionName={name}
+                  queryEndpoint={{}}
+                />
+              </OutsideClickDetector>
+              {ReactDOM.createPortal(
+                <div
+                  ref={arrowProps.ref}
+                  style={{
+                    ...arrowProps.style,
+                    width: 0,
+                    height: 0,
+                    position: "absolute",
+                    left: pageX - 8,
+                    top: pageY,
+                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                  }}
+                />,
+                document.body
+              )}
+            </div>
+          )}
+        </Popper>
+      </Manager>,
+      document.body
+    );
+  }
   function getMenuComponents() {
     const items = [AnnotationDisplayModeConfig];
     setConfigMenu([...items]);
@@ -313,7 +380,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     getMenuComponents();
   };
-  function onChange(value, value2) {
+  function onConfigChange(value, value2) {
     console.log(value, value2);
   }
   function renderConfigMenu(event) {
@@ -354,7 +421,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                   <MenuComponent
                     key={index}
                     optionsObjects={[DEFAULT_OPTIONS]}
-                    onOptionSet={onChange}
+                    onOptionSet={onConfigChange}
                   />
                 </OutsideClickDetector>
               </div>
@@ -368,7 +435,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setConfigMenu([...menu]);
   }
   function renderTooltip(event, gene) {
-    const currtooltip = getToolTip["refGene"](
+    const currtooltip = refGeneClickTooltip(
       gene,
       event.pageX,
       event.pageY,
@@ -395,7 +462,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
-    <>
+    <div
+      style={{
+        display: "flex",
+        overflowX: "visible",
+        overflowY: "hidden",
+        flexDirection: "column",
+      }}
+      // onContextMenu={renderConfigMenu}
+    >
       <div
         style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
       >
@@ -406,10 +481,32 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 {leftHTML[leftHTML.length - index - 1]}
               </div>
             ))}
+        {/* <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            opacity: 0.5,
+
+            zIndex: 3,
+          }}
+        >
+          {rightData.map((item, index) => (
+            <TooltipGenomealign
+              key={index}
+              data={rightData[index]}
+              windowWidth={windowWidth}
+              trackIdx={index}
+              trackType={"refGene"}
+              side={"right"}
+              trackModel={trackModel}
+              height={DEFAULT_OPTIONS.height}
+            />
+          ))}
+        </div> */}
       </div>
       <div
         style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
-        onContextMenu={renderConfigMenu}
       >
         {side === "right"
           ? rightHTML.map((item, index) => <div key={index}>{item}</div>)
@@ -421,7 +518,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         {toolTipVisible ? toolTip : ""}
         {configMenuVisible ? configMenu : ""}
       </div>
-    </>
+    </div>
   );
 });
 

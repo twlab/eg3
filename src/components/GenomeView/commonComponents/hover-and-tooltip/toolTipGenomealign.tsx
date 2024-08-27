@@ -1,82 +1,68 @@
 import { useEffect, useRef, useState, memo } from "react";
 import "./Tooltip.css";
 import AlignmentSequence from "./AlignmentCoordinate";
-import { Manager, Reference, Popper } from "react-popper";
-import OutsideClickDetector from "../OutsideClickDetector";
-import GeneDetail from "../../geneAnnotationTrack/GeneDetail";
-import ReactDOM from "react-dom";
-
-const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
-const ARROW_SIZE = 16;
+import GenomicCoordinates from "./GenomicCoordinates";
+import TrackModel from "../../../../models/TrackModel";
 
 interface MethylcHoverProps {
   data: any;
   windowWidth: number;
   trackIdx?: number;
   length?: number;
-  side: string;
+  side?: string;
   trackType: string;
+  trackModel?: TrackModel;
+  height: number;
+  viewRegion?: any;
+  unit?: string | undefined;
+  data2?: any;
+  hasReverse?: boolean;
 }
-export const getToolTip: { [key: string]: any } = {
-  refGene: function refGeneFetch(gene: any, pageX, pageY, name, onClose) {
-    const contentStyle = Object.assign({
-      marginTop: ARROW_SIZE,
-      pointerEvents: "auto",
-    });
-
-    return ReactDOM.createPortal(
-      <Manager>
-        <Reference>
-          {({ ref }) => (
-            <div
-              ref={ref}
-              style={{ position: "absolute", left: pageX - 8 * 2, top: pageY }}
-            />
+export const getToolTip = {
+  refGene: function getTooltip(dataObj: { [key: string]: any }) {
+    const value = dataObj.data[Math.round(dataObj.relativeX)];
+    const value2 = dataObj.hasReverse
+      ? dataObj.data2[Math.round(dataObj.relativeX)]
+      : null;
+    const stringValue =
+      typeof value === "number" && !Number.isNaN(value)
+        ? value.toFixed(2)
+        : "(no data)";
+    const stringValue2 =
+      typeof value2 === "number" && !Number.isNaN(value2)
+        ? value2.toFixed(2)
+        : "(no data)";
+    return (
+      <div>
+        <div>
+          <span className="Tooltip-major-text" style={{ marginRight: 3 }}>
+            {dataObj.hasReverse && "Forward: "} {stringValue}
+          </span>
+          {dataObj.unit && (
+            <span className="Tooltip-minor-text">{dataObj.unit}</span>
           )}
-        </Reference>
-        <Popper
-          placement="bottom-start"
-          modifiers={[{ name: "flip", enabled: false }]}
-        >
-          {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <GeneDetail
-                  gene={gene}
-                  collectionName={name}
-                  queryEndpoint={{}}
-                />
-              </OutsideClickDetector>
-              {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
-                document.body
-              )}
-            </div>
-          )}
-        </Popper>
-      </Manager>,
-      document.body
+        </div>
+        {dataObj.hasReverse && (
+          <div>
+            <span className="Tooltip-major-text" style={{ marginRight: 3 }}>
+              Reverse: {stringValue2}
+            </span>
+            {dataObj.unit && (
+              <span className="Tooltip-minor-text">{dataObj.unit}</span>
+            )}
+          </div>
+        )}
+        <div className="Tooltip-minor-text">
+          <GenomicCoordinates
+            viewRegion={dataObj.viewRegion}
+            width={dataObj.width}
+            x={dataObj.relativeX}
+          />
+        </div>
+        <div className="Tooltip-minor-text">
+          {dataObj.trackModel.getDisplayLabel()}
+        </div>
+      </div>
     );
   },
   bed: async function bedFetch(regionData: any) {},
@@ -94,14 +80,15 @@ export const getToolTip: { [key: string]: any } = {
   hic: function hicFetch(regionData: any) {
     return;
   },
-  genomealign: function genomeAlignFetch(alignment: any, relativeX: number) {
-    const { basesPerPixel, primaryGenome, queryGenome } = alignment;
-    const drawData = alignment.drawData;
+  genomealign: function genomeAlignFetch(dataObj: { [key: string]: any }) {
+    const { basesPerPixel, primaryGenome, queryGenome } = dataObj.data;
+    const drawData = dataObj.data.drawData;
 
     // Which segment in drawData cusor lands on:
     const indexOfCusorSegment = drawData.reduce(
       (iCusor, x, i) =>
-        x.targetXSpan.start < relativeX && x.targetXSpan.end >= relativeX
+        x.targetXSpan.start < dataObj.relativeX &&
+        x.targetXSpan.end >= dataObj.relativeX
           ? i
           : iCusor,
       NaN
@@ -113,7 +100,7 @@ export const getToolTip: { [key: string]: any } = {
     return (
       <AlignmentSequence
         alignment={cusorSegment}
-        x={relativeX}
+        x={dataObj.relativeX}
         halfLength={sequenceHalfLength}
         target={primaryGenome}
         query={queryGenome}
@@ -143,6 +130,12 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
   windowWidth,
   trackIdx,
   trackType,
+  height,
+  trackModel,
+  viewRegion,
+  unit,
+  data2,
+  hasReverse,
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -163,22 +156,28 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
 
       let dataIdxX = Math.round(e.pageX - rect.left);
       let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
-
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
-      let tooltipsv = getToolTip[trackType](data, e.pageX - rect.left);
 
-      if (dataIdxX < windowWidth) {
-        setPosition({
-          ...rectPosition,
-          top: rect.bottom,
-          left: rect.left,
-          right: rect.right,
-          dataIdxX: dataIdxX,
-          dataIdxY: dataIdxY,
-          toolTip: tooltipsv,
-        });
-        setIsVisible(true);
-      }
+      let tooltipsv = getToolTip[trackType]({
+        data,
+        trackModel,
+        data2,
+        viewRegion,
+        width: windowWidth,
+        unit,
+        relativeX: dataIdxX,
+        hasReverse,
+      });
+      setPosition({
+        ...rectPosition,
+        top: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        dataIdxX: dataIdxX,
+        dataIdxY: dataIdxY,
+        toolTip: tooltipsv,
+      });
+      setIsVisible(true);
     }
   };
   // when creating mouse behavior and events for separate component you have to create handler function outside the useeffect or else state is based
@@ -207,7 +206,7 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
       ref={targetRef}
       style={{
         width: windowWidth,
-        height: 80,
+        height: height,
         position: "relative",
       }}
     >
