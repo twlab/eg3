@@ -18,6 +18,8 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import TooltipGenomealign from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
 import GeneDetail from "./geneAnnotationTrack/GeneDetail";
+import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import NavigationContext from "../../models/NavigationContext";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -101,13 +103,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
-
+  const rightRawData = useRef<Array<any>>([]);
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
+  const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
   const [rightData, setRightData] = useState<Array<any>>([]);
+  const [dataIdx, setDataIdx] = useState(0);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
-
+  const view = useRef(0);
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
@@ -129,13 +133,57 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
-  function fetchGenomeData(initial: number = 0) {
+  function fetchGenomeData(fetchedData, testAlgo) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    if (result) {
+    if (testAlgo.length > 0) {
+      let algoData = testAlgo.map((record) => new Gene(record));
+
+      let featureArrange = new FeatureArranger();
+      let placeFeatureData = featureArrange.arrange(
+        algoData,
+
+        rightRawData.current.length < 3
+          ? trackData!.regionNavCoord
+          : new DisplayedRegionModel(
+              trackData!.regionNavCoord._navContext,
+              trackData!.regionNavCoord._startBase -
+                (trackData!.regionNavCoord._endBase -
+                  trackData!.regionNavCoord._startBase) *
+                  2,
+
+              trackData!.regionNavCoord._endBase
+            ),
+        rightRawData.current.length < 3
+          ? windowWidth * rightRawData.current.length
+          : windowWidth * 3,
+        getGenePadding,
+        DEFAULT_OPTIONS.hiddenPixels,
+        SortItemsOptions.ASC,
+        trackData!.side,
+        {}
+      );
+
+      const height = getHeight(placeFeatureData.numRowsAssigned);
+      let svgDATA = createFullVisualizer(
+        placeFeatureData.placements,
+        rightRawData.current.length < 3
+          ? windowWidth * rightRawData.current.length
+          : windowWidth * 3,
+        height,
+        ROW_HEIGHT,
+        DEFAULT_OPTIONS.maxRows,
+        DEFAULT_OPTIONS
+      );
+      console.log(svgDATA);
+      setRightAlgo([...[svgDATA]]);
+      view.current = trackData!.xDist;
+    }
+    if (fetchedData) {
       if (trackData!.side === "right") {
-        let testData = result.map((record) => new Gene(record));
+        console.log(trackData!.regionNavCoord);
+        let testData = fetchedData.map((record) => new Gene(record));
         setRightData([...rightData, testData]);
         let canvasElements = (
           <NumericalTrack
@@ -159,8 +207,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           getGenePadding,
           DEFAULT_OPTIONS.hiddenPixels,
           SortItemsOptions.ASC,
-          testPrevOverflowStrand.current,
-          trackData!.side
+          trackData!.side,
+          testPrevOverflowStrand.current
         );
         console.log(placeFeatureData);
         const height = getHeight(placeFeatureData.numRowsAssigned);
@@ -214,8 +262,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           getGenePadding,
           DEFAULT_OPTIONS.hiddenPixels,
           SortItemsOptions.ASC,
-          testPrevOverflowStrandLeft.current,
-          trackData!.side
+          trackData!.side,
+          testPrevOverflowStrandLeft.current
         );
 
         const height = getHeight(placeFeatureData.numRowsAssigned);
@@ -452,13 +500,24 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setConfigMenuVisible(false);
   }
   useEffect(() => {
-    fetchGenomeData();
+    if (trackData!.refGene) {
+      rightRawData.current.push(trackData!.refGene);
+    }
+    let testData = rightRawData.current.slice(-3).flat(1);
+    fetchGenomeData(trackData!.refGene, testData);
   }, [trackData]);
 
   useEffect(() => {
     setToolTipVisible(false);
+    setDataIdx(Math.floor(dragXDist! / windowWidth));
   }, [dragXDist]);
 
+  useEffect(() => {
+    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
+    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
+    // otherwise when there is new data cuz the user is at the end of the track
+    console.log(-dataIdx, "hi", rightRawData.current);
+  }, [dataIdx]);
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
@@ -472,7 +531,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       // onContextMenu={renderConfigMenu}
     >
       <div
-        style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
+        style={{
+          display: "flex",
+          overflowX: "visible",
+          overflowY: "hidden",
+          position: "relative",
+        }}
       >
         {side === "right"
           ? rightCanvas.map((item, index) => <div key={index}>{item}</div>)
@@ -506,7 +570,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         </div> */}
       </div>
       <div
-        style={{ display: "flex", overflowX: "visible", overflowY: "hidden" }}
+        style={{
+          display: "flex",
+          overflowX: "visible",
+          overflowY: "hidden",
+          position: "relative",
+        }}
       >
         {side === "right"
           ? rightHTML.map((item, index) => <div key={index}>{item}</div>)
@@ -517,6 +586,28 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             ))}
         {toolTipVisible ? toolTip : ""}
         {configMenuVisible ? configMenu : ""}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          overflowX: "visible",
+          overflowY: "visible",
+          position: "relative",
+          height: 120,
+        }}
+      >
+        <div
+          style={{
+            overflow: "visible",
+
+            position: "absolute",
+
+            left:
+              side === "right" ? `${-view.current! - windowWidth * 2}px` : "",
+          }}
+        >
+          {side === "right" ? rightAlgo : ""}
+        </div>
       </div>
     </div>
   );

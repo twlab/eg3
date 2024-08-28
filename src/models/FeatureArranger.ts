@@ -39,8 +39,8 @@ export class FeatureArranger {
     groups: PlacedFeatureGroup[],
     padding: number | PaddingFunc,
     sortItems: SortItemsOptions,
-    prevRegionOverflow?: { [key: string]: any },
-    trackSide?: string
+    trackSide?: string,
+    prevRegionOverflow?: { [key: string]: any }
   ): number {
     // if (sortItems === SortItemsOptions.NONE) {
     //   groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
@@ -52,7 +52,7 @@ export class FeatureArranger {
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
 
-    if (prevRegionOverflow) {
+    if (prevRegionOverflow !== undefined) {
       let maxXsForRowsLen = maxXsForRows.length - 1;
 
       for (const key in prevRegionOverflow) {
@@ -86,7 +86,10 @@ export class FeatureArranger {
     }
     console.log(maxXsForRows, groups);
     for (const group of groups) {
-      if (!(group.feature.id! in prevRegionOverflow!)) {
+      if (
+        prevRegionOverflow === undefined ||
+        !(group.feature.id! in prevRegionOverflow)
+      ) {
         const horizontalPadding = isConstPadding
           ? (padding as number)
           : (padding as PaddingFunc)(group.feature, group.xSpan);
@@ -169,8 +172,8 @@ export class FeatureArranger {
     padding: number | PaddingFunc = 0,
     hiddenPixels: number = 0.5,
     sortItems: SortItemsOptions = SortItemsOptions.NONE,
-    prevRegionOverflow?: { [key: string]: any },
-    trackSide?: string
+    trackSide?: string,
+    prevRegionOverflow?: { [key: string]: any }
   ): FeatureArrangementResult {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const visibleFeatures = features.filter(
@@ -192,8 +195,8 @@ export class FeatureArranger {
       results,
       padding,
       sortItems,
-      prevRegionOverflow,
-      trackSide
+      trackSide,
+      prevRegionOverflow
     );
     return {
       placements: results,

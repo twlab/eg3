@@ -16,9 +16,9 @@ const MIN_BASE = 0;
  * @author Silas Hsu
  */
 class DisplayedRegionModel {
-  private _navContext: NavigationContext;
-  private _startBase: number | undefined;
-  private _endBase: number | undefined;
+  public _navContext: NavigationContext;
+  public _startBase: number | undefined;
+  public _endBase: number | undefined;
 
   /**
    * Makes a new instance with specified navigation context, and optionally, initial view region.  If not specified,
