@@ -177,8 +177,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         DEFAULT_OPTIONS
       );
       console.log(svgDATA);
-      setRightAlgo([...[svgDATA]]);
-      view.current = trackData!.xDist;
+      setRightAlgo([[svgDATA]]);
+      view.current = -trackData!.xDist - windowWidth;
     }
     if (fetchedData) {
       if (trackData!.side === "right") {
@@ -602,8 +602,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
             position: "absolute",
 
-            left:
-              side === "right" ? `${-view.current! - windowWidth * 2}px` : "",
+            left: side === "right" ? `${view.current!}px` : "",
           }}
         >
           {side === "right" ? rightAlgo : ""}
