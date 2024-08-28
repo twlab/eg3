@@ -84,7 +84,7 @@ export class FeatureArranger {
         }
       }
     }
-    console.log(maxXsForRows, groups);
+
     for (const group of groups) {
       if (
         prevRegionOverflow === undefined ||
@@ -111,7 +111,6 @@ export class FeatureArranger {
         group.row = row;
       }
     }
-    console.log(groups);
     return maxXsForRows.length;
   }
 
@@ -190,7 +189,7 @@ export class FeatureArranger {
 
       results.push(...this._combineAdjacent(placements));
     }
-    console.log(results);
+
     const numRowsAssigned = this._assignRows(
       results,
       padding,

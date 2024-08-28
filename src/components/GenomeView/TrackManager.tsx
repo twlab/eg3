@@ -173,7 +173,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
       (item, index) => item.getLocus()
     );
-    console.log(expandedGenomeCoordLocus, expandedGenomeFeatureSegment);
+
     viewRegion.current = genomeCoordLocus;
     startBp(viewRegion.current.toString());
     bpX.current = curBp;
@@ -493,7 +493,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [initialStart]);
   useEffect(() => {
     if (trackManagerId.current === "") {
-      console.log(genomeArr);
       // on initial and when our genome data changes we set the default values here
 
       let genome = genomeArr[genomeIdx];

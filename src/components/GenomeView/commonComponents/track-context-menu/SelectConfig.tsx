@@ -47,10 +47,6 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
       <select
         value={inputValue}
         onChange={(event) => setNewValue(event.target.value)}
-        onClick={(e) => {
-          console.log("child");
-          e.stopPropagation();
-        }}
       >
         {optionElements}
       </select>

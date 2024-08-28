@@ -185,7 +185,7 @@ export class HicSource {
     this.currentBinSize = binSize;
     const promises: Array<any> = [];
     const loci = region;
-    console.log(loci);
+
     for (let i = 0; i < loci.length; i++) {
       for (let j = i; j < loci.length; j++) {
         promises.push(

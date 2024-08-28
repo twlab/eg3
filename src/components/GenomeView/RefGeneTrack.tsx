@@ -79,6 +79,7 @@ const canvasOptions = {
 };
 const ROW_VERTICAL_PADDING = 5;
 const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
+console.log(ROW_HEIGHT);
 const getGenePadding = (gene) => gene.getName().length * GeneAnnotation.HEIGHT;
 const TOP_PADDING = 2;
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
@@ -107,7 +108,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
   const [rightData, setRightData] = useState<Array<any>>([]);
-  const dataIdx = useRef(0);
+  const [dataIdx, setDataIdx] = useState(0);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
@@ -136,7 +137,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   function fetchGenomeData(fetchedData, testAlgo, idxPos) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    console.log(idxPos);
+
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (testAlgo.length > 0) {
       let algoData = testAlgo.map((record) => new Gene(record));
@@ -164,7 +165,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         fetchedData.side,
         {}
       );
-      console.log(testAlgo);
+
       const height = getHeight(placeFeatureData.numRowsAssigned);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
@@ -182,7 +183,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     if (fetchedData) {
       if (trackData!.side === "right") {
-        console.log(trackData!.regionNavCoord);
         let testData = fetchedData.refGene.map((record) => new Gene(record));
         setRightData([...rightData, testData]);
         let canvasElements = (
@@ -199,56 +199,56 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
         setRightCanvas([...rightCanvas, canvasElements]);
         //_____________________________________________________________________________________________________________________
-        let featureArrange = new FeatureArranger();
-        let placeFeatureData = featureArrange.arrange(
-          testData,
-          trackData!.regionNavCoord,
-          windowWidth,
-          getGenePadding,
-          DEFAULT_OPTIONS.hiddenPixels,
-          SortItemsOptions.ASC,
-          trackData!.side,
-          testPrevOverflowStrand.current
-        );
+        // let featureArrange = new FeatureArranger();
+        // let placeFeatureData = featureArrange.arrange(
+        //   testData,
+        //   trackData!.regionNavCoord,
+        //   windowWidth,
+        //   getGenePadding,
+        //   DEFAULT_OPTIONS.hiddenPixels,
+        //   SortItemsOptions.ASC,
+        //   trackData!.side,
+        //   testPrevOverflowStrand.current
+        // );
 
-        const height = getHeight(placeFeatureData.numRowsAssigned);
-        let svgDATA = createFullVisualizer(
-          placeFeatureData.placements,
-          windowWidth,
-          height,
-          ROW_HEIGHT,
-          DEFAULT_OPTIONS.maxRows,
-          DEFAULT_OPTIONS
-        );
-        let tempOverFlow = {};
+        // const height = getHeight(placeFeatureData.numRowsAssigned);
+        // let svgDATA = createFullVisualizer(
+        //   placeFeatureData.placements,
+        //   windowWidth,
+        //   height,
+        //   ROW_HEIGHT,
+        //   DEFAULT_OPTIONS.maxRows,
+        //   DEFAULT_OPTIONS
+        // );
+        // let tempOverFlow = {};
 
-        for (var i = 0; i < placeFeatureData.placements.length; i++) {
-          let curFeature = placeFeatureData.placements[i];
-          if (
-            curFeature.placedFeatures[0].contextLocation.end >=
-            trackData!.regionNavCoord._endBase
-          ) {
-            tempOverFlow[curFeature.feature.id!] = curFeature;
-          }
-        }
+        // for (var i = 0; i < placeFeatureData.placements.length; i++) {
+        //   let curFeature = placeFeatureData.placements[i];
+        //   if (
+        //     curFeature.placedFeatures[0].contextLocation.end >=
+        //     trackData!.regionNavCoord._endBase
+        //   ) {
+        //     tempOverFlow[curFeature.feature.id!] = curFeature;
+        //   }
+        // }
 
-        testPrevOverflowStrand.current = tempOverFlow;
-        setRightHTML([...rightHTML, ...[svgDATA]]);
+        // testPrevOverflowStrand.current = tempOverFlow;
+        // setRightHTML([...rightHTML, ...[svgDATA]]);
 
-        if (trackData!.initial) {
-          let tempOverFlow = {};
-          for (var i = 0; i < placeFeatureData.placements.length; i++) {
-            let curFeature = placeFeatureData.placements[i];
-            if (
-              curFeature.placedFeatures[0].contextLocation.start <=
-              trackData!.regionNavCoord._startBase
-            ) {
-              tempOverFlow[curFeature.feature.id!] = curFeature;
-            }
-          }
-          testPrevOverflowStrandLeft.current = tempOverFlow;
-          setLeftHTML([...leftHTML, ...[svgDATA]]);
-        }
+        // if (trackData!.initial) {
+        //   let tempOverFlow = {};
+        //   for (var i = 0; i < placeFeatureData.placements.length; i++) {
+        //     let curFeature = placeFeatureData.placements[i];
+        //     if (
+        //       curFeature.placedFeatures[0].contextLocation.start <=
+        //       trackData!.regionNavCoord._startBase
+        //     ) {
+        //       tempOverFlow[curFeature.feature.id!] = curFeature;
+        //     }
+        //   }
+        //   testPrevOverflowStrandLeft.current = tempOverFlow;
+        //   setLeftHTML([...leftHTML, ...[svgDATA]]);
+        // }
       } else if (trackData!.side === "left") {
         result.sort((a, b) => {
           return b.txEnd - a.txEnd;
@@ -293,7 +293,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       //_____________________________________________________________________________________________________________________________________________
     }
-    console.log((Math.floor(idxPos / windowWidth) - 1) * windowWidth, idxPos);
+
     setXPos((Math.floor(idxPos / windowWidth) - 1) * windowWidth);
   }
 
@@ -508,7 +508,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         trackData: trackData!,
       });
     }
-    let testData = rightRawData.current.slice(-3).flat(1);
+    let testData = rightRawData.current.slice(-3);
     let refGenesArray = testData.map((item) => item.refGenes).flat(1);
 
     fetchGenomeData(trackData!, refGenesArray, -trackData!.xDist);
@@ -516,8 +516,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     setToolTipVisible(false);
-    dataIdx.current = Math.floor(dragXDist! / windowWidth);
-    console.log(Math.floor(dragXDist! / windowWidth));
+    setConfigMenuVisible(false);
+    setDataIdx(Math.floor(dragXDist! / windowWidth));
   }, [dragXDist]);
 
   useEffect(() => {
@@ -527,27 +527,26 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     if (
       rightRawData.current.length > 3 &&
-      -dataIdx.current !== rightRawData.current.length
+      -dataIdx !== rightRawData.current.length
     ) {
-      let testData = rightRawData.current
-        .slice(-dataIdx.current - 1, -dataIdx.current + 2)
-        .flat(1);
+      let testData = rightRawData.current.slice(-dataIdx - 1, -dataIdx + 2);
       let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+
       fetchGenomeData(
-        rightRawData.current[-dataIdx.current].trackData,
+        rightRawData.current[-dataIdx].trackData,
         refGenesArray,
-        (-dataIdx.current - 1) * windowWidth
+        -rightRawData.current[-dataIdx].trackData.xDist
       );
     }
-  }, [dataIdx.current]);
+  }, [dataIdx]);
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
       style={{
         display: "flex",
-        overflowX: "visible",
-        overflowY: "hidden",
+        overflow: "visible",
+
         flexDirection: "column",
       }}
       // onContextMenu={renderConfigMenu}
@@ -555,9 +554,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       <div
         style={{
           display: "flex",
-          overflowX: "visible",
-          overflowY: "hidden",
-          position: "relative",
         }}
       >
         {side === "right"
@@ -591,7 +587,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ))}
         </div> */}
       </div>
-      <div
+      {/* <div
         style={{
           display: "flex",
           overflowX: "visible",
@@ -606,22 +602,17 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 {leftHTML[leftHTML.length - index - 1]}
               </div>
             ))}
-        {toolTipVisible ? toolTip : ""}
-        {configMenuVisible ? configMenu : ""}
-      </div>
+      </div> */}
       <div
         style={{
           display: "flex",
-          overflowX: "visible",
-          overflowY: "visible",
+
           position: "relative",
-          height: 120,
+          height: 200,
         }}
       >
         <div
           style={{
-            overflow: "visible",
-
             position: "absolute",
 
             left:
@@ -632,6 +623,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         >
           {side === "right" ? rightAlgo : ""}
         </div>
+        {toolTipVisible ? toolTip : ""}
+        {configMenuVisible ? configMenu : ""}
       </div>
     </div>
   );
