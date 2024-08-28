@@ -107,10 +107,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [rightHTML, setRightHTML] = useState<Array<any>>([]);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
   const [rightData, setRightData] = useState<Array<any>>([]);
-  const [dataIdx, setDataIdx] = useState(0);
+  const dataIdx = useRef(0);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
   const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
+  const [xPos, setXPos] = useState(0);
   const view = useRef(0);
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
@@ -133,27 +134,26 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
-  function fetchGenomeData(fetchedData, testAlgo) {
+  function fetchGenomeData(fetchedData, testAlgo, idxPos) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-
+    console.log(idxPos);
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
     if (testAlgo.length > 0) {
       let algoData = testAlgo.map((record) => new Gene(record));
-
       let featureArrange = new FeatureArranger();
       let placeFeatureData = featureArrange.arrange(
         algoData,
 
         rightRawData.current.length < 3
-          ? trackData!.regionNavCoord
+          ? fetchedData.regionNavCoord
           : new DisplayedRegionModel(
-              trackData!.regionNavCoord._navContext,
-              trackData!.regionNavCoord._startBase -
-                (trackData!.regionNavCoord._endBase -
-                  trackData!.regionNavCoord._startBase) *
+              fetchedData.regionNavCoord._navContext,
+              fetchedData.regionNavCoord._startBase -
+                (fetchedData.regionNavCoord._endBase -
+                  fetchedData.regionNavCoord._startBase) *
                   2,
 
-              trackData!.regionNavCoord._endBase
+              fetchedData.regionNavCoord._endBase
             ),
         rightRawData.current.length < 3
           ? windowWidth * rightRawData.current.length
@@ -161,10 +161,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         getGenePadding,
         DEFAULT_OPTIONS.hiddenPixels,
         SortItemsOptions.ASC,
-        trackData!.side,
+        fetchedData.side,
         {}
       );
-
+      console.log(testAlgo);
       const height = getHeight(placeFeatureData.numRowsAssigned);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
@@ -176,14 +176,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         DEFAULT_OPTIONS.maxRows,
         DEFAULT_OPTIONS
       );
-      console.log(svgDATA);
-      setRightAlgo([[svgDATA]]);
+
+      setRightAlgo([...[svgDATA]]);
       view.current = -trackData!.xDist - windowWidth;
     }
     if (fetchedData) {
       if (trackData!.side === "right") {
         console.log(trackData!.regionNavCoord);
-        let testData = fetchedData.map((record) => new Gene(record));
+        let testData = fetchedData.refGene.map((record) => new Gene(record));
         setRightData([...rightData, testData]);
         let canvasElements = (
           <NumericalTrack
@@ -210,7 +210,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           trackData!.side,
           testPrevOverflowStrand.current
         );
-        console.log(placeFeatureData);
+
         const height = getHeight(placeFeatureData.numRowsAssigned);
         let svgDATA = createFullVisualizer(
           placeFeatureData.placements,
@@ -293,6 +293,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       //_____________________________________________________________________________________________________________________________________________
     }
+    console.log((Math.floor(idxPos / windowWidth) - 1) * windowWidth, idxPos);
+    setXPos((Math.floor(idxPos / windowWidth) - 1) * windowWidth);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -501,23 +503,43 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   useEffect(() => {
     if (trackData!.refGene) {
-      rightRawData.current.push(trackData!.refGene);
+      rightRawData.current.push({
+        refGenes: trackData!.refGene,
+        trackData: trackData!,
+      });
     }
     let testData = rightRawData.current.slice(-3).flat(1);
-    fetchGenomeData(trackData!.refGene, testData);
+    let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+
+    fetchGenomeData(trackData!, refGenesArray, -trackData!.xDist);
   }, [trackData]);
 
   useEffect(() => {
     setToolTipVisible(false);
-    setDataIdx(Math.floor(dragXDist! / windowWidth));
+    dataIdx.current = Math.floor(dragXDist! / windowWidth);
+    console.log(Math.floor(dragXDist! / windowWidth));
   }, [dragXDist]);
 
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-    console.log(-dataIdx, "hi", rightRawData.current);
-  }, [dataIdx]);
+
+    if (
+      rightRawData.current.length > 3 &&
+      -dataIdx.current !== rightRawData.current.length
+    ) {
+      let testData = rightRawData.current
+        .slice(-dataIdx.current - 1, -dataIdx.current + 2)
+        .flat(1);
+      let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+      fetchGenomeData(
+        rightRawData.current[-dataIdx.current].trackData,
+        refGenesArray,
+        (-dataIdx.current - 1) * windowWidth
+      );
+    }
+  }, [dataIdx.current]);
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
@@ -602,7 +624,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
             position: "absolute",
 
-            // left: side === "right" ? `${view.current!}px` : "",
+            left:
+              side === "right"
+                ? `${rightRawData.current.length > 3 ? xPos : 0}px`
+                : "",
           }}
         >
           {side === "right" ? rightAlgo : ""}

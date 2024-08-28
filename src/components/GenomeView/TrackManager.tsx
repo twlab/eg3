@@ -78,7 +78,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
-  const movementX = useRef(0);
   const isLoading = useRef(true);
   const lastDragX = useRef(0);
   // These states are used to update the tracks with new fetched data
@@ -125,12 +124,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     lastX.current = e.pageX;
 
     dragX.current -= deltaX;
-    movementX.current -= deltaX;
+
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 =
     cancelAnimationFrame(frameID.current);
     frameID.current = requestAnimationFrame(() => {
-      block.current!.style.transform = `translate3d(${movementX.current}px, 0px, 0)`;
+      block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
     });
   }
   const handleClick = () => {
@@ -170,7 +169,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curBp - bpRegionSize.current,
       curBp + bpRegionSize.current * 2
     );
-    movementX.current = 0;
+
     let expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
       (item, index) => item.getLocus()
     );
