@@ -602,7 +602,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
             position: "absolute",
 
-            left: side === "right" ? `${view.current!}px` : "",
+            // left: side === "right" ? `${view.current!}px` : "",
           }}
         >
           {side === "right" ? rightAlgo : ""}
