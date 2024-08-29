@@ -90,14 +90,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   dragXDist,
   trackModel,
 }) {
-  let result;
-  if (Object.keys(trackData!).length > 0) {
-    result = trackData!.refGene;
-  }
-
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const rightRawData = useRef<Array<any>>([]);
+  const svgHeight = useRef(DEFAULT_OPTIONS.height);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
 
   const [dataIdx, setDataIdx] = useState(0);
@@ -109,8 +105,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
-
-  const testPrevOverflowStrandLeft = useRef<{ [key: string]: any }>({});
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -127,198 +121,198 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
-  function fetchGenomeData(curTrackData, genesArr, idxPos) {
+  function createSVGOrCanvas(curTrackData, genesArr) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    if (genesArr.length > 0) {
-      if (trackData!.side === "right") {
-        let algoData = genesArr.map((record) => new Gene(record));
-        let featureArrange = new FeatureArranger();
-        // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-        // we have to get coord of prev regions by subtracting of the last region
-        let currDisplayNav: DisplayedRegionModel = new DisplayedRegionModel(
+
+    if (trackData!.side === "right") {
+      let algoData = genesArr.map((record) => new Gene(record));
+      let featureArrange = new FeatureArranger();
+      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
+      // we have to get coord of prev regions by subtracting of the last region
+      let currDisplayNav: DisplayedRegionModel = new DisplayedRegionModel(
+        curTrackData.regionNavCoord._navContext,
+        curTrackData.regionNavCoord._startBase -
+          (curTrackData.regionNavCoord._endBase -
+            curTrackData.regionNavCoord._startBase) *
+            2,
+
+        curTrackData.regionNavCoord._endBase
+      );
+      if (rightRawData.current.length === 2) {
+        currDisplayNav = new DisplayedRegionModel(
           curTrackData.regionNavCoord._navContext,
           curTrackData.regionNavCoord._startBase -
             (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase) *
-              2,
+              curTrackData.regionNavCoord._startBase),
 
           curTrackData.regionNavCoord._endBase
         );
-        if (rightRawData.current.length === 2) {
-          currDisplayNav = new DisplayedRegionModel(
-            curTrackData.regionNavCoord._navContext,
-            curTrackData.regionNavCoord._startBase -
-              (curTrackData.regionNavCoord._endBase -
-                curTrackData.regionNavCoord._startBase),
+      } else if (rightRawData.current.length === 1) {
+        currDisplayNav = curTrackData.regionNavCoord;
+      }
+      let placeFeatureData = featureArrange.arrange(
+        algoData,
+        currDisplayNav,
+        rightRawData.current.length < 3
+          ? windowWidth * rightRawData.current.length
+          : windowWidth * 3,
+        getGenePadding,
+        DEFAULT_OPTIONS.hiddenPixels,
+        SortItemsOptions.ASC
+      );
 
-            curTrackData.regionNavCoord._endBase
-          );
-        } else if (rightRawData.current.length === 1) {
-          currDisplayNav = curTrackData.regionNavCoord;
-        }
-        let placeFeatureData = featureArrange.arrange(
-          algoData,
-          currDisplayNav,
-          rightRawData.current.length < 3
-            ? windowWidth * rightRawData.current.length
-            : windowWidth * 3,
-          getGenePadding,
-          DEFAULT_OPTIONS.hiddenPixels,
-          SortItemsOptions.ASC
-        );
+      const height = getHeight(placeFeatureData.numRowsAssigned);
+      let svgDATA = createFullVisualizer(
+        placeFeatureData.placements,
+        windowWidth * 3,
+        height,
+        ROW_HEIGHT,
+        DEFAULT_OPTIONS.maxRows,
+        DEFAULT_OPTIONS
+      );
 
-        const height = getHeight(placeFeatureData.numRowsAssigned);
-        let svgDATA = createFullVisualizer(
-          placeFeatureData.placements,
-          windowWidth * 3,
-          height,
-          ROW_HEIGHT,
-          DEFAULT_OPTIONS.maxRows,
-          DEFAULT_OPTIONS
-        );
+      setRightAlgo([...[svgDATA]]);
+      svgHeight.current = height;
+      //_________________________________________________________________________________________density
 
-        setRightAlgo([...[svgDATA]]);
-
-        //_________________________________________________________________________________________density
-
-        let canvasElements = (
-          <NumericalTrack
-            data={algoData}
-            options={canvasOptions}
-            viewWindow={
-              new OpenInterval(
-                0,
-                rightRawData.current.length < 3
-                  ? windowWidth * rightRawData.current.length
-                  : windowWidth * 3
-              )
-            }
-            viewRegion={currDisplayNav}
-            width={
+      let canvasElements = (
+        <NumericalTrack
+          data={algoData}
+          options={canvasOptions}
+          viewWindow={
+            new OpenInterval(
+              0,
               rightRawData.current.length < 3
                 ? windowWidth * rightRawData.current.length
                 : windowWidth * 3
-            }
-            forceSvg={false}
-            trackModel={trackModel}
-          />
-        );
-
-        setRightCanvas([...[canvasElements]]);
-      }
-    }
-    if (curTrackData) {
-      if (trackData!.side === "right") {
-        // let testData = curTrackData.refGene.map((record) => new Gene(record));
-        // setRightData([...rightData, testData]);
-        // let canvasElements = (
-        //   <NumericalTrack
-        //     data={testData}
-        //     options={canvasOptions}
-        //     viewWindow={new OpenInterval(0, windowWidth)}
-        //     viewRegion={currDisplayNav.viewRegion}
-        //     width={
-        //       rightRawData.current.length < 3
-        //         ? windowWidth * rightRawData.current.length
-        //         : windowWidth * 3
-        //     }
-        //     forceSvg={false}
-        //     trackModel={trackModel}
-        //   />
-        // );
-        // setRightCanvas([...rightCanvas, canvasElements]);
-        //_____________________________________________________________________________________________________________________
-        // let featureArrange = new FeatureArranger();
-        // let placeFeatureData = featureArrange.arrange(
-        //   testData,
-        //   trackData!.regionNavCoord,
-        //   windowWidth,
-        //   getGenePadding,
-        //   DEFAULT_OPTIONS.hiddenPixels,
-        //   SortItemsOptions.ASC,
-        //   trackData!.side,
-        //   testPrevOverflowStrand.current
-        // );
-        // const height = getHeight(placeFeatureData.numRowsAssigned);
-        // let svgDATA = createFullVisualizer(
-        //   placeFeatureData.placements,
-        //   windowWidth,
-        //   height,
-        //   ROW_HEIGHT,
-        //   DEFAULT_OPTIONS.maxRows,
-        //   DEFAULT_OPTIONS
-        // );
-        // let tempOverFlow = {};
-        // for (var i = 0; i < placeFeatureData.placements.length; i++) {
-        //   let curFeature = placeFeatureData.placements[i];
-        //   if (
-        //     curFeature.placedFeatures[0].contextLocation.end >=
-        //     trackData!.regionNavCoord._endBase
-        //   ) {
-        //     tempOverFlow[curFeature.feature.id!] = curFeature;
-        //   }
-        // }
-        // testPrevOverflowStrand.current = tempOverFlow;
-        // setRightHTML([...rightHTML, ...[svgDATA]]);
-        // if (trackData!.initial) {
-        //   let tempOverFlow = {};
-        //   for (var i = 0; i < placeFeatureData.placements.length; i++) {
-        //     let curFeature = placeFeatureData.placements[i];
-        //     if (
-        //       curFeature.placedFeatures[0].contextLocation.start <=
-        //       trackData!.regionNavCoord._startBase
-        //     ) {
-        //       tempOverFlow[curFeature.feature.id!] = curFeature;
-        //     }
-        //   }
-        //   testPrevOverflowStrandLeft.current = tempOverFlow;
-        //   setLeftHTML([...leftHTML, ...[svgDATA]]);
-        // }
-      } else if (trackData!.side === "left") {
-        result.sort((a, b) => {
-          return b.txEnd - a.txEnd;
-        });
-        let testData = result.map((record) => new Gene(record));
-        let featureArrange = new FeatureArranger();
-        let placeFeatureData = featureArrange.arrange(
-          testData,
-          trackData!.regionNavCoord,
-          windowWidth,
-          getGenePadding,
-          DEFAULT_OPTIONS.hiddenPixels,
-          SortItemsOptions.ASC
-        );
-
-        const height = getHeight(placeFeatureData.numRowsAssigned);
-        let svgDATA = createFullVisualizer(
-          placeFeatureData.placements,
-          windowWidth,
-          height,
-          ROW_HEIGHT,
-          DEFAULT_OPTIONS.maxRows,
-          DEFAULT_OPTIONS
-        );
-        let tempOverFlow = {};
-        for (var i = 0; i < placeFeatureData.placements.length; i++) {
-          let curFeature = placeFeatureData.placements[i];
-          if (
-            curFeature.placedFeatures[0].contextLocation.start <=
-            trackData!.regionNavCoord._startBase
-          ) {
-            tempOverFlow[curFeature.feature.id!] = curFeature;
+            )
           }
-        }
-        testPrevOverflowStrandLeft.current = tempOverFlow;
-      } else {
-        return;
-      }
+          viewRegion={currDisplayNav}
+          width={
+            rightRawData.current.length < 3
+              ? windowWidth * rightRawData.current.length
+              : windowWidth * 3
+          }
+          forceSvg={false}
+          trackModel={trackModel}
+        />
+      );
 
-      //_____________________________________________________________________________________________________________________________________________
+      setRightCanvas([...[canvasElements]]);
     }
 
-    setXPos((Math.floor(idxPos / windowWidth) - 1) * windowWidth);
+    // if (curTrackData) {
+    //   if (trackData!.side === "right") {
+    //     // let testData = curTrackData.refGene.map((record) => new Gene(record));
+    //     // setRightData([...rightData, testData]);
+    //     // let canvasElements = (
+    //     //   <NumericalTrack
+    //     //     data={testData}
+    //     //     options={canvasOptions}
+    //     //     viewWindow={new OpenInterval(0, windowWidth)}
+    //     //     viewRegion={currDisplayNav.viewRegion}
+    //     //     width={
+    //     //       rightRawData.current.length < 3
+    //     //         ? windowWidth * rightRawData.current.length
+    //     //         : windowWidth * 3
+    //     //     }
+    //     //     forceSvg={false}
+    //     //     trackModel={trackModel}
+    //     //   />
+    //     // );
+    //     // setRightCanvas([...rightCanvas, canvasElements]);
+    //     //_____________________________________________________________________________________________________________________
+    //     // let featureArrange = new FeatureArranger();
+    //     // let placeFeatureData = featureArrange.arrange(
+    //     //   testData,
+    //     //   trackData!.regionNavCoord,
+    //     //   windowWidth,
+    //     //   getGenePadding,
+    //     //   DEFAULT_OPTIONS.hiddenPixels,
+    //     //   SortItemsOptions.ASC,
+    //     //   trackData!.side,
+    //     //   testPrevOverflowStrand.current
+    //     // );
+    //     // const height = getHeight(placeFeatureData.numRowsAssigned);
+    //     // let svgDATA = createFullVisualizer(
+    //     //   placeFeatureData.placements,
+    //     //   windowWidth,
+    //     //   height,
+    //     //   ROW_HEIGHT,
+    //     //   DEFAULT_OPTIONS.maxRows,
+    //     //   DEFAULT_OPTIONS
+    //     // );
+    //     // let tempOverFlow = {};
+    //     // for (var i = 0; i < placeFeatureData.placements.length; i++) {
+    //     //   let curFeature = placeFeatureData.placements[i];
+    //     //   if (
+    //     //     curFeature.placedFeatures[0].contextLocation.end >=
+    //     //     trackData!.regionNavCoord._endBase
+    //     //   ) {
+    //     //     tempOverFlow[curFeature.feature.id!] = curFeature;
+    //     //   }
+    //     // }
+    //     // testPrevOverflowStrand.current = tempOverFlow;
+    //     // setRightHTML([...rightHTML, ...[svgDATA]]);
+    //     // if (trackData!.initial) {
+    //     //   let tempOverFlow = {};
+    //     //   for (var i = 0; i < placeFeatureData.placements.length; i++) {
+    //     //     let curFeature = placeFeatureData.placements[i];
+    //     //     if (
+    //     //       curFeature.placedFeatures[0].contextLocation.start <=
+    //     //       trackData!.regionNavCoord._startBase
+    //     //     ) {
+    //     //       tempOverFlow[curFeature.feature.id!] = curFeature;
+    //     //     }
+    //     //   }
+    //     //   testPrevOverflowStrandLeft.current = tempOverFlow;
+    //     //   setLeftHTML([...leftHTML, ...[svgDATA]]);
+    //     // }
+    //   } else if (trackData!.side === "left") {
+    //     result.sort((a, b) => {
+    //       return b.txEnd - a.txEnd;
+    //     });
+    //     let testData = result.map((record) => new Gene(record));
+    //     let featureArrange = new FeatureArranger();
+    //     let placeFeatureData = featureArrange.arrange(
+    //       testData,
+    //       trackData!.regionNavCoord,
+    //       windowWidth,
+    //       getGenePadding,
+    //       DEFAULT_OPTIONS.hiddenPixels,
+    //       SortItemsOptions.ASC
+    //     );
+
+    //     const height = getHeight(placeFeatureData.numRowsAssigned);
+    //     let svgDATA = createFullVisualizer(
+    //       placeFeatureData.placements,
+    //       windowWidth,
+    //       height,
+    //       ROW_HEIGHT,
+    //       DEFAULT_OPTIONS.maxRows,
+    //       DEFAULT_OPTIONS
+    //     );
+    //     let tempOverFlow = {};
+    //     for (var i = 0; i < placeFeatureData.placements.length; i++) {
+    //       let curFeature = placeFeatureData.placements[i];
+    //       if (
+    //         curFeature.placedFeatures[0].contextLocation.start <=
+    //         trackData!.regionNavCoord._startBase
+    //       ) {
+    //         tempOverFlow[curFeature.feature.id!] = curFeature;
+    //       }
+    //     }
+    //     testPrevOverflowStrandLeft.current = tempOverFlow;
+    //   } else {
+    //     return;
+    //   }
+
+    //   //_____________________________________________________________________________________________________________________________________________
+    // }
+
+    setXPos((Math.floor(-curTrackData!.xDist / windowWidth) - 1) * windowWidth);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -534,7 +528,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       let testData = rightRawData.current.slice(-3);
       let refGenesArray = testData.map((item) => item.refGenes).flat(1);
       let deDupRefGenesArr = removeDuplicates(refGenesArray);
-      fetchGenomeData(trackData!, deDupRefGenesArr, -trackData!.xDist);
+      createSVGOrCanvas(trackData!, deDupRefGenesArr);
     }
   }, [trackData]);
 
@@ -543,10 +537,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setConfigMenuVisible(false);
     setDataIdx(Math.floor(dragXDist! / windowWidth));
   }, [dragXDist]);
-
-  useEffect(() => {
-    console.log(rightCanvas);
-  }, [rightCanvas]);
 
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
@@ -560,10 +550,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       let refGenesArray = testData.map((item) => item.refGenes).flat(1);
       let deDupRefGenesArr = removeDuplicates(refGenesArray);
 
-      fetchGenomeData(
+      createSVGOrCanvas(
         rightRawData.current[-dataIdx].trackData,
-        deDupRefGenesArr,
-        -rightRawData.current[-dataIdx].trackData.xDist
+        deDupRefGenesArr
       );
     }
   }, [dataIdx]);
@@ -577,7 +566,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
         flexDirection: "column",
       }}
-      // onContextMenu={renderConfigMenu}
+      onContextMenu={renderConfigMenu}
     >
       <div
         style={{
@@ -607,7 +596,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           display: "flex",
 
           position: "relative",
-          height: 300,
+          height: svgHeight.current,
         }}
       >
         <div
@@ -620,7 +609,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 : "",
           }}
         >
-          {side === "right" ? rightAlgo.map((item, index) => item) : ""}
+          {side === "right"
+            ? rightAlgo.map((item, index) => <div key={index}>{item}</div>)
+            : ""}
         </div>
         {toolTipVisible ? toolTip : ""}
         {configMenuVisible ? configMenu : ""}

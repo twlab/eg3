@@ -72,7 +72,6 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
    * Redraws the canvas.
    */
   componentDidUpdate(prevProps) {
-    console.log("HUHHH");
     const pixelRatio = this.getPixelRatioSafely();
     if (pixelRatio !== 1) {
       const width = this.props.width;
@@ -205,7 +204,7 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
     context.scale(pixelRatio, pixelRatio);
 
     context.clearRect(0, 0, this.canvasNode.width, this.canvasNode.height); // Clear the canvas
-    console.log(this.props.children!);
+
     this.props.children!.forEach((element) =>
       this.drawOneElement(context, element)
     );
