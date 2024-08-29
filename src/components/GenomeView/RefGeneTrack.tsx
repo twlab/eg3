@@ -79,7 +79,7 @@ const canvasOptions = {
 };
 const ROW_VERTICAL_PADDING = 5;
 const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
-console.log(ROW_HEIGHT);
+
 const getGenePadding = (gene) => gene.getName().length * GeneAnnotation.HEIGHT;
 const TOP_PADDING = 2;
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
@@ -510,7 +510,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     let testData = rightRawData.current.slice(-3);
     let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-
+    console.log(refGenesArray);
     fetchGenomeData(trackData!, refGenesArray, -trackData!.xDist);
   }, [trackData]);
 
@@ -608,7 +608,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           display: "flex",
 
           position: "relative",
-          height: 200,
+          height: 300,
         }}
       >
         <div

@@ -238,8 +238,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     genomeCoordLocus: Array<ChromosomeInterval>,
     expandedGenomeCoordLocus?: Array<ChromosomeInterval>
   ) {
-    console.log(bpX.current, genomeCoordLocus, expandedGenomeCoordLocus);
-
     let newVisData: ViewExpansion = {
       visWidth: windowWidth * 3,
       visRegion: new DisplayedRegionModel(
@@ -350,7 +348,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         sectionGenomicLocus = genomeFeatureSegment.map((item, index) =>
           item.getLocus()
         );
-        console.log(sectionGenomicLocus, "left");
 
         //_____________________________________________________________________________
 
@@ -411,8 +408,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       } catch {}
     }
-
-    console.log(maxBp.current, minBp.current);
   }
   function handleDelete(id: number) {
     genomeArr[genomeIdx].defaultTracks = genomeArr[
@@ -513,7 +508,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let genomeLocus = genomeFeatureSegment.map((item, index) =>
         item.getLocus()
       );
-      console.log(genomeLocus);
 
       //-------------------------------------------------------------------------------------------------------------------
       // let allChrData = genome.chromosomes;
