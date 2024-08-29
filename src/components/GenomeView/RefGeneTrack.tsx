@@ -9,17 +9,16 @@ import { GeneAnnotationScaffold } from "./geneAnnotationTrack/GeneAnnotationScaf
 import { GeneAnnotation } from "./geneAnnotationTrack/GeneAnnotation";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
-import { getToolTip } from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
+
 import { AnnotationDisplayModes } from "./commonComponents/track-context-menu/DisplayModes";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import { AnnotationDisplayModeConfig } from "./commonComponents/track-context-menu/DisplayModeConfig";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import TooltipGenomealign from "./commonComponents/hover-and-tooltip/toolTipGenomealign";
+import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrack/GeneDetail";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import NavigationContext from "../../models/NavigationContext";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -100,13 +99,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const rightRawData = useRef<Array<any>>([]);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
-  const [rightData, setRightData] = useState<Array<any>>([]);
+
   const [dataIdx, setDataIdx] = useState(0);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
-  const [leftHTML, setLeftHTML] = useState<Array<any>>([]);
+
   const [toolTip, setToolTip] = useState<any>();
   const [xPos, setXPos] = useState(0);
-  const view = useRef(0);
+
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
@@ -128,69 +127,108 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
-  function fetchGenomeData(fetchedData, testAlgo, idxPos) {
+  function fetchGenomeData(curTrackData, genesArr, idxPos) {
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
 
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
-    if (testAlgo.length > 0) {
-      let algoData = testAlgo.map((record) => new Gene(record));
-      let featureArrange = new FeatureArranger();
-      let placeFeatureData = featureArrange.arrange(
-        algoData,
-
-        rightRawData.current.length < 3
-          ? fetchedData.regionNavCoord
-          : new DisplayedRegionModel(
-              fetchedData.regionNavCoord._navContext,
-              fetchedData.regionNavCoord._startBase -
-                (fetchedData.regionNavCoord._endBase -
-                  fetchedData.regionNavCoord._startBase) *
-                  2,
-
-              fetchedData.regionNavCoord._endBase
-            ),
-        rightRawData.current.length < 3
-          ? windowWidth * rightRawData.current.length
-          : windowWidth * 3,
-        getGenePadding,
-        DEFAULT_OPTIONS.hiddenPixels,
-        SortItemsOptions.ASC,
-        fetchedData.side,
-        {}
-      );
-
-      const height = getHeight(placeFeatureData.numRowsAssigned);
-      let svgDATA = createFullVisualizer(
-        placeFeatureData.placements,
-        rightRawData.current.length < 3
-          ? windowWidth * rightRawData.current.length
-          : windowWidth * 3,
-        height,
-        ROW_HEIGHT,
-        DEFAULT_OPTIONS.maxRows,
-        DEFAULT_OPTIONS
-      );
-
-      setRightAlgo([...[svgDATA]]);
-      view.current = -trackData!.xDist - windowWidth;
-    }
-    if (fetchedData) {
+    if (genesArr.length > 0) {
       if (trackData!.side === "right") {
-        let testData = fetchedData.refGene.map((record) => new Gene(record));
-        setRightData([...rightData, testData]);
+        let algoData = genesArr.map((record) => new Gene(record));
+        let featureArrange = new FeatureArranger();
+        // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
+        // we have to get coord of prev regions by subtracting of the last region
+        let currDisplayNav: DisplayedRegionModel = new DisplayedRegionModel(
+          curTrackData.regionNavCoord._navContext,
+          curTrackData.regionNavCoord._startBase -
+            (curTrackData.regionNavCoord._endBase -
+              curTrackData.regionNavCoord._startBase) *
+              2,
+
+          curTrackData.regionNavCoord._endBase
+        );
+        if (rightRawData.current.length === 2) {
+          currDisplayNav = new DisplayedRegionModel(
+            curTrackData.regionNavCoord._navContext,
+            curTrackData.regionNavCoord._startBase -
+              (curTrackData.regionNavCoord._endBase -
+                curTrackData.regionNavCoord._startBase),
+
+            curTrackData.regionNavCoord._endBase
+          );
+        } else if (rightRawData.current.length === 1) {
+          currDisplayNav = curTrackData.regionNavCoord;
+        }
+        let placeFeatureData = featureArrange.arrange(
+          algoData,
+          currDisplayNav,
+          rightRawData.current.length < 3
+            ? windowWidth * rightRawData.current.length
+            : windowWidth * 3,
+          getGenePadding,
+          DEFAULT_OPTIONS.hiddenPixels,
+          SortItemsOptions.ASC
+        );
+
+        const height = getHeight(placeFeatureData.numRowsAssigned);
+        let svgDATA = createFullVisualizer(
+          placeFeatureData.placements,
+          windowWidth * 3,
+          height,
+          ROW_HEIGHT,
+          DEFAULT_OPTIONS.maxRows,
+          DEFAULT_OPTIONS
+        );
+
+        setRightAlgo([...[svgDATA]]);
+
+        //_________________________________________________________________________________________density
+
         let canvasElements = (
           <NumericalTrack
-            data={testData}
+            data={algoData}
             options={canvasOptions}
-            viewWindow={new OpenInterval(0, windowWidth)}
-            viewRegion={trackData!.regionNavCoord}
-            width={windowWidth}
+            viewWindow={
+              new OpenInterval(
+                0,
+                rightRawData.current.length < 3
+                  ? windowWidth * rightRawData.current.length
+                  : windowWidth * 3
+              )
+            }
+            viewRegion={currDisplayNav}
+            width={
+              rightRawData.current.length < 3
+                ? windowWidth * rightRawData.current.length
+                : windowWidth * 3
+            }
             forceSvg={false}
             trackModel={trackModel}
           />
         );
 
-        setRightCanvas([...rightCanvas, canvasElements]);
+        setRightCanvas([...[canvasElements]]);
+      }
+    }
+    if (curTrackData) {
+      if (trackData!.side === "right") {
+        // let testData = curTrackData.refGene.map((record) => new Gene(record));
+        // setRightData([...rightData, testData]);
+        // let canvasElements = (
+        //   <NumericalTrack
+        //     data={testData}
+        //     options={canvasOptions}
+        //     viewWindow={new OpenInterval(0, windowWidth)}
+        //     viewRegion={currDisplayNav.viewRegion}
+        //     width={
+        //       rightRawData.current.length < 3
+        //         ? windowWidth * rightRawData.current.length
+        //         : windowWidth * 3
+        //     }
+        //     forceSvg={false}
+        //     trackModel={trackModel}
+        //   />
+        // );
+        // setRightCanvas([...rightCanvas, canvasElements]);
         //_____________________________________________________________________________________________________________________
         // let featureArrange = new FeatureArranger();
         // let placeFeatureData = featureArrange.arrange(
@@ -203,7 +241,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         //   trackData!.side,
         //   testPrevOverflowStrand.current
         // );
-
         // const height = getHeight(placeFeatureData.numRowsAssigned);
         // let svgDATA = createFullVisualizer(
         //   placeFeatureData.placements,
@@ -214,7 +251,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         //   DEFAULT_OPTIONS
         // );
         // let tempOverFlow = {};
-
         // for (var i = 0; i < placeFeatureData.placements.length; i++) {
         //   let curFeature = placeFeatureData.placements[i];
         //   if (
@@ -224,10 +260,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         //     tempOverFlow[curFeature.feature.id!] = curFeature;
         //   }
         // }
-
         // testPrevOverflowStrand.current = tempOverFlow;
         // setRightHTML([...rightHTML, ...[svgDATA]]);
-
         // if (trackData!.initial) {
         //   let tempOverFlow = {};
         //   for (var i = 0; i < placeFeatureData.placements.length; i++) {
@@ -254,9 +288,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           windowWidth,
           getGenePadding,
           DEFAULT_OPTIONS.hiddenPixels,
-          SortItemsOptions.ASC,
-          trackData!.side,
-          testPrevOverflowStrandLeft.current
+          SortItemsOptions.ASC
         );
 
         const height = getHeight(placeFeatureData.numRowsAssigned);
@@ -279,7 +311,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           }
         }
         testPrevOverflowStrandLeft.current = tempOverFlow;
-        setLeftHTML([...leftHTML, ...[svgDATA]]);
       } else {
         return;
       }
@@ -500,11 +531,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         refGenes: trackData!.refGene,
         trackData: trackData!,
       });
+      let testData = rightRawData.current.slice(-3);
+      let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+      let deDupRefGenesArr = removeDuplicates(refGenesArray);
+      fetchGenomeData(trackData!, deDupRefGenesArr, -trackData!.xDist);
     }
-    let testData = rightRawData.current.slice(-3);
-    let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-    console.log(refGenesArray);
-    fetchGenomeData(trackData!, refGenesArray, -trackData!.xDist);
   }, [trackData]);
 
   useEffect(() => {
@@ -514,20 +545,24 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [dragXDist]);
 
   useEffect(() => {
+    console.log(rightCanvas);
+  }, [rightCanvas]);
+
+  useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-
     if (
       rightRawData.current.length > 3 &&
-      -dataIdx !== rightRawData.current.length
+      -dataIdx < rightRawData.current.length - 1
     ) {
       let testData = rightRawData.current.slice(-dataIdx - 1, -dataIdx + 2);
       let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+      let deDupRefGenesArr = removeDuplicates(refGenesArray);
 
       fetchGenomeData(
         rightRawData.current[-dataIdx].trackData,
-        refGenesArray,
+        deDupRefGenesArr,
         -rightRawData.current[-dataIdx].trackData.xDist
       );
     }
@@ -547,55 +582,26 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       <div
         style={{
           display: "flex",
+          position: "relative",
+          height: "40px",
         }}
       >
-        {side === "right"
-          ? rightCanvas.map((item, index) => <div key={index}>{item}</div>)
-          : leftHTML.map((item, index) => (
-              <div key={leftHTML.length - index - 1}>
-                {leftHTML[leftHTML.length - index - 1]}
-              </div>
-            ))}
-        {/* <div
+        <div
           style={{
-            display: "flex",
-            flexDirection: "row",
             position: "absolute",
-            opacity: 0.5,
 
-            zIndex: 3,
+            left:
+              side === "right"
+                ? `${rightRawData.current.length > 3 ? xPos : 0}px`
+                : "",
           }}
         >
-          {rightData.map((item, index) => (
-            <TooltipGenomealign
-              key={index}
-              data={rightData[index]}
-              windowWidth={windowWidth}
-              trackIdx={index}
-              trackType={"refGene"}
-              side={"right"}
-              trackModel={trackModel}
-              height={DEFAULT_OPTIONS.height}
-            />
-          ))}
-        </div> */}
+          {side === "right"
+            ? rightCanvas.map((item, index) => <div key={index}>{item}</div>)
+            : ""}
+        </div>
       </div>
-      {/* <div
-        style={{
-          display: "flex",
-          overflowX: "visible",
-          overflowY: "hidden",
-          position: "relative",
-        }}
-      >
-        {side === "right"
-          ? rightHTML.map((item, index) => <div key={index}>{item}</div>)
-          : leftHTML.map((item, index) => (
-              <div key={leftHTML.length - index - 1}>
-                {leftHTML[leftHTML.length - index - 1]}
-              </div>
-            ))}
-      </div> */}
+
       <div
         style={{
           display: "flex",
@@ -614,7 +620,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 : "",
           }}
         >
-          {side === "right" ? rightAlgo : ""}
+          {side === "right" ? rightAlgo.map((item, index) => item) : ""}
         </div>
         {toolTipVisible ? toolTip : ""}
         {configMenuVisible ? configMenu : ""}

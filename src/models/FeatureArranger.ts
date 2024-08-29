@@ -38,79 +38,35 @@ export class FeatureArranger {
   _assignRows(
     groups: PlacedFeatureGroup[],
     padding: number | PaddingFunc,
-    sortItems: SortItemsOptions,
-    trackSide?: string,
-    prevRegionOverflow?: { [key: string]: any }
+    sortItems: SortItemsOptions
   ): number {
-    // if (sortItems === SortItemsOptions.NONE) {
-    //   groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
-    // } else if (sortItems === SortItemsOptions.ASC) {
-    //   groups.sort((a, b) => a.feature.score - b.feature.score);
-    // } else if (sortItems === SortItemsOptions.DESC) {
-    //   groups.sort((a, b) => b.feature.score - a.feature.score);
-    // }
+    if (sortItems === SortItemsOptions.NONE) {
+      groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    } else if (sortItems === SortItemsOptions.ASC) {
+      groups.sort((a, b) => a.feature.score - b.feature.score);
+    } else if (sortItems === SortItemsOptions.DESC) {
+      groups.sort((a, b) => b.feature.score - a.feature.score);
+    }
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
-
-    if (prevRegionOverflow !== undefined) {
-      let maxXsForRowsLen = maxXsForRows.length - 1;
-
-      for (const key in prevRegionOverflow) {
-        for (const group of groups) {
-          if (key === group.feature.id!) {
-            let row;
-            const horizontalPadding = isConstPadding
-              ? (padding as number)
-              : (padding as PaddingFunc)(group.feature, group.xSpan);
-            const startX = group.xSpan.start - horizontalPadding;
-            const endX = group.xSpan.end + horizontalPadding;
-            if (prevRegionOverflow[key].row > maxXsForRowsLen) {
-              while (prevRegionOverflow[key].row > maxXsForRowsLen) {
-                maxXsForRowsLen++;
-                if (maxXsForRowsLen === prevRegionOverflow[key].row) {
-                  maxXsForRows.push(trackSide === "right" ? endX : startX);
-                  row = prevRegionOverflow[key].row;
-                } else {
-                  maxXsForRows.push(Number.NEGATIVE_INFINITY);
-                }
-              }
-            } else {
-              row = prevRegionOverflow[key].row;
-              maxXsForRows[row] = trackSide === "right" ? endX : startX;
-            }
-            group.row = row;
-            break;
-          }
-        }
-      }
-    }
-
     for (const group of groups) {
-      if (
-        prevRegionOverflow === undefined ||
-        !(group.feature.id! in prevRegionOverflow)
-      ) {
-        const horizontalPadding = isConstPadding
-          ? (padding as number)
-          : (padding as PaddingFunc)(group.feature, group.xSpan);
-        const startX = group.xSpan.start - horizontalPadding;
-        const endX = group.xSpan.end + horizontalPadding;
-        // Find the first row where the interval won't overlap with others in the row
-
-        let row = maxXsForRows.findIndex((maxX) =>
-          trackSide === "right" ? maxX < startX : maxX > endX
-        );
-
-        if (row === -1) {
-          // Couldn't find a row -- make a new one
-          maxXsForRows.push(trackSide === "right" ? endX : startX);
-          row = maxXsForRows.length - 1;
-        } else {
-          maxXsForRows[row] = trackSide === "right" ? endX : startX;
-        }
-        group.row = row;
+      const horizontalPadding = isConstPadding
+        ? (padding as number)
+        : (padding as PaddingFunc)(group.feature, group.xSpan);
+      const startX = group.xSpan.start - horizontalPadding;
+      const endX = group.xSpan.end + horizontalPadding;
+      // Find the first row where the interval won't overlap with others in the row
+      let row = maxXsForRows.findIndex((maxX) => maxX < startX);
+      if (row === -1) {
+        // Couldn't find a row -- make a new one
+        maxXsForRows.push(endX);
+        row = maxXsForRows.length - 1;
+      } else {
+        maxXsForRows[row] = endX;
       }
+      group.row = row;
     }
+
     return maxXsForRows.length;
   }
 
@@ -170,9 +126,7 @@ export class FeatureArranger {
     width: number,
     padding: number | PaddingFunc = 0,
     hiddenPixels: number = 0.5,
-    sortItems: SortItemsOptions = SortItemsOptions.NONE,
-    trackSide?: string,
-    prevRegionOverflow?: { [key: string]: any }
+    sortItems: SortItemsOptions = SortItemsOptions.NONE
   ): FeatureArrangementResult {
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const visibleFeatures = features.filter(
@@ -190,13 +144,7 @@ export class FeatureArranger {
       results.push(...this._combineAdjacent(placements));
     }
 
-    const numRowsAssigned = this._assignRows(
-      results,
-      padding,
-      sortItems,
-      trackSide,
-      prevRegionOverflow
-    );
+    const numRowsAssigned = this._assignRows(results, padding, sortItems);
     return {
       placements: results,
       numRowsAssigned,

@@ -65,9 +65,29 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
    * Draws the canvas.
    */
   componentDidMount() {
-    this.draw();
+    this.draw(this.canvasNode);
   }
 
+  /**
+   * Redraws the canvas.
+   */
+  componentDidUpdate(prevProps) {
+    console.log("HUHHH");
+    const pixelRatio = this.getPixelRatioSafely();
+    if (pixelRatio !== 1) {
+      const width = this.props.width;
+      const height = this.props.height;
+      // this.canvasNode.parentNode.style.width = width + 'px';
+      // this.canvasNode.parentNode.style.height = height + 'px';
+      this.canvasNode.style.width = width + "px";
+      this.canvasNode.style.height = height + "px";
+      this.canvasNode.setAttribute("width", width * pixelRatio);
+      this.canvasNode.setAttribute("height", height * pixelRatio);
+      const context = this.canvasNode.getContext("2d");
+      context.scale(pixelRatio, pixelRatio);
+    }
+    this.draw(this.canvasNode);
+  }
   /**
    * Redraws the canvas.
    */
@@ -167,7 +187,7 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
   /**
    * Redraws the canvas.
    */
-  draw() {
+  draw(canvas) {
     if (process.env.NODE_ENV === "test") {
       // jsdom does not support canvas
       return;
@@ -185,7 +205,7 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
     context.scale(pixelRatio, pixelRatio);
 
     context.clearRect(0, 0, this.canvasNode.width, this.canvasNode.height); // Clear the canvas
-
+    console.log(this.props.children!);
     this.props.children!.forEach((element) =>
       this.drawOneElement(context, element)
     );

@@ -242,7 +242,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
       width,
       options
     );
-    console.log(xvalues, this.props, "data");
+
     this.xToValue = xvalues[0];
     this.xToValue2 = xvalues[1];
     this.hasReverse = xvalues[2];
