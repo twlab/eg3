@@ -91,21 +91,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   dragXDist,
   trackModel,
 }) {
-  let start, end;
-
   let result;
   if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(":");
     result = trackData!.refGene;
-
-    start = Number(start);
-    end = Number(end);
   }
 
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const rightRawData = useRef<Array<any>>([]);
-  const [rightHTML, setRightHTML] = useState<Array<any>>([]);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
   const [rightData, setRightData] = useState<Array<any>>([]);
   const [dataIdx, setDataIdx] = useState(0);
@@ -117,7 +110,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
-  const testPrevOverflowStrand = useRef<{ [key: string]: any }>({});
+
   const testPrevOverflowStrandLeft = useRef<{ [key: string]: any }>({});
 
   // These states are used to update the tracks with new fetched data
