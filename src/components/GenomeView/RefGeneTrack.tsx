@@ -582,8 +582,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           deDupRefGenesArr
         );
       }
-
-      prevDataIdx.current = dataIdx!;
     } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
       if (prevDataIdx.current < dataIdx!) {
         let testData = [
@@ -614,9 +612,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           deDupRefGenesArr
         );
       }
-
-      prevDataIdx.current = dataIdx!;
     }
+    prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
 
   return (
