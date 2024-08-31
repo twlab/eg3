@@ -89,7 +89,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   genomeIdx,
   dragXDist,
   trackModel,
-  dataIdx,
 }) {
   const svgHeight = useRef(DEFAULT_OPTIONS.height);
   const [rightSVG, setRightSVG] = useState<Array<any>>([]);
@@ -103,8 +102,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
+  const [dataIdx, setDataIdx] = useState(0);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
   const prevDataIdx = useRef(0);
+
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -121,15 +122,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr, initial: number = 0) {
-    let curXpos;
-
     if (curTrackData.index === 0) {
-      curXpos = -windowWidth;
+      xPos.current = -windowWidth;
     } else if (curTrackData.side === "right") {
-      curXpos =
+      xPos.current =
         (Math.floor(-curTrackData!.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
-      curXpos =
+      xPos.current =
         (Math.floor(curTrackData!.xDist / windowWidth) - 1) * windowWidth;
     }
     if (curTrackData!.side === "right") {
@@ -176,9 +175,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         height,
         ROW_HEIGHT,
         DEFAULT_OPTIONS.maxRows,
-        DEFAULT_OPTIONS,
-        curXpos,
-        curTrackData.side
+        DEFAULT_OPTIONS
       );
 
       setRightSVG([...[svgDATA]]);
@@ -199,6 +196,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       );
 
       setRightCanvas([...[canvasElements]]);
+      if (curTrackData.initial === 1) {
+        setLeftSVG([...[svgDATA]]);
+        setLeftCanvas([...[canvasElements]]);
+      }
     } else if (curTrackData.side === "left") {
       let algoData = genesArr.map((record) => new Gene(record));
       let featureArrange = new FeatureArranger();
@@ -231,12 +232,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         height,
         ROW_HEIGHT,
         DEFAULT_OPTIONS.maxRows,
-        DEFAULT_OPTIONS,
-        curXpos,
-        curTrackData.side
+        DEFAULT_OPTIONS
       );
 
-      setRightSVG([...[svgDATA]]);
+      setLeftSVG([...[svgDATA]]);
 
       let canvasElements = (
         <NumericalTrack
@@ -250,7 +249,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         />
       );
 
-      setRightCanvas([...[canvasElements]]);
+      setLeftCanvas([...[canvasElements]]);
     }
   }
 
@@ -262,9 +261,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     height,
     rowHeight,
     maxRows,
-    options,
-    xpos,
-    curSide
+    options
   ) {
     function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
       const maxRowIndex = (maxRows || Infinity) - 1;
@@ -276,25 +273,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
 
     return (
-      <div
-        style={{
-          position: "absolute",
-
-          right: curSide === "left" ? `${xpos}px` : "",
-          left: curSide === "right" ? `${xpos}px` : "",
-        }}
-      >
-        <svg
-          style={{
-            display: "block",
-            // overflow: "visible",
-          }}
-          width={width}
-          height={height}
-        >
-          {placements.map(renderAnnotation)}
-        </svg>
-      </div>
+      <svg width={width} height={height}>
+        {placements.map(renderAnnotation)}
+      </svg>
     );
   }
   function getAnnotationElement(placedGroup, y, isLastRow, index) {
@@ -466,7 +447,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   useEffect(() => {
     if (trackData!.refGene) {
-      console.log(trackData!.refGene);
       if (trackData!.initial === 1) {
         let trackState0 = {
           initial: 0,
@@ -570,13 +550,24 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   useEffect(() => {
     setToolTipVisible(false);
     setConfigMenuVisible(false);
+    let curX;
+    // terminate the work when the component is unmounted
+    if (Math.round(dragXDist! / windowWidth) === 0) {
+      curX = 0;
+    } else if (dragXDist! > 1) {
+      curX = Math.ceil(dragXDist! / windowWidth);
+    } else {
+      curX = Math.floor(dragXDist! / windowWidth);
+    }
+
+    setDataIdx(curX);
   }, [dragXDist]);
 
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-    console.log(rightIdx.current, dataIdx, leftIdx.current);
+
     if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
       if (prevDataIdx.current > dataIdx!) {
         let testData = [
@@ -609,14 +600,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       prevDataIdx.current = dataIdx!;
     } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-      console.log("YEET1");
       if (prevDataIdx.current < dataIdx!) {
         let testData = [
           fetchedDataCache[dataIdx! - 2],
           fetchedDataCache[dataIdx! - 1],
           fetchedDataCache[dataIdx!],
         ];
-        console.log(testData, dataIdx!, fetchedDataCache);
+
         let refGenesArray = testData.map((item) => item.refGenes).flat(1);
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
 
@@ -630,7 +620,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           fetchedDataCache[dataIdx!],
           fetchedDataCache[dataIdx! + 1],
         ];
-        console.log(testData, dataIdx!, fetchedDataCache);
+
         let refGenesArray = testData.map((item) => item.refGenes).flat(1);
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
 
@@ -643,6 +633,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       prevDataIdx.current = dataIdx!;
     }
   }, [dataIdx]);
+
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
@@ -655,7 +646,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }}
       onContextMenu={renderConfigMenu}
     >
-      {/* <div
+      <div
         style={{
           display: "flex",
           position: "relative",
@@ -674,7 +665,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             ? rightCanvas.map((item, index) => <div key={index}>{item}</div>)
             : leftCanvas.map((item, index) => <div key={index}>{item}</div>)}
         </div>
-      </div> */}
+      </div>
 
       <div
         style={{
@@ -684,10 +675,16 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           height: svgHeight.current,
         }}
       >
-        {rightSVG.map((item, index) => (
-          <div key={index}>{item}</div>
-        ))}
+        <div
+          style={{
+            position: "absolute",
 
+            right: side === "left" ? `${xPos.current}px` : "",
+            left: side === "right" ? `${xPos.current}px` : "",
+          }}
+        >
+          {side === "right" ? rightSVG : leftSVG}
+        </div>
         {toolTipVisible ? toolTip : ""}
         {configMenuVisible ? configMenu : ""}
       </div>

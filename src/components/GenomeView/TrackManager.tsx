@@ -95,8 +95,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [hicOption, setHicOption] = useState(1);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
-  const [side, setSide] = useState("right");
-  const [dataIdx, setDataIdx] = useState(0);
+  const side = useRef("right");
+
   function sumArray(numbers) {
     let total = 0;
     for (let i = 0; i < numbers.length; i++) {
@@ -182,10 +182,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     startBp(viewRegion.current.toString());
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
-    if (dragX.current > 0 && side === "right") {
-      setSide("left");
-    } else if (dragX.current <= 0 && side === "left") {
-      setSide("right");
+    if (dragX.current > 0 && side.current === "right") {
+      side.current = "left";
+    } else if (dragX.current <= 0 && side.current === "left") {
+      side.current = "right";
     }
     if (hicOption === 1 && dragX.current <= 0) {
       // isLoading.current = true;
@@ -512,14 +512,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, []);
 
-  useEffect(() => {
-    // terminate the work when the component is unmounted
-    setDataIdx(
-      dragX.current > 0
-        ? Math.ceil(dragX.current / windowWidth)
-        : Math.floor(dragX.current / windowWidth)
-    );
-  }, [dragX.current]);
+  useEffect(() => {}, [dragX.current]);
 
   useEffect(() => {
     if (!initialStart) {
@@ -671,7 +664,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           style={{
             display: "flex",
             //makes components align right or right when we switch sides
-            justifyContent: side == "right" ? "start" : "end",
+            justifyContent: side.current == "right" ? "start" : "end",
 
             flexDirection: "row",
             // full windowwidth will make canvas only loop 0-windowidth
@@ -692,7 +685,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               display: "flex",
               flexDirection: "column",
               //makes components align right or right when we switch sides
-              alignItems: side == "right" ? "start" : "end",
+              alignItems: side.current == "right" ? "start" : "end",
             }}
           >
             {trackComponents.map((item, index) => {
@@ -707,13 +700,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   trackComponents={trackComponents}
                   bpToPx={basePerPixel.current}
                   trackData={trackData}
-                  side={side}
+                  side={side.current}
                   windowWidth={windowWidth}
                   dragXDist={dragX.current}
                   handleDelete={handleDelete}
                   genomeArr={genomeArr}
                   genomeIdx={genomeIdx}
-                  dataIdx={dataIdx}
                   // movement type track data
                   trackData2={trackData2}
                   trackIdx={index}
