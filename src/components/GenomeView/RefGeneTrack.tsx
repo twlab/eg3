@@ -89,14 +89,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   genomeIdx,
   dragXDist,
   trackModel,
+  dataIdx,
 }) {
-  //useRef to store data between states without re render the component
-  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const rightRawData = useRef<Array<any>>([]);
   const svgHeight = useRef(DEFAULT_OPTIONS.height);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
 
-  const [dataIdx, setDataIdx] = useState(0);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
 
   const [toolTip, setToolTip] = useState<any>();
@@ -105,7 +103,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
-
+  const prevDataIdx = useRef(0);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -122,11 +120,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
-    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-
-    // initialize the first index of the interval so we can start checking for prev overlapping intervals
-
-    if (trackData!.side === "right") {
+    if (curTrackData!.side === "right") {
       let algoData = genesArr.map((record) => new Gene(record));
       let featureArrange = new FeatureArranger();
       // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
@@ -316,12 +310,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
 
   //________________________________________________________________________________________________________________________________________________________
-  //________________________________________________________________________________________________________________________________________________________
 
-  // check each strand interval on each level to see if they overlapp and place it there
-  // they are already in order of not overlapp. so we just just check  Loop previousIndex <- (currentIndex interval)
-  //update the previous level start and end
-  // placeFeatureSegments from e g 2
   function createFullVisualizer(
     placements,
     width,
@@ -523,19 +512,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     if (trackData!.refGene) {
       rightRawData.current.push({
         refGenes: trackData!.refGene,
-        trackData: trackData!,
+        trackState: trackData!.trackState,
       });
       let testData = rightRawData.current.slice(-3);
       let refGenesArray = testData.map((item) => item.refGenes).flat(1);
       let deDupRefGenesArr = removeDuplicates(refGenesArray);
-      createSVGOrCanvas(trackData!, deDupRefGenesArr);
+      createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
     }
   }, [trackData]);
 
   useEffect(() => {
     setToolTipVisible(false);
     setConfigMenuVisible(false);
-    setDataIdx(Math.floor(dragXDist! / windowWidth));
   }, [dragXDist]);
 
   useEffect(() => {
@@ -544,16 +532,29 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     // otherwise when there is new data cuz the user is at the end of the track
     if (
       rightRawData.current.length > 3 &&
-      -dataIdx < rightRawData.current.length - 1
+      -dataIdx! < rightRawData.current.length - 1
     ) {
-      let testData = rightRawData.current.slice(-dataIdx - 1, -dataIdx + 2);
-      let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-      let deDupRefGenesArr = removeDuplicates(refGenesArray);
+      if (prevDataIdx.current > dataIdx!) {
+        let testData = rightRawData.current.slice(-dataIdx! - 2, -dataIdx! + 1);
+        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+        let deDupRefGenesArr = removeDuplicates(refGenesArray);
 
-      createSVGOrCanvas(
-        rightRawData.current[-dataIdx].trackData,
-        deDupRefGenesArr
-      );
+        createSVGOrCanvas(
+          rightRawData.current[-dataIdx!].trackState,
+          deDupRefGenesArr
+        );
+      } else if (prevDataIdx.current < dataIdx!) {
+        let testData = rightRawData.current.slice(-dataIdx! - 1, -dataIdx! + 2);
+        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+        let deDupRefGenesArr = removeDuplicates(refGenesArray);
+
+        createSVGOrCanvas(
+          rightRawData.current[-dataIdx! + 1].trackState,
+          deDupRefGenesArr
+        );
+      }
+
+      prevDataIdx.current = dataIdx!;
     }
   }, [dataIdx]);
   return (

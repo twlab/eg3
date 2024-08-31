@@ -19,4 +19,5 @@ export interface TrackProps {
   genomeArr?: Array<any>;
   genomeIdx?: number;
   trackModel?: any;
+  dataIdx?: number;
 }

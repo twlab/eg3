@@ -92,7 +92,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
   const [side, setSide] = useState("right");
-
+  const [dataIdx, setDataIdx] = useState(0);
   function sumArray(numbers) {
     let total = 0;
     for (let i = 0; i < numbers.length; i++) {
@@ -397,7 +397,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 tempObj["side"] = event.data.side;
                 tempObj["location"] = event.data.location;
                 tempObj["xDist"] = event.data.xDist;
-
+                tempObj["trackState"] = {
+                  initial: event.data.initial,
+                  side: event.data.side,
+                  xDist: event.data.xDist,
+                  regionNavCoord: new DisplayedRegionModel(
+                    genomeArr[genomeIdx].navContext,
+                    event.data.curRegionCoord._startBase,
+                    event.data.curRegionCoord._endBase
+                  ),
+                };
                 setTrackData({ ...tempObj });
                 isLoading.current = false;
               };
@@ -441,6 +450,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       console.log("trackmanager terminate");
     };
   }, []);
+
+  useEffect(() => {
+    // terminate the work when the component is unmounted
+    setDataIdx(Math.floor(dragX.current / windowWidth));
+  }, [dragX.current]);
 
   useEffect(() => {
     if (!initialStart) {
@@ -634,6 +648,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   handleDelete={handleDelete}
                   genomeArr={genomeArr}
                   genomeIdx={genomeIdx}
+                  dataIdx={dataIdx}
                   // movement type track data
                   trackData2={trackData2}
                   trackIdx={index}
