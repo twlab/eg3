@@ -508,7 +508,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let curX;
     // terminate the work when the component is unmounted
     const dragIdx = dragX.current / windowWidth;
-    if (dragIdx >= -0.99 && dragIdx <= 0.99) {
+    if (dragIdx > -1 && dragIdx < 1) {
       dragX.current > 0 ? (curX = -1) : (curX = 0);
     } else if (dragX.current! > 1) {
       curX = Math.ceil(dragX.current! / windowWidth);
