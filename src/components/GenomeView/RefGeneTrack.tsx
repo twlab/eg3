@@ -92,12 +92,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   dataIdx,
 }) {
   const svgHeight = useRef(DEFAULT_OPTIONS.height);
-  const [rightSVG, setRightSVG] = useState<Array<any>>([]);
-  const [leftSVG, setLeftSVG] = useState<Array<any>>([]);
+  const [svgComponents, setSvgComponents] = useState<Array<any>>([]);
+
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
-  const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
-  const [leftCanvas, setLeftCanvas] = useState<Array<any>>([]);
+  const [canvasComponents, setCanvasComponents] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
   const xPos = useRef(0);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -179,7 +178,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         DEFAULT_OPTIONS
       );
 
-      setRightSVG([...[svgDATA]]);
+      setSvgComponents([...[svgDATA]]);
 
       svgHeight.current = height;
       //_________________________________________________________________________________________density
@@ -196,11 +195,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         />
       );
 
-      setRightCanvas([...[canvasElements]]);
-      if (curTrackData.initial === 1) {
-        setLeftSVG([...[svgDATA]]);
-        setLeftCanvas([...[canvasElements]]);
-      }
+      setCanvasComponents([...[canvasElements]]);
     } else if (curTrackData.side === "left") {
       let algoData = genesArr.map((record) => new Gene(record));
       let featureArrange = new FeatureArranger();
@@ -236,7 +231,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         DEFAULT_OPTIONS
       );
 
-      setLeftSVG([...[svgDATA]]);
+      setSvgComponents([...[svgDATA]]);
 
       let canvasElements = (
         <NumericalTrack
@@ -250,7 +245,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         />
       );
 
-      setLeftCanvas([...[canvasElements]]);
+      setCanvasComponents([...[canvasElements]]);
     }
   }
 
@@ -651,9 +646,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             right: side === "left" ? `${xPos.current}px` : "",
           }}
         >
-          {side === "right"
-            ? rightCanvas.map((item, index) => <div key={index}>{item}</div>)
-            : leftCanvas.map((item, index) => <div key={index}>{item}</div>)}
+          {canvasComponents.map((item, index) => (
+            <div key={index}>{item}</div>
+          ))}
         </div>
       </div>
 
@@ -673,7 +668,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             left: side === "right" ? `${xPos.current}px` : "",
           }}
         >
-          {side === "right" ? rightSVG : leftSVG}
+          {svgComponents.map((item, index) => (
+            <div key={index}>{item}</div>
+          ))}
         </div>
         {toolTipVisible ? toolTip : ""}
         {configMenuVisible ? configMenu : ""}
