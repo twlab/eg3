@@ -95,7 +95,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const svgHeight = useRef(DEFAULT_OPTIONS.height);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
   const rightIdx = useRef(0);
-  const leftIdx = useRef(-1);
+  const leftIdx = useRef(1);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
 
   const [toolTip, setToolTip] = useState<any>();
@@ -406,7 +406,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             trackData!.refGene[0].navLoci.start,
             trackData!.refGene[0].navLoci.end
           ),
-          index: -1,
+          index: 1,
         };
         let trackState1 = {
           initial: 1,
@@ -424,7 +424,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             trackData!.refGene[2].navLoci.start,
             trackData!.refGene[2].navLoci.end
           ),
-          index: 1,
+          index: -1,
         };
         rightRawData.current.push({
           refGenes: trackData!.refGene[1],
@@ -439,18 +439,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           refGenes: trackData!.refGene[0].fetchData,
           trackState: trackState0,
         };
-        leftIdx.current--;
+        leftIdx.current++;
 
         fetchedDataCache[rightIdx.current] = {
           refGenes: trackData!.refGene[1].fetchData,
           trackState: trackState1,
         };
-        rightIdx.current++;
+        rightIdx.current--;
         fetchedDataCache[rightIdx.current] = {
           refGenes: trackData!.refGene[2].fetchData,
           trackState: trackState2,
         };
-        rightIdx.current++;
+        rightIdx.current--;
 
         let testData = [
           fetchedDataCache[-1],
@@ -470,14 +470,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             refGenes: trackData!.refGene,
             trackState: trackData!.trackState,
           };
-          let currIdx = rightIdx.current - 2;
+          let currIdx = rightIdx.current + 2;
           for (let i = 0; i < 3; i++) {
             testData.push(fetchedDataCache[currIdx]);
-            currIdx++;
+            currIdx--;
           }
 
-          console.log(testData, fetchedDataCache);
-          rightIdx.current++;
+          rightIdx.current--;
           let refGenesArray = testData.map((item) => item.refGenes).flat(1);
           let deDupRefGenesArr = removeDuplicates(refGenesArray);
           createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
@@ -495,26 +494,33 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-    if (
-      rightRawData.current.length > 3 &&
-      -dataIdx! < rightRawData.current.length - 1
-    ) {
+    console.log(rightIdx.current, dataIdx, leftIdx.current);
+    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
       if (prevDataIdx.current > dataIdx!) {
-        let testData = rightRawData.current.slice(-dataIdx! - 2, -dataIdx! + 1);
+        let testData = [
+          fetchedDataCache[dataIdx! + 2],
+          fetchedDataCache[dataIdx! + 1],
+          fetchedDataCache[dataIdx!],
+        ];
+
         let refGenesArray = testData.map((item) => item.refGenes).flat(1);
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
 
         createSVGOrCanvas(
-          rightRawData.current[-dataIdx!].trackState,
+          fetchedDataCache[dataIdx!].trackState,
           deDupRefGenesArr
         );
       } else if (prevDataIdx.current < dataIdx!) {
-        let testData = rightRawData.current.slice(-dataIdx! - 1, -dataIdx! + 2);
+        let testData = [
+          fetchedDataCache[dataIdx! + 1],
+          fetchedDataCache[dataIdx!],
+          fetchedDataCache[dataIdx! - 1],
+        ];
         let refGenesArray = testData.map((item) => item.refGenes).flat(1);
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
 
         createSVGOrCanvas(
-          rightRawData.current[-dataIdx! + 1].trackState,
+          fetchedDataCache[dataIdx! - 1].trackState,
           deDupRefGenesArr
         );
       }
