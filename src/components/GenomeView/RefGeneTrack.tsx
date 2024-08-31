@@ -135,7 +135,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
         curTrackData.regionNavCoord._endBase
       );
-      if (curTrackData.initial === 1) {
+      console.log(curTrackData);
+      if (curTrackData.index === 0) {
+        console.log("ASDASDASDASD");
         currDisplayNav = new DisplayedRegionModel(
           curTrackData.regionNavCoord._navContext,
           curTrackData.regionNavCoord._startBase -
@@ -396,7 +398,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   useEffect(() => {
     if (trackData!.refGene) {
       if (trackData!.initial === 1) {
-        console.log(trackData!);
         let trackState0 = {
           initial: 0,
           side: "left",
@@ -461,7 +462,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         let refGenesArray = testData.map((item) => item.refGenes).flat(1);
 
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
-        createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
+        createSVGOrCanvas(trackState1, deDupRefGenesArr);
       } else {
         let testData: Array<any> = [];
         if (trackData!.trackState.side === "right") {
