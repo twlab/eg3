@@ -88,7 +88,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
     windowWidth,
   ]);
-  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
+  const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([
+    windowWidth,
+  ]);
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [hicOption, setHicOption] = useState(1);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
@@ -512,7 +514,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     // terminate the work when the component is unmounted
-    setDataIdx(Math.floor(dragX.current / windowWidth));
+    setDataIdx(
+      dragX.current > 0
+        ? Math.ceil(dragX.current / windowWidth)
+        : Math.floor(dragX.current / windowWidth)
+    );
   }, [dragX.current]);
 
   useEffect(() => {
