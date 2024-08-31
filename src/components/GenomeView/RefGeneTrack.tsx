@@ -135,29 +135,28 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
         curTrackData.regionNavCoord._endBase
       );
-      if (rightRawData.current.length === 2) {
+      if (curTrackData.initial === 1) {
         currDisplayNav = new DisplayedRegionModel(
           curTrackData.regionNavCoord._navContext,
           curTrackData.regionNavCoord._startBase -
             (curTrackData.regionNavCoord._endBase -
               curTrackData.regionNavCoord._startBase),
 
-          curTrackData.regionNavCoord._endBase
+          curTrackData.regionNavCoord._endBase +
+            (curTrackData.regionNavCoord._endBase -
+              curTrackData.regionNavCoord._startBase)
         );
-      } else if (rightRawData.current.length === 1) {
-        currDisplayNav = curTrackData.regionNavCoord;
       }
+      console.log(algoData);
       let placeFeatureData = featureArrange.arrange(
         algoData,
         currDisplayNav,
-        rightRawData.current.length < 3
-          ? windowWidth * rightRawData.current.length
-          : windowWidth * 3,
+        windowWidth * 3,
         getGenePadding,
         DEFAULT_OPTIONS.hiddenPixels,
         SortItemsOptions.ASC
       );
-
+      console.log(placeFeatureData);
       const height = getHeight(placeFeatureData.numRowsAssigned);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
@@ -176,20 +175,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         <NumericalTrack
           data={algoData}
           options={canvasOptions}
-          viewWindow={
-            new OpenInterval(
-              0,
-              rightRawData.current.length < 3
-                ? windowWidth * rightRawData.current.length
-                : windowWidth * 3
-            )
-          }
+          viewWindow={new OpenInterval(0, windowWidth * 3)}
           viewRegion={currDisplayNav}
-          width={
-            rightRawData.current.length < 3
-              ? windowWidth * rightRawData.current.length
-              : windowWidth * 3
-          }
+          width={windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
         />
@@ -197,117 +185,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       setRightCanvas([...[canvasElements]]);
     }
-
-    // if (curTrackData) {
-    //   if (trackData!.side === "right") {
-    //     // let testData = curTrackData.refGene.map((record) => new Gene(record));
-    //     // setRightData([...rightData, testData]);
-    //     // let canvasElements = (
-    //     //   <NumericalTrack
-    //     //     data={testData}
-    //     //     options={canvasOptions}
-    //     //     viewWindow={new OpenInterval(0, windowWidth)}
-    //     //     viewRegion={currDisplayNav.viewRegion}
-    //     //     width={
-    //     //       rightRawData.current.length < 3
-    //     //         ? windowWidth * rightRawData.current.length
-    //     //         : windowWidth * 3
-    //     //     }
-    //     //     forceSvg={false}
-    //     //     trackModel={trackModel}
-    //     //   />
-    //     // );
-    //     // setRightCanvas([...rightCanvas, canvasElements]);
-    //     //_____________________________________________________________________________________________________________________
-    //     // let featureArrange = new FeatureArranger();
-    //     // let placeFeatureData = featureArrange.arrange(
-    //     //   testData,
-    //     //   trackData!.regionNavCoord,
-    //     //   windowWidth,
-    //     //   getGenePadding,
-    //     //   DEFAULT_OPTIONS.hiddenPixels,
-    //     //   SortItemsOptions.ASC,
-    //     //   trackData!.side,
-    //     //   testPrevOverflowStrand.current
-    //     // );
-    //     // const height = getHeight(placeFeatureData.numRowsAssigned);
-    //     // let svgDATA = createFullVisualizer(
-    //     //   placeFeatureData.placements,
-    //     //   windowWidth,
-    //     //   height,
-    //     //   ROW_HEIGHT,
-    //     //   DEFAULT_OPTIONS.maxRows,
-    //     //   DEFAULT_OPTIONS
-    //     // );
-    //     // let tempOverFlow = {};
-    //     // for (var i = 0; i < placeFeatureData.placements.length; i++) {
-    //     //   let curFeature = placeFeatureData.placements[i];
-    //     //   if (
-    //     //     curFeature.placedFeatures[0].contextLocation.end >=
-    //     //     trackData!.regionNavCoord._endBase
-    //     //   ) {
-    //     //     tempOverFlow[curFeature.feature.id!] = curFeature;
-    //     //   }
-    //     // }
-    //     // testPrevOverflowStrand.current = tempOverFlow;
-    //     // setRightHTML([...rightHTML, ...[svgDATA]]);
-    //     // if (trackData!.initial) {
-    //     //   let tempOverFlow = {};
-    //     //   for (var i = 0; i < placeFeatureData.placements.length; i++) {
-    //     //     let curFeature = placeFeatureData.placements[i];
-    //     //     if (
-    //     //       curFeature.placedFeatures[0].contextLocation.start <=
-    //     //       trackData!.regionNavCoord._startBase
-    //     //     ) {
-    //     //       tempOverFlow[curFeature.feature.id!] = curFeature;
-    //     //     }
-    //     //   }
-    //     //   testPrevOverflowStrandLeft.current = tempOverFlow;
-    //     //   setLeftHTML([...leftHTML, ...[svgDATA]]);
-    //     // }
-    //   } else if (trackData!.side === "left") {
-    //     result.sort((a, b) => {
-    //       return b.txEnd - a.txEnd;
-    //     });
-    //     let testData = result.map((record) => new Gene(record));
-    //     let featureArrange = new FeatureArranger();
-    //     let placeFeatureData = featureArrange.arrange(
-    //       testData,
-    //       trackData!.regionNavCoord,
-    //       windowWidth,
-    //       getGenePadding,
-    //       DEFAULT_OPTIONS.hiddenPixels,
-    //       SortItemsOptions.ASC
-    //     );
-
-    //     const height = getHeight(placeFeatureData.numRowsAssigned);
-    //     let svgDATA = createFullVisualizer(
-    //       placeFeatureData.placements,
-    //       windowWidth,
-    //       height,
-    //       ROW_HEIGHT,
-    //       DEFAULT_OPTIONS.maxRows,
-    //       DEFAULT_OPTIONS
-    //     );
-    //     let tempOverFlow = {};
-    //     for (var i = 0; i < placeFeatureData.placements.length; i++) {
-    //       let curFeature = placeFeatureData.placements[i];
-    //       if (
-    //         curFeature.placedFeatures[0].contextLocation.start <=
-    //         trackData!.regionNavCoord._startBase
-    //       ) {
-    //         tempOverFlow[curFeature.feature.id!] = curFeature;
-    //       }
-    //     }
-    //     testPrevOverflowStrandLeft.current = tempOverFlow;
-    //   } else {
-    //     return;
-    //   }
-
-    //   //_____________________________________________________________________________________________________________________________________________
-    // }
-
-    setXPos((Math.floor(-curTrackData!.xDist / windowWidth) - 1) * windowWidth);
+    if (curTrackData.index === 0) {
+      setXPos(-windowWidth);
+    } else {
+      setXPos(
+        (Math.floor(-curTrackData!.xDist / windowWidth) - 1) * windowWidth
+      );
+    }
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -511,14 +395,94 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   useEffect(() => {
     if (trackData!.refGene) {
-      rightRawData.current.push({
-        refGenes: trackData!.refGene,
-        trackState: trackData!.trackState,
-      });
-      let testData = rightRawData.current.slice(-3);
-      let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-      let deDupRefGenesArr = removeDuplicates(refGenesArray);
-      createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
+      if (trackData!.initial === 1) {
+        console.log(trackData!);
+        let trackState0 = {
+          initial: 0,
+          side: "left",
+          xDist: 0,
+          regionNavCoord: new DisplayedRegionModel(
+            genomeArr![genomeIdx!].navContext,
+            trackData!.refGene[0].navLoci.start,
+            trackData!.refGene[0].navLoci.end
+          ),
+          index: -1,
+        };
+        let trackState1 = {
+          initial: 1,
+          side: "right",
+          xDist: 0,
+          regionNavCoord: trackData!.regionNavCoord,
+          index: 0,
+        };
+        let trackState2 = {
+          initial: 0,
+          side: "right",
+          xDist: 0,
+          regionNavCoord: new DisplayedRegionModel(
+            genomeArr![genomeIdx!].navContext,
+            trackData!.refGene[2].navLoci.start,
+            trackData!.refGene[2].navLoci.end
+          ),
+          index: 1,
+        };
+        rightRawData.current.push({
+          refGenes: trackData!.refGene[1],
+          trackState: trackState1,
+        });
+
+        rightRawData.current.push({
+          refGenes: trackData!.refGene[2],
+          trackState: trackState2,
+        });
+        fetchedDataCache[leftIdx.current] = {
+          refGenes: trackData!.refGene[0].fetchData,
+          trackState: trackState0,
+        };
+        leftIdx.current--;
+
+        fetchedDataCache[rightIdx.current] = {
+          refGenes: trackData!.refGene[1].fetchData,
+          trackState: trackState1,
+        };
+        rightIdx.current++;
+        fetchedDataCache[rightIdx.current] = {
+          refGenes: trackData!.refGene[2].fetchData,
+          trackState: trackState2,
+        };
+        rightIdx.current++;
+
+        let testData = [
+          fetchedDataCache[-1],
+          fetchedDataCache[0],
+          fetchedDataCache[1],
+        ];
+        console.log(testData);
+        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+
+        let deDupRefGenesArr = removeDuplicates(refGenesArray);
+        createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
+      } else {
+        let testData: Array<any> = [];
+        if (trackData!.trackState.side === "right") {
+          trackData!.trackState["index"] = rightIdx.current;
+          fetchedDataCache[rightIdx.current] = {
+            refGenes: trackData!.refGene,
+            trackState: trackData!.trackState,
+          };
+          let currIdx = rightIdx.current - 2;
+          for (let i = 0; i < 3; i++) {
+            testData.push(fetchedDataCache[currIdx]);
+            currIdx++;
+          }
+
+          console.log(testData, fetchedDataCache);
+          rightIdx.current++;
+          let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+          let deDupRefGenesArr = removeDuplicates(refGenesArray);
+          createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
+        }
+      }
     }
   }, [trackData]);
 
@@ -581,10 +545,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           style={{
             position: "absolute",
 
-            left:
-              side === "right"
-                ? `${rightRawData.current.length > 3 ? xPos : 0}px`
-                : "",
+            left: side === "right" ? `${xPos}px` : "",
           }}
         >
           {side === "right"
@@ -605,10 +566,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           style={{
             position: "absolute",
 
-            left:
-              side === "right"
-                ? `${rightRawData.current.length > 3 ? xPos : 0}px`
-                : "",
+            left: side === "right" ? `${xPos}px` : "",
           }}
         >
           {side === "right"

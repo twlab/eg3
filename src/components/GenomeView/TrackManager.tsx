@@ -85,7 +85,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // New data are fetched only if the user drags to the either ends of the track
   const [initialStart, setInitialStart] = useState(true);
   const [isDragging, setDragging] = useState(false);
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([]);
+  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
+    windowWidth,
+  ]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([]);
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [hicOption, setHicOption] = useState(1);
