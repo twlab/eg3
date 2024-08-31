@@ -94,12 +94,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const rightRawData = useRef<Array<any>>([]);
   const svgHeight = useRef(DEFAULT_OPTIONS.height);
   const [rightAlgo, setRightAlgo] = useState<Array<any>>([]);
-
+  const rightIdx = useRef(0);
+  const leftIdx = useRef(-1);
   const [rightCanvas, setRightCanvas] = useState<Array<any>>([]);
 
   const [toolTip, setToolTip] = useState<any>();
   const [xPos, setXPos] = useState(0);
-
+  const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);

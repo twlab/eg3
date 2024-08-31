@@ -305,6 +305,57 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let curRegionCoord;
       let tempObj = {};
       let sectionGenomicLocus: Array<ChromosomeInterval> = [];
+
+      let initialGenomicLoci: Array<any> = [];
+      let initialNavLoci: Array<any> = [];
+      if (initial === 1) {
+        initialNavLoci.push({
+          start: minBp.current - bpRegionSize.current,
+          end: minBp.current,
+        });
+        initialNavLoci.push({
+          start: maxBp.current - bpRegionSize.current,
+          end: maxBp.current,
+        });
+        initialNavLoci.push({
+          start: maxBp.current,
+          end: maxBp.current + bpRegionSize.current,
+        });
+        let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+          genomeIdx
+        ].navContext.getFeaturesInInterval(
+          minBp.current - bpRegionSize.current,
+          minBp.current
+        );
+
+        initialGenomicLoci.push(
+          genomeFeatureSegment.map((item, index) => item.getLocus())
+        );
+
+        let genomeFeatureSegment2: Array<FeatureSegment> = genomeArr[
+          genomeIdx
+        ].navContext.getFeaturesInInterval(
+          maxBp.current - bpRegionSize.current,
+          maxBp.current
+        );
+
+        initialGenomicLoci.push(
+          genomeFeatureSegment2.map((item, index) => item.getLocus())
+        );
+
+        let genomeFeatureSegment3: Array<FeatureSegment> = genomeArr[
+          genomeIdx
+        ].navContext.getFeaturesInInterval(
+          maxBp.current,
+          maxBp.current + bpRegionSize.current
+        );
+
+        initialGenomicLoci.push(
+          genomeFeatureSegment3.map((item, index) => item.getLocus())
+        );
+      }
+
+      //_________________
       if (trackSide === "right") {
         curRegionCoord = new DisplayedRegionModel(
           genomeArr[genomeIdx].navContext,
@@ -361,7 +412,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         //_____________________________________________________________________________
         minBp.current = minBp.current - bpRegionSize.current;
       }
-
+      if (initial === 1) {
+        minBp.current = minBp.current - bpRegionSize.current;
+        maxBp.current = maxBp.current + bpRegionSize.current;
+      }
+      console.log(initialGenomicLoci);
       let sentData = false;
       try {
         genomeArr[genomeIdx].defaultTracks.map((item, index) => {
@@ -375,6 +430,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               ),
 
               loci: sectionGenomicLocus,
+              initialGenomicLoci,
+              initialNavLoci,
               trackSide,
               location: tempObj["location"],
               curRegionCoord,
@@ -387,7 +444,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 event.data.fetchResults.map(
                   (item, index) => (tempObj[item.name] = item.result)
                 );
-
+                console.log(event.data.fetchResults);
                 tempObj["regionNavCoord"] = new DisplayedRegionModel(
                   genomeArr[genomeIdx].navContext,
                   event.data.curRegionCoord._startBase,

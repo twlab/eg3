@@ -139,20 +139,41 @@ self.onmessage = async (event: MessageEvent) => {
           querygenomeName: item.trackModel.querygenome,
         });
       } else if (trackName === "refGene") {
-        const genRefResponses = await Promise.all(
-          genomicLoci.map((item, index) =>
-            trackFetchFunction[trackName]({
-              name: genomeName,
-              chr: item.chr,
-              start: item.start,
-              end: item.end,
-            })
-          )
-        );
-
+        let genRefResponses: Array<any> = [];
+        if (event.data.initial === 1) {
+          for (let i = 0; i < event.data.initialGenomicLoci.length; i++) {
+            const genRefResponse = await Promise.all(
+              event.data.initialGenomicLoci[i].map((item, index) =>
+                trackFetchFunction[trackName]({
+                  name: genomeName,
+                  chr: item.chr,
+                  start: item.start,
+                  end: item.end,
+                })
+              )
+            );
+            genRefResponses.push({
+              fetchData: _.flatten(genRefResponse),
+              genomicLoci: event.data.initialGenomicLoci[i],
+              navLoci: event.data.initialNavLoci[i],
+            });
+          }
+        } else {
+          genRefResponses = await Promise.all(
+            genomicLoci.map((item, index) =>
+              trackFetchFunction[trackName]({
+                name: genomeName,
+                chr: item.chr,
+                start: item.start,
+                end: item.end,
+              })
+            )
+          );
+        }
         fetchResults.push({
           name: trackName,
           result: _.flatten(genRefResponses),
+          id: id,
         });
       } else {
         let result = await trackFetchFunction[trackName](
