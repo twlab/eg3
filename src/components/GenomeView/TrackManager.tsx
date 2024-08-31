@@ -95,6 +95,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [hicOption, setHicOption] = useState(1);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
+  const [dataIdx, setDataIdx] = useState(0);
   const side = useRef("right");
 
   function sumArray(numbers) {
@@ -504,6 +505,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [isDragging]);
 
   useEffect(() => {
+    let curX;
+    // terminate the work when the component is unmounted
+    const dragIdx = dragX.current / windowWidth;
+    if (dragIdx >= -0.5 && dragIdx <= 0.5) {
+      curX = 0;
+    } else if (dragX.current! > 1) {
+      curX = Math.ceil(dragIdx);
+    } else {
+      curX = Math.floor(dragIdx);
+    }
+
+    setDataIdx(curX);
+  }, [dragX.current]);
+
+  useEffect(() => {
     // terminate the work when the component is unmounted
     return () => {
       worker.current!.terminate();
@@ -511,8 +527,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       console.log("trackmanager terminate");
     };
   }, []);
-
-  useEffect(() => {}, [dragX.current]);
 
   useEffect(() => {
     if (!initialStart) {
@@ -706,6 +720,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   handleDelete={handleDelete}
                   genomeArr={genomeArr}
                   genomeIdx={genomeIdx}
+                  dataIdx={dataIdx}
                   // movement type track data
                   trackData2={trackData2}
                   trackIdx={index}

@@ -89,6 +89,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   genomeIdx,
   dragXDist,
   trackModel,
+  dataIdx,
 }) {
   const svgHeight = useRef(DEFAULT_OPTIONS.height);
   const [rightSVG, setRightSVG] = useState<Array<any>>([]);
@@ -102,7 +103,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
-  const [dataIdx, setDataIdx] = useState(0);
+
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
   const prevDataIdx = useRef(0);
 
@@ -550,17 +551,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   useEffect(() => {
     setToolTipVisible(false);
     setConfigMenuVisible(false);
-    let curX;
-    // terminate the work when the component is unmounted
-    if (Math.round(dragXDist! / windowWidth) === 0) {
-      curX = 0;
-    } else if (dragXDist! > 1) {
-      curX = Math.ceil(dragXDist! / windowWidth);
-    } else {
-      curX = Math.floor(dragXDist! / windowWidth);
-    }
-
-    setDataIdx(curX);
   }, [dragXDist]);
 
   useEffect(() => {
