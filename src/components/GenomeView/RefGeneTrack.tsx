@@ -23,59 +23,62 @@ const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity a
 const ARROW_SIZE = 16;
 
 export const DEFAULT_OPTIONS = {
-  displayMode: AnnotationDisplayModes.FULL,
-  color: "blue",
-  color2: "red",
-  maxRows: 20,
-  height: 40, // For density display mode
-  hideMinimalItems: false,
-  sortItems: false,
+  full: {
+    displayMode: AnnotationDisplayModes.FULL,
+    color: "blue",
+    color2: "red",
+    maxRows: 20,
+    height: 40, // For density display mode
+    hideMinimalItems: false,
+    sortItems: false,
 
-  backgroundColor: "var(--bg-color)",
-  categoryColors: {
-    coding: "rgb(101,1,168)",
-    protein_coding: "rgb(101,1,168)",
-    nonCoding: "rgb(1,193,75)",
-    pseudogene: "rgb(230,0,172)",
-    pseudo: "rgb(230,0,172)",
-    problem: "rgb(224,2,2)",
-    polyA: "rgb(237,127,2)",
-    other: "rgb(128,128,128)",
+    backgroundColor: "var(--bg-color)",
+    categoryColors: {
+      coding: "rgb(101,1,168)",
+      protein_coding: "rgb(101,1,168)",
+      nonCoding: "rgb(1,193,75)",
+      pseudogene: "rgb(230,0,172)",
+      pseudo: "rgb(230,0,172)",
+      problem: "rgb(224,2,2)",
+      polyA: "rgb(237,127,2)",
+      other: "rgb(128,128,128)",
+    },
+    hiddenPixels: 0.5,
+    italicizeText: false,
   },
-  hiddenPixels: 0.5,
-  italicizeText: false,
-};
-const canvasOptions = {
-  aggregateMethod: "COUNT",
-  displayMode: "auto",
-  height: 40,
-  color: "blue",
-  colorAboveMax: "red",
-  color2: "red",
-  color2BelowMin: "darkgreen",
-  yScale: "auto",
-  yMax: 10,
-  yMin: 0,
-  smooth: 0,
-  ensemblStyle: false,
-  maxRows: 20,
-  hideMinimalItems: false,
-  sortItems: false,
-  backgroundColor: "var(--bg-color)",
-  categoryColors: {
-    coding: "rgb(101,1,168)",
-    protein_coding: "rgb(101,1,168)",
-    nonCoding: "rgb(1,193,75)",
-    pseudogene: "rgb(230,0,172)",
-    pseudo: "rgb(230,0,172)",
-    problem: "rgb(224,2,2)",
-    polyA: "rgb(237,127,2)",
-    other: "rgb(128,128,128)",
+  density: {
+    aggregateMethod: "COUNT",
+    displayMode: "auto",
+    height: 40,
+    color: "blue",
+    colorAboveMax: "red",
+    color2: "red",
+    color2BelowMin: "darkgreen",
+    yScale: "auto",
+    yMax: 10,
+    yMin: 0,
+    smooth: 0,
+    ensemblStyle: false,
+    maxRows: 20,
+    hideMinimalItems: false,
+    sortItems: false,
+    backgroundColor: "var(--bg-color)",
+    categoryColors: {
+      coding: "rgb(101,1,168)",
+      protein_coding: "rgb(101,1,168)",
+      nonCoding: "rgb(1,193,75)",
+      pseudogene: "rgb(230,0,172)",
+      pseudo: "rgb(230,0,172)",
+      problem: "rgb(224,2,2)",
+      polyA: "rgb(237,127,2)",
+      other: "rgb(128,128,128)",
+    },
+    hiddenPixels: 0.5,
+    italicizeText: false,
+    label: "refGene",
   },
-  hiddenPixels: 0.5,
-  italicizeText: false,
-  label: "refGene",
 };
+
 const ROW_VERTICAL_PADDING = 5;
 const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
 
@@ -91,27 +94,31 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackModel,
   dataIdx,
 }) {
-  const svgHeight = useRef(DEFAULT_OPTIONS.height);
-  const [svgComponents, setSvgComponents] = useState<Array<any>>([]);
-
+  const svgHeight = useRef(DEFAULT_OPTIONS.full.height);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
+  const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const prevDataIdx = useRef(0);
+  const xPos = useRef(0);
+  const svgConfig = useRef<{ [key: string]: any }>(DEFAULT_OPTIONS.full);
+  const canvasConfig = useRef<{ [key: string]: any }>(DEFAULT_OPTIONS.density);
+  const curRegionData = useRef<{ [key: string]: any }>({});
+  const displayMode = useRef("full");
+
+  const [svgComponents, setSvgComponents] = useState<Array<any>>([]);
   const [canvasComponents, setCanvasComponents] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
-  const xPos = useRef(0);
-  const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [configMenu, setConfigMenu] = useState<Array<any>>([]);
-
+  const [configChanged, setConfigChanged] = useState(false);
   const [configMenuVisible, setConfigMenuVisible] = useState(false);
-  const prevDataIdx = useRef(0);
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   function getHeight(numRows: number): number {
     let rowHeight = ROW_HEIGHT;
-    let options = DEFAULT_OPTIONS;
+    let options = DEFAULT_OPTIONS.full;
     let rowsToDraw = Math.min(numRows, options.maxRows);
     if (options.hideMinimalItems) {
       rowsToDraw -= 1;
@@ -131,6 +138,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       xPos.current =
         (Math.floor(curTrackData!.xDist / windowWidth) - 1) * windowWidth;
     }
+
     if (curTrackData!.side === "right") {
       let algoData = genesArr.map((record) => new Gene(record));
       let featureArrange = new FeatureArranger();
@@ -145,7 +153,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
         curTrackData.regionNavCoord._endBase
       );
-      console.log(curTrackData);
+
       if (curTrackData.index === 0) {
         currDisplayNav = new DisplayedRegionModel(
           curTrackData.regionNavCoord._navContext,
@@ -158,49 +166,48 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               curTrackData.regionNavCoord._startBase)
         );
       }
-      console.log(algoData);
-      let placeFeatureData = featureArrange.arrange(
-        algoData,
-        currDisplayNav,
-        windowWidth * 3,
-        getGenePadding,
-        DEFAULT_OPTIONS.hiddenPixels,
-        SortItemsOptions.NONE
-      );
+      if (displayMode.current === "full") {
+        let placeFeatureData = featureArrange.arrange(
+          algoData,
+          currDisplayNav,
+          windowWidth * 3,
+          getGenePadding,
+          DEFAULT_OPTIONS.full.hiddenPixels,
+          SortItemsOptions.NONE
+        );
 
-      const height = getHeight(placeFeatureData.numRowsAssigned);
-      let svgDATA = createFullVisualizer(
-        placeFeatureData.placements,
-        windowWidth * 3,
-        height,
-        ROW_HEIGHT,
-        DEFAULT_OPTIONS.maxRows,
-        DEFAULT_OPTIONS
-      );
+        const height = getHeight(placeFeatureData.numRowsAssigned);
+        let svgDATA = createFullVisualizer(
+          placeFeatureData.placements,
+          windowWidth * 3,
+          height,
+          ROW_HEIGHT,
+          DEFAULT_OPTIONS.full.maxRows,
+          DEFAULT_OPTIONS.full
+        );
 
-      setSvgComponents([...[svgDATA]]);
+        setSvgComponents([...[svgDATA]]);
 
-      svgHeight.current = height;
+        svgHeight.current = height;
+      }
       //_________________________________________________________________________________________density
+      else if (displayMode.current === "density") {
+        let canvasElements = (
+          <NumericalTrack
+            data={algoData}
+            options={DEFAULT_OPTIONS.density}
+            viewWindow={new OpenInterval(0, windowWidth * 3)}
+            viewRegion={currDisplayNav}
+            width={windowWidth * 3}
+            forceSvg={false}
+            trackModel={trackModel}
+          />
+        );
 
-      let canvasElements = (
-        <NumericalTrack
-          data={algoData}
-          options={canvasOptions}
-          viewWindow={new OpenInterval(0, windowWidth * 3)}
-          viewRegion={currDisplayNav}
-          width={windowWidth * 3}
-          forceSvg={false}
-          trackModel={trackModel}
-        />
-      );
-
-      setCanvasComponents([...[canvasElements]]);
+        setCanvasComponents([...[canvasElements]]);
+      }
     } else if (curTrackData.side === "left") {
       let algoData = genesArr.map((record) => new Gene(record));
-      let featureArrange = new FeatureArranger();
-      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-      // we have to get coord of prev regions by subtracting of the last region
       let currDisplayNav: DisplayedRegionModel = new DisplayedRegionModel(
         curTrackData.regionNavCoord._navContext,
         curTrackData.regionNavCoord._startBase,
@@ -210,42 +217,47 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             curTrackData.regionNavCoord._startBase) *
             2
       );
+      if (displayMode.current === "full") {
+        let featureArrange = new FeatureArranger();
+        // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
+        // we have to get coord of prev regions by subtracting of the last region
 
-      let placeFeatureData = featureArrange.arrange(
-        algoData,
-        currDisplayNav,
-        windowWidth * 3,
-        getGenePadding,
-        DEFAULT_OPTIONS.hiddenPixels,
-        SortItemsOptions.NONE
-      );
+        let placeFeatureData = featureArrange.arrange(
+          algoData,
+          currDisplayNav,
+          windowWidth * 3,
+          getGenePadding,
+          DEFAULT_OPTIONS.full.hiddenPixels,
+          SortItemsOptions.NONE
+        );
 
-      const height = getHeight(placeFeatureData.numRowsAssigned);
-      svgHeight.current = height;
-      let svgDATA = createFullVisualizer(
-        placeFeatureData.placements,
-        windowWidth * 3,
-        height,
-        ROW_HEIGHT,
-        DEFAULT_OPTIONS.maxRows,
-        DEFAULT_OPTIONS
-      );
+        const height = getHeight(placeFeatureData.numRowsAssigned);
+        svgHeight.current = height;
+        let svgDATA = createFullVisualizer(
+          placeFeatureData.placements,
+          windowWidth * 3,
+          height,
+          ROW_HEIGHT,
+          DEFAULT_OPTIONS.full.maxRows,
+          DEFAULT_OPTIONS.full
+        );
 
-      setSvgComponents([...[svgDATA]]);
+        setSvgComponents([...[svgDATA]]);
+      } else if (displayMode.current === "density") {
+        let canvasElements = (
+          <NumericalTrack
+            data={algoData}
+            options={DEFAULT_OPTIONS.density}
+            viewWindow={new OpenInterval(0, windowWidth * 3)}
+            viewRegion={currDisplayNav}
+            width={windowWidth * 3}
+            forceSvg={false}
+            trackModel={trackModel}
+          />
+        );
 
-      let canvasElements = (
-        <NumericalTrack
-          data={algoData}
-          options={canvasOptions}
-          viewWindow={new OpenInterval(0, windowWidth * 3)}
-          viewRegion={currDisplayNav}
-          width={windowWidth * 3}
-          forceSvg={false}
-          trackModel={trackModel}
-        />
-      );
-
-      setCanvasComponents([...[canvasElements]]);
+        setCanvasComponents([...[canvasElements]]);
+      }
     }
   }
 
@@ -286,7 +298,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         viewWindow={new OpenInterval(0, windowWidth * 3)}
         y={y}
         isMinimal={isLastRow}
-        options={DEFAULT_OPTIONS}
+        options={DEFAULT_OPTIONS.full}
         onClick={renderTooltip}
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
@@ -294,7 +306,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             key={i}
             placedGene={placedGene}
             y={y}
-            options={DEFAULT_OPTIONS}
+            options={DEFAULT_OPTIONS.full}
           />
         ))}
       </GeneAnnotationScaffold>
@@ -361,20 +373,17 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       document.body
     );
   }
-  function getMenuComponents() {
-    const items = [AnnotationDisplayModeConfig];
-    setConfigMenu([...items]);
-  }
-  const handleRightClick = (event) => {
-    event.preventDefault(); // Prevent the default context menu
 
-    getMenuComponents();
-  };
-  function onConfigChange(value, value2) {
-    console.log(value, value2);
+  function onConfigChange(key, value) {
+    if (key === "displayMode" && value !== displayMode.current) {
+      displayMode.current = value;
+
+      setConfigChanged(true);
+    }
   }
   function renderConfigMenu(event) {
-    event.preventDefault(); // Prevent the default context menu
+    event.preventDefault();
+    // create object that has key as displayMode and the configmenu component as the value
     const items = [AnnotationDisplayModeConfig];
 
     let menu = items.map((MenuComponent, index) =>
@@ -410,7 +419,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 <OutsideClickDetector onOutsideClick={onCloseMenu}>
                   <MenuComponent
                     key={index}
-                    optionsObjects={[DEFAULT_OPTIONS]}
+                    optionsObjects={[DEFAULT_OPTIONS.full]}
                     onOptionSet={onConfigChange}
                   />
                 </OutsideClickDetector>
@@ -440,6 +449,60 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   function onCloseMenu() {
     setConfigMenuVisible(false);
+  }
+  function getCacheData() {
+    let viewData: Array<any> = [];
+    let curIdx;
+
+    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+      if (prevDataIdx.current > dataIdx!) {
+        viewData = [
+          fetchedDataCache[dataIdx! + 2],
+          fetchedDataCache[dataIdx! + 1],
+          fetchedDataCache[dataIdx!],
+        ];
+
+        curIdx = dataIdx!;
+      } else if (prevDataIdx.current < dataIdx!) {
+        viewData = [
+          fetchedDataCache[dataIdx! + 1],
+          fetchedDataCache[dataIdx!],
+          fetchedDataCache[dataIdx! - 1],
+        ];
+
+        curIdx = dataIdx! - 1;
+        curIdx = dataIdx!;
+      }
+    } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
+      if (prevDataIdx.current < dataIdx!) {
+        viewData = [
+          fetchedDataCache[dataIdx! - 2],
+          fetchedDataCache[dataIdx! - 1],
+          fetchedDataCache[dataIdx!],
+        ];
+
+        curIdx = dataIdx!;
+      } else if (prevDataIdx.current > dataIdx!) {
+        viewData = [
+          fetchedDataCache[dataIdx! - 1],
+          fetchedDataCache[dataIdx!],
+          fetchedDataCache[dataIdx! + 1],
+        ];
+
+        curIdx = dataIdx! + 1;
+      }
+    }
+    if (viewData.length > 0) {
+      let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
+      let deDupRefGenesArr = removeDuplicates(refGenesArray);
+      curRegionData.current = {
+        trackState: fetchedDataCache[curIdx].trackState,
+        deDupRefGenesArr,
+        initial: 0,
+      };
+      createSVGOrCanvas(fetchedDataCache[curIdx].trackState, deDupRefGenesArr);
+    }
+    prevDataIdx.current = dataIdx!;
   }
   useEffect(() => {
     if (trackData!.refGene) {
@@ -497,10 +560,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           fetchedDataCache[0],
           fetchedDataCache[-1],
         ];
-        console.log(testData);
+
         let refGenesArray = testData.map((item) => item.refGenes).flat(1);
 
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
+        curRegionData.current = {
+          trackState: trackState1,
+          deDupRefGenesArr,
+          initial: 1,
+        };
         createSVGOrCanvas(trackState1, deDupRefGenesArr, 1);
       } else {
         let testData: Array<any> = [];
@@ -519,7 +587,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           rightIdx.current--;
           let refGenesArray = testData.map((item) => item.refGenes).flat(1);
           let deDupRefGenesArr = removeDuplicates(refGenesArray);
-
+          curRegionData.current = {
+            trackState: trackData!.trackState,
+            deDupRefGenesArr,
+            initial: 0,
+          };
           createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
         } else if (trackData!.trackState.side === "left") {
           trackData!.trackState["index"] = leftIdx.current;
@@ -536,7 +608,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           leftIdx.current++;
           let refGenesArray = testData.map((item) => item.refGenes).flat(1);
           let deDupRefGenesArr = removeDuplicates(refGenesArray);
-
+          curRegionData.current = {
+            trackState: trackData!.trackState,
+            deDupRefGenesArr,
+            initial: 0,
+          };
           createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
         }
       }
@@ -549,71 +625,20 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [dragXDist]);
 
   useEffect(() => {
+    if (configChanged === true) {
+      createSVGOrCanvas(
+        curRegionData.current.trackState,
+        curRegionData.current.deDupRefGenesArr,
+        curRegionData.current.initial
+      );
+    }
+    setConfigChanged(false);
+  }, [configChanged]);
+  useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-
-    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-      if (prevDataIdx.current > dataIdx!) {
-        let testData = [
-          fetchedDataCache[dataIdx! + 2],
-          fetchedDataCache[dataIdx! + 1],
-          fetchedDataCache[dataIdx!],
-        ];
-
-        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray);
-
-        createSVGOrCanvas(
-          fetchedDataCache[dataIdx!].trackState,
-          deDupRefGenesArr
-        );
-      } else if (prevDataIdx.current < dataIdx!) {
-        let testData = [
-          fetchedDataCache[dataIdx! + 1],
-          fetchedDataCache[dataIdx!],
-          fetchedDataCache[dataIdx! - 1],
-        ];
-        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray);
-
-        createSVGOrCanvas(
-          fetchedDataCache[dataIdx! - 1].trackState,
-          deDupRefGenesArr
-        );
-      }
-    } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-      if (prevDataIdx.current < dataIdx!) {
-        let testData = [
-          fetchedDataCache[dataIdx! - 2],
-          fetchedDataCache[dataIdx! - 1],
-          fetchedDataCache[dataIdx!],
-        ];
-
-        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray);
-
-        createSVGOrCanvas(
-          fetchedDataCache[dataIdx!].trackState,
-          deDupRefGenesArr
-        );
-      } else if (prevDataIdx.current > dataIdx!) {
-        let testData = [
-          fetchedDataCache[dataIdx! - 1],
-          fetchedDataCache[dataIdx!],
-          fetchedDataCache[dataIdx! + 1],
-        ];
-
-        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray);
-
-        createSVGOrCanvas(
-          fetchedDataCache[dataIdx! + 1].trackState,
-          deDupRefGenesArr
-        );
-      }
-    }
-    prevDataIdx.current = dataIdx!;
+    getCacheData();
   }, [dataIdx]);
 
   return (
@@ -631,44 +656,47 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       <div
         style={{
           display: "flex",
-          position: "relative",
-          height: "40px",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-
-            left: side === "right" ? `${xPos.current}px` : "",
-            right: side === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents.map((item, index) => (
-            <div key={index}>{item}</div>
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
 
           position: "relative",
           height: svgHeight.current,
         }}
       >
-        <div
-          style={{
-            position: "absolute",
+        {displayMode.current === "full" ? (
+          <div
+            style={{
+              position: "absolute",
 
-            right: side === "left" ? `${xPos.current}px` : "",
-            left: side === "right" ? `${xPos.current}px` : "",
-          }}
-        >
-          {svgComponents.map((item, index) => (
-            <div key={index}>{item}</div>
-          ))}
-        </div>
+              right: side === "left" ? `${xPos.current}px` : "",
+              left: side === "right" ? `${xPos.current}px` : "",
+            }}
+          >
+            {svgComponents.map((item, index) => (
+              <div key={index}>{item}</div>
+            ))}
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              position: "relative",
+              height: "40px",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+
+                left: side === "right" ? `${xPos.current}px` : "",
+                right: side === "left" ? `${xPos.current}px` : "",
+              }}
+            >
+              {canvasComponents.map((item, index) => (
+                <div key={index}>{item}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {toolTipVisible ? toolTip : ""}
         {configMenuVisible ? configMenu : ""}
       </div>
