@@ -20,13 +20,14 @@ export const ITEM_PROP_TYPES = {
 import "./TrackContextMenu.css";
 
 interface SingleInputConfigProps {
-  onOptionSet: any;
-  optionsObjects: any;
+  onOptionSet?: any;
+  optionsObjects?: any;
   optionName: string;
-  label: string;
+  label: any;
   defaultValue?: any;
   multiValue?: any;
   hasSetButton?: boolean;
+
   getInputElement: (
     inputValue: any,
     setNewValue: (newValue: any) => void
@@ -54,6 +55,7 @@ function SingleInputConfig({
   }, [optionsObjects, optionName, defaultValue, multiValue]);
 
   function handleInputChange(newValue: any) {
+    console.log(newValue);
     if (!hasSetButton) {
       makeOptionSetRequest(newValue);
     }
@@ -64,7 +66,10 @@ function SingleInputConfig({
     onOptionSet(optionName, newValue);
   }
 
-  const inputElement = getInputElement(inputValue, handleInputChange);
+  const inputElement =
+    getInputElement !== undefined
+      ? getInputElement(inputValue, handleInputChange)
+      : "";
   const setButton = hasSetButton ? (
     <button onClick={() => makeOptionSetRequest(inputValue)}>Set</button>
   ) : null;

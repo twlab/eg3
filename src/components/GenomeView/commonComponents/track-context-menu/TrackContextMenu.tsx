@@ -1,12 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
-import Collapsible from "react-collapsible";
+
 import TrackModel from "../../../../models/TrackModel";
-import {
-  getTrackConfig,
-  INTERACTION_TYPES,
-} from "../trackConfig/getTrackConfig";
+
 import { CopyToClip } from "../CopyToClipboard";
 // import { NUMERRICAL_TRACK_TYPES } from "../trackManagers/CustomTrackAdder";
 import { niceCount, variableIsObject } from "../../../../models/util";

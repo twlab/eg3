@@ -208,6 +208,7 @@ const TooltipGenomealign: React.FC<MethylcHoverProps> = memo(function tooltip({
         width: windowWidth,
         height: height,
         position: "relative",
+        zIndex: -1,
       }}
     >
       {isVisible ? (

@@ -20,7 +20,6 @@ import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { size } from "lodash";
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
@@ -52,8 +51,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeArr,
 }) {
   //useRef to store data between states without re render the component
-  const region = useRef("");
-
   const worker = useRef<Worker>();
   const infiniteScrollWorker = useRef<Worker>();
   const trackManagerId = useRef("");
@@ -63,15 +60,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const block = useRef<HTMLInputElement>(null);
   const curVisData = useRef<{ [key: string]: any }>({});
   const viewRegion = useRef<ChromosomeInterval[]>();
-  // const chrIndexRight = useRef(0);
-  // const chrIndexLeft = useRef(0);
-  // const initialChrIdx = useRef(0);
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
-
-  // const chrData = useRef<Array<any>>([]);
-  // const chrLength = useRef<Array<any>>([]);
 
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
@@ -80,6 +71,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const dragX = useRef(0);
   const isLoading = useRef(true);
   const lastDragX = useRef(0);
+  const side = useRef("right");
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -96,8 +88,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [trackData2, setTrackData2] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
-  const side = useRef("right");
-
+  const [configMenu, setConfigMenu] = useState<any>();
+  const [configMenuVisible, setConfigMenuVisible] = useState(false);
   function sumArray(numbers) {
     let total = 0;
     for (let i = 0; i < numbers.length; i++) {
@@ -493,7 +485,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     });
   }
-
+  function getConfigMenu(htmlElement: any) {
+    setConfigMenuVisible(true);
+    setConfigMenu(htmlElement);
+  }
+  function onCloseConfigMenu() {
+    setConfigMenuVisible(false);
+  }
   useEffect(() => {
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
@@ -721,6 +719,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   genomeArr={genomeArr}
                   genomeIdx={genomeIdx}
                   dataIdx={dataIdx}
+                  getConfigMenu={getConfigMenu}
+                  onCloseConfigMenu={onCloseConfigMenu}
                   // movement type track data
                   trackData2={trackData2}
                   trackIdx={index}
@@ -729,6 +729,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               );
             })}
           </div>
+          {configMenuVisible ? configMenu : ""}
         </div>
       </div>
     </>

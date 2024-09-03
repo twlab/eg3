@@ -20,4 +20,6 @@ export interface TrackProps {
   genomeIdx?: number;
   trackModel?: any;
   dataIdx?: number;
+  getConfigMenu: any;
+  onCloseConfigMenu: () => void;
 }

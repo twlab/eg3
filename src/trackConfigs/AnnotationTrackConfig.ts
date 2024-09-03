@@ -1,29 +1,27 @@
 import { TrackConfig } from "./TrackConfig";
 
-import { DEFAULT_OPTIONS } from "../trackVis/commonComponents/annotation/AnnotationTrack";
+import { DEFAULT_OPTIONS } from "../components/GenomeView/RefGeneTrack";
 
-import { AnnotationDisplayModeConfig } from "../trackContextMenu/DisplayModeConfig";
+import { AnnotationDisplayModeConfig } from "../components/GenomeView/commonComponents/track-context-menu/DisplayModeConfig";
 import {
   PrimaryColorConfig,
   SecondaryColorConfig,
   BackgroundColorConfig,
-} from "../trackContextMenu/ColorConfig";
-import HeightConfig from "../trackContextMenu/HeightConfig";
-import MaxRowsConfig from "../trackContextMenu/MaxRowsConfig";
+} from "./ColorConfig";
+import HeightConfig from "./HeightConfig";
+import MaxRowsConfig from "./MaxRowsConfig";
 
-import { AnnotationDisplayModes } from "../../model/DisplayModes";
-import { TrackModel } from "../../model/TrackModel";
+import { AnnotationDisplayModes } from "../components/GenomeView/commonComponents/track-context-menu/DisplayModes";
+import TrackModel from "../models/TrackModel";
 
 export class AnnotationTrackConfig extends TrackConfig {
   constructor(trackModel: TrackModel) {
     super(trackModel);
-    this.setDefaultOptions(DEFAULT_OPTIONS);
+    this.setDefaultOptions(DEFAULT_OPTIONS.full);
   }
 
   getMenuComponents() {
-    console.log(...super.getMenuComponents(), AnnotationDisplayModeConfig);
     const items = [...super.getMenuComponents(), AnnotationDisplayModeConfig];
-
     if (this.getOptions().displayMode === AnnotationDisplayModes.DENSITY) {
       items.push(HeightConfig);
     } else {

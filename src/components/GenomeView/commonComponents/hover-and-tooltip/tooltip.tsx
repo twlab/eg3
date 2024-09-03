@@ -95,7 +95,8 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
       style={{
         width: windowWidth,
         height: 80,
-        position: "relative",
+        position: "absolute",
+        zIndex: -1,
       }}
     >
       {isVisible ? (
@@ -109,7 +110,7 @@ const TestToolTip: React.FC<MethylcHoverProps> = memo(function TestToolTip({
             padding: 8,
             borderRadius: 4,
             fontSize: 14,
-
+            zIndex: -4,
             transition: "opacity 0.1s",
           }}
         >
