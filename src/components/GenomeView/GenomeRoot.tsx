@@ -56,7 +56,7 @@ function GenomeHub(props: any) {
     if (props.selectedGenome.length > 0) {
       let tempGeneArr: Array<any> = props.selectedGenome.map(
         (genome, index) => {
-          genome["id"] = uuidv4();
+          genome["genomeID"] = uuidv4();
           genome["windowWidth"] = windowWidth;
           // need to account for when chr changes order so we can change the nav coord order and change featureStart so everything is still in order
           // (genome["chrOrder"] = items);
@@ -92,7 +92,7 @@ function GenomeHub(props: any) {
 
       // FOR TESTTING________________________________________________________________________________________
 
-      HG38["id"] = uuidv4();
+      HG38["genomeID"] = uuidv4();
       HG38["windowWidth"] = size.width;
       setGenomeList(new Array<any>(HG38));
 
@@ -187,7 +187,7 @@ function GenomeHub(props: any) {
 
       //   setGenomeList([...tempGenomeArr]);
 
-      HG38["id"] = uuidv4();
+      HG38["genomeID"] = uuidv4();
       HG38["windowWidth"] = size.width;
       setGenomeList(new Array<any>(HG38));
     }
@@ -230,7 +230,7 @@ function GenomeHub(props: any) {
       </div>
       {genomeList.map((item, index) => (
         <TrackManager
-          key={item.id}
+          key={item.genomeID}
           genomeIdx={index}
           addTrack={addTrack}
           startBp={startBp}

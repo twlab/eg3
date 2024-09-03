@@ -20,13 +20,14 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   trackData,
   side,
   windowWidth = 0,
+  id,
 }) {
   let start, end;
 
   let result;
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
-    result = trackData!.methylc;
+    result = trackData![`${id}`];
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }

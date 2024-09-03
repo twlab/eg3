@@ -20,7 +20,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   let result: Array<any> = [];
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
-    result = trackData!.bigWig;
+    result = trackData![`${id}`];
 
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;

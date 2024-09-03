@@ -23,29 +23,7 @@ import "./TrackContextMenu.css";
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/GeneAnnotationTrackConfig";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
-interface AnnotationOptions {
-  displayMode: any; // Assuming you have an enum or type for AnnotationDisplayModes
-  color: string;
-  color2: string;
-  maxRows: number;
-  height?: number; // Optional property for density display mode
-  hideMinimalItems: boolean;
-  sortItems: boolean;
 
-  backgroundColor: string;
-  categoryColors: {
-    coding: string;
-    protein_coding: string;
-    nonCoding: string;
-    pseudogene: string;
-    pseudo: string;
-    problem: string;
-    polyA: string;
-    other: string;
-  };
-  hiddenPixels: number;
-  italicizeText: boolean;
-}
 export const DEFAULT_OPTIONS = {
   full: {
     displayMode: AnnotationDisplayModes.FULL,
@@ -69,6 +47,7 @@ export const DEFAULT_OPTIONS = {
     },
     hiddenPixels: 0.5,
     italicizeText: false,
+    label: "refGene",
   },
   density: {
     aggregateMethod: "COUNT",
@@ -119,6 +98,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   dataIdx,
   getConfigMenu,
   onCloseConfigMenu,
+  id,
 }) {
   const svgHeight = useRef(DEFAULT_OPTIONS.full.height);
   const rightIdx = useRef(0);
@@ -127,7 +107,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const prevDataIdx = useRef(0);
   const xPos = useRef(0);
   const svgConfig = useRef<{ [key: string]: any }>(DEFAULT_OPTIONS.full);
-  const canvasConfig = useRef<{ [key: string]: any }>(DEFAULT_OPTIONS.density);
+  const canvasConfig = useRef<any>(DEFAULT_OPTIONS.density);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const displayMode = useRef("full");
   const configMenuPos = useRef<{ [key: string]: any }>({});
@@ -143,7 +123,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   // New data are fetched only if the user drags to the either ends of the track
   function getHeight(numRows: number): number {
     let rowHeight = ROW_HEIGHT;
-    let options = DEFAULT_OPTIONS.full;
+    let options = svgConfig.current;
     let rowsToDraw = Math.min(numRows, options.maxRows);
     if (options.hideMinimalItems) {
       rowsToDraw -= 1;
@@ -197,7 +177,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           currDisplayNav,
           windowWidth * 3,
           getGenePadding,
-          DEFAULT_OPTIONS.full.hiddenPixels,
+          svgConfig.current.hiddenPixels,
           SortItemsOptions.NONE
         );
 
@@ -207,8 +187,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           windowWidth * 3,
           height,
           ROW_HEIGHT,
-          DEFAULT_OPTIONS.full.maxRows,
-          DEFAULT_OPTIONS.full
+          svgConfig.current.maxRows,
+          svgConfig.current
         );
 
         setSvgComponents([...[svgDATA]]);
@@ -220,7 +200,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         let canvasElements = (
           <NumericalTrack
             data={algoData}
-            options={DEFAULT_OPTIONS.density}
+            options={canvasConfig.current}
             viewWindow={new OpenInterval(0, windowWidth * 3)}
             viewRegion={currDisplayNav}
             width={windowWidth * 3}
@@ -252,7 +232,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           currDisplayNav,
           windowWidth * 3,
           getGenePadding,
-          DEFAULT_OPTIONS.full.hiddenPixels,
+          svgConfig.current.hiddenPixels,
           SortItemsOptions.NONE
         );
 
@@ -263,8 +243,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           windowWidth * 3,
           height,
           ROW_HEIGHT,
-          DEFAULT_OPTIONS.full.maxRows,
-          DEFAULT_OPTIONS.full
+          svgConfig.current.maxRows,
+          svgConfig.current
         );
 
         setSvgComponents([...[svgDATA]]);
@@ -272,7 +252,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         let canvasElements = (
           <NumericalTrack
             data={algoData}
-            options={DEFAULT_OPTIONS.density}
+            options={canvasConfig.current}
             viewWindow={new OpenInterval(0, windowWidth * 3)}
             viewRegion={currDisplayNav}
             width={windowWidth * 3}
@@ -323,7 +303,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         viewWindow={new OpenInterval(0, windowWidth * 3)}
         y={y}
         isMinimal={isLastRow}
-        options={DEFAULT_OPTIONS.full}
+        options={svgConfig.current}
         onClick={renderTooltip}
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
@@ -331,7 +311,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             key={i}
             placedGene={placedGene}
             y={y}
-            options={DEFAULT_OPTIONS.full}
+            options={svgConfig.current}
           />
         ))}
       </GeneAnnotationScaffold>
@@ -401,18 +381,99 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   function onConfigChange(key, value) {
     console.log(key, value);
-    if (key === "displayMode" && value !== displayMode.current) {
+    if (key === "displayMode" && value === displayMode.current) {
+      return;
+    } else if (key === "displayMode" && value !== displayMode.current) {
       console.log("huh1", configMenuPos.current);
-
       displayMode.current = value;
+      if (displayMode.current === "full") {
+        genomeArr![genomeIdx!].options = svgConfig.current;
+      } else if (displayMode.current === "density") {
+        genomeArr![genomeIdx!].options = canvasConfig.current;
+      }
 
+      const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+
+      console.log(renderer);
+      let configsOptions = renderer.getMenuComponents();
+      console.log(configsOptions);
+      // create object that has key as displayMode and the configmenu component as the value
+      const items = [...configsOptions];
+
+      let menu = ReactDOM.createPortal(
+        <Manager>
+          <Reference>
+            {({ ref }) => (
+              <div
+                ref={ref}
+                style={{
+                  position: "absolute",
+                  left: configMenuPos.current.pageX,
+                  top: configMenuPos.current.pageY,
+                }}
+              />
+            )}
+          </Reference>
+          <Popper
+            placement="bottom-start"
+            modifiers={[{ name: "flip", enabled: false }]}
+          >
+            {({ ref, style, placement, arrowProps }) => (
+              <div
+                ref={ref}
+                style={{
+                  ...style,
+                  position: "absolute",
+                  zIndex: 1000,
+                }}
+              >
+                <OutsideClickDetector onOutsideClick={onCloseConfigMenu}>
+                  <div className="TrackContextMenu-body">
+                    {items.map((MenuComponent, index) => (
+                      <MenuComponent
+                        key={index}
+                        defaultValue={displayMode.current}
+                        optionsObjects={[
+                          displayMode.current === "full"
+                            ? svgConfig.current
+                            : canvasConfig.current,
+                        ]}
+                        onOptionSet={onConfigChange}
+                      />
+                    ))}
+                  </div>
+                </OutsideClickDetector>
+              </div>
+            )}
+          </Popper>
+        </Manager>,
+        document.body
+      );
+
+      getConfigMenu(menu);
       setConfigChanged(true);
+    } else if (displayMode.current === "full") {
+      if (svgConfig.current[`${key}`] !== value) {
+        svgConfig.current[`${key}`] = value;
+        setConfigChanged(true);
+      }
+    } else if (displayMode.current === "density") {
+      if (canvasConfig.current[`${key}`] !== value) {
+        canvasConfig.current[`${key}`] = value;
+        setConfigChanged(true);
+      }
     }
   }
   function renderConfigMenu(event) {
     event.preventDefault();
+    if (displayMode.current === "full") {
+      genomeArr![genomeIdx!].options = svgConfig.current;
+    } else if (displayMode.current === "density") {
+      genomeArr![genomeIdx!].options = canvasConfig.current;
+    }
 
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+
     let configsOptions = renderer.getMenuComponents();
     // create object that has key as displayMode and the configmenu component as the value
     const items = [...configsOptions];
@@ -449,7 +510,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                   {items.map((MenuComponent, index) => (
                     <MenuComponent
                       key={index}
-                      optionsObjects={[DEFAULT_OPTIONS.full]}
+                      optionsObjects={[
+                        displayMode.current === "full"
+                          ? svgConfig.current
+                          : canvasConfig.current,
+                      ]}
+                      defaultValue={displayMode.current}
                       onOptionSet={onConfigChange}
                     />
                   ))}
@@ -535,7 +601,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     prevDataIdx.current = dataIdx!;
   }
   useEffect(() => {
-    if (trackData!.refGene) {
+    if (trackData![`${id}`]) {
       if (trackData!.initial === 1) {
         let trackState0 = {
           initial: 0,
@@ -543,8 +609,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           xDist: 0,
           regionNavCoord: new DisplayedRegionModel(
             genomeArr![genomeIdx!].navContext,
-            trackData!.refGene[0].navLoci.start,
-            trackData!.refGene[0].navLoci.end
+            trackData![`${id}`][0].navLoci.start,
+            trackData![`${id}`][0].navLoci.end
           ),
           index: 1,
         };
@@ -561,25 +627,25 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           xDist: 0,
           regionNavCoord: new DisplayedRegionModel(
             genomeArr![genomeIdx!].navContext,
-            trackData!.refGene[2].navLoci.start,
-            trackData!.refGene[2].navLoci.end
+            trackData![`${id}`][2].navLoci.start,
+            trackData![`${id}`][2].navLoci.end
           ),
           index: -1,
         };
 
         fetchedDataCache[leftIdx.current] = {
-          refGenes: trackData!.refGene[0].fetchData,
+          refGenes: trackData![`${id}`][0].fetchData,
           trackState: trackState0,
         };
         leftIdx.current++;
 
         fetchedDataCache[rightIdx.current] = {
-          refGenes: trackData!.refGene[1].fetchData,
+          refGenes: trackData![`${id}`][1].fetchData,
           trackState: trackState1,
         };
         rightIdx.current--;
         fetchedDataCache[rightIdx.current] = {
-          refGenes: trackData!.refGene[2].fetchData,
+          refGenes: trackData![`${id}`][2].fetchData,
           trackState: trackState2,
         };
         rightIdx.current--;
@@ -604,7 +670,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         if (trackData!.trackState.side === "right") {
           trackData!.trackState["index"] = rightIdx.current;
           fetchedDataCache[rightIdx.current] = {
-            refGenes: trackData!.refGene,
+            refGenes: trackData![`${id}`],
             trackState: trackData!.trackState,
           };
           let currIdx = rightIdx.current + 2;
@@ -625,7 +691,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         } else if (trackData!.trackState.side === "left") {
           trackData!.trackState["index"] = leftIdx.current;
           fetchedDataCache[leftIdx.current] = {
-            refGenes: trackData!.refGene,
+            refGenes: trackData![`${id}`],
             trackState: trackData!.trackState,
           };
           let currIdx = leftIdx.current - 2;

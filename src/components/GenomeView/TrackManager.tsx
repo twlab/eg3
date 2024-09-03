@@ -264,7 +264,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 return items.name === "genomealign" || items.name === "hic";
               }
             ),
-            // TO DO?????????????need to sent loci as a array of all chr regions, after converting it from navcoord
+
             loci: genomeCoordLocus,
             expandedLoci: expandedGenomeCoordLocus,
             trackSide,
@@ -276,8 +276,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
           if (initial === 1) {
             worker.current!.onmessage = (event) => {
+              console.log(event.data.fetchResults);
               event.data.fetchResults.map((item, index) => {
-                tmpData2[item.nameResult] = {
+                tmpData2[item.id] = {
                   fetchData: item.result,
                   trackType: item.name,
                 };
@@ -413,7 +414,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         minBp.current = minBp.current - bpRegionSize.current;
         maxBp.current = maxBp.current + bpRegionSize.current;
       }
-      console.log(initialGenomicLoci);
+
       let sentData = false;
       try {
         genomeArr[genomeIdx].defaultTracks.map((item, index) => {
@@ -439,8 +440,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (initial === 1) {
               infiniteScrollWorker.current!.onmessage = (event) => {
                 event.data.fetchResults.map(
-                  (item, index) => (tempObj[item.name] = item.result)
+                  (item, index) => (tempObj[item.id] = item.result)
                 );
+                console.log(event.data.fetchResults);
                 console.log(event.data.fetchResults);
                 tempObj["regionNavCoord"] = new DisplayedRegionModel(
                   genomeArr[genomeIdx].navContext,

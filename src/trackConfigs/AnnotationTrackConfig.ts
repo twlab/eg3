@@ -22,7 +22,11 @@ export class AnnotationTrackConfig extends TrackConfig {
 
   getMenuComponents() {
     const items = [...super.getMenuComponents(), AnnotationDisplayModeConfig];
-    if (this.getOptions().displayMode === AnnotationDisplayModes.DENSITY) {
+
+    if (
+      this.getOptions().displayMode === AnnotationDisplayModes.DENSITY ||
+      this.getOptions().displayMode === "auto"
+    ) {
       items.push(HeightConfig);
     } else {
       // Assume FULL display mode

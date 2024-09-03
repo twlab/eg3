@@ -66,6 +66,7 @@ self.onmessage = async (event: MessageEvent) => {
   let basesPerPixel = event.data.basesPerPixel;
   let regionLength = event.data.regionLength;
   let newtrackDefault = event.data.trackArray;
+  console.log(newtrackDefault);
   await Promise.all(
     newtrackDefault.map(async (item, index) => {
       const trackName = item.name;
@@ -103,7 +104,11 @@ self.onmessage = async (event: MessageEvent) => {
           expandGenomicLoci,
           basesPerPixel
         );
-        fetchResults.push({ name: trackName, nameResult: "hicResult", result });
+        fetchResults.push({
+          name: trackName,
+          result,
+          id,
+        });
       } else if (trackName === "genomealign") {
         let result = await trackFetchFunction[trackName](
           basesPerPixel < 10 ? expandGenomicLoci : genomicLoci,
@@ -133,10 +138,10 @@ self.onmessage = async (event: MessageEvent) => {
         );
         fetchResults.push({
           name: trackName,
-          nameResult: "genomealignResult",
           result,
           genomeName: genomeName,
           querygenomeName: item.trackModel.querygenome,
+          id,
         });
       } else if (trackName === "refGene") {
         let genRefResponses: Array<any> = [];
@@ -156,6 +161,7 @@ self.onmessage = async (event: MessageEvent) => {
               fetchData: _.flatten(genRefResponse),
               genomicLoci: event.data.initialGenomicLoci[i],
               navLoci: event.data.initialNavLoci[i],
+              id,
             });
           }
         } else {
@@ -191,7 +197,7 @@ self.onmessage = async (event: MessageEvent) => {
           url
         );
 
-        fetchResults.push({ name: trackName, result });
+        fetchResults.push({ name: trackName, result, id });
       }
     })
   );

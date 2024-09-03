@@ -1,3 +1,4 @@
+import React from "react";
 import SelectConfig from "./SelectConfig";
 import {
   AnnotationDisplayModes,
@@ -23,7 +24,6 @@ export function AnnotationDisplayModeConfig(props) {
       {...props}
       optionName="displayMode"
       label="Display mode:"
-      defaultValue={AnnotationDisplayModes.FULL}
       choices={AnnotationDisplayModes}
     />
   );

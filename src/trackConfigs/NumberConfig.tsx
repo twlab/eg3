@@ -12,9 +12,9 @@ import "./TrackContextMenu.css";
 interface NumberConfigProps {
   optionsObjects: any;
   optionName: string;
-  label?: string;
+  label?: any;
   minValue?: number;
-  defaultValue?: number;
+  defaultValue?: any;
   isFloat?: boolean;
   step?: number;
   width?: string;

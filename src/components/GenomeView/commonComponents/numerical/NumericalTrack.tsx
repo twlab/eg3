@@ -72,8 +72,8 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
         displayMode: PropTypes.oneOf(Object.values(NumericalDisplayModes))
           .isRequired,
         height: PropTypes.number.isRequired, // Height of the track
-        scaleType: PropTypes.any, // Unused for now
-        scaleRange: PropTypes.array, // Unused for now
+        // scaleType: PropTypes.any, // Unused for now
+        // scaleRange: PropTypes.array, // Unused for now
         color: PropTypes.string, // Color to draw bars, if using the default getBarElement
       }).isRequired,
       isLoading: PropTypes.bool, // If true, applies loading styling

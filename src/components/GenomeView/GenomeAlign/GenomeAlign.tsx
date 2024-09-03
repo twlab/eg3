@@ -77,6 +77,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   visData,
   trackIdx,
   handleDelete,
+  id,
 }) {
   let start, end;
   let result;
@@ -85,9 +86,9 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   if (Object.keys(trackData2!).length > 0) {
     [start, end] = trackData2!.location.split(":");
 
-    result = trackData2!.genomealignResult.fetchData;
-    trackType = trackData2!.genomealignResult.trackType;
-    loci = trackData2!.genomealignResult.loci;
+    result = trackData2![`${id}`].fetchData;
+    trackType = trackData2![`${id}`].trackType;
+    loci = trackData2![`${id}`].loci;
     start = Number(start);
     end = Number(end);
   }

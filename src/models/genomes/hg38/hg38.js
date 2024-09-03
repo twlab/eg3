@@ -62,11 +62,11 @@ const defaultTracks = [
           genome: "hg19",
           url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
         }),
-       new TrackModel ({
-          name: "hic",
-          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-          genome: "hg19",
-        }),
+    //    new TrackModel ({
+    //       name: "hic",
+    //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    //       genome: "hg19",
+    //     }),
        new TrackModel ({
           name: "hic",
           url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",

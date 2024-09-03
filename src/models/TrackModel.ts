@@ -47,8 +47,6 @@ interface ITrackModel {
   genome?: string;
 }
 
-let nextId = 0;
-
 /**
  * An object storing track metadata and state.
  *
@@ -119,10 +117,6 @@ export class TrackModel {
     if (this.options.height && typeof this.options.height === "string") {
       this.options.height = Number.parseFloat(this.options.height) || 20;
     }
-
-    // Other misc props
-    this.id = nextId;
-    nextId++;
   }
 
   serialize() {

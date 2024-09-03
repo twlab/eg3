@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
+import React, { useState, useEffect } from "react";
+
 import SingleInputConfig from "./SingleInputConfig";
 
 const UNKNOWN_VALUE = "Wat is this"; // Special value for unknown selection
@@ -11,7 +11,7 @@ interface Option {
 
 interface SelectConfigProps {
   choices: any;
-  defaultValue?: string | number;
+  defaultValue?: any;
   optionName: string;
   optionsObjects: any[]; // You can replace 'any' with a more specific type if needed
   label: string;
@@ -26,6 +26,14 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
   label,
   onOptionSet = () => undefined,
 }) => {
+  // Initialize state to store the selected value
+  const [selectedValue, setSelectedValue] = useState(defaultValue);
+
+  // When the component mounts, set the selected value based on the defaultValue
+  useEffect(() => {
+    setSelectedValue(defaultValue);
+  }, [defaultValue]);
+
   const renderInputElement = (
     inputValue: string | number,
     setNewValue: (value: string | number) => void
@@ -45,8 +53,12 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
 
     return (
       <select
-        value={inputValue}
-        onChange={(event) => setNewValue(event.target.value)}
+        value={selectedValue} // Use the selected value from state
+        onChange={(event) => {
+          const newValue = event.target.value;
+          setSelectedValue(newValue); // Update the selected value in state
+          setNewValue(newValue);
+        }}
       >
         {optionElements}
       </select>
@@ -73,4 +85,5 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
     />
   );
 };
+
 export default SelectConfig;

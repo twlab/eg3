@@ -55,22 +55,15 @@ let defaultHic = {
 };
 let featurePlacer = new FeaturePlacer();
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
-  bpRegionSize,
-  bpToPx,
-  trackData,
   side,
-  windowWidth = 0,
-
   trackData2,
-  dragXDist,
-  genomeArr,
-  genomeIdx,
   visData,
   trackIdx,
+  id,
 }) {
   let result;
   if (Object.keys(trackData2!).length > 0) {
-    result = trackData2!.hicResult.fetchData;
+    result = trackData2![`${id}`].fetchData;
   }
 
   //useRef to store data between states without re render the component

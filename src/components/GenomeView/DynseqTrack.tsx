@@ -15,6 +15,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackData,
   side,
   windowWidth = 0,
+  id,
 }) {
   let start, end;
 
@@ -22,7 +23,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
 
   if (Object.keys(trackData!).length > 0) {
     [start, end] = trackData!.location.split(":");
-    result = trackData!.dynseq;
+    result = trackData![`${id}`];
     bpRegionSize = bpRegionSize;
     bpToPx = bpToPx;
   }
