@@ -40,11 +40,13 @@ export class ColorConfig extends React.PureComponent<ColorConfigProps> {
    * @return {JSX.Element}
    */
   renderColorPicker(inputValue, setNewValue) {
+    console.log(inputValue);
     return (
       <ColorPicker
-        color={inputValue.hex}
+        color={inputValue.hex !== undefined ? inputValue.hex : inputValue}
         label={this.props.label}
         onChange={(color) => setNewValue(color)}
+        isOpen={false}
       />
     );
   }
@@ -58,6 +60,7 @@ export class ColorConfig extends React.PureComponent<ColorConfigProps> {
         label=""
         defaultValue={DEFAULT_COLOR}
         getInputElement={this.renderColorPicker}
+        onOptionSet={() => ""}
       />
     );
   }

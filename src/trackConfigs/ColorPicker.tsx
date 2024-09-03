@@ -67,7 +67,6 @@ class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
    * Closes the picker UI.
    */
   closePicker() {
-    console.log("WUTTTTTTTTTTTTTTTTT");
     this.setState({ isOpen: false });
   }
 
@@ -78,13 +77,13 @@ class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
     const { color, label, onChange, disableAlpha } = this.props;
 
     const parsedColor = parseColor(color);
-    console.log(parsedColor, color);
+
     let openerStyle = {
       backgroundColor: color,
       color: getContrastingColor(color),
     };
     Object.assign(openerStyle, PICKER_OPENER_STYLE);
-    console.log(openerStyle);
+
     let pickerElement;
     if (this.state.isOpen) {
       pickerElement = (
@@ -111,12 +110,7 @@ class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
         </Reference>
         <Popper placement="bottom">
           {({ ref, style, placement, arrowProps }) => (
-            <div
-              onMouseDown={(e) => {
-                e.stopPropagation();
-              }}
-              style={{ position: "absolute", zIndex: 1004 }}
-            >
+            <div ref={ref} style={{ position: "absolute", zIndex: 1004 }}>
               {pickerElement}
             </div>
           )}

@@ -400,6 +400,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
 
   function onConfigChange(key, value) {
+    console.log(key, value);
     if (key === "displayMode" && value !== displayMode.current) {
       console.log("huh1", configMenuPos.current);
 
