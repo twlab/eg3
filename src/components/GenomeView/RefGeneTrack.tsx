@@ -23,7 +23,29 @@ import "./TrackContextMenu.css";
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/GeneAnnotationTrackConfig";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
+interface AnnotationOptions {
+  displayMode: any; // Assuming you have an enum or type for AnnotationDisplayModes
+  color: string;
+  color2: string;
+  maxRows: number;
+  height?: number; // Optional property for density display mode
+  hideMinimalItems: boolean;
+  sortItems: boolean;
 
+  backgroundColor: string;
+  categoryColors: {
+    coding: string;
+    protein_coding: string;
+    nonCoding: string;
+    pseudogene: string;
+    pseudo: string;
+    problem: string;
+    polyA: string;
+    other: string;
+  };
+  hiddenPixels: number;
+  italicizeText: boolean;
+}
 export const DEFAULT_OPTIONS = {
   full: {
     displayMode: AnnotationDisplayModes.FULL,
@@ -392,7 +414,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
     let configsOptions = renderer.getMenuComponents();
     // create object that has key as displayMode and the configmenu component as the value
-    const items = [AnnotationDisplayModeConfig, ...configsOptions];
+    const items = [...configsOptions];
 
     let menu = ReactDOM.createPortal(
       <Manager>

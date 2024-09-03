@@ -1,48 +1,47 @@
-import { PureComponent, RefObject } from "react";
+import React, { useRef, useEffect } from "react";
 
 interface OutsideClickDetectorProps {
   onOutsideClick?: (event: MouseEvent) => void;
-  innerRef?: (node: Node) => void;
+  innerRef?: (node: Node | null) => void;
+  children: React.ReactNode;
 }
 
-class OutsideClickDetector extends PureComponent<OutsideClickDetectorProps> {
-  private node: Node | null = null;
+const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
+  onOutsideClick,
+  innerRef,
+  children,
+}) => {
+  const nodeRef = useRef<Node | null>(null);
 
-  componentDidMount() {
-    document.addEventListener("mousedown", this.detectOutsideClick);
-  }
-
-  handleRef = (node: Node) => {
-    this.node = node;
-    if (this.props.innerRef) {
-      this.props.innerRef(node);
+  const handleRef = (node: Node | null) => {
+    nodeRef.current = node;
+    if (innerRef) {
+      innerRef(node);
     }
   };
 
-  detectOutsideClick = (event: any) => {
+  const detectOutsideClick = (event: MouseEvent) => {
     if (
-      this.node &&
-      !this.node.contains(event.target as Node) &&
-      this.props.onOutsideClick
+      nodeRef.current &&
+      !nodeRef.current.contains(event.target as Node) &&
+      onOutsideClick
     ) {
-      this.props.onOutsideClick(event);
+      onOutsideClick(event);
     }
   };
 
-  componentWillUnmount() {
-    document.removeEventListener("mousedown", this.detectOutsideClick);
-  }
+  useEffect(() => {
+    document.addEventListener("mousedown", detectOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", detectOutsideClick);
+    };
+  }, []);
 
-  render() {
-    const { onOutsideClick, ...otherProps } = this.props;
-    return (
-      <div
-        style={{ position: "relative", zIndex: 0 }}
-        {...otherProps}
-        ref={this.handleRef}
-      />
-    );
-  }
-}
+  return (
+    <div style={{ position: "relative", zIndex: 0 }} ref={handleRef}>
+      {children}
+    </div>
+  );
+};
 
 export default OutsideClickDetector;

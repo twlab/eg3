@@ -28,6 +28,7 @@ export class AnnotationTrackConfig extends TrackConfig {
       // Assume FULL display mode
       items.push(MaxRowsConfig);
     }
+
     items.push(PrimaryColorConfig, SecondaryColorConfig, BackgroundColorConfig);
     return items;
   }
