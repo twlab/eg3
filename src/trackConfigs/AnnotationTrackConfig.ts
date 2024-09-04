@@ -1,7 +1,14 @@
 import { TrackConfig } from "./TrackConfig";
 
-import { DEFAULT_OPTIONS } from "../components/GenomeView/RefGeneTrack";
-
+export const DEFAULT_OPTIONS = {
+  displayMode: AnnotationDisplayModes.FULL,
+  color: "blue",
+  color2: "red",
+  maxRows: 20,
+  height: 40, // For density display mode
+  hideMinimalItems: false,
+  sortItems: false,
+};
 import { AnnotationDisplayModeConfig } from "../components/GenomeView/commonComponents/track-context-menu/DisplayModeConfig";
 import {
   PrimaryColorConfig,
@@ -17,7 +24,7 @@ import TrackModel from "../models/TrackModel";
 export class AnnotationTrackConfig extends TrackConfig {
   constructor(trackModel: TrackModel) {
     super(trackModel);
-    this.setDefaultOptions(DEFAULT_OPTIONS.full);
+    this.setDefaultOptions(DEFAULT_OPTIONS);
   }
 
   getMenuComponents() {

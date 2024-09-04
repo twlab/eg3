@@ -130,7 +130,7 @@ class TrackContextMenu extends React.PureComponent {
     if (selectedTracks.length === 0) {
       return null;
     }
-    console.log(this.props.tracks);
+
     return (
       <div className="TrackContextMenu-body">
         <MenuTitle tracks={selectedTracks} />

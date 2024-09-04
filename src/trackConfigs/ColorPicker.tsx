@@ -75,19 +75,14 @@ class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
    */
   render() {
     const { color, label, onChange, disableAlpha } = this.props;
-    console.log({ color, label, onChange, disableAlpha }, "initial");
+
     const parsedColor = parseColor(color);
     let openerStyle = {
       backgroundColor: color,
       color: getContrastingColor(color),
     };
     Object.assign(openerStyle, PICKER_OPENER_STYLE);
-    console.log({ label, hex: parsedColor.hex, parsedColor }, "initial");
-    const pickerOpener = (
-      <span style={openerStyle} onClick={this.openPicker}>
-        {label || parsedColor.hex}
-      </span>
-    );
+
     let pickerElement;
     if (this.state.isOpen) {
       pickerElement = (
@@ -112,9 +107,12 @@ class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
             </span>
           )}
         </Reference>
-        <Popper placement="bottom">
+        <Popper
+          placement="bottom"
+          modifiers={[{ name: "flip", enabled: false }]}
+        >
           {({ ref, style, placement, arrowProps }) => (
-            <div ref={ref} style={{ position: "absolute", zIndex: 1004 }}>
+            <div ref={ref} style={{ zIndex: 2 }}>
               {pickerElement}
             </div>
           )}

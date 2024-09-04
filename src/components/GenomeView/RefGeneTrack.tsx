@@ -21,67 +21,19 @@ import GeneDetail from "./geneAnnotationTrack/GeneDetail";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import "./TrackContextMenu.css";
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/GeneAnnotationTrackConfig";
+import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrack/GeneAnnotation";
+import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
+import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/AnnotationTrackConfig";
+
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
 export const DEFAULT_OPTIONS = {
-  full: {
-    displayMode: AnnotationDisplayModes.FULL,
-    color: "blue",
-    color2: "red",
-    maxRows: 20,
-    height: 40, // For density display mode
-    hideMinimalItems: false,
-    sortItems: false,
-
-    backgroundColor: "var(--bg-color)",
-    categoryColors: {
-      coding: "rgb(101,1,168)",
-      protein_coding: "rgb(101,1,168)",
-      nonCoding: "rgb(1,193,75)",
-      pseudogene: "rgb(230,0,172)",
-      pseudo: "rgb(230,0,172)",
-      problem: "rgb(224,2,2)",
-      polyA: "rgb(237,127,2)",
-      other: "rgb(128,128,128)",
-    },
-    hiddenPixels: 0.5,
-    italicizeText: false,
-    label: "refGene",
-  },
-  density: {
-    aggregateMethod: "COUNT",
-    displayMode: "auto",
-    height: 40,
-    color: "blue",
-    colorAboveMax: "red",
-    color2: "red",
-    color2BelowMin: "darkgreen",
-    yScale: "auto",
-    yMax: 10,
-    yMin: 0,
-    smooth: 0,
-    ensemblStyle: false,
-    maxRows: 20,
-    hideMinimalItems: false,
-    sortItems: false,
-    backgroundColor: "var(--bg-color)",
-    categoryColors: {
-      coding: "rgb(101,1,168)",
-      protein_coding: "rgb(101,1,168)",
-      nonCoding: "rgb(1,193,75)",
-      pseudogene: "rgb(230,0,172)",
-      pseudo: "rgb(230,0,172)",
-      problem: "rgb(224,2,2)",
-      polyA: "rgb(237,127,2)",
-      other: "rgb(128,128,128)",
-    },
-    hiddenPixels: 0.5,
-    italicizeText: false,
-    label: "refGene",
-  },
+  ...defaultGeneAnnotationTrack,
+  ...defaultNumericalTrack,
+  ...defaultAnnotationTrack,
 };
-
+DEFAULT_OPTIONS.aggregateMethod = "COUNT";
 const ROW_VERTICAL_PADDING = 5;
 const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
 
@@ -100,17 +52,16 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   onCloseConfigMenu,
   id,
 }) {
-  const svgHeight = useRef(DEFAULT_OPTIONS.full.height);
-  const canvasHeight = useRef(DEFAULT_OPTIONS.density.height);
+  const configOptions = useRef(DEFAULT_OPTIONS);
+
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
   const xPos = useRef(0);
-  const svgConfig = useRef<{ [key: string]: any }>(DEFAULT_OPTIONS.full);
-  const canvasConfig = useRef<any>(DEFAULT_OPTIONS.density);
   const curRegionData = useRef<{ [key: string]: any }>({});
-  const displayMode = useRef("full");
+  const svgHeight = useRef(DEFAULT_OPTIONS.height);
+
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<Array<any>>([]);
   const [canvasComponents, setCanvasComponents] = useState<Array<any>>([]);
@@ -124,7 +75,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   // New data are fetched only if the user drags to the either ends of the track
   function getHeight(numRows: number): number {
     let rowHeight = ROW_HEIGHT;
-    let options = svgConfig.current;
+    let options = configOptions.current;
     let rowsToDraw = Math.min(numRows, options.maxRows);
     if (options.hideMinimalItems) {
       rowsToDraw -= 1;
@@ -144,7 +95,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       xPos.current =
         (Math.floor(curTrackData!.xDist / windowWidth) - 1) * windowWidth;
     }
-
+    console.log(configOptions.current);
     if (curTrackData!.side === "right") {
       let algoData = genesArr.map((record) => new Gene(record));
       let featureArrange = new FeatureArranger();
@@ -172,13 +123,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               curTrackData.regionNavCoord._startBase)
         );
       }
-      if (displayMode.current === "full") {
+      if (configOptions.current.displayMode === "full") {
         let placeFeatureData = featureArrange.arrange(
           algoData,
           currDisplayNav,
           windowWidth * 3,
           getGenePadding,
-          svgConfig.current.hiddenPixels,
+          configOptions.current.hiddenPixels,
           SortItemsOptions.NOSORT
         );
 
@@ -188,8 +139,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           windowWidth * 3,
           height,
           ROW_HEIGHT,
-          svgConfig.current.maxRows,
-          svgConfig.current
+          configOptions.current.maxRows,
+          configOptions.current
         );
 
         setSvgComponents([...[svgDATA]]);
@@ -197,11 +148,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         svgHeight.current = height;
       }
       //_________________________________________________________________________________________density
-      else if (displayMode.current === "density") {
+      else if (configOptions.current.displayMode === "density") {
+        let tmpObj = { ...configOptions.current };
+        tmpObj.displayMode = "auto";
         let canvasElements = (
           <NumericalTrack
             data={algoData}
-            options={canvasConfig.current}
+            options={tmpObj}
             viewWindow={new OpenInterval(0, windowWidth * 3)}
             viewRegion={currDisplayNav}
             width={windowWidth * 3}
@@ -223,7 +176,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             curTrackData.regionNavCoord._startBase) *
             2
       );
-      if (displayMode.current === "full") {
+      if (configOptions.current.displayMode === "full") {
         let featureArrange = new FeatureArranger();
         // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
         // we have to get coord of prev regions by subtracting of the last region
@@ -233,7 +186,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           currDisplayNav,
           windowWidth * 3,
           getGenePadding,
-          svgConfig.current.hiddenPixels,
+          configOptions.current.hiddenPixels,
           SortItemsOptions.NONE
         );
 
@@ -244,16 +197,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           windowWidth * 3,
           height,
           ROW_HEIGHT,
-          svgConfig.current.maxRows,
-          svgConfig.current
+          configOptions.current.maxRows,
+          configOptions.current
         );
 
         setSvgComponents([...[svgDATA]]);
-      } else if (displayMode.current === "density") {
+      } else if (configOptions.current.displayMode === "density") {
+        let tmpObj = { ...configOptions.current };
+        tmpObj.displayMode = "auto";
         let canvasElements = (
           <NumericalTrack
             data={algoData}
-            options={canvasConfig.current}
+            options={tmpObj}
             viewWindow={new OpenInterval(0, windowWidth * 3)}
             viewRegion={currDisplayNav}
             width={windowWidth * 3}
@@ -261,7 +216,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             trackModel={trackModel}
           />
         );
-
+        console.log(canvasElements);
         setCanvasComponents([...[canvasElements]]);
       }
     }
@@ -304,7 +259,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         viewWindow={new OpenInterval(0, windowWidth * 3)}
         y={y}
         isMinimal={isLastRow}
-        options={svgConfig.current}
+        options={configOptions.current}
         onClick={renderTooltip}
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
@@ -312,7 +267,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             key={i}
             placedGene={placedGene}
             y={y}
-            options={svgConfig.current}
+            options={configOptions.current}
           />
         ))}
       </GeneAnnotationScaffold>
@@ -381,17 +336,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
 
   function onConfigChange(key, value) {
-    console.log(key, value);
-    if (key === "displayMode" && value === displayMode.current) {
+    if (value === configOptions.current[`${key}`]) {
       return;
-    } else if (key === "displayMode" && value !== displayMode.current) {
-      console.log("huh1", configMenuPos.current);
-      displayMode.current = value;
-      if (displayMode.current === "full") {
-        genomeArr![genomeIdx!].options = svgConfig.current;
-      } else if (displayMode.current === "density") {
-        genomeArr![genomeIdx!].options = canvasConfig.current;
-      }
+    } else if (
+      key === "displayMode" &&
+      value !== configOptions.current.displayMode
+    ) {
+      configOptions.current.displayMode = value;
+
+      genomeArr![genomeIdx!].options = configOptions.current;
 
       const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
 
@@ -431,12 +384,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                     {items.map((MenuComponent, index) => (
                       <MenuComponent
                         key={index}
-                        defaultValue={displayMode.current}
-                        optionsObjects={[
-                          displayMode.current === "full"
-                            ? svgConfig.current
-                            : canvasConfig.current,
-                        ]}
+                        defaultValue={configOptions.current.displayMode}
+                        optionsObjects={[configOptions.current]}
                         onOptionSet={onConfigChange}
                       />
                     ))}
@@ -451,34 +400,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       getConfigMenu(menu);
       setConfigChanged(true);
-    } else if (displayMode.current === "full") {
-      if (svgConfig.current[`${key}`] !== value) {
-        svgConfig.current[`${key}`] = value;
-        if (canvasConfig.current[`${key}`] !== undefined) {
-          canvasConfig.current[`${key}`] = value;
-        }
-        setConfigChanged(true);
-      }
-    } else if (displayMode.current === "density") {
-      if (canvasConfig.current[`${key}`] !== value) {
-        if (key === "height") {
-          canvasHeight.current = value;
-        }
-        canvasConfig.current[`${key}`] = value;
-        if (svgConfig.current[`${key}`] !== undefined) {
-          svgConfig.current[`${key}`] = value;
-        }
-        setConfigChanged(true);
-      }
+    } else {
+      configOptions.current[`${key}`] = value;
+      setConfigChanged(true);
     }
   }
   function renderConfigMenu(event) {
     event.preventDefault();
-    if (displayMode.current === "full") {
-      genomeArr![genomeIdx!].options = svgConfig.current;
-    } else if (displayMode.current === "density") {
-      genomeArr![genomeIdx!].options = canvasConfig.current;
-    }
+
+    genomeArr![genomeIdx!].options = configOptions.current;
 
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
 
@@ -501,8 +431,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           )}
         </Reference>
         <Popper
-          placement="bottom-start"
-          modifiers={[{ name: "flip", enabled: false }]}
+          placement="top-start"
+          modifiers={[
+            {
+              name: "flip",
+              options: {
+                fallbackPlacements: ["bottom", "top"],
+              },
+            },
+          ]}
         >
           {({ ref, style, placement, arrowProps }) => (
             <div
@@ -518,13 +455,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                   {items.map((MenuComponent, index) => (
                     <MenuComponent
                       key={index}
-                      optionsObjects={[
-                        displayMode.current === "full"
-                          ? svgConfig.current
-                          : canvasConfig.current,
-                      ]}
+                      optionsObjects={[configOptions.current]}
                       defaultValue={
-                        index !== 2 && index !== 7 ? displayMode.current : 0
+                        index !== 2 && index !== 7
+                          ? configOptions.current.displayMode
+                          : 0
                       }
                       onOptionSet={onConfigChange}
                     />
@@ -760,18 +695,21 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       <div
         style={{
           display: "flex",
-
+          height:
+            configOptions.current.displayMode === "full"
+              ? svgHeight.current
+              : configOptions.current.height,
           position: "relative",
-          height: svgHeight.current,
         }}
       >
-        {displayMode.current === "full" ? (
+        {configOptions.current.displayMode === "full" ? (
           <div
             style={{
               position: "absolute",
-
+              height: svgHeight.current,
               right: side === "left" ? `${xPos.current}px` : "",
               left: side === "right" ? `${xPos.current}px` : "",
+              backgroundColor: configOptions.current.backgroundColor,
             }}
           >
             {svgComponents.map((item, index) => (
@@ -783,13 +721,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             style={{
               display: "flex",
               position: "relative",
-              height: canvasHeight.current,
+              height: configOptions.current.height,
             }}
           >
             <div
               style={{
                 position: "absolute",
-
+                backgroundColor: configOptions.current.backgroundColor,
                 left: side === "right" ? `${xPos.current}px` : "",
                 right: side === "left" ? `${xPos.current}px` : "",
               }}
