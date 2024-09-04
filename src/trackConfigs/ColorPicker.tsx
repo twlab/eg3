@@ -16,11 +16,10 @@ const PICKER_OPENER_STYLE = {
   minHeight: "1em",
 };
 interface ColorPickerProps {
-  color: string;
+  color: any;
   label: any; // Predefined color palette
-  onChange: (color: string) => void;
+  onChange: (color: any) => void;
   disableAlpha: any;
-  isOpen: boolean;
 }
 /**
  * A color picker.
@@ -29,11 +28,12 @@ interface ColorPickerProps {
  */
 
 interface MyState {
-  isOpen: boolean;
+  isOpen?: boolean;
 }
+
 class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
   static propTypes = {
-    color: PropTypes.string.isRequired, // The color for the picker to display
+    color: PropTypes.any.isRequired, // The color for the picker to display
     label: PropTypes.string, // Label of the picker opener.  If not provided, then displays the color's hex value.
 
     /**
@@ -75,15 +75,19 @@ class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
    */
   render() {
     const { color, label, onChange, disableAlpha } = this.props;
-
+    console.log({ color, label, onChange, disableAlpha }, "initial");
     const parsedColor = parseColor(color);
-
     let openerStyle = {
       backgroundColor: color,
       color: getContrastingColor(color),
     };
     Object.assign(openerStyle, PICKER_OPENER_STYLE);
-
+    console.log({ label, hex: parsedColor.hex, parsedColor }, "initial");
+    const pickerOpener = (
+      <span style={openerStyle} onClick={this.openPicker}>
+        {label || parsedColor.hex}
+      </span>
+    );
     let pickerElement;
     if (this.state.isOpen) {
       pickerElement = (

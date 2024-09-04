@@ -56,6 +56,8 @@ SingleInputConfig.propTypes = {
   multiValue: PropTypes.any,
   hasSetButton: PropTypes.bool,
   getInputElement: PropTypes.func,
+  optionsObjects: PropTypes.any,
+  onOptionSet: PropTypes.any,
 };
 
 SingleInputConfig.defaultProps = {

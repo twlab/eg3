@@ -455,11 +455,17 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     } else if (displayMode.current === "full") {
       if (svgConfig.current[`${key}`] !== value) {
         svgConfig.current[`${key}`] = value;
+        if (canvasConfig.current[`${key}`] !== undefined) {
+          canvasConfig.current[`${key}`] = value;
+        }
         setConfigChanged(true);
       }
     } else if (displayMode.current === "density") {
       if (canvasConfig.current[`${key}`] !== value) {
         canvasConfig.current[`${key}`] = value;
+        if (svgConfig.current[`${key}`] !== undefined) {
+          svgConfig.current[`${key}`] = value;
+        }
         setConfigChanged(true);
       }
     }

@@ -14,17 +14,15 @@ const DEFAULT_COLOR = "#FFFFFF"; // White
  */
 
 interface ColorConfigProps {
-  label: string; // The label for the component
-  optionName: any;
+  color: any;
+  label: string;
+  optionName: string;
 }
 export class ColorConfig extends React.PureComponent<ColorConfigProps> {
-  static propTypes = Object.assign(
-    {},
-    {
-      optionName: PropTypes.string.isRequired, // The prop to change of a TrackModel's options object.
-      label: PropTypes.string, // Label of the color picker
-    }
-  );
+  static propTypes = Object.assign({}, SingleInputConfig.propTypes, {
+    optionName: PropTypes.string.isRequired, // The prop to change of a TrackModel's options object.
+    label: PropTypes.string, // Label of the color picker
+  });
 
   constructor(props) {
     super(props);
@@ -40,13 +38,11 @@ export class ColorConfig extends React.PureComponent<ColorConfigProps> {
    * @return {JSX.Element}
    */
   renderColorPicker(inputValue, setNewValue) {
-    console.log(inputValue);
     return (
       <ColorPicker
-        color={inputValue.hex !== undefined ? inputValue.hex : inputValue}
+        color={inputValue}
         label={this.props.label}
-        onChange={(color) => setNewValue(color)}
-        isOpen={false}
+        onChange={(color) => setNewValue(color.hex)}
       />
     );
   }
@@ -55,12 +51,14 @@ export class ColorConfig extends React.PureComponent<ColorConfigProps> {
     return (
       <SingleInputConfig
         optionsObjects={[]}
+        onOptionSet={function (...args: any[]) {
+          throw new Error("Function not implemented.");
+        }}
         {...this.props}
         optionName={this.props.optionName}
         label=""
         defaultValue={DEFAULT_COLOR}
         getInputElement={this.renderColorPicker}
-        onOptionSet={() => ""}
       />
     );
   }

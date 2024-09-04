@@ -4,11 +4,6 @@ import SingleInputConfig from "./SingleInputConfig";
 
 const UNKNOWN_VALUE = "Wat is this"; // Special value for unknown selection
 
-interface Option {
-  label: string;
-  value: string;
-}
-
 interface SelectConfigProps {
   choices: any;
   defaultValue?: any;
