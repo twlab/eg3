@@ -101,6 +101,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   id,
 }) {
   const svgHeight = useRef(DEFAULT_OPTIONS.full.height);
+  const canvasHeight = useRef(DEFAULT_OPTIONS.density.height);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -178,7 +179,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           windowWidth * 3,
           getGenePadding,
           svgConfig.current.hiddenPixels,
-          SortItemsOptions.NONE
+          SortItemsOptions.NOSORT
         );
 
         const height = getHeight(placeFeatureData.numRowsAssigned);
@@ -394,9 +395,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
 
-      console.log(renderer);
       let configsOptions = renderer.getMenuComponents();
-      console.log(configsOptions);
       // create object that has key as displayMode and the configmenu component as the value
       const items = [...configsOptions];
 
@@ -459,6 +458,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     } else if (displayMode.current === "density") {
       if (canvasConfig.current[`${key}`] !== value) {
+        if (key === "height") {
+          canvasHeight.current = value;
+        }
         canvasConfig.current[`${key}`] = value;
         setConfigChanged(true);
       }
@@ -515,7 +517,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                           ? svgConfig.current
                           : canvasConfig.current,
                       ]}
-                      defaultValue={displayMode.current}
+                      defaultValue={
+                        index !== 2 && index !== 7 ? displayMode.current : 0
+                      }
                       onOptionSet={onConfigChange}
                     />
                   ))}
@@ -773,7 +777,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             style={{
               display: "flex",
               position: "relative",
-              height: "40px",
+              height: canvasHeight.current,
             }}
           >
             <div
