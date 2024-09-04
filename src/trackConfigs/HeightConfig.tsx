@@ -14,7 +14,7 @@ function HeightConfig(props) {
       label="Height (pixels):"
       minValue={5}
       step={5}
-      hasSetButton={false}
+      hasSetButton={true}
     />
   );
 }
