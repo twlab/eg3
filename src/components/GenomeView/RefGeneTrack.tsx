@@ -205,12 +205,28 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return (
       <svg width={width} height={height}>
         {placements.map(renderAnnotation)}
+        <line
+          x1={width / 3}
+          y1={0}
+          x2={width / 3}
+          y2={height}
+          stroke="black"
+          strokeWidth={1}
+        />
+
+        <line
+          x1={(2 * width) / 3}
+          y1={0}
+          x2={(2 * width) / 3}
+          y2={height}
+          stroke="black"
+          strokeWidth={1}
+        />
       </svg>
     );
   }
   function getAnnotationElement(placedGroup, y, isLastRow, index) {
     const gene = placedGroup.feature;
-    // const { viewWindow, options } = this.props;
 
     return (
       <GeneAnnotationScaffold
