@@ -9,10 +9,8 @@ import { GeneAnnotationScaffold } from "./geneAnnotationTrack/GeneAnnotationScaf
 import { GeneAnnotation } from "./geneAnnotationTrack/GeneAnnotation";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
-
-import { AnnotationDisplayModes } from "./commonComponents/track-context-menu/DisplayModes";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-import { AnnotationDisplayModeConfig } from "./commonComponents/track-context-menu/DisplayModeConfig";
+
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
@@ -347,7 +345,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                     {items.map((MenuComponent, index) => (
                       <MenuComponent
                         key={index}
-                        defaultValue={configOptions.current.displayMode}
+                        defaultValue={
+                          index !== 2 && index !== 7 && index !== 0
+                            ? configOptions.current.displayMode
+                            : 0
+                        }
                         optionsObjects={[configOptions.current]}
                         onOptionSet={onConfigChange}
                       />
@@ -370,7 +372,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   function renderConfigMenu(event) {
     event.preventDefault();
-
+    console.log(trackModel);
     genomeArr![genomeIdx!].options = configOptions.current;
 
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
@@ -421,7 +423,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                       optionsObjects={[configOptions.current]}
                       defaultValue={
                         index !== 2 && index !== 7
-                          ? configOptions.current.displayMode
+                          ? index !== 0
+                            ? configOptions.current.displayMode
+                            : trackModel.name
                           : 0
                       }
                       onOptionSet={onConfigChange}

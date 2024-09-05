@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import aggregateOptions from "./aggregateOptions";
@@ -15,7 +15,13 @@ const SingleInputConfig = ({
   defaultValue = "",
   multiValue = "[multiple values]",
   hasSetButton,
-  getInputElement,
+  getInputElement = (inputValue, setNewValue) => (
+    <input
+      type="text"
+      value={inputValue}
+      onChange={(event) => setNewValue(event.target.value)}
+    />
+  ),
   onOptionSet,
 }) => {
   const [inputValue, setInputValue] = useState(
@@ -58,18 +64,6 @@ SingleInputConfig.propTypes = {
   getInputElement: PropTypes.func,
   optionsObjects: PropTypes.any,
   onOptionSet: PropTypes.any,
-};
-
-SingleInputConfig.defaultProps = {
-  defaultValue: "",
-  multiValue: "[multiple values]",
-  getInputElement: (inputValue, setNewValue) => (
-    <input
-      type="text"
-      value={inputValue}
-      onChange={(event) => setNewValue(event.target.value)}
-    />
-  ),
 };
 
 export default SingleInputConfig;
