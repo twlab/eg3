@@ -591,8 +591,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           width={`${newTrackWidth.current!.visWidth}px`}
           height={"250"}
           style={{
-            overflow: "visible",
-
             position: "absolute",
             right:
               side === "left"
@@ -630,8 +628,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         </svg>
         <div
           style={{
-            overflow: "visible",
-
             position: "absolute",
             right:
               side === "left"

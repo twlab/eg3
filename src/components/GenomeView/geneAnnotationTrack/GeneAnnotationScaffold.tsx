@@ -1,16 +1,19 @@
 import React, { Children } from "react";
 import OpenInterval from "../../../models/OpenInterval";
 import Gene from "../../../models/Gene";
-import { GeneAnnotation } from "./GeneAnnotation";
+import GeneAnnotation, {
+  DEFAULT_OPTIONS,
+  GeneDisplayOptions,
+} from "./GeneAnnotation";
 import { TranslatableG } from "./TranslatableG";
 import BackgroundedText from "./BackgroundedText";
 
 interface GeneAnnotationScaffoldProps {
   gene: Gene;
-  xSpan: OpenInterval; // x span of the gene segments
-  viewWindow?: OpenInterval; // Used to guide placement of labels
-  y?: number; // Y offset
-  isMinimal?: boolean; // If true, display only a minimal box
+  xSpan: OpenInterval;
+  viewWindow?: OpenInterval;
+  y?: number;
+  isMinimal?: boolean;
   options?: {
     color?: string;
     backgroundColor?: string;
@@ -18,128 +21,119 @@ interface GeneAnnotationScaffoldProps {
     hideMinimalItems?: boolean;
   };
   children: React.ReactNode;
-  /**
-   * Callback for click events
-   *
-   * @param {React.MouseEvent} event - the triggering event
-   * @param {Gene} gene - the model of the clicked gene
-   */
   onClick(event: React.MouseEvent, gene: Gene): void;
 }
 
-const HEIGHT = GeneAnnotation.HEIGHT;
+const HEIGHT = 9;
 
-/**
- * A component designed to hold GeneAnnotations.  This component is responsible for drawing gene labels and listening
- * for clicks.
- *
- * @author Silas Hsu
- */
-export class GeneAnnotationScaffold extends React.PureComponent<GeneAnnotationScaffoldProps> {
-  static defaultProps: Partial<GeneAnnotationScaffoldProps> = {
-    viewWindow: new OpenInterval(-Infinity, Infinity),
-    y: 0,
-    options: {},
-    onClick: () => undefined,
-  };
+const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
+  gene,
+  xSpan,
+  viewWindow,
+  y,
+  isMinimal,
+  options,
+  children,
+  onClick,
+}) => {
+  const [xStart, xEnd] = xSpan;
+  function getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
+    const mergedOptions = {
+      ...DEFAULT_OPTIONS,
+      ...options,
+    };
 
-  constructor(props: GeneAnnotationScaffoldProps) {
-    super(props);
-
-    this.handleClick = this.handleClick.bind(this);
+    return {
+      color:
+        mergedOptions.categoryColors[gene.transcriptionClass!] ||
+        mergedOptions.color,
+      backgroundColor: mergedOptions.backgroundColor,
+      italicizeText: mergedOptions.italicizeText,
+    };
   }
+  const { color, backgroundColor, italicizeText } = getDrawColors(
+    gene,
+    options
+  );
 
-  handleClick(event: React.MouseEvent) {
-    this.props.onClick(event, this.props.gene);
-  }
+  const coveringRect = (
+    <rect
+      // Box that covers the whole annotation to increase the click area
+      x={xStart}
+      y={0}
+      width={xSpan.getLength()}
+      height={HEIGHT}
+      fill={isMinimal ? color : backgroundColor}
+      opacity={isMinimal ? 1 : 0}
+    />
+  );
 
-  render(): JSX.Element {
-    const { gene, xSpan, viewWindow, y, isMinimal, options, children } =
-      this.props;
-    const [xStart, xEnd] = xSpan;
-    const { color, backgroundColor, italicizeText } =
-      GeneAnnotation.getDrawColors(gene, this.props.options);
-
-    const coveringRect = (
-      <rect // Box that covers the whole annotation to increase the click area
-        x={xStart}
-        y={0}
-        width={xSpan.getLength()}
-        height={HEIGHT}
-        fill={isMinimal ? color : backgroundColor}
-        opacity={isMinimal ? 1 : 0}
-      />
-    );
-
-    if (isMinimal) {
-      // Just render a box if minimal.
-      if (options!.hideMinimalItems) {
-        return <div></div>;
-      }
-      return <TranslatableG y={y}>{coveringRect}</TranslatableG>;
+  if (isMinimal) {
+    // Just render a box if minimal.
+    if (options?.hideMinimalItems) {
+      return <div></div>;
     }
-
-    const centerY = HEIGHT / 2;
-    const centerLine = (
-      <line
-        x1={xStart}
-        y1={centerY}
-        x2={xEnd}
-        y2={centerY}
-        stroke={color}
-        strokeWidth={1}
-        strokeDasharray={4}
-      />
-    );
-
-    // Label
-    let labelX, textAnchor;
-    let labelHasBackground = false;
-    // Label width is approx. because calculating bounding boxes is expensive.
-    const estimatedLabelWidth = gene.getName().length * HEIGHT;
-    const isBlockedLeft = xStart - estimatedLabelWidth < viewWindow!.start; // Label obscured if put on the left
-    const isBlockedRight = xEnd + estimatedLabelWidth > viewWindow!.end; // Label obscured if put on the right
-    if (!isBlockedLeft) {
-      // Yay, we can put it on the left!
-      labelX = xStart - 4;
-      textAnchor = "end";
-    } else if (!isBlockedRight) {
-      // Yay, we can put it on the right!
-      labelX = xEnd + 4;
-      textAnchor = "start";
-    } else if (!isBlockedLeft && !isBlockedRight) {
-      // Just put it directly on top of the annotation
-      labelX = viewWindow!.start + 4;
-      textAnchor = "start";
-      labelHasBackground = true; // Need to add background for contrast purposes
-    }
-    // misaligned lable issue when convert to pdf
-    // possible solution https://observablehq.com/@hastebrot/vertical-text-alignment-in-svg
-    const label = (
-      <BackgroundedText
-        x={labelX}
-        y={0}
-        height={GeneAnnotation.HEIGHT}
-        fill={color}
-        // dominantBaseline="hanging"
-        // dominantBaseline="auto"
-        dy="0.65em"
-        textAnchor={textAnchor}
-        backgroundColor={backgroundColor}
-        backgroundOpacity={labelHasBackground ? 0.65 : 0}
-        italicizeText={italicizeText}
-      >
-        {gene.getName()}
-      </BackgroundedText>
-    );
-
-    return (
-      <TranslatableG y={y} onClick={this.handleClick}>
-        {coveringRect}
-        {centerLine}
-        {children}
-        {label}
-      </TranslatableG>
-    );
+    return <TranslatableG y={y}>{coveringRect}</TranslatableG>;
   }
-}
+
+  const centerY = HEIGHT / 2;
+  const centerLine = (
+    <line
+      x1={xStart}
+      y1={centerY}
+      x2={xEnd}
+      y2={centerY}
+      stroke={color}
+      strokeWidth={1}
+      strokeDasharray={4}
+    />
+  );
+
+  let labelX, textAnchor;
+  let labelHasBackground = false;
+
+  const estimatedLabelWidth = gene.getName().length * HEIGHT;
+  const isBlockedLeft = xStart - estimatedLabelWidth < viewWindow!.start;
+  const isBlockedRight = xEnd + estimatedLabelWidth > viewWindow!.end;
+
+  if (!isBlockedLeft) {
+    // Yay, we can put it on the left!
+    labelX = xStart - 4;
+    textAnchor = "end";
+  } else if (!isBlockedRight) {
+    // Yay, we can put it on the right!
+    labelX = xEnd + 4;
+    textAnchor = "start";
+  } else if (!isBlockedLeft && !isBlockedRight) {
+    labelX = viewWindow!.start + 4;
+    textAnchor = "start";
+    labelHasBackground = true;
+  }
+
+  const label = (
+    <BackgroundedText
+      x={labelX}
+      y={0}
+      height={9}
+      fill={color}
+      dy="0.65em"
+      textAnchor={textAnchor}
+      backgroundColor={backgroundColor}
+      backgroundOpacity={labelHasBackground ? 0.65 : 0}
+      italicizeText={italicizeText}
+    >
+      {gene.getName()}
+    </BackgroundedText>
+  );
+
+  return (
+    <TranslatableG y={y} onClick={(event) => onClick(event, gene)}>
+      {coveringRect}
+      {centerLine}
+      {children}
+      {label}
+    </TranslatableG>
+  );
+};
+
+export default GeneAnnotationScaffold;

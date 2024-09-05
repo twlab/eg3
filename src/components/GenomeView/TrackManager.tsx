@@ -442,8 +442,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 event.data.fetchResults.map(
                   (item, index) => (tempObj[item.id] = item.result)
                 );
-                console.log(event.data.fetchResults);
-                console.log(event.data.fetchResults);
+
                 tempObj["regionNavCoord"] = new DisplayedRegionModel(
                   genomeArr[genomeIdx].navContext,
                   event.data.curRegionCoord._startBase,
@@ -475,6 +474,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   function handleDelete(id: number) {
+    console.log(id);
     genomeArr[genomeIdx].defaultTracks = genomeArr[
       genomeIdx
     ].defaultTracks.filter((items, index) => {
@@ -486,6 +486,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return index !== id;
       });
     });
+
+    setConfigMenuVisible(false);
   }
   function getConfigMenu(htmlElement: any) {
     setConfigMenuVisible(true);
@@ -495,6 +497,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setConfigMenuVisible(false);
   }
   useEffect(() => {
+    console.log("IS WHY");
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
 
@@ -651,29 +654,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       >
         <button onClick={handleClick}>add bed</button>
 
-        <div> {viewRegion.current?.toString()}</div>
-
-        <div>Pixel distance from starting point : {dragX.current}px</div>
-        {isLoading.current ? (
-          <CircularProgress
-            variant="indeterminate"
-            disableShrink
-            sx={{
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
-              animationDuration: "550ms",
-
-              left: 0,
-            }}
-            size={20}
-            thickness={4}
-          />
-        ) : (
-          <div style={{ height: 20 }}>DATA READY LETS GO</div>
-        )}
-
-        <div>1pixel to {basePerPixel.current}bp</div>
-
         <div
           style={{
             display: "flex",
@@ -731,8 +711,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               );
             })}
           </div>
-          {configMenuVisible ? configMenu : ""}
         </div>
+        {configMenuVisible ? configMenu : ""}
       </div>
     </>
   );

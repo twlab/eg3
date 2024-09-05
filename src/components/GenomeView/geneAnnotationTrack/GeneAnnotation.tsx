@@ -30,7 +30,7 @@ export const DEFAULT_OPTIONS = {
   hideMinimalItems: false,
 };
 
-interface GeneDisplayOptions {
+export interface GeneDisplayOptions {
   color?: string;
   backgroundColor?: string;
   categoryColors?: { [category: string]: string };
@@ -42,45 +42,8 @@ interface GeneAnnotationProps {
   y?: number;
 }
 
-/**
- * A visualization of Gene objects.  Renders SVG elements.
- *
- * @author Silas Hsu and Daofeng Li
- */
-export class GeneAnnotation extends React.Component<GeneAnnotationProps> {
-  static HEIGHT = HEIGHT;
-
-  static getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
-    const mergedOptions = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-    };
-
-    return {
-      color:
-        mergedOptions.categoryColors[gene.transcriptionClass!] ||
-        mergedOptions.color,
-      backgroundColor: mergedOptions.backgroundColor,
-      italicizeText: mergedOptions.italicizeText,
-    };
-  }
-
-  private _exonClipId: string;
-
-  constructor(props: GeneAnnotationProps) {
-    super(props);
-    this._exonClipId = _.uniqueId("GeneAnnotation");
-  }
-
-  /**
-   * Renders a series of rectangles centered on the horizontal axis of the annotation.
-   *
-   * @param {PlacedSegment[]} placedSegments - segments of the gene to draw
-   * @param {number} height - height of all the rectangles
-   * @param {string} color - color of all the rectangles
-   * @return {JSX.Element[]} <rect> elements
-   */
-  _renderCenteredRects(
+const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
+  function _renderCenteredRects(
     placedSegments: PlacedSegment[],
     height: number,
     color: string,
@@ -102,91 +65,89 @@ export class GeneAnnotation extends React.Component<GeneAnnotationProps> {
       );
     });
   }
+  function getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
+    const mergedOptions = {
+      ...DEFAULT_OPTIONS,
+      ...options,
+    };
 
-  /**
-   * Draws the annotation.
-   *
-   * @return {JSX.Element}
-   */
-  render(): JSX.Element {
-    const placedGene = this.props.placedGene;
-    const gene = placedGene.feature as Gene;
-    const [xStart, xEnd] = placedGene.xSpan;
-    const { color, backgroundColor } = GeneAnnotation.getDrawColors(
-      gene,
-      this.props.options
-    );
-
-    const centerY = HEIGHT / 2;
-    const centerLine = (
-      <line
-        x1={xStart}
-        y1={centerY}
-        x2={xEnd}
-        y2={centerY}
-        stroke={color}
-        strokeWidth={2}
-      />
-    );
-
-    // Exons, which are split into translated and non-translated ones (i.e. utrs)
-    const { translated, utrs } = gene.getExonsAsFeatureSegments();
-    const placedTranslated = FEATURE_PLACER.placeFeatureSegments(
-      placedGene,
-      translated
-    );
-    const placedUtrs = FEATURE_PLACER.placeFeatureSegments(placedGene, utrs);
-    const exonRects = this._renderCenteredRects(
-      placedTranslated,
-      HEIGHT,
-      color
-    ); // These are the translated exons
-
-    // Arrows
-    // If this boolean expression confuses you, construct a truth table.  I needed one ;)
-    const isToRight = gene.getIsReverseStrand() === placedGene.isReverse;
-    const intronArrows = (
-      <AnnotationArrows
-        startX={xStart}
-        endX={xEnd}
-        height={HEIGHT}
-        isToRight={isToRight}
-        color={color}
-      />
-    );
-    // clipPath is an invisible element that defines where another element may draw.  We pass its id to exonArrows.
-    const exonClip = <clipPath id={this._exonClipId}>{exonRects}</clipPath>;
-    const exonArrows = (
-      <AnnotationArrows
-        startX={xStart}
-        endX={xEnd}
-        height={HEIGHT}
-        isToRight={isToRight}
-        color={backgroundColor}
-        clipId={this._exonClipId}
-      />
-    );
-
-    // utrArrowCover covers up arrows where the UTRs will be
-    const utrArrowCover = this._renderCenteredRects(
-      placedUtrs,
-      HEIGHT,
-      backgroundColor,
-      0
-    );
-    // const utrArrowCover = this._renderCenteredRects(placedUtrs, HEIGHT, 'white'); //somehow Illustrator don't understand css variables?
-    const utrRects = this._renderCenteredRects(placedUtrs, UTR_HEIGHT, color);
-
-    return (
-      <React.Fragment>
-        {centerLine}
-        {exonRects}
-        {exonClip}
-        {intronArrows}
-        {exonArrows}
-        {utrArrowCover}
-        {utrRects}
-      </React.Fragment>
-    );
+    return {
+      color:
+        mergedOptions.categoryColors[gene.transcriptionClass!] ||
+        mergedOptions.color,
+      backgroundColor: mergedOptions.backgroundColor,
+      italicizeText: mergedOptions.italicizeText,
+    };
   }
-}
+
+  const placedGene = props.placedGene;
+  const gene = placedGene.feature as Gene;
+  const [xStart, xEnd] = placedGene.xSpan;
+  const { color, backgroundColor } = getDrawColors(gene, props.options);
+
+  const centerY = HEIGHT / 2;
+  const centerLine = (
+    <line
+      x1={xStart}
+      y1={centerY}
+      x2={xEnd}
+      y2={centerY}
+      stroke={color}
+      strokeWidth={2}
+    />
+  );
+
+  const { translated, utrs } = gene.getExonsAsFeatureSegments();
+  const placedTranslated = FEATURE_PLACER.placeFeatureSegments(
+    placedGene,
+    translated
+  );
+  const placedUtrs = FEATURE_PLACER.placeFeatureSegments(placedGene, utrs);
+  const exonRects = _renderCenteredRects(placedTranslated, HEIGHT, color);
+
+  const isToRight = gene.getIsReverseStrand() === placedGene.isReverse;
+  const intronArrows = (
+    <AnnotationArrows
+      startX={xStart}
+      endX={xEnd}
+      height={HEIGHT}
+      isToRight={isToRight}
+      color={color}
+    />
+  );
+  let _exonClipId = _.uniqueId("GeneAnnotation");
+  const exonClip = <clipPath id={_exonClipId}>{exonRects}</clipPath>;
+  const exonArrows = (
+    <AnnotationArrows
+      startX={xStart}
+      endX={xEnd}
+      height={HEIGHT}
+      isToRight={isToRight}
+      color={backgroundColor}
+      clipId={_exonClipId}
+    />
+  );
+
+  const utrArrowCover = _renderCenteredRects(
+    placedUtrs,
+    HEIGHT,
+    backgroundColor,
+    0
+  );
+
+  const utrRects = _renderCenteredRects(placedUtrs, UTR_HEIGHT, color);
+
+  return (
+    <React.Fragment>
+      {centerLine}
+      {exonRects}
+      {exonClip}
+      {intronArrows}
+      {exonArrows}
+      {utrArrowCover}
+      {utrRects}
+    </React.Fragment>
+  );
+};
+
+export default GeneAnnotation;

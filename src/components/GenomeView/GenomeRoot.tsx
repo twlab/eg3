@@ -221,7 +221,7 @@ function GenomeHub(props: any) {
       <div
         ref={ref as React.RefObject<HTMLDivElement>}
         style={{
-          paddingLeft: "15px",
+          paddingLeft: "120px",
           paddingRight: "15px",
         }}
       >

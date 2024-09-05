@@ -2,7 +2,10 @@ import PropTypes from "prop-types";
 import React from "react";
 import FeatureDetail from "../commonComponents/annotation/FeatureDetail";
 import Gene from "../../../models/Gene";
-import { GeneAnnotation } from "./GeneAnnotation";
+import GeneAnnotation, {
+  DEFAULT_OPTIONS,
+  GeneDisplayOptions,
+} from "./GeneAnnotation";
 import { safeParseJsonString, variableIsObject } from "../../../models/util";
 
 import "./Tooltip.css";
@@ -24,7 +27,21 @@ interface GeneDetailProps {
  */
 
 const GeneDetail: React.FC<GeneDetailProps> = ({ gene, queryEndpoint }) => {
-  const colors = GeneAnnotation.getDrawColors(gene);
+  function getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
+    const mergedOptions = {
+      ...DEFAULT_OPTIONS,
+      ...options,
+    };
+
+    return {
+      color:
+        mergedOptions.categoryColors[gene.transcriptionClass!] ||
+        mergedOptions.color,
+      backgroundColor: mergedOptions.backgroundColor,
+      italicizeText: mergedOptions.italicizeText,
+    };
+  }
+  const colors = getDrawColors(gene);
   const desc = safeParseJsonString(gene.description!);
 
   let descContent: React.ReactNode;

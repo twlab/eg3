@@ -5,12 +5,12 @@ import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
 import Gene from "../../models/Gene";
-import { GeneAnnotationScaffold } from "./geneAnnotationTrack/GeneAnnotationScaffold";
-import { GeneAnnotation } from "./geneAnnotationTrack/GeneAnnotation";
+import GeneAnnotationScaffold from "./geneAnnotationTrack/GeneAnnotationScaffold";
+import GeneAnnotation from "./geneAnnotationTrack/GeneAnnotation";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-
+import { MenuTitle, RemoveOption } from "../../trackConfigs/TrackContextMenu";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
@@ -23,6 +23,8 @@ import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationT
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/AnnotationTrackConfig";
 
+import { v4 as uuidv4 } from "uuid";
+
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -33,9 +35,9 @@ export const DEFAULT_OPTIONS = {
 };
 DEFAULT_OPTIONS.aggregateMethod = "COUNT";
 const ROW_VERTICAL_PADDING = 5;
-const ROW_HEIGHT = GeneAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
+const ROW_HEIGHT = 9 + ROW_VERTICAL_PADDING;
 
-const getGenePadding = (gene) => gene.getName().length * GeneAnnotation.HEIGHT;
+const getGenePadding = (gene) => gene.getName().length * 9;
 const TOP_PADDING = 2;
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackData,
@@ -48,6 +50,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   dataIdx,
   getConfigMenu,
   onCloseConfigMenu,
+  handleDelete,
+  trackIdx,
   id,
 }) {
   const configOptions = useRef(DEFAULT_OPTIONS);
@@ -83,7 +87,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
-  function createSVGOrCanvas(curTrackData, genesArr, initial: number = 0) {
+  function createSVGOrCanvas(curTrackData, genesArr) {
+    console.log("EYTERER");
     if (curTrackData.index === 0) {
       xPos.current = -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -96,6 +101,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     let currDisplayNav;
     let sortType;
     if (curTrackData!.side === "right") {
+      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
+      // we have to get coord of prev regions by subtracting of the last region
       currDisplayNav = new DisplayedRegionModel(
         curTrackData.regionNavCoord._navContext,
         curTrackData.regionNavCoord._startBase -
@@ -120,6 +127,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
       sortType = SortItemsOptions.NOSORT;
     } else if (curTrackData.side === "left") {
+      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
+      // for left we subtract the endbase by 2 times
       currDisplayNav = new DisplayedRegionModel(
         curTrackData.regionNavCoord._navContext,
         curTrackData.regionNavCoord._startBase,
@@ -134,8 +143,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     let algoData = genesArr.map((record) => new Gene(record));
     let featureArrange = new FeatureArranger();
-    // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-    // we have to get coord of prev regions by subtracting of the last region
 
     //_
     if (configOptions.current.displayMode === "full") {
@@ -162,7 +169,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       svgHeight.current = height;
     }
-    //_
+
     //_________________________________________________________________________________________density
     else if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
@@ -230,7 +237,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     return (
       <GeneAnnotationScaffold
-        key={index}
+        key={uuidv4()}
         gene={gene}
         xSpan={placedGroup.xSpan}
         viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -358,6 +365,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               >
                 <OutsideClickDetector onOutsideClick={onCloseConfigMenu}>
                   <div className="TrackContextMenu-body">
+                    <MenuTitle
+                      title={trackModel.getDisplayLabel()}
+                      numTracks={trackIdx}
+                    />
                     {items.map((MenuComponent, index) => (
                       <MenuComponent
                         key={index}
@@ -370,6 +381,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                         onOptionSet={onConfigChange}
                       />
                     ))}
+                    <RemoveOption onClick={handleDelete} numTracks={trackIdx} />
                   </div>
                 </OutsideClickDetector>
               </div>
@@ -388,7 +400,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   function renderConfigMenu(event) {
     event.preventDefault();
-    console.log(trackModel);
+
     genomeArr![genomeIdx!].options = configOptions.current;
 
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
@@ -417,7 +429,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             {
               name: "flip",
               options: {
-                fallbackPlacements: ["bottom", "top"],
+                fallbackPlacements: ["bottom-start", "top-start"],
               },
             },
           ]}
@@ -433,6 +445,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             >
               <OutsideClickDetector onOutsideClick={onCloseConfigMenu}>
                 <div className="TrackContextMenu-body">
+                  <MenuTitle
+                    title={trackModel.getDisplayLabel()}
+                    numTracks={trackIdx}
+                  />
                   {items.map((MenuComponent, index) => (
                     <MenuComponent
                       key={index}
@@ -447,6 +463,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                       onOptionSet={onConfigChange}
                     />
                   ))}
+                  <RemoveOption onClick={handleDelete} numTracks={trackIdx} />
                 </div>
               </OutsideClickDetector>
             </div>
@@ -590,9 +607,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         curRegionData.current = {
           trackState: trackState1,
           deDupRefGenesArr,
-          initial: 1,
         };
-        createSVGOrCanvas(trackState1, deDupRefGenesArr, 1);
+        createSVGOrCanvas(trackState1, deDupRefGenesArr);
       } else {
         let testData: Array<any> = [];
         if (trackData!.trackState.side === "right") {
@@ -643,15 +659,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [trackData]);
 
   useEffect(() => {
-    setToolTipVisible(false);
-  }, [dragXDist]);
-
-  useEffect(() => {
     if (configChanged === true) {
       createSVGOrCanvas(
         curRegionData.current.trackState,
-        curRegionData.current.deDupRefGenesArr,
-        curRegionData.current.initial
+        curRegionData.current.deDupRefGenesArr
       );
     }
     setConfigChanged(false);
@@ -669,7 +680,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     <div
       style={{
         display: "flex",
-        overflow: "visible",
 
         flexDirection: "column",
       }}
@@ -688,6 +698,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         {configOptions.current.displayMode === "full" ? (
           <div
             style={{
+              borderTop: "1px solid Dodgerblue", // Set your desired border color for the child
+              borderBottom: "1px solid Dodgerblue", // Set your desired border
               position: "absolute",
               height: svgHeight.current,
               right: side === "left" ? `${xPos.current}px` : "",
@@ -709,6 +721,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           >
             <div
               style={{
+                borderTop: "1px solid Dodgerblue", // Set your desired border color for the child
+                borderBottom: "1px solid Dodgerblue", // Set your desired border
                 position: "absolute",
                 backgroundColor: configOptions.current.backgroundColor,
                 left: side === "right" ? `${xPos.current}px` : "",

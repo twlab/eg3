@@ -15,7 +15,6 @@ import { SortItemsOptions } from "../../../../models/SortItemsOptions";
 
 const SVG_STYLE = {
   display: "block",
-  overflow: "visible",
 };
 const TOP_PADDING = 2;
 
