@@ -95,13 +95,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       xPos.current =
         (Math.floor(curTrackData!.xDist / windowWidth) - 1) * windowWidth;
     }
-    console.log(configOptions.current);
+    let currDisplayNav;
+    let sortType;
     if (curTrackData!.side === "right") {
-      let algoData = genesArr.map((record) => new Gene(record));
-      let featureArrange = new FeatureArranger();
-      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-      // we have to get coord of prev regions by subtracting of the last region
-      let currDisplayNav: DisplayedRegionModel = new DisplayedRegionModel(
+      currDisplayNav = new DisplayedRegionModel(
         curTrackData.regionNavCoord._navContext,
         curTrackData.regionNavCoord._startBase -
           (curTrackData.regionNavCoord._endBase -
@@ -123,51 +120,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               curTrackData.regionNavCoord._startBase)
         );
       }
-      if (configOptions.current.displayMode === "full") {
-        let placeFeatureData = featureArrange.arrange(
-          algoData,
-          currDisplayNav,
-          windowWidth * 3,
-          getGenePadding,
-          configOptions.current.hiddenPixels,
-          SortItemsOptions.NOSORT
-        );
-
-        const height = getHeight(placeFeatureData.numRowsAssigned);
-        let svgDATA = createFullVisualizer(
-          placeFeatureData.placements,
-          windowWidth * 3,
-          height,
-          ROW_HEIGHT,
-          configOptions.current.maxRows,
-          configOptions.current
-        );
-
-        setSvgComponents([...[svgDATA]]);
-
-        svgHeight.current = height;
-      }
-      //_________________________________________________________________________________________density
-      else if (configOptions.current.displayMode === "density") {
-        let tmpObj = { ...configOptions.current };
-        tmpObj.displayMode = "auto";
-        let canvasElements = (
-          <NumericalTrack
-            data={algoData}
-            options={tmpObj}
-            viewWindow={new OpenInterval(0, windowWidth * 3)}
-            viewRegion={currDisplayNav}
-            width={windowWidth * 3}
-            forceSvg={false}
-            trackModel={trackModel}
-          />
-        );
-
-        setCanvasComponents([...[canvasElements]]);
-      }
+      sortType = SortItemsOptions.NOSORT;
     } else if (curTrackData.side === "left") {
-      let algoData = genesArr.map((record) => new Gene(record));
-      let currDisplayNav: DisplayedRegionModel = new DisplayedRegionModel(
+      currDisplayNav = new DisplayedRegionModel(
         curTrackData.regionNavCoord._navContext,
         curTrackData.regionNavCoord._startBase,
 
@@ -176,49 +131,57 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             curTrackData.regionNavCoord._startBase) *
             2
       );
-      if (configOptions.current.displayMode === "full") {
-        let featureArrange = new FeatureArranger();
-        // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-        // we have to get coord of prev regions by subtracting of the last region
+      sortType = SortItemsOptions.NONE;
+    }
 
-        let placeFeatureData = featureArrange.arrange(
-          algoData,
-          currDisplayNav,
-          windowWidth * 3,
-          getGenePadding,
-          configOptions.current.hiddenPixels,
-          SortItemsOptions.NONE
-        );
+    let algoData = genesArr.map((record) => new Gene(record));
+    let featureArrange = new FeatureArranger();
+    // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
+    // we have to get coord of prev regions by subtracting of the last region
 
-        const height = getHeight(placeFeatureData.numRowsAssigned);
-        svgHeight.current = height;
-        let svgDATA = createFullVisualizer(
-          placeFeatureData.placements,
-          windowWidth * 3,
-          height,
-          ROW_HEIGHT,
-          configOptions.current.maxRows,
-          configOptions.current
-        );
+    //_
+    if (configOptions.current.displayMode === "full") {
+      let placeFeatureData = featureArrange.arrange(
+        algoData,
+        currDisplayNav,
+        windowWidth * 3,
+        getGenePadding,
+        configOptions.current.hiddenPixels,
+        sortType
+      );
 
-        setSvgComponents([...[svgDATA]]);
-      } else if (configOptions.current.displayMode === "density") {
-        let tmpObj = { ...configOptions.current };
-        tmpObj.displayMode = "auto";
-        let canvasElements = (
-          <NumericalTrack
-            data={algoData}
-            options={tmpObj}
-            viewWindow={new OpenInterval(0, windowWidth * 3)}
-            viewRegion={currDisplayNav}
-            width={windowWidth * 3}
-            forceSvg={false}
-            trackModel={trackModel}
-          />
-        );
-        console.log(canvasElements);
-        setCanvasComponents([...[canvasElements]]);
-      }
+      const height = getHeight(placeFeatureData.numRowsAssigned);
+      let svgDATA = createFullVisualizer(
+        placeFeatureData.placements,
+        windowWidth * 3,
+        height,
+        ROW_HEIGHT,
+        configOptions.current.maxRows,
+        configOptions.current
+      );
+
+      setSvgComponents([...[svgDATA]]);
+
+      svgHeight.current = height;
+    }
+    //_
+    //_________________________________________________________________________________________density
+    else if (configOptions.current.displayMode === "density") {
+      let tmpObj = { ...configOptions.current };
+      tmpObj.displayMode = "auto";
+      let canvasElements = (
+        <NumericalTrack
+          data={algoData}
+          options={tmpObj}
+          viewWindow={new OpenInterval(0, windowWidth * 3)}
+          viewRegion={currDisplayNav}
+          width={windowWidth * 3}
+          forceSvg={false}
+          trackModel={trackModel}
+        />
+      );
+
+      setCanvasComponents([...[canvasElements]]);
     }
   }
 
