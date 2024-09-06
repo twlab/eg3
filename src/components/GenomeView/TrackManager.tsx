@@ -198,10 +198,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
       //so we need to add to keep the position correct.
       dragX.current >= sumArray(leftSectionSize.current) &&
+      dragX.current >= sumArray(leftSectionSize.current) &&
       dragX.current > 0
     ) {
       isLoading.current = true;
       console.log("trigger left");
+      leftSectionSize.current.push(windowWidth);
       leftSectionSize.current.push(windowWidth);
 
       fetchGenomeData(0, "left", genomeCoordLocus);
