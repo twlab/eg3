@@ -76,10 +76,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [initialStart, setInitialStart] = useState(true);
-  const [isDragging, setDragging] = useState(false);
-  const [rightSectionSize, setRightSectionSize] = useState<Array<any>>([
-    windowWidth,
-  ]);
+  const isDragging = useRef(false);
+  const rightSectionSize = useRef<Array<any>>([windowWidth]);
   const [leftSectionSize, setLeftSectionSize] = useState<Array<any>>([
     windowWidth,
   ]);
@@ -99,7 +97,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleMove(e) {
-    if (!isDragging) {
+    if (!isDragging.current) {
       return;
     }
 
@@ -137,13 +135,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   };
   function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
-    setDragging(true);
+    isDragging.current = true;
     lastX.current = e.pageX;
 
     e.preventDefault();
   }
   function handleMouseUp() {
-    setDragging(false);
+    isDragging.current = false;
     if (isLoading.current || lastDragX.current === dragX.current) {
       return;
     }
@@ -191,17 +189,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       // windowWidth needs to be changed to match the speed of the dragx else it has a differenace translate
       // for example if we set speed to 0.5 then need to mutiply windowith by 2
-      -dragX.current >= sumArray(rightSectionSize) &&
+      -dragX.current >= sumArray(rightSectionSize.current) &&
       dragX.current < 0
     ) {
       isLoading.current = true;
-      console.log("trigger right");
-      setRightSectionSize((prevStrandInterval) => {
-        const t = [...prevStrandInterval];
-        t.push(windowWidth);
-        return t;
-      });
 
+      rightSectionSize.current.push(windowWidth);
       fetchGenomeData(0, "right", genomeCoordLocus);
     } else if (
       //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
@@ -251,7 +244,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
     curVisData.current = newVisData;
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    if (initial === 2 || initial === 1) {
+    if (initial === 2 || initial === 1 || initial === 0) {
       let tmpData2 = {};
       let sentData = false;
 
@@ -274,29 +267,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             basePerPixel: basePerPixel.current,
             regionLength: curVisData.current.visRegion.getWidth(),
           });
-          if (initial === 1) {
-            worker.current!.onmessage = (event) => {
-              console.log(event.data.fetchResults);
-              event.data.fetchResults.map((item, index) => {
-                tmpData2[item.id] = {
-                  fetchData: item.result,
-                  trackType: item.name,
-                };
-
-                if (item.nameResult === "genomealignResult") {
-                  tmpData2["genomeName"] = item.genomeName;
-                  tmpData2["queryGenomeName"] = item.querygenomeName;
-                }
-              });
-              tmpData2["location"] = event.data.location;
-              tmpData2["xDist"] = event.data.xDist;
-              tmpData2["side"] = event.data.side;
-
-              setTrackData2({ ...tmpData2 });
-            };
-          }
         }
       });
+      worker.current!.onmessage = (event) => {
+        event.data.fetchResults.map((item, index) => {
+          tmpData2[item.id] = {
+            fetchData: item.result,
+            trackType: item.name,
+          };
+
+          if (item.nameResult === "genomealignResult") {
+            tmpData2["genomeName"] = item.genomeName;
+            tmpData2["queryGenomeName"] = item.querygenomeName;
+          }
+        });
+        tmpData2["location"] = event.data.location;
+        tmpData2["xDist"] = event.data.xDist;
+        tmpData2["side"] = event.data.side;
+
+        setTrackData2({ ...tmpData2 });
+      };
     }
 
     if (initial === 0 || initial === 1) {
@@ -438,43 +428,42 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             });
 
             if (initial === 1) {
-              infiniteScrollWorker.current!.onmessage = (event) => {
-                event.data.fetchResults.map(
-                  (item, index) => (tempObj[item.id] = item.result)
-                );
-
-                tempObj["regionNavCoord"] = new DisplayedRegionModel(
-                  genomeArr[genomeIdx].navContext,
-                  event.data.curRegionCoord._startBase,
-                  event.data.curRegionCoord._endBase
-                );
-                tempObj["initial"] = event.data.initial;
-                tempObj["side"] = event.data.side;
-                tempObj["location"] = event.data.location;
-                tempObj["xDist"] = event.data.xDist;
-                tempObj["trackState"] = {
-                  initial: event.data.initial,
-                  side: event.data.side,
-                  xDist: event.data.xDist,
-                  regionNavCoord: new DisplayedRegionModel(
-                    genomeArr[genomeIdx].navContext,
-                    event.data.curRegionCoord._startBase,
-                    event.data.curRegionCoord._endBase
-                  ),
-                };
-                setTrackData({ ...tempObj });
-                isLoading.current = false;
-              };
               //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
               minBp.current = minBp.current - bpRegionSize.current;
             }
           }
         });
       } catch {}
+      infiniteScrollWorker.current!.onmessage = (event) => {
+        event.data.fetchResults.map(
+          (item, index) => (tempObj[item.id] = item.result)
+        );
+
+        tempObj["regionNavCoord"] = new DisplayedRegionModel(
+          genomeArr[genomeIdx].navContext,
+          event.data.curRegionCoord._startBase,
+          event.data.curRegionCoord._endBase
+        );
+        tempObj["initial"] = event.data.initial;
+        tempObj["side"] = event.data.side;
+        tempObj["location"] = event.data.location;
+        tempObj["xDist"] = event.data.xDist;
+        tempObj["trackState"] = {
+          initial: event.data.initial,
+          side: event.data.side,
+          xDist: event.data.xDist,
+          regionNavCoord: new DisplayedRegionModel(
+            genomeArr[genomeIdx].navContext,
+            event.data.curRegionCoord._startBase,
+            event.data.curRegionCoord._endBase
+          ),
+        };
+        setTrackData({ ...tempObj });
+        isLoading.current = false;
+      };
     }
   }
   function handleDelete(id: number) {
-    console.log(id);
     genomeArr[genomeIdx].defaultTracks = genomeArr[
       genomeIdx
     ].defaultTracks.filter((items, index) => {
@@ -496,16 +485,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function onCloseConfigMenu() {
     setConfigMenuVisible(false);
   }
-  useEffect(() => {
-    console.log("IS WHY");
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging]);
 
   useEffect(() => {
     let curX;
@@ -523,8 +502,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [dragX.current]);
 
   useEffect(() => {
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
     // terminate the work when the component is unmounted
     return () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleMouseUp);
       worker.current!.terminate();
       infiniteScrollWorker.current!.terminate();
       console.log("trackmanager terminate");

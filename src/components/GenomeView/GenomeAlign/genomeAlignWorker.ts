@@ -932,5 +932,5 @@ self.onmessage = (event: MessageEvent) => {
 
     //default datas
   }
-  postMessage(drawDataArr);
+  postMessage({ drawDataArr, xDist: event.data.xDist });
 };

@@ -30,6 +30,7 @@ interface WorkerData {
   viewWindowRegion: { [key: string]: Feature[] | any };
   viewMode: string;
   viewWindow: { [key: string]: any };
+  xDist: number;
 }
 export const DEFAULT_OPTIONS = {
   height: 80,
@@ -124,7 +125,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       queryGenomeName: trackData2!.queryGenomeName,
       result: result,
       loci,
-
+      xDist: trackData2!.xDist,
       visRegion: {
         name: newNav.getName(),
         featureArray: newNav.getFeatures(),
@@ -153,7 +154,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       worker.postMessage(newWorkerData);
 
       worker.onmessage = (event) => {
-        let drawDataArr = event.data;
+        let drawDataArr = event.data.drawDataArr;
 
         newTrackWidth.current = drawDataArr[0].primaryVisData;
 
@@ -171,7 +172,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         } else {
           setLeftTrack(new Array<any>(tmpObj));
         }
-        view.current = trackData2!.xDist;
+        view.current = event.data.xDist;
       };
     }
 
@@ -182,7 +183,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       worker.postMessage(newWorkerData);
 
       worker.onmessage = (event) => {
-        let drawDataArr = event.data;
+        let drawDataArr = event.data.drawDataArr;
 
         let drawData = drawDataArr[0].drawData;
 
@@ -209,7 +210,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         } else {
           setLeftTrack(new Array<any>(tmpObj));
         }
-        view.current = trackData2!.xDist;
+        view.current = event.data.xDist;
       };
     }
   }
