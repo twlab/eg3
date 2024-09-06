@@ -1,5 +1,9 @@
 :root {
+backface-visibility: hidden;
+    perspective: 1000;
     --colNum: 2;
+    -webkit-backface-visibility: hidden;
+        -webkit-perspective: 1000;
     --dark-fg-color: white;
     --dark-bg-color: #222;
     --light-fg-color: #222;
