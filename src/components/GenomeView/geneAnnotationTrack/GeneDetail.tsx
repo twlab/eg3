@@ -6,6 +6,7 @@ import GeneAnnotation, {
   DEFAULT_OPTIONS,
   GeneDisplayOptions,
 } from "./GeneAnnotation";
+import { getDrawColors } from "./GeneAnnotationScaffold";
 import { safeParseJsonString, variableIsObject } from "../../../models/util";
 
 import "./Tooltip.css";
@@ -27,20 +28,6 @@ interface GeneDetailProps {
  */
 
 const GeneDetail: React.FC<GeneDetailProps> = ({ gene, queryEndpoint }) => {
-  function getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
-    const mergedOptions = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-    };
-
-    return {
-      color:
-        mergedOptions.categoryColors[gene.transcriptionClass!] ||
-        mergedOptions.color,
-      backgroundColor: mergedOptions.backgroundColor,
-      italicizeText: mergedOptions.italicizeText,
-    };
-  }
   const colors = getDrawColors(gene);
   const desc = safeParseJsonString(gene.description!);
 

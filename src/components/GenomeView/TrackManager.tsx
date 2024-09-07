@@ -20,6 +20,7 @@ import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
+import { drag } from "d3";
 
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
@@ -95,27 +96,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleMove(e) {
-    if (!isDragging.current) {
+    if (!isDragging.current || isLoading.current) {
       return;
     }
 
     const deltaX = lastX.current - e.pageX;
+    lastX.current = e.pageX;
+    let tempDragX = dragX.current;
+    tempDragX -= deltaX;
 
     if (
-      // (isLoading &&
-      //   deltaX > 0 &&
-      //   side === "right" &&
-      //   -tmpDragX > (rightSectionSize.length - 1) * windowWidth) ||
-      // (isLoading &&
-      //   deltaX < 0 &&
-      //   side === "left" &&
-      //   tmpDragX > (leftSectionSize.length - 1) * windowWidth)
-      isLoading.current
+      side.current === "right" &&
+      -tempDragX >= Math.floor(sumArray(rightSectionSize.current) + windowWidth)
+    ) {
+      return;
+    } else if (
+      side.current === "left" &&
+      tempDragX >= Math.floor(sumArray(leftSectionSize.current) + windowWidth)
     ) {
       return;
     }
-    lastX.current = e.pageX;
-
     dragX.current -= deltaX;
 
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
@@ -140,7 +140,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   function handleMouseUp() {
     isDragging.current = false;
-    if (isLoading.current || lastDragX.current === dragX.current) {
+    if (lastDragX.current === dragX.current) {
       return;
     }
     lastDragX.current = dragX.current;
@@ -176,10 +176,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else if (dragX.current <= 0 && side.current === "left") {
       side.current = "right";
     }
-    if (hicOption === 1 && dragX.current <= 0) {
+    if (hicOption === 1 && dragX.current <= 0 && !isLoading.current) {
       // isLoading.current = true;
       fetchGenomeData(2, "right", genomeCoordLocus, expandedGenomeCoordLocus);
-    } else {
+    } else if (hicOption === 1 && dragX.current > 0 && !isLoading.current) {
       // isLoading.current = true;
       fetchGenomeData(2, "left", genomeCoordLocus, expandedGenomeCoordLocus);
     }
@@ -238,7 +238,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
     curVisData.current = newVisData;
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    if (initial === 2 || initial === 1 || initial === 0) {
+    if (initial === 2 || initial === 1) {
       let tmpData2 = {};
       let sentData = false;
 
@@ -631,6 +631,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }}
       >
         <button onClick={handleClick}>add bed</button>
+
+        <div> {viewRegion.current?.toString()}</div>
+
+        <div>Pixel distance from starting point : {dragX.current}px</div>
+        {isLoading.current ? (
+          <CircularProgress
+            variant="indeterminate"
+            disableShrink
+            sx={{
+              color: (theme) =>
+                theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
+              animationDuration: "550ms",
+
+              left: 0,
+            }}
+            size={20}
+            thickness={4}
+          />
+        ) : (
+          <div style={{ height: 20 }}>DATA READY LETS GO</div>
+        )}
+
+        <div>1pixel to {basePerPixel.current}bp</div>
 
         <div
           style={{

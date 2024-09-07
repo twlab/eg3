@@ -8,7 +8,7 @@ import {
   PlacedFeature,
   PlacedSegment,
 } from "../../../models/getXSpan/FeaturePlacer";
-
+import { getDrawColors } from "./GeneAnnotationScaffold";
 const FEATURE_PLACER = new FeaturePlacer();
 const HEIGHT = 9;
 const UTR_HEIGHT = 5;
@@ -64,20 +64,6 @@ const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
         />
       );
     });
-  }
-  function getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
-    const mergedOptions = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-    };
-
-    return {
-      color:
-        mergedOptions.categoryColors[gene.transcriptionClass!] ||
-        mergedOptions.color,
-      backgroundColor: mergedOptions.backgroundColor,
-      italicizeText: mergedOptions.italicizeText,
-    };
   }
 
   const placedGene = props.placedGene;

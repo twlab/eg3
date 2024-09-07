@@ -37,20 +37,7 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
   onClick,
 }) => {
   const [xStart, xEnd] = xSpan;
-  function getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
-    const mergedOptions = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-    };
 
-    return {
-      color:
-        mergedOptions.categoryColors[gene.transcriptionClass!] ||
-        mergedOptions.color,
-      backgroundColor: mergedOptions.backgroundColor,
-      italicizeText: mergedOptions.italicizeText,
-    };
-  }
   const { color, backgroundColor, italicizeText } = getDrawColors(
     gene,
     options
@@ -137,3 +124,18 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
 };
 
 export default GeneAnnotationScaffold;
+
+export function getDrawColors(gene: Gene, options: GeneDisplayOptions = {}) {
+  const mergedOptions = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+  };
+
+  return {
+    color:
+      mergedOptions.categoryColors[gene.transcriptionClass!] ||
+      mergedOptions.color,
+    backgroundColor: mergedOptions.backgroundColor,
+    italicizeText: mergedOptions.italicizeText,
+  };
+}
