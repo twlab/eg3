@@ -163,7 +163,13 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       }
 
       view.current = trackData2!.xDist;
+
       newTrackWidth.current = result.primaryVisData;
+      console.log(
+        view.current,
+        newTrackWidth.current,
+        view.current! - newTrackWidth.current!.viewWindow.start
+      );
       //  find the gap for primary genome in bp
       // newWorkerData["viewMode"] = "fineMode";
       // worker.postMessage(newWorkerData);
@@ -379,7 +385,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       color: string,
       isQuery: boolean
     ) {
-      console.log(segments);
       const nonGaps = segments.filter((segment) => !segment.isGap);
       const rects = nonGaps.map((segment, i) => (
         <rect
@@ -621,7 +626,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             ? rightTrackGenes.map(
                 (drawData) =>
                   // index <= rightTrackGenes.length - 1 ?
-                  drawData["svgElements"].map((svgData) => svgData)
+                  drawData["svgElements"]
                 //  : (
                 //   <div style={{ display: 'flex', width: windowWidth }}>
                 //     ....LOADING
@@ -654,7 +659,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
                 : "",
           }}
         >
-          {bpToPx! <= 10
+          {/* {bpToPx! <= 10
             ? view.current <= 0
               ? rightTrackGenes.map(
                   (drawData) =>
@@ -694,7 +699,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
                   //   </div>
                   // )
                 )
-            : " "}
+            : " "} */}
         </div>
       </div>
       {/* <button

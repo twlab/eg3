@@ -70,7 +70,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [canvasComponents, setCanvasComponents] = useState<Array<any>>([]);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-
+  const newTrackWidth = useRef(visData);
   const [configChanged, setConfigChanged] = useState(false);
 
   // These states are used to update the tracks with new fetched data
@@ -89,52 +89,37 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
+    console.log(visData!, visData?.viewWindow.start!, curTrackData!.xDist);
+    newTrackWidth.current = visData;
     if (curTrackData.index === 0) {
-      xPos.current = -windowWidth;
+      xPos.current = -visData?.viewWindow.start!;
     } else if (curTrackData.side === "right") {
       xPos.current =
-        (Math.floor(-curTrackData!.xDist / windowWidth) - 1) * windowWidth;
+        (Math.floor(curTrackData!.xDist / visData?.viewWindow.start!) - 1) *
+        visData?.viewWindow.start!;
     } else if (curTrackData.side === "left") {
-      xPos.current =
-        (Math.floor(curTrackData!.xDist / windowWidth) - 1) * windowWidth;
+      xPos.current = curTrackData!.xDis;
+      console.log(xPos.current - newTrackWidth.current!.viewWindow.start);
     }
     let currDisplayNav;
     let sortType;
     if (curTrackData!.side === "right") {
-      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-      // we have to get coord of prev regions by subtracting of the last region
       currDisplayNav = new DisplayedRegionModel(
         visData!.visRegion._navContext,
-        curTrackData.regionNavCoord._startBase -
-          (curTrackData.regionNavCoord._endBase -
-            curTrackData.regionNavCoord._startBase) *
-            2,
+        visData!.visRegion._startBase!,
 
-        curTrackData.regionNavCoord._endBase
+        visData!.visRegion._endBase!
       );
 
-      if (curTrackData.index === 0) {
-        currDisplayNav = new DisplayedRegionModel(
-          visData!.visRegion._navContext,
-          curTrackData.regionNavCoord._startBase -
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase),
-
-          1259222408
-        );
-      }
       sortType = SortItemsOptions.NOSORT;
     } else if (curTrackData.side === "left") {
       // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
       // for left we subtract the endbase by 2 times
       currDisplayNav = new DisplayedRegionModel(
         visData!.visRegion._navContext,
-        curTrackData.regionNavCoord._startBase,
+        visData!.visRegion._startBase!,
 
-        curTrackData.regionNavCoord._endBase +
-          (curTrackData.regionNavCoord._endBase -
-            curTrackData.regionNavCoord._startBase) *
-            2
+        visData!.visRegion._endBase!
       );
       sortType = SortItemsOptions.NONE;
     }
@@ -650,6 +635,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             deDupRefGenesArr,
             initial: 0,
           };
+
           createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
         }
       }
@@ -700,7 +686,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               borderBottom: "1px solid Dodgerblue", // Set your desired border
               position: "absolute",
               height: svgHeight.current,
-              right: side === "left" ? `${xPos.current}px` : "",
+              right:
+                side === "left"
+                  ? `${
+                      xPos.current! - newTrackWidth.current!.viewWindow.start
+                    }px`
+                  : "",
+              // right: side === "left" ? `${xPos.current}px` : "",
               left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
             }}
@@ -723,8 +715,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 borderBottom: "1px solid Dodgerblue", // Set your desired border
                 position: "absolute",
                 backgroundColor: configOptions.current.backgroundColor,
+                right:
+                  side === "left"
+                    ? `${
+                        xPos.current! - newTrackWidth.current!.viewWindow.start
+                      }px`
+                    : "",
                 left: side === "right" ? `${xPos.current}px` : "",
-                right: side === "left" ? `${xPos.current}px` : "",
+                // right: side === "left" ? `${xPos.current}px` : "",
               }}
             >
               {canvasComponents.map((item, index) => (

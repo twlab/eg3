@@ -337,7 +337,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             });
 
             let testData = testMutli.multiAlign(newVisData, oldRecordsArray);
-
+            console.log(testData, newVisData);
             tmpData2["primaryVisData"] =
               testData[`${item.querygenomeName}`].primaryVisData;
             curVisData.current =
