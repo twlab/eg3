@@ -854,6 +854,7 @@ self.onmessage = (event: MessageEvent) => {
   // use align fine function or align rough function to create draw Data
   let drawDataArr: Array<{ [key: string]: any }> = [];
   if (event.data.viewMode === "fineMode") {
+
     const { newRecordsArray, allGaps } = refineRecordsArray(oldRecordsArray);
 
     // use the gaps in bp to create  new  visdata. The gap will cause  the windowWidth to change increasing or decreasing

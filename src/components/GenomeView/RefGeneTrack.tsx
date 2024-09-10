@@ -53,6 +53,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   handleDelete,
   trackIdx,
   id,
+  visData,
 }) {
   const configOptions = useRef(DEFAULT_OPTIONS);
 
@@ -88,7 +89,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
-    console.log("EYTERER");
     if (curTrackData.index === 0) {
       xPos.current = -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -104,7 +104,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
       // we have to get coord of prev regions by subtracting of the last region
       currDisplayNav = new DisplayedRegionModel(
-        curTrackData.regionNavCoord._navContext,
+        visData!.visRegion._navContext,
         curTrackData.regionNavCoord._startBase -
           (curTrackData.regionNavCoord._endBase -
             curTrackData.regionNavCoord._startBase) *
@@ -115,14 +115,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       if (curTrackData.index === 0) {
         currDisplayNav = new DisplayedRegionModel(
-          curTrackData.regionNavCoord._navContext,
+          visData!.visRegion._navContext,
           curTrackData.regionNavCoord._startBase -
             (curTrackData.regionNavCoord._endBase -
               curTrackData.regionNavCoord._startBase),
 
-          curTrackData.regionNavCoord._endBase +
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase)
+          1259222408
         );
       }
       sortType = SortItemsOptions.NOSORT;
@@ -130,7 +128,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
       // for left we subtract the endbase by 2 times
       currDisplayNav = new DisplayedRegionModel(
-        curTrackData.regionNavCoord._navContext,
+        visData!.visRegion._navContext,
         curTrackData.regionNavCoord._startBase,
 
         curTrackData.regionNavCoord._endBase +
@@ -149,7 +147,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       let placeFeatureData = featureArrange.arrange(
         algoData,
         currDisplayNav,
-        windowWidth * 3,
+        visData!.visWidth,
         getGenePadding,
         configOptions.current.hiddenPixels,
         sortType
@@ -158,7 +156,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       const height = getHeight(placeFeatureData.numRowsAssigned);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
-        windowWidth * 3,
+        visData!.visWidth,
         height,
         ROW_HEIGHT,
         configOptions.current.maxRows,

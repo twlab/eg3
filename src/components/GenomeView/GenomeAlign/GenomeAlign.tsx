@@ -16,6 +16,7 @@ import { AlignmentSegment } from "../../../models/AlignmentSegment";
 
 import ToolTipGenomealign from "../commonComponents/hover-and-tooltip/toolTipGenomealign";
 import { TrackProps } from "../../../models/trackModels/trackProps";
+import { GapText } from "./MultiAlignmentViewCalculator";
 const worker = new Worker(new URL("./genomeAlignWorker.ts", import.meta.url), {
   type: "module",
 });
@@ -113,67 +114,81 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       return;
     }
 
-    let newCoord = visData!.visRegion.getContextCoordinates();
-    let newNav = visData!.visRegion.getNavigationContext();
+    // let newCoord = visData!.visRegion.getContextCoordinates();
+    // let newNav = visData!.visRegion.getNavigationContext();
 
-    let newCoordWindow = visData!.viewWindowRegion.getContextCoordinates();
-    let newNavWindow = visData!.viewWindowRegion.getNavigationContext();
+    // let newCoordWindow = visData!.viewWindowRegion.getContextCoordinates();
+    // let newNavWindow = visData!.viewWindowRegion.getNavigationContext();
 
-    let newWorkerData: WorkerData = {
-      genomeName: trackData2!.genomeName,
-      viewMode: " ",
-      queryGenomeName: trackData2!.queryGenomeName,
-      result: result,
-      loci,
-      xDist: trackData2!.xDist,
-      visRegion: {
-        name: newNav.getName(),
-        featureArray: newNav.getFeatures(),
-        start: newCoord.start,
-        end: newCoord.end,
-      },
-      viewWindowRegion: {
-        name: newNav.getName(),
-        featureArray: newNavWindow.getFeatures(),
-        start: newCoordWindow.start,
-        end: newCoordWindow.end,
-      },
-      visWidth: visData!.visWidth,
-      viewWindow: {
-        start: visData!.viewWindow.start,
-        end: visData!.viewWindow.end,
-      },
-    };
+    // let newWorkerData: WorkerData = {
+    //   genomeName: trackData2!.genomeName,
+    //   viewMode: " ",
+    //   queryGenomeName: trackData2!.queryGenomeName,
+    //   result: result,
+    //   loci,
+    //   xDist: trackData2!.xDist,
+    //   visRegion: {
+    //     name: newNav.getName(),
+    //     featureArray: newNav.getFeatures(),
+    //     start: newCoord.start,
+    //     end: newCoord.end,
+    //   },
+    //   viewWindowRegion: {
+    //     name: newNav.getName(),
+    //     featureArray: newNavWindow.getFeatures(),
+    //     start: newCoordWindow.start,
+    //     end: newCoordWindow.end,
+    //   },
+    //   visWidth: visData!.visWidth,
+    //   viewWindow: {
+    //     start: visData!.viewWindow.start,
+    //     end: visData!.viewWindow.end,
+    //   },
+    // };
     let tmpObj;
     let svgElements;
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
+      const drawData = result.drawData as PlacedAlignment[];
+
+      svgElements = drawData.map(renderFineAlignment);
+      const drawGapText = result.drawGapText as GapText[];
+      svgElements.push(...drawGapText.map(renderGapText));
+      tmpObj = { svgElements, drawData, result };
+      if (trackData2!.side === "right") {
+        setRightTrack(new Array<any>(tmpObj));
+      } else {
+        setLeftTrack(new Array<any>(tmpObj));
+      }
+
+      view.current = trackData2!.xDist;
+      newTrackWidth.current = result.primaryVisData;
       //  find the gap for primary genome in bp
-      newWorkerData["viewMode"] = "fineMode";
-      worker.postMessage(newWorkerData);
+      // newWorkerData["viewMode"] = "fineMode";
+      // worker.postMessage(newWorkerData);
 
-      worker.onmessage = (event) => {
-        let drawDataArr = event.data.drawDataArr;
+      // worker.onmessage = (event) => {
+      //   let drawDataArr = event.data.drawDataArr;
 
-        newTrackWidth.current = drawDataArr[0].primaryVisData;
+      //   newTrackWidth.current = drawDataArr[0].primaryVisData;
 
-        let drawData = drawDataArr[0].drawData;
+      //   let drawData = drawDataArr[0].drawData;
 
-        svgElements = drawData.map((placement, index) =>
-          renderFineAlignment(placement, index)
-        );
-        const drawGapText = drawDataArr[0].drawGapText;
-        svgElements.push(...drawGapText.map(renderGapText));
-        tmpObj = { svgElements, drawDataArr };
+      //   svgElements = drawData.map((placement, index) =>
+      //     renderFineAlignment(placement, index)
+      //   );
+      //   const drawGapText = drawDataArr[0].drawGapText;
+      //   svgElements.push(...drawGapText.map(renderGapText));
+      //   tmpObj = { svgElements, drawDataArr };
 
-        if (trackData2!.side === "right") {
-          setRightTrack(new Array<any>(tmpObj));
-        } else {
-          setLeftTrack(new Array<any>(tmpObj));
-        }
-        view.current = event.data.xDist;
-      };
+      //   if (trackData2!.side === "right") {
+      //     setRightTrack(new Array<any>(tmpObj));
+      //   } else {
+      //     setLeftTrack(new Array<any>(tmpObj));
+      //   }
+      //   view.current = event.data.xDist;
+      // };
     }
 
     //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
@@ -300,26 +315,21 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     }
   }
 
-  function renderFineAlignment(placement: any, i: number) {
+  function renderFineAlignment(placement: PlacedAlignment, i: number) {
     const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
-    const {
-      xStart,
-      xEnd,
-      targetSequence,
-      querySequence,
-      baseWidth,
-      targetLocus,
-      queryLocus,
-      nonGapTargetData,
-      nonGapQueryData,
-    } = placement;
-
+    const { targetXSpan, targetSegments, querySegments } = placement;
+    const [xStart, xEnd] = targetXSpan;
+    const targetSequence = placement.visiblePart.getTargetSequence();
+    const querySequence = placement.visiblePart.getQuerySequence();
+    const baseWidth = targetXSpan.getLength() / targetSequence.length;
+    const targetLocus = placement.visiblePart.getLocus().toString();
+    const queryLocus = placement.visiblePart.getQueryLocus().toString();
     return (
       <React.Fragment key={i}>
         {renderSequenceSegments(
           targetLocus,
           targetSequence,
-          nonGapTargetData,
+          targetSegments!,
           ALIGN_TRACK_MARGIN,
           primaryColor,
           false
@@ -328,7 +338,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         {renderSequenceSegments(
           queryLocus,
           querySequence,
-          nonGapQueryData,
+          querySegments!,
           height - RECT_HEIGHT - ALIGN_TRACK_MARGIN,
           queryColor,
           true
@@ -338,7 +348,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
 
     function renderAlignTicks() {
       const ticks: Array<any> = [];
-      let x = xStart;
+      let x = targetXSpan.start;
       for (i = 0; i < targetSequence.length; i++) {
         if (
           targetSequence.charAt(i).toUpperCase() ===
@@ -364,41 +374,43 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     function renderSequenceSegments(
       locus: string,
       sequence: string,
-      segments: Array<any>,
+      segments: PlacedSequenceSegment[],
       y: number,
       color: string,
       isQuery: boolean
     ) {
-      const rects = segments.map((segment, i) => (
+      console.log(segments);
+      const nonGaps = segments.filter((segment) => !segment.isGap);
+      const rects = nonGaps.map((segment, i) => (
         <rect
           key={i}
-          x={segment.segXSpanStart}
+          x={segment.xSpan.start}
           y={y}
-          width={segment.segLength}
+          width={segment.xSpan.getLength()}
           height={RECT_HEIGHT}
           fill={color}
           onClick={() => console.log("You clicked on " + locus)}
         />
       ));
-      const letters = segments.map((segment, i) => (
+      const letters = nonGaps.map((segment, i) => (
         <Sequence
           key={i}
-          sequence={sequence.substr(segment.index, segment.segLength)}
-          xSpan={new OpenInterval(segment.segXSpanStart, segment.segXSpanEnd)}
+          sequence={sequence.substr(segment.index, segment.length)}
+          xSpan={segment.xSpan}
           y={y}
           isDrawBackground={false}
           height={RECT_HEIGHT}
         />
       ));
-      const arrows = segments.map((segment, i) => (
+      const arrows = nonGaps.map((segment, i) => (
         <AnnotationArrows
           key={i}
-          startX={segment.segXSpanStart}
-          endX={segment.segXSpanEnd}
+          startX={segment.xSpan.start}
+          endX={segment.xSpan.end}
           y={y}
           height={RECT_HEIGHT}
           opacity={0.75}
-          isToRight={isQuery}
+          isToRight={!(isQuery && placement.record.getIsReverseStrandQuery())}
           color="white"
           separation={baseWidth}
         />
@@ -647,7 +659,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
               ? rightTrackGenes.map(
                   (drawData) =>
                     // index <= rightTrackGenes.length - 1 ?
-                    drawData["drawDataArr"].map((drawDataArr, index) => (
+                    drawData["drawData"].map((drawDataArr, index) => (
                       <ToolTipGenomealign
                         key={"genomeAlignRight" + `${trackIdx}`}
                         trackType={trackType}
@@ -666,7 +678,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
               : leftTrackGenes.map(
                   (drawData) =>
                     // index <= rightTrackGenes.length - 1 ?
-                    drawData["drawDataArr"].map((drawDataArr) => (
+                    drawData["drawData"].map((drawDataArr) => (
                       <ToolTipGenomealign
                         key={"genomealignLeft" + `${trackIdx}`}
                         trackType={trackType}

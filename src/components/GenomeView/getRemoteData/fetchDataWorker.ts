@@ -10,12 +10,20 @@ const AWS_API = "https://lambda.epigenomegateway.org/v2";
 const trackFetchFunction: { [key: string]: any } = {
   refGene: async function refGeneFetch(regionData: any) {
     const genRefResponse = await fetch(
-      `${AWS_API}/${regionData.name}/genes/refGene/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
+      `${AWS_API}/${regionData.name}/genes/${regionData.trackName}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
       { method: "GET" }
     );
 
     return await genRefResponse.json();
   },
+  gencodeV39: async function refGeneFetch(regionData: any) {
+    const genRefResponse = await fetch(
+      `${AWS_API}/${regionData.name}/genes/${regionData.trackName}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
+      { method: "GET" }
+    );
+
+    return await genRefResponse.json();
+  }, 
   bed: async function bedFetch(
     loci: Array<{ [key: string]: any }>,
     options: { [key: string]: any },
@@ -47,7 +55,7 @@ const trackFetchFunction: { [key: string]: any } = {
     return getTabixData(loci, options, url);
   },
   hic: function hicFetch(straw, options, loci, basesPerPixel) {
-    console.log(loci);
+ 
     return straw.getData(loci, basesPerPixel, options);
   },
   genomealign: function genomeAlignFetch(
@@ -110,7 +118,7 @@ self.onmessage = async (event: MessageEvent) => {
           result,
           id,
         });
-      } else if (trackName === "genomealign") {
+      } else if (trackName === "genomealign" ) {
         let result = await trackFetchFunction[trackName](
           basesPerPixel < 10 ? expandGenomicLoci : genomicLoci,
           {
@@ -144,7 +152,7 @@ self.onmessage = async (event: MessageEvent) => {
           querygenomeName: item.trackModel.querygenome,
           id,
         });
-      } else if (trackName === "refGene") {
+      } else if (trackName === "refGene" || trackName === "gencodeV39") {
         let genRefResponses: Array<any> = [];
         if (event.data.initial === 1) {
           for (let i = 0; i < event.data.initialGenomicLoci.length; i++) {
@@ -155,6 +163,7 @@ self.onmessage = async (event: MessageEvent) => {
                   chr: item.chr,
                   start: item.start,
                   end: item.end,
+                  trackName
                 })
               )
             );
@@ -173,6 +182,7 @@ self.onmessage = async (event: MessageEvent) => {
                 chr: item.chr,
                 start: item.start,
                 end: item.end,
+                trackName
               })
             )
           );
@@ -210,5 +220,6 @@ self.onmessage = async (event: MessageEvent) => {
     location: event.data.location,
     initial: event.data.initial,
     curRegionCoord: event.data.curRegionCoord,
+    bpX: event.data.bpX
   });
 };

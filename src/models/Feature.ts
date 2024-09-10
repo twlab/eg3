@@ -36,7 +36,7 @@ export class Feature {
    * @param {Strand} strand - strand info
    */
   constructor(
-    name: string,
+    name: string | undefined,
     public locus: ChromosomeInterval,
     public strand: Strand = ""
   ) {

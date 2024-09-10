@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
-
+import _ from "lodash";
+import JSON5 from "json5";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 import RefGeneTrack from "./RefGeneTrack";
@@ -14,17 +15,23 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { ViewExpansion } from "../../models/RegionExpander";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
-
+import { MultiAlignmentViewCalculator } from "./GenomeAlign/MultiAlignmentViewCalculator";
 import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { drag } from "d3";
-
+import AlignmentRecord from "../../models/AlignmentRecord";
+interface RecordsObj {
+  query: string;
+  records: AlignmentRecord[];
+  isBigChain?: boolean;
+}
 // use class to create an instance of hic fetch and sent it to track manager in genome root
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
   refGene: RefGeneTrack,
+  gencodeV39: RefGeneTrack,
   bed: BedTrack,
   bedDensity: BedDensityTrack,
   bigWig: BigWigTrack,
@@ -59,7 +66,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const rightStartCoord = useRef(0);
   const bpRegionSize = useRef(0);
   const block = useRef<HTMLInputElement>(null);
-  const curVisData = useRef<{ [key: string]: any }>({});
+  const curVisData = useRef<{ [key: string]: any }>({
+    visWidth: windowWidth * 3,
+    visRegion: new DisplayedRegionModel(
+      genomeArr[genomeIdx].navContext,
+      0 - bpRegionSize.current,
+      0 + bpRegionSize.current * 2
+    ),
+    viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+    viewWindowRegion: new DisplayedRegionModel(
+      genomeArr[genomeIdx].navContext,
+      0,
+      0 + bpRegionSize.current
+    ),
+  });
   const viewRegion = useRef<ChromosomeInterval[]>();
   const bpX = useRef(0);
   const maxBp = useRef(0);
@@ -222,21 +242,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     genomeCoordLocus: Array<ChromosomeInterval>,
     expandedGenomeCoordLocus?: Array<ChromosomeInterval>
   ) {
-    let newVisData: ViewExpansion = {
-      visWidth: windowWidth * 3,
-      visRegion: new DisplayedRegionModel(
-        genomeArr[genomeIdx].navContext,
-        bpX.current - bpRegionSize.current,
-        bpX.current + bpRegionSize.current * 2
-      ),
-      viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-      viewWindowRegion: new DisplayedRegionModel(
-        genomeArr[genomeIdx].navContext,
-        bpX.current,
-        bpX.current + bpRegionSize.current
-      ),
-    };
-    curVisData.current = newVisData;
+    // let newVisData: ViewExpansion = {
+    //   visWidth: windowWidth * 3,
+    //   visRegion: new DisplayedRegionModel(
+    //     genomeArr[genomeIdx].navContext,
+    //     bpX.current - bpRegionSize.current,
+    //     bpX.current + bpRegionSize.current * 2
+    //   ),
+    //   viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+    //   viewWindowRegion: new DisplayedRegionModel(
+    //     genomeArr[genomeIdx].navContext,
+    //     bpX.current,
+    //     bpX.current + bpRegionSize.current
+    //   ),
+    // };
+
+    // curVisData.current = newVisData;
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2 || initial === 1) {
       let tmpData2 = {};
@@ -252,7 +273,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }
             ),
 
-            loci: genomeCoordLocus,
+            loci:
+              basePerPixel.current < 10
+                ? expandedGenomeCoordLocus
+                : genomeCoordLocus,
             expandedLoci: expandedGenomeCoordLocus,
             trackSide,
             location: `${bpX.current}:${bpX.current + bpRegionSize.current}`,
@@ -260,6 +284,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             initial,
             basePerPixel: basePerPixel.current,
             regionLength: curVisData.current.visRegion.getWidth(),
+            bpX: bpX.current,
           });
         }
       });
@@ -269,12 +294,61 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             fetchData: item.result,
             trackType: item.name,
           };
+          let newVisData: ViewExpansion = {
+            visWidth: windowWidth * 3,
+            visRegion: new DisplayedRegionModel(
+              genomeArr[genomeIdx].navContext,
+              event.data.bpX - bpRegionSize.current,
+              event.data.bpX + bpRegionSize.current * 2
+            ),
+            viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+            viewWindowRegion: new DisplayedRegionModel(
+              genomeArr[genomeIdx].navContext,
+              event.data.bpX,
+              event.data.bpX + bpRegionSize.current
+            ),
+          };
 
-          if (item.nameResult === "genomealignResult") {
+          if (item.name === "genomealign") {
             tmpData2["genomeName"] = item.genomeName;
             tmpData2["queryGenomeName"] = item.querygenomeName;
+            let testMutli = new MultiAlignmentViewCalculator(
+              genomeArr![genomeIdx!]
+            );
+            let copyData = _.cloneDeep(item.result);
+
+            let records: AlignmentRecord[] = [];
+            let recordArr: any = copyData;
+
+            for (const record of recordArr) {
+              let data = JSON5.parse("{" + record[3] + "}");
+              // if (options.isRoughMode) {
+
+              // }
+              record[3] = data;
+              records.push(new AlignmentRecord(record));
+            }
+
+            let oldRecordsArray: Array<RecordsObj> = [];
+            oldRecordsArray.push({
+              query: item.querygenomeName,
+              records: records,
+              isBigChain: false,
+            });
+
+            let testData = testMutli.multiAlign(newVisData, oldRecordsArray);
+
+            tmpData2["primaryVisData"] =
+              testData[`${item.querygenomeName}`].primaryVisData;
+            curVisData.current =
+              testData[`${item.querygenomeName}`].primaryVisData;
+            tmpData2[item.id] = {
+              fetchData: testData[`${item.querygenomeName}`],
+              trackType: item.name,
+            };
           }
         });
+
         tmpData2["location"] = event.data.location;
         tmpData2["xDist"] = event.data.xDist;
         tmpData2["side"] = event.data.side;
@@ -419,6 +493,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               curRegionCoord,
               xDist: dragX.current,
               initial,
+              bpX: bpX.current,
             });
 
             if (initial === 1) {

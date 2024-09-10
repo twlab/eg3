@@ -89,10 +89,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     // initialize the first index of the interval so we can start checking for prev overlapping intervals
 
     const newCanvasRef = createRef();
+
     let testInter = featurePlacer.placeInteractions(
       result,
-      visData!.visRegion,
-      visData!.visWidth
+      trackData2!.primaryVisData.visRegion,
+      trackData2!.primaryVisData.visWidth
     );
 
     let polyCoord = testInter.map((item, index) => renderRect(item, index));

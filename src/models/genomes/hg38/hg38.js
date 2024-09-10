@@ -33,7 +33,7 @@ const genome = new Genome("hg38", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:33284319-33604688");
+const defaultRegion = navContext.parse("chr7:27212300-27214862");
 const defaultTracks = [
         new TrackModel({
           type: "geneAnnotation",
@@ -45,7 +45,11 @@ const defaultTracks = [
         //   genome: "hg19",
         //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
         // },(
-
+       new TrackModel({
+          type: "geneAnnotation",
+          name: "gencodeV39",
+          genome: "hg38",
+        }),
        new TrackModel ({
           name: "bigWig",
           genome: "hg19",
