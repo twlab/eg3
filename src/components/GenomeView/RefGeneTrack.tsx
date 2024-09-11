@@ -54,7 +54,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackIdx,
   id,
 }) {
-  const configOptions = useRef(DEFAULT_OPTIONS);
+  const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
@@ -71,7 +71,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [toolTipVisible, setToolTipVisible] = useState(false);
 
   const [configChanged, setConfigChanged] = useState(false);
-
+  console.log(configOptions);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -320,6 +320,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
 
   function onConfigChange(key, value) {
+    console.log(key, value);
     if (value === configOptions.current[`${key}`]) {
       return;
     } else if (
@@ -390,9 +391,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       getConfigMenu(menu);
       setConfigChanged(true);
+      console.log(key, value, id, configOptions.current);
     } else {
       configOptions.current[`${key}`] = value;
       setConfigChanged(true);
+      console.log(key, value, id, configOptions.current);
     }
   }
   function renderConfigMenu(event) {
