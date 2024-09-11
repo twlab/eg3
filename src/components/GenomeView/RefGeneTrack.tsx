@@ -337,7 +337,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       const items = [...configsOptions];
 
       let menu = ReactDOM.createPortal(
-        <Manager>
+        <Manager key={`${id}` + "genref"}>
           <Reference>
             {({ ref }) => (
               <div
@@ -350,10 +350,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               />
             )}
           </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
+          <Popper>
             {({ ref, style, placement, arrowProps }) => (
               <div
                 ref={ref}
@@ -408,9 +405,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     let configsOptions = renderer.getMenuComponents();
     // create object that has key as displayMode and the configmenu component as the value
     const items = [...configsOptions];
-
+    console.log(event.pageX, event.pageY);
     let menu = ReactDOM.createPortal(
-      <Manager>
+      <Manager key={`${id}` + "genref"}>
         <Reference>
           {({ ref }) => (
             <div
@@ -418,22 +415,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               style={{
                 position: "absolute",
                 left: event.pageX,
-                top: event.pageY,
+                top: Math.max(0, event.pageY - 300),
               }}
             />
           )}
         </Reference>
-        <Popper
-          placement="top-start"
-          modifiers={[
-            {
-              name: "flip",
-              options: {
-                fallbackPlacements: ["bottom-start", "top-start"],
-              },
-            },
-          ]}
-        >
+        <Popper>
           {({ ref, style, placement, arrowProps }) => (
             <div
               ref={ref}
@@ -668,6 +655,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setConfigChanged(false);
   }, [configChanged]);
   useEffect(() => {
+    console.log("HUHHHHHHHHHHHHHHH");
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track

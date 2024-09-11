@@ -31,9 +31,10 @@ const genome = new Genome("hg38", [
     new Chromosome("chrX", 156040895),
     new Chromosome("chrY", 57227415),
 ]);
-
+// 27212300-27214862
+// 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27212300-27214862");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
         new TrackModel({
           type: "geneAnnotation",
@@ -76,18 +77,18 @@ const defaultTracks = [
     //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
     //       genome: "hg19",
     //     }),
-        new TrackModel({
-          name: "genomealign",
-          genome: "hg38",
-          url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-          trackModel: {
-            name: "hg38tomm10",
-            label: "Query mouse mm10 to hg38 blastz",
-            querygenome: "mm10",
-            filetype: "genomealign",
-            url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-          },
-        }),
+        // new TrackModel({
+        //   name: "genomealign",
+        //   genome: "hg38",
+        //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+        //   trackModel: {
+        //     name: "hg38tomm10",
+        //     label: "Query mouse mm10 to hg38 blastz",
+        //     querygenome: "mm10",
+        //     filetype: "genomealign",
+        //     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+        //   },
+        // }),
       ];
 
 const publicHubData = {
