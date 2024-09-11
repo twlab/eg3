@@ -4,15 +4,17 @@ import _ from "lodash";
 import memoizeOne from "memoize-one";
 // import { GuaranteeMap } from '../../model/GuaranteeMap';
 
-import {   segmentSequence,
+import {
+  segmentSequence,
   makeBaseNumberLookup,
   countBases,
   SequenceSegment,
-  GAP_CHAR,} from "../../../models/AlignmentStringUtils";
+  GAP_CHAR,
+} from "../../../models/AlignmentStringUtils";
 import AlignmentRecord from "../../../models/AlignmentRecord";
 import { AlignmentSegment } from "../../../models/AlignmentSegment";
 
-import { NavContextBuilder, Gap} from "../../../models/NavContextBuilder";
+import { NavContextBuilder, Gap } from "../../../models/NavContextBuilder";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import OpenInterval from "../../../models/OpenInterval";
 import NavigationContext from "../../../models/NavigationContext";
@@ -101,15 +103,12 @@ const FEATURE_PLACER = new FeaturePlacer();
 export class MultiAlignmentViewCalculator {
   private primaryGenome: string;
 
-
-  constructor(primaryGenomeConfig: GenomeConfig) {
-
-    this.primaryGenome = primaryGenomeConfig.genome.getName();
+  constructor(primaryGenomeConfig: string) {
+    this.primaryGenome = primaryGenomeConfig;
     this.multiAlign = memoizeOne(this.multiAlign);
   }
 
-
-  multiAlign(visData: ViewExpansion, rawRecords: any){
+  multiAlign(visData: ViewExpansion, rawRecords: any) {
     const { visRegion, visWidth, viewWindowRegion } = visData;
 
     const drawModel = new LinearDrawingModel(visRegion, visWidth);
@@ -134,7 +133,6 @@ export class MultiAlignmentViewCalculator {
       recordsArray = newRecordsArray;
 
       const primaryVisData = this.calculatePrimaryVis(allGaps, visData);
-
 
       return recordsArray.reduce(
         (multiAlign, records) => ({
@@ -376,7 +374,6 @@ export class MultiAlignmentViewCalculator {
       const xSpan = drawModel.baseSpanToXSpan(newContextSpan);
       const targetSeq = visiblePart.getTargetSequence();
       const querySeq = visiblePart.getQuerySequence();
-
 
       placement.contextSpan = newContextSpan;
       placement.targetXSpan = xSpan;
@@ -626,7 +623,7 @@ export class MultiAlignmentViewCalculator {
     visData: ViewExpansion
   ): PlacedAlignment[] {
     const { visRegion, visWidth } = visData;
- 
+
     return FEATURE_PLACER.placeFeatures(records, visRegion, visWidth).map(
       (placement) => {
         return {
@@ -651,7 +648,7 @@ export class MultiAlignmentViewCalculator {
     placements: PlacedAlignment[],
     minGapLength: number
   ): Gap[] {
-    const gaps: Array<any>= [];
+    const gaps: Array<any> = [];
     for (const placement of placements) {
       const { visiblePart, contextSpan } = placement;
       const segments = segmentSequence(
@@ -768,7 +765,7 @@ export class MultiAlignmentViewCalculator {
     const sortedPieces = genomePieces
       .slice()
       .sort((a, b) => a.queryXSpan.start - b.queryXSpan.start);
-    const features: Array<any>= [];
+    const features: Array<any> = [];
 
     let x = 0;
     let prevLocus = new ChromosomeInterval("", -1, -1); // Placeholder

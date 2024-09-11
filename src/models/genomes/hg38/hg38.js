@@ -71,11 +71,11 @@ const defaultTracks = [
     //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
     //       genome: "hg19",
     //     }),
-       new TrackModel ({
-          name: "hic",
-          url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-          genome: "hg19",
-        }),
+    //    new TrackModel ({
+    //       name: "hic",
+    //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    //       genome: "hg19",
+    //     }),
         new TrackModel({
           name: "genomealign",
           genome: "hg38",

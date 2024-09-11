@@ -86,13 +86,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   let trackType;
   let loci;
   if (Object.keys(trackData2!).length > 0) {
-    [start, end] = trackData2!.location.split(":");
-
-    result = trackData2![`${id}`].fetchData;
-    trackType = trackData2![`${id}`].trackType;
-    loci = trackData2![`${id}`].loci;
-    start = Number(start);
-    end = Number(end);
+    result = trackData2![`${id}`][`${trackData2!.querygenomeName}`];
   }
 
   //useRef to store data between states without re render the component
@@ -107,49 +101,16 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   // We will do MultiAlignmentViewCalculator here for rough mode
 
   function fetchGenomeData() {
-    let startPos;
-    startPos = start;
-
     if (result === undefined || result.length === 0) {
       return;
     }
 
-    // let newCoord = visData!.visRegion.getContextCoordinates();
-    // let newNav = visData!.visRegion.getNavigationContext();
-
-    // let newCoordWindow = visData!.viewWindowRegion.getContextCoordinates();
-    // let newNavWindow = visData!.viewWindowRegion.getNavigationContext();
-
-    // let newWorkerData: WorkerData = {
-    //   genomeName: trackData2!.genomeName,
-    //   viewMode: " ",
-    //   queryGenomeName: trackData2!.queryGenomeName,
-    //   result: result,
-    //   loci,
-    //   xDist: trackData2!.xDist,
-    //   visRegion: {
-    //     name: newNav.getName(),
-    //     featureArray: newNav.getFeatures(),
-    //     start: newCoord.start,
-    //     end: newCoord.end,
-    //   },
-    //   viewWindowRegion: {
-    //     name: newNav.getName(),
-    //     featureArray: newNavWindow.getFeatures(),
-    //     start: newCoordWindow.start,
-    //     end: newCoordWindow.end,
-    //   },
-    //   visWidth: visData!.visWidth,
-    //   viewWindow: {
-    //     start: visData!.viewWindow.start,
-    //     end: visData!.viewWindow.end,
-    //   },
-    // };
     let tmpObj;
     let svgElements;
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
+      console.log(result);
       const drawData = result.drawData as PlacedAlignment[];
 
       svgElements = drawData.map(renderFineAlignment);
@@ -321,21 +282,23 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     }
   }
 
-  function renderFineAlignment(placement: PlacedAlignment, i: number) {
+  function renderFineAlignment(placement: any, i: number) {
     const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
     const { targetXSpan, targetSegments, querySegments } = placement;
-    const [xStart, xEnd] = targetXSpan;
-    const targetSequence = placement.visiblePart.getTargetSequence();
-    const querySequence = placement.visiblePart.getQuerySequence();
-    const baseWidth = targetXSpan.getLength() / targetSequence.length;
-    const targetLocus = placement.visiblePart.getLocus().toString();
-    const queryLocus = placement.visiblePart.getQueryLocus().toString();
+    const xStart = targetXSpan.start;
+    const xEnd = targetXSpan.end;
+    const targetSequence = placement.targetSequence;
+    const querySequence = placement.querySequence;
+    const baseWidth = placement.baseWidth;
+    const targetLocus = placement.targetLocus;
+    const queryLocus = placement.queryLocus;
+    const nonGaps = placement.nonGaps;
     return (
       <React.Fragment key={i}>
         {renderSequenceSegments(
           targetLocus,
           targetSequence,
-          targetSegments!,
+          nonGaps,
           ALIGN_TRACK_MARGIN,
           primaryColor,
           false
@@ -344,7 +307,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         {renderSequenceSegments(
           queryLocus,
           querySequence,
-          querySegments!,
+          nonGaps,
           height - RECT_HEIGHT - ALIGN_TRACK_MARGIN,
           queryColor,
           true
@@ -380,18 +343,17 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     function renderSequenceSegments(
       locus: string,
       sequence: string,
-      segments: PlacedSequenceSegment[],
+      nonGaps: any,
       y: number,
       color: string,
       isQuery: boolean
     ) {
-      const nonGaps = segments.filter((segment) => !segment.isGap);
       const rects = nonGaps.map((segment, i) => (
         <rect
           key={i}
           x={segment.xSpan.start}
           y={y}
-          width={segment.xSpan.getLength()}
+          width={segment.xSpan.end - segment.xSpan.start}
           height={RECT_HEIGHT}
           fill={color}
           onClick={() => console.log("You clicked on " + locus)}
@@ -415,7 +377,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           y={y}
           height={RECT_HEIGHT}
           opacity={0.75}
-          isToRight={!(isQuery && placement.record.getIsReverseStrandQuery())}
+          isToRight={!(isQuery && placement.isReverseStrandQuery)}
           color="white"
           separation={baseWidth}
         />

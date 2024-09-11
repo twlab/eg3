@@ -23,6 +23,26 @@ import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { drag } from "d3";
 import AlignmentRecord from "../../models/AlignmentRecord";
+import Feature from "../../models/Feature";
+
+const genomeAlignWorker = new Worker(
+  new URL("./GenomeAlign/genomeAlignWorker.ts", import.meta.url),
+  {
+    type: "module",
+  }
+);
+interface WorkerData {
+  genomeName: string;
+  querygenomeName: string;
+  result: Array<any>; // Adjust the type according to the structure of your records
+
+  loci: any;
+
+  viewMode: string;
+  visData: any;
+  xDist: number;
+  defaultTracks: any;
+}
 interface RecordsObj {
   query: string;
   records: AlignmentRecord[];
@@ -228,37 +248,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
 
-  //______________________________________________________
-  //TO-DO IMPORTANT: fix return mutiple arrays after fetching data.
-  // should sent around of mutiple chr regions, but all the chr region gene datas should return in one array.
-  // step 1 first, find the mutiple coord regions and add them to array. Need to convert from nav Coord to genomic coord, each index value will the coord of each
-  // chr region adn their genomic interval
-  //step 2 in the worker sent the region array to the fetch functions,
-  // step 3 map and fetch each region from the array, returns flatten which means all the interval will be all in one array
-
   async function fetchGenomeData(
     initial: number = 0,
     trackSide,
     genomeCoordLocus: Array<ChromosomeInterval>,
     expandedGenomeCoordLocus?: Array<ChromosomeInterval>
   ) {
-    // let newVisData: ViewExpansion = {
-    //   visWidth: windowWidth * 3,
-    //   visRegion: new DisplayedRegionModel(
-    //     genomeArr[genomeIdx].navContext,
-    //     bpX.current - bpRegionSize.current,
-    //     bpX.current + bpRegionSize.current * 2
-    //   ),
-    //   viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-    //   viewWindowRegion: new DisplayedRegionModel(
-    //     genomeArr[genomeIdx].navContext,
-    //     bpX.current,
-    //     bpX.current + bpRegionSize.current
-    //   ),
-    // };
-
-    // curVisData.current = newVisData;
-    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
     if (initial === 2 || initial === 1) {
       let tmpData2 = {};
       let sentData = false;
@@ -294,66 +289,51 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             fetchData: item.result,
             trackType: item.name,
           };
-          let newVisData: ViewExpansion = {
-            visWidth: windowWidth * 3,
-            visRegion: new DisplayedRegionModel(
-              genomeArr[genomeIdx].navContext,
-              event.data.bpX - bpRegionSize.current,
-              event.data.bpX + bpRegionSize.current * 2
-            ),
-            viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-            viewWindowRegion: new DisplayedRegionModel(
-              genomeArr[genomeIdx].navContext,
-              event.data.bpX,
-              event.data.bpX + bpRegionSize.current
-            ),
-          };
 
           if (item.name === "genomealign") {
-            tmpData2["genomeName"] = item.genomeName;
-            tmpData2["queryGenomeName"] = item.querygenomeName;
-            let testMutli = new MultiAlignmentViewCalculator(
-              genomeArr![genomeIdx!]
-            );
-            let copyData = _.cloneDeep(item.result);
-
-            let records: AlignmentRecord[] = [];
-            let recordArr: any = copyData;
-
-            for (const record of recordArr) {
-              let data = JSON5.parse("{" + record[3] + "}");
-              // if (options.isRoughMode) {
-
-              // }
-              record[3] = data;
-              records.push(new AlignmentRecord(record));
-            }
-
-            let oldRecordsArray: Array<RecordsObj> = [];
-            oldRecordsArray.push({
-              query: item.querygenomeName,
-              records: records,
-              isBigChain: false,
-            });
-
-            let testData = testMutli.multiAlign(newVisData, oldRecordsArray);
-            console.log(testData, newVisData);
-            tmpData2["primaryVisData"] =
-              testData[`${item.querygenomeName}`].primaryVisData;
-            curVisData.current =
-              testData[`${item.querygenomeName}`].primaryVisData;
-            tmpData2[item.id] = {
-              fetchData: testData[`${item.querygenomeName}`],
-              trackType: item.name,
+            let newVisData: ViewExpansion = {
+              visWidth: windowWidth * 3,
+              visRegion: new DisplayedRegionModel(
+                genomeArr[genomeIdx].navContext,
+                event.data.bpX - bpRegionSize.current,
+                event.data.bpX + bpRegionSize.current * 2
+              ),
+              viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+              viewWindowRegion: new DisplayedRegionModel(
+                genomeArr[genomeIdx].navContext,
+                event.data.bpX,
+                event.data.bpX + bpRegionSize.current
+              ),
             };
+
+            let newWorkerData = {
+              genomeName: item.genomeName,
+              viewMode: " ",
+              querygenomeName: item.querygenomeName,
+              result: item.result,
+              loci: expandedGenomeCoordLocus,
+              xDist: event.data.xDist,
+              visData: newVisData,
+              defaultTracks: genomeArr![genomeIdx!].defaultTracks.filter(
+                (track) => track.id === item.id
+              ),
+              trackSide: event.data.side,
+
+              id: item.id,
+              location: event.data.location,
+            };
+            genomeAlignWorker.postMessage(newWorkerData);
+
+            genomeAlignWorker.onmessage = (event) => {
+              tmpData2 = { ...tmpData2, ...event.data };
+              console.log(tmpData2);
+
+              setTrackData2({ ...tmpData2 });
+            };
+
+            //-------------------------------------------------------------------------------------------------------------------------------------------------------
           }
         });
-
-        tmpData2["location"] = event.data.location;
-        tmpData2["xDist"] = event.data.xDist;
-        tmpData2["side"] = event.data.side;
-
-        setTrackData2({ ...tmpData2 });
       };
     }
 
