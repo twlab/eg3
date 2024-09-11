@@ -294,7 +294,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 event.data.bpX + bpRegionSize.current
               ),
             };
-
+            console.log(item.result);
             let newWorkerData = {
               genomeName: item.genomeName,
               viewMode: " ",
@@ -316,7 +316,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             genomeAlignWorker.onmessage = (event) => {
               tmpData2 = { ...tmpData2, ...event.data };
-
+              console.log(tmpData2);
               setTrackData2({ ...tmpData2 });
             };
 

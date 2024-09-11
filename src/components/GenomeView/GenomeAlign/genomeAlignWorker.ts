@@ -190,7 +190,7 @@ self.onmessage = (event: MessageEvent) => {
     record[3] = data;
     records.push(new AlignmentRecord(record));
   }
-
+  console.log(recordArr);
   let [genConfig] = event.data.defaultTracks;
 
   let oldRecordsArray: Array<RecordsObj> = [];
@@ -238,6 +238,12 @@ self.onmessage = (event: MessageEvent) => {
     };
   }
   let id = `${event.data.id}`;
+  console.log(alignment[`${event.data.querygenomeName}`]);
+  let curFeatures =
+    alignment[
+      `${event.data.querygenomeName}`
+    ].queryRegion._navContext.getFeatures();
+  console.log(curFeatures);
 
   postMessage({
     [`${id}`]: alignment,
