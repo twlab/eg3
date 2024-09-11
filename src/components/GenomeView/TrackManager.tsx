@@ -28,7 +28,7 @@ const genomeAlignWorker = new Worker(
     type: "module",
   }
 );
-// use class to create an instance of hic fetch and sent it to track manager in genome root
+
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
   refGene: RefGeneTrack,
   gencodeV39: RefGeneTrack,
@@ -39,11 +39,8 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   methylc: MethylcTrack,
   hic: HiCTrack,
   genomealign: GenomeAlign,
-
-  // Add more components as needed
 };
 
-//add logic to change diferernt fetch for difererrnt file types
 interface TrackManagerProps {
   genomeIdx: number;
   addTrack: (track: any) => void;
@@ -152,7 +149,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     lastDragX.current = dragX.current;
     let curX;
-    // terminate the work when the component is unmounted
+
     const dragIdx = dragX.current / windowWidth;
     if (dragIdx > -1 && dragIdx < 1) {
       dragX.current > 0 ? (curX = -1) : (curX = 0);
@@ -161,7 +158,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else {
       curX = Math.floor(dragX.current! / windowWidth);
     }
-    console.log(curX);
+
     setDataIdx(curX);
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
@@ -202,10 +199,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // isLoading.current = true;
       fetchGenomeData(2, "left", genomeCoordLocus, expandedGenomeCoordLocus);
     }
-    console.log(dragX.current, rightSectionSize, leftSectionSize);
+
     if (
-      // windowWidth needs to be changed to match the speed of the dragx else it has a differenace translate
-      // for example if we set speed to 0.5 then need to mutiply windowith by 2
       -dragX.current >= sumArray(rightSectionSize.current) &&
       dragX.current < 0
     ) {
@@ -215,8 +210,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       console.log("trigger right");
       fetchGenomeData(0, "right", genomeCoordLocus);
     } else if (
-      //need to add windowwith when moving left is because when the size of track is 2x it misalign the track because its already halfway
-      //so we need to add to keep the position correct.
       dragX.current >= sumArray(leftSectionSize.current) &&
       dragX.current > 0
     ) {
@@ -227,14 +220,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left", genomeCoordLocus);
     }
   }
-
-  //______________________________________________________
-  //TO-DO IMPORTANT: fix return mutiple arrays after fetching data.
-  // should sent around of mutiple chr regions, but all the chr region gene datas should return in one array.
-  // step 1 first, find the mutiple coord regions and add them to array. Need to convert from nav Coord to genomic coord, each index value will the coord of each
-  // chr region adn their genomic interval
-  //step 2 in the worker sent the region array to the fetch functions,
-  // step 3 map and fetch each region from the array, returns flatten which means all the interval will be all in one array
 
   async function fetchGenomeData(
     initial: number = 0,
@@ -326,11 +311,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               id: item.id,
               location: event.data.location,
             };
+
             genomeAlignWorker.postMessage(newWorkerData);
 
             genomeAlignWorker.onmessage = (event) => {
               tmpData2 = { ...tmpData2, ...event.data };
-              console.log(tmpData2);
 
               setTrackData2({ ...tmpData2 });
             };
@@ -531,7 +516,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setConfigMenuVisible(false);
   }
   function getConfigMenu(htmlElement: any) {
-    console.log("ASDASDASDASDASDASD");
     setConfigMenuVisible(true);
     setConfigMenu(htmlElement);
   }
@@ -603,8 +587,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       let genome = genomeArr[genomeIdx];
 
-      // [region.current, coord.current] = genome.defaultRegion.split(":");
-
       leftStartCoord.current = genome.defaultRegion.start;
       rightStartCoord.current = genome.defaultRegion.end;
 
@@ -619,22 +601,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let genomeLocus = genomeFeatureSegment.map((item, index) =>
         item.getLocus()
       );
-
-      //-------------------------------------------------------------------------------------------------------------------
-      // let allChrData = genome.chromosomes;
-
-      // for (const chromosome of genome.chrOrder) {
-      //   if (allChrData[chromosome] !== undefined) {
-      //     chrData.current.push(chromosome);
-      //     chrLength.current.push(allChrData[chromosome]);
-      //   }
-      // }
-      // console.log(genome.chrOrder, chrData.current, chrLength.current);
-      // initialChrIdx.current = chrData.current.indexOf(region.current);
-
-      // chrIndexRight.current = initialChrIdx.current;
-      // chrIndexLeft.current = initialChrIdx.current;
-      //-------------------------------------------------------------------------------------------------------------------
 
       viewRegion.current = genomeLocus;
       bpX.current = leftStartCoord.current;
@@ -669,7 +635,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           display: "flex",
           flexDirection: "column",
           whiteSpace: "nowrap",
-          //not using flex allows us to keep the position of the track
+
           alignItems: "center",
           margin: "auto",
         }}

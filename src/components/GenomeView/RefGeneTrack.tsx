@@ -71,7 +71,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [toolTipVisible, setToolTipVisible] = useState(false);
 
   const [configChanged, setConfigChanged] = useState(false);
-  console.log(configOptions);
+
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -88,7 +88,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
-    console.log("EYTERER");
     if (curTrackData.index === 0) {
       xPos.current = -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -320,7 +319,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
 
   function onConfigChange(key, value) {
-    console.log(key, value);
     if (value === configOptions.current[`${key}`]) {
       return;
     } else if (
@@ -391,11 +389,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       getConfigMenu(menu);
       setConfigChanged(true);
-      console.log(key, value, id, configOptions.current);
     } else {
       configOptions.current[`${key}`] = value;
       setConfigChanged(true);
-      console.log(key, value, id, configOptions.current);
     }
   }
   function renderConfigMenu(event) {
@@ -408,7 +404,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     let configsOptions = renderer.getMenuComponents();
     // create object that has key as displayMode and the configmenu component as the value
     const items = [...configsOptions];
-    console.log(event.pageX, event.pageY);
+
     let menu = ReactDOM.createPortal(
       <Manager key={`${id}` + "genref"}>
         <Reference>
@@ -658,7 +654,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setConfigChanged(false);
   }, [configChanged]);
   useEffect(() => {
-    console.log("HUHHHHHHHHHHHHHHH");
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track

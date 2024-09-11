@@ -34,7 +34,7 @@ const genome = new Genome("hg38", [
 // 27212300-27214862
 // 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [
         new TrackModel({
           type: "geneAnnotation",
@@ -51,44 +51,45 @@ const defaultTracks = [
           name: "gencodeV39",
           genome: "hg38",
         }),
-       new TrackModel ({
-          name: "bigWig",
-          genome: "hg19",
-          url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-        }),
+    //    new TrackModel ({
+    //       name: "bigWig",
+    //       genome: "hg19",
+    //       url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+    //     }),
 
-       new TrackModel ({
-          name: "dynseq",
-          genome: "hg19",
-          url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-        }),
+    //    new TrackModel ({
+    //       name: "dynseq",
+    //       genome: "hg19",
+    //       url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+    //     }),
+    //     new TrackModel({
+    //       name: "methylc",
+    //       genome: "hg19",
+    //       url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+    //     }),
+
+    //    new TrackModel ({
+    //       name: "hic",
+    //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    //       genome: "hg19",
+    //     }),
+    //    new TrackModel ({
+    //       name: "hic",
+    //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    //       genome: "hg19",
+    //     }),
         new TrackModel({
-          name: "methylc",
-          genome: "hg19",
-          url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+          name: "genomealign",
+          genome: "hg38",
+          url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+          trackModel: {
+            name: "hg38tomm10",
+            label: "Query mouse mm10 to hg38 blastz",
+            querygenome: "mm10",
+            filetype: "genomealign",
+            url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+          },
         }),
-    //    new TrackModel ({
-    //       name: "hic",
-    //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    //       genome: "hg19",
-    //     }),
-    //    new TrackModel ({
-    //       name: "hic",
-    //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    //       genome: "hg19",
-    //     }),
-        // new TrackModel({
-        //   name: "genomealign",
-        //   genome: "hg38",
-        //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-        //   trackModel: {
-        //     name: "hg38tomm10",
-        //     label: "Query mouse mm10 to hg38 blastz",
-        //     querygenome: "mm10",
-        //     filetype: "genomealign",
-        //     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-        //   },
-        // }),
       ];
 
 const publicHubData = {

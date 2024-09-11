@@ -193,7 +193,7 @@ export class MultiAlignmentViewCalculator {
     const newViewWindow = newDrawModel.baseSpanToXSpan(
       newViewWindowRegion.getContextCoordinates()
     );
-    console.log({
+    console.log("new bp size and width based on genomealign", {
       windowWith: viewWindow.getLength(),
       newthreeWidth: newVisWidth,
       oldBpWidth: visRegion.getWidth(),

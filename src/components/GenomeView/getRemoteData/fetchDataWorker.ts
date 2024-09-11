@@ -23,7 +23,7 @@ const trackFetchFunction: { [key: string]: any } = {
     );
 
     return await genRefResponse.json();
-  }, 
+  },
   bed: async function bedFetch(
     loci: Array<{ [key: string]: any }>,
     options: { [key: string]: any },
@@ -55,7 +55,6 @@ const trackFetchFunction: { [key: string]: any } = {
     return getTabixData(loci, options, url);
   },
   hic: function hicFetch(straw, options, loci, basesPerPixel) {
- 
     return straw.getData(loci, basesPerPixel, options);
   },
   genomealign: function genomeAlignFetch(
@@ -75,7 +74,7 @@ self.onmessage = async (event: MessageEvent) => {
   let basesPerPixel = event.data.basesPerPixel;
   let regionLength = event.data.regionLength;
   let newtrackDefault = event.data.trackArray;
-  console.log(newtrackDefault);
+
   await Promise.all(
     newtrackDefault.map(async (item, index) => {
       const trackName = item.name;
@@ -118,7 +117,7 @@ self.onmessage = async (event: MessageEvent) => {
           result,
           id,
         });
-      } else if (trackName === "genomealign" ) {
+      } else if (trackName === "genomealign") {
         let result = await trackFetchFunction[trackName](
           basesPerPixel < 10 ? expandGenomicLoci : genomicLoci,
           {
@@ -163,7 +162,7 @@ self.onmessage = async (event: MessageEvent) => {
                   chr: item.chr,
                   start: item.start,
                   end: item.end,
-                  trackName
+                  trackName,
                 })
               )
             );
@@ -182,7 +181,7 @@ self.onmessage = async (event: MessageEvent) => {
                 chr: item.chr,
                 start: item.start,
                 end: item.end,
-                trackName
+                trackName,
               })
             )
           );
@@ -220,6 +219,6 @@ self.onmessage = async (event: MessageEvent) => {
     location: event.data.location,
     initial: event.data.initial,
     curRegionCoord: event.data.curRegionCoord,
-    bpX: event.data.bpX
+    bpX: event.data.bpX,
   });
 };

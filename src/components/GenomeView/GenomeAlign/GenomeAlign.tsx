@@ -110,7 +110,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
-      console.log(result);
       const drawData = result.drawData as PlacedAlignment[];
 
       svgElements = drawData.map(renderFineAlignment);

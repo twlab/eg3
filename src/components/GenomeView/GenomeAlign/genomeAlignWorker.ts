@@ -144,8 +144,6 @@ self.onmessage = (event: MessageEvent) => {
     event.data.visData.visRegion._endBase
   );
 
-  console.log(visRegion);
-
   let viewWindowRegionFeatures: Feature[] = [];
 
   for (let feature of event.data.visData.viewWindowRegion._navContext
@@ -213,7 +211,7 @@ self.onmessage = (event: MessageEvent) => {
     i++
   ) {
     let placement = alignment[`${event.data.querygenomeName}`].drawData[i];
-    console.log(placement);
+
     const { targetXSpan } = placement;
     const targetSequence = placement.visiblePart.getTargetSequence();
     const querySequence = placement.visiblePart.getQuerySequence();
