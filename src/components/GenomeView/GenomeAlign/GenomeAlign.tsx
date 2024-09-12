@@ -1,4 +1,4 @@
-import React, { createRef, memo } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 
@@ -6,7 +6,6 @@ import _ from "lodash";
 import { SequenceSegment } from "../../../models/AlignmentStringUtils";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import { Sequence } from "./Sequence";
-import { ViewExpansion } from "../../../models/RegionExpander";
 
 import OpenInterval from "../../../models/OpenInterval";
 import Feature from "../../../models/Feature";
@@ -21,18 +20,6 @@ const worker = new Worker(new URL("./genomeAlignWorker.ts", import.meta.url), {
   type: "module",
 });
 
-interface WorkerData {
-  genomeName: string;
-  queryGenomeName: string;
-  result: Array<any>; // Adjust the type according to the structure of your records
-  visWidth: number;
-  loci: { [key: string]: Feature[] | any };
-  visRegion: { [key: string]: Feature[] | any };
-  viewWindowRegion: { [key: string]: Feature[] | any };
-  viewMode: string;
-  viewWindow: { [key: string]: any };
-  xDist: number;
-}
 export const DEFAULT_OPTIONS = {
   height: 80,
   primaryColor: "darkblue",
@@ -69,24 +56,18 @@ export interface PlacedAlignment {
   querySegments?: PlacedSequenceSegment[];
 }
 
-// multiAlignCal defaults
-// const MIN_GAP_DRAW_WIDTH = 3;
-
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,
-  trackData2,
+  trackData,
   visData,
   trackIdx,
   handleDelete,
   id,
 }) {
-  let start, end;
   let result;
-  let trackType;
-  let loci;
-  if (Object.keys(trackData2!).length > 0) {
-    result = trackData2![`${id}`][`${trackData2!.querygenomeName}`];
+  if (Object.keys(trackData!).length > 0) {
+    result = trackData![`${id}`];
   }
 
   //useRef to store data between states without re render the component
@@ -110,19 +91,20 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
+      console.log(result);
       const drawData = result.drawData as PlacedAlignment[];
 
       svgElements = drawData.map(renderFineAlignment);
       const drawGapText = result.drawGapText as GapText[];
       svgElements.push(...drawGapText.map(renderGapText));
       tmpObj = { svgElements, drawData, result };
-      if (trackData2!.side === "right") {
+      if (trackData!.side === "right") {
         setRightTrack(new Array<any>(tmpObj));
       } else {
         setLeftTrack(new Array<any>(tmpObj));
       }
 
-      view.current = trackData2!.xDist;
+      view.current = trackData!.xDist;
 
       newTrackWidth.current = result.primaryVisData;
       console.log(
@@ -186,7 +168,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         );
         svgElements.push(primaryArrows);
         tmpObj = { svgElements, drawDataArr };
-        if (trackData2!.side === "right") {
+        if (trackData!.side === "right") {
           setRightTrack(new Array<any>(tmpObj));
         } else {
           setLeftTrack(new Array<any>(tmpObj));
@@ -282,8 +264,9 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
 
   function renderFineAlignment(placement: any, i: number) {
+    console.log(placement);
     const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
-    const { targetXSpan, targetSegments, querySegments } = placement;
+    const { targetXSpan } = placement;
     const xStart = targetXSpan.start;
     const xEnd = targetXSpan.end;
     const targetSequence = placement.targetSequence;
@@ -291,13 +274,14 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     const baseWidth = placement.baseWidth;
     const targetLocus = placement.targetLocus;
     const queryLocus = placement.queryLocus;
-    const nonGaps = placement.nonGaps;
+    const nonGapsTarget = placement.nonGapsTarget;
+    const nonGapsQuery = placement.nonGapsQuery;
     return (
       <React.Fragment key={i}>
         {renderSequenceSegments(
           targetLocus,
           targetSequence,
-          nonGaps,
+          nonGapsTarget,
           ALIGN_TRACK_MARGIN,
           primaryColor,
           false
@@ -306,7 +290,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         {renderSequenceSegments(
           queryLocus,
           querySequence,
-          nonGaps,
+          nonGapsQuery,
           height - RECT_HEIGHT - ALIGN_TRACK_MARGIN,
           queryColor,
           true
@@ -317,6 +301,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     function renderAlignTicks() {
       const ticks: Array<any> = [];
       let x = targetXSpan.start;
+
       for (i = 0; i < targetSequence.length; i++) {
         if (
           targetSequence.charAt(i).toUpperCase() ===
@@ -507,8 +492,8 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       // const y2 = queryRectTopY;
 
       const x3 = segment.targetXSpan.end;
-      const targetGenome = trackData2!.genomeName;
-      const queryGenome = trackData2!.queryGenomeName;
+      const targetGenome = trackData!.genomeName;
+      const queryGenome = trackData!.queryGenomeName;
       const y3 = RECT_HEIGHT;
       const yhalf = (RECT_HEIGHT + queryRectTopY) / 2;
       const d_string = `M ${x0} ${y0} 
@@ -553,9 +538,10 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
 
   useEffect(() => {
+    console.log(trackData);
     fetchGenomeData();
     // having two prop changes here side and data will cause JSON5 try to run twice causing an error because its already parsed
-  }, [trackData2]);
+  }, [trackData]);
   // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
   // absolute element will affect each other position so you need those element to all have absolute
   return (
@@ -564,6 +550,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         style={{
           display: "flex",
           position: "relative",
+          height: 80,
         }}
       >
         <svg
@@ -571,6 +558,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           height={"250"}
           style={{
             position: "absolute",
+
             right:
               side === "left"
                 ? `${view.current! - newTrackWidth.current!.viewWindow.start}px`

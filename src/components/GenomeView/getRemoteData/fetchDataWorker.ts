@@ -139,7 +139,10 @@ self.onmessage = async (event: MessageEvent) => {
   let regionLength = event.data.regionLength;
   let trackDefaults = event.data.trackModelArr;
   let genomicFetchCoord = {};
-  genomicFetchCoord[`${event.data.primaryGenName}`] = genomicLoci;
+  genomicFetchCoord[`${event.data.primaryGenName}`] = {
+    genomicLoci,
+    expandGenomicLoci,
+  };
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
@@ -266,7 +269,6 @@ self.onmessage = async (event: MessageEvent) => {
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
     for (let query in alignment) {
-      alignment[`${query}`]["name"] = "genomealign";
       for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
         let placement = alignment[`${query}`].drawData[i];
 
@@ -276,7 +278,10 @@ self.onmessage = async (event: MessageEvent) => {
         const baseWidth = targetXSpan.getLength() / targetSequence.length;
         const targetLocus = placement.visiblePart.getLocus().toString();
         const queryLocus = placement.visiblePart.getQueryLocus().toString();
-        const nonGaps = placement.targetSegments.filter(
+        const nonGapsTarget = placement.targetSegments.filter(
+          (segment) => !segment.isGap
+        );
+        const nonGapsQuery = placement.querySegments.filter(
           (segment) => !segment.isGap
         );
 
@@ -284,10 +289,11 @@ self.onmessage = async (event: MessageEvent) => {
         let tempObj = {
           targetSequence,
           querySequence,
+          nonGapsQuery,
           baseWidth,
           targetLocus,
           queryLocus,
-          nonGaps,
+          nonGapsTarget,
           isReverseStrandQuery,
         };
         alignment[`${query}`].drawData[i] = {
@@ -298,20 +304,45 @@ self.onmessage = async (event: MessageEvent) => {
 
       // step 4 create obj that holds primary and query genome genomic coordinate because some other tracks might
       // align to the query coord
+      let genomicCoords: Array<any> = [];
 
-      fetchResults.push(alignment[`${query}`]);
+      let featuresForChr =
+        alignment[`${query}`].queryRegion._navContext._featuresForChr;
+      for (let chr in featuresForChr) {
+        if (chr !== "") {
+          console.log(featuresForChr[`${chr}`]);
+          let start = parseGenomicCoordinates(
+            featuresForChr[`${chr}`][0].name
+          ).start;
+          let end = parseGenomicCoordinates(
+            featuresForChr[`${chr}`][featuresForChr[`${chr}`].length - 1].name
+          ).end;
+          genomicCoords.push({ chr, start, end });
+          //   genomicCoords.push(  )                                                                                                                                                           )
+          //  genomicFetchCoord[`${chr}`] = {expandGenomicLoci: {start: , end: , chr}}
+        }
+      }
+      genomicFetchCoord[`${query}`] = { expandGenomicLoci: genomicCoords };
+
+      fetchResults.push({
+        result: alignment[`${query}`],
+        id: alignment[`${query}`].id,
+        name: "genomealign",
+      });
     }
-
-    console.log(fetchResults);
   }
 
   // step 5 if there are normal tracks assciated with query coord then we use query genomic coord to fetch their data
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
-  console.log(genomeAlignTracks);
+
+  let otherDefaultTracks = trackDefaults.filter((items, index) => {
+    return items.filetype !== "genomealign";
+  });
   await Promise.all(
-    trackDefaults.map(async (item, index) => {
+    otherDefaultTracks.map(async (item, index) => {
+      console.log(item);
       const trackName = item.name;
       const genomeName = item.genome;
       const id = item.id;
@@ -354,7 +385,15 @@ self.onmessage = async (event: MessageEvent) => {
         });
       } else if (trackName === "refGene" || trackName === "gencodeV39") {
         let genRefResponses: Array<any> = [];
-        if (event.data.initial === 1) {
+        let curFetchNav;
+        if ("genome" in item.metadata) {
+          curFetchNav =
+            genomicFetchCoord[`${item.metadata.genome}`].expandGenomicLoci;
+        } else {
+          curFetchNav = genomicLoci;
+        }
+
+        if (event.data.initial === 1 && !("genome" in item.metadata)) {
           for (let i = 0; i < event.data.initialGenomicLoci.length; i++) {
             const genRefResponse = await Promise.all(
               event.data.initialGenomicLoci[i].map((item, index) =>
@@ -376,7 +415,7 @@ self.onmessage = async (event: MessageEvent) => {
           }
         } else {
           genRefResponses = await Promise.all(
-            genomicLoci.map((item, index) =>
+            curFetchNav.map((item, index) =>
               trackFetchFunction[trackName]({
                 name: genomeName,
                 chr: item.chr,
@@ -412,7 +451,20 @@ self.onmessage = async (event: MessageEvent) => {
       }
     })
   );
+  function parseGenomicCoordinates(input: string): {
+    chr: string;
+    start: number;
+    end: number;
+  } {
+    const [chrPart, positionPart] = input.split(":");
+    const [startStr, endStr] = positionPart.split("-");
 
+    const chr = chrPart.slice(3); // Remove the 'chr' prefix
+    const start = parseInt(startStr, 10);
+    const end = parseInt(endStr, 10);
+
+    return { chr, start, end };
+  }
   postMessage({
     fetchResults,
     side: event.data.trackSide,

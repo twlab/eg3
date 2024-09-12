@@ -88,13 +88,14 @@ const defaultTracks = [
         ),
 
                 new TrackModel(         {
-            "name": "hg38tot2t-chm13v2",
+            "name": "hg38 to t2t-chm13v2",
             "label": "hg38 - chm13v2.0 minimap2",
             "querygenome": "t2t-chm13-v2.0",
             "filetype": "genomealign",
             "url": "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz"
         },
-        )
+    ),
+
       ];
 
 const publicHubData = {

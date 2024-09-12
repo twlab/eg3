@@ -697,7 +697,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             // so we have to subtract from the size of the canvas
             width: `${windowWidth - 1}px`,
             backgroundColor: "gainsboro",
-            height: "2000px",
+            // height: "2000px",
             overflowX: "hidden",
             overflowY: "visible",
           }}
@@ -739,7 +739,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   getConfigMenu={getConfigMenu}
                   onCloseConfigMenu={onCloseConfigMenu}
                   // movement type track data
-                  trackData2={trackData2}
+
                   trackIdx={index}
                   visData={curVisData.current}
                 />
