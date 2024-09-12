@@ -1,36 +1,19 @@
-//src/Worker/worker.ts
-
 import _ from "lodash";
 import JSON5 from "json5";
-import memoizeOne from "memoize-one";
-// import { GuaranteeMap } from '../../model/GuaranteeMap';
 
-import {
-  segmentSequence,
-  makeBaseNumberLookup,
-  countBases,
-  SequenceSegment,
-  GAP_CHAR,
-} from "../../../models/AlignmentStringUtils";
+import { SequenceSegment } from "../../../models/AlignmentStringUtils";
 import AlignmentRecord from "../../../models/AlignmentRecord";
 import { AlignmentSegment } from "../../../models/AlignmentSegment";
 
-import { NavContextBuilder, Gap } from "../../../models/NavContextBuilder";
+import { NavContextBuilder } from "../../../models/NavContextBuilder";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import OpenInterval from "../../../models/OpenInterval";
 import NavigationContext from "../../../models/NavigationContext";
-import LinearDrawingModel from "../../../models/LinearDrawingModel";
 import Feature from "../../../models/Feature";
 
 import { ViewExpansion } from "../../../models/RegionExpander";
-import { FeaturePlacer } from "../../../models/getXSpan/FeaturePlacer";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import { niceBpCount } from "../../../models/util";
-import { FeatureSegment } from "../../../models/FeatureSegment";
-import { GenomeConfig } from "../../../models/genomes/GenomeConfig";
 import { MultiAlignmentViewCalculator } from "./MultiAlignmentViewCalculator";
-import TrackModel from "../../../models/TrackModel";
-import test from "node:test";
 export interface PlacedAlignment {
   record: AlignmentRecord;
   visiblePart: AlignmentSegment;
@@ -67,15 +50,13 @@ export interface GapText {
 }
 
 export interface Alignment {
-  isFineMode: boolean; // Display mode
-  primaryVisData: ViewExpansion; // Primary genome view region data
-  queryRegion: DisplayedRegionModel; // Query genome view region
-  /**
-   * PlacedAlignment[] in fine mode; PlacedMergedAlignment in rough mode.
-   */
+  isFineMode: boolean;
+  primaryVisData: ViewExpansion;
+  queryRegion: DisplayedRegionModel;
+
   drawData: PlacedAlignment[] | PlacedMergedAlignment[];
-  drawGapText?: GapText[]; // An array holding gap size information between placedAlignments, fineMode only
-  plotStrand?: string; // rough mode plot positive or negative
+  drawGapText?: GapText[];
+  plotStrand?: string;
   primaryGenome: string;
   queryGenome: string;
   basesPerPixel: number;
@@ -92,34 +73,11 @@ interface RecordsObj {
   isBigChain?: boolean;
 }
 
-interface RefinedObj {
-  newRecordsArray: RecordsObj[];
-  allGaps: Gap[];
-}
-
-// const MIN_GAP_DRAW_WIDTH = 3;
-
-const FEATURE_PLACER = new FeaturePlacer();
-
-const DEFAULT_OPTIONS = {
-  height: 80,
-  primaryColor: "darkblue",
-  queryColor: "#B8008A",
-};
-const RECT_HEIGHT = 15;
-// multiAlignCal defaults
 interface RecordsObj {
   query: string;
   records: AlignmentRecord[];
   isBigChain?: boolean;
 }
-const MAX_FINE_MODE_BASES_PER_PIXEL = 10;
-const MARGIN = 5;
-// const MIN_GAP_DRAW_WIDTH = 3;
-const FONT_SIZE = 10;
-const MERGE_PIXEL_DISTANCE = 200;
-const MIN_MERGE_DRAW_WIDTH = 5;
-const MIN_GAP_LENGTH = 0.99;
 
 self.onmessage = (event: MessageEvent) => {
   let visRegionFeatures: Feature[] = [];
@@ -190,7 +148,7 @@ self.onmessage = (event: MessageEvent) => {
     record[3] = data;
     records.push(new AlignmentRecord(record));
   }
-  console.log(recordArr);
+
   let [genConfig] = event.data.defaultTracks;
 
   let oldRecordsArray: Array<RecordsObj> = [];
@@ -204,6 +162,7 @@ self.onmessage = (event: MessageEvent) => {
     event.data.genomeName
   );
   let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
+  console.log(alignment);
   // add another loop for mutiple genome aligns query genomes
   for (
     let i = 0;

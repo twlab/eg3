@@ -79,17 +79,22 @@ const defaultTracks = [
     //       genome: "hg19",
     //     }),
         new TrackModel({
-          name: "genomealign",
-          genome: "hg38",
-          url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-          trackModel: {
             name: "hg38tomm10",
             label: "Query mouse mm10 to hg38 blastz",
             querygenome: "mm10",
             filetype: "genomealign",
             url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
           },
-        }),
+        ),
+
+                new TrackModel(         {
+            "name": "hg38tot2t-chm13v2",
+            "label": "hg38 - chm13v2.0 minimap2",
+            "querygenome": "t2t-chm13-v2.0",
+            "filetype": "genomealign",
+            "url": "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz"
+        },
+        )
       ];
 
 const publicHubData = {

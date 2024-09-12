@@ -63,7 +63,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const rightStartCoord = useRef(0);
   const bpRegionSize = useRef(0);
   const block = useRef<HTMLInputElement>(null);
-  const curVisData = useRef<{ [key: string]: any }>({});
+  const curVisData = useRef<{ [key: string]: any }>({
+    visWidth: windowWidth * 3,
+    visRegion: new DisplayedRegionModel(
+      genomeArr[genomeIdx].navContext,
+      0 - bpRegionSize.current,
+      0 + bpRegionSize.current * 2
+    ),
+    viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+    viewWindowRegion: new DisplayedRegionModel(
+      genomeArr[genomeIdx].navContext,
+      0,
+      0 + bpRegionSize.current
+    ),
+  });
   const viewRegion = useRef<ChromosomeInterval[]>();
   const bpX = useRef(0);
   const maxBp = useRef(0);
@@ -208,7 +221,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       rightSectionSize.current.push(windowWidth);
       console.log("trigger right");
-      fetchGenomeData(0, "right", genomeCoordLocus);
+      fetchGenomeData(0, "right", genomeCoordLocus, expandedGenomeCoordLocus);
     } else if (
       dragX.current >= sumArray(leftSectionSize.current) &&
       dragX.current > 0
@@ -217,7 +230,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       console.log("trigger left");
       leftSectionSize.current.push(windowWidth);
 
-      fetchGenomeData(0, "left", genomeCoordLocus);
+      fetchGenomeData(0, "left", genomeCoordLocus, expandedGenomeCoordLocus);
     }
   }
 
@@ -227,105 +240,93 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     genomeCoordLocus: Array<ChromosomeInterval>,
     expandedGenomeCoordLocus?: Array<ChromosomeInterval>
   ) {
-    let newVisData: ViewExpansion = {
-      visWidth: windowWidth * 3,
-      visRegion: new DisplayedRegionModel(
-        genomeArr[genomeIdx].navContext,
-        bpX.current - bpRegionSize.current,
-        bpX.current + bpRegionSize.current * 2
-      ),
-      viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-      viewWindowRegion: new DisplayedRegionModel(
-        genomeArr[genomeIdx].navContext,
-        bpX.current,
-        bpX.current + bpRegionSize.current
-      ),
-    };
-    curVisData.current = newVisData;
     // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
-    if (initial === 2 || initial === 1) {
-      let tmpData2 = {};
-      let sentData = false;
+    // if (initial === 2 || initial === 1) {
+    //   let tmpData2 = {};
+    //   let sentData = false;
 
-      genomeArr[genomeIdx].defaultTracks.map((item, index) => {
-        if (!sentData) {
-          sentData = true;
-          worker.current!.postMessage({
-            trackArray: genomeArr[genomeIdx].defaultTracks.filter(
-              (items, index) => {
-                return items.name === "genomealign" || items.name === "hic";
-              }
-            ),
+    //   genomeArr[genomeIdx].defaultTracks.map((item, index) => {
+    //     if (!sentData) {
+    //       sentData = true;
+    //       worker.current!.postMessage({
+    //         trackModelArr: genomeArr[genomeIdx].defaultTracks.filter(
+    //           (items, index) => {
+    //             return items.name === "genomealign" || items.name === "hic";
+    //           }
+    //         ),
 
-            loci:
-              basePerPixel.current < 10
-                ? expandedGenomeCoordLocus
-                : genomeCoordLocus,
-            expandedLoci: expandedGenomeCoordLocus,
-            trackSide,
-            location: `${bpX.current}:${bpX.current + bpRegionSize.current}`,
-            xDist: dragX.current,
-            initial,
-            basePerPixel: basePerPixel.current,
-            regionLength: curVisData.current.visRegion.getWidth(),
-            bpX: bpX.current,
-          });
-        }
-      });
-      worker.current!.onmessage = (event) => {
-        event.data.fetchResults.map((item, index) => {
-          tmpData2[item.id] = {
-            fetchData: item.result,
-            trackType: item.name,
-          };
+    //         loci:
+    //           basePerPixel.current < 10
+    //             ? expandedGenomeCoordLocus
+    //             : genomeCoordLocus,
+    //         expandedLoci: expandedGenomeCoordLocus,
+    //         trackSide,
+    //         location: `${bpX.current}:${bpX.current + bpRegionSize.current}`,
+    //         xDist: dragX.current,
+    //         initial,
+    //         basePerPixel: basePerPixel.current,
+    //         regionLength:
+    //           bpX.current +
+    //           bpRegionSize.current * 2 -
+    //           (bpX.current - bpRegionSize.current),
+    //         bpX: bpX.current,
+    //       });
+    //     }
+    //   });
+    //   worker.current!.onmessage = (event) => {
+    //     event.data.fetchResults.map((item, index) => {
+    //       tmpData2[item.id] = {
+    //         fetchData: item.result,
+    //         trackType: item.name,
+    //       };
 
-          if (item.name === "genomealign") {
-            let newVisData: ViewExpansion = {
-              visWidth: windowWidth * 3,
-              visRegion: new DisplayedRegionModel(
-                genomeArr[genomeIdx].navContext,
-                event.data.bpX - bpRegionSize.current,
-                event.data.bpX + bpRegionSize.current * 2
-              ),
-              viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-              viewWindowRegion: new DisplayedRegionModel(
-                genomeArr[genomeIdx].navContext,
-                event.data.bpX,
-                event.data.bpX + bpRegionSize.current
-              ),
-            };
-            console.log(item.result);
-            let newWorkerData = {
-              genomeName: item.genomeName,
-              viewMode: " ",
-              querygenomeName: item.querygenomeName,
-              result: item.result,
-              loci: expandedGenomeCoordLocus,
-              xDist: event.data.xDist,
-              visData: newVisData,
-              defaultTracks: genomeArr![genomeIdx!].defaultTracks.filter(
-                (track) => track.id === item.id
-              ),
-              trackSide: event.data.side,
+    //       if (item.name === "genomealign") {
+    //         let newVisData: ViewExpansion = {
+    //           visWidth: windowWidth * 3,
+    //           visRegion: new DisplayedRegionModel(
+    //             genomeArr[genomeIdx].navContext,
+    //             event.data.bpX - bpRegionSize.current,
+    //             event.data.bpX + bpRegionSize.current * 2
+    //           ),
+    //           viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+    //           viewWindowRegion: new DisplayedRegionModel(
+    //             genomeArr[genomeIdx].navContext,
+    //             event.data.bpX,
+    //             event.data.bpX + bpRegionSize.current
+    //           ),
+    //         };
+    //         console.log(item.result);
+    //         let newWorkerData = {
+    //           genomeName: item.genomeName,
+    //           viewMode: " ",
+    //           querygenomeName: item.querygenomeName,
+    //           result: item.result,
+    //           loci: expandedGenomeCoordLocus,
+    //           xDist: event.data.xDist,
+    //           visData: newVisData,
+    //           defaultTracks: genomeArr![genomeIdx!].defaultTracks.filter(
+    //             (track) => track.id === item.id
+    //           ),
+    //           trackSide: event.data.side,
 
-              id: item.id,
-              location: event.data.location,
-            };
+    //           id: item.id,
+    //           location: event.data.location,
+    //         };
 
-            genomeAlignWorker.postMessage(newWorkerData);
+    //         genomeAlignWorker.postMessage(newWorkerData);
 
-            genomeAlignWorker.onmessage = (event) => {
-              tmpData2 = { ...tmpData2, ...event.data };
-              console.log(tmpData2);
-              setTrackData2({ ...tmpData2 });
-            };
+    //         genomeAlignWorker.onmessage = (event) => {
+    //           tmpData2 = { ...tmpData2, ...event.data };
+    //           console.log(tmpData2);
+    //           setTrackData2({ ...tmpData2 });
+    //         };
 
-            //-------------------------------------------------------------------------------------------------------------------------------------------------------
-          }
-        });
-      };
-    }
-
+    //         //-------------------------------------------------------------------------------------------------------------------------------------------------------
+    //       }
+    //     });
+    //   };
+    // }
+    console.log(genomeArr![genomeIdx!]);
     if (initial === 0 || initial === 1) {
       let curRegionCoord;
       let tempObj = {};
@@ -444,17 +445,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       let sentData = false;
       try {
+        let newVisData: ViewExpansion = {
+          visWidth: windowWidth * 3,
+          visRegion: new DisplayedRegionModel(
+            genomeArr[genomeIdx].navContext,
+            bpX.current - bpRegionSize.current,
+            bpX.current + bpRegionSize.current * 2
+          ),
+          viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+          viewWindowRegion: new DisplayedRegionModel(
+            genomeArr[genomeIdx].navContext,
+            bpX.current,
+            bpX.current + bpRegionSize.current
+          ),
+        };
+
         genomeArr[genomeIdx].defaultTracks.map((item, index) => {
           if (!sentData) {
             sentData = true;
             infiniteScrollWorker.current!.postMessage({
-              trackArray: genomeArr[genomeIdx].defaultTracks.filter(
-                (items, index) => {
-                  return items.name !== "genomealign" && items.name !== "hic";
-                }
-              ),
-
+              primaryGenName: genomeArr[genomeIdx].genome.getName(),
+              trackModelArr: genomeArr[genomeIdx].defaultTracks,
+              visData: newVisData,
               loci: sectionGenomicLocus,
+              expandedLoci: expandedGenomeCoordLocus,
               initialGenomicLoci,
               initialNavLoci,
               trackSide,
@@ -550,13 +564,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genome.defaultTracks[i]["id"] = uniqueKey;
           newTrackComponents.push({
             id: uniqueKey,
-            component: componentMap[genome.defaultTracks[i].name],
+            component:
+              genome.defaultTracks[i].name in componentMap
+                ? componentMap[genome.defaultTracks[i].name]
+                : componentMap[genome.defaultTracks[i].filetype],
             trackModel: genome.defaultTracks[i],
           });
         } else {
           newTrackComponents.push({
             id: genome.defaultTracks[i]["id"],
-            component: componentMap[genome.defaultTracks[i].name],
+            component:
+              genome.defaultTracks[i].name in componentMap
+                ? componentMap[genome.defaultTracks[i].name]
+                : componentMap[genome.defaultTracks[i].filetype],
             trackModel: genome.defaultTracks[i],
           });
         }
@@ -586,7 +606,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // on initial and when our genome data changes we set the default values here
 
       let genome = genomeArr[genomeIdx];
-
+      console.log(genome);
       leftStartCoord.current = genome.defaultRegion.start;
       rightStartCoord.current = genome.defaultRegion.end;
 

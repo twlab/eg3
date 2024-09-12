@@ -75,6 +75,7 @@ export interface Alignment {
   queryGenome: string;
   basesPerPixel: number;
   navContextBuilder?: NavContextBuilder;
+  id: any;
 }
 
 export interface MultiAlignment {
@@ -85,6 +86,7 @@ interface RecordsObj {
   query: string;
   records: AlignmentRecord[];
   isBigChain?: boolean;
+  id: any;
 }
 
 interface RefinedObj {
@@ -138,8 +140,14 @@ export class MultiAlignmentViewCalculator {
         (multiAlign, records) => ({
           ...multiAlign,
           [records.query]: records.isBigChain
-            ? this.alignRough(records.query, records.records, visData)
+            ? this.alignRough(
+                records.id,
+                records.query,
+                records.records,
+                visData
+              )
             : this.alignFine(
+                records.id,
                 records.query,
                 records.records,
                 visData,
@@ -165,6 +173,7 @@ export class MultiAlignmentViewCalculator {
         (multiAlign, records) => ({
           ...multiAlign,
           [records.query]: this.alignRough(
+            records.id,
             records.query,
             records.records,
             visData
@@ -341,6 +350,7 @@ export class MultiAlignmentViewCalculator {
     }
   }
   alignFine(
+    id: any,
     query: string,
     records: AlignmentRecord[],
     oldVisData: ViewExpansion,
@@ -486,7 +496,9 @@ export class MultiAlignmentViewCalculator {
       visWidth,
       drawModel
     );
+
     return {
+      id: id,
       isFineMode: true,
       primaryVisData: visData,
       queryRegion,
@@ -509,6 +521,7 @@ export class MultiAlignmentViewCalculator {
    * @return {PlacedMergedAlignment[]} placed merged alignments
    */
   alignRough(
+    id: any,
     query: string,
     alignmentRecords: AlignmentRecord[],
     visData: ViewExpansion
@@ -600,6 +613,7 @@ export class MultiAlignmentViewCalculator {
     }
 
     return {
+      id: id,
       isFineMode: false,
       primaryVisData: visData,
       queryRegion: this._makeQueryGenomeRegion(drawData, visWidth, drawModel),
