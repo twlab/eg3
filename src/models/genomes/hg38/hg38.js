@@ -36,21 +36,21 @@ const genome = new Genome("hg38", [
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [
-        new TrackModel({
-          type: "geneAnnotation",
-          name: "refGene",
-          genome: "hg38",
-        }),
-        // {
-        //   name: "bed",
-        //   genome: "hg19",
-        //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-        // },(
-       new TrackModel({
-          type: "geneAnnotation",
-          name: "gencodeV39",
-          genome: "hg38",
-        }),
+    //     new TrackModel({
+    //       type: "geneAnnotation",
+    //       name: "refGene",
+    //       genome: "hg38",
+    //     }),
+    //     // {
+    //     //   name: "bed",
+    //     //   genome: "hg19",
+    //     //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+    //     // },(
+    //    new TrackModel({
+    //       type: "geneAnnotation",
+    //       name: "gencodeV39",
+    //       genome: "hg38",
+    //     }),
     //    new TrackModel ({
     //       name: "bigWig",
     //       genome: "hg19",
@@ -86,7 +86,13 @@ const defaultTracks = [
             url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
           },
         ),
-
+// new TrackModel(         {
+//             "name": "hg38 to t2t-chm13v2",
+//             "label": "hg38 - chm13v2.0 minimap2",
+//             "querygenome": "t2t-chm13-v2.0",
+//             "filetype": "genomealign",
+//             "url": "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz"
+//         }),
 
 
 

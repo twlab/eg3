@@ -143,6 +143,8 @@ self.onmessage = async (event: MessageEvent) => {
   let primaryVisData;
   let queryRegion;
   let curTrackVis;
+  let initExpandLoci = event.data.initialExpandedNavLoci;
+
   genomicFetchCoord[`${event.data.primaryGenName}`] = {
     genomicLoci,
     expandGenomicLoci,
@@ -158,189 +160,33 @@ self.onmessage = async (event: MessageEvent) => {
   if (genomeAlignTracks.length > 0) {
     hasGenomeAlignTrack = true;
     // step 2: fetch genome align data and put them into an array
-    let visRegionFeatures: Feature[] = [];
 
-    for (let feature of event.data.visData.visRegion._navContext._features) {
-      let newChr = new ChromosomeInterval(
-        feature.locus.chr,
-        feature.locus.start,
-        feature.locus.end
-      );
-      visRegionFeatures.push(new Feature(feature.name, newChr));
-    }
-
-    let visRegionNavContext = new NavigationContext(
-      event.data.visData.visRegion._navContext._name,
-      visRegionFeatures
-    );
-
-    let visRegion = new DisplayedRegionModel(
-      visRegionNavContext,
-      event.data.visData.visRegion._startBase,
-      event.data.visData.visRegion._endBase
-    );
-    curTrackVis = new DisplayedRegionModel(
-      visRegionNavContext,
-      event.data.visData.visRegion._startBase,
-      event.data.visData.visRegion._endBase
-    );
-    let viewWindowRegionFeatures: Feature[] = [];
-
-    for (let feature of event.data.visData.viewWindowRegion._navContext
-      ._features) {
-      let newChr = new ChromosomeInterval(
-        feature.locus.chr,
-        feature.locus.start,
-        feature.locus.end
-      );
-      viewWindowRegionFeatures.push(new Feature(feature.name, newChr));
-    }
-
-    let viewWindowRegionNavContext = new NavigationContext(
-      event.data.visData.viewWindowRegion._navContext._name,
-      viewWindowRegionFeatures
-    );
-    let viewWindowRegion = new DisplayedRegionModel(
-      viewWindowRegionNavContext,
-      event.data.visData.viewWindowRegion._startBase,
-      event.data.visData.viewWindowRegion._endBase
-    );
-
-    let visData: ViewExpansion = {
-      visWidth: event.data.visData.visWidth,
-
-      visRegion,
-
-      viewWindow: new OpenInterval(
-        event.data.visData.viewWindow.start,
-        event.data.visData.viewWindow.end
-      ),
-
-      viewWindowRegion,
-    };
-
-    const oldRecordsArray = await Promise.all(
-      genomeAlignTracks.map(async (item, index) => {
-        let curGenomeAlignRespond = await trackFetchFunction.genomealign(
-          expandGenomicLoci,
-          {
-            height: 40,
-            isCombineStrands: false,
-            colorsForContext: {
-              CG: {
-                color: "rgb(100,139,216)",
-                background: "#d9d9d9",
-              },
-              CHG: {
-                color: "rgb(255,148,77)",
-                background: "#ffe0cc",
-              },
-              CHH: {
-                color: "rgb(255,0,255)",
-                background: "#ffe5ff",
-              },
-            },
-            depthColor: "#525252",
-            depthFilter: 0,
-            maxMethyl: 1,
-            label: "",
-          },
-          item.url
-        );
-
-        let records: AlignmentRecord[] = [];
-        let recordArr: any = curGenomeAlignRespond;
-
-        for (const record of recordArr) {
-          let data = JSON5.parse("{" + record[3] + "}");
-          // if (options.isRoughMode) {
-
-          // }
-          record[3] = data;
-          records.push(new AlignmentRecord(record));
-        }
-        // added trackId genomeAlign tracks so we can put the correct data to the correct track after we sent the data back
-        return {
-          query: item.querygenome,
-          records: records,
-          isBigChain: false,
-          id: item.id,
-        };
-      })
-    );
-
-    // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
-
-    let multiCalInstance = new MultiAlignmentViewCalculator(
-      event.data.primaryGenName
-    );
-    let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
-    // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
-    // because class don't get sent over Workers and Internet so we have to get the data here.
-    for (let query in alignment) {
-      for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
-        let placement = alignment[`${query}`].drawData[i];
-
-        const { targetXSpan } = placement;
-        const targetSequence = placement.visiblePart.getTargetSequence();
-        const querySequence = placement.visiblePart.getQuerySequence();
-        const baseWidth = targetXSpan.getLength() / targetSequence.length;
-        const targetLocus = placement.visiblePart.getLocus().toString();
-        const queryLocus = placement.visiblePart.getQueryLocus().toString();
-        const nonGapsTarget = placement.targetSegments.filter(
-          (segment) => !segment.isGap
-        );
-        const nonGapsQuery = placement.querySegments.filter(
-          (segment) => !segment.isGap
-        );
-
-        const isReverseStrandQuery = placement.record.getIsReverseStrandQuery();
-        let tempObj = {
-          targetSequence,
-          querySequence,
-          nonGapsQuery,
-          baseWidth,
-          targetLocus,
-          queryLocus,
-          nonGapsTarget,
-          isReverseStrandQuery,
-        };
-        alignment[`${query}`].drawData[i] = {
-          ...placement,
-          ...tempObj,
-        };
+    if (event.data.initial === 1) {
+      let initialData: Array<any> = [];
+      for (let navLoci of initExpandLoci) {
+        let res = await getGenomeAlignment(navLoci, genomeAlignTracks);
+        initialData.push(res);
       }
-
-      // step 4 create obj that holds primary and query genome genomic coordinate because some other tracks might
-      // align to the query coord
-      let genomicCoords: Array<any> = [];
-
-      let featuresForChr =
-        alignment[`${query}`].queryRegion._navContext._featuresForChr;
-      console.log(alignment);
-      for (let chr in featuresForChr) {
-        if (chr !== "") {
-          let start = parseGenomicCoordinates(
-            featuresForChr[`${chr}`][0].name
-          ).start;
-          let end = parseGenomicCoordinates(
-            featuresForChr[`${chr}`][featuresForChr[`${chr}`].length - 1].name
-          ).end;
-          genomicCoords.push({ chr, start, end });
-          //   genomicCoords.push(  )                                                                                                                                                           )
-          //  genomicFetchCoord[`${chr}`] = {expandGenomicLoci: {start: , end: , chr}}
-        }
+      let tempObj = {};
+      for (let dataArr of initialData) {
+        dataArr.map((item, index) => {
+          if (item.id in tempObj) {
+            tempObj[`${item.id}`].push(item);
+          } else {
+            tempObj[`${item.id}`] = new Array(item);
+          }
+        });
       }
-      genomicFetchCoord[`${query}`] = { expandGenomicLoci: genomicCoords };
-
-      fetchResults.push({
-        result: alignment[`${query}`],
-        id: alignment[`${query}`].id,
-        name: "genomealign",
-      });
-      console.log(alignment[`${query}`]);
-      primaryVisData = alignment[`${query}`].primaryVisData;
-      queryRegion = alignment[`${query}`].queryRegion;
+      for (let alignment in tempObj) {
+        fetchResults.push({ id: alignment, result: tempObj[`${alignment}`] });
+      }
+    } else {
+      (
+        await getGenomeAlignment(
+          event.data.visData.visRegion,
+          genomeAlignTracks
+        )
+      ).map((item) => fetchResults.push(item));
     }
   }
 
@@ -464,13 +310,6 @@ self.onmessage = async (event: MessageEvent) => {
           },
           url
         );
-
-        fetchResults.push({
-          name: trackName,
-          result,
-          id,
-          visRegion: curTrackVis,
-        });
       }
     })
   );
@@ -488,7 +327,189 @@ self.onmessage = async (event: MessageEvent) => {
 
     return { chr, start, end };
   }
-  console.log(primaryVisData);
+  async function getGenomeAlignment(curVisData, genomeAlignTracks) {
+    let visRegionFeatures: Feature[] = [];
+    let result: Array<any> = [];
+    for (let feature of event.data.visData.visRegion._navContext._features) {
+      let newChr = new ChromosomeInterval(
+        feature.locus.chr,
+        feature.locus.start,
+        feature.locus.end
+      );
+      visRegionFeatures.push(new Feature(feature.name, newChr));
+    }
+
+    let visRegionNavContext = new NavigationContext(
+      event.data.visData.visRegion._navContext._name,
+      visRegionFeatures
+    );
+
+    let visRegion = new DisplayedRegionModel(
+      visRegionNavContext,
+      curVisData._startBase,
+      curVisData._endBase
+    );
+
+    let viewWindowRegionFeatures: Feature[] = [];
+
+    for (let feature of event.data.visData.viewWindowRegion._navContext
+      ._features) {
+      let newChr = new ChromosomeInterval(
+        feature.locus.chr,
+        feature.locus.start,
+        feature.locus.end
+      );
+      viewWindowRegionFeatures.push(new Feature(feature.name, newChr));
+    }
+
+    let viewWindowRegionNavContext = new NavigationContext(
+      event.data.visData.viewWindowRegion._navContext._name,
+      viewWindowRegionFeatures
+    );
+    console.log(
+      curVisData._startBase + event.data.bpRegionSize,
+      curVisData._endBase - event.data.bpRegionSize
+    );
+    let viewWindowRegion = new DisplayedRegionModel(
+      viewWindowRegionNavContext,
+      curVisData._startBase + event.data.bpRegionSize,
+      curVisData._endBase - event.data.bpRegionSize
+    );
+
+    let visData: ViewExpansion = {
+      visWidth: event.data.windowWidth * 3,
+      visRegion,
+      viewWindow: new OpenInterval(
+        event.data.windowWidth,
+        event.data.windowWidth * 2
+      ),
+
+      viewWindowRegion,
+    };
+
+    const oldRecordsArray = await Promise.all(
+      genomeAlignTracks.map(async (item, index) => {
+        let curGenomeAlignRespond = await trackFetchFunction.genomealign(
+          expandGenomicLoci,
+          {
+            height: 40,
+            isCombineStrands: false,
+            colorsForContext: {
+              CG: {
+                color: "rgb(100,139,216)",
+                background: "#d9d9d9",
+              },
+              CHG: {
+                color: "rgb(255,148,77)",
+                background: "#ffe0cc",
+              },
+              CHH: {
+                color: "rgb(255,0,255)",
+                background: "#ffe5ff",
+              },
+            },
+            depthColor: "#525252",
+            depthFilter: 0,
+            maxMethyl: 1,
+            label: "",
+          },
+          item.url
+        );
+
+        let records: AlignmentRecord[] = [];
+        let recordArr: any = curGenomeAlignRespond;
+
+        for (const record of recordArr) {
+          let data = JSON5.parse("{" + record[3] + "}");
+          // if (options.isRoughMode) {
+
+          // }
+          record[3] = data;
+          records.push(new AlignmentRecord(record));
+        }
+        // added trackId genomeAlign tracks so we can put the correct data to the correct track after we sent the data back
+        return {
+          query: item.querygenome,
+          records: records,
+          isBigChain: false,
+          id: item.id,
+        };
+      })
+    );
+
+    // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
+
+    let multiCalInstance = new MultiAlignmentViewCalculator(
+      event.data.primaryGenName
+    );
+    let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
+    // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
+    // because class don't get sent over Workers and Internet so we have to get the data here.
+    for (let query in alignment) {
+      for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
+        let placement = alignment[`${query}`].drawData[i];
+
+        const { targetXSpan } = placement;
+        const targetSequence = placement.visiblePart.getTargetSequence();
+        const querySequence = placement.visiblePart.getQuerySequence();
+        const baseWidth = targetXSpan.getLength() / targetSequence.length;
+        const targetLocus = placement.visiblePart.getLocus().toString();
+        const queryLocus = placement.visiblePart.getQueryLocus().toString();
+        const nonGapsTarget = placement.targetSegments.filter(
+          (segment) => !segment.isGap
+        );
+        const nonGapsQuery = placement.querySegments.filter(
+          (segment) => !segment.isGap
+        );
+
+        const isReverseStrandQuery = placement.record.getIsReverseStrandQuery();
+        let tempObj = {
+          targetSequence,
+          querySequence,
+          nonGapsQuery,
+          baseWidth,
+          targetLocus,
+          queryLocus,
+          nonGapsTarget,
+          isReverseStrandQuery,
+        };
+        alignment[`${query}`].drawData[i] = {
+          ...placement,
+          ...tempObj,
+        };
+      }
+
+      // step 4 create obj that holds primary and query genome genomic coordinate because some other tracks might
+      // align to the query coord
+      let genomicCoords: Array<any> = [];
+
+      let featuresForChr =
+        alignment[`${query}`].queryRegion._navContext._featuresForChr;
+
+      for (let chr in featuresForChr) {
+        if (chr !== "") {
+          let start = parseGenomicCoordinates(
+            featuresForChr[`${chr}`][0].name
+          ).start;
+          let end = parseGenomicCoordinates(
+            featuresForChr[`${chr}`][featuresForChr[`${chr}`].length - 1].name
+          ).end;
+          genomicCoords.push({ chr, start, end });
+          //   genomicCoords.push(  )                                                                                                                                                           )
+          //  genomicFetchCoord[`${chr}`] = {expandGenomicLoci: {start: , end: , chr}}
+        }
+      }
+      genomicFetchCoord[`${query}`] = { expandGenomicLoci: genomicCoords };
+
+      result.push({
+        result: alignment[`${query}`],
+        id: alignment[`${query}`].id,
+        name: "genomealign",
+      });
+    }
+    return result;
+  }
+
   postMessage({
     fetchResults,
     side: event.data.trackSide,
@@ -496,10 +517,11 @@ self.onmessage = async (event: MessageEvent) => {
     location: event.data.location,
     initial: event.data.initial,
     curRegionCoord: event.data.curRegionCoord,
+    genomicFetchCoord,
     bpX: event.data.bpX,
     hasGenomeAlignTrack,
-    viewWindow: primaryVisData.viewWindow.start,
-    visRegion: primaryVisData.visRegion,
-    visWidth: primaryVisData.visWidth,
+    // viewWindow: primaryVisData.viewWindow.start,
+    // visRegion: primaryVisData.visRegion,
+    // visWidth: primaryVisData.visWidth,
   });
 };

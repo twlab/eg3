@@ -3,58 +3,14 @@ import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 
 import _ from "lodash";
-import { SequenceSegment } from "../../../models/AlignmentStringUtils";
-import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
-import { Sequence } from "./Sequence";
-
-import OpenInterval from "../../../models/OpenInterval";
-import Feature from "../../../models/Feature";
-import AlignmentRecord from "../../../models/AlignmentRecord";
-
-import { AlignmentSegment } from "../../../models/AlignmentSegment";
-
 import ToolTipGenomealign from "../commonComponents/hover-and-tooltip/toolTipGenomealign";
 import { TrackProps } from "../../../models/trackModels/trackProps";
-import { GapText } from "./MultiAlignmentViewCalculator";
-const worker = new Worker(new URL("./genomeAlignWorker.ts", import.meta.url), {
-  type: "module",
-});
-
-export const DEFAULT_OPTIONS = {
-  height: 80,
-  primaryColor: "darkblue",
-  queryColor: "#B8008A",
-};
-interface QueryGenomePiece {
-  queryFeature: Feature;
-  queryXSpan: OpenInterval;
-}
-
-export interface PlacedMergedAlignment extends QueryGenomePiece {
-  segments: PlacedAlignment[];
-  targetXSpan: OpenInterval;
-}
-// const FINE_MODE_HEIGHT = 80;
-const ALIGN_TRACK_MARGIN = 20; // The margin on top and bottom of alignment block
-// const ROUGH_MODE_HEIGHT = 80;
-const RECT_HEIGHT = 15;
-const TICK_MARGIN = 1;
-const FONT_SIZE = 10;
-// const PRIMARY_COLOR = 'darkblue';
-// const QUERY_COLOR = '#B8008A';
-const MAX_POLYGONS = 500;
-export interface PlacedSequenceSegment extends SequenceSegment {
-  xSpan: OpenInterval;
-}
-export interface PlacedAlignment {
-  record: AlignmentRecord;
-  visiblePart: AlignmentSegment;
-  contextSpan: OpenInterval;
-  targetXSpan: OpenInterval;
-  queryXSpan: OpenInterval | null;
-  targetSegments?: PlacedSequenceSegment[]; // These only present in fine mode
-  querySegments?: PlacedSequenceSegment[];
-}
+import { GapText, PlacedAlignment } from "./MultiAlignmentViewCalculator";
+import {
+  renderFineAlignment,
+  renderGapText,
+  renderRoughStrand,
+} from "./genomeAlignComponents";
 
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
@@ -63,480 +19,217 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   visData,
   trackIdx,
   handleDelete,
+  windowWidth,
+  dataIdx,
   id,
 }) {
-  let result;
-  if (Object.keys(trackData!).length > 0) {
-    result = trackData![`${id}`];
-  }
-
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
+  const rightIdx = useRef(0);
+  const leftIdx = useRef(1);
 
-  const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+  const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const curRegionData = useRef<{ [key: string]: any }>({});
+  const xPos = useRef(0);
 
-  const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
-  const view = useRef(0);
-  const newTrackWidth = useRef(visData);
+  const [svgComponents, setSvgComponents] = useState<Array<any>>([]);
 
-  // We will do MultiAlignmentViewCalculator here for rough mode
+  const newTrackWidth = useRef(windowWidth);
 
-  function fetchGenomeData() {
-    if (result === undefined || result.length === 0) {
-      return;
-    }
-
-    let tmpObj;
+  function createSVG(trackState, alignmentData) {
+    let result = alignmentData;
     let svgElements;
-    //FINEMODE __________________________________________________________________________________________________________________________________________________________
-    //step  1 check bp and get the gaps
+
     if (bpToPx! <= 10) {
       const drawData = result.drawData as PlacedAlignment[];
 
       svgElements = drawData.map(renderFineAlignment);
       const drawGapText = result.drawGapText as GapText[];
       svgElements.push(...drawGapText.map(renderGapText));
-      tmpObj = { svgElements, drawData, result };
-      if (trackData!.side === "right") {
-        setRightTrack(new Array<any>(tmpObj));
-      } else {
-        setLeftTrack(new Array<any>(tmpObj));
+
+      setSvgComponents(new Array<any>(svgElements));
+
+      if (trackState.index === 0) {
+        xPos.current = -trackState.startWindow;
+      } else if (trackState.side === "right") {
+        xPos.current = -trackState!.xDist - trackState.startWindow;
+      } else if (trackState.side === "left") {
+        xPos.current = trackState!.xDist - trackState.startWindow;
       }
 
-      view.current = trackData!.xDist;
-
-      newTrackWidth.current = result.primaryVisData;
-
-      //  find the gap for primary genome in bp
-      // newWorkerData["viewMode"] = "fineMode";
-      // worker.postMessage(newWorkerData);
-
-      // worker.onmessage = (event) => {
-      //   let drawDataArr = event.data.drawDataArr;
-
-      //   newTrackWidth.current = drawDataArr[0].primaryVisData;
-
-      //   let drawData = drawDataArr[0].drawData;
-
-      //   svgElements = drawData.map((placement, index) =>
-      //     renderFineAlignment(placement, index)
-      //   );
-      //   const drawGapText = drawDataArr[0].drawGapText;
-      //   svgElements.push(...drawGapText.map(renderGapText));
-      //   tmpObj = { svgElements, drawDataArr };
-
-      //   if (trackData2!.side === "right") {
-      //     setRightTrack(new Array<any>(tmpObj));
-      //   } else {
-      //     setLeftTrack(new Array<any>(tmpObj));
-      //   }
-      //   view.current = event.data.xDist;
-      // };
+      newTrackWidth.current = trackState.visWidth;
     }
 
     //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
     //step 1
     else {
-      newWorkerData["viewMode"] = "roughMode";
-      worker.postMessage(newWorkerData);
+      // newWorkerData["viewMode"] = "roughMode";
+      // worker.onmessage = (event) => {
+      //   let drawDataArr = event.data.drawDataArr;
+      //   let drawData = drawDataArr[0].drawData;
+      //   svgElements = drawData.map((placement) =>
+      //     renderRoughAlignment(placement, false, 80)
+      //   );
+      //   newTrackWidth.current = drawDataArr[0].primaryVisData;
+      //   const arrows = renderRoughStrand("+", 0, visData!.viewWindow, false);
+      //   svgElements.push(arrows);
+      //   const primaryViewWindow = drawDataArr[0].primaryVisData.viewWindow;
+      //   const strand = drawDataArr[0].plotStrand;
+      //   const height = 80;
+      //   const primaryArrows = renderRoughStrand(
+      //     strand,
+      //     height - RECT_HEIGHT,
+      //     primaryViewWindow,
+      //     true
+      //   );
+      //   svgElements.push(primaryArrows);
+      //   tmpObj = { svgElements, drawDataArr };
+      //   if (trackData!.side === "right") {
+      //     setRightTrack(new Array<any>(tmpObj));
+      //   } else {
+      //     setLeftTrack(new Array<any>(tmpObj));
+      //   }
+      //   xPos.current = event.data.xDist;
+      // };
+    }
+  }
 
-      worker.onmessage = (event) => {
-        let drawDataArr = event.data.drawDataArr;
+  // function to get for dataidx change and getting stored data
+  function getCacheData() {
+    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
+    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
+    // otherwise when there is new data cuz the user is at the end of the track
+    let viewData = {};
+    let curIdx;
 
-        let drawData = drawDataArr[0].drawData;
-
-        svgElements = drawData.map((placement) =>
-          renderRoughAlignment(placement, false, 80)
-        );
-        newTrackWidth.current = drawDataArr[0].primaryVisData;
-        const arrows = renderRoughStrand("+", 0, visData!.viewWindow, false);
-        svgElements.push(arrows);
-        const primaryViewWindow = drawDataArr[0].primaryVisData.viewWindow;
-
-        const strand = drawDataArr[0].plotStrand;
-        const height = 80;
-        const primaryArrows = renderRoughStrand(
-          strand,
-          height - RECT_HEIGHT,
-          primaryViewWindow,
-          true
-        );
-        svgElements.push(primaryArrows);
-        tmpObj = { svgElements, drawDataArr };
-        if (trackData!.side === "right") {
-          setRightTrack(new Array<any>(tmpObj));
-        } else {
-          setLeftTrack(new Array<any>(tmpObj));
-        }
-        view.current = event.data.xDist;
+    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
+    } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
+    }
+    if ("drawData" in viewData) {
+      curRegionData.current = {
+        trackState: fetchedDataCache.current[curIdx].trackState,
+        deDupRefGenesArr: viewData,
+        initial: 0,
       };
+      createSVG(fetchedDataCache.current[curIdx].trackState, viewData);
     }
   }
+  // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
+  useEffect(() => {
+    if (trackData![`${id}`]) {
+      if (trackData!.initial === 1) {
+        let trackState0 = {
+          initial: 0,
+          side: "left",
+          xDist: 0,
+          index: 1,
+          startWindow:
+            trackData![`${id}`][0].result.primaryVisData.viewWindow.start,
+          visWidth: trackData![`${id}`][0].result.primaryVisData.visWidth,
+        };
+        let trackState1 = {
+          initial: 1,
+          side: "right",
+          xDist: 0,
+          index: 0,
+          startWindow:
+            trackData![`${id}`][1].result.primaryVisData.viewWindow.start,
+          visWidth: trackData![`${id}`][1].result.primaryVisData.visWidth,
+        };
+        let trackState2 = {
+          initial: 0,
+          side: "right",
+          xDist: 0,
+          index: -1,
+          startWindow:
+            trackData![`${id}`][2].result.primaryVisData.viewWindow.start,
+          visWidth: trackData![`${id}`][2].result.primaryVisData.visWidth,
+        };
 
-  //fineMode FUNCTIONS ______s____________________________________________________________________________________________________________________________________________________
+        fetchedDataCache.current[leftIdx.current] = {
+          data: trackData![`${id}`][0].result,
+          trackState: trackState0,
+        };
+        leftIdx.current++;
 
-  function renderGapText(gap: { [key: string]: any }, i: number) {
-    const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
-    const placementTargetGap = gap.targetGapText;
-    const placementQueryGap = gap.queryGapText;
-    const placementGapX =
-      (gap.targetTextXSpan.start + gap.targetTextXSpan.end) / 2;
-    const queryPlacementGapX =
-      (gap.queryTextXSpan.start + gap.queryTextXSpan.end) / 2;
-    const shiftTargetText = gap.shiftTarget;
-    const shiftQueryText = gap.shiftQuery;
-    const targetY = shiftTargetText
-      ? ALIGN_TRACK_MARGIN - 10
-      : ALIGN_TRACK_MARGIN + 5;
-    const targetTickY = shiftTargetText
-      ? ALIGN_TRACK_MARGIN - 5
-      : ALIGN_TRACK_MARGIN + 5;
-    const queryY = shiftQueryText
-      ? height - ALIGN_TRACK_MARGIN + 10
-      : height - ALIGN_TRACK_MARGIN - 5;
-    const queryTickY = shiftQueryText
-      ? height - ALIGN_TRACK_MARGIN + 5
-      : height - ALIGN_TRACK_MARGIN - 5;
+        fetchedDataCache.current[rightIdx.current] = {
+          data: trackData![`${id}`][1].result,
+          trackState: trackState1,
+        };
+        rightIdx.current--;
+        fetchedDataCache.current[rightIdx.current] = {
+          data: trackData![`${id}`][2].result,
+          trackState: trackState2,
+        };
+        rightIdx.current--;
 
-    return (
-      <React.Fragment key={"gap " + i}>
-        {renderLine(
-          gap.targetXSpan.start,
-          ALIGN_TRACK_MARGIN,
-          gap.targetTextXSpan.start,
-          targetTickY,
-          primaryColor
-        )}
-        {renderText(placementTargetGap, placementGapX, targetY, primaryColor)}
-        {renderLine(
-          gap.targetXSpan.end,
-          ALIGN_TRACK_MARGIN,
-          gap.targetTextXSpan.end,
-          targetTickY,
-          primaryColor
-        )}
+        let curDataArr = fetchedDataCache.current[0].data;
 
-        {renderLine(
-          gap.queryXSpan.start,
-          height - ALIGN_TRACK_MARGIN,
-          gap.queryTextXSpan.start,
-          queryTickY,
-          queryColor
-        )}
-        {renderText(placementQueryGap, queryPlacementGapX, queryY, queryColor)}
-        {renderLine(
-          gap.queryXSpan.end,
-          height - ALIGN_TRACK_MARGIN,
-          gap.queryTextXSpan.end,
-          queryTickY,
-          queryColor
-        )}
-      </React.Fragment>
-    );
+        curRegionData.current = {
+          trackState: trackState1,
+          deDupRefGenesArr: curDataArr,
+        };
+        createSVG(trackState1, curDataArr);
+      } else {
+        let newTrackState = {
+          ...trackData!.trackState,
+          startWindow: trackData![`${id}`].primaryVisData.viewWindow.start,
+          visWidth: trackData![`${id}`].primaryVisData.visWidth,
+        };
+        if (trackData!.trackState.side === "right") {
+          trackData!.trackState["index"] = rightIdx.current;
+          fetchedDataCache.current[rightIdx.current] = {
+            data: trackData![`${id}`],
+            trackState: newTrackState,
+          };
 
-    function renderText(text: string, x: number, y: number, color: string) {
-      return (
-        <text
-          x={x}
-          y={y}
-          dominantBaseline="middle"
-          style={{ textAnchor: "middle", fill: color, fontSize: 10 }}
-        >
-          {text}
-        </text>
-      );
-    }
+          rightIdx.current--;
 
-    function renderLine(
-      x1: number,
-      y1: number,
-      x2: number,
-      y2: number,
-      color: string
-    ) {
-      return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} />;
-    }
-  }
+          curRegionData.current = {
+            trackState: newTrackState,
+            deDupRefGenesArr:
+              fetchedDataCache.current[rightIdx.current + 1].data,
+            initial: 0,
+          };
+          createSVG(
+            newTrackState,
+            fetchedDataCache.current[rightIdx.current + 1].data
+          );
+        } else if (trackData!.trackState.side === "left") {
+          trackData!.trackState["index"] = leftIdx.current;
 
-  function renderFineAlignment(placement: any, i: number) {
-    const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
-    const { targetXSpan } = placement;
-    const xStart = targetXSpan.start;
-    const xEnd = targetXSpan.end;
-    const targetSequence = placement.targetSequence;
-    const querySequence = placement.querySequence;
-    const baseWidth = placement.baseWidth;
-    const targetLocus = placement.targetLocus;
-    const queryLocus = placement.queryLocus;
-    const nonGapsTarget = placement.nonGapsTarget;
-    const nonGapsQuery = placement.nonGapsQuery;
-    return (
-      <React.Fragment key={i}>
-        {renderSequenceSegments(
-          targetLocus,
-          targetSequence,
-          nonGapsTarget,
-          ALIGN_TRACK_MARGIN,
-          primaryColor,
-          false
-        )}
-        {renderAlignTicks()}
-        {renderSequenceSegments(
-          queryLocus,
-          querySequence,
-          nonGapsQuery,
-          height - RECT_HEIGHT - ALIGN_TRACK_MARGIN,
-          queryColor,
-          true
-        )}
-      </React.Fragment>
-    );
+          fetchedDataCache.current[leftIdx.current] = {
+            data: trackData![`${id}`],
+            trackState: newTrackState,
+          };
 
-    function renderAlignTicks() {
-      const ticks: Array<any> = [];
-      let x = targetXSpan.start;
+          leftIdx.current++;
 
-      for (i = 0; i < targetSequence.length; i++) {
-        if (
-          targetSequence.charAt(i).toUpperCase() ===
-          querySequence.charAt(i).toUpperCase()
-        ) {
-          ticks.push(
-            <line
-              key={i}
-              x1={x + baseWidth / 2}
-              y1={ALIGN_TRACK_MARGIN + RECT_HEIGHT + TICK_MARGIN}
-              x2={x + baseWidth / 2}
-              y2={height - ALIGN_TRACK_MARGIN - RECT_HEIGHT - TICK_MARGIN}
-              stroke="black"
-              strokeOpacity={0.7}
-            />
+          curRegionData.current = {
+            trackState: newTrackState,
+            deDupRefGenesArr:
+              fetchedDataCache.current[leftIdx.current - 1].data,
+            initial: 0,
+          };
+
+          createSVG(
+            newTrackState,
+            fetchedDataCache.current[leftIdx.current - 1].data
           );
         }
-        x += baseWidth;
       }
-      return ticks;
     }
-
-    function renderSequenceSegments(
-      locus: string,
-      sequence: string,
-      nonGaps: any,
-      y: number,
-      color: string,
-      isQuery: boolean
-    ) {
-      const rects = nonGaps.map((segment, i) => (
-        <rect
-          key={i}
-          x={segment.xSpan.start}
-          y={y}
-          width={segment.xSpan.end - segment.xSpan.start}
-          height={RECT_HEIGHT}
-          fill={color}
-          onClick={() => console.log("You clicked on " + locus)}
-        />
-      ));
-      const letters = nonGaps.map((segment, i) => (
-        <Sequence
-          key={i}
-          sequence={sequence.substr(segment.index, segment.length)}
-          xSpan={segment.xSpan}
-          y={y}
-          isDrawBackground={false}
-          height={RECT_HEIGHT}
-        />
-      ));
-      const arrows = nonGaps.map((segment, i) => (
-        <AnnotationArrows
-          key={i}
-          startX={segment.xSpan.start}
-          endX={segment.xSpan.end}
-          y={y}
-          height={RECT_HEIGHT}
-          opacity={0.75}
-          isToRight={!(isQuery && placement.isReverseStrandQuery)}
-          color="white"
-          separation={baseWidth}
-        />
-      ));
-
-      return (
-        <React.Fragment>
-          <line
-            x1={xStart + baseWidth / 4}
-            y1={y + 0.5 * RECT_HEIGHT}
-            x2={xEnd}
-            y2={y + 0.5 * RECT_HEIGHT}
-            stroke={color}
-            strokeDasharray={baseWidth / 2}
-          />
-          {rects}
-          {arrows}
-          {letters}
-        </React.Fragment>
-      );
-    }
-  }
-
-  //ROUGHMODEFUNCTIONS __________________________________________________________________________________________________________________________________________________________
-  //ROUGHMODEFUNCTIONS __________________________________________________________________________________________________________________________________________________________
-  //ROUGHMODEFUNCTIONS __________________________________________________________________________________________________________________________________________________________
-  function renderRoughStrand(
-    strand: string,
-    topY: number,
-    viewWindow: { [key: string]: any },
-    isPrimary: boolean
-  ) {
-    const plotReverse = strand === "-" ? true : false;
-    return (
-      <AnnotationArrows
-        key={"roughArrow" + viewWindow.start + isPrimary}
-        startX={viewWindow.start}
-        endX={viewWindow.end}
-        y={topY}
-        height={RECT_HEIGHT}
-        opacity={0.75}
-        isToRight={!plotReverse}
-        color="white"
-        separation={0}
-      />
-    );
-  }
-  function ensureMaxListLength(list, limit: number) {
-    if (list.length <= limit) {
-      return list;
-    }
-
-    const selectedItems: Array<any> = [];
-    for (let i = 0; i < limit; i++) {
-      const fractionIterated = i / limit;
-      const selectedIndex = Math.ceil(fractionIterated * list.length);
-      selectedItems.push(list[selectedIndex]);
-    }
-    return selectedItems;
-  }
-  function renderRoughAlignment(
-    placement: { [key: string]: any },
-    plotReverse: boolean,
-    roughHeight: number
-  ) {
-    const targetXSpan: { [key: string]: any } = placement.targetXSpan;
-    const segments: Array<{ [key: string]: any }> = placement.segments;
-    const queryXSpan: { [key: string]: any } = placement.queryXSpan;
-    const queryFeature: { [key: string]: any } = placement.queryFeature;
-    const queryRectTopY = roughHeight - RECT_HEIGHT;
-
-    const targetGenomeRect = (
-      <rect
-        x={targetXSpan.start}
-        y={0}
-        width={targetXSpan.end - targetXSpan.start}
-        height={RECT_HEIGHT}
-        fill={DEFAULT_OPTIONS.primaryColor}
-        // tslint:disable-next-line:jsx-no-lambda
-        // onClick={() =>
-        //   console.log("You clicked on " + queryFeature.getLocus().toString())
-        // }
-      />
-    );
-    const queryGenomeRect = (
-      <rect
-        x={queryXSpan.start}
-        y={queryRectTopY}
-        width={queryXSpan.end - queryXSpan.start}
-        height={RECT_HEIGHT}
-        fill={DEFAULT_OPTIONS.queryColor}
-        // tslint:disable-next-line:jsx-no-lambda
-        // onClick={() => console.log("You clicked on " + queryFeature.getLocus().toString())}
-      />
-    );
-
-    const estimatedLabelWidth = queryFeature.toString().length * FONT_SIZE;
-    let label;
-    if (estimatedLabelWidth < queryXSpan.end - queryXSpan.start) {
-      label = (
-        <text
-          x={0.5 * (queryXSpan.start + queryXSpan.end)}
-          y={queryRectTopY + 0.5 * RECT_HEIGHT}
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fill="white"
-          fontSize={12}
-        >
-          {`${queryFeature.locus.chr}:${queryFeature.locus.start}-${queryFeature.locus.end}`}
-        </text>
-      );
-    }
-
-    const curvePaths = segments.map((segment, i) => {
-      const x0 = Math.floor(segment.targetXSpan.start);
-      const y0 = RECT_HEIGHT;
-      const x1 =
-        (!plotReverse && segment.record.queryStrand === "-") ||
-        (plotReverse && segment.record.queryStrand === "+")
-          ? Math.ceil(segment.queryXSpan!.end)
-          : Math.floor(segment.queryXSpan!.start);
-      const y1 = queryRectTopY;
-      const x2 =
-        (!plotReverse && segment.record.queryStrand === "-") ||
-        (plotReverse && segment.record.queryStrand === "+")
-          ? Math.floor(segment.queryXSpan!.start)
-          : Math.ceil(segment.queryXSpan!.end);
-      // const y2 = queryRectTopY;
-
-      const x3 = segment.targetXSpan.end;
-      const targetGenome = trackData!.genomeName;
-      const queryGenome = trackData!.queryGenomeName;
-      const y3 = RECT_HEIGHT;
-      const yhalf = (RECT_HEIGHT + queryRectTopY) / 2;
-      const d_string = `M ${x0} ${y0} 
-        C ${x0} ${yhalf}, ${x1} ${yhalf},${x1},${y1} 
-        H ${x2} 
-        C ${x2} ${yhalf}, ${x3} ${yhalf}, ${x3},${y3}
-        Z`;
-
-      return (
-        <path
-          key={i}
-          d={d_string}
-          fill={DEFAULT_OPTIONS.queryColor}
-          fillOpacity={0.5}
-          // tslint:disable-next-line:jsx-no-lambda
-          onClick={() =>
-            console.log(
-              targetGenome +
-                ":" +
-                `${segment.record.locus.chr}:${segment.record.locus.start}-${segment.record.locus.end}` +
-                " --- " +
-                queryGenome +
-                ":" +
-                `${segment.record.queryLocus.chr}:${segment.record.queryLocus.start}-${segment.record.queryLocus.end}`
-            )
-          }
-        />
-      );
-    });
-
-    return (
-      <React.Fragment
-        key={`${queryFeature.locus.chr}:${queryFeature.locus.start}-${queryFeature.locus.end}`}
-      >
-        {targetGenomeRect}
-
-        {queryGenomeRect}
-        {label}
-        {ensureMaxListLength(curvePaths, MAX_POLYGONS)}
-      </React.Fragment>
-    );
-  }
+  }, [trackData]);
+  // when INDEX POSITION CHANGE
 
   useEffect(() => {
-    fetchGenomeData();
-    // having two prop changes here side and data will cause JSON5 try to run twice causing an error because its already parsed
-  }, [trackData]);
-  // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
-  // absolute element will affect each other position so you need those element to all have absolute
+    getCacheData();
+  }, [dataIdx]);
+
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div
@@ -547,62 +240,26 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         }}
       >
         <svg
-          width={`${newTrackWidth.current!.visWidth}px`}
+          width={`${newTrackWidth.current}px`}
           height={"250"}
           style={{
             position: "absolute",
 
-            right:
-              side === "left"
-                ? `${view.current! - newTrackWidth.current!.viewWindow.start}px`
-                : "",
-            left:
-              side === "right"
-                ? `${
-                    -view.current! - newTrackWidth.current!.viewWindow.start
-                  }px`
-                : "",
+            right: side === "left" ? `${xPos.current!}px` : "",
+            left: side === "right" ? `${xPos.current!}px` : "",
           }}
         >
-          {view.current <= 0
-            ? rightTrackGenes.map(
-                (drawData) =>
-                  // index <= rightTrackGenes.length - 1 ?
-                  drawData["svgElements"]
-                //  : (
-                //   <div style={{ display: 'flex', width: windowWidth }}>
-                //     ....LOADING
-                //   </div>
-                // )
-              )
-            : leftTrackGenes.map(
-                (drawData) =>
-                  // index <= rightTrackGenes.length - 1 ?
-                  drawData["svgElements"].map((svgData) => svgData)
-                //  : (
-                //   <div style={{ display: 'flex', width: windowWidth }}>
-                //     ....LOADING
-                //   </div>
-                // )
-              )}
+          {svgComponents.map((drawData) => drawData)}
         </svg>
         <div
           style={{
             position: "absolute",
-            right:
-              side === "left"
-                ? `${view.current! - newTrackWidth.current!.viewWindow.start}px`
-                : "",
-            left:
-              side === "right"
-                ? `${
-                    -view.current! - newTrackWidth.current!.viewWindow.start
-                  }px`
-                : "",
+            right: side === "left" ? `${xPos.current!}px` : "",
+            left: side === "right" ? `${-xPos.current!}px` : "",
           }}
         >
           {/* {bpToPx! <= 10
-            ? view.current <= 0
+            ? xPos.current <= 0
               ? rightTrackGenes.map(
                   (drawData) =>
                     // index <= rightTrackGenes.length - 1 ?
@@ -654,3 +311,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   );
 });
 export default memo(GenomeAlign);
+function renderRoughAlignment(placement: any, arg1: boolean, arg2: number) {
+  throw new Error("Function not implemented.");
+}
