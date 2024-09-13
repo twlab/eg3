@@ -91,7 +91,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     //FINEMODE __________________________________________________________________________________________________________________________________________________________
     //step  1 check bp and get the gaps
     if (bpToPx! <= 10) {
-      console.log(result);
       const drawData = result.drawData as PlacedAlignment[];
 
       svgElements = drawData.map(renderFineAlignment);
@@ -107,11 +106,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       view.current = trackData!.xDist;
 
       newTrackWidth.current = result.primaryVisData;
-      console.log(
-        view.current,
-        newTrackWidth.current,
-        view.current! - newTrackWidth.current!.viewWindow.start
-      );
+
       //  find the gap for primary genome in bp
       // newWorkerData["viewMode"] = "fineMode";
       // worker.postMessage(newWorkerData);
@@ -264,7 +259,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
 
   function renderFineAlignment(placement: any, i: number) {
-    console.log(placement);
     const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
     const { targetXSpan } = placement;
     const xStart = targetXSpan.start;
@@ -538,7 +532,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
 
   useEffect(() => {
-    console.log(trackData);
     fetchGenomeData();
     // having two prop changes here side and data will cause JSON5 try to run twice causing an error because its already parsed
   }, [trackData]);

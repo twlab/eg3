@@ -88,40 +88,43 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
+    console.log(curTrackData);
     if (curTrackData.index === 0) {
-      xPos.current = -windowWidth;
+      xPos.current = -curTrackData.startWindow;
     } else if (curTrackData.side === "right") {
       xPos.current =
-        (Math.floor(-curTrackData!.xDist / windowWidth) - 1) * windowWidth;
+        Math.floor(-curTrackData!.xDist / windowWidth) * windowWidth -
+        curTrackData.startWindow;
     } else if (curTrackData.side === "left") {
       xPos.current =
-        (Math.floor(curTrackData!.xDist / windowWidth) - 1) * windowWidth;
+        Math.floor(curTrackData!.xDist / windowWidth) * windowWidth -
+        curTrackData.startWindow;
     }
-    let currDisplayNav;
+    let currDisplayNav = curTrackData.primaryNav;
     let sortType;
     if (curTrackData!.side === "right") {
       // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
       // we have to get coord of prev regions by subtracting of the last region
       currDisplayNav = new DisplayedRegionModel(
-        curTrackData.regionNavCoord._navContext,
-        curTrackData.regionNavCoord._startBase -
-          (curTrackData.regionNavCoord._endBase -
-            curTrackData.regionNavCoord._startBase) *
+        curTrackData.primaryNav._navContext,
+        curTrackData.primaryNav._startBase -
+          (curTrackData.primaryNav._endBase -
+            curTrackData.primaryNav._startBase) *
             2,
 
-        curTrackData.regionNavCoord._endBase
+        curTrackData.primaryNav._endBase
       );
 
       if (curTrackData.index === 0) {
         currDisplayNav = new DisplayedRegionModel(
-          curTrackData.regionNavCoord._navContext,
-          curTrackData.regionNavCoord._startBase -
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase),
+          curTrackData.primaryNav._navContext,
+          curTrackData.primaryNav._startBase -
+            (curTrackData.primaryNav._endBase -
+              curTrackData.primaryNav._startBase),
 
-          curTrackData.regionNavCoord._endBase +
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase)
+          curTrackData.primaryNav._endBase +
+            (curTrackData.primaryNav._endBase -
+              curTrackData.primaryNav._startBase)
         );
       }
       sortType = SortItemsOptions.NOSORT;
@@ -129,12 +132,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
       // for left we subtract the endbase by 2 times
       currDisplayNav = new DisplayedRegionModel(
-        curTrackData.regionNavCoord._navContext,
-        curTrackData.regionNavCoord._startBase,
+        curTrackData.primaryNav._navContext,
+        curTrackData.primaryNav._startBase,
 
-        curTrackData.regionNavCoord._endBase +
-          (curTrackData.regionNavCoord._endBase -
-            curTrackData.regionNavCoord._startBase) *
+        curTrackData.primaryNav._endBase +
+          (curTrackData.primaryNav._endBase -
+            curTrackData.primaryNav._startBase) *
             2
       );
       sortType = SortItemsOptions.NONE;
@@ -147,8 +150,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     if (configOptions.current.displayMode === "full") {
       let placeFeatureData = featureArrange.arrange(
         algoData,
-        currDisplayNav,
-        windowWidth * 3,
+        curTrackData.primaryNav,
+        curTrackData.visWidth,
         getGenePadding,
         configOptions.current.hiddenPixels,
         sortType
@@ -157,7 +160,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       const height = getHeight(placeFeatureData.numRowsAssigned);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
-        windowWidth * 3,
+        curTrackData.visWidth,
         height,
         ROW_HEIGHT,
         configOptions.current.maxRows,
@@ -533,50 +536,50 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
+        console.log(trackData![`${id}`]);
         let trackState0 = {
           initial: 0,
           side: "left",
           xDist: 0,
-          regionNavCoord: new DisplayedRegionModel(
-            genomeArr![genomeIdx!].navContext,
-            trackData![`${id}`][0].navLoci.start,
-            trackData![`${id}`][0].navLoci.end
-          ),
+          primaryNav: trackData!.trackState.primaryNav,
           index: 1,
+          startWindow: trackData!.trackState.startWindow,
+          visWidth: trackData!.trackState.visWidth,
         };
         let trackState1 = {
           initial: 1,
           side: "right",
           xDist: 0,
-          regionNavCoord: trackData!.regionNavCoord,
+          primaryNav: trackData!.trackState.primaryNav,
           index: 0,
+
+          startWindow: trackData!.trackState.startWindow,
+          visWidth: trackData!.trackState.visWidth,
         };
         let trackState2 = {
           initial: 0,
           side: "right",
           xDist: 0,
-          regionNavCoord: new DisplayedRegionModel(
-            genomeArr![genomeIdx!].navContext,
-            trackData![`${id}`][2].navLoci.start,
-            trackData![`${id}`][2].navLoci.end
-          ),
+          primaryNav: trackData!.trackState.primaryNav,
           index: -1,
+          startWindow: trackData!.trackState.startWindow,
+          visWidth: trackData!.trackState.visWidth,
         };
 
         fetchedDataCache[leftIdx.current] = {
-          refGenes: trackData![`${id}`][0].fetchData,
+          refGenes: trackData![`${id}`].result[0].fetchData,
           trackState: trackState0,
         };
         leftIdx.current++;
 
         fetchedDataCache[rightIdx.current] = {
-          refGenes: trackData![`${id}`][1].fetchData,
+          refGenes: trackData![`${id}`].result[1].fetchData,
           trackState: trackState1,
         };
         rightIdx.current--;
         fetchedDataCache[rightIdx.current] = {
-          refGenes: trackData![`${id}`][2].fetchData,
+          refGenes: trackData![`${id}`].result[2].fetchData,
           trackState: trackState2,
         };
         rightIdx.current--;
@@ -621,7 +624,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         } else if (trackData!.trackState.side === "left") {
           trackData!.trackState["index"] = leftIdx.current;
           fetchedDataCache[leftIdx.current] = {
-            refGenes: trackData![`${id}`],
+            refGenes: trackData![`${id}`].result,
             trackState: trackData!.trackState,
           };
           let currIdx = leftIdx.current - 2;

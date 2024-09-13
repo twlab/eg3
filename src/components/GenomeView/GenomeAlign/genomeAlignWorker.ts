@@ -162,7 +162,7 @@ self.onmessage = (event: MessageEvent) => {
     event.data.genomeName
   );
   let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
-  console.log(alignment);
+
   // add another loop for mutiple genome aligns query genomes
   for (
     let i = 0;
@@ -197,12 +197,11 @@ self.onmessage = (event: MessageEvent) => {
     };
   }
   let id = `${event.data.id}`;
-  console.log(alignment[`${event.data.querygenomeName}`]);
+
   let curFeatures =
     alignment[
       `${event.data.querygenomeName}`
     ].queryRegion._navContext.getFeatures();
-  console.log(curFeatures);
 
   postMessage({
     [`${id}`]: alignment,

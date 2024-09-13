@@ -139,6 +139,10 @@ self.onmessage = async (event: MessageEvent) => {
   let regionLength = event.data.regionLength;
   let trackDefaults = event.data.trackModelArr;
   let genomicFetchCoord = {};
+  let hasGenomeAlignTrack = false;
+  let primaryVisData;
+  let queryRegion;
+  let curTrackVis;
   genomicFetchCoord[`${event.data.primaryGenName}`] = {
     genomicLoci,
     expandGenomicLoci,
@@ -152,6 +156,7 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   if (genomeAlignTracks.length > 0) {
+    hasGenomeAlignTrack = true;
     // step 2: fetch genome align data and put them into an array
     let visRegionFeatures: Feature[] = [];
 
@@ -174,7 +179,11 @@ self.onmessage = async (event: MessageEvent) => {
       event.data.visData.visRegion._startBase,
       event.data.visData.visRegion._endBase
     );
-
+    curTrackVis = new DisplayedRegionModel(
+      visRegionNavContext,
+      event.data.visData.visRegion._startBase,
+      event.data.visData.visRegion._endBase
+    );
     let viewWindowRegionFeatures: Feature[] = [];
 
     for (let feature of event.data.visData.viewWindowRegion._navContext
@@ -308,9 +317,9 @@ self.onmessage = async (event: MessageEvent) => {
 
       let featuresForChr =
         alignment[`${query}`].queryRegion._navContext._featuresForChr;
+      console.log(alignment);
       for (let chr in featuresForChr) {
         if (chr !== "") {
-          console.log(featuresForChr[`${chr}`]);
           let start = parseGenomicCoordinates(
             featuresForChr[`${chr}`][0].name
           ).start;
@@ -329,6 +338,9 @@ self.onmessage = async (event: MessageEvent) => {
         id: alignment[`${query}`].id,
         name: "genomealign",
       });
+      console.log(alignment[`${query}`]);
+      primaryVisData = alignment[`${query}`].primaryVisData;
+      queryRegion = alignment[`${query}`].queryRegion;
     }
   }
 
@@ -342,12 +354,14 @@ self.onmessage = async (event: MessageEvent) => {
   });
   await Promise.all(
     otherDefaultTracks.map(async (item, index) => {
-      console.log(item);
       const trackName = item.name;
       const genomeName = item.genome;
       const id = item.id;
       const url = item.url;
 
+      if (hasGenomeAlignTrack) {
+        curTrackVis = primaryVisData.visRegion;
+      }
       if (trackName === "hic") {
         if (!(id in strawCache)) {
           strawCache[id] = new HicSource(item.url, regionLength);
@@ -382,13 +396,16 @@ self.onmessage = async (event: MessageEvent) => {
           name: trackName,
           result,
           id,
+          visRegion: curTrackVis,
         });
       } else if (trackName === "refGene" || trackName === "gencodeV39") {
         let genRefResponses: Array<any> = [];
         let curFetchNav;
+        let trackVis;
         if ("genome" in item.metadata) {
           curFetchNav =
             genomicFetchCoord[`${item.metadata.genome}`].expandGenomicLoci;
+          curTrackVis = queryRegion;
         } else {
           curFetchNav = genomicLoci;
         }
@@ -430,6 +447,7 @@ self.onmessage = async (event: MessageEvent) => {
           name: trackName,
           result: _.flatten(genRefResponses),
           id: id,
+          visRegion: curTrackVis,
         });
       } else {
         let result = await trackFetchFunction[trackName](
@@ -447,7 +465,12 @@ self.onmessage = async (event: MessageEvent) => {
           url
         );
 
-        fetchResults.push({ name: trackName, result, id });
+        fetchResults.push({
+          name: trackName,
+          result,
+          id,
+          visRegion: curTrackVis,
+        });
       }
     })
   );
@@ -465,6 +488,7 @@ self.onmessage = async (event: MessageEvent) => {
 
     return { chr, start, end };
   }
+  console.log(primaryVisData);
   postMessage({
     fetchResults,
     side: event.data.trackSide,
@@ -473,5 +497,9 @@ self.onmessage = async (event: MessageEvent) => {
     initial: event.data.initial,
     curRegionCoord: event.data.curRegionCoord,
     bpX: event.data.bpX,
+    hasGenomeAlignTrack,
+    viewWindow: primaryVisData.viewWindow.start,
+    visRegion: primaryVisData.visRegion,
+    visWidth: primaryVisData.visWidth,
   });
 };

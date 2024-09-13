@@ -21,6 +21,8 @@ import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { drag } from "d3";
+import Feature from "../../models/Feature";
+import NavigationContext from "../../models/NavigationContext";
 
 const genomeAlignWorker = new Worker(
   new URL("./GenomeAlign/genomeAlignWorker.ts", import.meta.url),
@@ -233,7 +235,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left", genomeCoordLocus, expandedGenomeCoordLocus);
     }
   }
+  function objToInstanceAlign(alignment) {
+    let visRegionFeatures: Feature[] = [];
 
+    for (let feature of alignment._navContext._features) {
+      let newChr = new ChromosomeInterval(
+        feature.locus.chr,
+        feature.locus.start,
+        feature.locus.end
+      );
+      visRegionFeatures.push(new Feature(feature.name, newChr));
+    }
+
+    let visRegionNavContext = new NavigationContext(
+      alignment._navContext._name,
+      visRegionFeatures
+    );
+
+    let visRegion = new DisplayedRegionModel(
+      visRegionNavContext,
+      alignment._startBase,
+      alignment._endBase
+    );
+    return visRegion;
+  }
   async function fetchGenomeData(
     initial: number = 0,
     trackSide,
@@ -326,7 +351,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //     });
     //   };
     // }
-    console.log(genomeArr![genomeIdx!]);
+
     if (initial === 0 || initial === 1) {
       let curRegionCoord;
       let tempObj = {};
@@ -486,15 +511,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       } catch {}
       infiniteScrollWorker.current!.onmessage = (event) => {
-        event.data.fetchResults.map(
-          (item, index) => (tempObj[item.id] = item.result)
-        );
-
-        tempObj["regionNavCoord"] = new DisplayedRegionModel(
-          genomeArr[genomeIdx].navContext,
-          event.data.curRegionCoord._startBase,
-          event.data.curRegionCoord._endBase
-        );
+        let hasGenAlign = event.data.hasGenomeAlignTrack;
+        event.data.fetchResults.map((item, index) => {
+          if ("visRegion" in item) {
+            tempObj[item.id] = {
+              result: item.result,
+              visRegion: hasGenAlign
+                ? objToInstanceAlign(item.visRegion)
+                : new DisplayedRegionModel(
+                    genomeArr[genomeIdx].navContext,
+                    event.data.curRegionCoord._startBase,
+                    event.data.curRegionCoord._endBase
+                  ),
+            };
+          } else {
+            tempObj[item.id] = item.result;
+          }
+        });
+        console.log(event.data);
         tempObj["initial"] = event.data.initial;
         tempObj["side"] = event.data.side;
         tempObj["location"] = event.data.location;
@@ -503,12 +537,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           initial: event.data.initial,
           side: event.data.side,
           xDist: event.data.xDist,
-          regionNavCoord: new DisplayedRegionModel(
-            genomeArr[genomeIdx].navContext,
-            event.data.curRegionCoord._startBase,
-            event.data.curRegionCoord._endBase
-          ),
+          startWindow: hasGenAlign ? event.data.viewWindow : windowWidth,
+          primaryNav: objToInstanceAlign(event.data.visRegion),
+          visWidth: event.data.visWidth,
         };
+        console.log(tempObj);
         setTrackData({ ...tempObj });
         isLoading.current = false;
       };
@@ -606,7 +639,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // on initial and when our genome data changes we set the default values here
 
       let genome = genomeArr[genomeIdx];
-      console.log(genome);
+
       leftStartCoord.current = genome.defaultRegion.start;
       rightStartCoord.current = genome.defaultRegion.end;
 
