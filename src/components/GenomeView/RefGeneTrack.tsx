@@ -102,44 +102,24 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     let currDisplayNav = curTrackData.primaryNav;
     let sortType;
-    if (curTrackData!.side === "right") {
-      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-      // we have to get coord of prev regions by subtracting of the last region
-      currDisplayNav = new DisplayedRegionModel(
-        curTrackData.primaryNav._navContext,
-        curTrackData.primaryNav._startBase -
-          (curTrackData.primaryNav._endBase -
-            curTrackData.primaryNav._startBase) *
-            2,
+    // if (curTrackData!.side === "right") {
+    //   // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
+    //   // we have to get coord of prev regions by subtracting of the last region
+    //   currDisplayNav = new DisplayedRegionModel(
+    //     curTrackData.primaryNav._navContext,
+    //     curTrackData.primaryNav._startBase -
+    //       (curTrackData.primaryNav._endBase -
+    //         curTrackData.primaryNav._startBase) *
+    //         2,
 
-        curTrackData.primaryNav._endBase
-      );
+    //     curTrackData.primaryNav._endBase
+    //   );
 
-      if (curTrackData.index === 0) {
-        currDisplayNav = new DisplayedRegionModel(
-          curTrackData.primaryNav._navContext,
-          curTrackData.primaryNav._startBase -
-            (curTrackData.primaryNav._endBase -
-              curTrackData.primaryNav._startBase),
+    //   if (curTrackData.index === 0) {
 
-          curTrackData.primaryNav._endBase +
-            (curTrackData.primaryNav._endBase -
-              curTrackData.primaryNav._startBase)
-        );
-      }
-      sortType = SortItemsOptions.NOSORT;
-    } else if (curTrackData.side === "left") {
-      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-      // for left we subtract the endbase by 2 times
-      currDisplayNav = new DisplayedRegionModel(
-        curTrackData.primaryNav._navContext,
-        curTrackData.primaryNav._startBase,
-
-        curTrackData.primaryNav._endBase +
-          (curTrackData.primaryNav._endBase -
-            curTrackData.primaryNav._startBase) *
-            2
-      );
+    //   }
+    sortType = SortItemsOptions.NOSORT;
+    if (curTrackData.side === "left") {
       sortType = SortItemsOptions.NONE;
     }
 
