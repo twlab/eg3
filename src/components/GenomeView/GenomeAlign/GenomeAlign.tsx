@@ -16,7 +16,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,
   trackData,
-  visData,
   trackIdx,
   handleDelete,
   windowWidth,
@@ -241,7 +240,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       >
         <svg
           width={`${newTrackWidth.current}px`}
-          height={"250"}
+          height={"80px"}
           style={{
             position: "absolute",
 
@@ -251,14 +250,14 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         >
           {svgComponents.map((drawData) => drawData)}
         </svg>
-        <div
+        {/* <div
           style={{
             position: "absolute",
             right: side === "left" ? `${xPos.current!}px` : "",
             left: side === "right" ? `${-xPos.current!}px` : "",
           }}
         >
-          {/* {bpToPx! <= 10
+          {bpToPx! <= 10
             ? xPos.current <= 0
               ? rightTrackGenes.map(
                   (drawData) =>
@@ -298,8 +297,8 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
                   //   </div>
                   // )
                 )
-            : " "} */}
-        </div>
+            : " "}
+        </div> */}
       </div>
       {/* <button
         style={{ display: "flex", position: "relative" }}
@@ -311,6 +310,3 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   );
 });
 export default memo(GenomeAlign);
-function renderRoughAlignment(placement: any, arg1: boolean, arg2: number) {
-  throw new Error("Function not implemented.");
-}
