@@ -119,7 +119,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
   // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
   useEffect(() => {
-    if (trackData![`${id}`]) {
+    if (trackData![`${id}`] !== undefined) {
       if (trackData!.initial === 1) {
         let trackState0 = {
           initial: 0,
@@ -127,8 +127,10 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           xDist: 0,
           index: 1,
           startWindow:
-            trackData![`${id}`][0].result.primaryVisData.viewWindow.start,
-          visWidth: trackData![`${id}`][0].result.primaryVisData.visWidth,
+            trackData![`${id}`].result[0].result.primaryVisData.viewWindow
+              .start,
+          visWidth:
+            trackData![`${id}`].result[0].result.primaryVisData.visWidth,
         };
         let trackState1 = {
           initial: 1,
@@ -136,8 +138,10 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           xDist: 0,
           index: 0,
           startWindow:
-            trackData![`${id}`][1].result.primaryVisData.viewWindow.start,
-          visWidth: trackData![`${id}`][1].result.primaryVisData.visWidth,
+            trackData![`${id}`].result[1].result.primaryVisData.viewWindow
+              .start,
+          visWidth:
+            trackData![`${id}`].result[1].result.primaryVisData.visWidth,
         };
         let trackState2 = {
           initial: 0,
@@ -145,23 +149,25 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           xDist: 0,
           index: -1,
           startWindow:
-            trackData![`${id}`][2].result.primaryVisData.viewWindow.start,
-          visWidth: trackData![`${id}`][2].result.primaryVisData.visWidth,
+            trackData![`${id}`].result[2].result.primaryVisData.viewWindow
+              .start,
+          visWidth:
+            trackData![`${id}`].result[2].result.primaryVisData.visWidth,
         };
 
         fetchedDataCache.current[leftIdx.current] = {
-          data: trackData![`${id}`][0].result,
+          data: trackData![`${id}`].result[0].result,
           trackState: trackState0,
         };
         leftIdx.current++;
 
         fetchedDataCache.current[rightIdx.current] = {
-          data: trackData![`${id}`][1].result,
+          data: trackData![`${id}`].result[1].result,
           trackState: trackState1,
         };
         rightIdx.current--;
         fetchedDataCache.current[rightIdx.current] = {
-          data: trackData![`${id}`][2].result,
+          data: trackData![`${id}`].result[2].result,
           trackState: trackState2,
         };
         rightIdx.current--;
@@ -176,13 +182,14 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       } else {
         let newTrackState = {
           ...trackData!.trackState,
-          startWindow: trackData![`${id}`].primaryVisData.viewWindow.start,
-          visWidth: trackData![`${id}`].primaryVisData.visWidth,
+          startWindow:
+            trackData![`${id}`].result.primaryVisData.viewWindow.start,
+          visWidth: trackData![`${id}`].result.primaryVisData.visWidth,
         };
         if (trackData!.trackState.side === "right") {
-          trackData!.trackState["index"] = rightIdx.current;
+          newTrackState["index"] = rightIdx.current;
           fetchedDataCache.current[rightIdx.current] = {
-            data: trackData![`${id}`],
+            data: trackData![`${id}`].result,
             trackState: newTrackState,
           };
 
@@ -199,10 +206,9 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             fetchedDataCache.current[rightIdx.current + 1].data
           );
         } else if (trackData!.trackState.side === "left") {
-          trackData!.trackState["index"] = leftIdx.current;
-
+          newTrackState["index"] = leftIdx.current;
           fetchedDataCache.current[leftIdx.current] = {
-            data: trackData![`${id}`],
+            data: trackData![`${id}`].result,
             trackState: newTrackState,
           };
 

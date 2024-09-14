@@ -46,11 +46,11 @@ const defaultTracks = [
     //     //   genome: "hg19",
     //     //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
     //     // },(
-    //    new TrackModel({
-    //       type: "geneAnnotation",
-    //       name: "gencodeV39",
-    //       genome: "hg38",
-    //     }),
+       new TrackModel({
+          type: "geneAnnotation",
+          name: "gencodeV39",
+          genome: "hg38",
+        }),
     //    new TrackModel ({
     //       name: "bigWig",
     //       genome: "hg19",

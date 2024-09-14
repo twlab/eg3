@@ -132,9 +132,11 @@ let strawCache: { [key: string]: any } = {};
 
 //TO_DOOOOOOOOO have a way to get option from trackManager for each track and set it here if custom options are defined while getting the fetched data
 self.onmessage = async (event: MessageEvent) => {
+  let primaryGenName = event.data.primaryGenName;
   let fetchResults: Array<any> = [];
-  let genomicLoci = event.data.loci;
-  let expandGenomicLoci = event.data.expandedLoci;
+  let genomicLoci = event.data.genomicLoci;
+  let expandGenomicLoci = event.data.expandedGenLoci;
+  let initGenomicLoci = event.data.initGenomicLoci;
   let basesPerPixel = event.data.basesPerPixel;
   let regionLength = event.data.regionLength;
   let trackDefaults = event.data.trackModelArr;
@@ -143,12 +145,17 @@ self.onmessage = async (event: MessageEvent) => {
   let primaryVisData;
   let queryRegion;
   let curTrackVis;
-  let initExpandLoci = event.data.initialExpandedNavLoci;
 
-  genomicFetchCoord[`${event.data.primaryGenName}`] = {
+  let initGenalignNavLoci = event.data.initGenalignNavLoci;
+  let initGenalignGenomicLoci = event.data.initGenalignGenomicLoci;
+
+  genomicFetchCoord[`${primaryGenName}`] = {
     genomicLoci,
     expandGenomicLoci,
+    initGenomicLoci,
+    initGenalignGenomicLoci,
   };
+
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
@@ -158,13 +165,23 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   if (genomeAlignTracks.length > 0) {
+    genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = [];
+
     hasGenomeAlignTrack = true;
     // step 2: fetch genome align data and put them into an array
 
     if (event.data.initial === 1) {
       let initialData: Array<any> = [];
-      for (let navLoci of initExpandLoci) {
-        let res = await getGenomeAlignment(navLoci, genomeAlignTracks);
+      for (let i = 0; i < initGenalignNavLoci.length; i++) {
+        let res = await getGenomeAlignment(
+          initGenalignNavLoci[i],
+          genomeAlignTracks
+        );
+
+        genomicFetchCoord[`${primaryGenName}`]["primaryVisData"].push(
+          res[0].result.primaryVisData
+        );
+
         initialData.push(res);
       }
       let tempObj = {};
@@ -177,19 +194,44 @@ self.onmessage = async (event: MessageEvent) => {
           }
         });
       }
+
       for (let alignment in tempObj) {
+        let queryName = tempObj[`${alignment}`][0].queryName;
+        genomicFetchCoord[`${queryName}`] = {};
+        genomicFetchCoord[`${queryName}`]["id"] = tempObj[`${alignment}`][0].id;
+        genomicFetchCoord[`${queryName}`]["queryGenomicCoord"] = [];
+        genomicFetchCoord[`${queryName}`]["queryRegion"] = [];
+        tempObj[`${alignment}`].map((item) => {
+          genomicFetchCoord[`${queryName}`].queryGenomicCoord.push(
+            item.queryGenomicCoord
+          );
+          genomicFetchCoord[`${queryName}`].queryRegion.push(
+            item.result.queryRegion
+          );
+        });
+
         fetchResults.push({ id: alignment, result: tempObj[`${alignment}`] });
       }
+      console.log(fetchResults, genomicFetchCoord);
     } else {
       (
         await getGenomeAlignment(
           event.data.visData.visRegion,
           genomeAlignTracks
         )
-      ).map((item) => fetchResults.push(item));
+      ).map((item) => {
+        genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
+          item.result.primaryVisData;
+        genomicFetchCoord[`${item.queryName}`] = {
+          queryGenomicCoord: item.queryGenomicCoord,
+          id: item.id,
+          queryRegion: item.result.queryRegion,
+        };
+        fetchResults.push(item);
+      });
     }
   }
-
+  console.log(fetchResults, genomicFetchCoord);
   // step 5 if there are normal tracks assciated with query coord then we use query genomic coord to fetch their data
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
@@ -205,9 +247,6 @@ self.onmessage = async (event: MessageEvent) => {
       const id = item.id;
       const url = item.url;
 
-      if (hasGenomeAlignTrack) {
-        curTrackVis = primaryVisData.visRegion;
-      }
       if (trackName === "hic") {
         if (!(id in strawCache)) {
           strawCache[id] = new HicSource(item.url, regionLength);
@@ -247,19 +286,19 @@ self.onmessage = async (event: MessageEvent) => {
       } else if (trackName === "refGene" || trackName === "gencodeV39") {
         let genRefResponses: Array<any> = [];
         let curFetchNav;
-        let trackVis;
-        if ("genome" in item.metadata) {
-          curFetchNav =
-            genomicFetchCoord[`${item.metadata.genome}`].expandGenomicLoci;
-          curTrackVis = queryRegion;
-        } else {
-          curFetchNav = genomicLoci;
-        }
 
-        if (event.data.initial === 1 && !("genome" in item.metadata)) {
-          for (let i = 0; i < event.data.initialGenomicLoci.length; i++) {
+        if (event.data.initial === 1) {
+          if ("genome" in item.metadata) {
+            curFetchNav =
+              genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord
+                .expandGenomicLoci;
+          } else {
+            curFetchNav = initGenalignGenomicLoci;
+          }
+
+          for (let i = 0; i < curFetchNav.length; i++) {
             const genRefResponse = await Promise.all(
-              event.data.initialGenomicLoci[i].map((item, index) =>
+              curFetchNav[i].map((item, index) =>
                 trackFetchFunction[trackName]({
                   name: genomeName,
                   chr: item.chr,
@@ -269,31 +308,40 @@ self.onmessage = async (event: MessageEvent) => {
                 })
               )
             );
+            console.log();
             genRefResponses.push({
+              name: trackName,
               fetchData: _.flatten(genRefResponse),
-              genomicLoci: event.data.initialGenomicLoci[i],
-              navLoci: event.data.initialNavLoci[i],
               id,
+              metadata: item.metadata,
             });
           }
         } else {
-          genRefResponses = await Promise.all(
-            curFetchNav.map((item, index) =>
-              trackFetchFunction[trackName]({
-                name: genomeName,
-                chr: item.chr,
-                start: item.start,
-                end: item.end,
-                trackName,
-              })
-            )
-          );
+          if ("genome" in item.metadata) {
+            curFetchNav =
+              genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord
+                .expandGenomicLoci;
+          } else {
+            curFetchNav = expandGenomicLoci;
+
+            genRefResponses = await Promise.all(
+              curFetchNav.map((item, index) =>
+                trackFetchFunction[trackName]({
+                  name: genomeName,
+                  chr: item.chr,
+                  start: item.start,
+                  end: item.end,
+                  trackName,
+                })
+              )
+            );
+          }
         }
         fetchResults.push({
           name: trackName,
           result: _.flatten(genRefResponses),
           id: id,
-          visRegion: curTrackVis,
+          metadata: item.metadata,
         });
       } else {
         let result = await trackFetchFunction[trackName](
@@ -366,10 +414,7 @@ self.onmessage = async (event: MessageEvent) => {
       event.data.visData.viewWindowRegion._navContext._name,
       viewWindowRegionFeatures
     );
-    console.log(
-      curVisData._startBase + event.data.bpRegionSize,
-      curVisData._endBase - event.data.bpRegionSize
-    );
+
     let viewWindowRegion = new DisplayedRegionModel(
       viewWindowRegionNavContext,
       curVisData._startBase + event.data.bpRegionSize,
@@ -445,6 +490,7 @@ self.onmessage = async (event: MessageEvent) => {
     let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
+    console.log(alignment);
     for (let query in alignment) {
       for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
         let placement = alignment[`${query}`].drawData[i];
@@ -481,7 +527,7 @@ self.onmessage = async (event: MessageEvent) => {
 
       // step 4 create obj that holds primary and query genome genomic coordinate because some other tracks might
       // align to the query coord
-      let genomicCoords: Array<any> = [];
+      let queryGenomicCoords: Array<any> = [];
 
       let featuresForChr =
         alignment[`${query}`].queryRegion._navContext._featuresForChr;
@@ -494,17 +540,19 @@ self.onmessage = async (event: MessageEvent) => {
           let end = parseGenomicCoordinates(
             featuresForChr[`${chr}`][featuresForChr[`${chr}`].length - 1].name
           ).end;
-          genomicCoords.push({ chr, start, end });
+          queryGenomicCoords.push({ chr, start, end });
           //   genomicCoords.push(  )                                                                                                                                                           )
           //  genomicFetchCoord[`${chr}`] = {expandGenomicLoci: {start: , end: , chr}}
         }
       }
-      genomicFetchCoord[`${query}`] = { expandGenomicLoci: genomicCoords };
+      // genomicFetchCoord[`${query}`] = { expandGenomicLoci: queryGenomicCoords };
 
       result.push({
+        queryName: query,
         result: alignment[`${query}`],
         id: alignment[`${query}`].id,
         name: "genomealign",
+        queryGenomicCoord: queryGenomicCoords,
       });
     }
     return result;
@@ -520,6 +568,7 @@ self.onmessage = async (event: MessageEvent) => {
     genomicFetchCoord,
     bpX: event.data.bpX,
     hasGenomeAlignTrack,
+
     // viewWindow: primaryVisData.viewWindow.start,
     // visRegion: primaryVisData.visRegion,
     // visWidth: primaryVisData.visWidth,
