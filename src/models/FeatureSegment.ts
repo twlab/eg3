@@ -70,9 +70,9 @@ export class FeatureSegment {
   /**
    * @return {string} the attached feature's name
    */
-  // getName(): string {
-  //   return this.feature.getName();
-  // }
+  getName(): string {
+    return this.feature.getName();
+  }
 
   /**
    * @return {number} this interval's length

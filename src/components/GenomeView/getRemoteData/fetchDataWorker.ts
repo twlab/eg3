@@ -1,7 +1,5 @@
 import _ from "lodash";
-import getTabixData from "./tabixSource";
 import { HicSource } from "./hicSource";
-import getBigData from "./bigSource";
 import JSON5 from "json5";
 import { SequenceSegment } from "../../../models/AlignmentStringUtils";
 import AlignmentRecord from "../../../models/AlignmentRecord";
@@ -14,6 +12,7 @@ import Feature from "../../../models/Feature";
 import { ViewExpansion } from "../../../models/RegionExpander";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../GenomeAlign/MultiAlignmentViewCalculator";
+import trackFetchFunction from "./fetchTrackData";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -68,66 +67,6 @@ export interface MultiAlignment {
   [genome: string]: Alignment;
 }
 
-const AWS_API = "https://lambda.epigenomegateway.org/v2";
-
-const trackFetchFunction: { [key: string]: any } = {
-  refGene: async function refGeneFetch(regionData: any) {
-    const genRefResponse = await fetch(
-      `${AWS_API}/${regionData.name}/genes/${regionData.trackName}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
-      { method: "GET" }
-    );
-
-    return await genRefResponse.json();
-  },
-  gencodeV39: async function refGeneFetch(regionData: any) {
-    const genRefResponse = await fetch(
-      `${AWS_API}/${regionData.name}/genes/${regionData.trackName}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
-      { method: "GET" }
-    );
-
-    return await genRefResponse.json();
-  },
-  bed: async function bedFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
-  },
-
-  bigWig: function bigWigFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
-  },
-
-  dynseq: function dynseqFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
-  },
-  methylc: function methylcFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
-  },
-  hic: function hicFetch(straw, options, loci, basesPerPixel) {
-    return straw.getData(loci, basesPerPixel, options);
-  },
-  genomealign: function genomeAlignFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
-  },
-};
 let strawCache: { [key: string]: any } = {};
 
 //TO_DOOOOOOOOO have a way to get option from trackManager for each track and set it here if custom options are defined while getting the fetched data
@@ -142,9 +81,6 @@ self.onmessage = async (event: MessageEvent) => {
   let trackDefaults = event.data.trackModelArr;
   let genomicFetchCoord = {};
   let hasGenomeAlignTrack = false;
-  let primaryVisData;
-  let queryRegion;
-  let curTrackVis;
 
   let initGenalignNavLoci = event.data.initGenalignNavLoci;
   let initGenalignGenomicLoci = event.data.initGenalignGenomicLoci;
@@ -212,7 +148,6 @@ self.onmessage = async (event: MessageEvent) => {
 
         fetchResults.push({ id: alignment, result: tempObj[`${alignment}`] });
       }
-      console.log(fetchResults, genomicFetchCoord);
     } else {
       (
         await getGenomeAlignment(
@@ -223,7 +158,7 @@ self.onmessage = async (event: MessageEvent) => {
         genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
           item.result.primaryVisData;
         genomicFetchCoord[`${item.queryName}`] = {
-          queryGenomicCoord: item.queryGenomicCoord,
+          queryGenomicCoord: new Array(item.queryGenomicCoord),
           id: item.id,
           queryRegion: item.result.queryRegion,
         };
@@ -231,150 +166,7 @@ self.onmessage = async (event: MessageEvent) => {
       });
     }
   }
-  console.log(fetchResults, genomicFetchCoord);
-  // step 5 if there are normal tracks assciated with query coord then we use query genomic coord to fetch their data
-  //____________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________
 
-  let otherDefaultTracks = trackDefaults.filter((items, index) => {
-    return items.filetype !== "genomealign";
-  });
-  await Promise.all(
-    otherDefaultTracks.map(async (item, index) => {
-      const trackName = item.name;
-      const genomeName = item.genome;
-      const id = item.id;
-      const url = item.url;
-
-      if (trackName === "hic") {
-        if (!(id in strawCache)) {
-          strawCache[id] = new HicSource(item.url, regionLength);
-        }
-
-        let result = await trackFetchFunction[trackName](
-          strawCache[id],
-          {
-            color: "#B8008A",
-            color2: "#006385",
-            backgroundColor: "var(--bg-color)",
-            displayMode: "heatmap",
-            scoreScale: "auto",
-            scoreMax: 10,
-            scalePercentile: 95,
-            scoreMin: 0,
-            height: 500,
-            lineWidth: 2,
-            greedyTooltip: false,
-            fetchViewWindowOnly: false,
-            bothAnchorsInView: false,
-            isThereG3dTrack: false,
-            clampHeight: false,
-            binSize: 0,
-            normalization: "NONE",
-            label: "",
-          },
-          expandGenomicLoci,
-          basesPerPixel
-        );
-        fetchResults.push({
-          name: trackName,
-          result,
-          id,
-          visRegion: curTrackVis,
-        });
-      } else if (trackName === "refGene" || trackName === "gencodeV39") {
-        let genRefResponses: Array<any> = [];
-        let curFetchNav;
-
-        if (event.data.initial === 1) {
-          if ("genome" in item.metadata) {
-            curFetchNav =
-              genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord
-                .expandGenomicLoci;
-          } else {
-            curFetchNav = initGenalignGenomicLoci;
-          }
-
-          for (let i = 0; i < curFetchNav.length; i++) {
-            const genRefResponse = await Promise.all(
-              curFetchNav[i].map((item, index) =>
-                trackFetchFunction[trackName]({
-                  name: genomeName,
-                  chr: item.chr,
-                  start: item.start,
-                  end: item.end,
-                  trackName,
-                })
-              )
-            );
-            console.log();
-            genRefResponses.push({
-              name: trackName,
-              fetchData: _.flatten(genRefResponse),
-              id,
-              metadata: item.metadata,
-            });
-          }
-        } else {
-          if ("genome" in item.metadata) {
-            curFetchNav =
-              genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord
-                .expandGenomicLoci;
-          } else {
-            curFetchNav = expandGenomicLoci;
-
-            genRefResponses = await Promise.all(
-              curFetchNav.map((item, index) =>
-                trackFetchFunction[trackName]({
-                  name: genomeName,
-                  chr: item.chr,
-                  start: item.start,
-                  end: item.end,
-                  trackName,
-                })
-              )
-            );
-          }
-        }
-        fetchResults.push({
-          name: trackName,
-          result: _.flatten(genRefResponses),
-          id: id,
-          metadata: item.metadata,
-        });
-      } else {
-        let result = await trackFetchFunction[trackName](
-          genomicLoci,
-          {
-            displayMode: "full",
-            color: "blue",
-            color2: "red",
-            maxRows: 20,
-            height: 40,
-            hideMinimalItems: false,
-            sortItems: false,
-            label: "",
-          },
-          url
-        );
-      }
-    })
-  );
-  function parseGenomicCoordinates(input: string): {
-    chr: string;
-    start: number;
-    end: number;
-  } {
-    const [chrPart, positionPart] = input.split(":");
-    const [startStr, endStr] = positionPart.split("-");
-
-    const chr = chrPart.slice(3); // Remove the 'chr' prefix
-    const start = parseInt(startStr, 10);
-    const end = parseInt(endStr, 10);
-
-    return { chr, start, end };
-  }
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
     let result: Array<any> = [];
@@ -490,7 +282,7 @@ self.onmessage = async (event: MessageEvent) => {
     let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
-    console.log(alignment);
+
     for (let query in alignment) {
       for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
         let placement = alignment[`${query}`].drawData[i];
@@ -558,6 +350,130 @@ self.onmessage = async (event: MessageEvent) => {
     return result;
   }
 
+  // step 5 if there are normal tracks assciated with query coord then we use query genomic coord to fetch their data
+  //____________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________
+  let normDefaultTracks = trackDefaults.filter((items, index) => {
+    return items.filetype !== "genomealign";
+  });
+  await Promise.all(
+    normDefaultTracks.map(async (item, index) => {
+      const trackName = item.name;
+      const genomeName = item.genome;
+      const id = item.id;
+      const url = item.url;
+
+      if (trackName === "hic") {
+        if (!(id in strawCache)) {
+          strawCache[id] = new HicSource(item.url, regionLength);
+        }
+
+        let result = await trackFetchFunction[trackName](
+          strawCache[id],
+          {
+            color: "#B8008A",
+            color2: "#006385",
+            backgroundColor: "var(--bg-color)",
+            displayMode: "heatmap",
+            scoreScale: "auto",
+            scoreMax: 10,
+            scalePercentile: 95,
+            scoreMin: 0,
+            height: 500,
+            lineWidth: 2,
+            greedyTooltip: false,
+            fetchViewWindowOnly: false,
+            bothAnchorsInView: false,
+            isThereG3dTrack: false,
+            clampHeight: false,
+            binSize: 0,
+            normalization: "NONE",
+            label: "",
+          },
+          expandGenomicLoci,
+          basesPerPixel
+        );
+        fetchResults.push({
+          name: trackName,
+          result,
+          id,
+        });
+      } else if (trackName === "refGene" || trackName === "gencodeV39") {
+        let genRefResponses: Array<any> = [];
+        let curFetchNav;
+
+        if ("genome" in item.metadata) {
+          curFetchNav =
+            genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord;
+        } else if (event.data.initial === 1) {
+          curFetchNav = initGenalignGenomicLoci;
+        } else {
+          curFetchNav = new Array(expandGenomicLoci);
+        }
+
+        for (let i = 0; i < curFetchNav.length; i++) {
+          const genRefResponse = await Promise.all(
+            await curFetchNav[i].map((item, index) =>
+              trackFetchFunction[trackName]({
+                name: genomeName,
+                chr: item.chr,
+                start: item.start,
+                end: item.end,
+                trackName,
+              })
+            )
+          );
+
+          genRefResponses.push({
+            name: trackName,
+            fetchData: _.flatten(genRefResponse),
+            id,
+            metadata: item.metadata,
+          });
+        }
+        fetchResults.push({
+          name: trackName,
+          result:
+            event.data.initial !== 1
+              ? _.flatten(genRefResponses)[0].fetchData
+              : genRefResponses,
+          id: id,
+          metadata: item.metadata,
+        });
+      } else {
+        let result = await trackFetchFunction[trackName](
+          genomicLoci,
+          {
+            displayMode: "full",
+            color: "blue",
+            color2: "red",
+            maxRows: 20,
+            height: 40,
+            hideMinimalItems: false,
+            sortItems: false,
+            label: "",
+          },
+          url
+        );
+      }
+    })
+  );
+  function parseGenomicCoordinates(input: string): {
+    chr: string;
+    start: number;
+    end: number;
+  } {
+    const [chrPart, positionPart] = input.split(":");
+    const [startStr, endStr] = positionPart.split("-");
+
+    const chr = chrPart.slice(3); // Remove the 'chr' prefix
+    const start = parseInt(startStr, 10);
+    const end = parseInt(endStr, 10);
+
+    return { chr, start, end };
+  }
+
   postMessage({
     fetchResults,
     side: event.data.trackSide,
@@ -568,9 +484,5 @@ self.onmessage = async (event: MessageEvent) => {
     genomicFetchCoord,
     bpX: event.data.bpX,
     hasGenomeAlignTrack,
-
-    // viewWindow: primaryVisData.viewWindow.start,
-    // visRegion: primaryVisData.visRegion,
-    // visWidth: primaryVisData.visWidth,
   });
 };

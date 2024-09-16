@@ -94,7 +94,11 @@ new TrackModel(         {
             "url": "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz"
         }),
 
-
+       new TrackModel({
+          type: "geneAnnotation",
+          name: "refGene",
+          genome: "mm10",
+        }),
 
       ];
 

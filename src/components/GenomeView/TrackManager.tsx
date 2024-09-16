@@ -235,7 +235,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function bpNavToGenNav(bpNavArr) {
-    console.log(bpNavArr);
     let genRes: Array<any> = [];
     for (let bpNav of bpNavArr) {
       let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
@@ -247,7 +246,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       genRes.push(genomeFeatureSegment.map((item, index) => item.getLocus()));
     }
-    console.log(genRes);
+
     return genRes;
   }
 
@@ -454,12 +453,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           (item, index) => item.getLocus()
         );
 
+        let testDefaultTrack = genomeArr[genomeIdx].defaultTracks;
+        for (let trackModel of testDefaultTrack) {
+          if (trackModel.genome === "mm10") {
+            trackModel.metadata["genome"] = "mm10";
+          }
+        }
         genomeArr[genomeIdx].defaultTracks.map((item, index) => {
           if (!sentData) {
             sentData = true;
             infiniteScrollWorker.current!.postMessage({
               primaryGenName: genomeArr[genomeIdx].genome.getName(),
-              trackModelArr: genomeArr[genomeIdx].defaultTracks,
+              trackModelArr: testDefaultTrack,
               visData: newVisData,
               genomicLoci: sectionGenomicLocus,
               expandedGenLoci: expandedGenomeCoordLocus,
@@ -500,7 +505,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           xDist: event.data.xDist,
           genomicFetchCoord: event.data.genomicFetchCoord,
         };
-        console.log(tempObj);
+
         isLoading.current = false;
         setTrackData({ ...tempObj });
       };

@@ -36,11 +36,7 @@ const defaultTracks = [
         type: "ruler",
         name: "Ruler",
     }),
-    new TrackModel({
-        type: "geneAnnotation",
-        name: "refGene",
-        genome: "mm10",
-    }),
+
     // new TrackModel({
     //     type: "geneAnnotation",
     //     name: "gencodeM19",
@@ -65,6 +61,10 @@ const defaultTracks = [
         type: "repeatmasker",
         name: "RepeatMasker",
         url: "https://vizhub.wustl.edu/public/mm10/rmsk16.bb",
+    }),    new TrackModel({
+        type: "geneAnnotation",
+        name: "refGene",
+        genome: "mm10",
     }),
     // new TrackModel({
     //     type: 'refbed',
