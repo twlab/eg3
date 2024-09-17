@@ -9,14 +9,17 @@ import { chrType } from "../../localdata/genomename";
 import { v4 as uuidv4 } from "uuid";
 import useResizeObserver from "./Resize";
 import HG38 from "../../models/genomes/hg38/hg38";
+import OpenInterval from "../../models/OpenInterval";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub(props: any) {
   const stateChangeCount = useRef(0);
+  const curNavRegion = useRef<{ [key: string]: any }>({ start: 0, end: 0 });
   const [items, setItems] = useState(chrType);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
+
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
@@ -36,7 +39,9 @@ function GenomeHub(props: any) {
 
     setGenomeList(new Array<any>(newList));
   }
-  function startBp(region: string) {
+  function startBp(region: string, startNav: number, endNav: number) {
+    curNavRegion.current.start = startNav;
+    curNavRegion.current.end = endNav;
     let newList = { ...genomeList[0] };
     newList.defaultRegion = region;
     const serializedArray = JSON.stringify(newList);
@@ -189,6 +194,11 @@ function GenomeHub(props: any) {
 
       HG38["genomeID"] = uuidv4();
       HG38["windowWidth"] = size.width;
+      HG38["defaultRegion"] = new OpenInterval(
+        Math.round(curNavRegion.current.start),
+        Math.round(curNavRegion.current.end)
+      );
+
       setGenomeList(new Array<any>(HG38));
     }
 

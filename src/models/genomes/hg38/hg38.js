@@ -31,8 +31,11 @@ const genome = new Genome("hg38", [
     new Chromosome("chrX", 156040895),
     new Chromosome("chrY", 57227415),
 ]);
-// 27212300-27214862
-// 
+      //   //chr7:27053397-27373765
+      //   // chr7:10000-20000
+      //   //testing finemode  27213325-27213837
+//   //chr7:159159564-chr8:224090
+      //27195171-27202238
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [

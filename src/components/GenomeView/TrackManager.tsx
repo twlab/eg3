@@ -62,7 +62,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
 interface TrackManagerProps {
   genomeIdx: number;
   addTrack: (track: any) => void;
-  startBp: (bp: string) => void;
+  startBp: (bp: string, startNav: number, endNav: number) => void;
   windowWidth: number;
   genomeArr: Array<any>;
 }
@@ -203,7 +203,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     );
     //view genomic coord_________________________________________________
 
-    startBp(genomeCoordLocus.toString());
+    startBp(genomeCoordLocus.toString(), curBp, curBp + bpRegionSize.current);
     setCurRegion(genomeCoordLocus);
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
@@ -339,7 +339,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // }
 
     if (initial === 0 || initial === 1) {
-      let curRegionCoord;
+      let curViewWindowRegion;
       let tempObj = {};
       let sectionGenomicLocus: Array<ChromosomeInterval> = [];
 
@@ -377,7 +377,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       //_________________
       if (trackSide === "right") {
-        curRegionCoord = new DisplayedRegionModel(
+        curViewWindowRegion = new DisplayedRegionModel(
           genomeArr[genomeIdx].navContext,
           maxBp.current - bpRegionSize.current,
           maxBp.current
@@ -399,7 +399,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         maxBp.current = maxBp.current + bpRegionSize.current;
       } else {
-        curRegionCoord = new DisplayedRegionModel(
+        curViewWindowRegion = new DisplayedRegionModel(
           genomeArr[genomeIdx].navContext,
           minBp.current,
           minBp.current + bpRegionSize.current
@@ -476,7 +476,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               initGenalignGenomicLoci: bpNavToGenNav(initGenalignNavLoci),
               initGenalignNavLoci,
               trackSide,
-              curRegionCoord,
+              viewWindowRegion: curViewWindowRegion,
               xDist: dragX.current,
               initial,
               bpRegionSize: bpRegionSize.current,
@@ -504,6 +504,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           side: event.data.side,
           xDist: event.data.xDist,
           genomicFetchCoord: event.data.genomicFetchCoord,
+          useFineModeNav: event.data.useFineModeNav,
         };
 
         isLoading.current = false;
@@ -644,7 +645,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <button onClick={handleClick}>add bed</button>
 
         <div> {curRegion?.toString()}</div>
-
+        <div> {bpX.current + "-" + (bpX.current + bpRegionSize.current)}</div>
         <div>Pixel distance from starting point : {dragX.current}px</div>
         {isLoading.current ? (
           <CircularProgress
