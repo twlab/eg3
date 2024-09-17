@@ -167,7 +167,7 @@ export class MultiAlignmentViewCalculator {
       //   return { query: fetcher.queryGenome, records: records };
       // });
       recordsArray = rawRecords;
-
+      console.log(recordsArray)
       // Don't need to change each records for rough alignment, directly loop through them:
       return recordsArray.reduce(
         (multiAlign, records) => ({

@@ -120,7 +120,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     // otherwise when there is new data cuz the user is at the end of the track
     let viewData = {};
     let curIdx;
-
+    console.log(rightIdx.current, dataIdx);
     if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;

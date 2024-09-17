@@ -98,15 +98,13 @@ self.onmessage = async (event: MessageEvent) => {
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   // step 1: check if there genome align tracks because it alters other track positions because of gaps
-
-
-  if (
-    useFineModeNav
-  ) {
-    console.log("WEWE")
   let genomeAlignTracks = trackDefaults.filter((items, index) => {
     return items.filetype === "genomealign";
   });
+
+  if (
+    genomeAlignTracks.length > 0
+  ) {
     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = [];
 
     // step 2: fetch genome align data and put them into an array
@@ -118,13 +116,13 @@ self.onmessage = async (event: MessageEvent) => {
           initGenalignNavLoci[i],
           genomeAlignTracks
         );
-
+          if(useFineModeNav){
         genomicFetchCoord[`${primaryGenName}`]["primaryVisData"].push(
           res[0].result.primaryVisData
-        );
-
+        )}
         initialData.push(res);
       }
+      if(useFineModeNav){
       let tempObj = {};
       for (let dataArr of initialData) {
         dataArr.map((item, index) => {
@@ -153,6 +151,8 @@ self.onmessage = async (event: MessageEvent) => {
 
         fetchResults.push({ id: alignment, result: tempObj[`${alignment}`] });
       }
+    }
+    fetchResults.push(initialData)
     } else {
       (
         await getGenomeAlignment(
@@ -172,10 +172,11 @@ self.onmessage = async (event: MessageEvent) => {
     }
   }
   else{
-    console.log("ASDASDASDSAD")
+
      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData
 
   }
+  console.log(genomicFetchCoord, fetchResults)
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
     let result: Array<any> = [];
@@ -289,14 +290,14 @@ self.onmessage = async (event: MessageEvent) => {
       event.data.primaryGenName
     );
     let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
-    console.log(alignment);
+ 
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
     for (let query in alignment) {
       for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
         let placement = alignment[`${query}`].drawData[i];
-        console.log(placement);
+  
         const { targetXSpan } = placement;
         const targetSequence = placement.visiblePart.getTargetSequence();
         const querySequence = placement.visiblePart.getQuerySequence();
@@ -329,7 +330,7 @@ self.onmessage = async (event: MessageEvent) => {
           ...tempObj,
         };
       }
-
+      
       // step 4 create obj that holds primary and query genome genomic coordinate because some other tracks might
       // align to the query coord
       let queryGenomicCoords: Array<any> = [];
@@ -358,8 +359,8 @@ self.onmessage = async (event: MessageEvent) => {
         id: alignment[`${query}`].id,
         name: "genomealign",
         queryGenomicCoord: queryGenomicCoords,
-      });
-    }
+      });}
+    
     return result;
   }
 

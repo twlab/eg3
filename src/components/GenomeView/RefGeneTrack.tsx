@@ -511,15 +511,23 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
         viewData = deDupRefGenesArr;
-        console.log(viewData);
       }
       curRegionData.current = {
         trackState: fetchedDataCache.current[curIdx].trackState,
         deDupRefGenesArr: viewData,
         initial: 0,
       };
-
-      createSVGOrCanvas(fetchedDataCache.current[curIdx].trackState, viewData);
+      if (!useFineModeNav) {
+        createSVGOrCanvas(
+          fetchedDataCache.current[curIdx].trackState,
+          viewData
+        );
+      } else {
+        createSVGOrCanvasFine(
+          fetchedDataCache.current[curIdx].trackState,
+          viewData
+        );
+      }
     }
   }
   useEffect(() => {
@@ -572,7 +580,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             deDupRefGenesArr: curDataArr,
           };
 
-          createSVGOrCanvas(createTrackState(1, "right"), curDataArr);
+          createSVGOrCanvasFine(createTrackState(1, "right"), curDataArr);
         } else {
           let visRegion;
           if ("genome" in trackData![`${id}`].metadata) {
@@ -609,7 +617,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 fetchedDataCache.current[rightIdx.current + 1].refGenes,
               initial: 0,
             };
-            createSVGOrCanvas(
+            createSVGOrCanvasFine(
               newTrackState,
               fetchedDataCache.current[rightIdx.current + 1].refGenes
             );
@@ -630,7 +638,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               initial: 0,
             };
 
-            createSVGOrCanvas(
+            createSVGOrCanvasFine(
               newTrackState,
               fetchedDataCache.current[leftIdx.current - 1].refGenes
             );
@@ -707,8 +715,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           createSVGOrCanvas(trackState1, deDupRefGenesArr);
         } else {
           let testData: Array<any> = [];
-          console.log(trackData);
-          console.log(trackData![`${id}`].result);
+
           if (trackData!.trackState.side === "right") {
             trackData!.trackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
@@ -761,10 +768,17 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     if (configChanged === true) {
-      createSVGOrCanvas(
-        curRegionData.current.trackState,
-        curRegionData.current.deDupRefGenesArr
-      );
+      if (!useFineModeNav) {
+        createSVGOrCanvas(
+          curRegionData.current.trackState,
+          curRegionData.current.deDupRefGenesArr
+        );
+      } else {
+        createSVGOrCanvasFine(
+          curRegionData.current.trackState,
+          curRegionData.current.deDupRefGenesArr
+        );
+      }
     }
     setConfigChanged(false);
   }, [configChanged]);

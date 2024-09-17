@@ -35,7 +35,7 @@ const genome = new Genome("hg38", [
       //   // chr7:10000-20000
       //   //testing finemode  27213325-27213837
 //   //chr7:159159564-chr8:224090
-      //27195171-27202238
+
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
@@ -81,14 +81,14 @@ const defaultTracks = [
     //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
     //       genome: "hg19",
     //     }),
-        // new TrackModel({
-        //     name: "hg38tomm10",
-        //     label: "Query mouse mm10 to hg38 blastz",
-        //     querygenome: "mm10",
-        //     filetype: "genomealign",
-        //     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-        //   },
-        // ),
+//         new TrackModel({
+//             name: "hg38tomm10",
+//             label: "Query mouse mm10 to hg38 blastz",
+//             querygenome: "mm10",
+//             filetype: "genomealign",
+//             url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+//           },
+//         ),
 // new TrackModel(         {
 //             "name": "hg38 to t2t-chm13v2",
 //             "label": "hg38 - chm13v2.0 minimap2",
