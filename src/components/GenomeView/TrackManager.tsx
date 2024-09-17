@@ -76,10 +76,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //useRef to store data between states without re render the component
   const worker = useRef<Worker>();
   const infiniteScrollWorker = useRef<Worker>();
+  const useFineModeNav = useRef(false);
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
-  const bpRegionSize = useRef(0);
+  const bpRegionSize = useRef(windowWidth);
   const block = useRef<HTMLInputElement>(null);
   const curVisData = useRef<{ [key: string]: any }>({
     visWidth: windowWidth * 3,
@@ -468,7 +469,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               visData: newVisData,
               genomicLoci: sectionGenomicLocus,
               expandedGenLoci: expandedGenomeCoordLocus,
-
+              useFineModeNav: useFineModeNav.current,
               windowWidth,
               initGenomicLoci: bpNavToGenNav(initNavLoci),
               initNavLoci,
@@ -577,6 +578,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 : componentMap[genome.defaultTracks[i].filetype],
             trackModel: genome.defaultTracks[i],
           });
+        }
+        if (
+          genome.defaultTracks[i].filetype === "genomealign" &&
+          basePerPixel.current < 10
+        ) {
+          useFineModeNav.current = true;
         }
       }
 

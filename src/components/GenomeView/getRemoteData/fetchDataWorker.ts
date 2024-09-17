@@ -80,7 +80,7 @@ self.onmessage = async (event: MessageEvent) => {
   let trackDefaults = event.data.trackModelArr;
   let genomicFetchCoord = {};
 
-  let useFineModeNav = false;
+  let useFineModeNav =   event.data.useFineModeNav
 
   let initGenalignNavLoci = event.data.initGenalignNavLoci;
   let initGenalignGenomicLoci = event.data.initGenalignGenomicLoci;
@@ -97,15 +97,14 @@ self.onmessage = async (event: MessageEvent) => {
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   // step 1: check if there genome align tracks because it alters other track positions because of gaps
+
+
+  if (
+    useFineModeNav
+  ) {
   let genomeAlignTracks = trackDefaults.filter((items, index) => {
     return items.filetype === "genomealign";
   });
-
-  if (
-    genomeAlignTracks.length > 0 &&
-    event.data.bpRegionSize / event.data.windowWidth < 10
-  ) {
-    useFineModeNav = true;
     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = [];
 
     // step 2: fetch genome align data and put them into an array
@@ -170,7 +169,9 @@ self.onmessage = async (event: MessageEvent) => {
       });
     }
   }
-
+  else{
+     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData
+  }
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
     let result: Array<any> = [];
@@ -424,7 +425,6 @@ self.onmessage = async (event: MessageEvent) => {
         } else {
           curFetchNav = new Array(genomicLoci);
         }
-        console.log(curFetchNav);
         for (let i = 0; i < curFetchNav.length; i++) {
           const genRefResponse = await Promise.all(
             await curFetchNav[i].map((item, index) =>

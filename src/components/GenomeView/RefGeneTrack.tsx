@@ -374,114 +374,222 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      const primaryVisData =
-        trackData!.trackState.genomicFetchCoord[
-          trackData!.trackState.primaryGenName
-        ].primaryVisData;
+      if (trackData!.trackState.useFineModeNav) {
+        const primaryVisData =
+          trackData!.trackState.genomicFetchCoord[
+            trackData!.trackState.primaryGenName
+          ].primaryVisData;
 
-      if (trackData!.trackState.initial === 1) {
-        const visRegionArr =
-          "genome" in trackData![`${id}`].metadata
-            ? trackData!.trackState.genomicFetchCoord[
-                trackData![`${id}`].metadata.genome
-              ].queryRegion
-            : primaryVisData.map((item) => item.visRegion);
+        if (trackData!.trackState.initial === 1) {
+          const visRegionArr =
+            "genome" in trackData![`${id}`].metadata
+              ? trackData!.trackState.genomicFetchCoord[
+                  trackData![`${id}`].metadata.genome
+                ].queryRegion
+              : primaryVisData.map((item) => item.visRegion);
 
-        const createTrackState = (index: number, side: string) => ({
-          initial: index === 1 ? 1 : 0,
-          side,
-          xDist: 0,
-          index,
-          visRegion: visRegionArr[index],
-          startWindow: primaryVisData[index].viewWindow.start,
-          visWidth: primaryVisData[index].visWidth,
-        });
+          const createTrackState = (index: number, side: string) => ({
+            initial: index === 1 ? 1 : 0,
+            side,
+            xDist: 0,
 
-        fetchedDataCache.current[leftIdx.current] = {
-          refGenes: trackData![`${id}`].result[0].fetchData,
-          trackState: createTrackState(0, "left"),
-        };
-        leftIdx.current++;
+            visRegion: visRegionArr[index],
+            startWindow: primaryVisData[index].viewWindow.start,
+            visWidth: primaryVisData[index].visWidth,
+          });
 
-        fetchedDataCache.current[rightIdx.current] = {
-          refGenes: trackData![`${id}`].result[1].fetchData,
-          trackState: createTrackState(1, "right"),
-        };
-        rightIdx.current--;
-
-        fetchedDataCache.current[rightIdx.current] = {
-          refGenes: trackData![`${id}`].result[2].fetchData,
-          trackState: createTrackState(2, "right"),
-        };
-        rightIdx.current--;
-
-        const curDataArr = fetchedDataCache.current[0].refGenes;
-        curRegionData.current = {
-          trackState: createTrackState(1, "right"),
-          deDupRefGenesArr: curDataArr,
-        };
-
-        createSVGOrCanvas(createTrackState(1, "right"), curDataArr);
-      } else {
-        let visRegion;
-        if ("genome" in trackData![`${id}`].metadata) {
-          visRegion =
-            trackData!.trackState.genomicFetchCoord[
-              `${trackData![`${id}`].metadata.genome}`
-            ].queryRegion;
-        } else {
-          visRegion = primaryVisData.visRegion;
-        }
-        let newTrackState = {
-          initial: 0,
-          side: trackData!.trackState.side,
-          xDist: trackData!.trackState.xDist,
-          visRegion: visRegion,
-          startWindow: primaryVisData.viewWindow.start,
-          visWidth: primaryVisData.visWidth,
-        };
-
-        if (trackData!.trackState.side === "right") {
-          newTrackState["index"] = rightIdx.current;
-          fetchedDataCache.current[rightIdx.current] = {
-            refGenes: trackData![`${id}`].result,
-            trackState: newTrackState,
-          };
-
-          rightIdx.current--;
-
-          curRegionData.current = {
-            trackState:
-              fetchedDataCache.current[rightIdx.current + 1].trackState,
-            deDupRefGenesArr:
-              fetchedDataCache.current[rightIdx.current + 1].refGenes,
-            initial: 0,
-          };
-          createSVGOrCanvas(
-            newTrackState,
-            fetchedDataCache.current[rightIdx.current + 1].refGenes
-          );
-        } else if (trackData!.trackState.side === "left") {
-          trackData!.trackState["index"] = leftIdx.current;
           fetchedDataCache.current[leftIdx.current] = {
-            refGenes: trackData![`${id}`].result,
-            trackState: newTrackState,
+            refGenes: trackData![`${id}`].result[0].fetchData,
+            trackState: createTrackState(0, "left"),
           };
-
           leftIdx.current++;
 
+          fetchedDataCache.current[rightIdx.current] = {
+            refGenes: trackData![`${id}`].result[1].fetchData,
+            trackState: createTrackState(1, "right"),
+          };
+          rightIdx.current--;
+
+          fetchedDataCache.current[rightIdx.current] = {
+            refGenes: trackData![`${id}`].result[2].fetchData,
+            trackState: createTrackState(2, "right"),
+          };
+          rightIdx.current--;
+
+          const curDataArr = fetchedDataCache.current[0].refGenes;
           curRegionData.current = {
-            trackState:
-              fetchedDataCache.current[leftIdx.current - 1].trackState,
-            deDupRefGenesArr:
-              fetchedDataCache.current[leftIdx.current - 1].refGenes,
-            initial: 0,
+            trackState: createTrackState(1, "right"),
+            deDupRefGenesArr: curDataArr,
           };
 
-          createSVGOrCanvas(
-            newTrackState,
-            fetchedDataCache.current[leftIdx.current - 1].refGenes
-          );
+          createSVGOrCanvas(createTrackState(1, "right"), curDataArr);
+        } else {
+          let visRegion;
+          if ("genome" in trackData![`${id}`].metadata) {
+            visRegion =
+              trackData!.trackState.genomicFetchCoord[
+                `${trackData![`${id}`].metadata.genome}`
+              ].queryRegion;
+          } else {
+            visRegion = primaryVisData.visRegion;
+          }
+          let newTrackState = {
+            initial: 0,
+            side: trackData!.trackState.side,
+            xDist: trackData!.trackState.xDist,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
+            useFineModeNav: true,
+          };
+
+          if (trackData!.trackState.side === "right") {
+            newTrackState["index"] = rightIdx.current;
+            fetchedDataCache.current[rightIdx.current] = {
+              refGenes: trackData![`${id}`].result,
+              trackState: newTrackState,
+            };
+
+            rightIdx.current--;
+
+            curRegionData.current = {
+              trackState:
+                fetchedDataCache.current[rightIdx.current + 1].trackState,
+              deDupRefGenesArr:
+                fetchedDataCache.current[rightIdx.current + 1].refGenes,
+              initial: 0,
+            };
+            createSVGOrCanvas(
+              newTrackState,
+              fetchedDataCache.current[rightIdx.current + 1].refGenes
+            );
+          } else if (trackData!.trackState.side === "left") {
+            trackData!.trackState["index"] = leftIdx.current;
+            fetchedDataCache.current[leftIdx.current] = {
+              refGenes: trackData![`${id}`].result,
+              trackState: newTrackState,
+            };
+
+            leftIdx.current++;
+
+            curRegionData.current = {
+              trackState:
+                fetchedDataCache.current[leftIdx.current - 1].trackState,
+              deDupRefGenesArr:
+                fetchedDataCache.current[leftIdx.current - 1].refGenes,
+              initial: 0,
+            };
+
+            createSVGOrCanvas(
+              newTrackState,
+              fetchedDataCache.current[leftIdx.current - 1].refGenes
+            );
+          }
+        }
+      } else {
+        //_________________________________________________________________________________________________________________________________________________
+        const primaryVisData =
+          trackData!.trackState.genomicFetchCoord[
+            `${trackData!.trackState.primaryGenName}`
+          ].primaryVisData;
+        console.log(trackData!.trackState);
+        if (trackData!.trackState.initial === 1) {
+          const visRegionArr = primaryVisData.map((item) => item.visRegion);
+          const createTrackState = (index: number, side: string) => ({
+            initial: index === 1 ? 1 : 0,
+            side,
+            xDist: 0,
+            index,
+            visRegion: visRegionArr[index],
+            startWindow: primaryVisData[index].viewWindow.start,
+            visWidth: primaryVisData[index].visWidth,
+            useFineModeNav: false,
+          });
+
+          fetchedDataCache.current[leftIdx.current] = {
+            refGenes: trackData![`${id}`].result[0].fetchData,
+            trackState: createTrackState(1, "left"),
+          };
+          leftIdx.current++;
+
+          fetchedDataCache.current[rightIdx.current] = {
+            refGenes: trackData![`${id}`].result[1].fetchData,
+            trackState: createTrackState(0, "right"),
+          };
+          rightIdx.current--;
+
+          fetchedDataCache.current[rightIdx.current] = {
+            refGenes: trackData![`${id}`].result[2].fetchData,
+            trackState: createTrackState(-1, "right"),
+          };
+          rightIdx.current--;
+          let curDataArr = [
+            fetchedDataCache.current[1],
+            fetchedDataCache.current[0],
+            fetchedDataCache.current[-1],
+          ];
+          let refGenesArray = curDataArr.map((item) => item.refGenes).flat(1);
+          let deDupRefGenesArr = removeDuplicates(refGenesArray);
+          curRegionData.current = {
+            trackState: createTrackState(1, "right"),
+            deDupRefGenesArr,
+          };
+
+          createSVGOrCanvas(createTrackState(1, "right"), deDupRefGenesArr);
+        } else {
+          let testData: Array<any> = [];
+          if (trackData!.trackState.side === "right") {
+            trackData!.trackState["index"] = rightIdx.current;
+            fetchedDataCache.current[rightIdx.current] = {
+              refGenes: trackData![`${id}`],
+              trackState: trackData!.trackState,
+            };
+            let currIdx = rightIdx.current + 2;
+            for (let i = 0; i < 3; i++) {
+              testData.push(fetchedDataCache.current[currIdx]);
+              currIdx--;
+            }
+
+            rightIdx.current--;
+            let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+            let deDupRefGenesArr = removeDuplicates(refGenesArray);
+            curRegionData.current = {
+              trackState:
+                fetchedDataCache.current[rightIdx.current + 1].trackState,
+              deDupRefGenesArr,
+              initial: 0,
+            };
+            createSVGOrCanvas(
+              fetchedDataCache.current[rightIdx.current + 1].trackState,
+              deDupRefGenesArr
+            );
+          } else if (trackData!.trackState.side === "left") {
+            trackData!.trackState["index"] = leftIdx.current;
+            fetchedDataCache.current[leftIdx.current] = {
+              refGenes: trackData![`${id}`].result,
+              trackState: trackData!.trackState,
+            };
+            let currIdx = leftIdx.current - 2;
+            for (let i = 0; i < 3; i++) {
+              testData.push(fetchedDataCache.current[currIdx]);
+              currIdx++;
+            }
+
+            leftIdx.current++;
+            let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+            let deDupRefGenesArr = removeDuplicates(refGenesArray);
+            curRegionData.current = {
+              trackState:
+                fetchedDataCache.current[leftIdx.current - 1].trackState,
+              deDupRefGenesArr,
+              initial: 0,
+            };
+
+            createSVGOrCanvas(
+              fetchedDataCache.current[leftIdx.current - 1].trackState,
+              deDupRefGenesArr
+            );
+          }
         }
       }
     }
