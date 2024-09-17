@@ -234,10 +234,7 @@ function GenomeHub(props: any) {
           paddingLeft: "79px",
           paddingRight: "70px",
         }}
-      >
-        <p>Width: {size.width}px</p>
-        <p>Height: {size.height}px</p>
-      </div>
+      ></div>
       {genomeList.map((item, index) => (
         <TrackManager
           key={item.genomeID}

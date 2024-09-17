@@ -79,7 +79,7 @@ self.onmessage = async (event: MessageEvent) => {
   let regionLength = event.data.regionLength;
   let trackDefaults = event.data.trackModelArr;
   let genomicFetchCoord = {};
-
+  let initNavLoci = event.data.initNavLoci
   let useFineModeNav =   event.data.useFineModeNav
 
   let initGenalignNavLoci = event.data.initGenalignNavLoci;
@@ -90,7 +90,8 @@ self.onmessage = async (event: MessageEvent) => {
     expandGenomicLoci,
     initGenomicLoci,
     initGenalignGenomicLoci,
-    viewWindowRegion: event.data.viewWindowRegion,
+    curFetchRegionNav: event.data.curFetchRegionNav,
+    initNavLoci
   };
 
   //____________________________________________________________________________________________________________________________________________________________________
@@ -102,6 +103,7 @@ self.onmessage = async (event: MessageEvent) => {
   if (
     useFineModeNav
   ) {
+    console.log("WEWE")
   let genomeAlignTracks = trackDefaults.filter((items, index) => {
     return items.filetype === "genomealign";
   });
@@ -170,7 +172,9 @@ self.onmessage = async (event: MessageEvent) => {
     }
   }
   else{
+    console.log("ASDASDASDSAD")
      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData
+
   }
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
@@ -492,7 +496,7 @@ self.onmessage = async (event: MessageEvent) => {
     side: event.data.trackSide,
     xDist: event.data.xDist,
     initial: event.data.initial,
-
+    curFetchRegionNav: event.data.curFetchRegionNav,
     genomicFetchCoord,
     bpX: event.data.bpX,
     useFineModeNav,

@@ -22,4 +22,5 @@ export interface TrackProps {
   dataIdx?: number;
   getConfigMenu: any;
   onCloseConfigMenu: () => void;
+  useFineModeNav: boolean;
 }
