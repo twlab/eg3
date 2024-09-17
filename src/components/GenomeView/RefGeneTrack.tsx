@@ -88,7 +88,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
-    console.log("EYTERER");
     if (curTrackData.index === 0) {
       xPos.current = -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -627,7 +626,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               refGenes: trackData![`${id}`].result,
               trackState: newTrackState,
             };
-            console.log(fetchedDataCache.current);
+
             leftIdx.current++;
 
             curRegionData.current = {
@@ -681,7 +680,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             regionNavCoord: visRegionArr[2],
             index: -1,
           };
-          console.log(trackData);
+
           fetchedDataCache.current[leftIdx.current] = {
             refGenes: trackData![`${id}`].result[0].fetchData,
             trackState: trackState0,
@@ -738,13 +737,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             };
             createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr);
           } else if (trackData!.trackState.side === "left") {
-            console.log(trackData![`${id}`].result);
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
               refGenes: trackData![`${id}`].result,
               trackState: trackData!.trackState,
             };
-            console.log(fetchedDataCache.current);
+
             let currIdx = leftIdx.current - 2;
             for (let i = 0; i < 3; i++) {
               testData.push(fetchedDataCache.current[currIdx]);

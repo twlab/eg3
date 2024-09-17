@@ -58,7 +58,6 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   genomealign: GenomeAlign,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
-  console.log(bpNavArr);
   let genRes: Array<any> = [];
   for (let bpNav of bpNavArr) {
     let genomeFeatureSegment: Array<FeatureSegment> =
@@ -182,11 +181,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const dragIdx = dragX.current / windowWidth;
 
     if (dragIdx > -1 && dragIdx < 1) {
-      !useFineModeNav.current
-        ? dragX.current > 0
-          ? (curX = 1)
-          : (curX = 0)
-        : (curX = 0);
+      // !useFineModeNav.current
+      //   ? dragX.current > 0
+      //     ? (curX = 1)
+      //     : (curX = 0)
+      //   :
+
+      curX = 0;
     } else if (dragX.current! > 1) {
       curX = Math.ceil(dragX.current! / windowWidth);
     } else {
@@ -359,7 +360,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         genomeArr[genomeIdx].defaultTracks.map((item, index) => {
           if (!sentData) {
-            console.log(useFineModeNav.current);
             sentData = true;
             infiniteScrollWorker.current!.postMessage({
               primaryGenName: genomeArr[genomeIdx].genome.getName(),
@@ -488,7 +488,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genome.defaultTracks[i].filetype === "genomealign" &&
           basePerPixel.current < 10
         ) {
-          console.log(basePerPixel.current, genome.defaultTracks[i].filetype);
           useFineModeNav.current = true;
         }
       }

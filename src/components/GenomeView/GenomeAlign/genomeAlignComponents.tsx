@@ -292,7 +292,7 @@ function ensureMaxListLength(list, limit: number) {
   }
   return selectedItems;
 }
-function renderRoughAlignment(
+export function renderRoughAlignment(
   placement: { [key: string]: any },
   plotReverse: boolean,
   roughHeight: number

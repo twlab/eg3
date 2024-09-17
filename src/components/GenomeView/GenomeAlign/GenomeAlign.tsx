@@ -1,7 +1,10 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
-import { DEFAULT_OPTIONS } from "./genomeAlignComponents";
+import {
+  DEFAULT_OPTIONS,
+  PlacedMergedAlignment,
+} from "./genomeAlignComponents";
 import _ from "lodash";
 import HoverToolTip from "../commonComponents/hover-and-tooltip/hoverToolTip";
 import { TrackProps } from "../../../models/trackModels/trackProps";
@@ -10,9 +13,11 @@ import {
   renderFineAlignment,
   renderGapText,
   renderRoughStrand,
+  renderRoughAlignment,
 } from "./genomeAlignComponents";
 import { GenomeAlignTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
 import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+import OpenInterval from "../../../models/OpenInterval";
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,
@@ -82,34 +87,50 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
     //step 1
     else {
-      // newWorkerData["viewMode"] = "roughMode";
-      // worker.onmessage = (event) => {
-      //   let drawDataArr = event.data.drawDataArr;
-      //   let drawData = drawDataArr[0].drawData;
-      //   svgElements = drawData.map((placement) =>
-      //     renderRoughAlignment(placement, false, 80)
-      //   );
-      //   newTrackWidth.current = drawDataArr[0].primaryVisData;
-      //   const arrows = renderRoughStrand("+", 0, visData!.viewWindow, false);
-      //   svgElements.push(arrows);
-      //   const primaryViewWindow = drawDataArr[0].primaryVisData.viewWindow;
-      //   const strand = drawDataArr[0].plotStrand;
-      //   const height = 80;
-      //   const primaryArrows = renderRoughStrand(
-      //     strand,
-      //     height - RECT_HEIGHT,
-      //     primaryViewWindow,
-      //     true
-      //   );
-      //   svgElements.push(primaryArrows);
-      //   tmpObj = { svgElements, drawDataArr };
-      //   if (trackData!.side === "right") {
-      //     setRightTrack(new Array<any>(tmpObj));
-      //   } else {
-      //     setLeftTrack(new Array<any>(tmpObj));
-      //   }
-      //   xPos.current = event.data.xDist;
-      // };
+      const drawData = result.drawData as PlacedMergedAlignment[];
+      const segmentArray = [].concat.apply(
+        [],
+        drawData.map((placement) => placement.segments) as any
+      );
+
+      const strand = result.plotStrand;
+
+      svgElements = drawData.map((placement) =>
+        renderRoughAlignment(placement, strand === "-", 80)
+      );
+      const arrows = renderRoughStrand(
+        "+",
+        0,
+        new OpenInterval(windowWidth, windowWidth * 2),
+        false
+      );
+      svgElements.push(arrows);
+      const primaryViewWindow = result.primaryVisData.viewWindow;
+
+      const primaryArrows = renderRoughStrand(
+        strand,
+        80 - 15,
+        primaryViewWindow,
+        true
+      );
+      svgElements.push(primaryArrows);
+
+      let tempObj = {
+        alignment: result,
+        svgElements: new Array<any>(svgElements),
+        trackState,
+      };
+      setSvgComponents({ ...tempObj });
+
+      if (trackState.index === 0) {
+        xPos.current = -trackState.startWindow;
+      } else if (trackState.side === "right") {
+        xPos.current = -trackState!.xDist - trackState.startWindow;
+      } else if (trackState.side === "left") {
+        xPos.current = trackState!.xDist - trackState.startWindow;
+      }
+
+      newTrackWidth.current = trackState.visWidth;
     }
   }
 
@@ -120,7 +141,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     // otherwise when there is new data cuz the user is at the end of the track
     let viewData = {};
     let curIdx;
-    console.log(rightIdx.current, dataIdx);
     if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
@@ -139,6 +159,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
   // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
   useEffect(() => {
+    console.log(trackData);
     if (trackData![`${id}`] !== undefined) {
       if (trackData!.initial === 1) {
         let trackState0 = {
