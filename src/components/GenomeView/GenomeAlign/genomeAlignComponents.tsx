@@ -23,14 +23,13 @@ export interface PlacedMergedAlignment extends QueryGenomePiece {
   segments: PlacedAlignment[];
   targetXSpan: OpenInterval;
 }
-// const FINE_MODE_HEIGHT = 80;
-const ALIGN_TRACK_MARGIN = 20; // The margin on top and bottom of alignment block
-// const ROUGH_MODE_HEIGHT = 80;
+
+const ALIGN_TRACK_MARGIN = 20;
+
 const RECT_HEIGHT = 15;
 const TICK_MARGIN = 1;
 const FONT_SIZE = 10;
-// const PRIMARY_COLOR = 'darkblue';
-// const QUERY_COLOR = '#B8008A';
+
 const MAX_POLYGONS = 500;
 export interface PlacedSequenceSegment extends SequenceSegment {
   xSpan: OpenInterval;

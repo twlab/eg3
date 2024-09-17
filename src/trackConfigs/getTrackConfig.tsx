@@ -18,7 +18,6 @@ import TrackModel from "../models/TrackModel";
 // import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
 // import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 // import { RulerTrackConfig } from "./RulerTrackConfig";
-// import { TrackModel } from "../../model/TrackModel";
 // import { RefBedTrackConfig } from "./RefBedTrackConfig";
 // import { SnpTrackConfig } from "./SnpTrackConfig";
 // import { MatplotTrackConfig } from "./MatplotTrackConfig";

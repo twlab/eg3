@@ -293,6 +293,8 @@ self.onmessage = async (event: MessageEvent) => {
         const baseWidth = targetXSpan.getLength() / targetSequence.length;
         const targetLocus = placement.visiblePart.getLocus().toString();
         const queryLocus = placement.visiblePart.getQueryLocus().toString();
+
+        const queryLocusFine = placement.visiblePart.getQueryLocusFine();
         const nonGapsTarget = placement.targetSegments.filter(
           (segment) => !segment.isGap
         );
@@ -310,6 +312,7 @@ self.onmessage = async (event: MessageEvent) => {
           queryLocus,
           nonGapsTarget,
           isReverseStrandQuery,
+          queryLocusFine,
         };
         alignment[`${query}`].drawData[i] = {
           ...placement,

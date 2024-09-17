@@ -23,7 +23,7 @@ import { GeneAnnotationTrackConfig } from "../../trackConfigs/GeneAnnotationTrac
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrack/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/AnnotationTrackConfig";
-
+import trackConfigMenu from "./commonComponents/track-context-menu/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
@@ -46,7 +46,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   windowWidth = 0,
   genomeArr,
   genomeIdx,
-  dragXDist,
   trackModel,
   dataIdx,
   getConfigMenu,
@@ -56,7 +55,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   id,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
-
+  const svgHeight = useRef(0);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -97,24 +96,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
 
     newTrackWidth.current = curTrackData.visWidth;
-    let currDisplayNav = curTrackData.visRegion;
+
     let sortType;
-    // if (curTrackData!.side === "right") {
-    //   // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-    //   // we have to get coord of prev regions by subtracting of the last region
-    //   currDisplayNav = new DisplayedRegionModel(
-    //     curTrackData.visRegion._navContext,
-    //     curTrackData.visRegion._startBase -
-    //       (curTrackData.visRegion._endBase -
-    //         curTrackData.visRegion._startBase) *
-    //         2,
 
-    //     curTrackData.visRegion._endBase
-    //   );
-
-    //   if (curTrackData.index === 0) {
-
-    //   }
     sortType = SortItemsOptions.NOSORT;
 
     let algoData = genesArr.map((record) => new Gene(record));
@@ -132,7 +116,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       );
 
       const height = getHeight(placeFeatureData.numRowsAssigned);
-      configOptions.current.height = height;
+      svgHeight.current = height;
+
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         curTrackData.visWidth,
@@ -307,61 +292,21 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
 
-      let configsOptions = renderer.getMenuComponents();
       // create object that has key as displayMode and the configmenu component as the value
-      const items = [...configsOptions];
+      const items = renderer.getMenuComponents();
 
-      let menu = ReactDOM.createPortal(
-        <Manager key={`${id}` + "genref"}>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: configMenuPos.current.pageX,
-                  top: configMenuPos.current.pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper>
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  position: "absolute",
-                  zIndex: 1000,
-                }}
-              >
-                <OutsideClickDetector onOutsideClick={onCloseConfigMenu}>
-                  <div className="TrackContextMenu-body">
-                    <MenuTitle
-                      title={trackModel.getDisplayLabel()}
-                      numTracks={trackIdx}
-                    />
-                    {items.map((MenuComponent, index) => (
-                      <MenuComponent
-                        key={index}
-                        defaultValue={
-                          index !== 2 && index !== 7 && index !== 0
-                            ? configOptions.current.displayMode
-                            : 0
-                        }
-                        optionsObjects={[configOptions.current]}
-                        onOptionSet={onConfigChange}
-                      />
-                    ))}
-                    <RemoveOption onClick={handleDelete} numTracks={trackIdx} />
-                  </div>
-                </OutsideClickDetector>
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
+      let menu = trackConfigMenu[`${trackModel.name}`]({
+        trackIdx,
+        handleDelete,
+        id,
+        pageX: configMenuPos.current.pageX,
+        pageY: configMenuPos.current.pageY,
+        onCloseConfigMenu,
+        trackModel,
+        configOptions: configOptions.current,
+        items,
+        onConfigChange,
+      });
 
       getConfigMenu(menu);
       setConfigChanged(true);
@@ -377,63 +322,20 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
 
-    let configsOptions = renderer.getMenuComponents();
     // create object that has key as displayMode and the configmenu component as the value
-    const items = [...configsOptions];
-
-    let menu = ReactDOM.createPortal(
-      <Manager key={`${id}` + "genref"}>
-        <Reference>
-          {({ ref }) => (
-            <div
-              ref={ref}
-              style={{
-                position: "absolute",
-                left: event.pageX,
-                top: Math.max(0, event.pageY - 300),
-              }}
-            />
-          )}
-        </Reference>
-        <Popper>
-          {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                position: "absolute",
-                zIndex: 1000,
-              }}
-            >
-              <OutsideClickDetector onOutsideClick={onCloseConfigMenu}>
-                <div className="TrackContextMenu-body">
-                  <MenuTitle
-                    title={trackModel.getDisplayLabel()}
-                    numTracks={trackIdx}
-                  />
-                  {items.map((MenuComponent, index) => (
-                    <MenuComponent
-                      key={index}
-                      optionsObjects={[configOptions.current]}
-                      defaultValue={
-                        index !== 2 && index !== 7
-                          ? index !== 0
-                            ? configOptions.current.displayMode
-                            : trackModel.name
-                          : 0
-                      }
-                      onOptionSet={onConfigChange}
-                    />
-                  ))}
-                  <RemoveOption onClick={handleDelete} numTracks={trackIdx} />
-                </div>
-              </OutsideClickDetector>
-            </div>
-          )}
-        </Popper>
-      </Manager>,
-      document.body
-    );
+    const items = renderer.getMenuComponents();
+    let menu = trackConfigMenu[`${trackModel.name}`]({
+      trackIdx,
+      handleDelete,
+      id,
+      pageX: event.pageX,
+      pageY: event.pageY,
+      onCloseConfigMenu,
+      trackModel,
+      configOptions: configOptions.current,
+      items,
+      onConfigChange,
+    });
 
     getConfigMenu(menu);
     configMenuPos.current = { left: event.pageX, top: event.pageY };
@@ -638,23 +540,28 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       <div
         style={{
           display: "flex",
-          height: configOptions.current.height,
+          height:
+            configOptions.current.displayMode === "full"
+              ? svgHeight.current
+              : configOptions.current.height,
           position: "relative",
         }}
       >
         {configOptions.current.displayMode === "full" ? (
           <div
             style={{
-              borderTop: "1px solid Dodgerblue", // Set your desired border color for the child
-              borderBottom: "1px solid Dodgerblue", // Set your desired border
+              borderTop: "1px solid Dodgerblue",
+              borderBottom: "1px solid Dodgerblue",
               position: "absolute",
-              height: configOptions.current.height,
+              height: svgHeight.current,
               right: side === "left" ? `${xPos.current}px` : "",
               left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
             }}
           >
-            {svgComponents.map((item, index) => item)}
+            {svgComponents.map((item, index) => (
+              <div key={index}>{item}</div>
+            ))}
           </div>
         ) : (
           <div
@@ -666,8 +573,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           >
             <div
               style={{
-                borderTop: "1px solid Dodgerblue", // Set your desired border color for the child
-                borderBottom: "1px solid Dodgerblue", // Set your desired border
+                borderTop: "1px solid Dodgerblue",
+                borderBottom: "1px solid Dodgerblue",
                 position: "absolute",
                 backgroundColor: configOptions.current.backgroundColor,
                 left: side === "right" ? `${xPos.current}px` : "",

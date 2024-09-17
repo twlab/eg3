@@ -81,6 +81,7 @@ export const getToolTip = {
     return;
   },
   genomealign: function genomeAlignFetch(dataObj: { [key: string]: any }) {
+    console.log(dataObj);
     const { basesPerPixel, primaryGenome, queryGenome } = dataObj.data;
     const drawData = dataObj.data.drawData;
 
@@ -96,7 +97,7 @@ export const getToolTip = {
     const cusorSegment = drawData[indexOfCusorSegment];
 
     const sequenceHalfLength = 10; // The length of alignment in the hoverbox.
-
+    console.log(cusorSegment);
     return (
       <AlignmentSequence
         alignment={cusorSegment}
