@@ -43,8 +43,12 @@ export interface PlacedAlignment {
   targetSegments?: PlacedSequenceSegment[]; // These only present in fine mode
   querySegments?: PlacedSequenceSegment[];
 }
-export function renderGapText(gap: { [key: string]: any }, i: number) {
-  const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
+export function renderGapText(
+  gap: { [key: string]: any },
+  i: number,
+  options: { [key: string]: any }
+) {
+  const { height, primaryColor, queryColor } = options;
   const placementTargetGap = gap.targetGapText;
   const placementQueryGap = gap.queryGapText;
   const placementGapX =
@@ -126,8 +130,12 @@ export function renderGapText(gap: { [key: string]: any }, i: number) {
   }
 }
 
-export function renderFineAlignment(placement: any, i: number) {
-  const { height, primaryColor, queryColor } = DEFAULT_OPTIONS;
+export function renderFineAlignment(
+  placement: any,
+  i: number,
+  options: { [key: string]: any }
+) {
+  const { height, primaryColor, queryColor } = options;
   const { targetXSpan } = placement;
   const xStart = targetXSpan.start;
   const xEnd = targetXSpan.end;

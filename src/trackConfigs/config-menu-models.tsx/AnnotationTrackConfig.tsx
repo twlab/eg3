@@ -9,17 +9,17 @@ export const DEFAULT_OPTIONS = {
   hideMinimalItems: false,
   sortItems: false,
 };
-import { AnnotationDisplayModeConfig } from "../components/GenomeView/commonComponents/track-context-menu/DisplayModeConfig";
+import { AnnotationDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";
 import {
   PrimaryColorConfig,
   SecondaryColorConfig,
   BackgroundColorConfig,
-} from "./ColorConfig";
-import HeightConfig from "./HeightConfig";
-import MaxRowsConfig from "./MaxRowsConfig";
+} from "../config-menu-components.tsx/ColorConfig";
+import HeightConfig from "../config-menu-components.tsx/HeightConfig";
+import MaxRowsConfig from "../config-menu-components.tsx/MaxRowsConfig";
 
-import { AnnotationDisplayModes } from "../components/GenomeView/commonComponents/track-context-menu/DisplayModes";
-import TrackModel from "../models/TrackModel";
+import { AnnotationDisplayModes } from "./DisplayModes";
+import TrackModel from "../../models/TrackModel";
 
 export class AnnotationTrackConfig extends TrackConfig {
   constructor(trackModel: TrackModel) {

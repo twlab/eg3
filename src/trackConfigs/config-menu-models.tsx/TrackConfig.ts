@@ -1,5 +1,5 @@
-import LabelConfig from "./LabelConfig";
-import { TrackModel, TrackOptions } from "../models/TrackModel";
+import LabelConfig from "../config-menu-components.tsx/LabelConfig";
+import { TrackModel, TrackOptions } from "../../models/TrackModel";
 
 export class TrackConfig {
   public defaultOptions: TrackOptions;

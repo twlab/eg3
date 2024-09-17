@@ -9,12 +9,12 @@ import memoizeOne from "memoize-one";
 // import HoverTooltipContext from "../tooltip/HoverTooltipContext";
 // import configOptionMerging from "../configOptionMerging";
 import { RenderTypes, DesignRenderer } from "../art/DesignRenderer";
-import { NumericalDisplayModes } from "../track-context-menu/DisplayModes";
+import { NumericalDisplayModes } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { DefaultAggregators } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
-import ToolTipGenomealign from "../hover-and-tooltip/toolTipGenomealign";
+import HoverToolTip from "../hover-and-tooltip/hoverToolTip";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data: Feature[]; // Replace 'Feature' with the actual type of your data
@@ -260,7 +260,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             zIndex: 3,
           }}
         >
-          <ToolTipGenomealign
+          <HoverToolTip
             data={this.xToValue}
             data2={this.xToValue2}
             windowWidth={width}
@@ -303,7 +303,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             zIndex: 3,
           }}
         >
-          <ToolTipGenomealign
+          <HoverToolTip
             data={this.xToValue}
             windowWidth={width}
             trackType={"refGene"}

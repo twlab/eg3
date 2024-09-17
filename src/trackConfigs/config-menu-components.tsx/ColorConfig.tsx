@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import SingleInputConfig from "../components/GenomeView/commonComponents/track-context-menu/SingleInputConfig";
+import SingleInputConfig from "./SingleInputConfig";
 import ColorPicker from "./ColorPicker";
 
 import "./TrackContextMenu.css";

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
-import aggregateOptions from "./aggregateOptions";
+import aggregateOptions from "../config-menu-models.tsx/aggregateOptions";
 import { ITEM_PROP_TYPES } from "./TrackContextMenu";
 
 import "./TrackContextMenu.css";

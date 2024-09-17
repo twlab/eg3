@@ -8,7 +8,7 @@ import { TrackConfig } from "./TrackConfig";
 // import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
 // import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import { GeneAnnotationTrackConfig } from "./GeneAnnotationTrackConfig";
-import TrackModel from "../models/TrackModel";
+import TrackModel from "../../models/TrackModel";
 // import { HicTrackConfig } from "./HicTrackConfig";
 // import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
 // import { LongRangeColorTrackConfig } from "./LongRangeColorTrackConfig";
@@ -16,7 +16,7 @@ import TrackModel from "../models/TrackModel";
 // import { CoolTrackConfig } from "./CoolTrackConfig";
 // import { MethylCTrackConfig } from "./MethylCTrackConfig";
 // import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
-// import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
+import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 // import { RulerTrackConfig } from "./RulerTrackConfig";
 // import { RefBedTrackConfig } from "./RefBedTrackConfig";
 // import { SnpTrackConfig } from "./SnpTrackConfig";
@@ -70,7 +70,7 @@ const TYPE_NAME_TO_CONFIG = {
   // refbed: RefBedTrackConfig,
   // methylc: MethylCTrackConfig,
   // repeatmasker: RepeatMaskerTrackConfig,
-  // genomealign: GenomeAlignTrackConfig,
+  genomealign: GenomeAlignTrackConfig,
   // snp: SnpTrackConfig,
   // ruler: RulerTrackConfig,
   // matplot: MatplotTrackConfig,

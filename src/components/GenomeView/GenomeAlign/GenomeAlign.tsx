@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import { DEFAULT_OPTIONS } from "./genomeAlignComponents";
 import _ from "lodash";
-import ToolTipGenomealign from "../commonComponents/hover-and-tooltip/toolTipGenomealign";
+import HoverToolTip from "../commonComponents/hover-and-tooltip/hoverToolTip";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import { GapText, PlacedAlignment } from "./MultiAlignmentViewCalculator";
 import {
@@ -11,7 +11,8 @@ import {
   renderGapText,
   renderRoughStrand,
 } from "./genomeAlignComponents";
-
+import { GenomeAlignTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
+import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,
@@ -20,7 +21,12 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   handleDelete,
   windowWidth,
   dataIdx,
+  onCloseConfigMenu,
+  trackModel,
+  genomeArr,
+  genomeIdx,
   id,
+  getConfigMenu,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -45,17 +51,23 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     if (bpToPx! <= 10) {
       const drawData = result.drawData as PlacedAlignment[];
 
-      svgElements = drawData.map(renderFineAlignment);
+      svgElements = drawData.map((item, index) =>
+        renderFineAlignment(item, index, configOptions.current)
+      );
       const drawGapText = result.drawGapText as GapText[];
-      svgElements.push(...drawGapText.map(renderGapText));
-      console.log(trackState, drawData);
+      svgElements.push(
+        drawGapText.map((item, index) =>
+          renderGapText(item, index, configOptions.current)
+        )
+      );
+
       let tempObj = {
         alignment: result,
         svgElements: new Array<any>(svgElements),
         trackState,
       };
       setSvgComponents({ ...tempObj });
-      console.log(tempObj);
+
       if (trackState.index === 0) {
         xPos.current = -trackState.startWindow;
       } else if (trackState.side === "right") {
@@ -240,7 +252,39 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   useEffect(() => {
     getCacheData();
   }, [dataIdx]);
+  function onConfigChange(key, value) {
+    if (value === configOptions.current[`${key}`]) {
+      return;
+    } else {
+      configOptions.current[`${key}`] = value;
+    }
+    setConfigChanged(true);
+  }
+  function renderConfigMenu(event) {
+    event.preventDefault();
 
+    genomeArr![genomeIdx!].options = configOptions.current;
+
+    const renderer = new GenomeAlignTrackConfig(genomeArr![genomeIdx!]);
+
+    // create object that has key as displayMode and the configmenu component as the value
+    const items = renderer.getMenuComponents();
+    let menu = trackConfigMenu[`${trackModel.type}`]({
+      trackIdx,
+      handleDelete,
+      id,
+      pageX: event.pageX,
+      pageY: event.pageY,
+      onCloseConfigMenu,
+      trackModel,
+      configOptions: configOptions.current,
+      items,
+      onConfigChange,
+    });
+
+    getConfigMenu(menu);
+    configMenuPos.current = { left: event.pageX, top: event.pageY };
+  }
   useEffect(() => {
     if (configChanged === true) {
       createSVG(
@@ -251,17 +295,19 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     setConfigChanged(false);
   }, [configChanged]);
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div
+      onContextMenu={renderConfigMenu}
+      style={{ display: "flex", flexDirection: "column" }}
+    >
       <div
         style={{
           display: "flex",
           position: "relative",
-          height: 80,
+          height: `${configOptions.current.height}px`,
         }}
       >
         <svg
           width={`${newTrackWidth.current}px`}
-          height={"80px"}
           style={{
             position: "absolute",
 
@@ -281,11 +327,11 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
               zIndex: 3,
             }}
           >
-            <ToolTipGenomealign
+            <HoverToolTip
               data={svgComponents.alignment}
               windowWidth={svgComponents.trackState.visWidth}
               trackType={"genomealign"}
-              height={80}
+              height={configOptions.current.height}
               viewRegion={svgComponents.trackState.visRegion}
               side={svgComponents.trackState.side}
             />
@@ -293,56 +339,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         ) : (
           ""
         )}
-
-        {/* <div
-          style={{
-            position: "absolute",
-            right: side === "left" ? `${xPos.current!}px` : "",
-            left: side === "right" ? `${-xPos.current!}px` : "",
-          }}
-        >
-          {bpToPx! <= 10
-            ? xPos.current <= 0
-              ? rightTrackGenes.map(
-                  (drawData) =>
-                    // index <= rightTrackGenes.length - 1 ?
-                    drawData["drawData"].map((drawDataArr, index) => (
-                      <ToolTipGenomealign
-                        key={"genomeAlignRight" + `${trackIdx}`}
-                        trackType={trackType}
-                        data={drawDataArr}
-                        windowWidth={newTrackWidth.current!.visWidth}
-                        side={"right"}
-                        height={DEFAULT_OPTIONS.height}
-                      />
-                    ))
-                  //  : (
-                  //   <div style={{ display: 'flex', width: windowWidth }}>
-                  //     ....LOADING
-                  //   </div>
-                  // )
-                )
-              : leftTrackGenes.map(
-                  (drawData) =>
-                    // index <= rightTrackGenes.length - 1 ?
-                    drawData["drawData"].map((drawDataArr) => (
-                      <ToolTipGenomealign
-                        key={"genomealignLeft" + `${trackIdx}`}
-                        trackType={trackType}
-                        data={drawDataArr}
-                        windowWidth={newTrackWidth.current!.visWidth}
-                        side={"left"}
-                        height={DEFAULT_OPTIONS.height}
-                      />
-                    ))
-                  //  : (
-                  //   <div style={{ display: 'flex', width: windowWidth }}>
-                  //     ....LOADING
-                  //   </div>
-                  // )
-                )
-            : " "}
-        </div> */}
       </div>
     </div>
   );

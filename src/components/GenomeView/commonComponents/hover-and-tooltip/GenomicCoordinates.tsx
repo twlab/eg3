@@ -31,7 +31,6 @@ class GenomicCoordinates extends React.Component<GenomicCoordinatesProps> {
     let segment;
     try {
       segment = drawModel.xToSegmentCoordinate(x);
-      console.log(segment);
     } catch (error) {
       return null;
     }

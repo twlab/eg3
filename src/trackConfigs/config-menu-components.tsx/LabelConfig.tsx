@@ -1,4 +1,4 @@
-import SingleInputConfig from "../components/GenomeView/commonComponents/track-context-menu/SingleInputConfig";
+import SingleInputConfig from "./SingleInputConfig";
 
 /**
  * Context menu item for setting track labels.

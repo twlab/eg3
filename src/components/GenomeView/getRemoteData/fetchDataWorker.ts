@@ -280,13 +280,14 @@ self.onmessage = async (event: MessageEvent) => {
       event.data.primaryGenName
     );
     let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
+    console.log(alignment);
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
     for (let query in alignment) {
       for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
         let placement = alignment[`${query}`].drawData[i];
-
+        console.log(placement);
         const { targetXSpan } = placement;
         const targetSequence = placement.visiblePart.getTargetSequence();
         const querySequence = placement.visiblePart.getQuerySequence();

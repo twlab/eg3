@@ -2,7 +2,7 @@ import { scaleLinear } from "d3-scale";
 import React, { createRef, memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import TestToolTipHic from "./commonComponents/hover-and-tooltip/tooltipHic";
-import { InteractionDisplayMode } from "./commonComponents/track-context-menu/DisplayModes";
+import { InteractionDisplayMode } from "../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 import percentile from "percentile";

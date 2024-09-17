@@ -11,19 +11,18 @@ import GeneAnnotation from "./geneAnnotationTrack/GeneAnnotation";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-import { MenuTitle, RemoveOption } from "../../trackConfigs/TrackContextMenu";
+
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrack/GeneDetail";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import "./TrackContextMenu.css";
-import { GeneAnnotationTrackConfig } from "../../trackConfigs/GeneAnnotationTrackConfig";
+import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrack/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/AnnotationTrackConfig";
-import trackConfigMenu from "./commonComponents/track-context-menu/TrackConfigMenu";
+import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
+import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
@@ -292,15 +291,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
 
-      // create object that has key as displayMode and the configmenu component as the value
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.name}`]({
         trackIdx,
         handleDelete,
         id,
-        pageX: configMenuPos.current.pageX,
-        pageY: configMenuPos.current.pageY,
+        pageX: configMenuPos.current.left,
+        pageY: configMenuPos.current.top,
         onCloseConfigMenu,
         trackModel,
         configOptions: configOptions.current,
@@ -309,11 +307,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       });
 
       getConfigMenu(menu);
-      setConfigChanged(true);
     } else {
       configOptions.current[`${key}`] = value;
-      setConfigChanged(true);
     }
+    setConfigChanged(true);
   }
   function renderConfigMenu(event) {
     event.preventDefault();

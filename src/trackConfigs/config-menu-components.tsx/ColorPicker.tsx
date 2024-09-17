@@ -4,8 +4,8 @@ import { Manager, Reference, Popper } from "react-popper";
 import { SketchPicker } from "react-color";
 import parseColor from "parse-color";
 
-import OutsideClickDetector from "../components/GenomeView/commonComponents/OutsideClickDetector";
-import { getContrastingColor } from "../models/util";
+import OutsideClickDetector from "../../components/GenomeView/commonComponents/OutsideClickDetector";
+import { getContrastingColor } from "../../models/util";
 
 const PICKER_OPENER_STYLE = {
   border: "1px solid grey",

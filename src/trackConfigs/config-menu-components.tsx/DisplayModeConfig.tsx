@@ -10,7 +10,7 @@ import {
   VcfDisplayModes,
   GraphDisplayModes,
   FiberDisplayModes,
-} from "./DisplayModes";
+} from "../config-menu-models.tsx/DisplayModes";
 
 /**
  * A menu item for configuring display modes of annotation tracks.
@@ -19,10 +19,12 @@ import {
  * @return {JSX.Element} element to render
  */
 export function AnnotationDisplayModeConfig(props) {
+  console.log(props);
   return (
     <SelectConfig
       {...props}
       optionName="displayMode"
+      defaultValue={props.defaultValue}
       label="Display mode:"
       choices={AnnotationDisplayModes}
     />
@@ -36,6 +38,7 @@ export function AnnotationDisplayModeConfig(props) {
  * @return {JSX.Element} element to render
  */
 export function NumericalDisplayModeConfig(props) {
+  console.log(props);
   return (
     <SelectConfig
       {...props}

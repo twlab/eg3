@@ -22,12 +22,11 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
   onOptionSet = () => undefined,
 }) => {
   // Initialize state to store the selected value
+
+  console.log(defaultValue);
   const [selectedValue, setSelectedValue] = useState(defaultValue);
 
   // When the component mounts, set the selected value based on the defaultValue
-  useEffect(() => {
-    setSelectedValue(defaultValue);
-  }, [defaultValue]);
 
   const renderInputElement = (
     inputValue: string | number,
