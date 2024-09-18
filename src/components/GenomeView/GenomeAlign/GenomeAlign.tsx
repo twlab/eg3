@@ -32,6 +32,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   genomeIdx,
   id,
   getConfigMenu,
+  useFineModeNav,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -94,23 +95,30 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       );
 
       const strand = result.plotStrand;
-
+      const targetGenome = result.primaryGenome;
+      const queryGenome = result.queryGenome;
       svgElements = drawData.map((placement) =>
-        renderRoughAlignment(placement, strand === "-", 80)
+        renderRoughAlignment(
+          placement,
+          strand === "-",
+          80,
+          targetGenome,
+          queryGenome
+        )
       );
       const arrows = renderRoughStrand(
         "+",
         0,
-        new OpenInterval(windowWidth, windowWidth * 2),
+        new OpenInterval(0, windowWidth * 3),
         false
       );
       svgElements.push(arrows);
-      const primaryViewWindow = result.primaryVisData.viewWindow;
+      // const primaryViewWindow = result.primaryVisData.viewWindow;
 
       const primaryArrows = renderRoughStrand(
         strand,
         80 - 15,
-        primaryViewWindow,
+        new OpenInterval(0, windowWidth * 3),
         true
       );
       svgElements.push(primaryArrows);
@@ -338,7 +346,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         >
           {svgComponents.svgElements.map((item) => item)}
         </svg>
-        {svgComponents.svgElements.length > 0 ? (
+        {svgComponents.svgElements.length > 0 && useFineModeNav ? (
           <div
             style={{
               position: "absolute",

@@ -295,14 +295,16 @@ function ensureMaxListLength(list, limit: number) {
 export function renderRoughAlignment(
   placement: { [key: string]: any },
   plotReverse: boolean,
-  roughHeight: number
+  roughHeight: number,
+  targetGenome,
+  queryGenome
 ) {
   const targetXSpan: { [key: string]: any } = placement.targetXSpan;
   const segments: Array<{ [key: string]: any }> = placement.segments;
   const queryXSpan: { [key: string]: any } = placement.queryXSpan;
   const queryFeature: { [key: string]: any } = placement.queryFeature;
   const queryRectTopY = roughHeight - RECT_HEIGHT;
-
+  console.log(placement);
   const targetGenomeRect = (
     <rect
       x={targetXSpan.start}
@@ -364,8 +366,6 @@ export function renderRoughAlignment(
     const x3 = segment.targetXSpan.end;
     // const targetGenome = trackData!.genomeName;
     // const queryGenome = trackData!.queryGenomeName;
-    const targetGenome = "ASDASDASDASD";
-    const queryGenome = "ADASDSADASDASDASDASDASDSA";
     const y3 = RECT_HEIGHT;
     const yhalf = (RECT_HEIGHT + queryRectTopY) / 2;
     const d_string = `M ${x0} ${y0} 

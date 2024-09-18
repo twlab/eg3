@@ -181,13 +181,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const dragIdx = dragX.current / windowWidth;
 
     if (dragIdx > -1 && dragIdx < 1) {
-      // !useFineModeNav.current
-      //   ? dragX.current > 0
-      //     ? (curX = 1)
-      //     : (curX = 0)
-      //   :
-
-      curX = 0;
+      !useFineModeNav.current
+        ? dragX.current > 0
+          ? (curX = 1)
+          : (curX = 0)
+        : (curX = 0);
     } else if (dragX.current! > 1) {
       curX = Math.ceil(dragX.current! / windowWidth);
     } else {

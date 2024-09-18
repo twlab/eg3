@@ -322,6 +322,9 @@ self.onmessage = async (event: MessageEvent) => {
             isReverseStrandQuery,
             queryLocusFine,
           };
+        } else {
+          let estimatedLabelWidth = placement.queryFeature.toString().length;
+          tempObj = { estimatedLabelWidth };
         }
         alignment[`${query}`].drawData[i] = {
           ...placement,
