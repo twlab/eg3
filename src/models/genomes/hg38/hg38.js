@@ -36,8 +36,9 @@ const genome = new Genome("hg38", [
 //   //testing finemode  27213325-27213837
 //   //chr7:159159564-chr8:224090
 // //27195171-27202238
+//chr7:26805572-26825594
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:26805572-26825594");
 const defaultTracks = [
   // new TrackModel({
   //   type: "geneAnnotation",

@@ -1,10 +1,6 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
-import {
-  DEFAULT_OPTIONS,
-  PlacedMergedAlignment,
-} from "./genomeAlignComponents";
 import _ from "lodash";
 import HoverToolTip from "../commonComponents/hover-and-tooltip/hoverToolTip";
 import { TrackProps } from "../../../models/trackModels/trackProps";
@@ -14,7 +10,9 @@ import {
   renderGapText,
   renderRoughStrand,
   renderRoughAlignment,
-} from "./genomeAlignComponents";
+  DEFAULT_OPTIONS,
+  PlacedMergedAlignment,
+} from "./GenomeAlignComponents";
 import { GenomeAlignTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
 import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import OpenInterval from "../../../models/OpenInterval";
@@ -89,11 +87,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     //step 1
     else {
       const drawData = result.drawData as PlacedMergedAlignment[];
-      const segmentArray = [].concat.apply(
-        [],
-        drawData.map((placement) => placement.segments) as any
-      );
-
+      console.log(result);
       const strand = result.plotStrand;
       const targetGenome = result.primaryGenome;
       const queryGenome = result.queryGenome;
@@ -149,10 +143,17 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     // otherwise when there is new data cuz the user is at the end of the track
     let viewData = {};
     let curIdx;
+
     if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+      if (dataIdx === 1) {
+        dataIdx = 0;
+      }
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
     } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
+      if (dataIdx === 1) {
+        dataIdx = 0;
+      }
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
     }
@@ -326,7 +327,11 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   return (
     <div
       onContextMenu={renderConfigMenu}
-      style={{ display: "flex", flexDirection: "column" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: `${configOptions.current.height}px`,
+      }}
     >
       <div
         style={{
@@ -338,15 +343,16 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         <svg
           width={`${newTrackWidth.current}px`}
           style={{
+            display: "block",
             position: "absolute",
-
+            height: `${configOptions.current.height}px`,
             right: side === "left" ? `${xPos.current!}px` : "",
             left: side === "right" ? `${xPos.current!}px` : "",
           }}
         >
           {svgComponents.svgElements.map((item) => item)}
         </svg>
-        {svgComponents.svgElements.length > 0 && useFineModeNav ? (
+        {svgComponents.svgElements.length > 0 ? (
           <div
             style={{
               position: "absolute",
@@ -359,10 +365,13 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             <HoverToolTip
               data={svgComponents.alignment}
               windowWidth={svgComponents.trackState.visWidth}
-              trackType={"genomealign"}
+              trackType={
+                useFineModeNav ? "genomealignFine" : "genomealignRough"
+              }
               height={configOptions.current.height}
               viewRegion={svgComponents.trackState.visRegion}
               side={svgComponents.trackState.side}
+              options={configOptions.current}
             />
           </div>
         ) : (

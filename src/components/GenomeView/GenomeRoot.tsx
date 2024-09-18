@@ -101,6 +101,8 @@ function GenomeHub(props: any) {
       HG38["windowWidth"] = size.width;
       setGenomeList(new Array<any>(HG38));
 
+      curNavRegion.current.start = HG38.defaultRegion.start;
+      curNavRegion.current.end = HG38.defaultRegion.end;
       // uncomment this when we are done
       // getSelectedGenome(size.width);
     } else if (stateChangeCount.current > 1) {

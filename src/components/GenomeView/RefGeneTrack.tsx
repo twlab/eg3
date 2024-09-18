@@ -88,6 +88,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
+    console.log(windowWidth);
     if (curTrackData.index === 0) {
       xPos.current = -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -144,6 +145,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     //_
     if (configOptions.current.displayMode === "full") {
+      console.log(windowWidth);
       let placeFeatureData = featureArrange.arrange(
         algoData,
         currDisplayNav,
@@ -153,6 +155,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         sortType
       );
       const height = getHeight(placeFeatureData.numRowsAssigned);
+      console.log(windowWidth * 3);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         windowWidth * 3,
@@ -217,7 +220,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
-
+      console.log(curTrackData.visWidth);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         curTrackData.visWidth,
@@ -260,6 +263,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     maxRows,
     options
   ) {
+    console.log(trackData, windowWidth, width, height);
     function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
       const maxRowIndex = (maxRows || Infinity) - 1;
       // Compute y
@@ -268,9 +272,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       return getAnnotationElement(placedGroup, y, rowIndex === maxRowIndex, i);
     }
-
+    console.log(height, width);
     return (
-      <svg width={width} height={height}>
+      <svg width={width} height={height} display={"block"}>
         {placements.map(renderAnnotation)}
         <line
           x1={width / 3}
@@ -616,6 +620,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 fetchedDataCache.current[rightIdx.current + 1].refGenes,
               initial: 0,
             };
+            console.log("????????????????????????????????????????????????????");
             createSVGOrCanvasFine(
               newTrackState,
               fetchedDataCache.current[rightIdx.current + 1].refGenes
@@ -801,10 +806,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       <div
         style={{
           display: "flex",
+          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
+          // other elements will overlapp
           height:
             configOptions.current.displayMode === "full"
-              ? svgHeight.current
-              : configOptions.current.height,
+              ? svgHeight.current + 2
+              : configOptions.current.height + 2,
           position: "relative",
         }}
       >
@@ -814,6 +821,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               borderTop: "1px solid Dodgerblue",
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
+              lineHeight: 0,
               right: side === "left" ? `${xPos.current}px` : "",
               left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,

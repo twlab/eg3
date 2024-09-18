@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, memo } from "react";
 import "./Tooltip.css";
-import AlignmentSequence from "./AlignmentCoordinate";
+import AlignmentSequence from "../../GenomeAlign/AlignmentCoordinate";
+import HorizontalFragment from "../../GenomeAlign/HorizontalFragment";
 import GenomicCoordinates from "./GenomicCoordinates";
 import TrackModel from "../../../../models/TrackModel";
 
-interface MethylcHoverProps {
+interface HoverToolTipProps {
   data: any;
   windowWidth: number;
   trackIdx?: number;
@@ -17,8 +18,9 @@ interface MethylcHoverProps {
   unit?: string | undefined;
   data2?: any;
   hasReverse?: boolean;
+  options?: any;
 }
-export const getToolTip = {
+export const getHoverTooltip = {
   refGene: function getTooltip(dataObj: { [key: string]: any }) {
     const value = dataObj.data[Math.round(dataObj.relativeX)];
     const value2 = dataObj.hasReverse
@@ -80,7 +82,7 @@ export const getToolTip = {
   hic: function hicFetch(regionData: any) {
     return;
   },
-  genomealign: function genomeAlignFetch(dataObj: { [key: string]: any }) {
+  genomealignFine: function genomeAlignFetch(dataObj: { [key: string]: any }) {
     const { basesPerPixel, primaryGenome, queryGenome } = dataObj.data;
     const drawData = dataObj.data.drawData;
 
@@ -108,6 +110,24 @@ export const getToolTip = {
       />
     );
   },
+  genomealignRough: function genomeAlignRoughFetch(dataObj: {
+    [key: string]: any;
+  }) {
+    console.log(dataObj.data);
+    const RECT_HEIGHT = 15;
+    return (
+      <HorizontalFragment
+        height={dataObj.options.height}
+        rectHeight={RECT_HEIGHT}
+        primaryColor={dataObj.options.primaryColor}
+        queryColor={dataObj.options.queryColor}
+        segmentArray={dataObj.data}
+        strand={dataObj.data.plotStrand}
+        viewWindowStart={dataObj.width}
+        relativeX={dataObj.relativeX}
+      />
+    );
+  },
 };
 function isObjectNotEmpty(data: any): boolean {
   return (
@@ -125,7 +145,7 @@ function isDataValid(data: any): boolean {
   return isObjectNotEmpty(data) || isArrayNotEmpty(data);
 }
 
-const HoverTooltip: React.FC<MethylcHoverProps> = memo(function tooltip({
+const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   data,
   windowWidth,
   trackIdx,
@@ -136,6 +156,7 @@ const HoverTooltip: React.FC<MethylcHoverProps> = memo(function tooltip({
   unit,
   data2,
   hasReverse,
+  options,
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -158,7 +179,7 @@ const HoverTooltip: React.FC<MethylcHoverProps> = memo(function tooltip({
       let dataIdxY = Math.round(e.pageY - (window.scrollY + rect.top - 1));
       // windowwidth going over by 1 pixel because each region pixel array starts at 0
 
-      let tooltipsv = getToolTip[trackType]({
+      let trackHoverTooltip = getHoverTooltip[trackType]({
         data,
         trackModel,
         data2,
@@ -167,7 +188,9 @@ const HoverTooltip: React.FC<MethylcHoverProps> = memo(function tooltip({
         unit,
         relativeX: dataIdxX,
         hasReverse,
+        options,
       });
+      console.log(trackHoverTooltip);
       setPosition({
         ...rectPosition,
         top: rect.bottom,
@@ -175,7 +198,7 @@ const HoverTooltip: React.FC<MethylcHoverProps> = memo(function tooltip({
         right: rect.right,
         dataIdxX: dataIdxX,
         dataIdxY: dataIdxY,
-        toolTip: tooltipsv,
+        toolTip: trackHoverTooltip,
       });
       setIsVisible(true);
     }
@@ -228,7 +251,21 @@ const HoverTooltip: React.FC<MethylcHoverProps> = memo(function tooltip({
           {rectPosition.toolTip}
         </div>
       ) : (
-        ""
+        <div
+          style={{
+            left: rectPosition.dataIdxX,
+            top: rectPosition.dataIdxY,
+            position: "absolute",
+            backgroundColor: "lightBlue",
+            // color: "white",
+            padding: 8,
+            borderRadius: 4,
+            fontSize: 14,
+          }}
+        >
+          {rectPosition.dataIdxX}
+          {rectPosition.toolTip}
+        </div>
       )}
     </div>
   );

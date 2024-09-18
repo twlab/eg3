@@ -13,6 +13,7 @@ import { ViewExpansion } from "../../../models/RegionExpander";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../GenomeAlign/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
+import { niceBpCount } from "../../../models/util";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -148,8 +149,6 @@ self.onmessage = async (event: MessageEvent) => {
 
         fetchResults.push({ id: alignment, result: tempObj[`${alignment}`] });
       }
-
-      fetchResults.push(initialData);
     } else {
       (
         await getGenomeAlignment(
@@ -290,6 +289,48 @@ self.onmessage = async (event: MessageEvent) => {
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
     for (let query in alignment) {
+      let segmentArray;
+      if (!useFineModeNav) {
+        segmentArray = [].concat.apply(
+          [],
+          alignment[`${query}`].drawData.map(
+            (placement) => placement.segments
+          ) as any
+        );
+        const strandList = segmentArray.map(
+          (segment) => segment.record.queryStrand
+        );
+        const targetXSpanList = segmentArray.map(
+          (segment) => segment.targetXSpan
+        );
+        const queryXSpanList = segmentArray.map(
+          (segment) => segment.queryXSpan
+        );
+        const targetLocusList = segmentArray.map((segment) =>
+          segment.visiblePart.getLocus().toString()
+        );
+        const queryLocusList = segmentArray.map((segment) =>
+          segment.visiblePart.getQueryLocus().toString()
+        );
+        const lengthList = segmentArray.map((segment) =>
+          niceBpCount(segment.visiblePart.getLength())
+        );
+        const queryLengthList = segmentArray.map((segment) =>
+          niceBpCount(segment.visiblePart.getQueryLocus().getLength())
+        );
+        let tempObj = {};
+        tempObj = {
+          strandList,
+          targetXSpanList,
+          queryXSpanList,
+          targetLocusList,
+          queryLocusList,
+          lengthList,
+          queryLengthList,
+        };
+
+        alignment[`${query}`] = { ...alignment[`${query}`], ...tempObj };
+      }
       for (let i = 0; i < alignment[`${query}`].drawData.length; i++) {
         let placement = alignment[`${query}`].drawData[i];
         let tempObj = {};
@@ -300,7 +341,6 @@ self.onmessage = async (event: MessageEvent) => {
           const baseWidth = targetXSpan.getLength() / targetSequence.length;
           const targetLocus = placement.visiblePart.getLocus().toString();
           const queryLocus = placement.visiblePart.getQueryLocus().toString();
-
           const queryLocusFine = placement.visiblePart.getQueryLocusFine();
           const nonGapsTarget = placement.targetSegments.filter(
             (segment) => !segment.isGap
