@@ -10,7 +10,12 @@ import { CopyToClip } from "../CopyToClipboard";
  *
  * @author Silas Hsu
  */
-class FeatureDetail extends React.PureComponent {
+interface FeatureDetailProps {
+  feature: any;
+  category: any;
+  queryEndpoint: any;
+}
+class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
   static propTypes = {
     feature: PropTypes.instanceOf(Feature).isRequired, // The Feature object for which to display info
     category: PropTypes.object,

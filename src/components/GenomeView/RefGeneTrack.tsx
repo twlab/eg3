@@ -11,7 +11,6 @@ import GeneAnnotation from "./geneAnnotationTrack/GeneAnnotation";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-import { bpNavToGenNav } from "./TrackManager";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
@@ -37,9 +36,9 @@ export const DEFAULT_OPTIONS = {
 DEFAULT_OPTIONS.aggregateMethod = "COUNT";
 const ROW_VERTICAL_PADDING = 5;
 const ROW_HEIGHT = 9 + ROW_VERTICAL_PADDING;
-
 const getGenePadding = (gene) => gene.getName().length * 9;
 const TOP_PADDING = 2;
+
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackData,
   side,

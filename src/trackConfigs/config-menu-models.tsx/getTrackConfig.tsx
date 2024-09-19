@@ -1,6 +1,6 @@
 import { TrackConfig } from "./TrackConfig";
 // import { BamTrackConfig } from "./BamTrackConfig";
-// import { BedTrackConfig } from "./BedTrackConfig";
+import { BedTrackConfig } from "./BedTrackConfig";
 // import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
 // import { QBedTrackConfig } from "./QBedTrackConfig";
 // import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
@@ -54,7 +54,7 @@ export const DYNAMIC_TYPES = [
 
 const TYPE_NAME_TO_CONFIG = {
   // bam: BamTrackConfig,
-  // bed: BedTrackConfig,
+  bed: BedTrackConfig,
   // dynamicbed: DynamicBedTrackConfig,
   // qbed: QBedTrackConfig,
   // categorical: CategoricalTrackConfig,

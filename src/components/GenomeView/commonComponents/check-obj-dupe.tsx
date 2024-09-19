@@ -13,3 +13,21 @@ export function removeDuplicates(arr: Array<any>) {
 
   return uniqueObjects;
 }
+
+interface DataObject {
+  start: number;
+  end: number;
+  [key: string]: any; // Allow other properties
+}
+export function removeDuplicatesWithoutId(arr: DataObject[]): DataObject[] {
+  const uniqueObjects = new Map<string, DataObject>();
+
+  arr.forEach((item) => {
+    const key = `${item.start}-${item.end}`;
+    if (!uniqueObjects.has(key)) {
+      uniqueObjects.set(key, item);
+    }
+  });
+
+  return Array.from(uniqueObjects.values());
+}

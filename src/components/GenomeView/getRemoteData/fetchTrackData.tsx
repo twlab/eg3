@@ -14,12 +14,13 @@ const trackFetchFunction: { [key: string]: any } = {
     return await genRefResponse.json();
   },
 
-  bed: async function bedFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
+  bed: async function bedFetch(regionData: any) {
+    console.log(regionData);
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
   },
 
   bigWig: function bigWigFetch(

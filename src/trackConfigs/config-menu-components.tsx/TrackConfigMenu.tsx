@@ -16,12 +16,13 @@ const trackConfigMenu: { [key: string]: any } = {
     );
   },
 
-  bed: async function bedFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
+  bed: function bedConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
 
   bigWig: function bigWigFetch(

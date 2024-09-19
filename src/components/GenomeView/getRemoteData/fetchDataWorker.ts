@@ -411,11 +411,10 @@ self.onmessage = async (event: MessageEvent) => {
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   let normDefaultTracks = trackDefaults.filter((items, index) => {
-    return items.file !== "genomealign";
+    return items.type !== "genomealign";
   });
   await Promise.all(
     normDefaultTracks.map(async (item, index) => {
-      console.log(item.name);
       const trackType = item.type;
       const genomeName = item.genome;
       const id = item.id;
@@ -457,52 +456,7 @@ self.onmessage = async (event: MessageEvent) => {
           id,
         });
       } else if (trackType === "geneannotation") {
-        console.log(item.name);
-        let genRefResponses: Array<any> = [];
-        let curFetchNav;
-        if ("genome" in item.metadata) {
-          curFetchNav =
-            genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord;
-        } else if (useFineModeNav) {
-          if (event.data.initial === 1) {
-            curFetchNav = initGenalignGenomicLoci;
-          } else {
-            curFetchNav = new Array(expandGenomicLoci);
-          }
-        } else if (event.data.initial === 1) {
-          curFetchNav = initGenomicLoci;
-        } else {
-          curFetchNav = new Array(genomicLoci);
-        }
-        for (let i = 0; i < curFetchNav.length; i++) {
-          console.log({
-            genomeName,
-            fetchName: item.name,
-            chr: item.chr,
-            start: item.start,
-            end: item.end,
-            trackType,
-          });
-          const genRefResponse = await Promise.all(
-            await curFetchNav[i].map((nav, index) => {
-              return trackFetchFunction[trackType]({
-                genomeName,
-                name: item.name,
-                chr: nav.chr,
-                start: nav.start,
-                end: nav.end,
-                trackType,
-              });
-            })
-          );
-
-          genRefResponses.push({
-            name: trackType,
-            fetchData: _.flatten(genRefResponse),
-            id,
-            metadata: item.metadata,
-          });
-        }
+        let genRefResponses: Array<any> = await fetchData(item, genomeName, id);
         fetchResults.push({
           name: trackType,
           result:
@@ -513,23 +467,77 @@ self.onmessage = async (event: MessageEvent) => {
           metadata: item.metadata,
         });
       } else {
-        let result = await trackFetchFunction[trackType](
-          genomicLoci,
-          {
-            displayMode: "full",
-            color: "blue",
-            color2: "red",
-            maxRows: 20,
-            height: 40,
-            hideMinimalItems: false,
-            sortItems: false,
-            label: "",
-          },
-          url
-        );
+        console.log(trackType);
+        let responses: Array<any> = await fetchData(item, genomeName, id);
+        fetchResults.push({
+          name: trackType,
+          result:
+            event.data.initial !== 1
+              ? _.flatten(responses)[0].fetchData
+              : responses,
+          id: id,
+          metadata: item.metadata,
+        });
       }
     })
   );
+
+  async function fetchData(trackModel, genomeName, id): Promise<Array<any>> {
+    let responses: Array<any> = [];
+    let curFetchNav;
+    if ("genome" in trackModel.metadata) {
+      curFetchNav =
+        genomicFetchCoord[`${trackModel.metadata.genome}`].queryGenomicCoord;
+    } else if (useFineModeNav) {
+      if (event.data.initial === 1) {
+        curFetchNav = initGenalignGenomicLoci;
+      } else {
+        curFetchNav = new Array(expandGenomicLoci);
+      }
+    } else if (event.data.initial === 1) {
+      curFetchNav = initGenomicLoci;
+    } else {
+      curFetchNav = new Array(genomicLoci);
+    }
+    for (let i = 0; i < curFetchNav.length; i++) {
+      let curRespond;
+      if (trackModel.type === "geneannotation") {
+        curRespond = await Promise.all(
+          await curFetchNav[i].map((nav, index) => {
+            return trackFetchFunction[trackModel.type]({
+              genomeName,
+              name: trackModel.name,
+              chr: nav.chr,
+              start: nav.start,
+              end: nav.end,
+              nav,
+              trackModel,
+              trackType: trackModel.type,
+            });
+          })
+        );
+      } else {
+        curRespond = await Promise.all(
+          await trackFetchFunction[trackModel.type]({
+            genomeName,
+            name: trackModel.name,
+
+            nav: curFetchNav[i],
+            trackModel,
+            trackType: trackModel.type,
+          })
+        );
+      }
+
+      responses.push({
+        name: trackModel.type,
+        fetchData: _.flatten(curRespond),
+        id,
+        metadata: trackModel.metadata,
+      });
+    }
+    return responses;
+  }
   function parseGenomicCoordinates(input: string): {
     chr: string;
     start: number;

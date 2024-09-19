@@ -5,32 +5,34 @@ import { objToInstanceAlign } from "./TrackManager";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
-import Gene from "../../models/Gene";
-import GeneAnnotationScaffold from "./geneAnnotationTrack/GeneAnnotationScaffold";
-import GeneAnnotation from "./geneAnnotationTrack/GeneAnnotation";
+import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-import { bpNavToGenNav } from "./TrackManager";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import { removeDuplicates } from "./commonComponents/check-obj-dupe";
-import GeneDetail from "./geneAnnotationTrack/GeneDetail";
+import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
+
 import "./TrackContextMenu.css";
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
-import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrack/GeneAnnotation";
+import BedAnnotation, {
+  DEFAULT_OPTIONS as defaultBedTrack,
+} from "./bedTrack/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import Feature from "../../models/Feature";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
+import { BedTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BedTrackConfig";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
 export const DEFAULT_OPTIONS = {
-  ...defaultGeneAnnotationTrack,
+  ...defaultBedTrack,
   ...defaultNumericalTrack,
   ...defaultAnnotationTrack,
 };
@@ -40,7 +42,7 @@ const ROW_HEIGHT = 9 + ROW_VERTICAL_PADDING;
 
 const getGenePadding = (gene) => gene.getName().length * 9;
 const TOP_PADDING = 2;
-const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
+const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackData,
   side,
   windowWidth = 0,
@@ -140,9 +142,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     }
 
-    let algoData = genesArr.map((record) => new Gene(record));
+    let algoData = genesArr.map((record) => {
+      let newChrInt = new ChromosomeInterval(
+        record.chr,
+        record.start,
+        record.end
+      );
+      return new Feature(newChrInt.toStringWithOther(newChrInt), newChrInt, "");
+    });
     let featureArrange = new FeatureArranger();
-
     if (configOptions.current.displayMode === "full") {
       let placeFeatureData = await featureArrange.arrange(
         algoData,
@@ -152,6 +160,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         configOptions.current.hiddenPixels,
         sortType
       );
+
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
       let svgDATA = createFullVisualizer(
@@ -227,31 +236,23 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     );
   }
   function getAnnotationElement(placedGroup, y, isLastRow, index) {
-    const gene = placedGroup.feature;
-
-    return (
-      <GeneAnnotationScaffold
-        key={uuidv4()}
-        gene={gene}
-        xSpan={placedGroup.xSpan}
-        viewWindow={new OpenInterval(0, windowWidth * 3)}
+    return placedGroup.placedFeatures.map((placement, i) => (
+      <BedAnnotation
+        key={i}
+        feature={placement.feature}
+        xSpan={placement.xSpan}
         y={y}
         isMinimal={isLastRow}
-        options={configOptions.current}
+        color={configOptions.current.color}
+        reverseStrandColor={configOptions.current.color2}
+        isInvertArrowDirection={placement.isReverse}
         onClick={renderTooltip}
-      >
-        {placedGroup.placedFeatures.map((placedGene, i) => (
-          <GeneAnnotation
-            key={i}
-            placedGene={placedGene}
-            y={y}
-            options={configOptions.current}
-          />
-        ))}
-      </GeneAnnotationScaffold>
-    );
+        alwaysDrawLabel={configOptions.current.alwaysDrawLabel}
+        hiddenPixels={configOptions.current.hiddenPixels}
+      />
+    ));
   }
-  function refGeneClickTooltip(gene: any, pageX, pageY, name, onClose) {
+  function bedClickToolTip(feature: any, pageX, pageY, name, onClose) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
       pointerEvents: "auto",
@@ -282,11 +283,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               className="Tooltip"
             >
               <OutsideClickDetector onOutsideClick={onClose}>
-                <GeneDetail
-                  gene={gene}
-                  collectionName={name}
-                  queryEndpoint={{}}
-                />
+                <FeatureDetail feature={feature} />
               </OutsideClickDetector>
               {ReactDOM.createPortal(
                 <div
@@ -328,7 +325,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       const items = renderer.getMenuComponents();
 
-      let menu = trackConfigMenu[`${trackModel.name}`]({
+      let menu = trackConfigMenu[`${trackModel.type}`]({
         trackIdx,
         handleDelete,
         id,
@@ -352,11 +349,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     genomeArr![genomeIdx!].options = configOptions.current;
 
-    const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BedTrackConfig(genomeArr![genomeIdx!]);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[`${trackModel.name}`]({
+    console.log(trackModel.type);
+    let menu = trackConfigMenu[`${trackModel.type}`]({
       trackIdx,
       handleDelete,
       id,
@@ -372,9 +370,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     getConfigMenu(menu);
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
-  function renderTooltip(event, gene) {
-    const currtooltip = refGeneClickTooltip(
-      gene,
+  function renderTooltip(event, feature) {
+    const currtooltip = bedClickToolTip(
+      feature,
       event.pageX,
       event.pageY,
       genomeArr![genomeIdx!].genome._name,
@@ -399,13 +397,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         if (dataIdx === 1) {
           dataIdx = 0;
         }
-        viewData = fetchedDataCache.current[dataIdx!].refGenes;
+        viewData = fetchedDataCache.current[dataIdx!].bedData;
         curIdx = dataIdx!;
       } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
         if (dataIdx === 1) {
           dataIdx = 0;
         }
-        viewData = fetchedDataCache.current[dataIdx!].refGenes;
+        viewData = fetchedDataCache.current[dataIdx!].bedData;
         curIdx = dataIdx!;
       }
     } else {
@@ -454,12 +452,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
-        let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray);
-        viewData = deDupRefGenesArr;
+        let bedDataArray = viewData.map((item) => item.bedData).flat(1);
+        let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
+        viewData = deDupbedDataArr;
         curRegionData.current = {
           trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupRefGenesArr: viewData,
+          deDupbedDataArr: viewData,
           initial: 0,
         };
 
@@ -509,27 +507,27 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           });
 
           fetchedDataCache.current[leftIdx.current] = {
-            refGenes: trackData![`${id}`].result[0].fetchData,
+            bedData: trackData![`${id}`].result[0].fetchData,
             trackState: createTrackState(0, "left"),
           };
           leftIdx.current++;
 
           fetchedDataCache.current[rightIdx.current] = {
-            refGenes: trackData![`${id}`].result[1].fetchData,
+            bedData: trackData![`${id}`].result[1].fetchData,
             trackState: createTrackState(1, "right"),
           };
           rightIdx.current--;
 
           fetchedDataCache.current[rightIdx.current] = {
-            refGenes: trackData![`${id}`].result[2].fetchData,
+            bedData: trackData![`${id}`].result[2].fetchData,
             trackState: createTrackState(2, "right"),
           };
           rightIdx.current--;
 
-          const curDataArr = fetchedDataCache.current[0].refGenes;
+          const curDataArr = fetchedDataCache.current[0].bedData;
           curRegionData.current = {
             trackState: createTrackState(1, "right"),
-            deDupRefGenesArr: curDataArr,
+            deDupbedDataArr: curDataArr,
           };
 
           createSVGOrCanvas(createTrackState(1, "right"), curDataArr, true);
@@ -556,7 +554,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           if (trackData!.trackState.side === "right") {
             newTrackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              refGenes: trackData![`${id}`].result,
+              bedData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -565,20 +563,20 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[rightIdx.current + 1].trackState,
-              deDupRefGenesArr:
-                fetchedDataCache.current[rightIdx.current + 1].refGenes,
+              deDupbedDataArr:
+                fetchedDataCache.current[rightIdx.current + 1].bedData,
               initial: 0,
             };
 
             createSVGOrCanvas(
               newTrackState,
-              fetchedDataCache.current[rightIdx.current + 1].refGenes,
+              fetchedDataCache.current[rightIdx.current + 1].bedData,
               true
             );
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              refGenes: trackData![`${id}`].result,
+              bedData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -587,14 +585,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[leftIdx.current - 1].trackState,
-              deDupRefGenesArr:
-                fetchedDataCache.current[leftIdx.current - 1].refGenes,
+              deDupbedDataArr:
+                fetchedDataCache.current[leftIdx.current - 1].bedData,
               initial: 0,
             };
 
             createSVGOrCanvas(
               newTrackState,
-              fetchedDataCache.current[leftIdx.current - 1].refGenes,
+              fetchedDataCache.current[leftIdx.current - 1].bedData,
               true
             );
           }
@@ -643,18 +641,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           };
 
           fetchedDataCache.current[leftIdx.current] = {
-            refGenes: trackData![`${id}`].result[0].fetchData,
+            bedData: trackData![`${id}`].result[0].fetchData,
             trackState: trackState0,
           };
           leftIdx.current++;
 
           fetchedDataCache.current[rightIdx.current] = {
-            refGenes: trackData![`${id}`].result[1].fetchData,
+            bedData: trackData![`${id}`].result[1].fetchData,
             trackState: trackState1,
           };
           rightIdx.current--;
           fetchedDataCache.current[rightIdx.current] = {
-            refGenes: trackData![`${id}`].result[2].fetchData,
+            bedData: trackData![`${id}`].result[2].fetchData,
             trackState: trackState2,
           };
           rightIdx.current--;
@@ -665,21 +663,22 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             fetchedDataCache.current[-1],
           ];
 
-          let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+          let bedDataArray = testData.map((item) => item.bedData).flat(1);
 
-          let deDupRefGenesArr = removeDuplicates(refGenesArray);
+          let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
           curRegionData.current = {
             trackState: trackState1,
-            deDupRefGenesArr,
+            deDupbedDataArr,
           };
-          createSVGOrCanvas(trackState1, deDupRefGenesArr, false);
+
+          createSVGOrCanvas(trackState1, deDupbedDataArr, false);
         } else {
           let testData: Array<any> = [];
 
           if (trackData!.trackState.side === "right") {
             trackData!.trackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              refGenes: trackData![`${id}`].result,
+              bedData: trackData![`${id}`].result,
               trackState: trackData!.trackState,
             };
             let currIdx = rightIdx.current + 2;
@@ -689,18 +688,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             }
 
             rightIdx.current--;
-            let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-            let deDupRefGenesArr = removeDuplicates(refGenesArray);
+            let bedDataArray = testData.map((item) => item.bedData).flat(1);
+            let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
             curRegionData.current = {
               trackState: trackData!.trackState,
-              deDupRefGenesArr,
+              deDupbedDataArr,
               initial: 0,
             };
-            createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr, false);
+            createSVGOrCanvas(trackData!.trackState, deDupbedDataArr, false);
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              refGenes: trackData![`${id}`].result,
+              bedData: trackData![`${id}`].result,
               trackState: trackData!.trackState,
             };
 
@@ -711,14 +710,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             }
 
             leftIdx.current++;
-            let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-            let deDupRefGenesArr = removeDuplicates(refGenesArray);
+            let bedDataArray = testData.map((item) => item.bedData).flat(1);
+            let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
             curRegionData.current = {
               trackState: trackData!.trackState,
-              deDupRefGenesArr,
+              deDupbedDataArr,
               initial: 0,
             };
-            createSVGOrCanvas(trackData!.trackState, deDupRefGenesArr, false);
+            createSVGOrCanvas(trackData!.trackState, deDupbedDataArr, false);
           }
         }
       }
@@ -730,13 +729,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       if (!useFineModeNav) {
         createSVGOrCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupRefGenesArr,
+          curRegionData.current.deDupbedDataArr,
           false
         );
       } else {
         createSVGOrCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupRefGenesArr,
+          curRegionData.current.deDupbedDataArr,
           true
         );
       }
@@ -816,4 +815,4 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   );
 });
 
-export default memo(RefGeneTrack);
+export default memo(BedTrack);

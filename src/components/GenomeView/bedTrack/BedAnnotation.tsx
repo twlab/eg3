@@ -6,7 +6,11 @@ import Feature from "../../../models/Feature";
 import OpenInterval from "../../../models/OpenInterval";
 import { getContrastingColor } from "../../../models/util";
 const HEIGHT = 9;
-
+export const DEFAULT_OPTIONS = {
+  backgroundColor: "var(--bg-color)",
+  hiddenPixels: 0.5,
+  alwaysDrawLabel: false,
+};
 interface BedAnnotationProps {
   feature: Feature;
   xSpan: OpenInterval;
