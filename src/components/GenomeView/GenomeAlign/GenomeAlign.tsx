@@ -87,7 +87,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     //step 1
     else {
       const drawData = result.drawData as PlacedMergedAlignment[];
-      console.log(result);
+
       const strand = result.plotStrand;
       const targetGenome = result.primaryGenome;
       const queryGenome = result.queryGenome;
@@ -168,7 +168,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
   // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
   useEffect(() => {
-    console.log(trackData);
     if (trackData![`${id}`] !== undefined) {
       if (trackData!.initial === 1) {
         let trackState0 = {

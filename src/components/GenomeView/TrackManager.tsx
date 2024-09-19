@@ -410,7 +410,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             event.data.curFetchRegionNav._endBase
           ),
         };
-
+        console.log(tempObj);
         isLoading.current = false;
         setTrackData({ ...tempObj });
       };
@@ -496,7 +496,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [initialStart]);
   useEffect(() => {
     if (trackManagerId.current === "") {
-      console.log(windowWidth);
       // on initial and when our genome data changes we set the default values here
 
       let genome = genomeArr[genomeIdx];
@@ -505,16 +504,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       rightStartCoord.current = genome.defaultRegion.end;
 
       bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
-      console.log(
-        rightStartCoord.current,
-        leftStartCoord.current,
-        bpRegionSize.current
-      );
+
       basePerPixel.current = bpRegionSize.current / windowWidth;
 
-      console.log(bpRegionSize.current, windowWidth);
-
-      console.log(basePerPixel.current);
       let genomeFeatureSegment: Array<FeatureSegment> =
         genome.navContext.getFeaturesInInterval(
           leftStartCoord.current,

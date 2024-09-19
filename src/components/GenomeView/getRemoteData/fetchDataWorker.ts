@@ -170,7 +170,7 @@ self.onmessage = async (event: MessageEvent) => {
     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
       event.data.curFetchRegionNav;
   }
-  console.log(genomicFetchCoord, fetchResults);
+
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
     let result: Array<any> = [];

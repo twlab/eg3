@@ -113,7 +113,6 @@ export const getHoverTooltip = {
   genomealignRough: function genomeAlignRoughFetch(dataObj: {
     [key: string]: any;
   }) {
-    console.log(dataObj.data);
     const RECT_HEIGHT = 15;
     return (
       <HorizontalFragment
@@ -190,7 +189,6 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         hasReverse,
         options,
       });
-      console.log(trackHoverTooltip);
       setPosition({
         ...rectPosition,
         top: rect.bottom,
@@ -251,21 +249,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
           {rectPosition.toolTip}
         </div>
       ) : (
-        <div
-          style={{
-            left: rectPosition.dataIdxX,
-            top: rectPosition.dataIdxY,
-            position: "absolute",
-            backgroundColor: "lightBlue",
-            // color: "white",
-            padding: 8,
-            borderRadius: 4,
-            fontSize: 14,
-          }}
-        >
-          {rectPosition.dataIdxX}
-          {rectPosition.toolTip}
-        </div>
+        ""
       )}
     </div>
   );

@@ -46,7 +46,7 @@ class AlignmentSequence extends React.Component<AlignSeqData> {
       const highlightLength = Math.max(Math.round(basesPerPixel), 1);
       const halfHighlightLength = Math.floor(highlightLength / 2);
       const { visiblePart, record } = alignment;
-      console.log(this.props);
+
       const { start, end } = visiblePart.sequenceInterval;
 
       const length = end - start;

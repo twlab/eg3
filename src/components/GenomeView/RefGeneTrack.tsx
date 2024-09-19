@@ -63,7 +63,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const prevDataIdx = useRef(0);
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
-
+  const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<Array<any>>([]);
   const [canvasComponents, setCanvasComponents] = useState<Array<any>>([]);
@@ -88,7 +88,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   function createSVGOrCanvas(curTrackData, genesArr) {
-    console.log(windowWidth);
     if (curTrackData.index === 0) {
       xPos.current = -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -145,7 +144,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     //_
     if (configOptions.current.displayMode === "full") {
-      console.log(windowWidth);
       let placeFeatureData = featureArrange.arrange(
         algoData,
         currDisplayNav,
@@ -155,7 +153,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         sortType
       );
       const height = getHeight(placeFeatureData.numRowsAssigned);
-      console.log(windowWidth * 3);
+
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         windowWidth * 3,
@@ -220,7 +218,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
-      console.log(curTrackData.visWidth);
+
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         curTrackData.visWidth,
@@ -263,7 +261,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     maxRows,
     options
   ) {
-    console.log(trackData, windowWidth, width, height);
     function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
       const maxRowIndex = (maxRows || Infinity) - 1;
       // Compute y
@@ -272,7 +269,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       return getAnnotationElement(placedGroup, y, rowIndex === maxRowIndex, i);
     }
-    console.log(height, width);
     return (
       <svg width={width} height={height} display={"block"}>
         {placements.map(renderAnnotation)}
@@ -460,11 +456,21 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   function getCacheData() {
     let viewData: Array<any> = [];
     let curIdx;
-    if (useFineModeNav) {
+
+    if (
+      useFineModeNav ||
+      genomeArr![genomeIdx!].genome._name !== parentGenome.current
+    ) {
       if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+        if (dataIdx === 1) {
+          dataIdx = 0;
+        }
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
       } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
+        if (dataIdx === 1) {
+          dataIdx = 0;
+        }
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
       }
@@ -510,17 +516,19 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     }
     if (viewData.length > 0) {
-      if (!useFineModeNav) {
+      if (
+        !useFineModeNav &&
+        genomeArr![genomeIdx!].genome._name === parentGenome.current
+      ) {
         let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
         let deDupRefGenesArr = removeDuplicates(refGenesArray);
         viewData = deDupRefGenesArr;
-      }
-      curRegionData.current = {
-        trackState: fetchedDataCache.current[curIdx].trackState,
-        deDupRefGenesArr: viewData,
-        initial: 0,
-      };
-      if (!useFineModeNav) {
+        curRegionData.current = {
+          trackState: fetchedDataCache.current[curIdx].trackState,
+          deDupRefGenesArr: viewData,
+          initial: 0,
+        };
+
         createSVGOrCanvas(
           fetchedDataCache.current[curIdx].trackState,
           viewData
@@ -535,14 +543,19 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (useFineModeNav) {
+      if (useFineModeNav || "genome" in trackData![`${id}`].metadata) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
             trackData!.trackState.primaryGenName
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
-          const visRegionArr =
+          if ("genome" in trackData![`${id}`].metadata) {
+            parentGenome.current = trackData![`${id}`].metadata.genome;
+          } else {
+            parentGenome.current = trackData!.trackState.primaryGenName;
+          }
+          let visRegionArr =
             "genome" in trackData![`${id}`].metadata
               ? trackData!.trackState.genomicFetchCoord[
                   trackData![`${id}`].metadata.genome
@@ -620,7 +633,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 fetchedDataCache.current[rightIdx.current + 1].refGenes,
               initial: 0,
             };
-            console.log("????????????????????????????????????????????????????");
+
             createSVGOrCanvasFine(
               newTrackState,
               fetchedDataCache.current[rightIdx.current + 1].refGenes
@@ -656,6 +669,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ];
 
         if (trackData!.initial === 1) {
+          if ("genome" in trackData![`${id}`].metadata) {
+            parentGenome.current = trackData![`${id}`].metadata.genome;
+          } else {
+            parentGenome.current = trackData!.trackState.primaryGenName;
+          }
           const visRegionArr = primaryVisData.initNavLoci.map(
             (item) =>
               new DisplayedRegionModel(

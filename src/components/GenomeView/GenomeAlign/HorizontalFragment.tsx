@@ -50,7 +50,7 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
     const queryLocusList = segmentArray.queryLocusList;
     const lengthList = segmentArray.lengthList;
     const queryLengthList = segmentArray.queryLengthList;
-    console.log(queryLocusList);
+
     const xSpanIndex = targetXSpanList.reduce(
       (iCusor, x, i) =>
         x.start < relativeX! && x.end >= relativeX! ? i : iCusor,
@@ -65,12 +65,7 @@ class HorizontalFragment extends Component<HorizontalFragmentProps> {
       const queryXSpan = queryXSpanList[xSpanIndex];
       const targetLocus = `${targetLocusList[xSpanIndex]} (${lengthList[xSpanIndex]})`;
       const queryLocus = `${queryLocusList[xSpanIndex]} (${queryLengthList[xSpanIndex]})`;
-      console.log(
-        targetLocus,
-        queryLocus,
-        targetLocusList[xSpanIndex],
-        queryLocusList[xSpanIndex]
-      );
+
       const queryX =
         strandList[xSpanIndex] === strand
           ? queryXSpan.start +
