@@ -264,7 +264,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             data={this.xToValue}
             data2={this.xToValue2}
             windowWidth={width}
-            trackType={"refGene"}
+            trackType={"geneannotation"}
             trackModel={trackModel}
             height={DEFAULT_OPTIONS.height}
             viewRegion={viewRegion}

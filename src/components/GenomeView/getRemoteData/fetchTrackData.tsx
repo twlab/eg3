@@ -4,22 +4,16 @@ import getBigData from "./bigSource";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const trackFetchFunction: { [key: string]: any } = {
-  refGene: async function refGeneFetch(regionData: any) {
+  geneannotation: async function refGeneFetch(regionData: any) {
+    console.log(regionData);
     const genRefResponse = await fetch(
-      `${AWS_API}/${regionData.name}/genes/${regionData.trackName}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
+      `${AWS_API}/${regionData.genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
       { method: "GET" }
     );
 
     return await genRefResponse.json();
   },
-  gencodeV39: async function refGeneFetch(regionData: any) {
-    const genRefResponse = await fetch(
-      `${AWS_API}/${regionData.name}/genes/${regionData.trackName}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
-      { method: "GET" }
-    );
 
-    return await genRefResponse.json();
-  },
   bed: async function bedFetch(
     loci: Array<{ [key: string]: any }>,
     options: { [key: string]: any },

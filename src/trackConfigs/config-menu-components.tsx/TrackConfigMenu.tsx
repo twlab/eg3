@@ -7,7 +7,7 @@ import getTabixData from "../../components/GenomeView/getRemoteData/tabixSource"
 import OutsideClickDetector from "../../components/GenomeView/commonComponents/OutsideClickDetector";
 
 const trackConfigMenu: { [key: string]: any } = {
-  refGene: function refGeneConfigMenu(data: any) {
+  geneannotation: function refGeneConfigMenu(data: any) {
     return (
       <ConfigMenuComponent
         key={"TrackContextMenu" + `${data.id}`}
@@ -15,15 +15,7 @@ const trackConfigMenu: { [key: string]: any } = {
       />
     );
   },
-  gencodeV39: function refGeneConfigMenu(data: any) {
-    console.log(data);
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
+
   bed: async function bedFetch(
     loci: Array<{ [key: string]: any }>,
     options: { [key: string]: any },

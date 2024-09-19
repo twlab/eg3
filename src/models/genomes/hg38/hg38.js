@@ -85,6 +85,7 @@ const defaultTracks = [
   new TrackModel({
     name: "hg38tomm10",
     label: "Query mouse mm10 to hg38 blastz",
+    type: "genomealign",
     querygenome: "mm10",
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
@@ -92,6 +93,7 @@ const defaultTracks = [
   new TrackModel({
     name: "hg38 to t2t-chm13v2",
     label: "hg38 - chm13v2.0 minimap2",
+    type: "genomealign",
     querygenome: "t2t-chm13-v2.0",
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz",

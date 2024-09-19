@@ -100,7 +100,7 @@ self.onmessage = async (event: MessageEvent) => {
   //____________________________________________________________________________________________________________________________________________________________________
   // step 1: check if there genome align tracks because it alters other track positions because of gaps
   let genomeAlignTracks = trackDefaults.filter((items, index) => {
-    return items.filetype === "genomealign";
+    return items.type === "genomealign";
   });
 
   if (genomeAlignTracks.length > 0) {
@@ -411,21 +411,22 @@ self.onmessage = async (event: MessageEvent) => {
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   let normDefaultTracks = trackDefaults.filter((items, index) => {
-    return items.filetype !== "genomealign";
+    return items.file !== "genomealign";
   });
   await Promise.all(
     normDefaultTracks.map(async (item, index) => {
-      const trackName = item.name;
+      console.log(item.name);
+      const trackType = item.type;
       const genomeName = item.genome;
       const id = item.id;
       const url = item.url;
 
-      if (trackName === "hic") {
+      if (trackType === "hic") {
         if (!(id in strawCache)) {
           strawCache[id] = new HicSource(item.url, regionLength);
         }
 
-        let result = await trackFetchFunction[trackName](
+        let result = await trackFetchFunction[trackType](
           strawCache[id],
           {
             color: "#B8008A",
@@ -451,11 +452,12 @@ self.onmessage = async (event: MessageEvent) => {
           event.data.bpRegionSize / event.data.windowWidth
         );
         fetchResults.push({
-          name: trackName,
+          name: trackType,
           result,
           id,
         });
-      } else if (trackName === "refGene" || trackName === "gencodeV39") {
+      } else if (trackType === "geneannotation") {
+        console.log(item.name);
         let genRefResponses: Array<any> = [];
         let curFetchNav;
         if ("genome" in item.metadata) {
@@ -473,27 +475,36 @@ self.onmessage = async (event: MessageEvent) => {
           curFetchNav = new Array(genomicLoci);
         }
         for (let i = 0; i < curFetchNav.length; i++) {
+          console.log({
+            genomeName,
+            fetchName: item.name,
+            chr: item.chr,
+            start: item.start,
+            end: item.end,
+            trackType,
+          });
           const genRefResponse = await Promise.all(
-            await curFetchNav[i].map((item, index) =>
-              trackFetchFunction[trackName]({
-                name: genomeName,
-                chr: item.chr,
-                start: item.start,
-                end: item.end,
-                trackName,
-              })
-            )
+            await curFetchNav[i].map((nav, index) => {
+              return trackFetchFunction[trackType]({
+                genomeName,
+                name: item.name,
+                chr: nav.chr,
+                start: nav.start,
+                end: nav.end,
+                trackType,
+              });
+            })
           );
 
           genRefResponses.push({
-            name: trackName,
+            name: trackType,
             fetchData: _.flatten(genRefResponse),
             id,
             metadata: item.metadata,
           });
         }
         fetchResults.push({
-          name: trackName,
+          name: trackType,
           result:
             event.data.initial !== 1
               ? _.flatten(genRefResponses)[0].fetchData
@@ -502,7 +513,7 @@ self.onmessage = async (event: MessageEvent) => {
           metadata: item.metadata,
         });
       } else {
-        let result = await trackFetchFunction[trackName](
+        let result = await trackFetchFunction[trackType](
           genomicLoci,
           {
             displayMode: "full",

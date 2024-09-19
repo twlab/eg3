@@ -328,7 +328,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       const items = renderer.getMenuComponents();
 
-      let menu = trackConfigMenu[`${trackModel.name}`]({
+      let menu = trackConfigMenu[`${trackModel.type}`]({
         trackIdx,
         handleDelete,
         id,
@@ -356,7 +356,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[`${trackModel.name}`]({
+    let menu = trackConfigMenu[`${trackModel.type}`]({
       trackIdx,
       handleDelete,
       id,

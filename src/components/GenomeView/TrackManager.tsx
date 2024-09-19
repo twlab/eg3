@@ -47,8 +47,7 @@ export function objToInstanceAlign(alignment) {
   return visRegion;
 }
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
-  refGene: RefGeneTrack,
-  gencodeV39: RefGeneTrack,
+  geneannotation: RefGeneTrack,
   bed: BedTrack,
   bedDensity: BedDensityTrack,
   bigWig: BigWigTrack,
@@ -160,7 +159,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const handleClick = () => {
     addTrack({
       region: curRegion,
-      trackName: "bigWig",
+      trackType: "bigWig",
       genome: genomeArr[genomeIdx],
     });
   };
@@ -458,7 +457,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // go through genome defaultTrack to see what track components we need and give each component
       // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
       let genome = genomeArr[genomeIdx];
-
+      console.log(genome);
       let newTrackComponents: Array<any> = [];
       for (let i = 0; i < genome.defaultTracks.length; i++) {
         if (!genome.defaultTracks[i]["id"]) {
@@ -466,30 +465,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genome.defaultTracks[i]["id"] = uniqueKey;
           newTrackComponents.push({
             id: uniqueKey,
-            component:
-              genome.defaultTracks[i].name in componentMap
-                ? componentMap[genome.defaultTracks[i].name]
-                : componentMap[genome.defaultTracks[i].filetype],
+            component: componentMap[genome.defaultTracks[i].type],
+
             trackModel: genome.defaultTracks[i],
           });
         } else {
           newTrackComponents.push({
             id: genome.defaultTracks[i]["id"],
-            component:
-              genome.defaultTracks[i].name in componentMap
-                ? componentMap[genome.defaultTracks[i].name]
-                : componentMap[genome.defaultTracks[i].filetype],
+            component: componentMap[genome.defaultTracks[i].type],
             trackModel: genome.defaultTracks[i],
           });
         }
         if (
-          genome.defaultTracks[i].filetype === "genomealign" &&
+          genome.defaultTracks[i].type === "genomealign" &&
           basePerPixel.current < 10
         ) {
           useFineModeNav.current = true;
         }
       }
-
+      console.log(newTrackComponents);
       setTrackComponents([...newTrackComponents]);
       fetchGenomeData(1, "right");
     }
@@ -506,12 +500,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
 
       basePerPixel.current = bpRegionSize.current / windowWidth;
-
-      let genomeFeatureSegment: Array<FeatureSegment> =
-        genome.navContext.getFeaturesInInterval(
-          leftStartCoord.current,
-          rightStartCoord.current
-        );
 
       bpX.current = leftStartCoord.current;
       maxBp.current = genome.defaultRegion.end;
