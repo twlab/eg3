@@ -41,9 +41,9 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const [svgComponents, setSvgComponents] = useState<{ [key: string]: any }>({
-    svgElements: [],
-  });
+  const [svgComponents, setSvgComponents] = useState<{ [key: string]: any }>(
+    {}
+  );
   const [configChanged, setConfigChanged] = useState(false);
 
   const newTrackWidth = useRef(windowWidth);
@@ -67,10 +67,10 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
 
       let tempObj = {
         alignment: result,
-        svgElements: new Array<any>(svgElements),
+        svgElements,
         trackState,
       };
-      setSvgComponents({ ...tempObj });
+      setSvgComponents(tempObj);
 
       if (trackState.index === 0) {
         xPos.current = -trackState.startWindow;
@@ -119,10 +119,10 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
 
       let tempObj = {
         alignment: result,
-        svgElements: new Array<any>(svgElements),
+        svgElements,
         trackState,
       };
-      setSvgComponents({ ...tempObj });
+      setSvgComponents(tempObj);
 
       if (trackState.index === 0) {
         xPos.current = -trackState.startWindow;
@@ -349,9 +349,9 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             left: side === "right" ? `${xPos.current!}px` : "",
           }}
         >
-          {svgComponents.svgElements.map((item) => item)}
+          {svgComponents.svgElements}
         </svg>
-        {svgComponents.svgElements.length > 0 ? (
+        {svgComponents.svgElements ? (
           <div
             style={{
               position: "absolute",

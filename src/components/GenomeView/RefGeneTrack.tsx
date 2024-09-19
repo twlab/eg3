@@ -65,8 +65,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const [svgComponents, setSvgComponents] = useState<Array<any>>([]);
-  const [canvasComponents, setCanvasComponents] = useState<Array<any>>([]);
+  const [svgComponents, setSvgComponents] = useState<any>();
+  const [canvasComponents, setCanvasComponents] = useState<any>();
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const newTrackWidth = useRef(windowWidth);
@@ -100,25 +100,20 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     let currDisplayNav;
     let sortType;
     if (curTrackData!.side === "right") {
-      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-      // we have to get coord of prev regions by subtracting of the last region
       currDisplayNav = new DisplayedRegionModel(
         curTrackData.regionNavCoord._navContext,
         curTrackData.regionNavCoord._startBase -
           (curTrackData.regionNavCoord._endBase -
             curTrackData.regionNavCoord._startBase) *
             2,
-
         curTrackData.regionNavCoord._endBase
       );
-
       if (curTrackData.index === 0) {
         currDisplayNav = new DisplayedRegionModel(
           curTrackData.regionNavCoord._navContext,
           curTrackData.regionNavCoord._startBase -
             (curTrackData.regionNavCoord._endBase -
               curTrackData.regionNavCoord._startBase),
-
           curTrackData.regionNavCoord._endBase +
             (curTrackData.regionNavCoord._endBase -
               curTrackData.regionNavCoord._startBase)
@@ -126,8 +121,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
       sortType = SortItemsOptions.NOSORT;
     } else if (curTrackData.side === "left") {
-      // newest navcoord and region are the lastest so to get the correct navcoords for previous two region
-      // for left we subtract the endbase by 2 times
       currDisplayNav = new DisplayedRegionModel(
         curTrackData.regionNavCoord._navContext,
         curTrackData.regionNavCoord._startBase,
@@ -138,11 +131,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             2
       );
     }
-
     let algoData = genesArr.map((record) => new Gene(record));
     let featureArrange = new FeatureArranger();
-
-    //_
     if (configOptions.current.displayMode === "full") {
       let placeFeatureData = featureArrange.arrange(
         algoData,
@@ -153,7 +143,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         sortType
       );
       const height = getHeight(placeFeatureData.numRowsAssigned);
-
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         windowWidth * 3,
@@ -162,14 +151,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         configOptions.current.maxRows,
         configOptions.current
       );
-
-      setSvgComponents([...[svgDATA]]);
-
+      setSvgComponents(svgDATA);
       svgHeight.current = height;
-    }
-
-    //_________________________________________________________________________________________density
-    else if (configOptions.current.displayMode === "density") {
+    } else if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
       let canvasElements = (
@@ -183,8 +167,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           trackModel={trackModel}
         />
       );
-
-      setCanvasComponents([...[canvasElements]]);
+      setCanvasComponents(canvasElements);
     }
   }
   function createSVGOrCanvasFine(curTrackData, genesArr) {
@@ -195,17 +178,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     } else if (curTrackData.side === "left") {
       xPos.current = curTrackData!.xDist - curTrackData.startWindow;
     }
-
     newTrackWidth.current = curTrackData.visWidth;
-
     let sortType;
-
     sortType = SortItemsOptions.NOSORT;
-
     let algoData = genesArr.map((record) => new Gene(record));
     let featureArrange = new FeatureArranger();
-
-    //_
     if (configOptions.current.displayMode === "full") {
       let placeFeatureData = featureArrange.arrange(
         algoData,
@@ -215,10 +192,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         configOptions.current.hiddenPixels,
         sortType
       );
-
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
-
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         curTrackData.visWidth,
@@ -227,12 +202,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         configOptions.current.maxRows,
         configOptions.current
       );
-
-      setSvgComponents([...[svgDATA]]);
-    }
-
-    //_________________________________________________________________________________________density
-    else if (configOptions.current.displayMode === "density") {
+      setSvgComponents(svgDATA);
+    } else if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
       let canvasElements = (
@@ -246,8 +217,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           trackModel={trackModel}
         />
       );
-
-      setCanvasComponents([...[canvasElements]]);
+      setCanvasComponents(canvasElements);
     }
   }
 
@@ -845,9 +815,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               backgroundColor: configOptions.current.backgroundColor,
             }}
           >
-            {svgComponents.map((item, index) => (
-              <div key={index}>{item}</div>
-            ))}
+            {svgComponents}
           </div>
         ) : (
           <div
@@ -867,9 +835,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 right: side === "left" ? `${xPos.current}px` : "",
               }}
             >
-              {canvasComponents.map((item, index) => (
-                <div key={index}>{item}</div>
-              ))}
+              {canvasComponents}
             </div>
           </div>
         )}
