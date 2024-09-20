@@ -2,34 +2,27 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
-import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
+
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
-import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-import ReactDOM from "react-dom";
-import { Manager, Popper, Reference } from "react-popper";
-import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
 import "./TrackContextMenu.css";
-import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqTrack/DynseqTrackComputation";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import Feature from "../../models/Feature";
+import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import DynseqTrackComputation from "./DynseqTrack/DynseqTrackComputation";
-
-const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
-const ARROW_SIZE = 16;
+import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
   ...defaultDynseq,
 };
-DEFAULT_OPTIONS.aggregateMethod = "COUNT";
+DEFAULT_OPTIONS.aggregateMethod = "MEAN";
 DEFAULT_OPTIONS.displayMode = "density";
 
 const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
@@ -57,10 +50,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const [svgComponents, setSvgComponents] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
-  const [toolTip, setToolTip] = useState<any>();
-  const [toolTipVisible, setToolTipVisible] = useState(false);
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
 
@@ -120,14 +110,14 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         );
       }
     }
-    console.log(genesArr);
+    // forma data so we can convert it using functions
     let algoData = genesArr.map((record) => {
       let newChrInt = new ChromosomeInterval(
         record.chr,
         record.start,
         record.end
       );
-      return new Feature(newChrInt.toStringWithOther(newChrInt), newChrInt);
+      return new NumericalFeature("", newChrInt).withValue(record.score);
     });
 
     if (configOptions.current.displayMode === "density") {
@@ -154,64 +144,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
 
   //________________________________________________________________________________________________________________________________________________________
 
-  function bedClickToolTip(feature: any, pageX, pageY, name, onClose) {
-    const contentStyle = Object.assign({
-      marginTop: ARROW_SIZE,
-      pointerEvents: "auto",
-    });
-
-    return ReactDOM.createPortal(
-      <Manager>
-        <Reference>
-          {({ ref }) => (
-            <div
-              ref={ref}
-              style={{ position: "absolute", left: pageX - 8 * 2, top: pageY }}
-            />
-          )}
-        </Reference>
-        <Popper
-          placement="bottom-start"
-          modifiers={[{ name: "flip", enabled: false }]}
-        >
-          {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <OutsideClickDetector onOutsideClick={onClose}>
-                <FeatureDetail feature={feature} />
-              </OutsideClickDetector>
-              {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
-                document.body
-              )}
-            </div>
-          )}
-        </Popper>
-      </Manager>,
-      document.body
-    );
-  }
-
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;
@@ -223,7 +155,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
 
       genomeArr![genomeIdx!].options = configOptions.current;
 
-      const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
 
       const items = renderer.getMenuComponents();
 
@@ -251,7 +183,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
 
     genomeArr![genomeIdx!].options = configOptions.current;
 
-    const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -284,13 +216,13 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         if (dataIdx === 1) {
           dataIdx = 0;
         }
-        viewData = fetchedDataCache.current[dataIdx!].bigwigData;
+        viewData = fetchedDataCache.current[dataIdx!].dynseqData;
         curIdx = dataIdx!;
       } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
         if (dataIdx === 1) {
           dataIdx = 0;
         }
-        viewData = fetchedDataCache.current[dataIdx!].bigwigData;
+        viewData = fetchedDataCache.current[dataIdx!].dynseqData;
         curIdx = dataIdx!;
       }
     } else {
@@ -339,12 +271,12 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
-        let bigwigDataArray = viewData.map((item) => item.bigwigData).flat(1);
-        let deDupbigwigDataArr = removeDuplicatesWithoutId(bigwigDataArray);
-        viewData = deDupbigwigDataArr;
+        let dynseqDataArray = viewData.map((item) => item.dynseqData).flat(1);
+        let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+        viewData = deDupdynseqDataArr;
         curRegionData.current = {
           trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupbigwigDataArr: viewData,
+          deDupdynseqDataArr: viewData,
           initial: 0,
         };
 
@@ -394,27 +326,27 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           });
 
           fetchedDataCache.current[leftIdx.current] = {
-            bigwigData: trackData![`${id}`].result[0].fetchData,
+            dynseqData: trackData![`${id}`].result[0].fetchData,
             trackState: createTrackState(0, "left"),
           };
           leftIdx.current++;
 
           fetchedDataCache.current[rightIdx.current] = {
-            bigwigData: trackData![`${id}`].result[1].fetchData,
+            dynseqData: trackData![`${id}`].result[1].fetchData,
             trackState: createTrackState(1, "right"),
           };
           rightIdx.current--;
 
           fetchedDataCache.current[rightIdx.current] = {
-            bigwigData: trackData![`${id}`].result[2].fetchData,
+            dynseqData: trackData![`${id}`].result[2].fetchData,
             trackState: createTrackState(2, "right"),
           };
           rightIdx.current--;
 
-          const curDataArr = fetchedDataCache.current[0].bigwigData;
+          const curDataArr = fetchedDataCache.current[0].dynseqData;
           curRegionData.current = {
             trackState: createTrackState(1, "right"),
-            deDupbigwigDataArr: curDataArr,
+            deDupdynseqDataArr: curDataArr,
           };
 
           createCanvas(createTrackState(1, "right"), curDataArr, true);
@@ -441,7 +373,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           if (trackData!.trackState.side === "right") {
             newTrackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              bigwigData: trackData![`${id}`].result,
+              dynseqData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -450,20 +382,20 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[rightIdx.current + 1].trackState,
-              deDupbigwigDataArr:
-                fetchedDataCache.current[rightIdx.current + 1].bigwigData,
+              deDupdynseqDataArr:
+                fetchedDataCache.current[rightIdx.current + 1].dynseqData,
               initial: 0,
             };
 
             createCanvas(
               newTrackState,
-              fetchedDataCache.current[rightIdx.current + 1].bigwigData,
+              fetchedDataCache.current[rightIdx.current + 1].dynseqData,
               true
             );
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              bigwigData: trackData![`${id}`].result,
+              dynseqData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -472,14 +404,14 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[leftIdx.current - 1].trackState,
-              deDupbigwigDataArr:
-                fetchedDataCache.current[leftIdx.current - 1].bigwigData,
+              deDupdynseqDataArr:
+                fetchedDataCache.current[leftIdx.current - 1].dynseqData,
               initial: 0,
             };
 
             createCanvas(
               newTrackState,
-              fetchedDataCache.current[leftIdx.current - 1].bigwigData,
+              fetchedDataCache.current[leftIdx.current - 1].dynseqData,
               true
             );
           }
@@ -528,18 +460,18 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           };
 
           fetchedDataCache.current[leftIdx.current] = {
-            bigwigData: trackData![`${id}`].result[0].fetchData,
+            dynseqData: trackData![`${id}`].result[0].fetchData,
             trackState: trackState0,
           };
           leftIdx.current++;
 
           fetchedDataCache.current[rightIdx.current] = {
-            bigwigData: trackData![`${id}`].result[1].fetchData,
+            dynseqData: trackData![`${id}`].result[1].fetchData,
             trackState: trackState1,
           };
           rightIdx.current--;
           fetchedDataCache.current[rightIdx.current] = {
-            bigwigData: trackData![`${id}`].result[2].fetchData,
+            dynseqData: trackData![`${id}`].result[2].fetchData,
             trackState: trackState2,
           };
           rightIdx.current--;
@@ -550,22 +482,22 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             fetchedDataCache.current[-1],
           ];
 
-          let bigwigDataArray = testData.map((item) => item.bigwigData).flat(1);
+          let dynseqDataArray = testData.map((item) => item.dynseqData).flat(1);
 
-          let deDupbigwigDataArr = removeDuplicatesWithoutId(bigwigDataArray);
+          let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
           curRegionData.current = {
             trackState: trackState1,
-            deDupbigwigDataArr,
+            deDupdynseqDataArr,
           };
 
-          createCanvas(trackState1, deDupbigwigDataArr, false);
+          createCanvas(trackState1, deDupdynseqDataArr, false);
         } else {
           let testData: Array<any> = [];
 
           if (trackData!.trackState.side === "right") {
             trackData!.trackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              bigwigData: trackData![`${id}`].result,
+              dynseqData: trackData![`${id}`].result,
               trackState: trackData!.trackState,
             };
             let currIdx = rightIdx.current + 2;
@@ -575,20 +507,20 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             }
 
             rightIdx.current--;
-            let bigwigDataArray = testData
-              .map((item) => item.bigwigData)
+            let dynseqDataArray = testData
+              .map((item) => item.dynseqData)
               .flat(1);
-            let deDupbigwigDataArr = removeDuplicatesWithoutId(bigwigDataArray);
+            let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
             curRegionData.current = {
               trackState: trackData!.trackState,
-              deDupbigwigDataArr,
+              deDupdynseqDataArr,
               initial: 0,
             };
-            createCanvas(trackData!.trackState, deDupbigwigDataArr, false);
+            createCanvas(trackData!.trackState, deDupdynseqDataArr, false);
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              bigwigData: trackData![`${id}`].result,
+              dynseqData: trackData![`${id}`].result,
               trackState: trackData!.trackState,
             };
 
@@ -599,16 +531,16 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             }
 
             leftIdx.current++;
-            let bigwigDataArray = testData
-              .map((item) => item.bigwigData)
+            let dynseqDataArray = testData
+              .map((item) => item.dynseqData)
               .flat(1);
-            let deDupbigwigDataArr = removeDuplicatesWithoutId(bigwigDataArray);
+            let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
             curRegionData.current = {
               trackState: trackData!.trackState,
-              deDupbigwigDataArr,
+              deDupdynseqDataArr,
               initial: 0,
             };
-            createCanvas(trackData!.trackState, deDupbigwigDataArr, false);
+            createCanvas(trackData!.trackState, deDupdynseqDataArr, false);
           }
         }
       }
@@ -620,13 +552,13 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       if (!useFineModeNav) {
         createCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupbigwigDataArr,
+          curRegionData.current.deDupdynseqDataArr,
           false
         );
       } else {
         createCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupbigwigDataArr,
+          curRegionData.current.deDupdynseqDataArr,
           true
         );
       }
@@ -663,44 +595,28 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           position: "relative",
         }}
       >
-        {configOptions.current.displayMode === "full" ? (
+        (
+        <div
+          style={{
+            display: "flex",
+            position: "relative",
+            height: configOptions.current.height,
+          }}
+        >
           <div
             style={{
               borderTop: "1px solid Dodgerblue",
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
-              lineHeight: 0,
-              right: side === "left" ? `${xPos.current}px` : "",
-              left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
+              left: side === "right" ? `${xPos.current}px` : "",
+              right: side === "left" ? `${xPos.current}px` : "",
             }}
           >
-            {svgComponents}
+            {canvasComponents}
           </div>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              position: "relative",
-              height: configOptions.current.height,
-            }}
-          >
-            <div
-              style={{
-                borderTop: "1px solid Dodgerblue",
-                borderBottom: "1px solid Dodgerblue",
-                position: "absolute",
-                backgroundColor: configOptions.current.backgroundColor,
-                left: side === "right" ? `${xPos.current}px` : "",
-                right: side === "left" ? `${xPos.current}px` : "",
-              }}
-            >
-              {canvasComponents}
-            </div>
-          </div>
-        )}
-
-        {toolTipVisible ? toolTip : ""}
+        </div>
+        )
       </div>
     </div>
   );

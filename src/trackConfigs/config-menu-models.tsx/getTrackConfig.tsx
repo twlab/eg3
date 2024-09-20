@@ -32,7 +32,7 @@ import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 // import { DynamicLongrangeTrackConfig } from "./DynamicLongrangeTrackConfig";
 // import { OmeroidrTrackConfig } from "./OmeroidrTrackConfig";
 // import { Omero4dnTrackConfig } from "./Omero4dnTrackConfig";
-// import { DynseqTrackConfig } from "./DynseqTrackConfig";
+import { DynseqTrackConfig } from "./DynseqTrackConfig";
 // import { RgbpeakTrackConfig } from "./RgbpeakTrackConfig";
 // import { VcfTrackConfig } from "./VcfTrackConfig";
 // import { BoxplotTrackConfig } from "./BoxplotTrackConfig";
@@ -86,7 +86,7 @@ const TYPE_NAME_TO_CONFIG = {
   // dynamiclongrange: DynamicLongrangeTrackConfig,
   // omeroidr: OmeroidrTrackConfig,
   // omero4dn: Omero4dnTrackConfig,
-  // dynseq: DynseqTrackConfig,
+  dynseq: DynseqTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
   // vcf: VcfTrackConfig,
   // boxplot: BoxplotTrackConfig,

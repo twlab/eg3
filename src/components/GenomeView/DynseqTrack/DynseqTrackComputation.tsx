@@ -24,7 +24,7 @@ export const MAX_PIXELS_PER_BASE_NUMERIC = 0.5;
 
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
-  height: 40,
+  height: 100,
   color: "blue",
   color2: "darkorange",
   yScale: ScaleChoices.AUTO,
@@ -185,7 +185,7 @@ class DynseqTrackComputation extends PureComponent<DynseqTrackProps> {
       (feature) => feature.value === undefined || feature.value >= 0
     );
     const dataReverse = data.filter((feature) => feature.value < 0);
-    console.log(data, dataReverse);
+
     if (dataReverse.length > 0) {
       this.hasReverse = true;
       this.xToValue2! = this.aggregateFeatures(
