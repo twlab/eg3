@@ -36,12 +36,12 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
-  methylc: function methylcFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
+  methylc: async function methylcFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
   },
   hic: function hicFetch(straw, options, loci, basesPerPixel) {
     return straw.getData(loci, basesPerPixel, options);

@@ -2,9 +2,12 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
-import HoverToolTip from "../commonComponents/hover-and-tooltip/hoverToolTip";
-import { TrackProps } from "../../../models/trackModels/trackProps";
-import { GapText, PlacedAlignment } from "./MultiAlignmentViewCalculator";
+import HoverToolTip from "./commonComponents/hover-and-tooltip/hoverToolTip";
+import { TrackProps } from "../../models/trackModels/trackProps";
+import {
+  GapText,
+  PlacedAlignment,
+} from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
 import {
   renderFineAlignment,
   renderGapText,
@@ -12,10 +15,10 @@ import {
   renderRoughAlignment,
   DEFAULT_OPTIONS,
   PlacedMergedAlignment,
-} from "./GenomeAlignComponents";
-import { GenomeAlignTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
-import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import OpenInterval from "../../../models/OpenInterval";
+} from "./GenomeAlignComponents/GenomeAlignComponents";
+import { GenomeAlignTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
+import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+import OpenInterval from "../../models/OpenInterval";
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,

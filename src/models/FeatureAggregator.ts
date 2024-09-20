@@ -122,7 +122,7 @@ export class FeatureAggregator {
     viewRegion: DisplayedRegionModel,
     width: number,
     useCenter: boolean = false
-  ): Feature[][] {
+  ): any {
     width = Math.round(width); // Sometimes it's juuust a little bit off from being an int
 
     const xToFeatures = Array(width).fill(null);

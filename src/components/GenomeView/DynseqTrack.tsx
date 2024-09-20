@@ -9,13 +9,13 @@ import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
 import "./TrackContextMenu.css";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqTrack/DynseqTrackComputation";
+import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComputation";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import DynseqTrackComputation from "./DynseqTrack/DynseqTrackComputation";
+import DynseqTrackComputation from "./DynseqComponents/DynseqTrackComputation";
 import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
 
 export const DEFAULT_OPTIONS = {

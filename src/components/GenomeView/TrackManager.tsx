@@ -8,7 +8,7 @@ import BigWigTrack from "./BigWigTrack";
 import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
 import HiCTrack from "./HiCTrack";
-import GenomeAlign from "./GenomeAlign/GenomeAlign";
+import GenomeAlign from "./GenomeAlign";
 import CircularProgress from "@mui/material/CircularProgress";
 import { ViewExpansion } from "../../models/RegionExpander";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";

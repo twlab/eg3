@@ -11,7 +11,7 @@ import NavigationContext from "../../../models/NavigationContext";
 import Feature from "../../../models/Feature";
 import { ViewExpansion } from "../../../models/RegionExpander";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import { MultiAlignmentViewCalculator } from "../GenomeAlign/MultiAlignmentViewCalculator";
+import { MultiAlignmentViewCalculator } from "../GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
 import { niceBpCount } from "../../../models/util";
 

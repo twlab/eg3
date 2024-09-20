@@ -7,7 +7,7 @@ import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import {
   DEFAULT_OPTIONS,
   MAX_PIXELS_PER_BASE_NUMERIC,
-} from "../../components/GenomeView/DynseqTrack/DynseqTrackComputation";
+} from "../../components/GenomeView/DynseqComponents/DynseqTrackComputation";
 import { BackgroundColorConfig } from "../config-menu-components.tsx/ColorConfig";
 
 export class DynseqTrackConfig extends TrackConfig {

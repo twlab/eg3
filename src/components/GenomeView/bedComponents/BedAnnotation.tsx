@@ -1,7 +1,7 @@
 import React from "react";
-import { TranslatableG } from "../geneAnnotationTrack/TranslatableG";
+import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
-import BackgroundedText from "../geneAnnotationTrack/BackgroundedText";
+import BackgroundedText from "../geneAnnotationTrackComponents/BackgroundedText";
 import Feature from "../../../models/Feature";
 import OpenInterval from "../../../models/OpenInterval";
 import { getContrastingColor } from "../../../models/util";

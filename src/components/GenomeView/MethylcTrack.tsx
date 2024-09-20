@@ -1,493 +1,617 @@
-import { scaleLinear } from "d3-scale";
-import React, { createRef, memo } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import TestToolTip from "./commonComponents/hover-and-tooltip/tooltip";
+import { objToInstanceAlign } from "./TrackManager";
 
-const worker = new Worker(new URL("../../worker/worker.ts", import.meta.url), {
-  type: "module",
-});
-const VERTICAL_PADDING = 0;
-const DEFAULT_COLORS_FOR_CONTEXT = {
-  CG: { color: "rgb(100,139,216)", background: "#d9d9d9" },
-  CHG: { color: "rgb(255,148,77)", background: "#ffe0cc" },
-  CHH: { color: "rgb(255,0,255)", background: "#ffe5ff" },
+import { SortItemsOptions } from "../../models/SortItemsOptions";
+import OpenInterval from "../../models/OpenInterval";
+import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
+
+import "./TrackContextMenu.css";
+import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
+import { DEFAULT_OPTIONS as defaultDynseq } from "./MethylcComponents/MethylCTrackComputation";
+import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+import { v4 as uuidv4 } from "uuid";
+import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import Feature, { NumericalFeature } from "../../models/Feature";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
+import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
+import { MethylCTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MethylCTrackConfig";
+import MethylCRecord from "../../models/MethylCRecord";
+
+export const DEFAULT_OPTIONS = {
+  ...defaultNumericalTrack,
+  ...defaultDynseq,
 };
+DEFAULT_OPTIONS.aggregateMethod = "MEAN";
+DEFAULT_OPTIONS.displayMode = "density";
 
 const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
-  bpRegionSize,
-  bpToPx,
   trackData,
   side,
   windowWidth = 0,
+  genomeArr,
+  genomeIdx,
+  trackModel,
+  dataIdx,
+  getConfigMenu,
+  onCloseConfigMenu,
+  handleDelete,
+  trackIdx,
   id,
+  useFineModeNav,
 }) {
-  let start, end;
+  const configOptions = useRef({ ...DEFAULT_OPTIONS });
+  const svgHeight = useRef(0);
+  const rightIdx = useRef(0);
+  const leftIdx = useRef(1);
+  const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const prevDataIdx = useRef(0);
+  const xPos = useRef(0);
+  const curRegionData = useRef<{ [key: string]: any }>({});
+  const parentGenome = useRef("");
+  const configMenuPos = useRef<{ [key: string]: any }>({});
+  const [canvasComponents, setCanvasComponents] = useState<any>();
+  const newTrackWidth = useRef(windowWidth);
+  const [configChanged, setConfigChanged] = useState(false);
 
-  let result;
-  if (Object.keys(trackData!).length > 0) {
-    [start, end] = trackData!.location.split(":");
-    result = trackData![`${id}`];
-    bpRegionSize = bpRegionSize;
-    bpToPx = bpToPx;
+  // These states are used to update the tracks with new fetched data
+  // new track sections are added as the user moves left (lower regions) and right (higher region)
+  // New data are fetched only if the user drags to the either ends of the track
+
+  async function createCanvas(curTrackData, genesArr, fine) {
+    if (curTrackData.index === 0) {
+      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
+    } else if (curTrackData.side === "right") {
+      xPos.current = fine
+        ? -curTrackData.xDist - curTrackData.startWindow
+        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
+    } else if (curTrackData.side === "left") {
+      xPos.current = fine
+        ? curTrackData.xDist - curTrackData.startWindow
+        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
+    }
+
+    if (fine) {
+      newTrackWidth.current = curTrackData.visWidth;
+    }
+
+    let currDisplayNav;
+    let sortType = SortItemsOptions.NOSORT;
+
+    if (!fine) {
+      if (curTrackData.side === "right") {
+        currDisplayNav = new DisplayedRegionModel(
+          curTrackData.regionNavCoord._navContext,
+          curTrackData.regionNavCoord._startBase -
+            (curTrackData.regionNavCoord._endBase -
+              curTrackData.regionNavCoord._startBase) *
+              2,
+          curTrackData.regionNavCoord._endBase
+        );
+        if (curTrackData.index === 0) {
+          currDisplayNav = new DisplayedRegionModel(
+            curTrackData.regionNavCoord._navContext,
+            curTrackData.regionNavCoord._startBase -
+              (curTrackData.regionNavCoord._endBase -
+                curTrackData.regionNavCoord._startBase),
+            curTrackData.regionNavCoord._endBase +
+              (curTrackData.regionNavCoord._endBase -
+                curTrackData.regionNavCoord._startBase)
+          );
+        }
+      } else if (curTrackData.side === "left") {
+        currDisplayNav = new DisplayedRegionModel(
+          curTrackData.regionNavCoord._navContext,
+          curTrackData.regionNavCoord._startBase,
+          curTrackData.regionNavCoord._endBase +
+            (curTrackData.regionNavCoord._endBase -
+              curTrackData.regionNavCoord._startBase) *
+              2
+        );
+      }
+    }
+    // forma data so we can convert it using functions
+
+    let algoData = genesArr.map((record) => {
+      return new MethylCRecord(record);
+    });
+
+    if (configOptions.current.displayMode === "density") {
+      let tmpObj = { ...configOptions.current };
+      tmpObj.displayMode = "auto";
+      let canvasElements = (
+        <MethylCTrackComputation
+          data={algoData}
+          options={tmpObj}
+          viewWindow={
+            new OpenInterval(0, fine ? curTrackData.visWidth : windowWidth * 3)
+          }
+          viewRegion={
+            fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
+          }
+          width={fine ? curTrackData.visWidth : windowWidth * 3}
+          forceSvg={false}
+          trackModel={trackModel}
+        />
+      );
+      setCanvasComponents(canvasElements);
+    }
   }
 
-  start = Number(start);
-  end = Number(end);
-  //useRef to store data between states without re render the component
-  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
+  //________________________________________________________________________________________________________________________________________________________
 
-  const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
+  function onConfigChange(key, value) {
+    if (value === configOptions.current[`${key}`]) {
+      return;
+    } else if (
+      key === "displayMode" &&
+      value !== configOptions.current.displayMode
+    ) {
+      configOptions.current.displayMode = value;
 
-  const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
-  const prevOverflowStrand = useRef<{ [key: string]: any }>({});
-  const overflowStrand = useRef<{ [key: string]: any }>({});
-  const [canvasRefR, setCanvasRefR] = useState<Array<any>>([]);
-  const [canvasRefR2, setCanvasRefR2] = useState<Array<any>>([]);
+      genomeArr![genomeIdx!].options = configOptions.current;
 
-  const [canvasRefL, setCanvasRefL] = useState<Array<any>>([]);
-  const [canvasRefL2, setCanvasRefL2] = useState<Array<any>>([]);
-  const prevOverflowStrand2 = useRef<{ [key: string]: any }>({});
-  const overflowStrand2 = useRef<{ [key: string]: any }>({});
+      const renderer = new MethylCTrackConfig(genomeArr![genomeIdx!]);
 
-  function fetchGenomeData(initial: number = 0) {
-    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
+      const items = renderer.getMenuComponents();
 
-    let startPos;
-    startPos = start;
+      let menu = trackConfigMenu[`${trackModel.type}`]({
+        trackIdx,
+        handleDelete,
+        id,
+        pageX: configMenuPos.current.left,
+        pageY: configMenuPos.current.top,
+        onCloseConfigMenu,
+        trackModel,
+        configOptions: configOptions.current,
+        items,
+        onConfigChange,
+      });
 
-    // initialize the first index of the interval so we can start checking for prev overlapping intervals
+      getConfigMenu(menu);
+    } else {
+      configOptions.current[`${key}`] = value;
+    }
+    setConfigChanged(true);
+  }
+  function renderConfigMenu(event) {
+    event.preventDefault();
 
-    if (result !== undefined && result.length > 0) {
-      // let checking for interval overlapping and determining what level each strand should be on
-      for (let i = result.length - 1; i >= 0; i--) {
-        const curStrand = result[i];
-        if (curStrand.end > end) {
-          const strandId = curStrand.start + curStrand.end;
-          overflowStrand.current[strandId] = {
-            level: i,
-            strand: curStrand,
-          };
+    genomeArr![genomeIdx!].options = configOptions.current;
+
+    const renderer = new MethylCTrackConfig(genomeArr![genomeIdx!]);
+
+    // create object that has key as displayMode and the configmenu component as the value
+    const items = renderer.getMenuComponents();
+    let menu = trackConfigMenu[`${trackModel.type}`]({
+      trackIdx,
+      handleDelete,
+      id,
+      pageX: event.pageX,
+      pageY: event.pageY,
+      onCloseConfigMenu,
+      trackModel,
+      configOptions: configOptions.current,
+      items,
+      onConfigChange,
+    });
+
+    getConfigMenu(menu);
+    configMenuPos.current = { left: event.pageX, top: event.pageY };
+  }
+
+  function getCacheData() {
+    let viewData: Array<any> = [];
+    let curIdx;
+
+    if (
+      useFineModeNav ||
+      genomeArr![genomeIdx!].genome._name !== parentGenome.current
+    ) {
+      if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+        if (dataIdx === 1) {
+          dataIdx = 0;
         }
+        viewData = fetchedDataCache.current[dataIdx!].dynseqData;
+        curIdx = dataIdx!;
+      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
+        if (dataIdx === 1) {
+          dataIdx = 0;
+        }
+        viewData = fetchedDataCache.current[dataIdx!].dynseqData;
+        curIdx = dataIdx!;
+      }
+    } else {
+      if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+        if (prevDataIdx.current > dataIdx!) {
+          viewData = [
+            fetchedDataCache.current[dataIdx! + 2],
+            fetchedDataCache.current[dataIdx! + 1],
+            fetchedDataCache.current[dataIdx!],
+          ];
 
-        if (trackData!.initial) {
-          if (curStrand.txStart < start) {
-            overflowStrand2.current[curStrand.id] = {
-              level: i,
-              strand: curStrand,
+          curIdx = dataIdx!;
+        } else if (prevDataIdx.current < dataIdx!) {
+          viewData = [
+            fetchedDataCache.current[dataIdx! + 1],
+            fetchedDataCache.current[dataIdx!],
+            fetchedDataCache.current[dataIdx! - 1],
+          ];
+
+          curIdx = dataIdx! - 1;
+          curIdx = dataIdx!;
+        }
+      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
+        if (prevDataIdx.current < dataIdx!) {
+          viewData = [
+            fetchedDataCache.current[dataIdx!],
+            fetchedDataCache.current[dataIdx! - 1],
+            fetchedDataCache.current[dataIdx! - 2],
+          ];
+
+          curIdx = dataIdx!;
+        } else if (prevDataIdx.current > dataIdx!) {
+          viewData = [
+            fetchedDataCache.current[dataIdx! + 1],
+            fetchedDataCache.current[dataIdx!],
+
+            fetchedDataCache.current[dataIdx! - 1],
+          ];
+
+          curIdx = dataIdx! + 1;
+        }
+      }
+    }
+    if (viewData.length > 0) {
+      if (
+        !useFineModeNav &&
+        genomeArr![genomeIdx!].genome._name === parentGenome.current
+      ) {
+        let dynseqDataArray = viewData.map((item) => item.dynseqData).flat(1);
+        let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+        viewData = deDupdynseqDataArr;
+        curRegionData.current = {
+          trackState: fetchedDataCache.current[curIdx].trackState,
+          deDupdynseqDataArr: viewData,
+          initial: 0,
+        };
+
+        createCanvas(
+          fetchedDataCache.current[curIdx].trackState,
+          viewData,
+          false
+        );
+      } else {
+        createCanvas(
+          fetchedDataCache.current[curIdx].trackState,
+          viewData,
+          true
+        );
+      }
+    }
+  }
+  useEffect(() => {
+    if (trackData![`${id}`]) {
+      if (useFineModeNav || "genome" in trackData![`${id}`].metadata) {
+        const primaryVisData =
+          trackData!.trackState.genomicFetchCoord[
+            trackData!.trackState.primaryGenName
+          ].primaryVisData;
+
+        if (trackData!.trackState.initial === 1) {
+          if ("genome" in trackData![`${id}`].metadata) {
+            parentGenome.current = trackData![`${id}`].metadata.genome;
+          } else {
+            parentGenome.current = trackData!.trackState.primaryGenName;
+          }
+          let visRegionArr =
+            "genome" in trackData![`${id}`].metadata
+              ? trackData!.trackState.genomicFetchCoord[
+                  trackData![`${id}`].metadata.genome
+                ].queryRegion
+              : primaryVisData.map((item) => item.visRegion);
+
+          const createTrackState = (index: number, side: string) => ({
+            initial: index === 1 ? 1 : 0,
+            side,
+            xDist: 0,
+
+            visRegion: visRegionArr[index],
+            startWindow: primaryVisData[index].viewWindow.start,
+            visWidth: primaryVisData[index].visWidth,
+          });
+
+          fetchedDataCache.current[leftIdx.current] = {
+            dynseqData: trackData![`${id}`].result[0].fetchData,
+            trackState: createTrackState(0, "left"),
+          };
+          leftIdx.current++;
+
+          fetchedDataCache.current[rightIdx.current] = {
+            dynseqData: trackData![`${id}`].result[1].fetchData,
+            trackState: createTrackState(1, "right"),
+          };
+          rightIdx.current--;
+
+          fetchedDataCache.current[rightIdx.current] = {
+            dynseqData: trackData![`${id}`].result[2].fetchData,
+            trackState: createTrackState(2, "right"),
+          };
+          rightIdx.current--;
+
+          const curDataArr = fetchedDataCache.current[0].dynseqData;
+          curRegionData.current = {
+            trackState: createTrackState(1, "right"),
+            deDupdynseqDataArr: curDataArr,
+          };
+
+          createCanvas(createTrackState(1, "right"), curDataArr, true);
+        } else {
+          let visRegion;
+          if ("genome" in trackData![`${id}`].metadata) {
+            visRegion =
+              trackData!.trackState.genomicFetchCoord[
+                `${trackData![`${id}`].metadata.genome}`
+              ].queryRegion;
+          } else {
+            visRegion = primaryVisData.visRegion;
+          }
+          let newTrackState = {
+            initial: 0,
+            side: trackData!.trackState.side,
+            xDist: trackData!.trackState.xDist,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
+            useFineModeNav: true,
+          };
+
+          if (trackData!.trackState.side === "right") {
+            newTrackState["index"] = rightIdx.current;
+            fetchedDataCache.current[rightIdx.current] = {
+              dynseqData: trackData![`${id}`].result,
+              trackState: newTrackState,
             };
+
+            rightIdx.current--;
+
+            curRegionData.current = {
+              trackState:
+                fetchedDataCache.current[rightIdx.current + 1].trackState,
+              deDupdynseqDataArr:
+                fetchedDataCache.current[rightIdx.current + 1].dynseqData,
+              initial: 0,
+            };
+
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[rightIdx.current + 1].dynseqData,
+              true
+            );
+          } else if (trackData!.trackState.side === "left") {
+            trackData!.trackState["index"] = leftIdx.current;
+            fetchedDataCache.current[leftIdx.current] = {
+              dynseqData: trackData![`${id}`].result,
+              trackState: newTrackState,
+            };
+
+            leftIdx.current++;
+
+            curRegionData.current = {
+              trackState:
+                fetchedDataCache.current[leftIdx.current - 1].trackState,
+              deDupdynseqDataArr:
+                fetchedDataCache.current[leftIdx.current - 1].dynseqData,
+              initial: 0,
+            };
+
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[leftIdx.current - 1].dynseqData,
+              true
+            );
           }
         }
-        if (!trackData!.initial && curStrand.end < end) {
-          break;
-        }
-      }
-    }
+      } else {
+        //_________________________________________________________________________________________________________________________________________________
+        const primaryVisData =
+          trackData!.trackState.genomicFetchCoord[
+            `${trackData!.trackState.primaryGenName}`
+          ];
 
-    //SORT our interval data into levels to be place on the track
-
-    const newCanvasRef = createRef();
-    const newCanvasRef2 = createRef();
-
-    worker.postMessage({
-      trackGene: result,
-      windowWidth: windowWidth,
-      bpToPx: bpToPx!,
-      bpRegionSize: bpRegionSize!,
-      startBpRegion: start,
-    });
-
-    // Listen for messages from the web worker
-    worker.onmessage = (event) => {
-      let converted = event.data;
-
-      let scales = computeScales(converted);
-      setRightTrack([
-        ...rightTrackGenes,
-        { canvasData: converted, scaleData: scales },
-      ]);
-      if (trackData!.initial) {
-        const newCanvasRevRef = createRef();
-        const newCanvasRevRef2 = createRef();
-        prevOverflowStrand2.current = { ...overflowStrand2.current };
-        setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRevRef]);
-        setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRevRef2]);
-        setLeftTrack([
-          ...leftTrackGenes,
-          { canvasData: converted, scaleData: scales },
-        ]);
-        overflowStrand2.current = {};
-      }
-    };
-    setCanvasRefR((prevRefs) => [...prevRefs, newCanvasRef]);
-    setCanvasRefR2((prevRefs) => [...prevRefs, newCanvasRef2]);
-    // CHECK if there are overlapping strands to the next track
-
-    prevOverflowStrand.current = { ...overflowStrand.current };
-    overflowStrand.current = {};
-  }
-
-  //________________________________________________________________________________________________________________________________________________________
-  //________________________________________________________________________________________________________________________________________________________
-
-  function fetchGenomeData2() {
-    let startPos;
-    startPos = start;
-
-    // initialize the first index of the interval so we can start checking for prev overlapping intervals
-
-    if (result.length > 0) {
-      result.sort((a, b) => {
-        return b.end - a.end;
-      });
-
-      var resultIdx = 0;
-
-      // let checking for interval overlapping and determining what level each strand should be on
-      for (let i = resultIdx; i < result.length; i++) {
-        const curStrand = result[i];
-        if (curStrand.start < start) {
-          const strandId = curStrand.start + curStrand.end;
-
-          overflowStrand2.current[strandId] = {
-            level: i,
-            strand: curStrand,
+        if (trackData!.initial === 1) {
+          if ("genome" in trackData![`${id}`].metadata) {
+            parentGenome.current = trackData![`${id}`].metadata.genome;
+          } else {
+            parentGenome.current = trackData!.trackState.primaryGenName;
+          }
+          const visRegionArr = primaryVisData.initNavLoci.map(
+            (item) =>
+              new DisplayedRegionModel(
+                genomeArr![genomeIdx!].navContext,
+                item.start,
+                item.end
+              )
+          );
+          let trackState0 = {
+            initial: 0,
+            side: "left",
+            xDist: 0,
+            regionNavCoord: visRegionArr[0],
+            index: 1,
           };
-        }
+          let trackState1 = {
+            initial: 1,
+            side: "right",
+            xDist: 0,
+            regionNavCoord: visRegionArr[1],
+            index: 0,
+          };
+          let trackState2 = {
+            initial: 0,
+            side: "right",
+            xDist: 0,
+            regionNavCoord: visRegionArr[2],
+            index: -1,
+          };
 
-        if (curStrand.start > start) {
-          break;
+          fetchedDataCache.current[leftIdx.current] = {
+            dynseqData: trackData![`${id}`].result[0].fetchData,
+            trackState: trackState0,
+          };
+          leftIdx.current++;
+
+          fetchedDataCache.current[rightIdx.current] = {
+            dynseqData: trackData![`${id}`].result[1].fetchData,
+            trackState: trackState1,
+          };
+          rightIdx.current--;
+          fetchedDataCache.current[rightIdx.current] = {
+            dynseqData: trackData![`${id}`].result[2].fetchData,
+            trackState: trackState2,
+          };
+          rightIdx.current--;
+
+          let testData = [
+            fetchedDataCache.current[1],
+            fetchedDataCache.current[0],
+            fetchedDataCache.current[-1],
+          ];
+
+          let dynseqDataArray = testData.map((item) => item.dynseqData).flat(1);
+
+          let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+          curRegionData.current = {
+            trackState: trackState1,
+            deDupdynseqDataArr,
+          };
+
+          createCanvas(trackState1, deDupdynseqDataArr, false);
+        } else {
+          let testData: Array<any> = [];
+
+          if (trackData!.trackState.side === "right") {
+            trackData!.trackState["index"] = rightIdx.current;
+            fetchedDataCache.current[rightIdx.current] = {
+              dynseqData: trackData![`${id}`].result,
+              trackState: trackData!.trackState,
+            };
+            let currIdx = rightIdx.current + 2;
+            for (let i = 0; i < 3; i++) {
+              testData.push(fetchedDataCache.current[currIdx]);
+              currIdx--;
+            }
+
+            rightIdx.current--;
+            let dynseqDataArray = testData
+              .map((item) => item.dynseqData)
+              .flat(1);
+            let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+            curRegionData.current = {
+              trackState: trackData!.trackState,
+              deDupdynseqDataArr,
+              initial: 0,
+            };
+            createCanvas(trackData!.trackState, deDupdynseqDataArr, false);
+          } else if (trackData!.trackState.side === "left") {
+            trackData!.trackState["index"] = leftIdx.current;
+            fetchedDataCache.current[leftIdx.current] = {
+              dynseqData: trackData![`${id}`].result,
+              trackState: trackData!.trackState,
+            };
+
+            let currIdx = leftIdx.current - 2;
+            for (let i = 0; i < 3; i++) {
+              testData.push(fetchedDataCache.current[currIdx]);
+              currIdx++;
+            }
+
+            leftIdx.current++;
+            let dynseqDataArray = testData
+              .map((item) => item.dynseqData)
+              .flat(1);
+            let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+            curRegionData.current = {
+              trackState: trackData!.trackState,
+              deDupdynseqDataArr,
+              initial: 0,
+            };
+            createCanvas(trackData!.trackState, deDupdynseqDataArr, false);
+          }
         }
       }
-    }
-
-    const newCanvasRef = createRef();
-    const newCanvasRef2 = createRef();
-
-    worker.postMessage({
-      trackGene: result,
-      windowWidth: windowWidth,
-      bpToPx: bpToPx!,
-      bpRegionSize: bpRegionSize!,
-      startBpRegion: start,
-    });
-
-    worker.onmessage = (event) => {
-      let converted = event.data;
-      let scales = computeScales(converted);
-
-      setLeftTrack([
-        ...leftTrackGenes,
-        { canvasData: converted, scaleData: scales },
-      ]);
-    };
-    setCanvasRefL((prevRefs) => [...prevRefs, newCanvasRef]);
-    setCanvasRefL2((prevRefs) => [...prevRefs, newCanvasRef2]);
-
-    prevOverflowStrand2.current = { ...overflowStrand2.current };
-
-    overflowStrand2.current = {};
-  }
-
-  function computeScales(xMap, height: number = 40, maxMethyl: number = 1) {
-    /*
-      xMap = returnValueOfAggregateRecords = [
-          {
-              combined: {
-                  depth: 5 (NaN if no data),
-                  contextValues: [
-                      {context: "CG", value: 0.3},
-                      {context: "CHH", value: 0.3},
-                      {context: "CHG", value: 0.3},
-                  ]
-              },
-              forward: {},
-              reverse: {}
-          },
-          ...
-      ]
-      */
-    const forwardRecords = xMap.map((record) => record.forward);
-    const reverseRecords = xMap.map((record) => record.reverse);
-
-    const maxDepthForward = forwardRecords.reduce(
-      (maxRecord, record) => {
-        return record.depth > maxRecord.depth ? record : maxRecord;
-      },
-      { depth: 0 }
-    );
-
-    const maxDepthReverse = reverseRecords.reduce(
-      (maxRecord, record) => {
-        return record.depth > maxRecord.depth ? record : maxRecord;
-      },
-      { depth: 0 }
-    );
-
-    const maxDepth = Math.max(maxDepthForward.depth, maxDepthReverse.depth);
-
-    return {
-      methylToY: scaleLinear()
-        .domain([maxMethyl, 0])
-        .range([VERTICAL_PADDING, height])
-        .clamp(true),
-      depthToY: scaleLinear()
-        .domain([maxDepth, 0])
-        .range([VERTICAL_PADDING, height])
-        .clamp(true),
-    };
-  }
-
-  async function drawCanvas(
-    startRange,
-    endRange,
-    canvasRef,
-    converted,
-    scales,
-    canvasRefReverse
-  ) {
-    if (canvasRef.current === null || !canvasRefReverse.current === null) {
-      return;
-    }
-    let context = canvasRef.current.getContext("2d");
-    let contextRev = canvasRefReverse.current.getContext("2d");
-
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    contextRev.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    for (let j = startRange; j < endRange; j++) {
-      let forward = converted[j].forward;
-      let reverse = converted[j].reverse;
-      // let combine = converted[j].combined;
-      let depthFilter = 0;
-
-      if (j + 1 !== endRange) {
-        let currRecord = converted[j].forward;
-        let nextRecord = converted[j + 1].forward;
-        let currRecordRev = converted[j].reverse;
-        let nextRecordRev = converted[j + 1].reverse;
-        if (currRecord.depth < depthFilter) {
-          continue;
-        }
-
-        const y1 = scales.depthToY(currRecord.depth);
-        const y2 = scales.depthToY(nextRecord.depth);
-
-        context.strokeStyle = "#525252";
-        context.beginPath();
-        context.moveTo(j, y1);
-        context.lineTo(j + 1, y2);
-        context.stroke();
-
-        const y1Rev = scales.depthToY(currRecordRev.depth);
-        const y2Rev = scales.depthToY(nextRecordRev.depth);
-
-        contextRev.strokeStyle = "#525252";
-        contextRev.beginPath();
-        contextRev.moveTo(j, 40 - y1Rev);
-        contextRev.lineTo(j + 1, 40 - y2Rev);
-        contextRev.stroke();
-      }
-
-      for (let contextData of forward.contextValues) {
-        const drawY = scales.methylToY(contextData.value);
-        const drawHeight = 40 - drawY;
-        const contextName = contextData.context;
-        const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
-
-        context.fillStyle = color;
-        context.globalAlpha = 0.75;
-        context.fillRect(j, drawY, 1, drawHeight);
-      }
-
-      for (let contextData of reverse.contextValues) {
-        const drawY = scales.methylToY(contextData.value);
-        const drawHeight = 40 - drawY;
-        const contextName = contextData.context;
-        const color = DEFAULT_COLORS_FOR_CONTEXT[contextName].color;
-
-        contextRev.fillStyle = color;
-        contextRev.globalAlpha = 0.75;
-        contextRev.fillRect(j, 0, 1, drawHeight);
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (side === "left") {
-      leftTrackGenes.forEach((canvasRef, index) => {
-        if (canvasRefL[index].current && canvasRefL2[index].current) {
-          let length = leftTrackGenes[index].canvasData.length;
-          drawCanvas(
-            0,
-            length,
-            canvasRefL[index],
-            leftTrackGenes[index].canvasData,
-            leftTrackGenes[index].scaleData,
-            canvasRefL2[index]
-          );
-        }
-      });
-    } else if (side === "right") {
-      rightTrackGenes.forEach((canvasRef, index) => {
-        if (canvasRefR[index].current && canvasRefR2[index].current) {
-          let length = rightTrackGenes[index].canvasData.length;
-          drawCanvas(
-            0,
-            length,
-            canvasRefR[index],
-            rightTrackGenes[index].canvasData,
-            rightTrackGenes[index].scaleData,
-            canvasRefR2[index]
-          );
-        }
-      });
-    }
-  }, [side]);
-  useEffect(() => {
-    if (rightTrackGenes.length > 0) {
-      drawCanvas(
-        0,
-        rightTrackGenes[rightTrackGenes.length - 1].canvasData.length,
-        canvasRefR[canvasRefR.length - 1],
-        rightTrackGenes[rightTrackGenes.length - 1].canvasData,
-        rightTrackGenes[rightTrackGenes.length - 1].scaleData,
-        canvasRefR2[canvasRefR2.length - 1]
-      );
-    }
-  }, [rightTrackGenes]);
-
-  useEffect(() => {
-    if (leftTrackGenes.length > 0) {
-      drawCanvas(
-        0,
-        leftTrackGenes[leftTrackGenes.length - 1].canvasData.length,
-        canvasRefL[canvasRefL.length - 1],
-        leftTrackGenes[leftTrackGenes.length - 1].canvasData,
-        leftTrackGenes[leftTrackGenes.length - 1].scaleData,
-        canvasRefL2[canvasRefL2.length - 1]
-      );
-    }
-  }, [leftTrackGenes]);
-  useEffect(() => {
-    if (trackData!.side === "right") {
-      fetchGenomeData();
-    } else if (trackData!.side === "left") {
-      fetchGenomeData2();
     }
   }, [trackData]);
 
+  useEffect(() => {
+    if (configChanged === true) {
+      if (!useFineModeNav) {
+        createCanvas(
+          curRegionData.current.trackState,
+          curRegionData.current.deDupdynseqDataArr,
+          false
+        );
+      } else {
+        createCanvas(
+          curRegionData.current.trackState,
+          curRegionData.current.deDupdynseqDataArr,
+          true
+        );
+      }
+    }
+    setConfigChanged(false);
+  }, [configChanged]);
+  useEffect(() => {
+    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
+    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
+    // otherwise when there is new data cuz the user is at the end of the track
+    getCacheData();
+  }, [dataIdx]);
+
   return (
+    //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
+
     <div
       style={{
-        height: "100px",
-        position: "relative",
+        display: "flex",
+
+        flexDirection: "column",
       }}
+      onContextMenu={renderConfigMenu}
     >
-      {side === "right" ? (
-        <>
+      <div
+        style={{
+          display: "flex",
+          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
+          // other elements will overlapp
+          height: configOptions.current.height * 2 + 2,
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            position: "relative",
+            height: configOptions.current.height,
+          }}
+        >
           <div
             style={{
-              display: "flex",
-              flexDirection: "row",
+              borderTop: "1px solid Dodgerblue",
+              borderBottom: "1px solid Dodgerblue",
               position: "absolute",
-              opacity: 0.5,
-
-              zIndex: 3,
+              backgroundColor: configOptions.current.backgroundColor,
+              left: side === "right" ? `${xPos.current}px` : "",
+              right: side === "left" ? `${xPos.current}px` : "",
             }}
           >
-            {rightTrackGenes.map((item, index) => (
-              <TestToolTip
-                key={index}
-                data={rightTrackGenes[index]}
-                windowWidth={windowWidth}
-                trackIdx={index}
-                side={"right"}
-              />
-            ))}
+            {canvasComponents}
           </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-
-              zIndex: 2,
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "row" }}>
-              {canvasRefR.map((item, index) => (
-                <canvas
-                  key={index}
-                  ref={item}
-                  height={"40"}
-                  width={`${windowWidth}px`}
-                  style={{}}
-                />
-              ))}
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "row" }}>
-              {canvasRefR2.map((item, index) => (
-                <canvas
-                  key={index + 32}
-                  ref={item}
-                  height={"40"}
-                  width={`${windowWidth}px`}
-                  style={{}}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              position: "absolute",
-              opacity: 0.5,
-
-              zIndex: 3,
-            }}
-          >
-            {leftTrackGenes.map((item, index) => (
-              <TestToolTip
-                key={leftTrackGenes.length - 1 - index}
-                data={leftTrackGenes[leftTrackGenes.length - 1 - index]}
-                windowWidth={windowWidth}
-                trackIdx={leftTrackGenes.length - 1 - index}
-                length={index}
-                side={"left"}
-              />
-            ))}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", flexDirection: "row" }}>
-              {canvasRefL.map((item, index) => (
-                <canvas
-                  key={canvasRefL.length - index - 1}
-                  ref={canvasRefL[canvasRefL.length - index - 1]}
-                  height={"40"}
-                  width={`${windowWidth}px`}
-                  style={{}}
-                />
-              ))}
-            </div>
-            <div style={{ display: "flex", flexDirection: "row" }}>
-              {canvasRefL2.map((item, index) => (
-                <canvas
-                  key={canvasRefL2.length - index - 1}
-                  ref={canvasRefL2[canvasRefL2.length - index - 1]}
-                  height={"40"}
-                  width={`${windowWidth}px`}
-                  style={{}}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 });
+
 export default memo(MethylcTrack);

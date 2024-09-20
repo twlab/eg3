@@ -14,7 +14,7 @@ import TrackModel from "../../models/TrackModel";
 // import { LongRangeColorTrackConfig } from "./LongRangeColorTrackConfig";
 // import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
 // import { CoolTrackConfig } from "./CoolTrackConfig";
-// import { MethylCTrackConfig } from "./MethylCTrackConfig";
+import { MethylCTrackConfig } from "./MethylCTrackConfig";
 // import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
 import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 // import { RulerTrackConfig } from "./RulerTrackConfig";
@@ -68,7 +68,7 @@ const TYPE_NAME_TO_CONFIG = {
   // cool: CoolTrackConfig,
   geneannotation: GeneAnnotationTrackConfig,
   // refbed: RefBedTrackConfig,
-  // methylc: MethylCTrackConfig,
+  methylc: MethylCTrackConfig,
   // repeatmasker: RepeatMaskerTrackConfig,
   genomealign: GenomeAlignTrackConfig,
   // snp: SnpTrackConfig,

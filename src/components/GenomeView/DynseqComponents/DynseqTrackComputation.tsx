@@ -208,7 +208,7 @@ class DynseqTrackComputation extends PureComponent<DynseqTrackProps> {
           )
         : [];
 
-    this.scales = this.computeScales(this.xToValue!, this.xToValue2, height);
+    this.scales = this.computeScales(this.xToValue!, this.xToValue2!, height);
     this.drawHeights = this.xToValue!.map(
       (x) => this.scales.valueToHeight(x) || 0
     );

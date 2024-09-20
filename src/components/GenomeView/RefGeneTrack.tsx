@@ -6,8 +6,8 @@ import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
 import Gene from "../../models/Gene";
-import GeneAnnotationScaffold from "./geneAnnotationTrack/GeneAnnotationScaffold";
-import GeneAnnotation from "./geneAnnotationTrack/GeneAnnotation";
+import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
+import GeneAnnotation from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
@@ -15,10 +15,10 @@ import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
-import GeneDetail from "./geneAnnotationTrack/GeneDetail";
+import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import "./TrackContextMenu.css";
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
-import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrack/GeneAnnotation";
+import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";

@@ -18,7 +18,7 @@ import "./TrackContextMenu.css";
 
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
-} from "./bedTrack/BedAnnotation";
+} from "./bedComponents/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
