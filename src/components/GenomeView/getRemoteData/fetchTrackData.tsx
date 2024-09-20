@@ -29,12 +29,12 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
 
-  dynseq: function dynseqFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
+  dynseq: async function dynseqFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
   },
   methylc: function methylcFetch(
     loci: Array<{ [key: string]: any }>,

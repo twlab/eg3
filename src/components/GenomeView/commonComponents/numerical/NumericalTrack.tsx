@@ -250,7 +250,8 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
     this.hasReverse = xvalues[2];
     this.scales = this.computeScales(this.xToValue, this.xToValue2, height);
     const isDrawingBars =
-      this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap
+      this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap\
+    console.log(this.xToValue, this.xToValue2, this.hasReverse);
     const visualizer = this.hasReverse ? (
       <React.Fragment>
         <div
@@ -266,7 +267,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             data={this.xToValue}
             data2={this.xToValue2}
             windowWidth={width}
-            trackType={"geneannotation"}
+            trackType={"numerical"}
             trackModel={trackModel}
             height={DEFAULT_OPTIONS.height}
             viewRegion={viewRegion}
@@ -308,7 +309,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           <HoverToolTip
             data={this.xToValue}
             windowWidth={width}
-            trackType={"refGene"}
+            trackType={"numerical"}
             trackModel={trackModel}
             height={DEFAULT_OPTIONS.height}
             viewRegion={viewRegion}

@@ -34,12 +34,13 @@ const trackConfigMenu: { [key: string]: any } = {
     );
   },
 
-  dynseq: function dynseqFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
+  dynseq: function dynseqConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
   methylc: function methylcFetch(
     loci: Array<{ [key: string]: any }>,

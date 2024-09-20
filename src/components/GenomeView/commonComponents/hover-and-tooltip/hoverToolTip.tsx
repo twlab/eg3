@@ -21,7 +21,7 @@ interface HoverToolTipProps {
   options?: any;
 }
 export const getHoverTooltip = {
-  refGene: function getTooltip(dataObj: { [key: string]: any }) {
+  numerical: function getTooltip(dataObj: { [key: string]: any }) {
     const value = dataObj.data[Math.round(dataObj.relativeX)];
     const value2 = dataObj.hasReverse
       ? dataObj.data2[Math.round(dataObj.relativeX)]
@@ -67,21 +67,7 @@ export const getHoverTooltip = {
       </div>
     );
   },
-  bed: async function bedFetch(regionData: any) {},
 
-  bigwig: function bigWigFetch(regionData: any) {
-    return;
-  },
-
-  dynseq: function dynseqFetch(regionData: any) {
-    return;
-  },
-  methylc: function methylcFetch(regionData: any) {
-    return;
-  },
-  hic: function hicFetch(regionData: any) {
-    return;
-  },
   genomealignFine: function genomeAlignFetch(dataObj: { [key: string]: any }) {
     const { basesPerPixel, primaryGenome, queryGenome } = dataObj.data;
     const drawData = dataObj.data.drawData;

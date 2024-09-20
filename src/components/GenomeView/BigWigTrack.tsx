@@ -28,11 +28,7 @@ export const DEFAULT_OPTIONS = {
 };
 DEFAULT_OPTIONS.aggregateMethod = "COUNT";
 DEFAULT_OPTIONS.displayMode = "density";
-const ROW_VERTICAL_PADDING = 5;
-const ROW_HEIGHT = 9 + ROW_VERTICAL_PADDING;
 
-const getGenePadding = (gene) => gene.getName().length * 9;
-const TOP_PADDING = 2;
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
   side,
@@ -58,10 +54,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const [svgComponents, setSvgComponents] = useState<any>();
+
   const [canvasComponents, setCanvasComponents] = useState<any>();
-  const [toolTip, setToolTip] = useState<any>();
-  const [toolTipVisible, setToolTipVisible] = useState(false);
+
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
 
@@ -664,44 +659,26 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           position: "relative",
         }}
       >
-        {configOptions.current.displayMode === "full" ? (
+        <div
+          style={{
+            display: "flex",
+            position: "relative",
+            height: configOptions.current.height,
+          }}
+        >
           <div
             style={{
               borderTop: "1px solid Dodgerblue",
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
-              lineHeight: 0,
-              right: side === "left" ? `${xPos.current}px` : "",
-              left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
+              left: side === "right" ? `${xPos.current}px` : "",
+              right: side === "left" ? `${xPos.current}px` : "",
             }}
           >
-            {svgComponents}
+            {canvasComponents}
           </div>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              position: "relative",
-              height: configOptions.current.height,
-            }}
-          >
-            <div
-              style={{
-                borderTop: "1px solid Dodgerblue",
-                borderBottom: "1px solid Dodgerblue",
-                position: "absolute",
-                backgroundColor: configOptions.current.backgroundColor,
-                left: side === "right" ? `${xPos.current}px` : "",
-                right: side === "left" ? `${xPos.current}px` : "",
-              }}
-            >
-              {canvasComponents}
-            </div>
-          </div>
-        )}
-
-        {toolTipVisible ? toolTip : ""}
+        </div>
       </div>
     </div>
   );

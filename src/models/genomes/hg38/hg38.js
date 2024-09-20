@@ -64,12 +64,16 @@ const defaultTracks = [
       color: "blue",
     },
   }),
+  new TrackModel({
+    type: "dynseq",
+    name: "example dynseq",
+    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+    options: {
+      color: "blue",
+      height: 100,
+    },
+  }),
 
-  //    new TrackModel ({
-  //       name: "dynseq",
-  //       genome: "hg19",
-  //       url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-  //     }),
   //     new TrackModel({
   //       name: "methylc",
   //       genome: "hg19",

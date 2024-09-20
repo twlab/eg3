@@ -14,26 +14,25 @@ import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 import "./TrackContextMenu.css";
 import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
+import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqTrack/DynseqTrackComputation";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import Feature from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
+import DynseqTrackComputation from "./DynseqTrack/DynseqTrackComputation";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
+  ...defaultDynseq,
 };
 DEFAULT_OPTIONS.aggregateMethod = "COUNT";
 DEFAULT_OPTIONS.displayMode = "density";
-const ROW_VERTICAL_PADDING = 5;
-const ROW_HEIGHT = 9 + ROW_VERTICAL_PADDING;
 
-const getGenePadding = (gene) => gene.getName().length * 9;
-const TOP_PADDING = 2;
-const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
+const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackData,
   side,
   windowWidth = 0,
@@ -121,21 +120,21 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         );
       }
     }
-
+    console.log(genesArr);
     let algoData = genesArr.map((record) => {
       let newChrInt = new ChromosomeInterval(
         record.chr,
         record.start,
         record.end
       );
-      return new Feature(newChrInt.toStringWithOther(newChrInt), newChrInt, "");
+      return new Feature(newChrInt.toStringWithOther(newChrInt), newChrInt);
     });
 
     if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
       let canvasElements = (
-        <NumericalTrack
+        <DynseqTrackComputation
           data={algoData}
           options={tmpObj}
           viewWindow={
@@ -707,4 +706,4 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   );
 });
 
-export default memo(BigWigTrack);
+export default memo(DynseqTrack);
