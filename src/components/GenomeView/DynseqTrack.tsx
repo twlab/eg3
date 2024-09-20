@@ -595,7 +595,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           position: "relative",
         }}
       >
-        (
         <div
           style={{
             display: "flex",
@@ -616,7 +615,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             {canvasComponents}
           </div>
         </div>
-        )
       </div>
     </div>
   );
