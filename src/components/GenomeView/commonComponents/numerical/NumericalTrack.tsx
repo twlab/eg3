@@ -15,6 +15,7 @@ import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
 import HoverToolTip from "../hover-and-tooltip/hoverToolTip";
+import { BackgroundColorConfig } from "../../../../trackConfigs/config-menu-components.tsx/ColorConfig";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data: Feature[]; // Replace 'Feature' with the actual type of your data
@@ -42,6 +43,7 @@ export const DEFAULT_OPTIONS = {
   yMin: 0,
   smooth: 0,
   ensemblStyle: false,
+  backgroundColor: "var(--bg-color)",
 };
 
 const AUTO_HEATMAP_THRESHOLD = 21; // If pixel height is less than this, automatically use heatmap

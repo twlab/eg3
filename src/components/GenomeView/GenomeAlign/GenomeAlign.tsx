@@ -344,6 +344,8 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           style={{
             display: "block",
             position: "absolute",
+            borderTop: "1px solid Dodgerblue",
+            borderBottom: "1px solid Dodgerblue",
             height: `${configOptions.current.height}px`,
             right: side === "left" ? `${xPos.current!}px` : "",
             left: side === "right" ? `${xPos.current!}px` : "",

@@ -467,7 +467,6 @@ self.onmessage = async (event: MessageEvent) => {
           metadata: item.metadata,
         });
       } else {
-        console.log(trackType);
         let responses: Array<any> = await fetchData(item, genomeName, id);
         fetchResults.push({
           name: trackType,

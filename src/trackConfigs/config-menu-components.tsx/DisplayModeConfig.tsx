@@ -19,7 +19,6 @@ import {
  * @return {JSX.Element} element to render
  */
 export function AnnotationDisplayModeConfig(props) {
-  console.log(props);
   return (
     <SelectConfig
       {...props}
@@ -38,7 +37,6 @@ export function AnnotationDisplayModeConfig(props) {
  * @return {JSX.Element} element to render
  */
 export function NumericalDisplayModeConfig(props) {
-  console.log(props);
   return (
     <SelectConfig
       {...props}

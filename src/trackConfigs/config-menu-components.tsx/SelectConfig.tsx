@@ -23,7 +23,6 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
 }) => {
   // Initialize state to store the selected value
 
-  console.log(defaultValue);
   const [selectedValue, setSelectedValue] = useState(defaultValue);
 
   // When the component mounts, set the selected value based on the defaultValue

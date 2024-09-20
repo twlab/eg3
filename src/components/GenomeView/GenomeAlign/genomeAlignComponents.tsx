@@ -304,7 +304,7 @@ export function renderRoughAlignment(
   const queryXSpan: { [key: string]: any } = placement.queryXSpan;
   const queryFeature: { [key: string]: any } = placement.queryFeature;
   const queryRectTopY = roughHeight - RECT_HEIGHT;
-  console.log(placement);
+
   const targetGenomeRect = (
     <rect
       x={targetXSpan.start}

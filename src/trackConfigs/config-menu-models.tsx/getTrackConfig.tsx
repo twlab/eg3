@@ -6,7 +6,7 @@ import { BedTrackConfig } from "./BedTrackConfig";
 // import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
 // import { BigBedTrackConfig } from "./BigBedTrackConfig";
 // import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
-// import { BigWigTrackConfig } from "./BigWigTrackConfig";
+import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import { GeneAnnotationTrackConfig } from "./GeneAnnotationTrackConfig";
 import TrackModel from "../../models/TrackModel";
 // import { HicTrackConfig } from "./HicTrackConfig";
@@ -60,7 +60,7 @@ const TYPE_NAME_TO_CONFIG = {
   // categorical: CategoricalTrackConfig,
   // bedgraph: BedGraphTrackConfig,
   // bigbed: BigBedTrackConfig,
-  // bigwig: BigWigTrackConfig,
+  bigwig: BigWigTrackConfig,
   // hic: HicTrackConfig,
   // longrange: LongRangeTrackConfig,
   // longrangecolor: LongRangeColorTrackConfig,

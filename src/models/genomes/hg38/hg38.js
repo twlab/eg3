@@ -40,16 +40,12 @@ const genome = new Genome("hg38", [
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "refGene",
-  //   genome: "hg38",
-  // }),
-  //     // {
-  //     //   name: "bed",
-  //     //   genome: "hg19",
-  //     //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  //     // },(
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
+
   new TrackModel({
     type: "geneAnnotation",
     name: "gencodeV39",
@@ -60,11 +56,14 @@ const defaultTracks = [
     name: "mm10 bed",
     url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
   }),
-  //    new TrackModel ({
-  //       name: "bigWig",
-  //       genome: "hg19",
-  //       url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-  //     }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+    options: {
+      color: "blue",
+    },
+  }),
 
   //    new TrackModel ({
   //       name: "dynseq",
@@ -95,14 +94,14 @@ const defaultTracks = [
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   }),
-  new TrackModel({
-    name: "hg38 to t2t-chm13v2",
-    label: "hg38 - chm13v2.0 minimap2",
-    type: "genomealign",
-    querygenome: "t2t-chm13-v2.0",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz",
-  }),
+  // new TrackModel({
+  //   name: "hg38 to t2t-chm13v2",
+  //   label: "hg38 - chm13v2.0 minimap2",
+  //   type: "genomealign",
+  //   querygenome: "t2t-chm13-v2.0",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz",
+  // }),
 
   new TrackModel({
     type: "geneAnnotation",

@@ -15,7 +15,7 @@ import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
 import "./TrackContextMenu.css";
-import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
+
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
 } from "./bedTrack/BedAnnotation";
@@ -321,7 +321,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
 
       genomeArr![genomeIdx!].options = configOptions.current;
 
-      const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new BedTrackConfig(genomeArr![genomeIdx!]);
 
       const items = renderer.getMenuComponents();
 
@@ -353,7 +353,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
-    console.log(trackModel.type);
     let menu = trackConfigMenu[`${trackModel.type}`]({
       trackIdx,
       handleDelete,

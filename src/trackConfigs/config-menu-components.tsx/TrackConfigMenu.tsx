@@ -25,12 +25,13 @@ const trackConfigMenu: { [key: string]: any } = {
     );
   },
 
-  bigWig: function bigWigFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
+  bigwig: function bigConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
 
   dynseq: function dynseqFetch(

@@ -69,7 +69,7 @@ export const getHoverTooltip = {
   },
   bed: async function bedFetch(regionData: any) {},
 
-  bigWig: function bigWigFetch(regionData: any) {
+  bigwig: function bigWigFetch(regionData: any) {
     return;
   },
 

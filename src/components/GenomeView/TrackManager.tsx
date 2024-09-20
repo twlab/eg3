@@ -4,7 +4,6 @@ const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 import RefGeneTrack from "./RefGeneTrack";
 import BedTrack from "./BedTrack";
-import BedDensityTrack from "./BedDensityTrack";
 import BigWigTrack from "./BigWigTrack";
 import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
@@ -49,8 +48,7 @@ export function objToInstanceAlign(alignment) {
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
   geneannotation: RefGeneTrack,
   bed: BedTrack,
-  bedDensity: BedDensityTrack,
-  bigWig: BigWigTrack,
+  bigwig: BigWigTrack,
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
   hic: HiCTrack,
@@ -409,7 +407,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             event.data.curFetchRegionNav._endBase
           ),
         };
-        console.log(tempObj);
+        console.log(tempObj, "fetched data for all tracks with their id");
         isLoading.current = false;
         setTrackData({ ...tempObj });
       };
@@ -457,7 +455,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // go through genome defaultTrack to see what track components we need and give each component
       // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
       let genome = genomeArr[genomeIdx];
-      console.log(genome);
+
       let newTrackComponents: Array<any> = [];
       for (let i = 0; i < genome.defaultTracks.length; i++) {
         if (!genome.defaultTracks[i]["id"]) {
@@ -483,7 +481,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           useFineModeNav.current = true;
         }
       }
-      console.log(newTrackComponents);
+
       setTrackComponents([...newTrackComponents]);
       fetchGenomeData(1, "right");
     }

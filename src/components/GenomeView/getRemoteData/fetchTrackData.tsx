@@ -5,7 +5,6 @@ const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
-    console.log(regionData);
     const genRefResponse = await fetch(
       `${AWS_API}/${regionData.genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`,
       { method: "GET" }
@@ -15,7 +14,6 @@ const trackFetchFunction: { [key: string]: any } = {
   },
 
   bed: async function bedFetch(regionData: any) {
-    console.log(regionData);
     return getTabixData(
       regionData.nav,
       regionData.trackModel.options,
@@ -23,12 +21,12 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
 
-  bigWig: function bigWigFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
+  bigwig: async function bigwigFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
   },
 
   dynseq: function dynseqFetch(
