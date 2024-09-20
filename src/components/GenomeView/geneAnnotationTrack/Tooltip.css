@@ -1,0 +1,45 @@
+.Tooltip {
+    border-radius: 5px;
+    background-color: rgba(173, 216, 230, 0.95);
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 6px;
+    padding-right: 6px;
+    z-index: 2;
+}
+
+.Tooltip-major-text {
+    font-size: 1.2em;
+}
+
+.Tooltip-minor-text {
+    font-size: 0.8em;
+    color: dimgrey;
+}
+
+.Tooltip-highlight-text {
+    font-size: 1em;
+    background-color:coral;
+    display: inline-block;
+}
+
+.Tooltip-monospace-text {
+    font-family: monospace;
+    text-align: center;
+    font-size: 16px;
+    color: dimgrey;
+    display: inline-block;
+}
+
+.Tooltip-monospace-seq {
+    font-family: monospace;
+    font-size: 16px;
+    display: inline;
+}
+
+.Tooltip-monospace-central-seq {
+    font-family: monospace;
+    font-size: 16px;
+    background-color:coral;
+    display: inline;
+}

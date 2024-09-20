@@ -1,4 +1,6 @@
 //src/Worker/worker.ts
+import JSON5 from "json5";
+// this is makeXMap then to placeFeatures from eg 2
 
 const workerFunction = function () {
   self.onmessage = (event: MessageEvent) => {
@@ -52,11 +54,11 @@ const workerFunction = function () {
 let codeToString = workerFunction.toString();
 //This brings out the code in the bracket in string
 let mainCode = codeToString.substring(
-  codeToString.indexOf('{') + 1,
-  codeToString.lastIndexOf('}')
+  codeToString.indexOf("{") + 1,
+  codeToString.lastIndexOf("}")
 );
 //convert the code into a raw data
-let blob = new Blob([mainCode], { type: 'application/javascript' });
+let blob = new Blob([mainCode], { type: "application/javascript" });
 //A url is made out of the blob object and we're good to go
 let worker_script = URL.createObjectURL(blob);
 

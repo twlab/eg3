@@ -69,7 +69,7 @@ function GenomePicker(props: any) {
             return (
               <Grid item key={key}>
                 <Card>
-                  <ListItem>{genomeItem.name}</ListItem>
+                  <ListItem>{genomeItem.genome.getName()}</ListItem>
                 </Card>
               </Grid>
             );
@@ -116,12 +116,12 @@ function GenomePicker(props: any) {
                       {entry[0]}
                     </Typography>
                     <List>
-                      {filteredAssemblies?.map((assembly: any, idx: number) => {
+                      {filteredAssemblies?.map((gene: any, idx: number) => {
                         return (
                           <ListItem
                             key={idx}
                             onClick={() =>
-                              props.addToView(props.allGenome[assembly])
+                              props.addToView(props.allGenome[gene])
                             }
                             style={{ height: 30 }}
                           >
@@ -133,7 +133,7 @@ function GenomePicker(props: any) {
                                 minHeight: "30px",
                               }}
                             >
-                              <ListItemText primary={"- " + assembly} />
+                              <ListItemText primary={"- " + gene} />
                             </ListItemButton>
                           </ListItem>
                         );
