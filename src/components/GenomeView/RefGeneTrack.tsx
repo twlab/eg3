@@ -392,7 +392,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   function getCacheData() {
     let viewData: Array<any> = [];
     let curIdx;
-    console.log(prevDataIdx.current, dataIdx!);
 
     if (
       useFineModeNav ||
@@ -401,12 +400,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
-      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx!].refGenes;
-        curIdx = dataIdx!;
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx! + 1].refGenes;
+        curIdx = dataIdx! + 1;
       }
     } else {
-      if (dataIdx! !== rightIdx.current + 1 && dataIdx! <= 0) {
+      if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
         viewData = [
           fetchedDataCache.current[dataIdx! + 1],
           fetchedDataCache.current[dataIdx!],
@@ -460,7 +459,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
-        console.log("111");
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
             trackData!.trackState.primaryGenName
@@ -569,7 +567,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           }
         }
       } else {
-        console.log("EERERERERERE23");
         //_________________________________________________________________________________________________________________________________________________
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[

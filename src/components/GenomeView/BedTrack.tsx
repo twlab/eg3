@@ -90,18 +90,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   async function createSVGOrCanvas(curTrackData, genesArr, fine) {
-    if (curTrackData.index === 0) {
-      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
-    } else if (curTrackData.side === "right") {
-      xPos.current = fine
-        ? -curTrackData.xDist - curTrackData.startWindow
-        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
-    } else if (curTrackData.side === "left") {
-      xPos.current = fine
-        ? curTrackData.xDist - curTrackData.startWindow
-        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
-    }
-
     if (fine) {
       newTrackWidth.current = curTrackData.visWidth;
     }
@@ -191,6 +179,21 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         />
       );
       setCanvasComponents(canvasElements);
+    }
+    if (curTrackData.initial === 1) {
+      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
+    } else if (curTrackData.side === "right") {
+      xPos.current = fine
+        ? (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
+        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
+    } else if (curTrackData.side === "left") {
+      xPos.current = fine
+        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
+        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     }
   }
 
@@ -393,70 +396,47 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
       if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-        if (dataIdx === 1) {
-          dataIdx = 0;
-        }
-        viewData = fetchedDataCache.current[dataIdx!].bedData;
+        viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
-      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-        if (dataIdx === 1) {
-          dataIdx = 0;
-        }
-        viewData = fetchedDataCache.current[dataIdx!].bedData;
-        curIdx = dataIdx!;
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx! + 1].cacheData;
+        curIdx = dataIdx! + 1;
       }
     } else {
-      if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-        if (prevDataIdx.current > dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 2],
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-          ];
+      if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
+        viewData = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
 
-          curIdx = dataIdx!;
-        } else if (prevDataIdx.current < dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-            fetchedDataCache.current[dataIdx! - 1],
-          ];
+        curIdx = dataIdx! - 1;
+      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+        viewData = [
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx! + 2],
+        ];
 
-          curIdx = dataIdx! - 1;
-          curIdx = dataIdx!;
-        }
-      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-        if (prevDataIdx.current < dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx!],
-            fetchedDataCache.current[dataIdx! - 1],
-            fetchedDataCache.current[dataIdx! - 2],
-          ];
-
-          curIdx = dataIdx!;
-        } else if (prevDataIdx.current > dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-
-            fetchedDataCache.current[dataIdx! - 1],
-          ];
-
-          curIdx = dataIdx! + 1;
-        }
+        curIdx = dataIdx! + 2;
       }
     }
     if (viewData.length > 0) {
+      curRegionData.current = {
+        trackState: fetchedDataCache.current[curIdx].trackState,
+        deDupcacheDataArr: viewData,
+        initial: 0,
+      };
       if (
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
-        let bedDataArray = viewData.map((item) => item.bedData).flat(1);
-        let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
-        viewData = deDupbedDataArr;
+        let cacheDataArray = viewData.map((item) => item.cacheData).flat(1);
+        let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
+        viewData = deDupcacheDataArr;
         curRegionData.current = {
           trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupbedDataArr: viewData,
+          deDupcacheDataArr: viewData,
           initial: 0,
         };
 
@@ -476,7 +456,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (useFineModeNav || "genome" in trackData![`${id}`].metadata) {
+      if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
             trackData!.trackState.primaryGenName
@@ -488,45 +468,33 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           } else {
             parentGenome.current = trackData!.trackState.primaryGenName;
           }
-          let visRegionArr =
+          let visRegion =
             "genome" in trackData![`${id}`].metadata
               ? trackData!.trackState.genomicFetchCoord[
                   trackData![`${id}`].metadata.genome
                 ].queryRegion
-              : primaryVisData.map((item) => item.visRegion);
+              : primaryVisData.visRegion;
 
           const createTrackState = (index: number, side: string) => ({
             initial: index === 1 ? 1 : 0,
             side,
             xDist: 0,
 
-            visRegion: visRegionArr[index],
-            startWindow: primaryVisData[index].viewWindow.start,
-            visWidth: primaryVisData[index].visWidth,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
           });
 
-          fetchedDataCache.current[leftIdx.current] = {
-            bedData: trackData![`${id}`].result[0].fetchData,
-            trackState: createTrackState(0, "left"),
-          };
-          leftIdx.current++;
-
           fetchedDataCache.current[rightIdx.current] = {
-            bedData: trackData![`${id}`].result[1].fetchData,
+            cacheData: trackData![`${id}`].result[0],
             trackState: createTrackState(1, "right"),
           };
           rightIdx.current--;
 
-          fetchedDataCache.current[rightIdx.current] = {
-            bedData: trackData![`${id}`].result[2].fetchData,
-            trackState: createTrackState(2, "right"),
-          };
-          rightIdx.current--;
-
-          const curDataArr = fetchedDataCache.current[0].bedData;
+          const curDataArr = fetchedDataCache.current[0].cacheData;
           curRegionData.current = {
             trackState: createTrackState(1, "right"),
-            deDupbedDataArr: curDataArr,
+            deDupcacheDataArr: curDataArr,
           };
 
           createSVGOrCanvas(createTrackState(1, "right"), curDataArr, true);
@@ -553,7 +521,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           if (trackData!.trackState.side === "right") {
             newTrackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              bedData: trackData![`${id}`].result,
+              cacheData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -562,20 +530,20 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[rightIdx.current + 1].trackState,
-              deDupbedDataArr:
-                fetchedDataCache.current[rightIdx.current + 1].bedData,
+              deDupcacheDataArr:
+                fetchedDataCache.current[rightIdx.current + 1].cacheData,
               initial: 0,
             };
 
             createSVGOrCanvas(
               newTrackState,
-              fetchedDataCache.current[rightIdx.current + 1].bedData,
+              fetchedDataCache.current[rightIdx.current + 1].cacheData,
               true
             );
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              bedData: trackData![`${id}`].result,
+              cacheData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -584,14 +552,14 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[leftIdx.current - 1].trackState,
-              deDupbedDataArr:
-                fetchedDataCache.current[leftIdx.current - 1].bedData,
+              deDupcacheDataArr:
+                fetchedDataCache.current[leftIdx.current - 1].cacheData,
               initial: 0,
             };
 
             createSVGOrCanvas(
               newTrackState,
-              fetchedDataCache.current[leftIdx.current - 1].bedData,
+              fetchedDataCache.current[leftIdx.current - 1].cacheData,
               true
             );
           }
@@ -623,6 +591,8 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[0],
             index: 1,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
           let trackState1 = {
             initial: 1,
@@ -630,6 +600,8 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[1],
             index: 0,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
           let trackState2 = {
             initial: 0,
@@ -637,21 +609,23 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[2],
             index: -1,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
 
           fetchedDataCache.current[leftIdx.current] = {
-            bedData: trackData![`${id}`].result[0].fetchData,
+            cacheData: trackData![`${id}`].result[0],
             trackState: trackState0,
           };
           leftIdx.current++;
 
           fetchedDataCache.current[rightIdx.current] = {
-            bedData: trackData![`${id}`].result[1].fetchData,
+            cacheData: trackData![`${id}`].result[1],
             trackState: trackState1,
           };
           rightIdx.current--;
           fetchedDataCache.current[rightIdx.current] = {
-            bedData: trackData![`${id}`].result[2].fetchData,
+            cacheData: trackData![`${id}`].result[2],
             trackState: trackState2,
           };
           rightIdx.current--;
@@ -662,23 +636,26 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             fetchedDataCache.current[-1],
           ];
 
-          let bedDataArray = testData.map((item) => item.bedData).flat(1);
+          let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
 
-          let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
+          let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
           curRegionData.current = {
             trackState: trackState1,
-            deDupbedDataArr,
+            deDupcacheDataArr,
           };
-
-          createSVGOrCanvas(trackState1, deDupbedDataArr, false);
+          createSVGOrCanvas(trackState1, deDupcacheDataArr, false);
         } else {
           let testData: Array<any> = [];
-
+          let newTrackState = {
+            ...trackData!.trackState,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
+          };
           if (trackData!.trackState.side === "right") {
             trackData!.trackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              bedData: trackData![`${id}`].result,
-              trackState: trackData!.trackState,
+              cacheData: trackData![`${id}`].result,
+              trackState: newTrackState,
             };
             let currIdx = rightIdx.current + 2;
             for (let i = 0; i < 3; i++) {
@@ -687,19 +664,19 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             }
 
             rightIdx.current--;
-            let bedDataArray = testData.map((item) => item.bedData).flat(1);
-            let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
+            let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
+            let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
             curRegionData.current = {
-              trackState: trackData!.trackState,
-              deDupbedDataArr,
+              trackState: newTrackState,
+              deDupcacheDataArr,
               initial: 0,
             };
-            createSVGOrCanvas(trackData!.trackState, deDupbedDataArr, false);
+            createSVGOrCanvas(newTrackState, deDupcacheDataArr, false);
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              bedData: trackData![`${id}`].result,
-              trackState: trackData!.trackState,
+              cacheData: trackData![`${id}`].result,
+              trackState: newTrackState,
             };
 
             let currIdx = leftIdx.current - 2;
@@ -709,20 +686,19 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             }
 
             leftIdx.current++;
-            let bedDataArray = testData.map((item) => item.bedData).flat(1);
-            let deDupbedDataArr = removeDuplicatesWithoutId(bedDataArray);
+            let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
+            let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
             curRegionData.current = {
               trackState: trackData!.trackState,
-              deDupbedDataArr,
+              deDupcacheDataArr,
               initial: 0,
             };
-            createSVGOrCanvas(trackData!.trackState, deDupbedDataArr, false);
+            createSVGOrCanvas(newTrackState, deDupcacheDataArr, false);
           }
         }
       }
     }
   }, [trackData]);
-
   useEffect(() => {
     if (configChanged === true) {
       if (!useFineModeNav) {

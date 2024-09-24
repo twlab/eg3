@@ -59,24 +59,11 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   // New data are fetched only if the user drags to the either ends of the track
 
   async function createCanvas(curTrackData, genesArr, fine) {
-    if (curTrackData.index === 0) {
-      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
-    } else if (curTrackData.side === "right") {
-      xPos.current = fine
-        ? -curTrackData.xDist - curTrackData.startWindow
-        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
-    } else if (curTrackData.side === "left") {
-      xPos.current = fine
-        ? curTrackData.xDist - curTrackData.startWindow
-        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
-    }
-
     if (fine) {
       newTrackWidth.current = curTrackData.visWidth;
     }
 
     let currDisplayNav;
-    let sortType = SortItemsOptions.NOSORT;
 
     if (!fine) {
       if (curTrackData.side === "right") {
@@ -139,6 +126,21 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         />
       );
       setCanvasComponents(canvasElements);
+    }
+    if (curTrackData.initial === 1) {
+      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
+    } else if (curTrackData.side === "right") {
+      xPos.current = fine
+        ? (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
+        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
+    } else if (curTrackData.side === "left") {
+      xPos.current = fine
+        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
+        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     }
   }
 
@@ -213,70 +215,47 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
       if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-        if (dataIdx === 1) {
-          dataIdx = 0;
-        }
-        viewData = fetchedDataCache.current[dataIdx!].dynseqData;
+        viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
-      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-        if (dataIdx === 1) {
-          dataIdx = 0;
-        }
-        viewData = fetchedDataCache.current[dataIdx!].dynseqData;
-        curIdx = dataIdx!;
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx! + 1].cacheData;
+        curIdx = dataIdx! + 1;
       }
     } else {
-      if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-        if (prevDataIdx.current > dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 2],
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-          ];
+      if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
+        viewData = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
 
-          curIdx = dataIdx!;
-        } else if (prevDataIdx.current < dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-            fetchedDataCache.current[dataIdx! - 1],
-          ];
+        curIdx = dataIdx! - 1;
+      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+        viewData = [
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx! + 2],
+        ];
 
-          curIdx = dataIdx! - 1;
-          curIdx = dataIdx!;
-        }
-      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-        if (prevDataIdx.current < dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx!],
-            fetchedDataCache.current[dataIdx! - 1],
-            fetchedDataCache.current[dataIdx! - 2],
-          ];
-
-          curIdx = dataIdx!;
-        } else if (prevDataIdx.current > dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-
-            fetchedDataCache.current[dataIdx! - 1],
-          ];
-
-          curIdx = dataIdx! + 1;
-        }
+        curIdx = dataIdx! + 2;
       }
     }
     if (viewData.length > 0) {
+      curRegionData.current = {
+        trackState: fetchedDataCache.current[curIdx].trackState,
+        deDupcacheDataArr: viewData,
+        initial: 0,
+      };
       if (
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
-        let dynseqDataArray = viewData.map((item) => item.dynseqData).flat(1);
-        let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
-        viewData = deDupdynseqDataArr;
+        let cacheDataArray = viewData.map((item) => item.cacheData).flat(1);
+        let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
+        viewData = deDupcacheDataArr;
         curRegionData.current = {
           trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupdynseqDataArr: viewData,
+          deDupcacheDataArr: viewData,
           initial: 0,
         };
 
@@ -296,7 +275,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (useFineModeNav || "genome" in trackData![`${id}`].metadata) {
+      if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
             trackData!.trackState.primaryGenName
@@ -308,45 +287,33 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           } else {
             parentGenome.current = trackData!.trackState.primaryGenName;
           }
-          let visRegionArr =
+          let visRegion =
             "genome" in trackData![`${id}`].metadata
               ? trackData!.trackState.genomicFetchCoord[
                   trackData![`${id}`].metadata.genome
                 ].queryRegion
-              : primaryVisData.map((item) => item.visRegion);
+              : primaryVisData.visRegion;
 
           const createTrackState = (index: number, side: string) => ({
             initial: index === 1 ? 1 : 0,
             side,
             xDist: 0,
 
-            visRegion: visRegionArr[index],
-            startWindow: primaryVisData[index].viewWindow.start,
-            visWidth: primaryVisData[index].visWidth,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
           });
 
-          fetchedDataCache.current[leftIdx.current] = {
-            dynseqData: trackData![`${id}`].result[0].fetchData,
-            trackState: createTrackState(0, "left"),
-          };
-          leftIdx.current++;
-
           fetchedDataCache.current[rightIdx.current] = {
-            dynseqData: trackData![`${id}`].result[1].fetchData,
+            cacheData: trackData![`${id}`].result[0],
             trackState: createTrackState(1, "right"),
           };
           rightIdx.current--;
 
-          fetchedDataCache.current[rightIdx.current] = {
-            dynseqData: trackData![`${id}`].result[2].fetchData,
-            trackState: createTrackState(2, "right"),
-          };
-          rightIdx.current--;
-
-          const curDataArr = fetchedDataCache.current[0].dynseqData;
+          const curDataArr = fetchedDataCache.current[0].cacheData;
           curRegionData.current = {
             trackState: createTrackState(1, "right"),
-            deDupdynseqDataArr: curDataArr,
+            deDupcacheDataArr: curDataArr,
           };
 
           createCanvas(createTrackState(1, "right"), curDataArr, true);
@@ -373,7 +340,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           if (trackData!.trackState.side === "right") {
             newTrackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              dynseqData: trackData![`${id}`].result,
+              cacheData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -382,20 +349,20 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[rightIdx.current + 1].trackState,
-              deDupdynseqDataArr:
-                fetchedDataCache.current[rightIdx.current + 1].dynseqData,
+              deDupcacheDataArr:
+                fetchedDataCache.current[rightIdx.current + 1].cacheData,
               initial: 0,
             };
 
             createCanvas(
               newTrackState,
-              fetchedDataCache.current[rightIdx.current + 1].dynseqData,
+              fetchedDataCache.current[rightIdx.current + 1].cacheData,
               true
             );
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              dynseqData: trackData![`${id}`].result,
+              cacheData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -404,14 +371,14 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[leftIdx.current - 1].trackState,
-              deDupdynseqDataArr:
-                fetchedDataCache.current[leftIdx.current - 1].dynseqData,
+              deDupcacheDataArr:
+                fetchedDataCache.current[leftIdx.current - 1].cacheData,
               initial: 0,
             };
 
             createCanvas(
               newTrackState,
-              fetchedDataCache.current[leftIdx.current - 1].dynseqData,
+              fetchedDataCache.current[leftIdx.current - 1].cacheData,
               true
             );
           }
@@ -443,6 +410,8 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[0],
             index: 1,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
           let trackState1 = {
             initial: 1,
@@ -450,6 +419,8 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[1],
             index: 0,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
           let trackState2 = {
             initial: 0,
@@ -457,21 +428,23 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[2],
             index: -1,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
 
           fetchedDataCache.current[leftIdx.current] = {
-            dynseqData: trackData![`${id}`].result[0].fetchData,
+            cacheData: trackData![`${id}`].result[0],
             trackState: trackState0,
           };
           leftIdx.current++;
 
           fetchedDataCache.current[rightIdx.current] = {
-            dynseqData: trackData![`${id}`].result[1].fetchData,
+            cacheData: trackData![`${id}`].result[1],
             trackState: trackState1,
           };
           rightIdx.current--;
           fetchedDataCache.current[rightIdx.current] = {
-            dynseqData: trackData![`${id}`].result[2].fetchData,
+            cacheData: trackData![`${id}`].result[2],
             trackState: trackState2,
           };
           rightIdx.current--;
@@ -482,23 +455,26 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             fetchedDataCache.current[-1],
           ];
 
-          let dynseqDataArray = testData.map((item) => item.dynseqData).flat(1);
+          let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
 
-          let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+          let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
           curRegionData.current = {
             trackState: trackState1,
-            deDupdynseqDataArr,
+            deDupcacheDataArr,
           };
-
-          createCanvas(trackState1, deDupdynseqDataArr, false);
+          createCanvas(trackState1, deDupcacheDataArr, false);
         } else {
           let testData: Array<any> = [];
-
+          let newTrackState = {
+            ...trackData!.trackState,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
+          };
           if (trackData!.trackState.side === "right") {
             trackData!.trackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              dynseqData: trackData![`${id}`].result,
-              trackState: trackData!.trackState,
+              cacheData: trackData![`${id}`].result,
+              trackState: newTrackState,
             };
             let currIdx = rightIdx.current + 2;
             for (let i = 0; i < 3; i++) {
@@ -507,21 +483,19 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             }
 
             rightIdx.current--;
-            let dynseqDataArray = testData
-              .map((item) => item.dynseqData)
-              .flat(1);
-            let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+            let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
+            let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
             curRegionData.current = {
-              trackState: trackData!.trackState,
-              deDupdynseqDataArr,
+              trackState: newTrackState,
+              deDupcacheDataArr,
               initial: 0,
             };
-            createCanvas(trackData!.trackState, deDupdynseqDataArr, false);
+            createCanvas(newTrackState, deDupcacheDataArr, false);
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              dynseqData: trackData![`${id}`].result,
-              trackState: trackData!.trackState,
+              cacheData: trackData![`${id}`].result,
+              trackState: newTrackState,
             };
 
             let currIdx = leftIdx.current - 2;
@@ -531,16 +505,14 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
             }
 
             leftIdx.current++;
-            let dynseqDataArray = testData
-              .map((item) => item.dynseqData)
-              .flat(1);
-            let deDupdynseqDataArr = removeDuplicatesWithoutId(dynseqDataArray);
+            let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
+            let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
             curRegionData.current = {
               trackState: trackData!.trackState,
-              deDupdynseqDataArr,
+              deDupcacheDataArr,
               initial: 0,
             };
-            createCanvas(trackData!.trackState, deDupdynseqDataArr, false);
+            createCanvas(newTrackState, deDupcacheDataArr, false);
           }
         }
       }
@@ -552,13 +524,13 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       if (!useFineModeNav) {
         createCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupdynseqDataArr,
+          curRegionData.current.deDupcacheDataArr,
           false
         );
       } else {
         createCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupdynseqDataArr,
+          curRegionData.current.deDupcacheDataArr,
           true
         );
       }
