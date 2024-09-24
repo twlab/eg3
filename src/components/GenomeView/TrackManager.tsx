@@ -434,7 +434,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             event.data.curFetchRegionNav._endBase
           ),
         };
-        console.log(tempObj, "fetched data for all tracks with their id");
+        console.log(
+          tempObj,
+          event.data.genomicLoci,
+          event.data.expandGenomicLoci,
+          "fetched data for all tracks with their id"
+        );
         isLoading.current = false;
         setTrackData({ ...tempObj });
       };
@@ -484,7 +489,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let genome = genomeArr[genomeIdx];
 
       let newTrackComponents: Array<any> = [];
-      console.log(genome.defaultTracks);
+
       for (let i = 0; i < genome.defaultTracks.length; i++) {
         const uniqueKey = uuidv4();
         genome.defaultTracks[i]["id"] = uniqueKey;

@@ -284,7 +284,6 @@ const InteractionTrack: React.FC<TrackProps> = memo(function InteractionTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      console.log(trackData);
       // if (useFineModeNav || "genome" in trackData![`${id}`].metadata) {
       //   const primaryVisData =
       //     trackData!.trackState.genomicFetchCoord[
