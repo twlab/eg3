@@ -91,11 +91,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
     } else if (curTrackData.side === "right") {
       xPos.current = fine
-        ? Math.floor(-curTrackData.xDist / windowWidth - 1) * windowWidth
+        ? (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth
+        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
         : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     }
 
@@ -397,9 +401,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
       } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-        if (dataIdx === 1) {
-          dataIdx = 0;
-        }
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
       }
@@ -454,6 +455,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
+      console.log(trackData![`${id}`]);
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
@@ -466,38 +468,26 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           } else {
             parentGenome.current = trackData!.trackState.primaryGenName;
           }
-          let visRegionArr =
+          let visRegion =
             "genome" in trackData![`${id}`].metadata
               ? trackData!.trackState.genomicFetchCoord[
                   trackData![`${id}`].metadata.genome
                 ].queryRegion
-              : primaryVisData.map((item) => item.visRegion);
+              : primaryVisData.visRegion;
 
           const createTrackState = (index: number, side: string) => ({
             initial: index === 1 ? 1 : 0,
             side,
             xDist: 0,
 
-            visRegion: visRegionArr[index],
-            startWindow: primaryVisData[index].viewWindow.start,
-            visWidth: primaryVisData[index].visWidth,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
           });
 
-          fetchedDataCache.current[leftIdx.current] = {
+          fetchedDataCache.current[rightIdx.current] = {
             refGenes: trackData![`${id}`].result[0].fetchData,
-            trackState: createTrackState(0, "left"),
-          };
-          leftIdx.current++;
-
-          fetchedDataCache.current[rightIdx.current] = {
-            refGenes: trackData![`${id}`].result[1].fetchData,
             trackState: createTrackState(1, "right"),
-          };
-          rightIdx.current--;
-
-          fetchedDataCache.current[rightIdx.current] = {
-            refGenes: trackData![`${id}`].result[2].fetchData,
-            trackState: createTrackState(2, "right"),
           };
           rightIdx.current--;
 
@@ -506,7 +496,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             trackState: createTrackState(1, "right"),
             deDupRefGenesArr: curDataArr,
           };
-          console.log(createTrackState(1, "right"));
+          console.log(trackData![`${id}`].result);
           createSVGOrCanvas(createTrackState(1, "right"), curDataArr, true);
         } else {
           let visRegion;

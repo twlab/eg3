@@ -410,11 +410,7 @@ self.onmessage = async (event: MessageEvent) => {
       curFetchNav =
         genomicFetchCoord[`${trackModel.metadata.genome}`].queryGenomicCoord;
     } else if (useFineModeNav) {
-      if (event.data.initial === 1) {
-        curFetchNav = initGenalignGenomicLoci;
-      } else {
-        curFetchNav = new Array(expandGenomicLoci);
-      }
+      curFetchNav = new Array(expandGenomicLoci);
     } else if (event.data.initial === 1) {
       curFetchNav = initGenomicLoci;
     } else {
