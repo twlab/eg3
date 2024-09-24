@@ -105,64 +105,18 @@ self.onmessage = async (event: MessageEvent) => {
 
     // step 2: fetch genome align data and put them into an array
 
-    if (event.data.initial === 1) {
-      let initialData: Array<any> = [];
-      for (let i = 0; i < initGenalignNavLoci.length; i++) {
-        let res = await getGenomeAlignment(
-          initGenalignNavLoci[i],
-          genomeAlignTracks
-        );
-        genomicFetchCoord[`${primaryGenName}`]["primaryVisData"].push(
-          res[0].result.primaryVisData
-        );
-        initialData.push(res);
-      }
-
-      let tempObj = {};
-      for (let dataArr of initialData) {
-        dataArr.map((item, index) => {
-          if (item.id in tempObj) {
-            tempObj[`${item.id}`].push(item);
-          } else {
-            tempObj[`${item.id}`] = new Array(item);
-          }
-        });
-      }
-
-      for (let alignment in tempObj) {
-        let queryName = tempObj[`${alignment}`][0].queryName;
-        genomicFetchCoord[`${queryName}`] = {};
-        genomicFetchCoord[`${queryName}`]["id"] = tempObj[`${alignment}`][0].id;
-        genomicFetchCoord[`${queryName}`]["queryGenomicCoord"] = [];
-        genomicFetchCoord[`${queryName}`]["queryRegion"] = [];
-        tempObj[`${alignment}`].map((item) => {
-          genomicFetchCoord[`${queryName}`].queryGenomicCoord.push(
-            item.queryGenomicCoord
-          );
-          genomicFetchCoord[`${queryName}`].queryRegion.push(
-            item.result.queryRegion
-          );
-        });
-
-        fetchResults.push({ id: alignment, result: tempObj[`${alignment}`] });
-      }
-    } else {
-      (
-        await getGenomeAlignment(
-          event.data.visData.visRegion,
-          genomeAlignTracks
-        )
-      ).map((item) => {
-        genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
-          item.result.primaryVisData;
-        genomicFetchCoord[`${item.queryName}`] = {
-          queryGenomicCoord: new Array(item.queryGenomicCoord),
-          id: item.id,
-          queryRegion: item.result.queryRegion,
-        };
-        fetchResults.push(item);
-      });
-    }
+    (
+      await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks)
+    ).map((item) => {
+      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
+        item.result.primaryVisData;
+      genomicFetchCoord[`${item.queryName}`] = {
+        queryGenomicCoord: new Array(item.queryGenomicCoord),
+        id: item.id,
+        queryRegion: item.result.queryRegion,
+      };
+      fetchResults.push(item);
+    });
   } else {
     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
       event.data.curFetchRegionNav;

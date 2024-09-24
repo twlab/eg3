@@ -88,21 +88,17 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
   async function createSVGOrCanvas(curTrackData, genesArr, fine) {
     if (curTrackData.initial === 1) {
-      console.log("HUGG");
       xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
     } else if (curTrackData.side === "right") {
       xPos.current = fine
-        ? Math.floor(-curTrackData.xDist / windowWidth) * windowWidth
+        ? Math.floor(-curTrackData.xDist / windowWidth - 1) * windowWidth
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? Math.floor(-curTrackData.xDist / windowWidth) * windowWidth
-        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
+        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth
+        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     }
-    console.log(
-      -curTrackData.xDist - curTrackData.startWindow,
-      (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth
-    );
+
     if (fine) {
       newTrackWidth.current = curTrackData.visWidth;
     }
@@ -111,7 +107,17 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     let sortType = SortItemsOptions.NOSORT;
 
     if (!fine) {
-      if (curTrackData.side === "right") {
+      if (curTrackData.initial === 1) {
+        currDisplayNav = new DisplayedRegionModel(
+          curTrackData.regionNavCoord._navContext,
+          curTrackData.regionNavCoord._startBase -
+            (curTrackData.regionNavCoord._endBase -
+              curTrackData.regionNavCoord._startBase),
+          curTrackData.regionNavCoord._endBase +
+            (curTrackData.regionNavCoord._endBase -
+              curTrackData.regionNavCoord._startBase)
+        );
+      } else if (curTrackData.side === "right") {
         currDisplayNav = new DisplayedRegionModel(
           curTrackData.regionNavCoord._navContext,
           curTrackData.regionNavCoord._startBase -
@@ -120,17 +126,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               2,
           curTrackData.regionNavCoord._endBase
         );
-        if (curTrackData.index === 0) {
-          currDisplayNav = new DisplayedRegionModel(
-            curTrackData.regionNavCoord._navContext,
-            curTrackData.regionNavCoord._startBase -
-              (curTrackData.regionNavCoord._endBase -
-                curTrackData.regionNavCoord._startBase),
-            curTrackData.regionNavCoord._endBase +
-              (curTrackData.regionNavCoord._endBase -
-                curTrackData.regionNavCoord._startBase)
-          );
-        }
       } else if (curTrackData.side === "left") {
         currDisplayNav = new DisplayedRegionModel(
           curTrackData.regionNavCoord._navContext,
@@ -145,7 +140,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     let algoData = genesArr.map((record) => new Gene(record));
     let featureArrange = new FeatureArranger();
-    console.log(algoData, "YTERER");
+
     if (configOptions.current.displayMode === "full") {
       let placeFeatureData = await featureArrange.arrange(
         algoData,
@@ -399,9 +394,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
       if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-        if (dataIdx === 1) {
-          dataIdx = 0;
-        }
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
       } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
@@ -412,44 +404,24 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         curIdx = dataIdx!;
       }
     } else {
-      if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-        if (prevDataIdx.current > dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 2],
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-          ];
+      console.log(dataIdx!, rightIdx.current);
+      if (dataIdx! !== rightIdx.current + 1 && dataIdx! <= 0) {
+        viewData = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
 
-          curIdx = dataIdx!;
-        } else if (prevDataIdx.current < dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-            fetchedDataCache.current[dataIdx! - 1],
-          ];
+        curIdx = dataIdx! - 1;
+      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+        console.log(dataIdx!, leftIdx.current);
+        viewData = [
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx! + 2],
+        ];
 
-          curIdx = dataIdx! - 1;
-          curIdx = dataIdx!;
-        }
-      } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-        if (prevDataIdx.current < dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx!],
-            fetchedDataCache.current[dataIdx! - 1],
-            fetchedDataCache.current[dataIdx! - 2],
-          ];
-
-          curIdx = dataIdx!;
-        } else if (prevDataIdx.current > dataIdx!) {
-          viewData = [
-            fetchedDataCache.current[dataIdx! + 1],
-            fetchedDataCache.current[dataIdx!],
-
-            fetchedDataCache.current[dataIdx! - 1],
-          ];
-
-          curIdx = dataIdx! + 1;
-        }
+        curIdx = dataIdx! + 2;
       }
     }
     if (viewData.length > 0) {
@@ -608,8 +580,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           trackData!.trackState.genomicFetchCoord[
             `${trackData!.trackState.primaryGenName}`
           ];
-        console.log(trackData!.trackState);
+
         if (trackData!.initial === 1) {
+          console.log(primaryVisData);
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -629,8 +602,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[0],
             index: 1,
-            startWindow: primaryVisData.primaryVisData[0].viewWindow.start,
-            visWidth: primaryVisData.primaryVisData[0].visWidth,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
           let trackState1 = {
             initial: 1,
@@ -638,8 +611,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[1],
             index: 0,
-            startWindow: primaryVisData.primaryVisData[1].viewWindow.start,
-            visWidth: primaryVisData.primaryVisData[1].visWidth,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
           let trackState2 = {
             initial: 0,
@@ -647,8 +620,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             xDist: 0,
             regionNavCoord: visRegionArr[2],
             index: -1,
-            startWindow: primaryVisData.primaryVisData[2].viewWindow.start,
-            visWidth: primaryVisData.primaryVisData[2].visWidth,
+            startWindow: primaryVisData.primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.primaryVisData.visWidth,
           };
 
           fetchedDataCache.current[leftIdx.current] = {
@@ -765,6 +738,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
+    prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
 
   return (

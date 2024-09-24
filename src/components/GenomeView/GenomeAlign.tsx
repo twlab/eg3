@@ -133,8 +133,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         xPos.current =
           (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth;
       } else if (trackState.side === "left") {
-        xPos.current =
-          (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth;
+        xPos.current = Math.floor(trackState.xDist / windowWidth) * windowWidth;
       }
       newTrackWidth.current = trackState.visWidth;
     }
@@ -147,17 +146,11 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     // otherwise when there is new data cuz the user is at the end of the track
     let viewData = {};
     let curIdx;
-
+    console.log(rightIdx.current, dataIdx);
     if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-      if (dataIdx === 1) {
-        dataIdx = 0;
-      }
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
     } else if (dataIdx! !== leftIdx.current && dataIdx! > 0) {
-      if (dataIdx === 1) {
-        dataIdx = 0;
-      }
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
     }
@@ -174,64 +167,28 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   useEffect(() => {
     if (trackData![`${id}`] !== undefined) {
       if (trackData!.initial === 1) {
-        let trackState0 = {
-          initial: 0,
-          side: "left",
-          xDist: 0,
-          index: 1,
-          startWindow:
-            trackData![`${id}`].result[0].result.primaryVisData.viewWindow
-              .start,
-          visWidth:
-            trackData![`${id}`].result[0].result.primaryVisData.visWidth,
-        };
-        let trackState1 = {
+        let trackState = {
           initial: 1,
           side: "right",
           xDist: 0,
-          index: 0,
           startWindow:
-            trackData![`${id}`].result[1].result.primaryVisData.viewWindow
-              .start,
-          visWidth:
-            trackData![`${id}`].result[1].result.primaryVisData.visWidth,
-        };
-        let trackState2 = {
-          initial: 0,
-          side: "right",
-          xDist: 0,
-          index: -1,
-          startWindow:
-            trackData![`${id}`].result[2].result.primaryVisData.viewWindow
-              .start,
-          visWidth:
-            trackData![`${id}`].result[2].result.primaryVisData.visWidth,
+            trackData![`${id}`].result.primaryVisData.viewWindow.start,
+          visWidth: trackData![`${id}`].result.primaryVisData.visWidth,
         };
 
-        fetchedDataCache.current[leftIdx.current] = {
-          data: trackData![`${id}`].result[0].result,
-          trackState: trackState0,
-        };
-        leftIdx.current++;
-
         fetchedDataCache.current[rightIdx.current] = {
-          data: trackData![`${id}`].result[1].result,
-          trackState: trackState1,
-        };
-        rightIdx.current--;
-        fetchedDataCache.current[rightIdx.current] = {
-          data: trackData![`${id}`].result[2].result,
-          trackState: trackState2,
+          data: trackData![`${id}`].result,
+          trackState: trackState,
         };
         rightIdx.current--;
 
         let curDataArr = fetchedDataCache.current[0].data;
 
         curRegionData.current = {
-          trackState: trackState1,
+          trackState: trackState,
           cachedData: curDataArr,
         };
-        createSVG(trackState1, curDataArr);
+        createSVG(trackState, curDataArr);
       } else {
         let newTrackState = {
           ...trackData!.trackState,
@@ -239,7 +196,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             trackData![`${id}`].result.primaryVisData.viewWindow.start,
           visWidth: trackData![`${id}`].result.primaryVisData.visWidth,
         };
-        console.log(newTrackState);
+
         if (trackData!.trackState.side === "right") {
           newTrackState["index"] = rightIdx.current;
           fetchedDataCache.current[rightIdx.current] = {

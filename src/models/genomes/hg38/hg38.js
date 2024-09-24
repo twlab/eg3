@@ -51,11 +51,11 @@ const defaultTracks = [
     name: "gencodeV39",
     genome: "hg38",
   }),
-    new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "mm10",
-  }),
+  //   new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "mm10",
+  // }),
   // new TrackModel({
   //   type: "bed",
   //   name: "mm10 bed",
