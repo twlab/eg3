@@ -251,7 +251,6 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
     this.scales = this.computeScales(this.xToValue, this.xToValue2, height);
     const isDrawingBars =
       this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap\
-    console.log(this.props);
     const visualizer = this.hasReverse ? (
       <React.Fragment>
         <div

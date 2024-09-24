@@ -75,7 +75,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       };
       setSvgComponents(tempObj);
 
-      if (trackState.index === 0) {
+      if (trackState.initial === 1) {
         xPos.current = -trackState.startWindow;
       } else if (trackState.side === "right") {
         xPos.current = -trackState!.xDist - trackState.startWindow;
@@ -127,14 +127,15 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       };
       setSvgComponents(tempObj);
 
-      if (trackState.index === 0) {
-        xPos.current = -trackState.startWindow;
+      if (trackState.initial === 1) {
+        xPos.current = -windowWidth;
       } else if (trackState.side === "right") {
-        xPos.current = -trackState!.xDist - trackState.startWindow;
+        xPos.current =
+          (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth;
       } else if (trackState.side === "left") {
-        xPos.current = trackState!.xDist - trackState.startWindow;
+        xPos.current =
+          (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth;
       }
-
       newTrackWidth.current = trackState.visWidth;
     }
   }
@@ -238,6 +239,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             trackData![`${id}`].result.primaryVisData.viewWindow.start,
           visWidth: trackData![`${id}`].result.primaryVisData.visWidth,
         };
+        console.log(newTrackState);
         if (trackData!.trackState.side === "right") {
           newTrackState["index"] = rightIdx.current;
           fetchedDataCache.current[rightIdx.current] = {

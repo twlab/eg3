@@ -51,42 +51,47 @@ const defaultTracks = [
     name: "gencodeV39",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+    new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "mm10",
   }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
-  new TrackModel({
-    type: "dynseq",
-    name: "example dynseq",
-    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-    options: {
-      color: "blue",
-      height: 100,
-    },
-  }),
-  new TrackModel({
-    type: "methylc",
-    name: "H1",
-    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-    options: {
-      label: "Methylation",
-      colorsForContext: {
-        CG: { color: "#648bd8", background: "#d9d9d9" },
-        CHG: { color: "#ff944d", background: "#ffe0cc" },
-        CHH: { color: "#ff00ff", background: "#ffe5ff" },
-      },
-      depthColor: "#01E9FE",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "dynseq",
+  //   name: "example dynseq",
+  //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+  //   options: {
+  //     color: "blue",
+  //     height: 100,
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "methylc",
+  //   name: "H1",
+  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+  //   options: {
+  //     label: "Methylation",
+  //     colorsForContext: {
+  //       CG: { color: "#648bd8", background: "#d9d9d9" },
+  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
+  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
+  //     },
+  //     depthColor: "#01E9FE",
+  //   },
+  // }),
 
   //     new TrackModel({
   //       name: "methylc",
@@ -99,11 +104,16 @@ const defaultTracks = [
   //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
   //       genome: "hg19",
   //     }),
-  //    new TrackModel ({
-  //       name: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //       genome: "hg19",
-  //     }),
+//         new TrackModel(
+// {
+//     "type": "hic",
+//     "name": "test hic",
+//     "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+//     // "options": {
+//     //     "displayMode": "arc"
+//     // }
+// }
+//     ),
   new TrackModel({
     name: "hg38tomm10",
     label: "Query mouse mm10 to hg38 blastz",
@@ -121,11 +131,7 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz",
   // }),
 
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "mm10",
-  }),
+
 ];
 
 const publicHubData = {

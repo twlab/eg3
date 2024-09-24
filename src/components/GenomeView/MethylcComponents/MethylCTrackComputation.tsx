@@ -17,7 +17,7 @@ import TrackModel from "../../../models/TrackModel";
 import { FeatureAggregator } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
 import { getContrastingColor } from "../../../models/util";
-
+import HoverToolTip from "../commonComponents/hover-and-tooltip/hoverToolTip";
 // import "./commonComponents/tooltip/Tooltip.css";
 import "./MethylCTrack.css";
 
@@ -96,7 +96,6 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     super(props);
     this.aggregateRecords = memoizeOne(this.aggregateRecords);
     this.computeScales = memoizeOne(this.computeScales);
-    this.renderTooltipContents = this.renderTooltipContents.bind(this);
   }
 
   aggregateRecords = (data: any[], viewRegion: any, width: number) => {
@@ -123,69 +122,8 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     };
   };
 
-  renderTooltipContents(x: number) {
-    const { trackModel, viewRegion, width, options } = this.props;
-    const strandsAtPixel = this.aggregatedRecords[Math.round(x)];
-
-    return (
-      <div>
-        {this.renderTooltipContentsForStrand(
-          strandsAtPixel,
-          options.isCombineStrands ? "combined" : "forward"
-        )}
-        {!options.isCombineStrands &&
-          this.renderTooltipContentsForStrand(strandsAtPixel, "reverse")}
-        <div className="Tooltip-minor-text">
-          <GenomicCoordinates viewRegion={viewRegion} width={width} x={x} />
-        </div>
-        <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
-      </div>
-    );
-  }
-
-  renderTooltipContentsForStrand(strandsAtPixel: any, strand: string) {
-    const { depthColor, colorsForContext, depthFilter } = this.props.options;
-    const dataAtPixel = strandsAtPixel[strand];
-    let details;
-    if (dataAtPixel) {
-      if (dataAtPixel.depth < depthFilter) {
-        return null;
-      }
-      let dataElements: Array<any> = [];
-      const contextValues = _.sortBy(dataAtPixel.contextValues, "context");
-      for (let contextData of contextValues) {
-        const contextName = contextData.context;
-        const color = (colorsForContext[contextName] || UNKNOWN_CONTEXT_COLORS)
-          .color;
-        dataElements.push(
-          <div
-            key={contextName + "label"}
-            style={makeBackgroundColorStyle(color)}
-          >
-            {contextName}
-          </div>,
-          <div key={contextName + "value"}>{contextData.value.toFixed(2)}</div>
-        );
-      }
-      details = (
-        <div className="MethylCTrack-tooltip-strand-details">
-          <div style={makeBackgroundColorStyle(depthColor)}>Depth</div>
-          <div>{Math.round(dataAtPixel.depth)}</div>
-          {dataElements}
-        </div>
-      );
-    }
-
-    return (
-      <div key={strand} className="MethylCTrack-tooltip-strand">
-        <span className="MethylCTrack-tooltip-strand-title">{strand}</span>
-        {details || <div className="Tooltip-minor-text">(No data)</div>}
-      </div>
-    );
-  }
-
   renderVisualizer() {
-    const { width, options, forceSvg } = this.props;
+    const { width, options, forceSvg, viewRegion, trackModel } = this.props;
     const {
       height,
       colorsForContext,
@@ -209,7 +147,6 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       strandRenderers = <StrandVisualizer {...childProps} strand="combined" />;
       tooltipY = height;
     } else {
-      console.log("HIHI");
       strandRenderers = (
         <React.Fragment>
           <StrandVisualizer {...childProps} strand="forward" />
@@ -220,9 +157,30 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     }
 
     return (
-      //   <HoverTooltipContext tooltipRelativeY={tooltipY} getTooltipContents={this.renderTooltipContents}>
-      strandRenderers
-      //   </HoverTooltipContext>
+      <>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+
+            zIndex: 3,
+          }}
+        >
+          <HoverToolTip
+            data={this.aggregatedRecords}
+            windowWidth={width}
+            trackModel={trackModel}
+            trackType={"methyc"}
+            options={options}
+            height={tooltipY}
+            viewRegion={viewRegion}
+            hasReverse={true}
+          />
+        </div>
+        {strandRenderers}
+        //{" "}
+      </>
     );
   }
 

@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { HicSource } from "./hicSource";
 import JSON5 from "json5";
 import { SequenceSegment } from "../../../models/AlignmentStringUtils";
 import AlignmentRecord from "../../../models/AlignmentRecord";
@@ -67,8 +66,6 @@ export interface Alignment {
 export interface MultiAlignment {
   [genome: string]: Alignment;
 }
-
-let strawCache: { [key: string]: any } = {};
 
 //TO_DOOOOOOOOO have a way to get option from trackManager for each track and set it here if custom options are defined while getting the fetched data
 self.onmessage = async (event: MessageEvent) => {
@@ -421,39 +418,10 @@ self.onmessage = async (event: MessageEvent) => {
       const url = item.url;
 
       if (trackType === "hic") {
-        if (!(id in strawCache)) {
-          strawCache[id] = new HicSource(item.url, regionLength);
-        }
-
-        let result = await trackFetchFunction[trackType](
-          strawCache[id],
-          {
-            color: "#B8008A",
-            color2: "#006385",
-            backgroundColor: "var(--bg-color)",
-            displayMode: "heatmap",
-            scoreScale: "auto",
-            scoreMax: 10,
-            scalePercentile: 95,
-            scoreMin: 0,
-            height: 500,
-            lineWidth: 2,
-            greedyTooltip: false,
-            fetchViewWindowOnly: false,
-            bothAnchorsInView: false,
-            isThereG3dTrack: false,
-            clampHeight: false,
-            binSize: 0,
-            normalization: "NONE",
-            label: "",
-          },
-          expandGenomicLoci,
-          event.data.bpRegionSize / event.data.windowWidth
-        );
         fetchResults.push({
           name: trackType,
-          result,
           id,
+          metadata: item.metadata,
         });
       } else if (trackType === "geneannotation") {
         let genRefResponses: Array<any> = await fetchData(item, genomeName, id);

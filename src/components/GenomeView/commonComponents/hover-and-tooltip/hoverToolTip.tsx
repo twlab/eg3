@@ -4,6 +4,8 @@ import AlignmentSequence from "../../GenomeAlignComponents/AlignmentCoordinate";
 import HorizontalFragment from "../../GenomeAlignComponents/HorizontalFragment";
 import GenomicCoordinates from "./GenomicCoordinates";
 import TrackModel from "../../../../models/TrackModel";
+import { getContrastingColor } from "../../../../models/util";
+import _ from "lodash";
 
 interface HoverToolTipProps {
   data: any;
@@ -67,7 +69,88 @@ export const getHoverTooltip = {
       </div>
     );
   },
+  methyc: function getTooltip(dataObj: { [key: string]: any }) {
+    const { trackModel, viewRegion, width, options } = dataObj;
+    const strandsAtPixel = dataObj.data[Math.round(dataObj.relativeX)];
 
+    return (
+      <div>
+        {renderTooltipContentsForStrand(
+          strandsAtPixel,
+          options.isCombineStrands ? "combined" : "forward"
+        )}
+        {!options.isCombineStrands &&
+          renderTooltipContentsForStrand(strandsAtPixel, "reverse")}
+        <div className="Tooltip-minor-text">
+          <GenomicCoordinates
+            viewRegion={viewRegion}
+            width={width}
+            x={dataObj.relativeX}
+          />
+        </div>
+        <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
+      </div>
+    );
+    function getColorsForContext(contextName: string) {
+      return (
+        dataObj.options.colorsForContext[contextName] || dataObj.options.CG
+      );
+    }
+
+    function makeBackgroundColorStyle(color: string) {
+      return {
+        color: getContrastingColor(color),
+        backgroundColor: color,
+        padding: "0px 3px", // 3px horizontal padding
+        borderRadius: 3,
+      };
+    }
+
+    function renderTooltipContentsForStrand(strandsAtPixel, strand) {
+      const { depthColor, colorsForContext, depthFilter } = dataObj.options;
+      const dataAtPixel = strandsAtPixel[strand];
+
+      let details;
+      if (dataAtPixel) {
+        if (dataAtPixel.depth < depthFilter) {
+          return null;
+        }
+        let dataElements: Array<any> = [];
+        // Sort alphabetically by context name first
+        const contextValues = _.sortBy(dataAtPixel.contextValues, "context");
+        for (let contextData of contextValues) {
+          const contextName = contextData.context;
+          const color = (colorsForContext[contextName] || dataObj.options.CG)
+            .color;
+          dataElements.push(
+            <div
+              key={contextName + "label"}
+              style={makeBackgroundColorStyle(color)}
+            >
+              {contextName}
+            </div>,
+            <div key={contextName + "value"}>
+              {contextData.value.toFixed(2)}
+            </div>
+          );
+        }
+        details = (
+          <div className="MethylCTrack-tooltip-strand-details">
+            <div style={makeBackgroundColorStyle(depthColor)}>Depth</div>
+            <div>{Math.round(dataAtPixel.depth)}</div>
+            {dataElements}
+          </div>
+        );
+      }
+
+      return (
+        <div key={strand} className="MethylCTrack-tooltip-strand">
+          <span className="MethylCTrack-tooltip-strand-title">{strand}</span>
+          {details || <div className="Tooltip-minor-text">(No data)</div>}
+        </div>
+      );
+    }
+  },
   genomealignFine: function genomeAlignFetch(dataObj: { [key: string]: any }) {
     const { basesPerPixel, primaryGenome, queryGenome } = dataObj.data;
     const drawData = dataObj.data.drawData;
