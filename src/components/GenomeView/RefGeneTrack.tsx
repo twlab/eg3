@@ -87,22 +87,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   async function createSVGOrCanvas(curTrackData, genesArr, fine) {
-    if (curTrackData.initial === 1) {
-      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
-    } else if (curTrackData.side === "right") {
-      xPos.current = fine
-        ? (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
-          windowWidth +
-          curTrackData.startWindow
-        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
-    } else if (curTrackData.side === "left") {
-      xPos.current = fine
-        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
-          windowWidth +
-          curTrackData.startWindow
-        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
-    }
-
     if (fine) {
       newTrackWidth.current = curTrackData.visWidth;
     }
@@ -184,6 +168,22 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         />
       );
       setCanvasComponents(canvasElements);
+    }
+
+    if (curTrackData.initial === 1) {
+      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
+    } else if (curTrackData.side === "right") {
+      xPos.current = fine
+        ? (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
+        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
+    } else if (curTrackData.side === "left") {
+      xPos.current = fine
+        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+          windowWidth +
+          curTrackData.startWindow
+        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     }
   }
 
