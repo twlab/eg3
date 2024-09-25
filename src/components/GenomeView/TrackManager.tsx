@@ -9,7 +9,7 @@ import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
 import GenomeAlign from "./GenomeAlign";
 import CircularProgress from "@mui/material/CircularProgress";
-import { ViewExpansion } from "../../models/RegionExpander";
+
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 
@@ -413,8 +413,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           tempObj[item.id] = {
             result: item.result,
             metadata: item.metadata,
-            straw: item.name === "hic" ? hicStrawObj.current[`${item.id}`] : "",
           };
+          if (item.name === "hic") {
+            tempObj[item.id]["straw"] = hicStrawObj.current[`${item.id}`];
+          }
         });
 
         tempObj["initial"] = event.data.initial;
@@ -508,8 +510,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (genome.defaultTracks[i].type === "hic") {
+          console.log(genome.defaultTracks[i]);
           hicStrawObj.current[`${uniqueKey}`] = new HicSource(
-            genome.defaultTracks[i]
+            genome.defaultTracks[i].url
           );
         }
       }

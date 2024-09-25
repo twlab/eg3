@@ -46,11 +46,11 @@ const defaultTracks = [
     genome: "hg38",
   }),
 
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
+  // }),
     new TrackModel({
     type: "geneAnnotation",
     name: "refGene",
@@ -93,27 +93,18 @@ const defaultTracks = [
     },
   }),
 
-  //     new TrackModel({
-  //       name: "methylc",
-  //       genome: "hg19",
-  //       url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-  //     }),
 
-  //    new TrackModel ({
-  //       name: "hic",
-  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //       genome: "hg19",
-  //     }),
-//         new TrackModel(
-// {
-//     "type": "hic",
-//     "name": "test hic",
-//     "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-//     // "options": {
-//     //     "displayMode": "arc"
-//     // }
-// }
-//     ),
+
+        new TrackModel(
+{
+    "type": "hic",
+    "name": "test hic",
+    "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+}
+    ),
   new TrackModel({
     name: "hg38tomm10",
     label: "Query mouse mm10 to hg38 blastz",
@@ -122,14 +113,14 @@ const defaultTracks = [
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   }),
-  // new TrackModel({
-  //   name: "hg38 to t2t-chm13v2",
-  //   label: "hg38 - chm13v2.0 minimap2",
-  //   type: "genomealign",
-  //   querygenome: "t2t-chm13-v2.0",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz",
-  // }),
+  new TrackModel({
+    name: "hg38 to t2t-chm13v2",
+    label: "hg38 - chm13v2.0 minimap2",
+    type: "genomealign",
+    querygenome: "t2t-chm13-v2.0",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/chm13v2.hg38.align.gz",
+  }),
 
 
 ];

@@ -397,7 +397,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       useFineModeNav ||
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
-      if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+      if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {

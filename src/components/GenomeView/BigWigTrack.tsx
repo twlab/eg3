@@ -212,7 +212,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       useFineModeNav ||
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
-      if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+      if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
@@ -558,49 +558,30 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           display: "flex",
           // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
           // other elements will overlapp
-          height:
-            configOptions.current.displayMode === "full"
-              ? svgHeight.current + 2
-              : configOptions.current.height + 2,
+          height: configOptions.current.height + 2,
           position: "relative",
         }}
       >
-        {configOptions.current.displayMode === "full" ? (
+        <div
+          style={{
+            display: "flex",
+            position: "relative",
+            height: configOptions.current.height,
+          }}
+        >
           <div
             style={{
               borderTop: "1px solid Dodgerblue",
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
-              lineHeight: 0,
-              right: side === "left" ? `${xPos.current}px` : "",
-              left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
+              left: side === "right" ? `${xPos.current}px` : "",
+              right: side === "left" ? `${xPos.current}px` : "",
             }}
           >
-            {svgComponents}
+            {canvasComponents}
           </div>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              position: "relative",
-              height: configOptions.current.height,
-            }}
-          >
-            <div
-              style={{
-                borderTop: "1px solid Dodgerblue",
-                borderBottom: "1px solid Dodgerblue",
-                position: "absolute",
-                backgroundColor: configOptions.current.backgroundColor,
-                left: side === "right" ? `${xPos.current}px` : "",
-                right: side === "left" ? `${xPos.current}px` : "",
-              }}
-            >
-              {canvasComponents}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

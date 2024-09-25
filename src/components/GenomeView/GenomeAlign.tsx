@@ -152,7 +152,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     let viewData = {};
     let curIdx;
 
-    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+    if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
     } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
