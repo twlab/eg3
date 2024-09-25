@@ -20,6 +20,7 @@ import TrackModel from "../../../models/TrackModel";
 import OpenInterval from "../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { BinSize, NormalizationMode } from "../getRemoteData/HicDataModes";
+import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
 
 const TOP_PADDING = 2;
 
@@ -191,13 +192,15 @@ class InteractionTrackComponent extends React.PureComponent<
     } = this.props;
     const filteredData = this.filterData(data);
     this.scales = this.computeScale();
+    let interactionData = this.featurePlacer.placeInteractions(
+      filteredData,
+      visRegion,
+      width
+    );
     const visualizerProps = {
-      placedInteractions: this.featurePlacer.placeInteractions(
-        filteredData,
-        visRegion,
-        width
-      ),
+      placedInteractions: interactionData,
       viewWindow,
+      options,
       width,
       height: options.height,
       opacityScale: this.scales.opacityScale,
@@ -229,9 +232,9 @@ class InteractionTrackComponent extends React.PureComponent<
       //   case InteractionDisplayMode.FLATARC:
       //     visualizer = <CubicCurveDisplay {...visualizerProps} />;
       //     break;
-      //   case InteractionDisplayMode.ARC:
-      //     visualizer = <ArcDisplay {...visualizerProps} />;
-      //     break;
+      case InteractionDisplayMode.ARC:
+        visualizer = <ArcDisplay {...visualizerProps} />;
+        break;
       //   case InteractionDisplayMode.SQUARE:
       //     visualizer = <SquareDisplay {...visualizerProps} />;
       //     break;

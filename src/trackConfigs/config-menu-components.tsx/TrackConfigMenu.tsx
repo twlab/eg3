@@ -42,15 +42,21 @@ const trackConfigMenu: { [key: string]: any } = {
       />
     );
   },
-  methylc: function methylcFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
+  methylc: function methylcConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
-  hic: function hicFetch(straw, options, loci, basesPerPixel) {
-    return straw.getData(loci, basesPerPixel, options);
+  hic: function hicConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
   genomealign: function genomeAlignFetch(data: any) {
     return (

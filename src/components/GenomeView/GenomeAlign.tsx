@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
-import HoverToolTip from "./commonComponents/hover-and-tooltip/hoverToolTip";
+import HoverToolTip from "./commonComponents/hoverToolTips/hoverToolTip";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import {
   GapText,

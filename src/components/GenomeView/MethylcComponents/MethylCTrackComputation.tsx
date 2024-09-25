@@ -8,7 +8,7 @@ import { scaleLinear } from "d3-scale";
 // import TrackLegend from './commonComponents/TrackLegend';
 // import configOptionMerging from './commonComponents/configOptionMerging';
 // import HoverTooltipContext from './commonComponents/tooltip/HoverTooltipContext';
-import GenomicCoordinates from "../commonComponents/hover-and-tooltip/GenomicCoordinates";
+import GenomicCoordinates from "../commonComponents/hoverToolTips/GenomicCoordinates";
 import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
@@ -17,7 +17,7 @@ import TrackModel from "../../../models/TrackModel";
 import { FeatureAggregator } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
 import { getContrastingColor } from "../../../models/util";
-import HoverToolTip from "../commonComponents/hover-and-tooltip/hoverToolTip";
+import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
 // import "./commonComponents/tooltip/Tooltip.css";
 import "./MethylCTrack.css";
 

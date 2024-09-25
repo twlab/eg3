@@ -23,4 +23,5 @@ export interface TrackProps {
   getConfigMenu: any;
   onCloseConfigMenu: () => void;
   useFineModeNav: boolean;
+  trackManagerRef: any;
 }

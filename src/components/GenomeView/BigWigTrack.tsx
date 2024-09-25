@@ -39,7 +39,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   useFineModeNav,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
-  const svgHeight = useRef(0);
+
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});

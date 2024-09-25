@@ -92,6 +92,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const rightStartCoord = useRef(0);
   const bpRegionSize = useRef(0);
   const block = useRef<HTMLInputElement>(null);
+  const beams = useRef<HTMLInputElement>(null);
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
@@ -598,6 +599,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         <div
           style={{
+            position: "relative",
             display: "flex",
             //makes components align right or right when we switch sides
             justifyContent: side.current == "right" ? "start" : "end",
@@ -650,6 +652,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   getConfigMenu={getConfigMenu}
                   onCloseConfigMenu={onCloseConfigMenu}
                   trackIdx={index}
+                  trackManagerRef={block}
                 />
               );
             })}

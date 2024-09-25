@@ -2,28 +2,15 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
-import HoverToolTip from "./commonComponents/hover-and-tooltip/hoverToolTip";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import {
-  GapText,
-  PlacedAlignment,
-} from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
-import {
-  renderFineAlignment,
-  renderGapText,
-  renderRoughStrand,
-  renderRoughAlignment,
-  PlacedMergedAlignment,
-} from "./GenomeAlignComponents/GenomeAlignComponents";
 import { GenomeAlignTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import OpenInterval from "../../models/OpenInterval";
 
-import InteractionTrackComponent, {
-  DEFAULT_OPTIONS,
-} from "./interactionTrack/InteractionTrackComponent";
+import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
 import { objToInstanceAlign } from "./TrackManager";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
+import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   bpToPx,
   side,
@@ -39,6 +26,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   id,
   getConfigMenu,
   useFineModeNav,
+  trackManagerRef,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -59,6 +47,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     let algoData = genesArr;
 
     let tmpObj = { ...configOptions.current };
+    tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
     let canvasElements = (
       <InteractionTrackComponent
         data={algoData}
@@ -247,10 +236,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
     genomeArr![genomeIdx!].options = configOptions.current;
 
-    const renderer = new GenomeAlignTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new HicTrackConfig(genomeArr![genomeIdx!]);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
+    console.log(configOptions.current);
     let menu = trackConfigMenu[`${trackModel.type}`]({
       trackIdx,
       handleDelete,
