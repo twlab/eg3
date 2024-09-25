@@ -238,8 +238,8 @@ class InteractionTrackComponent extends React.PureComponent<
       //   case InteractionDisplayMode.SQUARE:
       //     visualizer = <SquareDisplay {...visualizerProps} />;
       //     break;
-      //   default:
-      //     visualizer = <ArcDisplay {...visualizerProps} />;
+      default:
+        visualizer = <ArcDisplay {...visualizerProps} />;
     }
 
     return visualizer;

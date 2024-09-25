@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { GenomeAlignTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
+
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import OpenInterval from "../../models/OpenInterval";
 
@@ -25,7 +25,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   genomeIdx,
   id,
   getConfigMenu,
-  useFineModeNav,
+
   trackManagerRef,
 }) {
   //useRef to store data between states without re render the component
