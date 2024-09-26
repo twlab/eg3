@@ -1,11 +1,13 @@
 import React from "react";
 import { ScaleLinear } from "d3-scale";
 import pointInPolygon from "point-in-polygon";
-import { GenomeInteraction } from "../../../model/GenomeInteraction";
-import { PlacedInteraction } from "../../../model/FeaturePlacer";
-import OpenInterval from "../../../model/interval/OpenInterval";
-import DesignRenderer, { RenderTypes } from "../../../art/DesignRenderer";
-import HoverTooltipContext from "../commonComponents/tooltip/HoverTooltipContext";
+import { PlacedInteraction } from "../../../models/getXSpan/FeaturePlacer";
+import OpenInterval from "../../../models/OpenInterval";
+
+import DesignRenderer, {
+  RenderTypes,
+} from "../commonComponents/art/DesignRenderer";
+import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
 
 interface SquareDisplayProps {
   placedInteractions: PlacedInteraction[];
@@ -14,14 +16,11 @@ interface SquareDisplayProps {
   height: number;
   opacityScale: ScaleLinear<number, number>;
   color: string;
-  color2: string;
-  onInteractionHovered(
-    event: React.MouseEvent,
-    interaction: GenomeInteraction
-  ): void;
-  onMouseOut(event: React.MouseEvent): void;
+  color2?: string;
   forceSvg?: boolean;
   bothAnchorsInView?: boolean;
+
+  options: any;
 }
 
 export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
@@ -29,10 +28,17 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
     return props.viewWindow.getLength();
   }
 
-  hmData: any[];
+  hmData: any[] = [];
 
   renderRect = (placedInteraction: PlacedInteraction, index: number) => {
-    const { opacityScale, color, color2, viewWindow, height, bothAnchorsInView } = this.props;
+    const {
+      opacityScale,
+      color,
+      color2,
+      viewWindow,
+      height,
+      bothAnchorsInView,
+    } = this.props;
     const drawWidth = viewWindow.getLength();
     const angle = height / drawWidth;
     const score = placedInteraction.interaction.score;
@@ -53,21 +59,21 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
       [xSpan1.end, (xSpan2.start - viewWindow.start) * angle], // Top Right
       [xSpan1.start, (xSpan2.start - viewWindow.start) * angle], // Top Left
       [xSpan1.start, (xSpan2.end - viewWindow.start) * angle], // Bottom Left
-      [xSpan1.end, (xSpan2.end - viewWindow.start) * angle] // Bottom  Right
+      [xSpan1.end, (xSpan2.end - viewWindow.start) * angle], // Bottom  Right
     ];
     const pointRight = [
       // Going counterclockwise
       [xSpan2.end, (xSpan1.start - viewWindow.start) * angle], // Top Right
       [xSpan2.start, (xSpan1.start - viewWindow.start) * angle], // Top Left
       [xSpan2.start, (xSpan1.end - viewWindow.start) * angle], // Bottom Left
-      [xSpan2.end, (xSpan1.end - viewWindow.start) * angle] // Bottom  Right
+      [xSpan2.end, (xSpan1.end - viewWindow.start) * angle], // Bottom  Right
     ];
     const key = placedInteraction.generateKey() + index;
 
     this.hmData.push({
       pointLeft,
       pointRight,
-      interaction: placedInteraction.interaction
+      interaction: placedInteraction.interaction,
     });
 
     if (xSpan1.start === xSpan2.start && xSpan1.end === xSpan2.end) {
@@ -106,7 +112,7 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
    * @param {number} relativeY - y coordinate of hover relative to the visualizer
    * @return {JSX.Element} tooltip to render
    */
-  renderTooltip = (relativeX: number, relativeY: number): JSX.Element => {
+  renderTooltip = (relativeX: number, relativeY: number) => {
     const polygon = this.findPolygon(relativeX, relativeY);
     if (polygon) {
       return (
@@ -135,21 +141,37 @@ export class SquareDisplay extends React.PureComponent<SquareDisplayProps, {}> {
 
   render() {
     this.hmData = [];
-    const { placedInteractions, width, forceSvg, height } = this.props;
+    const { placedInteractions, width, forceSvg, height, viewWindow, options } =
+      this.props;
     return (
-      <HoverTooltipContext
-        getTooltipContents={this.renderTooltip}
-        useRelativeY={true}
-      >
+      <>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+
+            zIndex: 3,
+          }}
+        >
+          <HoverToolTip
+            data={this.hmData}
+            windowWidth={width}
+            viewWindow={viewWindow}
+            trackType={"interactionSquareDisplay"}
+            height={height}
+            hasReverse={true}
+            options={this.props.options}
+          />
+        </div>
         <DesignRenderer
           type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
           width={width}
           height={height}
-          onMouseMove={this.renderTooltip}
         >
           {placedInteractions.map(this.renderRect)}
         </DesignRenderer>
-      </HoverTooltipContext>
+      </>
     );
   }
 }

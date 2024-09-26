@@ -10,6 +10,8 @@ import InteractionTrackComponent from "./InteractionComponents/InteractionTrackC
 import { objToInstanceAlign } from "./TrackManager";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
+import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   bpToPx,
   side,
@@ -43,8 +45,27 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const newTrackWidth = useRef(windowWidth);
 
   async function createCanvas(curTrackData, genesArr) {
-    let algoData = genesArr;
-
+    const algoData: any = [];
+    genesArr.map((record) => {
+      const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
+      // console.log(regexMatch);
+      if (regexMatch) {
+        const chr = regexMatch[1];
+        const start = Number.parseInt(regexMatch[2], 10);
+        const end = Number.parseInt(regexMatch[3], 10);
+        // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
+        const score = Number.parseFloat(record[3].split(",")[1]);
+        const recordLocus1 = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        const recordLocus2 = new ChromosomeInterval(chr, start, end);
+        algoData.push(new GenomeInteraction(recordLocus1, recordLocus2, score));
+      } else {
+        console.error(`${record[3]} not formated correctly in longrange track`);
+      }
+    });
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
     let canvasElements = (
@@ -128,12 +149,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
                 ].queryRegion
               : primaryVisData.visRegion;
 
-          let result = await trackData![`${id}`].straw.getData(
-            objToInstanceAlign(visRegion),
-            bpToPx,
-            configOptions.current
-          );
-
           let trackState = {
             initial: 1,
             side: "right",
@@ -144,7 +159,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
           };
 
           fetchedDataCache.current[rightIdx.current] = {
-            data: result,
+            data: trackData![`${id}`].result[0],
             trackState: trackState,
           };
           rightIdx.current--;
@@ -174,16 +189,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
             startWindow: primaryVisData.viewWindow.start,
             visWidth: primaryVisData.visWidth,
           };
-          let result = await trackData![`${id}`].straw.getData(
-            objToInstanceAlign(visRegion),
-            bpToPx,
-            configOptions.current
-          );
 
           if (trackData!.trackState.side === "right") {
             newTrackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              data: result,
+              data: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 
@@ -201,7 +211,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
           } else if (trackData!.trackState.side === "left") {
             newTrackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              data: result,
+              data: trackData![`${id}`].result,
               trackState: newTrackState,
             };
 

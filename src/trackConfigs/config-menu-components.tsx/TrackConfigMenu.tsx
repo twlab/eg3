@@ -58,6 +58,14 @@ const trackConfigMenu: { [key: string]: any } = {
       />
     );
   },
+  categorical: function categoricalConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
   genomealign: function genomeAlignFetch(data: any) {
     return (
       <ConfigMenuComponent

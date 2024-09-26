@@ -1,6 +1,7 @@
 import _ from "lodash";
 import getTabixData from "./tabixSource";
 import getBigData from "./bigSource";
+import getCoolSource from "./CoolSource";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const trackFetchFunction: { [key: string]: any } = {
@@ -28,7 +29,27 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
-
+  cool: async function coolFetch(regionData: any) {
+    return getCoolSource(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  categorical: async function coolFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  longrange: async function coolFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   dynseq: async function dynseqFetch(regionData: any) {
     return getBigData(
       regionData.nav,

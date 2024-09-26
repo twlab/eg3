@@ -135,5 +135,4 @@ class BackgroundedText extends React.Component<BackgroundedTextProps> {
     );
   }
 }
-
 export default BackgroundedText;

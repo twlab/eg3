@@ -163,7 +163,7 @@ export const getHoverTooltip = {
   },
   interactionHeatmap: function getToolTip(dataObj: { [key: string]: any }) {
     const polygon = findPolygon(dataObj.relativeX, dataObj.relativeY);
-    console.log(polygon);
+
     let interaction;
     let xSpan1;
     let xSpan2;
@@ -317,7 +317,6 @@ export const getHoverTooltip = {
     }
     function findArc(x: number, y: number) {
       for (const item of dataObj.data) {
-        console.log(item);
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
@@ -349,6 +348,45 @@ export const getHoverTooltip = {
     let arcElement = renderTooltip(dataObj.relativeX, dataObj.relativeY);
 
     return arcElement ? { toolTip: arcElement } : "";
+  },
+
+  interactionSquareDisplay: function getToolTip(dataObj: {
+    [key: string]: any;
+  }) {
+    const polygon = findPolygon(dataObj.relativeX, dataObj.relativeY);
+
+    let interaction;
+    let xSpan1;
+    let xSpan2;
+    if (polygon) {
+      xSpan1 = polygon.xSpan1;
+      xSpan2 = polygon.xSpan2;
+      interaction = polygon.interaction;
+    }
+
+    function findPolygon(x: number, y: number) {
+      for (const item of dataObj.data) {
+        if (
+          pointInPolygon([x, y], item.pointLeft) ||
+          pointInPolygon([x, y], item.pointRight)
+        ) {
+          return item;
+        }
+      }
+      return null;
+    }
+
+    return polygon
+      ? {
+          toolTip: (
+            <div>
+              <div>Locus1: {interaction.locus1.toString()}</div>
+              <div>Locus2: {interaction.locus2.toString()}</div>
+              <div>Score: {interaction.score}</div>
+            </div>
+          ),
+        }
+      : "";
   },
   genomealignFine: function genomeAlignFetch(dataObj: { [key: string]: any }) {
     const { basesPerPixel, primaryGenome, queryGenome } = dataObj.data;

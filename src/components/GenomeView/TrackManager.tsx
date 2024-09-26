@@ -22,6 +22,8 @@ import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
 import { HicSource } from "./getRemoteData/hicSource";
 import HiCTrack from "./HiCTrack";
+import CategoricalTrack from "./CategoricalTrack";
+import LongrangeTrack from "./LongrangeTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -54,6 +56,9 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   methylc: MethylcTrack,
   hic: HiCTrack,
   genomealign: GenomeAlign,
+  cool: HiCTrack,
+  categorical: CategoricalTrack,
+  longrange: LongrangeTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -511,7 +516,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (genome.defaultTracks[i].type === "hic") {
-          console.log(genome.defaultTracks[i]);
           hicStrawObj.current[`${uniqueKey}`] = new HicSource(
             genome.defaultTracks[i].url
           );

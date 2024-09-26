@@ -3,7 +3,7 @@ import { TrackConfig } from "./TrackConfig";
 import { BedTrackConfig } from "./BedTrackConfig";
 // import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
 // import { QBedTrackConfig } from "./QBedTrackConfig";
-// import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
+import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
 // import { BigBedTrackConfig } from "./BigBedTrackConfig";
 // import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
 import { BigWigTrackConfig } from "./BigWigTrackConfig";
@@ -57,7 +57,7 @@ const TYPE_NAME_TO_CONFIG = {
   bed: BedTrackConfig,
   // dynamicbed: DynamicBedTrackConfig,
   // qbed: QBedTrackConfig,
-  // categorical: CategoricalTrackConfig,
+  categorical: CategoricalTrackConfig,
   // bedgraph: BedGraphTrackConfig,
   // bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,

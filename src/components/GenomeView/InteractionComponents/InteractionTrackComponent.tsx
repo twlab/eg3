@@ -20,7 +20,6 @@ import TrackModel from "../../../models/TrackModel";
 import OpenInterval from "../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { BinSize, NormalizationMode } from "../getRemoteData/HicDataModes";
-import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
 
 const TOP_PADDING = 2;
 
@@ -229,15 +228,15 @@ class InteractionTrackComponent extends React.PureComponent<
       case InteractionDisplayMode.HEATMAP:
         visualizer = <Heatmap {...visualizerProps} getBeamRefs={getBeamRefs} />;
         break;
-      //   case InteractionDisplayMode.FLATARC:
-      //     visualizer = <CubicCurveDisplay {...visualizerProps} />;
-      //     break;
+      case InteractionDisplayMode.FLATARC:
+        visualizer = <CubicCurveDisplay {...visualizerProps} />;
+        break;
       case InteractionDisplayMode.ARC:
         visualizer = <ArcDisplay {...visualizerProps} />;
         break;
-      //   case InteractionDisplayMode.SQUARE:
-      //     visualizer = <SquareDisplay {...visualizerProps} />;
-      //     break;
+      case InteractionDisplayMode.SQUARE:
+        visualizer = <SquareDisplay {...visualizerProps} />;
+        break;
       default:
         visualizer = <ArcDisplay {...visualizerProps} />;
     }
