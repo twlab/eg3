@@ -37,15 +37,20 @@ const genome = new Genome("hg38", [
 //   //chr7:159159564-chr8:224090
 // //27195171-27202238
 //chr7:26805572-26825594
+// big interact chr3:63836292-64336395
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27139913-35149137");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "geneAnnotation",
     name: "refGene",
     genome: "hg38",
   }),
-
+        new TrackModel({
+        type: "repeatmasker",
+        name: "RepeatMasker",
+        url: "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
+    }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "gencodeV39",
@@ -61,37 +66,37 @@ const defaultTracks = [
     name: "mm10 bed",
     url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
   }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
-  new TrackModel({
-    type: "dynseq",
-    name: "example dynseq",
-    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-    options: {
-      color: "blue",
-      height: 100,
-    },
-  }),
-  new TrackModel({
-    type: "methylc",
-    name: "H1",
-    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-    options: {
-      label: "Methylation",
-      colorsForContext: {
-        CG: { color: "#648bd8", background: "#d9d9d9" },
-        CHG: { color: "#ff944d", background: "#ffe0cc" },
-        CHH: { color: "#ff00ff", background: "#ffe5ff" },
-      },
-      depthColor: "#01E9FE",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "dynseq",
+  //   name: "example dynseq",
+  //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+  //   options: {
+  //     color: "blue",
+  //     height: 100,
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "methylc",
+  //   name: "H1",
+  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+  //   options: {
+  //     label: "Methylation",
+  //     colorsForContext: {
+  //       CG: { color: "#648bd8", background: "#d9d9d9" },
+  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
+  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
+  //     },
+  //     depthColor: "#01E9FE",
+  //   },
+  // }),
 
   new TrackModel({
     type: "hic",
@@ -138,7 +143,13 @@ const defaultTracks = [
     name: "ES-E14 ChIA-PET",
     url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
   }),
-
+        new TrackModel(
+{
+    "type": "biginteract",
+    "name": "test bigInteract",
+    "url": "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb"
+}
+    ),
   // new TrackModel({
   //   type: "cool",
   //   name: "Aiden et al. (2009) GM06900 HINDIII 1kb",

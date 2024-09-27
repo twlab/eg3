@@ -66,6 +66,31 @@ const trackConfigMenu: { [key: string]: any } = {
       />
     );
   },
+  longrange: function longrangeConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+
+  biginteract: function biginteractConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+  repeatmasker: function repeatmaskerConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
   genomealign: function genomeAlignFetch(data: any) {
     return (
       <ConfigMenuComponent

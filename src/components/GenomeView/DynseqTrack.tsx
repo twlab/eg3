@@ -521,7 +521,10 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
 
   useEffect(() => {
     if (configChanged === true) {
-      if (!useFineModeNav) {
+      if (
+        !useFineModeNav &&
+        genomeArr![genomeIdx!].genome._name === parentGenome.current
+      ) {
         createCanvas(
           curRegionData.current.trackState,
           curRegionData.current.deDupcacheDataArr,

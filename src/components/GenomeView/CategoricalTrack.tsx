@@ -723,7 +723,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     if (configChanged === true) {
       if (
         !useFineModeNav &&
-        genomeArr![genomeIdx!].genome._name !== parentGenome.current
+        genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
         createSVGOrCanvas(
           curRegionData.current.trackState,

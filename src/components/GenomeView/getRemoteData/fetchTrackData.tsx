@@ -2,6 +2,7 @@ import _ from "lodash";
 import getTabixData from "./tabixSource";
 import getBigData from "./bigSource";
 import getCoolSource from "./CoolSource";
+import getRepeatSource from "./RepeatSource";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const trackFetchFunction: { [key: string]: any } = {
@@ -51,6 +52,22 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
   dynseq: async function dynseqFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+
+  repeatmasker: async function repeatmaskerFetch(regionData: any) {
+    return getRepeatSource(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url,
+      regionData.basesPerPixel
+    );
+  },
+  biginteract: async function biginteractFetch(regionData: any) {
     return getBigData(
       regionData.nav,
       regionData.trackModel.options,

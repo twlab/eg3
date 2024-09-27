@@ -701,7 +701,10 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   }, [trackData]);
   useEffect(() => {
     if (configChanged === true) {
-      if (!useFineModeNav) {
+      if (
+        !useFineModeNav &&
+        genomeArr![genomeIdx!].genome._name === parentGenome.current
+      ) {
         createSVGOrCanvas(
           curRegionData.current.trackState,
           curRegionData.current.deDupbedDataArr,

@@ -434,7 +434,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
         let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray);
+        let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
         viewData = deDupRefGenesArr;
         curRegionData.current = {
           trackState: fetchedDataCache.current[curIdx].trackState,
@@ -640,7 +640,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
           let refGenesArray = testData.map((item) => item.refGenes).flat(1);
 
-          let deDupRefGenesArr = removeDuplicates(refGenesArray);
+          let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
           curRegionData.current = {
             trackState: trackState1,
             deDupRefGenesArr,
@@ -667,7 +667,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
             rightIdx.current--;
             let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-            let deDupRefGenesArr = removeDuplicates(refGenesArray);
+            let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
             curRegionData.current = {
               trackState: newTrackState,
               deDupRefGenesArr,
@@ -689,7 +689,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
             leftIdx.current++;
             let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-            let deDupRefGenesArr = removeDuplicates(refGenesArray);
+            let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
             curRegionData.current = {
               trackState: trackData!.trackState,
               deDupRefGenesArr,
@@ -704,9 +704,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     if (configChanged === true) {
+      console.log(parentGenome.current, genomeArr![genomeIdx!].genome._name);
       if (
         !useFineModeNav &&
-        genomeArr![genomeIdx!].genome._name !== parentGenome.current
+        genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
         createSVGOrCanvas(
           curRegionData.current.trackState,

@@ -9,10 +9,10 @@ import OpenInterval from "../../models/OpenInterval";
 import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
 import { objToInstanceAlign } from "./TrackManager";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
-import { LongRangeTrackConfig } from "../../trackConfigs/config-menu-models.tsx/LongRangeTrackConfig";
+import { BigInteractTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigInteractTrackConfig";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
-const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
+const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   bpToPx,
   side,
   trackData,
@@ -47,28 +47,43 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   async function createCanvas(curTrackData, genesArr) {
     const algoData: any = [];
     genesArr.map((record) => {
-      const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
-      // console.log(regexMatch);
+      const regexMatch = record["rest"].match(
+        /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
+      );
+
       if (regexMatch) {
-        console.log(regexMatch);
-        const chr = regexMatch[1];
-        const start = Number.parseInt(regexMatch[2], 10);
-        const end = Number.parseInt(regexMatch[3], 10);
-        // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
-        const score = Number.parseFloat(record[3].split(",")[1]);
+        const fields = record["rest"].split("\t");
+
+        const score = parseInt(fields[1]);
+        const value = fields[2];
+        const region1Chrom = fields[5];
+        const region1Start = parseInt(fields[6]);
+        const region1End = parseInt(fields[7]);
+        const region2Chrom = fields[10];
+        const region2Start = parseInt(fields[11]);
+        const region2End = parseInt(fields[12]);
+
         const recordLocus1 = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end
+          region1Chrom,
+          region1Start,
+          region1End
         );
-        const recordLocus2 = new ChromosomeInterval(chr, start, end);
+        const recordLocus2 = new ChromosomeInterval(
+          region2Chrom,
+          region2Start,
+          region2End
+        );
         algoData.push(new GenomeInteraction(recordLocus1, recordLocus2, score));
       } else {
-        console.error(`${record[3]} not formated correctly in longrange track`);
+        console.error(
+          `${record[3]} not formated correctly in  BIGinteract track`
+        );
       }
     });
+
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
+    console.log(algoData);
     let canvasElements = (
       <InteractionTrackComponent
         data={algoData}
@@ -252,11 +267,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
     genomeArr![genomeIdx!].options = configOptions.current;
 
-    const renderer = new LongRangeTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BigInteractTrackConfig(genomeArr![genomeIdx!]);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
-    console.log(configOptions.current);
+
     let menu = trackConfigMenu[`${trackModel.type}`]({
       trackIdx,
       handleDelete,
@@ -324,4 +339,4 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     </div>
   );
 });
-export default memo(HiCTrack);
+export default memo(BigInteractTrack);

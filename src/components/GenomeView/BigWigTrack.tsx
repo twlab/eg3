@@ -519,7 +519,10 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
 
   useEffect(() => {
     if (configChanged === true) {
-      if (!useFineModeNav) {
+      if (
+        !useFineModeNav &&
+        genomeArr![genomeIdx!].genome._name === parentGenome.current
+      ) {
         createCanvas(
           curRegionData.current.trackState,
           curRegionData.current.deDupcacheDataArr,

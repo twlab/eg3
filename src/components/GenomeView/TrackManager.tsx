@@ -24,6 +24,8 @@ import { HicSource } from "./getRemoteData/hicSource";
 import HiCTrack from "./HiCTrack";
 import CategoricalTrack from "./CategoricalTrack";
 import LongrangeTrack from "./LongrangeTrack";
+import BigInteractTrack from "./BigInteractTrack";
+import RepeatMaskerTrack from "./RepeatMaskerTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -59,6 +61,8 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   cool: HiCTrack,
   categorical: CategoricalTrack,
   longrange: LongrangeTrack,
+  biginteract: BigInteractTrack,
+  repeatmasker: RepeatMaskerTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];

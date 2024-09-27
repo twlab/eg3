@@ -9,10 +9,10 @@ import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
 import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import { GeneAnnotationTrackConfig } from "./GeneAnnotationTrackConfig";
 import TrackModel from "../../models/TrackModel";
-// import { HicTrackConfig } from "./HicTrackConfig";
-// import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
+import { HicTrackConfig } from "./HicTrackConfig";
+import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
 // import { LongRangeColorTrackConfig } from "./LongRangeColorTrackConfig";
-// import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
+import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
 // import { CoolTrackConfig } from "./CoolTrackConfig";
 import { MethylCTrackConfig } from "./MethylCTrackConfig";
 // import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
@@ -61,10 +61,10 @@ const TYPE_NAME_TO_CONFIG = {
   // bedgraph: BedGraphTrackConfig,
   // bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,
-  // hic: HicTrackConfig,
-  // longrange: LongRangeTrackConfig,
+  hic: HicTrackConfig,
+  longrange: LongRangeTrackConfig,
   // longrangecolor: LongRangeColorTrackConfig,
-  // biginteract: BigInteractTrackConfig,
+  biginteract: BigInteractTrackConfig,
   // cool: CoolTrackConfig,
   geneannotation: GeneAnnotationTrackConfig,
   // refbed: RefBedTrackConfig,

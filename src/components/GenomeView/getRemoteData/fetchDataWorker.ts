@@ -79,8 +79,6 @@ self.onmessage = async (event: MessageEvent) => {
   let initNavLoci = event.data.initNavLoci;
   let useFineModeNav = event.data.useFineModeNav;
 
-  let initGenalignGenomicLoci = event.data.initGenalignGenomicLoci;
-
   genomicFetchCoord[`${primaryGenName}`] = {
     genomicLoci,
     expandGenomicLoci,
@@ -398,7 +396,11 @@ self.onmessage = async (event: MessageEvent) => {
     if ("genome" in trackModel.metadata) {
       curFetchNav =
         genomicFetchCoord[`${trackModel.metadata.genome}`].queryGenomicCoord;
-    } else if (useFineModeNav || trackModel.type === "longrange") {
+    } else if (
+      useFineModeNav ||
+      trackModel.type === "longrange" ||
+      trackModel.type === "biginteract"
+    ) {
       curFetchNav = new Array(expandGenomicLoci);
     } else if (event.data.initial === 1) {
       curFetchNav = initGenomicLoci;
@@ -427,7 +429,7 @@ self.onmessage = async (event: MessageEvent) => {
           await trackFetchFunction[trackModel.type]({
             genomeName,
             name: trackModel.name,
-
+            basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
             nav: curFetchNav[i],
             trackModel,
             trackType: trackModel.type,
