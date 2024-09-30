@@ -22,7 +22,20 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
-
+  bigbed: async function bigbedFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  refbed: async function refbedFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   bigwig: async function bigwigFetch(regionData: any) {
     return getBigData(
       regionData.nav,

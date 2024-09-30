@@ -4,7 +4,7 @@ import { BedTrackConfig } from "./BedTrackConfig";
 // import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
 // import { QBedTrackConfig } from "./QBedTrackConfig";
 import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
-// import { BigBedTrackConfig } from "./BigBedTrackConfig";
+import { BigBedTrackConfig } from "./BigBedTrackConfig";
 // import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
 import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import { GeneAnnotationTrackConfig } from "./GeneAnnotationTrackConfig";
@@ -15,10 +15,10 @@ import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
 import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
 // import { CoolTrackConfig } from "./CoolTrackConfig";
 import { MethylCTrackConfig } from "./MethylCTrackConfig";
-// import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
+import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
 import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 // import { RulerTrackConfig } from "./RulerTrackConfig";
-// import { RefBedTrackConfig } from "./RefBedTrackConfig";
+import { RefBedTrackConfig } from "./RefBedTrackConfig";
 // import { SnpTrackConfig } from "./SnpTrackConfig";
 // import { MatplotTrackConfig } from "./MatplotTrackConfig";
 // import { DynamicplotTrackConfig } from "./DynamicplotTrackConfig";
@@ -59,7 +59,7 @@ const TYPE_NAME_TO_CONFIG = {
   // qbed: QBedTrackConfig,
   categorical: CategoricalTrackConfig,
   // bedgraph: BedGraphTrackConfig,
-  // bigbed: BigBedTrackConfig,
+  bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,
   hic: HicTrackConfig,
   longrange: LongRangeTrackConfig,
@@ -67,9 +67,9 @@ const TYPE_NAME_TO_CONFIG = {
   biginteract: BigInteractTrackConfig,
   // cool: CoolTrackConfig,
   geneannotation: GeneAnnotationTrackConfig,
-  // refbed: RefBedTrackConfig,
+  refbed: RefBedTrackConfig,
   methylc: MethylCTrackConfig,
-  // repeatmasker: RepeatMaskerTrackConfig,
+  repeatmasker: RepeatMaskerTrackConfig,
   genomealign: GenomeAlignTrackConfig,
   // snp: SnpTrackConfig,
   // ruler: RulerTrackConfig,

@@ -24,7 +24,22 @@ const trackConfigMenu: { [key: string]: any } = {
       />
     );
   },
-
+  bigbed: function bedConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+  refbed: function refbedConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
   bigwig: function bigConfigMenu(data: any) {
     return (
       <ConfigMenuComponent

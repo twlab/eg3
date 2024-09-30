@@ -4,6 +4,7 @@ const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 import RefGeneTrack from "./RefGeneTrack";
 import BedTrack from "./BedTrack";
+import BigBedTrack from "./BigBedTrack";
 import BigWigTrack from "./BigWigTrack";
 import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
@@ -26,6 +27,7 @@ import CategoricalTrack from "./CategoricalTrack";
 import LongrangeTrack from "./LongrangeTrack";
 import BigInteractTrack from "./BigInteractTrack";
 import RepeatMaskerTrack from "./RepeatMaskerTrack";
+import RefBedTrack from "./RefBedTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -63,6 +65,8 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   longrange: LongrangeTrack,
   biginteract: BigInteractTrack,
   repeatmasker: RepeatMaskerTrack,
+  bigbed: BigBedTrack,
+  refbed: RefBedTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
