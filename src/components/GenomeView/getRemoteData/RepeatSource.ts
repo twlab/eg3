@@ -28,7 +28,7 @@ function getRepeatSource(loci, options, url, basesPerPixel) {
       loci.forEach((locus, index) => {
         dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
       });
-      console.log(dataForEachLocus);
+
       return _.flatten(dataForEachLocus);
     }
   }

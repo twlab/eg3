@@ -9,6 +9,7 @@ import BigWigTrack from "./BigWigTrack";
 import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
 import GenomeAlign from "./GenomeAlign";
+import MatplotTrack from "./MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
@@ -67,6 +68,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   repeatmasker: RepeatMaskerTrack,
   bigbed: BigBedTrack,
   refbed: RefBedTrack,
+  matplot: MatplotTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];

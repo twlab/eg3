@@ -36,6 +36,14 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
+  matplot: async function matplotFetch(regionData: any) {
+    console.log(regionData);
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   bigwig: async function bigwigFetch(regionData: any) {
     return getBigData(
       regionData.nav,

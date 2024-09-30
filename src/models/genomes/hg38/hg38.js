@@ -56,6 +56,38 @@ const defaultTracks = [
     },
   }),
   new TrackModel({
+    type: "matplot",
+    name: "matplot wrap",
+    tracks: [
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+        name: "MeDIP",
+        options: {
+          color: "red",
+          backgroundColor: "#FFE7AB",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MeDIP",
+        },
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+        name: "MRE",
+        options: {
+          color: "blue",
+          backgroundColor: "#C0E3CC",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MRE",
+        },
+      },
+    ],
+  }),
+  new TrackModel({
     type: "bigbed",
     name: "test bigbed",
     url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",

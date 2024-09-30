@@ -91,11 +91,10 @@ function GenomeHub(props: any) {
   // having an intial render [] will cause setGenomeList to be sent twice messing up the data because they happen at the same time because the Id get changed immdeiately
   // causing extra data to be sent
   useEffect(() => {
-    console.log(size.width, prevSize.current);
     if (Math.floor(prevSize.current) !== Math.floor(size.width)) {
       if (stateChangeCount.current === 0) {
         // second state change we set genomeList with the new size width, or if there a session data we can set it here, or if theres no data from homepage or session can set empty track, or link back to homepagea
-        console.log(size);
+
         // FOR TESTTING________________________________________________________________________________________
 
         HG38["genomeID"] = uuidv4();
@@ -107,7 +106,6 @@ function GenomeHub(props: any) {
         // uncomment this when we are done
         // getSelectedGenome(size.width);
       } else if (stateChangeCount.current > 0) {
-        console.log(size);
         // every state change after 1 will be resizing, need to get navCoord from trackmanager and set it with new genome object and new key to sent
 
         //______ for test

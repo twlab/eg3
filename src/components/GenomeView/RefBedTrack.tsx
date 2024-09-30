@@ -141,7 +141,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       refBedRecord.strand = record[5];
       return new Gene(refBedRecord);
     });
-    console.log(algoData);
+
     let featureArrange = new FeatureArranger();
 
     if (configOptions.current.displayMode === "full") {

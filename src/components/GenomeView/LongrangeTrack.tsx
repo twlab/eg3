@@ -48,9 +48,8 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     const algoData: any = [];
     genesArr.map((record) => {
       const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
-      // console.log(regexMatch);
+
       if (regexMatch) {
-        console.log(regexMatch);
         const chr = regexMatch[1];
         const start = Number.parseInt(regexMatch[2], 10);
         const end = Number.parseInt(regexMatch[3], 10);
@@ -256,7 +255,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
-    console.log(configOptions.current);
+
     let menu = trackConfigMenu[`${trackModel.type}`]({
       trackIdx,
       handleDelete,

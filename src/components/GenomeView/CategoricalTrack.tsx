@@ -462,7 +462,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      console.log(trackModel);
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[

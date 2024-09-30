@@ -127,7 +127,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
       if (fine) {
         newTrackWidth.current = curTrackData.visWidth;
       }
-      console.log(fine);
+
       let rawDataArr: Array<RepeatDASFeature> = [];
       genesArr.map((record) => {
         const regexMatch = record["rest"].match(
@@ -227,7 +227,6 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
         );
         setSvgComponents(svgDATA);
       } else if (configOptions.current.displayMode === "density") {
-        console.log(curTrackData, fine);
         let tmpObj = { ...configOptions.current };
         tmpObj.displayMode = "auto";
         let canvasElements = (
@@ -735,7 +734,6 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
             }
           }
         } else {
-          console.log("YEEEEEEET", useFineModeNav);
           //_________________________________________________________________________________________________________________________________________________
           const primaryVisData =
             trackData!.trackState.genomicFetchCoord[
@@ -885,7 +883,6 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
 
     useEffect(() => {
       if (configChanged === true) {
-        console.log(parentGenome.current, genomeArr![genomeIdx!].genome._name);
         if (
           !useFineModeNav &&
           genomeArr![genomeIdx!].genome._name === parentGenome.current

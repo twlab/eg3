@@ -159,7 +159,6 @@ export class RepeatMaskerFeature extends Feature {
    * @return {number} the repeat class ID
    */
   getCategoryId(): number {
-    console.log(this.repClass);
     return CLASS_TO_ID[this.repClass];
   }
 

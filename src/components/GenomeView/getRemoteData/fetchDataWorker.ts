@@ -378,6 +378,21 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
         });
+      } else if (trackType === "matplot") {
+        let tmpReponse = await Promise.all(
+          item.tracks.map((trackItem, index) => {
+            return event.data.initial !== 1
+              ? fetchData(trackItem, genomeName, id)[0]
+              : fetchData(trackItem, genomeName, id);
+          })
+        );
+
+        fetchResults.push({
+          name: trackType,
+          result: tmpReponse,
+          id: id,
+          metadata: item.metadata,
+        });
       } else {
         let responses: Array<any> = await fetchData(item, genomeName, id);
         fetchResults.push({

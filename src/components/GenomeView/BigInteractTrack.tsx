@@ -83,7 +83,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
 
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
-    console.log(algoData);
+
     let canvasElements = (
       <InteractionTrackComponent
         data={algoData}

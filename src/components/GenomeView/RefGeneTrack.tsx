@@ -704,7 +704,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     if (configChanged === true) {
-      console.log(parentGenome.current, genomeArr![genomeIdx!].genome._name);
       if (
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
