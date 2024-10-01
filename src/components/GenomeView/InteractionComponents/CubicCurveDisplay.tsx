@@ -91,7 +91,14 @@ export class CubicCurveDisplay extends React.PureComponent<
     // const sortedInteractions = placedInteractions.slice().sort((a, b)
     //        => b.interaction.score - a.interaction.score);
     // const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores
-    return (
+    return placedInteractions.length === 0 ? (
+      <div
+        style={{
+          width: width,
+          height: height,
+        }}
+      ></div>
+    ) : (
       <DesignRenderer
         type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
         width={width}

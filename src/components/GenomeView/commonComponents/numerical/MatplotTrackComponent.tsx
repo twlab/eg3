@@ -168,6 +168,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
   render() {
     const { data, viewRegion, width, trackModel, unit, options, forceSvg } =
       this.props;
+    console.log(data);
     const { height, aggregateMethod, smooth, lineWidth } = options;
     const aggreagatedData = data.map((d) =>
       this.aggregateFeatures(d, viewRegion, width, aggregateMethod)
@@ -256,7 +257,14 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
 
   render() {
     const { xToValue, height, width } = this.props;
-    return (
+    return xToValue.length === 0 ? (
+      <div
+        style={{
+          width: width,
+          height: height,
+        }}
+      ></div>
+    ) : (
       <DesignRenderer
         type={1 ? RenderTypes.SVG : RenderTypes.CANVAS}
         width={width}

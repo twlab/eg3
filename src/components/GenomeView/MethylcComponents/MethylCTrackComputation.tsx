@@ -318,7 +318,14 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
       bars = <g transform={transform}>{bars}</g>;
       style = undefined;
     }
-    return (
+    return data.length === 0 ? (
+      <div
+        style={{
+          width: width,
+          height: height,
+        }}
+      ></div>
+    ) : (
       <DesignRenderer
         type={htmlType}
         width={width}

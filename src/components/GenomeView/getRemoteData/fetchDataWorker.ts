@@ -380,13 +380,13 @@ self.onmessage = async (event: MessageEvent) => {
         });
       } else if (trackType === "matplot") {
         let tmpReponse = await Promise.all(
-          item.tracks.map((trackItem, index) => {
+          item.tracks.map(async (trackItem, index) => {
             return event.data.initial !== 1
-              ? fetchData(trackItem, genomeName, id)[0]
+              ? (await fetchData(trackItem, genomeName, id)).flat(1)
               : fetchData(trackItem, genomeName, id);
           })
         );
-
+        console.log(tmpReponse);
         fetchResults.push({
           name: trackType,
           result: tmpReponse,
@@ -406,6 +406,8 @@ self.onmessage = async (event: MessageEvent) => {
   );
 
   async function fetchData(trackModel, genomeName, id): Promise<Array<any>> {
+    console.log(trackModel);
+
     let responses: Array<any> = [];
     let curFetchNav;
     if ("genome" in trackModel.metadata) {

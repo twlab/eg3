@@ -407,7 +407,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   function getCacheData() {
     let viewData: Array<any> = [];
     let curIdx;
-
+    let hasdata = false;
     if (
       useFineModeNav ||
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
@@ -415,9 +415,11 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
+        hasdata = true;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = fetchedDataCache.current[dataIdx! + 1].refGenes;
         curIdx = dataIdx! + 1;
+        hasdata = true;
       }
     } else {
       if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
@@ -426,7 +428,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! - 1],
         ];
-
+        hasdata = true;
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
         viewData = [
@@ -434,11 +436,11 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           fetchedDataCache.current[dataIdx! + 1],
           fetchedDataCache.current[dataIdx! + 2],
         ];
-
+        hasdata = true;
         curIdx = dataIdx! + 2;
       }
     }
-    if (viewData.length > 0) {
+    if (hasdata) {
       curRegionData.current = {
         trackState: fetchedDataCache.current[curIdx].trackState,
         deDupRefGenesArr: viewData,
@@ -463,6 +465,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           false
         );
       } else {
+        console.log(fetchedDataCache.current[curIdx].trackState);
         createSVGOrCanvas(
           fetchedDataCache.current[curIdx].trackState,
           viewData,

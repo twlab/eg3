@@ -282,6 +282,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           colorOut={colorAboveMax}
           isDrawingBars={isDrawingBars}
           forceSvg={forceSvg}
+          width={width}
         />
         <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
         <ValuePlot
@@ -292,6 +293,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           colorOut={color2BelowMin}
           isDrawingBars={isDrawingBars}
           forceSvg={forceSvg}
+          width={width}
         />
       </React.Fragment>
     ) : (
@@ -324,6 +326,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           colorOut={colorAboveMax}
           isDrawingBars={isDrawingBars}
           forceSvg={forceSvg}
+          width={width}
         />
       </React.Fragment>
     );
@@ -338,6 +341,7 @@ interface ValueTrackProps {
   isDrawingBars?: boolean;
   colorOut?: any;
   forceSvg?: any;
+  width: any;
 }
 export class ValuePlot extends React.PureComponent<ValueTrackProps> {
   static propTypes = {
@@ -346,6 +350,7 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
     height: PropTypes.number.isRequired,
     color: PropTypes.string,
     isDrawingBars: PropTypes.bool,
+    width: PropTypes.any,
   };
 
   constructor(props) {
@@ -438,8 +443,16 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
 
   render() {
     // console.log("render in valueplot");
-    const { xToValue, height, forceSvg } = this.props;
-    return (
+    const { xToValue, height, forceSvg, width } = this.props;
+
+    return xToValue.length === 0 ? (
+      <div
+        style={{
+          width: width,
+          height: height,
+        }}
+      ></div>
+    ) : (
       <DesignRenderer
         type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
         width={xToValue.length}

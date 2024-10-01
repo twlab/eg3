@@ -173,14 +173,22 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
             options={this.props.options}
           />
         </div>
-
-        <DesignRenderer
-          type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-          width={width}
-          height={height}
-        >
-          {placedInteractions.map(this.renderRect)}
-        </DesignRenderer>
+        {placedInteractions.length === 0 ? (
+          <div
+            style={{
+              width: width,
+              height: height,
+            }}
+          ></div>
+        ) : (
+          <DesignRenderer
+            type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+            width={width}
+            height={height}
+          >
+            {placedInteractions.map(this.renderRect)}
+          </DesignRenderer>
+        )}
       </>
     );
   }

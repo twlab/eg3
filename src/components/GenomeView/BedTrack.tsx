@@ -180,6 +180,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       );
       setCanvasComponents(canvasElements);
     }
+
     if (curTrackData.initial === 1) {
       xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -390,7 +391,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   function getCacheData() {
     let viewData: Array<any> = [];
     let curIdx;
-
+    let hasData = false;
     if (
       useFineModeNav ||
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
@@ -398,9 +399,11 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
+        hasData = true;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = fetchedDataCache.current[dataIdx! + 1].cacheData;
         curIdx = dataIdx! + 1;
+        hasData = true;
       }
     } else {
       if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
@@ -409,7 +412,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! - 1],
         ];
-
+        hasData = true;
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
         viewData = [
@@ -417,11 +420,11 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           fetchedDataCache.current[dataIdx! + 1],
           fetchedDataCache.current[dataIdx! + 2],
         ];
-
+        hasData = true;
         curIdx = dataIdx! + 2;
       }
     }
-    if (viewData.length > 0) {
+    if (hasData) {
       curRegionData.current = {
         trackState: fetchedDataCache.current[curIdx].trackState,
         deDupcacheDataArr: viewData,
@@ -496,7 +499,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             trackState: createTrackState(1, "right"),
             deDupcacheDataArr: curDataArr,
           };
-
+          console.log(fetchedDataCache.current);
           createSVGOrCanvas(createTrackState(1, "right"), curDataArr, true);
         } else {
           let visRegion;
@@ -707,13 +710,14 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       ) {
         createSVGOrCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupbedDataArr,
+          curRegionData.current.deDupcacheDataArr,
           false
         );
       } else {
+        console.log("asdsads", curRegionData.current);
         createSVGOrCanvas(
           curRegionData.current.trackState,
-          curRegionData.current.deDupbedDataArr,
+          curRegionData.current.deDupcacheDataArr,
           true
         );
       }

@@ -303,13 +303,22 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
             options={options}
           />
         </div>
-        <DesignRenderer
-          type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-          width={width}
-          height={height}
-        >
-          {placedInteractions.map(this.renderArc)}
-        </DesignRenderer>
+        {this.arcData.length === 0 ? (
+          <div
+            style={{
+              width: width,
+              height: height,
+            }}
+          ></div>
+        ) : (
+          <DesignRenderer
+            type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+            width={width}
+            height={height}
+          >
+            {placedInteractions.map(this.renderArc)}
+          </DesignRenderer>
+        )}
       </>
     );
   }

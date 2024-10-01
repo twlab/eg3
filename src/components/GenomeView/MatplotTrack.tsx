@@ -96,15 +96,20 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       }
     }
 
-    let algoData = genesArr.map((record) => {
-      let newChrInt = new ChromosomeInterval(
-        record.chr,
-        record.start,
-        record.end
+    let algoData: Array<any> = [];
+    for (let i = 0; i < genesArr.length; i++) {
+      algoData.push(
+        genesArr[i].map((record) => {
+          let newChrInt = new ChromosomeInterval(
+            record.chr,
+            record.start,
+            record.end
+          );
+          return new NumericalFeature("", newChrInt).withValue(record.score);
+        })
       );
-      return new NumericalFeature("", newChrInt).withValue(record.score);
-    });
-
+    }
+    console.log(algoData);
     if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
@@ -248,8 +253,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
-        let cacheDataArray = viewData.map((item) => item.cacheData).flat(1);
-        let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
+        let deDupcacheDataArr = getDeDupeArr(viewData);
         viewData = deDupcacheDataArr;
         curRegionData.current = {
           trackState: fetchedDataCache.current[curIdx].trackState,
@@ -270,6 +274,26 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         );
       }
     }
+  }
+  function getDeDupeArr(data: Array<any>) {
+    let tempMap = new Map<number, any[]>();
+
+    data.forEach((data) => {
+      data.cacheData.forEach((featArr, j) => {
+        if (tempMap.has(j)) {
+          tempMap.get(j)!.push(featArr);
+        } else {
+          tempMap.set(j, [featArr]);
+        }
+      });
+    });
+
+    let deDupcacheDataArr: Array<any> = [];
+    tempMap.forEach((value, key) => {
+      deDupcacheDataArr.push(removeDuplicatesWithoutId(value.flat(1)));
+    });
+
+    return deDupcacheDataArr;
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
@@ -298,8 +322,9 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
             startWindow: primaryVisData.viewWindow.start,
             visWidth: primaryVisData.visWidth,
           });
+          console.log(trackData![`${id}`].result);
           fetchedDataCache.current[rightIdx.current] = {
-            cacheData: trackData![`${id}`].result[0],
+            cacheData: trackData![`${id}`].result.flat(1),
             trackState: createTrackState(1, "right"),
           };
           rightIdx.current--;
@@ -441,24 +466,8 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
             fetchedDataCache.current[0],
             fetchedDataCache.current[-1],
           ];
-          let tempObj = {};
-          for (let i = 0; i < testData.length; i++) {
-            for (let j = 0; j < testData[i].cacheData.length; j++) {
-              let featArr = testData[i].cacheData[j];
 
-              if (tempObj[j]) {
-                tempObj[j].push(featArr);
-              } else {
-                tempObj[j] = new Array(featArr);
-              }
-            }
-          }
-          let deDupcacheDataArr: Array<any> = [];
-          for (let feat in tempObj) {
-            deDupcacheDataArr.push(
-              removeDuplicatesWithoutId(tempObj[`${feat}`].flat(1))
-            );
-          }
+          let deDupcacheDataArr = getDeDupeArr(testData);
           curRegionData.current = {
             trackState: trackState1,
             deDupcacheDataArr,
@@ -474,17 +483,21 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           if (trackData!.trackState.side === "right") {
             trackData!.trackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              cacheData: trackData![`${id}`].result,
+              cacheData: trackData![`${id}`].result.map((item, index) => {
+                return item;
+              }),
               trackState: newTrackState,
             };
+
             let currIdx = rightIdx.current + 2;
             for (let i = 0; i < 3; i++) {
               testData.push(fetchedDataCache.current[currIdx]);
               currIdx--;
             }
             rightIdx.current--;
-            let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
-            let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
+
+            let deDupcacheDataArr = getDeDupeArr(testData);
+
             curRegionData.current = {
               trackState: newTrackState,
               deDupcacheDataArr,
@@ -494,7 +507,9 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              cacheData: trackData![`${id}`].result,
+              cacheData: trackData![`${id}`].result.map((item, index) => {
+                return item;
+              }),
               trackState: newTrackState,
             };
             let currIdx = leftIdx.current - 2;
@@ -503,8 +518,9 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
               currIdx++;
             }
             leftIdx.current++;
-            let cacheDataArray = testData.map((item) => item.cacheData).flat(1);
-            let deDupcacheDataArr = removeDuplicatesWithoutId(cacheDataArray);
+
+            let deDupcacheDataArr = getDeDupeArr(testData);
+
             curRegionData.current = {
               trackState: trackData!.trackState,
               deDupcacheDataArr,
