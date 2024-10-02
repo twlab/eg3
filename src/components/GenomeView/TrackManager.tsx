@@ -1,7 +1,8 @@
 import { memo, useEffect, useRef, useState } from "react";
-
+import { decode } from "@msgpack/msgpack";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
+import { inflate } from "pako";
 import RefGeneTrack from "./RefGeneTrack";
 import BedTrack from "./BedTrack";
 import BigBedTrack from "./BigBedTrack";
@@ -11,7 +12,6 @@ import MethylcTrack from "./MethylcTrack";
 import GenomeAlign from "./GenomeAlign";
 import MatplotTrack from "./MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
-
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 
@@ -140,7 +140,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     return total;
   }
+  async function fetchG3dData(url: string) {
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { Range: "bytes=0-63999" },
+        redirect: "follow",
+        mode: "cors",
+      });
 
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch data from ${url}. Status: ${response.status}`
+        );
+      }
+
+      const buffer = response.arrayBuffer();
+      return buffer;
+    } catch (error) {
+      console.error("Error fetching G3D data:", error);
+      throw error; // Rethrow the error for the caller to handle
+    }
+  }
   function handleMove(e) {
     if (!isDragging.current || isLoading.current) {
       return;
@@ -243,8 +264,58 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left");
     }
   }
-
+  function getPackSize(buffer) {
+    let i = buffer.length;
+    for (; i--; i >= 0) {
+      if (buffer[i] !== 0x00) {
+        return i + 1;
+      }
+    }
+    return i;
+  }
   async function fetchGenomeData(initial: number = 0, trackSide) {
+    const g3dUrl = "https://target.wustl.edu/dli/tmp/test2.g3d";
+
+    const g3dBuffer = await fetchG3dData(g3dUrl);
+
+    const buffer = new Uint8Array(g3dBuffer);
+    const size1 = getPackSize(buffer);
+    const newBuffer = buffer.slice(0, size1);
+    const header: any = decode(newBuffer);
+    const magic = header.magic;
+    const genome = header.genome;
+    const version = header.version;
+    const resolutions = header.resolutions;
+    const name = header.name;
+    const offsets = header.offsets;
+
+    // Meta data for the g3d file
+    let meta = {
+      magic,
+      genome,
+      version,
+      resolutions,
+      name,
+      offsets,
+    };
+    const resdata = meta.offsets[200000];
+    const { offset, size } = resdata;
+    const rangeString = "bytes=" + offset + "-" + (offset + size - 1);
+
+    const responses: any = await fetch(g3dUrl, {
+      method: "GET",
+      headers: { Range: `${rangeString}` },
+      redirect: "follow",
+      mode: "cors",
+    });
+    let responseBuiffer = await responses.arrayBuffer();
+    console.log(responses);
+    const bufferd = new Uint8Array(responseBuiffer);
+    const unzippedd = inflate(bufferd);
+
+    console.log(unzippedd);
+    const datass = decode(unzippedd);
+    console.log(datass);
     if (initial === 0 || initial === 1) {
       let curFetchRegionNav;
       let tempObj = {};

@@ -386,7 +386,7 @@ self.onmessage = async (event: MessageEvent) => {
               : fetchData(trackItem, genomeName, id);
           })
         );
-        console.log(tmpReponse);
+
         fetchResults.push({
           name: trackType,
           result: tmpReponse,
@@ -406,8 +406,6 @@ self.onmessage = async (event: MessageEvent) => {
   );
 
   async function fetchData(trackModel, genomeName, id): Promise<Array<any>> {
-    console.log(trackModel);
-
     let responses: Array<any> = [];
     let curFetchNav;
     if ("genome" in trackModel.metadata) {

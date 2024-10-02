@@ -465,7 +465,6 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           false
         );
       } else {
-        console.log(fetchedDataCache.current[curIdx].trackState);
         createSVGOrCanvas(
           fetchedDataCache.current[curIdx].trackState,
           viewData,

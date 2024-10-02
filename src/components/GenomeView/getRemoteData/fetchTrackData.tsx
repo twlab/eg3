@@ -37,7 +37,6 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
   matplot: async function matplotFetch(regionData: any) {
-    console.log(regionData);
     return getTabixData(
       regionData.nav,
       regionData.trackModel.options,

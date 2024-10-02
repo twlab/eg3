@@ -109,7 +109,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         })
       );
     }
-    console.log(algoData);
+
     if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
@@ -322,7 +322,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
             startWindow: primaryVisData.viewWindow.start,
             visWidth: primaryVisData.visWidth,
           });
-          console.log(trackData![`${id}`].result);
+
           fetchedDataCache.current[rightIdx.current] = {
             cacheData: trackData![`${id}`].result.flat(1),
             trackState: createTrackState(1, "right"),

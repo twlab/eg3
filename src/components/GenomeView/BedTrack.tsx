@@ -499,7 +499,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             trackState: createTrackState(1, "right"),
             deDupcacheDataArr: curDataArr,
           };
-          console.log(fetchedDataCache.current);
+
           createSVGOrCanvas(createTrackState(1, "right"), curDataArr, true);
         } else {
           let visRegion;
@@ -714,7 +714,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           false
         );
       } else {
-        console.log("asdsads", curRegionData.current);
         createSVGOrCanvas(
           curRegionData.current.trackState,
           curRegionData.current.deDupcacheDataArr,
