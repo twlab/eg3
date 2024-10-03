@@ -38,6 +38,7 @@ const genome = new Genome("hg38", [
 // //27195171-27202238
 //chr7:26805572-26825594
 // big interact chr3:63836292-64336395
+// https://target.wustl.edu/dli/tmp/test2.g3d
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [

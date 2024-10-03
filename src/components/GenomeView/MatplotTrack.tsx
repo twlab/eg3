@@ -4,22 +4,22 @@ import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
 
 import OpenInterval from "../../models/OpenInterval";
-import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
 import "./TrackContextMenu.css";
 import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
+import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import test from "node:test";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
+  ...defaultMatplot,
 };
 DEFAULT_OPTIONS.aggregateMethod = "MEAN";
 DEFAULT_OPTIONS.displayMode = "density";
