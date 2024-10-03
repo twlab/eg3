@@ -2,6 +2,9 @@ import LabelConfig from "../config-menu-components.tsx/LabelConfig";
 import { TrackModel, TrackOptions } from "../../models/TrackModel";
 
 export class TrackConfig {
+  isBigwigTrack() {
+    throw new Error("Method not implemented.");
+  }
   public defaultOptions: TrackOptions;
 
   constructor(public trackModel: TrackModel) {

@@ -10,7 +10,7 @@ import _ from "lodash";
 // import * as THREE from "three";
 import rgba from "color-rgba";
 import ChromosomeInterval from "./ChromosomeInterval";
-// import axios from "axios";
+import fetch from "isomorphic-fetch";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 interface Coordinate {
   x: number;
@@ -357,17 +357,29 @@ export function arraysEqual(a: any[], b: any[]) {
   return true;
 }
 
-// export const getSymbolRegions = async (genomeName: string, symbol: string) => {
-//   const params = {
-//     q: symbol,
-//     getOnlyNames: false,
-//   };
+export const getSymbolRegions = async (genomeName: string, symbol: string) => {
+  const params = {
+    q: symbol,
+    getOnlyNames: false,
+  };
 
-//   const response = await axios.get(`${AWS_API}/${genomeName}/genes/queryName`, {
-//     params: params,
-//   });
-//   return response.data;
-// };
+  const url = new URL(`${AWS_API}/${genomeName}/genes/queryName`);
+  Object.keys(params).forEach((key) =>
+    url.searchParams.append(key, params[key])
+  );
+
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    throw error;
+  }
+};
 
 export const safeParseJsonString = (str: string) => {
   try {

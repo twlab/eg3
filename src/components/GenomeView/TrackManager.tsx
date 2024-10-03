@@ -29,6 +29,7 @@ import LongrangeTrack from "./LongrangeTrack";
 import BigInteractTrack from "./BigInteractTrack";
 import RepeatMaskerTrack from "./RepeatMaskerTrack";
 import RefBedTrack from "./RefBedTrack";
+import * as $3Dmol from "3dmol/build/3Dmol.js";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -245,6 +246,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   async function fetchGenomeData(initial: number = 0, trackSide) {
+    console.log(window);
     const g3dUrl = "https://target.wustl.edu/dli/tmp/test2.g3d";
 
     const file = new G3dFile({ url: g3dUrl });
