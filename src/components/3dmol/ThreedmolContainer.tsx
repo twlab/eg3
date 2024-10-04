@@ -5,7 +5,7 @@ import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 // import axios from "axios";
 import percentile from "percentile";
-
+import G3dFile from "../GenomeView/getRemoteData/g3dFileV2";
 import Drawer from "rc-drawer";
 import TrackModel from "../../models/TrackModel";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
@@ -52,8 +52,6 @@ import {
 
 import "rc-drawer/assets/index.css";
 import "./ThreedmolContainer.css";
-
-const unzip = util.promisify(zlib.unzip);
 
 /**
  * the container for holding 3D structure rendered by 3Dmol.js
@@ -1408,7 +1406,8 @@ class ThreedmolContainer extends React.Component<
   };
 
   updateLegendColor = (k, color) => {
-    this.setState(k, color);
+    const curState: any = { [k]: color };
+    this.setState(curState);
   };
 
   updateResolution = (resolution) => {
@@ -3182,10 +3181,7 @@ class ThreedmolContainer extends React.Component<
             placement={this.state.placement}
             width={this.state.width}
             height={this.state.height}
-            level={null}
             open={childShow}
-            handler={false}
-            showMask={false}
           >
             <div
               id="accordion"

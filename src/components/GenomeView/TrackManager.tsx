@@ -29,7 +29,7 @@ import LongrangeTrack from "./LongrangeTrack";
 import BigInteractTrack from "./BigInteractTrack";
 import RepeatMaskerTrack from "./RepeatMaskerTrack";
 import RefBedTrack from "./RefBedTrack";
-import * as $3Dmol from "3dmol/build/3Dmol.js";
+
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
