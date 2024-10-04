@@ -3,10 +3,12 @@ import PropTypes from "prop-types";
 import fetch from "isomorphic-fetch";
 import _ from "lodash";
 import OpenInterval from "../../../models/OpenInterval";
-import { MAX_NUMBER_THUMBNAILS, THUMBNAIL_PADDING } from "./OmeroTrack";
+
 import { ensureMaxListLength } from "../../../models/util";
 import TrackModel from "../../../models/TrackModel";
+export const MAX_NUMBER_THUMBNAILS = 384; // image number of 1 run in idr web UI
 
+export const THUMBNAIL_PADDING = 2;
 export const CORS_PROXY = "https://epigenome.wustl.edu/cors";
 interface ImageProperties {
   viewWindow: any;

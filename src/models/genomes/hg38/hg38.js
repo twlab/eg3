@@ -40,7 +40,7 @@ const genome = new Genome("hg38", [
 // big interact chr3:63836292-64336395
 // https://target.wustl.edu/dli/tmp/test2.g3d
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27195171-27202238");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "refbed",
@@ -88,6 +88,13 @@ const defaultTracks = [
       },
     ],
   }),
+
+    new TrackModel({
+    "type": "g3d",
+    "url": "https://target.wustl.edu/dli/tmp/test2.g3d",
+    "name": "example 3d track",
+    "showOnHubLoad": true
+}),
   new TrackModel({
     type: "bigbed",
     name: "test bigbed",
@@ -112,6 +119,7 @@ const defaultTracks = [
     type: "geneAnnotation",
     name: "refGene",
     genome: "mm10",
+    metadata: {genome: "mm10"}
   }),
   new TrackModel({
     type: "bed",

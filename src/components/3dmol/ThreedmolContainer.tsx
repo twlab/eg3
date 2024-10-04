@@ -92,7 +92,7 @@ interface ComponentState {
   resolutions: any[]; // Replace 'any' with a more specific type if known
   resolution: number;
   message: string;
-  modelDisplayConfig: any; // Replace 'any' with a more specific type if known
+  modelDisplayConfig: { [key: string]: boolean }; // Replace 'any' with a more specific type if known
   highlightingOn: boolean;
   highlightingColor: string;
   highlightingColorChanged: boolean;
@@ -145,7 +145,7 @@ interface ComponentState {
 }
 interface ComponentProps {
   onToggleSync3d?: any;
-  sync3d: any;
+  sync3d?: any;
   tracks: TrackModel[];
   g3dtrack: TrackModel;
   viewRegion: DisplayedRegionModel;
@@ -334,6 +334,7 @@ class ThreedmolContainer extends React.Component<
 
   async componentDidMount() {
     const { width, height, viewRegion, g3dtrack } = this.props;
+    console.log(this.props);
     this.setState({ mainBoxHeight: height, mainBoxWidth: width });
     const features = viewRegion.getNavigationContext().getFeatures();
     features.forEach(
@@ -424,6 +425,7 @@ class ThreedmolContainer extends React.Component<
       spinSpeed,
       spinReverse,
     } = this.state;
+    console.log(modelDisplayConfig);
     const { width, height } = this.props;
     const halftWidth = width! * 0.5;
     if (
@@ -516,8 +518,10 @@ class ThreedmolContainer extends React.Component<
       this.removeHover();
       await this.prepareAtomData();
     }
+
     if (highlightingOn !== prevState.highlightingOn) {
       if (highlightingOn) {
+        console.log("EEEEEEEEEEEEEE");
         this.highlightRegions();
       } else {
         this.removeHighlightRegions();
@@ -1053,6 +1057,7 @@ class ThreedmolContainer extends React.Component<
     const { viewRegion, genomeConfig } = this.props;
     const regions = viewRegion.getFeatureSegments();
     const navContext = genomeConfig.navContext;
+    console.log(regions, navContext);
     // console.log(regions);
     return regions.map((region) => {
       if (navContext.hasFeatureWithName(region.feature)) {
@@ -1120,7 +1125,7 @@ class ThreedmolContainer extends React.Component<
       atoms2 = this.atomData[resString];
     } else {
       const data = await this.g3dFile.readData(resolution);
-      console.log(data, "hi");
+
       atoms2 = g3dParser(data, this.setAtomClickable);
       // atoms = this.assginAtomsCallbacks(atoms2);
       // this.atomData[resString] = [atoms2, atoms];
@@ -1146,15 +1151,17 @@ class ThreedmolContainer extends React.Component<
         });
       });
     }
+
     const modelDisplayConfig = {};
     Object.keys(atoms2).forEach((hap) => (modelDisplayConfig[hap] = true));
-    this.setState({ modelDisplayConfig });
+
     Object.keys(atoms2).forEach((hap) => {
       this.model2[hap] = this.viewer2.addModel();
       this.model2[hap].addAtoms(atoms2[hap]);
       this.model[hap] = this.viewer.addModel();
       this.model[hap].addAtoms(atoms2[hap]);
     });
+    this.setState({ modelDisplayConfig: { ...modelDisplayConfig } });
 
     // get max/min of x, y, z
     const xS: Array<any> = [],
@@ -1219,7 +1226,7 @@ class ThreedmolContainer extends React.Component<
     // element.style.border='1px red solid';
     // element2.style.border='1px black solid';
 
-    this.highlightRegions();
+    this.highlightRegions(modelDisplayConfig);
 
     this.setState({
       message: "",
@@ -1414,7 +1421,7 @@ class ThreedmolContainer extends React.Component<
     this.setState({ resolution });
   };
 
-  highlightRegions = () => {
+  highlightRegions = (tmpModelDisplayConfig = null) => {
     const {
       highlightStyle,
       highlightingColor,
@@ -1424,6 +1431,12 @@ class ThreedmolContainer extends React.Component<
       modelDisplayConfig,
       showEnvelop,
     } = this.state;
+    let curModelDisplayConfig;
+    if (tmpModelDisplayConfig !== null) {
+      curModelDisplayConfig = tmpModelDisplayConfig;
+    } else {
+      curModelDisplayConfig = modelDisplayConfig;
+    }
     const regions = this.viewRegionToRegions();
     // console.log(regions);
     // const colorByRegion = function (atom, region) {
@@ -1439,7 +1452,7 @@ class ThreedmolContainer extends React.Component<
     // };
     const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
     const resString = resolution.toString();
-    Object.keys(modelDisplayConfig).forEach((hap) => {
+    Object.keys(curModelDisplayConfig).forEach((hap) => {
       regionRange[hap] = {};
       regions.forEach((reg) => {
         const leftResi = getClosestValueIndex(
@@ -1483,7 +1496,7 @@ class ThreedmolContainer extends React.Component<
           };
     let validateRegion = false;
     // console.log(regionRange);
-    Object.keys(modelDisplayConfig).forEach((hap) => {
+    Object.keys(curModelDisplayConfig).forEach((hap) => {
       regions.forEach((region) => {
         if (
           regionRange[hap][region.chrom][0] !== undefined &&
@@ -1509,6 +1522,7 @@ class ThreedmolContainer extends React.Component<
       if (showEnvelop && this.envelop) {
         this.updateEnvelop(false);
       }
+      console.log("HIIIII");
       this.viewer.render();
     } else {
       this.setState({
@@ -3171,9 +3185,7 @@ class ThreedmolContainer extends React.Component<
       selectedSet,
       genomeConfig,
     } = this.props;
-    const bwTracks = tracks.filter((track) =>
-      getTrackConfig(track).isBigwigTrack()
-    );
+    const bwTracks = tracks.filter((track) => {});
     return (
       <div id="threed-mol-container">
         {childShow && (

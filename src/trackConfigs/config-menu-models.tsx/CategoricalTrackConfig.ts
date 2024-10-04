@@ -5,7 +5,14 @@ import { BackgroundColorConfig } from "../config-menu-components.tsx/ColorConfig
 import HiddenPixelsConfig from "../config-menu-components.tsx/HiddenPixelsConfig";
 import MaxRowsConfig from "../config-menu-components.tsx/MaxRowsConfig";
 import TrackModel from "../../models/TrackModel";
-import { DEFAULT_OPTIONS } from "../../components/GenomeView/CategoricalComponents/CategoricalTrack";
+export const DEFAULT_OPTIONS = {
+  height: 20,
+  color: "blue",
+  maxRows: 1,
+  hiddenPixels: 0.5,
+  alwaysDrawLabel: false,
+  category: {},
+};
 
 enum BedColumnIndex {
   CATEGORY = 3,
