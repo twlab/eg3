@@ -13,7 +13,7 @@ import MatplotTrack from "./MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
-import G3dFile from "./getRemoteData/g3dFileV2";
+
 import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
@@ -69,7 +69,6 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   bigbed: BigBedTrack,
   refbed: RefBedTrack,
   matplot: MatplotTrack,
-  g3d: ThreedmolContainer,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -120,14 +119,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const dragX = useRef(0);
   const isLoading = useRef(true);
   const lastDragX = useRef(0);
+  const isThereG3dTrack = useRef(false);
   const side = useRef("right");
+  const isDragging = useRef(false);
+  const rightSectionSize = useRef<Array<any>>([windowWidth]);
+  const leftSectionSize = useRef<Array<any>>([]);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [initialStart, setInitialStart] = useState(true);
-  const isDragging = useRef(false);
-  const rightSectionSize = useRef<Array<any>>([windowWidth]);
-  const leftSectionSize = useRef<Array<any>>([]);
+  const [windowRegion, setWindowRegion] = useState<DisplayedRegionModel>();
+  const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
@@ -147,8 +149,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (!isDragging.current || isLoading.current) {
       return;
     }
-    const rectInfo = g3dRect.current!.getBoundingClientRect();
-    const blockinfo = block.current!.getBoundingClientRect();
 
     const deltaX = lastX.current - e.pageX;
     lastX.current = e.pageX;
@@ -219,6 +219,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     startBp(genomeCoordLocus.toString(), curBp, curBp + bpRegionSize.current);
     setCurRegion(genomeCoordLocus);
+    setWindowRegion(
+      new DisplayedRegionModel(
+        genomeArr[genomeIdx].navContext,
+        curBp,
+        curBp + bpRegionSize.current
+      )
+    );
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
     if (dragX.current > 0 && side.current === "right") {
@@ -301,6 +308,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         );
         minBp.current = minBp.current - bpRegionSize.current;
         maxBp.current = maxBp.current + bpRegionSize.current * 2;
+        setWindowRegion(curFetchRegionNav);
         //________________________________________________________________________________________________________________
       } else {
         if (trackSide === "right") {
@@ -535,12 +543,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             );
           }
         } else {
+          isThereG3dTrack.current = true;
           let newG3dComponent: Array<any> = [];
           const uniqueKeyG3d = uuidv4();
           genome.defaultTracks[i]["id"] = uniqueKeyG3d;
           newG3dComponent.push({
             id: uniqueKeyG3d,
-            component: componentMap[genome.defaultTracks[i].type],
+            component: ThreedmolContainer,
 
             trackModel: genome.defaultTracks[i],
           });
@@ -637,8 +646,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               // full windowwidth will make canvas only loop 0-windowidth
               // the last value will have no data.
               // so we have to subtract from the size of the canvas
-              // width: `${windowWidth - 1}px`,
-              width: `${fullWindowWidth / 2}px`,
+              width: `${windowWidth - 1}px`,
+              // width: `${fullWindowWidth / 2}px`,
               // height: "2000px",
               overflowX: "hidden",
               overflowY: "hidden",
@@ -682,15 +691,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     onCloseConfigMenu={onCloseConfigMenu}
                     trackIdx={index}
                     trackManagerRef={block}
+                    setShow3dGene={setShow3dGene}
+                    isThereG3dTrack={isThereG3dTrack.current}
                   />
                 );
               })}
             </div>
           </div>
-
+          {/* 
           <div
             ref={g3dRect}
             style={{
+              display: "flex",
               width: `${fullWindowWidth / 2}px`,
               backgroundColor: "blue",
             }}
@@ -699,26 +711,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               const rectInfo = g3dRect.current!.getBoundingClientRect();
 
               let Component = item.component;
-              if (trackData.trackState) {
+              if (windowRegion) {
                 return (
                   <Component
                     //infinitescroll type track data
                     key={item.id}
                     tracks={genomeArr[genomeIdx].defaultTracks}
                     g3dtrack={item.trackModel}
-                    viewRegion={trackData.trackState.regionNavCoord}
+                    viewRegion={windowRegion}
                     width={rectInfo.width}
-                    height={1000}
+                    height={rectInfo.height}
                     x={rectInfo.x}
                     y={rectInfo.y}
                     genomeConfig={genomeArr[genomeIdx]}
+                    geneFor3d={show3dGene}
                   />
                 );
               } else {
                 return "";
               }
             })}
-          </div>
+          </div> */}
         </div>
       </div>
       {configMenuVisible ? configMenu : ""}

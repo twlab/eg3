@@ -13,7 +13,6 @@ import { LongRangeTrackConfig } from "../../trackConfigs/config-menu-models.tsx/
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
-  bpToPx,
   side,
   trackData,
   trackIdx,

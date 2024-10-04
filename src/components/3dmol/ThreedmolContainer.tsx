@@ -1,6 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
-
 import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 // import axios from "axios";
@@ -10,7 +8,6 @@ import Drawer from "rc-drawer";
 import TrackModel from "../../models/TrackModel";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import GeneSearchBox3D from "../GenomeView/genomeNavigator/GeneSearchBox3D";
 // import { BigwigSource } from "./BigwigSource";
 import { CORS_PROXY } from "../GenomeView/imageTrackComponents/OmeroSvgVisualizer";
@@ -52,6 +49,8 @@ import {
 
 import "rc-drawer/assets/index.css";
 import "./ThreedmolContainer.css";
+import { inflate } from "pako";
+import { BigwigSource } from "./BigwigSource";
 
 /**
  * the container for holding 3D structure rendered by 3Dmol.js
@@ -92,7 +91,7 @@ interface ComponentState {
   resolutions: any[]; // Replace 'any' with a more specific type if known
   resolution: number;
   message: string;
-  modelDisplayConfig: { [key: string]: boolean }; // Replace 'any' with a more specific type if known
+  modelDisplayConfig: { [key: string]: boolean } | null; // Replace 'any' with a more specific type if known
   highlightingOn: boolean;
   highlightingColor: string;
   highlightingColorChanged: boolean;
@@ -168,15 +167,6 @@ class ThreedmolContainer extends React.Component<
   ComponentProps,
   ComponentState
 > {
-  static propTypes = {
-    tracks: PropTypes.arrayOf(PropTypes.instanceOf(TrackModel)).isRequired,
-    g3dtrack: PropTypes.instanceOf(TrackModel).isRequired, // g3d track id to get g3d track to render
-    viewRegion: PropTypes.instanceOf(DisplayedRegionModel).isRequired,
-    width: PropTypes.number,
-    height: PropTypes.number,
-    x: PropTypes.number, // x position to left screen from flex layout
-    y: PropTypes.number, // y position
-  };
   mol: any;
   viewer: any;
   viewer2: any;
@@ -209,7 +199,6 @@ class ThreedmolContainer extends React.Component<
   constructor(props) {
     super(props);
     this.mol = $3Dmol;
-    // this.mol.Parsers.g3d = g3dParser;
     this.viewer = null;
     this.viewer2 = null;
     this.model = {}; // hap as key, model as value
@@ -320,7 +309,7 @@ class ThreedmolContainer extends React.Component<
       showEnvelop: false,
       envelopColor: "grey",
       envelopOpacity: "0.3",
-      spinning: true,
+      spinning: false,
       spinDirection: "y",
       spinSpeed: 1,
       spinReverse: false,
@@ -334,7 +323,6 @@ class ThreedmolContainer extends React.Component<
 
   async componentDidMount() {
     const { width, height, viewRegion, g3dtrack } = this.props;
-    console.log(this.props);
     this.setState({ mainBoxHeight: height, mainBoxWidth: width });
     const features = viewRegion.getNavigationContext().getFeatures();
     features.forEach(
@@ -373,7 +361,6 @@ class ThreedmolContainer extends React.Component<
       resolutions: this.g3dFile.meta.resolutions,
       resolution: reso,
     });
-    this.viewer.spin(this.state.spinDirection, this.state.spinSpeed);
   }
 
   async componentDidUpdate(prevProps, prevState) {
@@ -425,7 +412,6 @@ class ThreedmolContainer extends React.Component<
       spinSpeed,
       spinReverse,
     } = this.state;
-    console.log(modelDisplayConfig);
     const { width, height } = this.props;
     const halftWidth = width! * 0.5;
     if (
@@ -521,7 +507,6 @@ class ThreedmolContainer extends React.Component<
 
     if (highlightingOn !== prevState.highlightingOn) {
       if (highlightingOn) {
-        console.log("EEEEEEEEEEEEEE");
         this.highlightRegions();
       } else {
         this.removeHighlightRegions();
@@ -1378,7 +1363,9 @@ class ThreedmolContainer extends React.Component<
   toggleModelDisplay = (hap) => {
     const newDisplayConfig = {
       ...this.state.modelDisplayConfig,
-      [hap]: !this.state.modelDisplayConfig[hap],
+      [hap]: this.state.modelDisplayConfig
+        ? !this.state.modelDisplayConfig[hap]
+        : "",
     };
     // console.log(newDisplayConfig, hap);
     if (newDisplayConfig[hap]) {
@@ -1421,7 +1408,7 @@ class ThreedmolContainer extends React.Component<
     this.setState({ resolution });
   };
 
-  highlightRegions = (tmpModelDisplayConfig = null) => {
+  highlightRegions = (tmpModelDisplayConfig: any = null) => {
     const {
       highlightStyle,
       highlightingColor,
@@ -1522,7 +1509,7 @@ class ThreedmolContainer extends React.Component<
       if (showEnvelop && this.envelop) {
         this.updateEnvelop(false);
       }
-      console.log("HIIIII");
+
       this.viewer.render();
     } else {
       this.setState({
@@ -1713,34 +1700,38 @@ class ThreedmolContainer extends React.Component<
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
-      Object.keys(modelDisplayConfig).forEach((hap) => {
-        regionRange[hap] = {};
-        regions.forEach((reg) => {
-          const leftResi = getClosestValueIndex(
-            this.atomStartsByChrom[resString][hap][reg.chrom],
-            reg.start
-          )[1];
-          const rightResi = getClosestValueIndex(
-            this.atomStartsByChrom[resString][hap][reg.chrom],
-            reg.end
-          )[0];
-          regionRange[hap][reg.chrom] = [leftResi, rightResi];
-        });
-      });
-      Object.keys(modelDisplayConfig).forEach((hap) => {
-        queryChroms.forEach((chrom) => {
-          if (
-            regionRange[hap][chrom][0] !== undefined &&
-            regionRange[hap][chrom][1] !== undefined
-          ) {
-            const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
-            this.viewer!.setStyle(
-              { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
-              usedHighlightStyle
-            );
-          }
-        });
-      });
+      Object.keys(modelDisplayConfig ? modelDisplayConfig : {}).forEach(
+        (hap) => {
+          regionRange[hap] = {};
+          regions.forEach((reg) => {
+            const leftResi = getClosestValueIndex(
+              this.atomStartsByChrom[resString][hap][reg.chrom],
+              reg.start
+            )[1];
+            const rightResi = getClosestValueIndex(
+              this.atomStartsByChrom[resString][hap][reg.chrom],
+              reg.end
+            )[0];
+            regionRange[hap][reg.chrom] = [leftResi, rightResi];
+          });
+        }
+      );
+      Object.keys(modelDisplayConfig ? modelDisplayConfig : {}).forEach(
+        (hap) => {
+          queryChroms.forEach((chrom) => {
+            if (
+              regionRange[hap][chrom][0] !== undefined &&
+              regionRange[hap][chrom][1] !== undefined
+            ) {
+              const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
+              this.viewer!.setStyle(
+                { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
+                usedHighlightStyle
+              );
+            }
+          });
+        }
+      );
     } else {
       queryChroms.forEach((chrom) => {
         this.viewer!.setStyle({ chain: chrom }, usedHighlightStyle);
@@ -1915,8 +1906,14 @@ class ThreedmolContainer extends React.Component<
     //     : {};
     // console.log(headers);
     try {
-      const response = await axios.get(url, { responseType: "arraybuffer" });
-      const buffer = Buffer.from(response.data);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {},
+        redirect: "follow",
+        mode: "cors",
+      });
+      let responseBuffer = await response.arrayBuffer();
+      const buffer = new Uint8Array(responseBuffer);
       //  console.log(buffer)
       let dataString;
       // if (response.headers["content-type"] === "text/plain") {
@@ -1924,7 +1921,7 @@ class ThreedmolContainer extends React.Component<
         // text file...amazon s3 for gzipped file also return text in headers...
         dataString = buffer.toString();
       } else {
-        const unzipped = await unzip(buffer);
+        const unzipped = await inflate(buffer);
         dataString = unzipped.toString();
       }
       return dataString.split("\n");
@@ -1940,8 +1937,8 @@ class ThreedmolContainer extends React.Component<
       const gzipFile = /gzip/;
       let dataString;
       if (fileobj.type.match(gzipFile)) {
-        const zipped = await readFileAsBuffer(fileobj);
-        const unzipped = await unzip(zipped);
+        const zipped: any = await readFileAsBuffer(fileobj);
+        const unzipped = inflate(zipped);
         dataString = unzipped.toString();
       } else {
         dataString = await readFileAsText(fileobj);
@@ -2485,34 +2482,38 @@ class ThreedmolContainer extends React.Component<
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
-      Object.keys(modelDisplayConfig).forEach((hap) => {
-        regionRange[hap] = {};
-        regions.forEach((reg) => {
-          const leftResi = getClosestValueIndex(
-            this.atomStartsByChrom[resString][hap][reg.chrom],
-            reg.start
-          )[1];
-          const rightResi = getClosestValueIndex(
-            this.atomStartsByChrom[resString][hap][reg.chrom],
-            reg.end
-          )[0];
-          regionRange[hap][reg.chrom] = [leftResi, rightResi];
-        });
-      });
-      Object.keys(modelDisplayConfig).forEach((hap) => {
-        queryChroms.forEach((chrom) => {
-          if (
-            regionRange[hap][chrom][0] !== undefined &&
-            regionRange[hap][chrom][1] !== undefined
-          ) {
-            const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
-            this.viewer.setStyle(
-              { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
-              usedHighlightStyle
-            );
-          }
-        });
-      });
+      Object.keys(modelDisplayConfig ? modelDisplayConfig : {}).forEach(
+        (hap) => {
+          regionRange[hap] = {};
+          regions.forEach((reg) => {
+            const leftResi = getClosestValueIndex(
+              this.atomStartsByChrom[resString][hap][reg.chrom],
+              reg.start
+            )[1];
+            const rightResi = getClosestValueIndex(
+              this.atomStartsByChrom[resString][hap][reg.chrom],
+              reg.end
+            )[0];
+            regionRange[hap][reg.chrom] = [leftResi, rightResi];
+          });
+        }
+      );
+      Object.keys(modelDisplayConfig ? modelDisplayConfig : {}).forEach(
+        (hap) => {
+          queryChroms.forEach((chrom) => {
+            if (
+              regionRange[hap][chrom][0] !== undefined &&
+              regionRange[hap][chrom][1] !== undefined
+            ) {
+              const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
+              this.viewer.setStyle(
+                { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
+                usedHighlightStyle
+              );
+            }
+          });
+        }
+      );
     } else {
       queryChroms.forEach((chrom) => {
         this.viewer.setStyle({ chain: chrom }, usedHighlightStyle);

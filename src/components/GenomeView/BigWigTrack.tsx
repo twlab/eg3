@@ -47,7 +47,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const [svgComponents, setSvgComponents] = useState<any>();
+
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);

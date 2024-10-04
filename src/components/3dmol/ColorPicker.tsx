@@ -4,8 +4,8 @@ import { SketchPicker } from "react-color";
 import colorParse from "color-parse";
 
 interface ColorPickerProp {
-  onUpdateLegendColor: any;
-  colorKey: any;
+  onUpdateLegendColor?: any;
+  colorKey?: any;
   getChangedColor?: any;
   clickDisabled?: any;
   fullWidth?: any;

@@ -56,7 +56,7 @@ class NavigationContext {
    * @param {boolean} isGenome - whether the context covers the entire genome
    * @throws {Error} if the feature list has a problem
    */
-  constructor(name: string, features: Feature[]) {
+  constructor(name: string, features: Array<any>) {
     this._name = name;
     this._features = features;
     this._minCoordinateForFeature = new Map();

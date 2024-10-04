@@ -16,6 +16,7 @@ import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
 import HoverToolTip from "../hoverToolTips/hoverToolTip";
 import { BackgroundColorConfig } from "../../../../trackConfigs/config-menu-components.tsx/ColorConfig";
+import TrackLegend from "../TrackLegend";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data: Feature[]; // Replace 'Feature' with the actual type of your data
@@ -251,6 +252,17 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
     this.scales = this.computeScales(this.xToValue, this.xToValue2, height);
     const isDrawingBars =
       this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap\
+    console.log(isDrawingBars ? this.scales.axisScale : undefined, unit);
+    const legend = (
+      <TrackLegend
+        trackModel={trackModel}
+        height={height}
+        axisScale={isDrawingBars ? this.scales.axisScale : undefined}
+        // axisScale={isDrawingBars ? this.scales.valueToY : undefined}
+        // axisScaleReverse={isDrawingBars ? this.scales.valueToYReverse : undefined}
+        axisLegend={unit}
+      />
+    );
     const visualizer = this.hasReverse ? (
       <React.Fragment>
         <div
@@ -262,6 +274,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             zIndex: 3,
           }}
         >
+          {legend}
           <HoverToolTip
             data={this.xToValue}
             data2={this.xToValue2}
@@ -307,6 +320,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             zIndex: 3,
           }}
         >
+          {legend}
           <HoverToolTip
             data={this.xToValue}
             windowWidth={width}

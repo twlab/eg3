@@ -1,5 +1,4 @@
-import React from "react";
-// import {EyeIcon, EyeClosedIcon} from '@primer/octicons-react';
+import { EyeIcon, EyeClosedIcon } from "@primer/octicons-react";
 
 export const ModelListMenu = (props) => {
   const { modelDisplay, onToggleModelDisplay } = props;

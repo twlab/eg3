@@ -1,9 +1,9 @@
 import React from "react";
-// import { notify } from "react-notify-toast";
-// import ChromosomeInterval from "../../../model/interval/ChromosomeInterval";
-// import Feature from "../../../model/Feature";
-// import RegionSet from "../../../model/RegionSet";
-// import FlankingStrategy from "../../../model/FlankingStrategy";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
+import Feature from "../../models/Feature";
+// import { notify } from "react-notify-toast"
+import RegionSet from "../../models/RegionSet";
+import FlankingStrategy from "../../models/FlankingStrategy";
 
 export const HoverInfo = ({
   atom,
@@ -31,7 +31,7 @@ export const HoverInfo = ({
     if (interval) {
       onNewViewRegion(...interval);
     } else {
-      notify.show("Region not available for this atom", "error", 2000);
+      console.log("Region not available for this atom", "error", 2000);
     }
   };
 

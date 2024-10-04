@@ -13,7 +13,6 @@ import { DEFAULT_OPTIONS as defaultDynseq } from "./MethylcComponents/MethylCTra
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import Feature, { NumericalFeature } from "../../models/Feature";
 
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
 import { MethylCTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MethylCTrackConfig";
@@ -42,11 +41,11 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   useFineModeNav,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
-  const svgHeight = useRef(0);
+
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
-  const prevDataIdx = useRef(0);
+
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");

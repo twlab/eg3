@@ -53,6 +53,8 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   trackIdx,
   id,
   useFineModeNav,
+  setShow3dGene,
+  isThereG3dTrack,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -304,6 +306,22 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
                   collectionName={name}
                   queryEndpoint={{}}
                 />
+                {isThereG3dTrack ? (
+                  <div>
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => setShow3dGene(gene)}
+                    >
+                      Show in 3D
+                    </button>
+                    {/* {" "}
+                    <button className="btn btn-sm btn-secondary" onClick={this.clearGene3d}>
+                        Clear in 3D
+                    </button> */}
+                  </div>
+                ) : (
+                  ""
+                )}
               </OutsideClickDetector>
               {ReactDOM.createPortal(
                 <div

@@ -2,6 +2,8 @@ import { BigWig } from "@gmod/bbi";
 import { RemoteFile } from "generic-filehandle";
 
 export class BigwigSource {
+  url: any;
+  bw: BigWig;
   constructor(url) {
     this.url = url;
     // const headers = this.url.includes("4dnucleome")

@@ -13,7 +13,6 @@ import { BigInteractTrackConfig } from "../../trackConfigs/config-menu-models.ts
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
-  bpToPx,
   side,
   trackData,
   trackIdx,

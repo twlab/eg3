@@ -24,6 +24,8 @@ import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/co
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import TrackLegend from "./commonComponents/TrackLegend";
+import Track from "./commonComponents/Track";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -53,6 +55,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackIdx,
   id,
   useFineModeNav,
+  setShow3dGene,
+  isThereG3dTrack,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -61,6 +66,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
   const xPos = useRef(0);
+  const trackBox = useRef<HTMLInputElement>(null);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
@@ -70,6 +76,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
+  const [legend, setLegend] = useState<any>();
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -125,11 +132,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         );
       }
     }
+    console.log(trackBox.current?.getClientRects());
 
     let algoData = genesArr.map((record) => new Gene(record));
     let featureArrange = new FeatureArranger();
-
     if (configOptions.current.displayMode === "full") {
+      //FullDisplayMode part from eg2
       let placeFeatureData = await featureArrange.arrange(
         algoData,
         fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav,
@@ -139,7 +147,23 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         sortType
       );
       const height = getHeight(placeFeatureData.numRowsAssigned);
+      if (height !== svgHeight.current) {
+        setLegend(
+          <div
+            style={{
+              width: "100px",
+              backgroundColor: "lightblue",
+              zIndex: 1000,
+              position: "absolute",
+            }}
+          >
+            <TrackLegend height={height} trackModel={trackModel} />
+          </div>
+        );
+      }
+
       svgHeight.current = height;
+
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         fine ? curTrackData.visWidth : windowWidth * 3,
@@ -148,6 +172,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         configOptions.current.maxRows,
         configOptions.current
       );
+
       setSvgComponents(svgDATA);
     } else if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
@@ -197,6 +222,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     maxRows,
     options
   ) {
+    // FullVisualizer class from eg2
     function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
       const maxRowIndex = (maxRows || Infinity) - 1;
       // Compute y
@@ -228,6 +254,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       </svg>
     );
   }
+  // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
   function getAnnotationElement(placedGroup, y, isLastRow, index) {
     const gene = placedGroup.feature;
 
@@ -289,6 +316,22 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                   collectionName={name}
                   queryEndpoint={{}}
                 />
+                {isThereG3dTrack ? (
+                  <div>
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => setShow3dGene(gene)}
+                    >
+                      Show in 3D
+                    </button>
+                    {/* {" "}
+                    <button className="btn btn-sm btn-secondary" onClick={this.clearGene3d}>
+                        Clear in 3D
+                    </button> */}
+                  </div>
+                ) : (
+                  ""
+                )}
               </OutsideClickDetector>
               {ReactDOM.createPortal(
                 <div
@@ -355,7 +398,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     genomeArr![genomeIdx!].options = configOptions.current;
 
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
-
+    console.log(event.pageY);
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
@@ -735,64 +778,57 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
+      ref={trackBox}
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-
-        flexDirection: "column",
+        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
+        // other elements will overlapp
+        height:
+          configOptions.current.displayMode === "full"
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
+        position: "relative",
       }}
-      onContextMenu={renderConfigMenu}
     >
-      <div
-        style={{
-          display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height:
-            configOptions.current.displayMode === "full"
-              ? svgHeight.current + 2
-              : configOptions.current.height + 2,
-          position: "relative",
-        }}
-      >
-        {configOptions.current.displayMode === "full" ? (
+      {configOptions.current.displayMode === "full" ? (
+        <div
+          style={{
+            borderTop: "1px solid Dodgerblue",
+            borderBottom: "1px solid Dodgerblue",
+            position: "absolute",
+            lineHeight: 0,
+            right: side === "left" ? `${xPos.current}px` : "",
+            left: side === "right" ? `${xPos.current}px` : "",
+            backgroundColor: configOptions.current.backgroundColor,
+          }}
+        >
+          {svgComponents}
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            position: "relative",
+            height: configOptions.current.height,
+          }}
+        >
           <div
             style={{
               borderTop: "1px solid Dodgerblue",
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
-              lineHeight: 0,
-              right: side === "left" ? `${xPos.current}px` : "",
-              left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
+              left: side === "right" ? `${xPos.current}px` : "",
+              right: side === "left" ? `${xPos.current}px` : "",
             }}
           >
-            {svgComponents}
+            {canvasComponents}
           </div>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              position: "relative",
-              height: configOptions.current.height,
-            }}
-          >
-            <div
-              style={{
-                borderTop: "1px solid Dodgerblue",
-                borderBottom: "1px solid Dodgerblue",
-                position: "absolute",
-                backgroundColor: configOptions.current.backgroundColor,
-                left: side === "right" ? `${xPos.current}px` : "",
-                right: side === "left" ? `${xPos.current}px` : "",
-              }}
-            >
-              {canvasComponents}
-            </div>
-          </div>
-        )}
-
-        {toolTipVisible ? toolTip : ""}
-      </div>
+        </div>
+      )}
+      {toolTipVisible ? toolTip : ""}
+      {legend}
     </div>
   );
 });

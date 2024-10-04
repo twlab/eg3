@@ -24,4 +24,6 @@ export interface TrackProps {
   onCloseConfigMenu: () => void;
   useFineModeNav: boolean;
   trackManagerRef: any;
+  setShow3dGene: any;
+  isThereG3dTrack: boolean;
 }
