@@ -13,7 +13,7 @@ import MatplotTrack from "./MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
-
+import useResizeObserver from "./Resize";
 import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
@@ -111,6 +111,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
+  const prevSize = useRef<any>(0);
+
   const hicStrawObj = useRef<{ [key: string]: any }>({});
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
@@ -124,10 +126,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const isDragging = useRef(false);
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
   const leftSectionSize = useRef<Array<any>>([]);
+  const boxSizeChange = useRef<boolean>(false);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-  const [initialStart, setInitialStart] = useState(true);
+  const [trackBoxPosition, setTrackBoxPosition] = useState<Array<any> | null>(
+    null
+  );
+  const [initialStart, setInitialStart] = useState("workerNotReady");
   const [windowRegion, setWindowRegion] = useState<DisplayedRegionModel>();
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
@@ -486,7 +492,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return index !== id;
       });
     });
-
+    boxSizeChange.current = true;
     setConfigMenuVisible(false);
   }
   function getConfigMenu(htmlElement: any) {
@@ -510,9 +516,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       console.log("trackmanager terminate");
     };
   }, []);
+  useEffect(() => {
+    if (boxSizeChange.current) {
+      const rects: Array<any> = [];
+      const children = block.current!.children;
+
+      Array.from(children).map((child) => {
+        const rect = child.getBoundingClientRect();
+        rects.push({
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+          pageY: rect.top + window.scrollY,
+        });
+      });
+
+      setTrackBoxPosition([...rects]);
+    }
+    boxSizeChange.current = false;
+  }, [trackComponents]);
 
   useEffect(() => {
-    if (!initialStart) {
+    if (initialStart === "workerReady") {
       // go through genome defaultTrack to see what track components we need and give each component
       // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
       let genome = genomeArr[genomeIdx];
@@ -560,6 +588,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
+
   useEffect(() => {
     if (trackManagerId.current === "") {
       // on initial and when our genome data changes we set the default values here
@@ -579,7 +608,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
-      if (initialStart) {
+      if (initialStart === "workerNotReady") {
         worker.current = new Worker(
           new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url),
           {
@@ -592,7 +621,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             type: "module",
           }
         );
-        setInitialStart(false);
+        setInitialStart("workerReady");
       }
       trackManagerId.current = genome.id;
     }
@@ -670,9 +699,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             >
               {trackComponents.map((item, index) => {
                 let Component = item.component;
+
                 return (
                   <Component
-                    //infinitescroll type track data
                     key={item.id}
                     id={item.id}
                     trackModel={item.trackModel}
@@ -693,6 +722,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     trackManagerRef={block}
                     setShow3dGene={setShow3dGene}
                     isThereG3dTrack={isThereG3dTrack.current}
+                    trackBoxPosition={trackBoxPosition}
                   />
                 );
               })}

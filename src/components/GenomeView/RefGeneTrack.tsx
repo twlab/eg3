@@ -25,8 +25,7 @@ import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/Track
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
-import Track from "./commonComponents/Track";
-
+import useResizeObserver from "./Resize";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -58,19 +57,22 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   setShow3dGene,
   isThereG3dTrack,
   trackManagerRef,
+  trackBoxPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
+  const boxXpos = useRef(0);
+  const boxRef = useRef<HTMLInputElement>(null);
+  const updateLegend = useRef<any>(null);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
   const xPos = useRef(0);
-  const trackBox = useRef<HTMLInputElement>(null);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const [svgComponents, setSvgComponents] = useState<any>();
+  const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
@@ -132,7 +134,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         );
       }
     }
-    console.log(trackBox.current?.getClientRects());
 
     let algoData = genesArr.map((record) => new Gene(record));
     let featureArrange = new FeatureArranger();
@@ -147,22 +148,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         sortType
       );
       const height = getHeight(placeFeatureData.numRowsAssigned);
-      if (height !== svgHeight.current) {
-        setLegend(
-          <div
-            style={{
-              width: "100px",
-              backgroundColor: "lightblue",
-              zIndex: 1000,
-              position: "absolute",
-            }}
-          >
-            <TrackLegend height={height} trackModel={trackModel} />
-          </div>
-        );
-      }
 
       svgHeight.current = height;
+
+      updateLegend.current = (
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      );
 
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
@@ -508,6 +499,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -617,6 +609,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ];
 
         if (trackData!.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -744,7 +737,25 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     }
   }, [trackData]);
+  useEffect(() => {
+    if (trackBoxPosition) {
+      let curTrackPos = trackBoxPosition[trackIdx];
 
+      let legendEle = ReactDOM.createPortal(
+        <div
+          style={{
+            position: "absolute",
+            left: boxXpos.current,
+            top: curTrackPos.pageY,
+          }}
+        >
+          {updateLegend.current ? updateLegend.current : ""}
+        </div>,
+        document.body
+      );
+      setLegend(legendEle);
+    }
+  }, [trackBoxPosition]);
   useEffect(() => {
     if (configChanged === true) {
       if (
@@ -767,6 +778,25 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setConfigChanged(false);
   }, [configChanged]);
   useEffect(() => {
+    if (svgComponents) {
+      let boxPos = boxRef.current!.getBoundingClientRect();
+      let legendEle = ReactDOM.createPortal(
+        <div
+          style={{
+            position: "absolute",
+            left: boxXpos.current,
+            top: boxPos.top + window.scrollY,
+          }}
+        >
+          {updateLegend.current ? updateLegend.current : ""}
+        </div>,
+        document.body
+      );
+      setLegend(legendEle);
+    }
+  }, [svgComponents]);
+
+  useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
@@ -778,7 +808,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
-      ref={trackBox}
+      ref={boxRef}
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
@@ -791,6 +821,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         position: "relative",
       }}
     >
+      {legend}
       {configOptions.current.displayMode === "full" ? (
         <div
           style={{
@@ -804,6 +835,19 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           }}
         >
           {svgComponents}
+          <div
+            style={{
+              width: "100px",
+              backgroundColor: "lightblue",
+              zIndex: 1000,
+              position: "fixed",
+              top: 0,
+              left: 0,
+            }}
+          >
+            {" "}
+            {legend}
+          </div>
         </div>
       ) : (
         <div

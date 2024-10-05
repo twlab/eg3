@@ -26,4 +26,6 @@ export interface TrackProps {
   trackManagerRef: any;
   setShow3dGene: any;
   isThereG3dTrack: boolean;
+
+  trackBoxPosition: Array<any>;
 }
