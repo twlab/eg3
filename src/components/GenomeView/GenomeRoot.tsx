@@ -228,17 +228,18 @@ function GenomeHub(props: any) {
   }, [size]);
 
   return (
-    <div data-theme={"light"}>
+    <div
+      ref={ref as React.RefObject<HTMLDivElement>}
+      style={{
+        paddingLeft: "1%",
+        paddingRight: "2%",
+      }}
+      data-theme={"light"}
+    >
       {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
-      <div
-        ref={ref as React.RefObject<HTMLDivElement>}
-        style={{
-          paddingLeft: "79px",
-          paddingRight: "70px",
-        }}
-      ></div>
+
       {genomeList.map((item, index) => (
         <TrackManager
           key={item.genomeID}

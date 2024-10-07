@@ -128,9 +128,10 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
           .filter((d, i) => i === 2)
           .attr("dy", "-0.1em");
       }
-      select(this.gNode).selectAll("text").attr("class", "svg-text-bg");
-      select(this.gNode).selectAll("line").attr("class", "svg-line-bg");
-      select(this.gNode).selectAll("path").attr("class", "svg-line-bg");
+
+      select(this.gNode).selectAll("text").attr("class", "svg-text-bg2");
+      select(this.gNode).selectAll("line").attr("class", "svg-line-bg2");
+      select(this.gNode).selectAll("path").attr("class", "svg-line-bg2");
     }
   }
 
@@ -192,7 +193,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
         <svg
           width={AXIS_WIDTH}
           height={axisHeight}
-          style={{ overflow: "visible" }}
+          style={{ overflow: "visible", backgroundColor: "#ffffff" }}
         >
           <TranslatableG innerRef={this.handleRef} x={AXIS_WIDTH - 1} />
         </svg>

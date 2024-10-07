@@ -26,6 +26,8 @@ import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
 import useResizeObserver from "./Resize";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
+import { NumericalFeature } from "../../models/Feature";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -58,6 +60,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   isThereG3dTrack,
   trackManagerRef,
   trackBoxPosition,
+  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -66,8 +69,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const boxXpos = useRef(0);
   const boxRef = useRef<HTMLInputElement>(null);
   const updateLegend = useRef<any>(null);
+  const updateLegendCanvas = useRef<any>(null);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
+  const prevBoxHeight = useRef<any>(0);
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
@@ -135,9 +140,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     }
 
-    let algoData = genesArr.map((record) => new Gene(record));
-    let featureArrange = new FeatureArranger();
     if (configOptions.current.displayMode === "full") {
+      let algoData = genesArr.map((record) => new Gene(record));
+      let featureArrange = new FeatureArranger();
       //FullDisplayMode part from eg2
       let placeFeatureData = await featureArrange.arrange(
         algoData,
@@ -166,8 +171,22 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       setSvgComponents(svgDATA);
     } else if (configOptions.current.displayMode === "density") {
+      let algoData = genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chrom,
+          record.txStart,
+          record.txEnd
+        );
+        return new NumericalFeature("", newChrInt).withValue(record.score);
+      });
+
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
+
+      function getNumLegend(legend: TrackLegend) {
+        updateLegendCanvas.current = legend;
+      }
+
       let canvasElements = (
         <NumericalTrack
           data={algoData}
@@ -181,6 +200,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           width={fine ? curTrackData.visWidth : windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
+          getNumLegend={getNumLegend}
         />
       );
       setCanvasComponents(canvasElements);
@@ -389,7 +409,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     genomeArr![genomeIdx!].options = configOptions.current;
 
     const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
-    console.log(event.pageY);
+
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
@@ -739,21 +759,40 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [trackData]);
   useEffect(() => {
     if (trackBoxPosition) {
-      let curTrackPos = trackBoxPosition[trackIdx];
-
-      let legendEle = ReactDOM.createPortal(
-        <div
-          style={{
-            position: "absolute",
-            left: boxXpos.current,
-            top: curTrackPos.pageY,
-          }}
-        >
-          {updateLegend.current ? updateLegend.current : ""}
-        </div>,
-        document.body
-      );
-      setLegend(legendEle);
+      if (configOptions.current.displayMode === "full" && svgComponents) {
+        let boxPos = boxRef.current!.getBoundingClientRect();
+        let legendEle = ReactDOM.createPortal(
+          <div
+            style={{
+              position: "absolute",
+              left: boxXpos.current,
+              top: boxPos.top + window.scrollY,
+            }}
+          >
+            {updateLegend.current ? updateLegend.current : ""}
+          </div>,
+          document.body
+        );
+        setLegend(legendEle);
+      } else if (
+        configOptions.current.displayMode === "density" &&
+        canvasComponents
+      ) {
+        let boxPos = boxRef.current!.getBoundingClientRect();
+        let legendEle = ReactDOM.createPortal(
+          <div
+            style={{
+              position: "absolute",
+              left: boxXpos.current,
+              top: boxPos.top + window.scrollY,
+            }}
+          >
+            {updateLegendCanvas.current ? updateLegendCanvas.current : ""}
+          </div>,
+          document.body
+        );
+        setLegend(legendEle);
+      }
     }
   }, [trackBoxPosition]);
   useEffect(() => {
@@ -775,10 +814,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         );
       }
     }
-    setConfigChanged(false);
   }, [configChanged]);
   useEffect(() => {
-    if (svgComponents) {
+    if (
+      configChanged === true &&
+      prevBoxHeight.current !== boxRef.current!.getBoundingClientRect().height
+    ) {
+      getLegendPosition();
+    } else if (configOptions.current.displayMode === "full" && svgComponents) {
       let boxPos = boxRef.current!.getBoundingClientRect();
       let legendEle = ReactDOM.createPortal(
         <div
@@ -793,8 +836,28 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         document.body
       );
       setLegend(legendEle);
+    } else if (
+      configOptions.current.displayMode === "density" &&
+      canvasComponents
+    ) {
+      let boxPos = boxRef.current!.getBoundingClientRect();
+      let legendEle = ReactDOM.createPortal(
+        <div
+          style={{
+            position: "absolute",
+            left: boxXpos.current,
+            top: boxPos.top + window.scrollY,
+          }}
+        >
+          {updateLegendCanvas.current ? updateLegendCanvas.current : ""}
+        </div>,
+        document.body
+      );
+      setLegend(legendEle);
     }
-  }, [svgComponents]);
+    setConfigChanged(false);
+    prevBoxHeight.current = boxRef.current!.getBoundingClientRect().height;
+  }, [svgComponents, canvasComponents]);
 
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
@@ -821,7 +884,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         position: "relative",
       }}
     >
-      {legend}
       {configOptions.current.displayMode === "full" ? (
         <div
           style={{
@@ -835,19 +897,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           }}
         >
           {svgComponents}
-          <div
-            style={{
-              width: "100px",
-              backgroundColor: "lightblue",
-              zIndex: 1000,
-              position: "fixed",
-              top: 0,
-              left: 0,
-            }}
-          >
-            {" "}
-            {legend}
-          </div>
         </div>
       ) : (
         <div

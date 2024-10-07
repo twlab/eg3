@@ -16,5 +16,6 @@ interface TranslatableGProps extends SVGProps<SVGGElement> {
 export function TranslatableG(props: TranslatableGProps) {
   const { x, y, innerRef, ...remainingProps } = props;
   const transform = x || y ? `translate(${x || 0} ${y || 0})` : undefined;
+
   return <g ref={innerRef} transform={transform} {...remainingProps} />;
 }

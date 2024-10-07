@@ -260,7 +260,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left");
     }
   }
+  function getLegendPosition() {
+    const rects: Array<any> = [];
+    const children = block.current!.children;
 
+    Array.from(children).map((child) => {
+      const rect = child.getBoundingClientRect();
+      rects.push({
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        pageY: rect.top + window.scrollY,
+      });
+    });
+
+    setTrackBoxPosition([...rects]);
+  }
   async function fetchGenomeData(initial: number = 0, trackSide) {
     if (initial === 0 || initial === 1) {
       let curFetchRegionNav;
@@ -518,23 +536,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, []);
   useEffect(() => {
     if (boxSizeChange.current) {
-      const rects: Array<any> = [];
-      const children = block.current!.children;
-
-      Array.from(children).map((child) => {
-        const rect = child.getBoundingClientRect();
-        rects.push({
-          left: rect.left,
-          top: rect.top,
-          right: rect.right,
-          bottom: rect.bottom,
-          width: rect.width,
-          height: rect.height,
-          pageY: rect.top + window.scrollY,
-        });
-      });
-
-      setTrackBoxPosition([...rects]);
+      getLegendPosition();
     }
     boxSizeChange.current = false;
   }, [trackComponents]);
@@ -723,6 +725,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     setShow3dGene={setShow3dGene}
                     isThereG3dTrack={isThereG3dTrack.current}
                     trackBoxPosition={trackBoxPosition}
+                    getLegendPosition={getLegendPosition}
                   />
                 );
               })}

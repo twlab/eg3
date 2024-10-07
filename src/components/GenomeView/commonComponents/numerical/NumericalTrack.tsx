@@ -30,6 +30,7 @@ interface NumericalTrackProps {
   viewRegion: any;
   width: any;
   forceSvg: any;
+  getNumLegend?: any;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -60,29 +61,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
   /**
    * Don't forget to look at NumericalFeatureProcessor's propTypes!
    */
-  static propTypes = Object.assign(
-    {},
-    {
-      /**
-       * NumericalFeatureProcessor provides these.  Parents should provide an array of NumericalFeature.
-       */
-      data: PropTypes.array.isRequired, // PropTypes.arrayOf(Feature)
-      unit: PropTypes.string, // Unit to display after the number in tooltips
-      options: PropTypes.shape({
-        aggregateMethod: PropTypes.oneOf(
-          Object.values(DefaultAggregators.types)
-        ),
-        displayMode: PropTypes.oneOf(Object.values(NumericalDisplayModes))
-          .isRequired,
-        height: PropTypes.number.isRequired, // Height of the track
-        // scaleType: PropTypes.any, // Unused for now
-        // scaleRange: PropTypes.array, // Unused for now
-        color: PropTypes.string, // Color to draw bars, if using the default getBarElement
-      }).isRequired,
-      isLoading: PropTypes.bool, // If true, applies loading styling
-      error: PropTypes.any, // If present, applies error styling
-    }
-  );
+
   xToValue: any;
   xToValue2: any;
   scales: any;
@@ -235,8 +214,16 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
 
   render() {
     // console.log("render");
-    const { data, viewRegion, width, trackModel, unit, options, forceSvg } =
-      this.props;
+    const {
+      data,
+      viewRegion,
+      width,
+      trackModel,
+      unit,
+      options,
+      forceSvg,
+      getNumLegend,
+    } = this.props;
     const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
     const xvalues = this.aggregator.xToValueMaker(
@@ -252,7 +239,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
     this.scales = this.computeScales(this.xToValue, this.xToValue2, height);
     const isDrawingBars =
       this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap\
-    console.log(isDrawingBars ? this.scales.axisScale : undefined, unit);
+
     const legend = (
       <TrackLegend
         trackModel={trackModel}
@@ -263,6 +250,11 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
         axisLegend={unit}
       />
     );
+
+    if (getNumLegend) {
+      getNumLegend(legend);
+    }
+
     const visualizer = this.hasReverse ? (
       <React.Fragment>
         <div
@@ -274,7 +266,6 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             zIndex: 3,
           }}
         >
-          {legend}
           <HoverToolTip
             data={this.xToValue}
             data2={this.xToValue2}
@@ -320,7 +311,6 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             zIndex: 3,
           }}
         >
-          {legend}
           <HoverToolTip
             data={this.xToValue}
             windowWidth={width}
