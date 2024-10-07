@@ -16,6 +16,8 @@ import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
+import TrackLegend from "./commonComponents/TrackLegend";
+import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -37,6 +39,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackIdx,
   id,
   useFineModeNav,
+  trackManagerRef,
+  trackBoxPosition,
+  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -47,8 +52,14 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
+  const boxXpos = useRef(0);
+  const boxRef = useRef<HTMLInputElement>(null);
+  const updateLegendCanvas = useRef<any>(null);
+  const prevBoxHeight = useRef<any>(0);
+  const [legend, setLegend] = useState<any>();
 
   const [canvasComponents, setCanvasComponents] = useState<any>();
+
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
 
@@ -105,26 +116,29 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       return new NumericalFeature("", newChrInt).withValue(record.score);
     });
 
-    if (configOptions.current.displayMode === "density") {
-      let tmpObj = { ...configOptions.current };
-      tmpObj.displayMode = "auto";
-      let canvasElements = (
-        <NumericalTrack
-          data={algoData}
-          options={tmpObj}
-          viewWindow={
-            new OpenInterval(0, fine ? curTrackData.visWidth : windowWidth * 3)
-          }
-          viewRegion={
-            fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
-          }
-          width={fine ? curTrackData.visWidth : windowWidth * 3}
-          forceSvg={false}
-          trackModel={trackModel}
-        />
-      );
-      setCanvasComponents(canvasElements);
+    function getNumLegend(legend: TrackLegend) {
+      updateLegendCanvas.current = legend;
     }
+    let tmpObj = { ...configOptions.current };
+    tmpObj.displayMode = "auto";
+    let canvasElements = (
+      <NumericalTrack
+        data={algoData}
+        options={tmpObj}
+        viewWindow={
+          new OpenInterval(0, fine ? curTrackData.visWidth : windowWidth * 3)
+        }
+        viewRegion={
+          fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
+        }
+        width={fine ? curTrackData.visWidth : windowWidth * 3}
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+      />
+    );
+    setCanvasComponents(canvasElements);
+
     if (curTrackData.initial === 1) {
       xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -271,6 +285,28 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       }
     }
   }
+  function updateTrackLegend() {
+    let boxPos = boxRef.current!.getBoundingClientRect();
+    let legendEle;
+    if (canvasComponents) {
+      legendEle = updateLegendCanvas.current;
+    }
+    let curLegendEle = ReactDOM.createPortal(
+      <div
+        style={{
+          position: "absolute",
+          left: boxXpos.current,
+          top: boxPos.top + window.scrollY,
+        }}
+      >
+        {legendEle ? legendEle : ""}
+      </div>,
+      document.body
+    );
+
+    prevBoxHeight.current = boxPos.height;
+    setLegend(curLegendEle);
+  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -280,6 +316,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -389,6 +426,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           ];
 
         if (trackData!.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -536,8 +574,22 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         );
       }
     }
-    setConfigChanged(false);
   }, [configChanged]);
+  useEffect(() => {
+    if (trackBoxPosition) {
+      updateTrackLegend();
+    }
+  }, [trackBoxPosition]);
+  useEffect(() => {
+    let curBox = boxRef.current!.getBoundingClientRect().height;
+    if (configChanged === true && prevBoxHeight.current !== curBox) {
+      getLegendPosition();
+      prevBoxHeight.current = curBox;
+    } else {
+      updateTrackLegend();
+    }
+    setConfigChanged(false);
+  }, [canvasComponents]);
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
@@ -549,43 +601,27 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
+      ref={boxRef}
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-
-        flexDirection: "column",
+        position: "relative",
+        height: configOptions.current.height + 2,
       }}
-      onContextMenu={renderConfigMenu}
     >
       <div
         style={{
-          display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height: configOptions.current.height + 2,
-          position: "relative",
+          borderTop: "1px solid Dodgerblue",
+          borderBottom: "1px solid Dodgerblue",
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: side === "right" ? `${xPos.current}px` : "",
+          right: side === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            position: "relative",
-            height: configOptions.current.height,
-          }}
-        >
-          <div
-            style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: side === "right" ? `${xPos.current}px` : "",
-              right: side === "left" ? `${xPos.current}px` : "",
-            }}
-          >
-            {canvasComponents}
-          </div>
-        </div>
+        {canvasComponents}
       </div>
+      {legend}
     </div>
   );
 });

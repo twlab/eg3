@@ -39,8 +39,9 @@ const genome = new Genome("hg38", [
 //chr7:26805572-26825594
 // big interact chr3:63836292-64336395
 // https://target.wustl.edu/dli/tmp/test2.g3d
+// chr7:74083652-74084068 dynseq cromorsome
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:74083652-74084068");
 const defaultTracks = [
   new TrackModel({
     type: "refbed",
@@ -88,18 +89,20 @@ const defaultTracks = [
       },
     ],
   }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  // }),
 
-  new TrackModel({
-    type: "g3d",
-    url: "https://target.wustl.edu/dli/tmp/test2.g3d",
-    name: "example 3d track",
-    showOnHubLoad: true,
-  }),
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
   new TrackModel({
     type: "geneAnnotation",
     name: "refGene",
@@ -158,14 +161,6 @@ const defaultTracks = [
   //   },
   // }),
 
-  // new TrackModel({
-  //   type: "hic",
-  //   name: "test hic",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //   // "options": {
-  //   //     "displayMode": "arc"
-  //   // }
-  // }),
   new TrackModel({
     name: "hg38tomm10",
     label: "Query mouse mm10 to hg38 blastz",
@@ -203,11 +198,11 @@ const defaultTracks = [
   //   name: "ES-E14 ChIA-PET",
   //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
   // }),
-  // new TrackModel({
-  //   type: "biginteract",
-  //   name: "test bigInteract",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
-  // }),
+  new TrackModel({
+    type: "biginteract",
+    name: "test bigInteract",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
+  }),
   // new TrackModel({
   //   type: "cool",
   //   name: "Aiden et al. (2009) GM06900 HINDIII 1kb",

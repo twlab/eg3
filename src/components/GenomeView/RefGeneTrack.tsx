@@ -784,11 +784,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
   }, [trackData]);
   useEffect(() => {
-    if (trackBoxPosition) {
-      updateTrackLegend();
-    }
-  }, [trackBoxPosition]);
-  useEffect(() => {
     if (configChanged === true) {
       if (
         !useFineModeNav &&
@@ -808,6 +803,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     }
   }, [configChanged]);
+
+  useEffect(() => {
+    if (trackBoxPosition) {
+      updateTrackLegend();
+    }
+  }, [trackBoxPosition]);
   useEffect(() => {
     let curBox = boxRef.current!.getBoundingClientRect().height;
     if (configChanged === true && prevBoxHeight.current !== curBox) {

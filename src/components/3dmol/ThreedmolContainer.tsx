@@ -1042,7 +1042,7 @@ class ThreedmolContainer extends React.Component<
     const { viewRegion, genomeConfig } = this.props;
     const regions = viewRegion.getFeatureSegments();
     const navContext = genomeConfig.navContext;
-    console.log(regions, navContext);
+
     // console.log(regions);
     return regions.map((region) => {
       if (navContext.hasFeatureWithName(region.feature)) {

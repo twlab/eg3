@@ -10,9 +10,10 @@ import LinearDrawingModel from "../../../models/LinearDrawingModel";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import NavigationContext from "../../../models/NavigationContext";
 import { FeaturePlacer } from "../../../models/getXSpan/FeaturePlacer";
-import TwoBitSource from "../../dataSources/TwoBitSource";
+import TwoBitSource from "../getRemoteData/TwoBitSource";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import { SequenceData } from "../../../models/SequenceData";
+import { GenomeConfig } from "../../../models/genomes/GenomeConfig";
 
 const HEIGHT = 15;
 const TOP_PADDING = 5;
@@ -40,7 +41,30 @@ const CYTOBAND_LABEL_SIZE = 10;
  *
  * @author Silas Hsu and Daofeng Li
  */
-class Chromosomes extends React.PureComponent {
+
+interface ChromosomesProps {
+  genomeConfig: any; // Object with cytoband data
+  viewRegion: DisplayedRegionModel; // Region to visualize
+  width: number; // Width with which to draw
+  labelOffset?: number; // Y offset of feature labels
+  x?: number; // X offset of the entire graphic
+  y?: number; // Y offset of the entire graphic
+  drawHeights?: number[]; // Array of draw heights
+  zeroLine?: number; // Zero line position
+  height?: number; // Height of the graphic
+  hideCytoband?: boolean; // Whether to hide cytoband
+  minXwidthPerBase?: number; // Minimum width per base
+  hideChromName?: any;
+}
+
+interface ChromosomesState {
+  sequenceData: Array<any>; // Optional array of features within the sequence
+}
+
+class Chromosomes extends React.PureComponent<
+  ChromosomesProps,
+  ChromosomesState
+> {
   static propTypes = {
     genomeConfig: PropTypes.shape({ cytobands: PropTypes.object }).isRequired, // Object with cytoband data
     viewRegion: PropTypes.instanceOf(DisplayedRegionModel).isRequired, // Region to visualize
@@ -59,6 +83,9 @@ class Chromosomes extends React.PureComponent {
     minXwidthPerBase: 1,
     hideCytoband: false,
   };
+  twoBitSource: TwoBitSource | null;
+  fastaSeq: any;
+  featurePlacer: FeaturePlacer;
 
   constructor(props) {
     super(props);
@@ -95,7 +122,7 @@ class Chromosomes extends React.PureComponent {
 
     const drawModel = new LinearDrawingModel(props.viewRegion, props.width);
     if (drawModel.basesToXWidth(1) > props.minXwidthPerBase) {
-      let sequence = [];
+      let sequence: Array<any> = [];
       if (this.fastaSeq.length) {
         const interval = props.viewRegion.getContextCoordinates();
         const seq = this.fastaSeq.slice(interval.start, interval.end);
@@ -105,7 +132,7 @@ class Chromosomes extends React.PureComponent {
         this.setState({ sequenceData: sequence });
       } else {
         try {
-          sequence = await this.twoBitSource.getData(props.viewRegion);
+          sequence = await this.twoBitSource!.getData(props.viewRegion);
           if (this.props.viewRegion === props.viewRegion) {
             // Check that when the data comes in, we still want it
             this.setState({ sequenceData: sequence });
@@ -137,7 +164,7 @@ class Chromosomes extends React.PureComponent {
         this.props.viewRegion,
         this.props.width
       );
-      if (drawModel.basesToXWidth(1) > this.props.minXwidthPerBase) {
+      if (drawModel.basesToXWidth(1) > this.props.minXwidthPerBase!) {
         this.fetchSequence(this.props);
       }
     }
@@ -153,7 +180,7 @@ class Chromosomes extends React.PureComponent {
     const contextIntervals = this.props.viewRegion
       .getNavigationContext()
       .convertGenomeIntervalToBases(cytobandLocus);
-    const children = [];
+    const children: Array<any> = [];
     for (const contextInterval of contextIntervals) {
       const startX = Math.max(0, drawModel.baseToX(contextInterval.start));
       const endX = Math.min(
@@ -163,7 +190,7 @@ class Chromosomes extends React.PureComponent {
       const drawWidth = endX - startX;
       const colors = CYTOBAND_COLORS[cytoband.gieStain];
       const name = cytoband.name;
-      if (drawWidth < this.props.minXwidthPerBase) {
+      if (drawWidth < this.props.minXwidthPerBase!) {
         continue;
       }
 
@@ -228,7 +255,7 @@ class Chromosomes extends React.PureComponent {
    */
   renderCytobandsInLocus(locus, drawModel) {
     const cytobandsForChr = this.props.genomeConfig.cytobands[locus.chr] || [];
-    let children = [];
+    let children: Array<any> = [];
     for (let cytoband of cytobandsForChr) {
       const cytobandLocus = new ChromosomeInterval(
         cytoband.chrom,
@@ -321,10 +348,10 @@ class Chromosomes extends React.PureComponent {
     } = this.props;
     const drawModel = new LinearDrawingModel(viewRegion, width);
 
-    let boxesAndLabels = [];
+    let boxesAndLabels: Array<any> = [];
     if (!hideCytoband) {
       let x = 0;
-      let chromosomeNames = [];
+      let chromosomeNames: Array<any> = [];
       for (const segment of viewRegion.getFeatureSegments()) {
         const drawWidth = drawModel.basesToXWidth(segment.getLength());
         boxesAndLabels.push(
@@ -410,7 +437,7 @@ class Chromosomes extends React.PureComponent {
       <TranslatableG x={this.props.x} y={this.props.y}>
         {boxesAndLabels}
         {cytobands}
-        {drawModel.basesToXWidth(1) > minXwidthPerBase &&
+        {drawModel.basesToXWidth(1) > minXwidthPerBase! &&
           this.renderSequences()}
       </TranslatableG>
     );

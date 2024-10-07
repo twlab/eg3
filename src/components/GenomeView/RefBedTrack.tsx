@@ -61,7 +61,6 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
-  const prevDataIdx = useRef(0);
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
@@ -763,7 +762,6 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
-    prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
 
   return (

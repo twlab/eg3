@@ -18,6 +18,10 @@ import { ScaleChoices } from "../../../models/ScaleChoices";
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 // import TrackLegend from "../commonComponents/TrackLegend";
 import NumericalTrack from "../commonComponents/numerical/NumericalTrack";
+import TrackLegend from "../commonComponents/TrackLegend";
+import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
+import Chromosomes from "../genomeNavigator/Chromosomes";
+import React from "react";
 const CHROMOSOMES_Y = 60;
 const TOP_PADDING = 2;
 export const MAX_PIXELS_PER_BASE_NUMERIC = 0.5;
@@ -54,6 +58,9 @@ interface DynseqTrackProps {
     end: number;
   };
   forceSvg: boolean;
+  getNumLegend: any;
+  basesByPixel: number;
+  genomeConfig: any;
 }
 
 class DynseqTrackComputation extends PureComponent<DynseqTrackProps> {
@@ -179,7 +186,16 @@ class DynseqTrackComputation extends PureComponent<DynseqTrackProps> {
   };
 
   render() {
-    const { data, viewRegion, width, options } = this.props;
+    const {
+      data,
+      viewRegion,
+      width,
+      options,
+      trackModel,
+      unit,
+      genomeConfig,
+      basesByPixel,
+    } = this.props;
     const { height, aggregateMethod } = options;
     const dataForward = data.filter(
       (feature) => feature.value === undefined || feature.value >= 0
@@ -226,7 +242,60 @@ class DynseqTrackComputation extends PureComponent<DynseqTrackProps> {
       );
     }
 
-    return <NumericalTrack {...this.props} />;
+    if (basesByPixel <= MAX_PIXELS_PER_BASE_NUMERIC) {
+      const legend = (
+        <TrackLegend
+          trackModel={trackModel}
+          height={height}
+          axisScale={this.scales.axisScale}
+          axisLegend={unit}
+        />
+      );
+
+      const visualizer = (
+        <React.Fragment>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+
+              zIndex: 3,
+            }}
+          >
+            <HoverToolTip
+              data={this.xToValue}
+              data2={this.xToValue2}
+              windowWidth={width}
+              trackType={"numerical"}
+              trackModel={trackModel}
+              height={DEFAULT_OPTIONS.height}
+              viewRegion={viewRegion}
+              unit={unit}
+              hasReverse={true}
+            />{" "}
+          </div>
+          <svg width={width} height={height} style={{ display: "block" }}>
+            {" "}
+            <Chromosomes
+              genomeConfig={genomeConfig}
+              viewRegion={viewRegion}
+              width={width}
+              labelOffset={CHROMOSOMES_Y}
+              hideChromName={true}
+              drawHeights={this.drawHeights}
+              zeroLine={this.scales.zeroLine}
+              height={height}
+              hideCytoband={true}
+              minXwidthPerBase={2}
+            />
+          </svg>
+        </React.Fragment>
+      );
+      return visualizer;
+    } else {
+      return <NumericalTrack {...this.props} />;
+    }
   }
 }
 

@@ -20,6 +20,7 @@ import TrackModel from "../../../models/TrackModel";
 import OpenInterval from "../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { BinSize, NormalizationMode } from "../getRemoteData/HicDataModes";
+import TrackLegend from "../commonComponents/TrackLegend";
 
 const TOP_PADDING = 2;
 
@@ -43,6 +44,7 @@ interface InteractionTrackProps {
     minValueFilter?: number;
     bothAnchorsInView?: boolean;
     clampHeight?: boolean;
+    getNumLegend?: any;
   };
   forceSvg?: boolean;
   getBeamRefs?: any;
@@ -52,6 +54,7 @@ interface InteractionTrackProps {
   width: number; // Width of the visualizer
   viewWindow: OpenInterval; // Visible portion of the visualizer
   visRegion: DisplayedRegionModel;
+  getNumLegend: any;
 }
 
 export const DEFAULT_OPTIONS = {
@@ -188,6 +191,7 @@ class InteractionTrackComponent extends React.PureComponent<
       getBeamRefs,
       onSetAnchors3d,
       isThereG3dTrack,
+      getNumLegend,
     } = this.props;
     const filteredData = this.filterData(data);
     this.scales = this.computeScale();
@@ -216,14 +220,7 @@ class InteractionTrackComponent extends React.PureComponent<
       isThereG3dTrack,
       clampHeight: options.clampHeight,
     };
-    let visualizer; // , height;
-    // if (options.displayMode === InteractionDisplayMode.HEATMAP) {
-    //     visualizer = <Heatmap {...visualizerProps} />;
-    //     // height = Heatmap.getHeight(visualizerProps);
-    // } else {
-    //     visualizer = <ArcDisplay {...visualizerProps} />;
-    //     // height = ArcDisplay.getHeight(visualizerProps);
-    // }
+    let visualizer;
     switch (options.displayMode) {
       case InteractionDisplayMode.HEATMAP:
         visualizer = <Heatmap {...visualizerProps} getBeamRefs={getBeamRefs} />;
@@ -239,6 +236,20 @@ class InteractionTrackComponent extends React.PureComponent<
         break;
       default:
         visualizer = <ArcDisplay {...visualizerProps} />;
+    }
+    let legend = (
+      <TrackLegend
+        trackModel={trackModel}
+        height={options.height}
+        axisScale={
+          options.displayMode === InteractionDisplayMode.FLATARC
+            ? this.scales.heightScale
+            : undefined
+        }
+      />
+    );
+    if (getNumLegend) {
+      getNumLegend(legend);
     }
 
     return visualizer;

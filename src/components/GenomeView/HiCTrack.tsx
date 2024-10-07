@@ -10,6 +10,8 @@ import InteractionTrackComponent from "./InteractionComponents/InteractionTrackC
 import { objToInstanceAlign } from "./TrackManager";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
+import TrackLegend from "./commonComponents/TrackLegend";
+import ReactDOM from "react-dom";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   bpToPx,
   side,
@@ -26,6 +28,8 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   getConfigMenu,
 
   trackManagerRef,
+  trackBoxPosition,
+  getLegendPosition,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -35,8 +39,15 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const curRegionData = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
+
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
+  const boxXpos = useRef(0);
+  const boxRef = useRef<HTMLInputElement>(null);
+  const updateLegend = useRef<any>(null);
+  const updateLegendCanvas = useRef<any>(null);
+  const prevBoxHeight = useRef<any>(0);
+  const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [configChanged, setConfigChanged] = useState(false);
 
@@ -46,7 +57,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     let algoData = genesArr;
 
     let tmpObj = { ...configOptions.current };
+
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
+    function getNumLegend(legend: TrackLegend) {
+      updateLegendCanvas.current = legend;
+    }
     let canvasElements = (
       <InteractionTrackComponent
         data={algoData}
@@ -56,6 +71,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
         width={curTrackData.visWidth}
         forceSvg={false}
         trackModel={trackModel}
+        getNumLegend={getNumLegend}
       />
     );
     setCanvasComponents(canvasElements);
@@ -110,6 +126,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
           ].primaryVisData;
 
         if (trackData!.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if (trackModel.options) {
             configOptions.current = {
               ...configOptions.current,
@@ -261,6 +278,31 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     getConfigMenu(menu);
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
+
+  function updateTrackLegend() {
+    let boxPos = boxRef.current!.getBoundingClientRect();
+    let legendEle;
+    if (canvasComponents) {
+      legendEle = updateLegendCanvas.current;
+    }
+    let curLegendEle = ReactDOM.createPortal(
+      <div
+        style={{
+          position: "absolute",
+          left: boxXpos.current,
+          top: boxPos.top + window.scrollY,
+        }}
+      >
+        {legendEle ? legendEle : ""}
+      </div>,
+      document.body
+    );
+
+    prevBoxHeight.current = boxPos.height;
+
+    setLegend(curLegendEle);
+  }
+
   useEffect(() => {
     if (configChanged === true) {
       createCanvas(
@@ -270,45 +312,45 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     }
     setConfigChanged(false);
   }, [configChanged]);
+
+  useEffect(() => {
+    if (trackBoxPosition) {
+      updateTrackLegend();
+    }
+  }, [trackBoxPosition]);
+  useEffect(() => {
+    let curBox = boxRef.current!.getBoundingClientRect().height;
+    if (configChanged === true && prevBoxHeight.current !== curBox) {
+      getLegendPosition();
+      prevBoxHeight.current = curBox;
+    } else {
+      updateTrackLegend();
+    }
+    setConfigChanged(false);
+  }, [canvasComponents]);
   return (
     <div
+      ref={boxRef}
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-
-        flexDirection: "column",
+        position: "relative",
+        height: configOptions.current.height + 2,
       }}
-      onContextMenu={renderConfigMenu}
     >
       <div
         style={{
-          display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height: configOptions.current.height + 2,
-          position: "relative",
+          borderTop: "1px solid Dodgerblue",
+          borderBottom: "1px solid Dodgerblue",
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: side === "right" ? `${xPos.current}px` : "",
+          right: side === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            position: "relative",
-            height: configOptions.current.height,
-          }}
-        >
-          <div
-            style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: side === "right" ? `${xPos.current}px` : "",
-              right: side === "left" ? `${xPos.current}px` : "",
-            }}
-          >
-            {canvasComponents}
-          </div>
-        </div>
+        {canvasComponents}
       </div>
+      {legend}
     </div>
   );
 });

@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
 
-import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
@@ -17,6 +16,8 @@ import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import DynseqTrackComputation from "./DynseqComponents/DynseqTrackComputation";
 import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
+import TrackLegend from "./commonComponents/TrackLegend";
+import { getGenomeConfig } from "../../models/genomes/allGenomes";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -39,17 +40,25 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackIdx,
   id,
   useFineModeNav,
+  bpToPx,
+  trackManagerRef,
+  trackBoxPosition,
+  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
-  const prevDataIdx = useRef(0);
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
+  const boxXpos = useRef(0);
+  const boxRef = useRef<HTMLInputElement>(null);
+  const updateLegendCanvas = useRef<any>(null);
+  const prevBoxHeight = useRef<any>(0);
+  const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
@@ -106,27 +115,33 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       );
       return new NumericalFeature("", newChrInt).withValue(record.score);
     });
-
-    if (configOptions.current.displayMode === "density") {
-      let tmpObj = { ...configOptions.current };
-      tmpObj.displayMode = "auto";
-      let canvasElements = (
-        <DynseqTrackComputation
-          data={algoData}
-          options={tmpObj}
-          viewWindow={
-            new OpenInterval(0, fine ? curTrackData.visWidth : windowWidth * 3)
-          }
-          viewRegion={
-            fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
-          }
-          width={fine ? curTrackData.visWidth : windowWidth * 3}
-          forceSvg={false}
-          trackModel={trackModel}
-        />
-      );
-      setCanvasComponents(canvasElements);
+    function getNumLegend(legend: TrackLegend) {
+      updateLegendCanvas.current = legend;
     }
+
+    let tmpObj = { ...configOptions.current };
+    tmpObj.displayMode = "auto";
+
+    let canvasElements = (
+      <DynseqTrackComputation
+        data={algoData}
+        options={tmpObj}
+        viewWindow={
+          new OpenInterval(0, fine ? curTrackData.visWidth : windowWidth * 3)
+        }
+        viewRegion={
+          fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
+        }
+        width={fine ? curTrackData.visWidth : windowWidth * 3}
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+        basesByPixel={bpToPx}
+        genomeConfig={getGenomeConfig(parentGenome.current)}
+      />
+    );
+    setCanvasComponents(canvasElements);
+
     if (curTrackData.initial === 1) {
       xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
     } else if (curTrackData.side === "right") {

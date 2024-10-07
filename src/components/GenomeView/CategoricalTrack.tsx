@@ -13,8 +13,8 @@ import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
 import "./TrackContextMenu.css";
-import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
-
+import { CategoricalTrackConfig } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
+import { DEFAULT_OPTIONS as defaultCategorical } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
@@ -23,11 +23,13 @@ import Feature from "../../models/Feature";
 import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
+import TrackLegend from "./commonComponents/TrackLegend";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 export const DEFAULT_OPTIONS = {
   ...defaultAnnotationTrack,
+  ...defaultCategorical,
   height: 20,
   color: "blue",
   maxRows: 1,
@@ -64,6 +66,9 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   trackIdx,
   id,
   useFineModeNav,
+  trackManagerRef,
+  trackBoxPosition,
+  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -75,6 +80,12 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
+  const boxXpos = useRef(0);
+  const boxRef = useRef<HTMLInputElement>(null);
+  const updateLegend = useRef<any>(null);
+  const updateLegendCanvas = useRef<any>(null);
+  const prevBoxHeight = useRef<any>(0);
+  const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
@@ -158,6 +169,9 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
 
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
+      updateLegend.current = (
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      );
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         fine ? curTrackData.visWidth : windowWidth * 3,
@@ -330,7 +344,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
 
       genomeArr![genomeIdx!].options = configOptions.current;
 
-      const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new CategoricalTrackConfig(genomeArr![genomeIdx!]);
 
       const items = renderer.getMenuComponents();
 
@@ -358,7 +372,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
 
     genomeArr![genomeIdx!].options = configOptions.current;
 
-    const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new CategoricalTrackConfig(genomeArr![genomeIdx!]);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -460,6 +474,30 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
       }
     }
   }
+
+  function updateTrackLegend() {
+    let boxPos = boxRef.current!.getBoundingClientRect();
+    let legendEle;
+    if (svgComponents) {
+      legendEle = updateLegend.current;
+    }
+    let curLegendEle = ReactDOM.createPortal(
+      <div
+        style={{
+          position: "absolute",
+          left: boxXpos.current,
+          top: boxPos.top + window.scrollY,
+        }}
+      >
+        {legendEle ? legendEle : ""}
+      </div>,
+      document.body
+    );
+
+    prevBoxHeight.current = boxPos.height;
+
+    setLegend(curLegendEle);
+  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -469,6 +507,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if (trackModel.options) {
             configOptions.current = {
               ...configOptions.current,
@@ -584,6 +623,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           ];
 
         if (trackData!.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if (trackModel.options) {
             configOptions.current = {
               ...configOptions.current,
@@ -739,6 +779,21 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     }
     setConfigChanged(false);
   }, [configChanged]);
+
+  useEffect(() => {
+    if (trackBoxPosition) {
+      updateTrackLegend();
+    }
+  }, [trackBoxPosition]);
+  useEffect(() => {
+    let curBox = boxRef.current!.getBoundingClientRect().height;
+    if (configChanged === true && prevBoxHeight.current !== curBox) {
+      getLegendPosition();
+      prevBoxHeight.current = curBox;
+    } else {
+      updateTrackLegend();
+    }
+  }, [svgComponents]);
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
@@ -751,39 +806,33 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
+      ref={boxRef}
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
+        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
+        // other elements will overlapp
+        height: svgHeight.current + 2,
 
-        flexDirection: "column",
+        position: "relative",
       }}
-      onContextMenu={renderConfigMenu}
     >
       <div
         style={{
-          display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height: svgHeight.current + 2,
-
-          position: "relative",
+          borderTop: "1px solid Dodgerblue",
+          borderBottom: "1px solid Dodgerblue",
+          position: "absolute",
+          lineHeight: 0,
+          right: side === "left" ? `${xPos.current}px` : "",
+          left: side === "right" ? `${xPos.current}px` : "",
+          backgroundColor: configOptions.current.backgroundColor,
         }}
       >
-        <div
-          style={{
-            borderTop: "1px solid Dodgerblue",
-            borderBottom: "1px solid Dodgerblue",
-            position: "absolute",
-            lineHeight: 0,
-            right: side === "left" ? `${xPos.current}px` : "",
-            left: side === "right" ? `${xPos.current}px` : "",
-            backgroundColor: configOptions.current.backgroundColor,
-          }}
-        >
-          {svgComponents}
-        </div>
-
-        {toolTipVisible ? toolTip : ""}
+        {svgComponents}
       </div>
+
+      {toolTipVisible ? toolTip : ""}
+      {legend}
     </div>
   );
 });

@@ -24,9 +24,10 @@ import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/co
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import Feature from "../../models/Feature";
+import Feature, { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { BedTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BedTrackConfig";
+import TrackLegend from "./commonComponents/TrackLegend";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -56,17 +57,27 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackIdx,
   id,
   useFineModeNav,
+
+  trackManagerRef,
+  trackBoxPosition,
+  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
-  const prevDataIdx = useRef(0);
+
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
+  const boxXpos = useRef(0);
+  const boxRef = useRef<HTMLInputElement>(null);
+  const updateLegend = useRef<any>(null);
+  const updateLegendCanvas = useRef<any>(null);
+  const prevBoxHeight = useRef<any>(0);
+  const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [toolTip, setToolTip] = useState<any>();
@@ -130,16 +141,20 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       }
     }
 
-    let algoData = genesArr.map((record) => {
-      let newChrInt = new ChromosomeInterval(
-        record.chr,
-        record.start,
-        record.end
-      );
-      return new Feature(newChrInt.toStringWithOther(newChrInt), newChrInt, "");
-    });
-    let featureArrange = new FeatureArranger();
     if (configOptions.current.displayMode === "full") {
+      let algoData = genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        return new Feature(
+          newChrInt.toStringWithOther(newChrInt),
+          newChrInt,
+          ""
+        );
+      });
+      let featureArrange = new FeatureArranger();
       let placeFeatureData = await featureArrange.arrange(
         algoData,
         fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav,
@@ -151,6 +166,10 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
 
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
+      updateLegend.current = (
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      );
+
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         fine ? curTrackData.visWidth : windowWidth * 3,
@@ -161,8 +180,19 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       );
       setSvgComponents(svgDATA);
     } else if (configOptions.current.displayMode === "density") {
+      let algoData = genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        return new NumericalFeature("", newChrInt).withValue(record.score);
+      });
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
+      function getNumLegend(legend: TrackLegend) {
+        updateLegendCanvas.current = legend;
+      }
       let canvasElements = (
         <NumericalTrack
           data={algoData}
@@ -176,6 +206,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           width={fine ? curTrackData.visWidth : windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
+          getNumLegend={getNumLegend}
         />
       );
       setCanvasComponents(canvasElements);
@@ -457,6 +488,34 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       }
     }
   }
+  function updateTrackLegend() {
+    let boxPos = boxRef.current!.getBoundingClientRect();
+    let legendEle;
+    if (configOptions.current.displayMode === "full" && svgComponents) {
+      legendEle = updateLegend.current;
+    } else if (
+      configOptions.current.displayMode === "density" &&
+      canvasComponents
+    ) {
+      legendEle = updateLegendCanvas.current;
+    }
+    let curLegendEle = ReactDOM.createPortal(
+      <div
+        style={{
+          position: "absolute",
+          left: boxXpos.current,
+          top: boxPos.top + window.scrollY,
+        }}
+      >
+        {legendEle ? legendEle : ""}
+      </div>,
+      document.body
+    );
+
+    prevBoxHeight.current = boxPos.height;
+
+    setLegend(curLegendEle);
+  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -466,6 +525,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -575,6 +635,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           ];
 
         if (trackData!.initial === 1) {
+          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -721,8 +782,24 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         );
       }
     }
-    setConfigChanged(false);
   }, [configChanged]);
+
+  useEffect(() => {
+    if (trackBoxPosition) {
+      updateTrackLegend();
+    }
+  }, [trackBoxPosition]);
+  useEffect(() => {
+    let curBox = boxRef.current!.getBoundingClientRect().height;
+    if (configChanged === true && prevBoxHeight.current !== curBox) {
+      getLegendPosition();
+      prevBoxHeight.current = curBox;
+    } else {
+      updateTrackLegend();
+    }
+    setConfigChanged(false);
+  }, [svgComponents, canvasComponents]);
+
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
@@ -734,64 +811,58 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
+      ref={boxRef}
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-
-        flexDirection: "column",
+        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
+        // other elements will overlapp
+        height:
+          configOptions.current.displayMode === "full"
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
+        position: "relative",
       }}
-      onContextMenu={renderConfigMenu}
     >
-      <div
-        style={{
-          display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height:
-            configOptions.current.displayMode === "full"
-              ? svgHeight.current + 2
-              : configOptions.current.height + 2,
-          position: "relative",
-        }}
-      >
-        {configOptions.current.displayMode === "full" ? (
+      {configOptions.current.displayMode === "full" ? (
+        <div
+          style={{
+            borderTop: "1px solid Dodgerblue",
+            borderBottom: "1px solid Dodgerblue",
+            position: "absolute",
+            lineHeight: 0,
+            right: side === "left" ? `${xPos.current}px` : "",
+            left: side === "right" ? `${xPos.current}px` : "",
+            backgroundColor: configOptions.current.backgroundColor,
+          }}
+        >
+          {svgComponents}
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            position: "relative",
+            height: configOptions.current.height,
+          }}
+        >
           <div
             style={{
               borderTop: "1px solid Dodgerblue",
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
-              lineHeight: 0,
-              right: side === "left" ? `${xPos.current}px` : "",
-              left: side === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
+              left: side === "right" ? `${xPos.current}px` : "",
+              right: side === "left" ? `${xPos.current}px` : "",
             }}
           >
-            {svgComponents}
+            {canvasComponents}
           </div>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              position: "relative",
-              height: configOptions.current.height,
-            }}
-          >
-            <div
-              style={{
-                borderTop: "1px solid Dodgerblue",
-                borderBottom: "1px solid Dodgerblue",
-                position: "absolute",
-                backgroundColor: configOptions.current.backgroundColor,
-                left: side === "right" ? `${xPos.current}px` : "",
-                right: side === "left" ? `${xPos.current}px` : "",
-              }}
-            >
-              {canvasComponents}
-            </div>
-          </div>
-        )}
+        </div>
+      )}
 
-        {toolTipVisible ? toolTip : ""}
-      </div>
+      {toolTipVisible ? toolTip : ""}
+      {legend}
     </div>
   );
 });
