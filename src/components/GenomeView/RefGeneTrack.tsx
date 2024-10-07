@@ -510,6 +510,32 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     }
   }
+  function updateTrackLegend() {
+    let boxPos = boxRef.current!.getBoundingClientRect();
+    let legendEle;
+    if (configOptions.current.displayMode === "full" && svgComponents) {
+      legendEle = updateLegend.current;
+    } else if (
+      configOptions.current.displayMode === "density" &&
+      canvasComponents
+    ) {
+      legendEle = updateLegendCanvas.current;
+    }
+    let curLegendEle = ReactDOM.createPortal(
+      <div
+        style={{
+          position: "absolute",
+          left: boxXpos.current,
+          top: boxPos.top + window.scrollY,
+        }}
+      >
+        {legendEle ? legendEle : ""}
+      </div>,
+      document.body
+    );
+    prevBoxHeight.current = boxPos.height;
+    setLegend(curLegendEle);
+  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -759,40 +785,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [trackData]);
   useEffect(() => {
     if (trackBoxPosition) {
-      if (configOptions.current.displayMode === "full" && svgComponents) {
-        let boxPos = boxRef.current!.getBoundingClientRect();
-        let legendEle = ReactDOM.createPortal(
-          <div
-            style={{
-              position: "absolute",
-              left: boxXpos.current,
-              top: boxPos.top + window.scrollY,
-            }}
-          >
-            {updateLegend.current ? updateLegend.current : ""}
-          </div>,
-          document.body
-        );
-        setLegend(legendEle);
-      } else if (
-        configOptions.current.displayMode === "density" &&
-        canvasComponents
-      ) {
-        let boxPos = boxRef.current!.getBoundingClientRect();
-        let legendEle = ReactDOM.createPortal(
-          <div
-            style={{
-              position: "absolute",
-              left: boxXpos.current,
-              top: boxPos.top + window.scrollY,
-            }}
-          >
-            {updateLegendCanvas.current ? updateLegendCanvas.current : ""}
-          </div>,
-          document.body
-        );
-        setLegend(legendEle);
-      }
+      updateTrackLegend();
     }
   }, [trackBoxPosition]);
   useEffect(() => {
@@ -816,47 +809,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
   }, [configChanged]);
   useEffect(() => {
-    if (
-      configChanged === true &&
-      prevBoxHeight.current !== boxRef.current!.getBoundingClientRect().height
-    ) {
+    let curBox = boxRef.current!.getBoundingClientRect().height;
+    if (configChanged === true && prevBoxHeight.current !== curBox) {
       getLegendPosition();
-    } else if (configOptions.current.displayMode === "full" && svgComponents) {
-      let boxPos = boxRef.current!.getBoundingClientRect();
-      let legendEle = ReactDOM.createPortal(
-        <div
-          style={{
-            position: "absolute",
-            left: boxXpos.current,
-            top: boxPos.top + window.scrollY,
-          }}
-        >
-          {updateLegend.current ? updateLegend.current : ""}
-        </div>,
-        document.body
-      );
-      setLegend(legendEle);
-    } else if (
-      configOptions.current.displayMode === "density" &&
-      canvasComponents
-    ) {
-      let boxPos = boxRef.current!.getBoundingClientRect();
-      let legendEle = ReactDOM.createPortal(
-        <div
-          style={{
-            position: "absolute",
-            left: boxXpos.current,
-            top: boxPos.top + window.scrollY,
-          }}
-        >
-          {updateLegendCanvas.current ? updateLegendCanvas.current : ""}
-        </div>,
-        document.body
-      );
-      setLegend(legendEle);
+      prevBoxHeight.current = curBox;
+    } else {
+      updateTrackLegend();
     }
     setConfigChanged(false);
-    prevBoxHeight.current = boxRef.current!.getBoundingClientRect().height;
   }, [svgComponents, canvasComponents]);
 
   useEffect(() => {

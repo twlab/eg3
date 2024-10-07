@@ -29,6 +29,7 @@ import BigInteractTrack from "./BigInteractTrack";
 import RepeatMaskerTrack from "./RepeatMaskerTrack";
 import RefBedTrack from "./RefBedTrack";
 import ThreedmolContainer from "../3dmol/ThreedmolContainer";
+import TrackModel from "../../models/TrackModel";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -112,7 +113,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const maxBp = useRef(0);
   const minBp = useRef(0);
   const prevSize = useRef<any>(0);
-
+  const activeTrackModels = useRef<Array<TrackModel>>([]);
   const hicStrawObj = useRef<{ [key: string]: any }>({});
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
@@ -263,7 +264,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function getLegendPosition() {
     const rects: Array<any> = [];
     const children = block.current!.children;
-
+    console.log(children, trackComponents);
     Array.from(children).map((child) => {
       const rect = child.getBoundingClientRect();
       rects.push({
@@ -426,17 +427,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       let sentData = false;
       try {
-        let trackModelArr = genomeArr[genomeIdx].defaultTracks.filter(
-          (items, index) => {
-            return items.type !== "g3d";
-          }
-        );
-        genomeArr[genomeIdx].defaultTracks.map((item, index) => {
+        activeTrackModels.current.map((item, index) => {
           if (!sentData) {
             sentData = true;
             infiniteScrollWorker.current!.postMessage({
               primaryGenName: genomeArr[genomeIdx].genome.getName(),
-              trackModelArr: trackModelArr,
+              trackModelArr: activeTrackModels.current,
               visData: newVisData,
               genomicLoci: genomicLoci,
               expandedGenLoci: expandedGenomeCoordLocus,
@@ -586,6 +582,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           setG3dTrackComponents([...newG3dComponent]);
         }
       }
+      activeTrackModels.current = genomeArr[genomeIdx].defaultTracks.filter(
+        (items, index) => {
+          return items.type !== "g3d";
+        }
+      );
       setTrackComponents([...newTrackComponents]);
       fetchGenomeData(1, "right");
     }
