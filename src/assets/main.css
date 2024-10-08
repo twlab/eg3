@@ -1,10 +1,6 @@
 body {
-
-
   margin: 0;
-  font-family: 
-    sans-serif;
-
+  font-family: sans-serif;
 }
 
 a {
@@ -28,13 +24,10 @@ a {
   margin: 0;
 }
 .Typography-h3 {
-
   font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-
 }
 
 .bottom-space {
-
 }
 
 .root-1 {
@@ -66,7 +59,7 @@ a {
 .Toolbar-root {
   display: flex;
   position: relative;
-  align-items: center;
+  /* align-items: center; */
 }
 .Toolbar-gutters {
   padding-left: 16px;
@@ -80,7 +73,6 @@ a {
 }
 
 .app-root-1 {
-
 }
 .header-navButtons-3 {
   color: #777e90;

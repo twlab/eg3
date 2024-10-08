@@ -57,8 +57,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackIdx,
   id,
   useFineModeNav,
-
-  trackManagerRef,
   trackBoxPosition,
   getLegendPosition,
 }) {

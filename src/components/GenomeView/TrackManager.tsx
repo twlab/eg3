@@ -112,7 +112,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
-  const prevSize = useRef<any>(0);
+
   const activeTrackModels = useRef<Array<TrackModel>>([]);
   const hicStrawObj = useRef<{ [key: string]: any }>({});
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -640,28 +640,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackManagerId.current = genome.id;
     }
   }, [genomeArr]);
-  const containerStyles = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr", // Two equal columns
-    gap: "10px", // Gap between grid items
-    position: "relative", // Important for overlay
-  };
 
-  const boxStyles = {
-    backgroundColor: "#0057e3",
-    padding: "10px",
-    borderRadius: "5px",
-  };
-
-  const overlayStyles = {
-    backgroundColor: "#009938",
-    padding: "10px",
-    borderRadius: "5px",
-    position: "absolute",
-    top: 0,
-    left: 0,
-    zIndex: 1, // Ensure it's on top
-  };
   return (
     <>
       <div
