@@ -138,7 +138,8 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         xPos.current =
           (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth;
       } else if (trackState.side === "left") {
-        xPos.current = Math.floor(trackState.xDist / windowWidth) * windowWidth;
+        xPos.current =
+          (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth;
       }
       newTrackWidth.current = trackState.visWidth;
     }

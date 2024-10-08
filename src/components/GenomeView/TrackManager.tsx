@@ -139,6 +139,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
+
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
   const [configMenu, setConfigMenu] = useState<any>();
@@ -174,12 +175,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     dragX.current -= deltaX;
-    console.log("ASDASDADASDASDADASDAD", trackComponents);
+
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 =
+    cancelAnimationFrame(frameID.current);
     trackComponents.forEach((component, i) => {
-      console.log(component.posRef);
-      requestAnimationFrame(() => {
+      frameID.current = requestAnimationFrame(() => {
         component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
       });
     });
@@ -524,6 +525,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return () => {
       worker.current!.terminate();
       infiniteScrollWorker.current!.terminate();
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleMouseUp);
       console.log("trackmanager terminate");
     };
   }, []);
@@ -554,12 +557,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       for (let i = 0; i < genome.defaultTracks.length; i++) {
         if (genome.defaultTracks[i].type !== "g3d") {
           const newPosRef = createRef();
+          const newLegendRef = createRef();
           const uniqueKey = uuidv4();
           genome.defaultTracks[i]["id"] = uniqueKey;
           newTrackComponents.push({
             id: uniqueKey,
             component: componentMap[genome.defaultTracks[i].type],
             posRef: newPosRef,
+            legendRef: newLegendRef,
             trackModel: genome.defaultTracks[i],
           });
 
@@ -594,7 +599,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return items.type !== "g3d";
         }
       );
-      console.log(newTrackComponents);
+
       setTrackComponents((prevTrackComponents) => {
         // Modify prevTrackComponents here
         return [...prevTrackComponents, ...newTrackComponents];
@@ -640,7 +645,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackManagerId.current = genome.id;
     }
   }, [genomeArr]);
+  const containerStyles = {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr", // Two equal columns
+    gap: "10px", // Gap between grid items
+    position: "relative", // Important for overlay
+  };
 
+  const boxStyles = {
+    backgroundColor: "#0057e3",
+    padding: "10px",
+    borderRadius: "5px",
+  };
+
+  const overlayStyles = {
+    backgroundColor: "#009938",
+    padding: "10px",
+    borderRadius: "5px",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    zIndex: 1, // Ensure it's on top
+  };
   return (
     <>
       <div
@@ -681,7 +707,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           <div
             onMouseDown={handleMouseDown}
             style={{
-              position: "relative",
               display: "flex",
               //makes components align right or right when we switch sides
               justifyContent: side.current == "right" ? "start" : "end",
@@ -697,48 +722,68 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               overflowY: "hidden",
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
               {trackComponents.map((item, index) => {
                 let Component = item.component;
 
                 return (
                   <div
-                    key={item.id}
-                    data-theme={"light"}
-                    ref={trackComponents[index].posRef}
                     style={{
-                      //makes components align right or right when we switch sides
-                      alignItems: side.current == "right" ? "start" : "end",
-                      WebkitBackfaceVisibility: "hidden",
-                      WebkitPerspective: "1000px", // Note: Add 'px' to the value
-                      backfaceVisibility: "hidden",
-                      perspective: "1000px", // Note: Add 'px' to the value
+                      display: "grid",
                     }}
                   >
-                    <Component
+                    <div
                       key={item.id}
-                      id={item.id}
-                      trackModel={item.trackModel}
-                      bpRegionSize={bpRegionSize.current}
-                      useFineModeNav={useFineModeNav.current}
-                      bpToPx={basePerPixel.current}
-                      trackData={trackData}
-                      side={side.current}
-                      windowWidth={windowWidth}
-                      dragXDist={dragX.current}
-                      handleDelete={handleDelete}
-                      genomeArr={genomeArr}
-                      genomeIdx={genomeIdx}
-                      dataIdx={dataIdx}
-                      getConfigMenu={getConfigMenu}
-                      onCloseConfigMenu={onCloseConfigMenu}
-                      trackIdx={index}
-                      trackManagerRef={block}
-                      setShow3dGene={setShow3dGene}
-                      isThereG3dTrack={isThereG3dTrack.current}
-                      trackBoxPosition={trackBoxPosition}
-                      getLegendPosition={getLegendPosition}
-                    />
+                      data-theme={"light"}
+                      ref={trackComponents[index].posRef}
+                      style={{
+                        display: "flex",
+
+                        WebkitBackfaceVisibility: "hidden",
+                        WebkitPerspective: "1000px",
+                        backfaceVisibility: "hidden",
+                        perspective: "1000px",
+                        gridArea: "1/1",
+                      }}
+                    >
+                      <Component
+                        key={item.id}
+                        id={item.id}
+                        trackModel={item.trackModel}
+                        bpRegionSize={bpRegionSize.current}
+                        useFineModeNav={useFineModeNav.current}
+                        bpToPx={basePerPixel.current}
+                        trackData={trackData}
+                        side={side.current}
+                        windowWidth={windowWidth}
+                        dragXDist={dragX.current}
+                        handleDelete={handleDelete}
+                        genomeArr={genomeArr}
+                        genomeIdx={genomeIdx}
+                        dataIdx={dataIdx}
+                        getConfigMenu={getConfigMenu}
+                        onCloseConfigMenu={onCloseConfigMenu}
+                        trackIdx={index}
+                        trackManagerRef={block}
+                        setShow3dGene={setShow3dGene}
+                        isThereG3dTrack={isThereG3dTrack.current}
+                        trackBoxPosition={trackBoxPosition}
+                        getLegendPosition={getLegendPosition}
+                        legendRef={item.legendRef}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        position: "relative",
+                        gridArea: "1/1",
+                      }}
+                      ref={item.legendRef}
+                    ></div>
                   </div>
                 );
               })}

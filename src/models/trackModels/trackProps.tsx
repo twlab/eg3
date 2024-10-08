@@ -28,4 +28,5 @@ export interface TrackProps {
   isThereG3dTrack: boolean;
   getLegendPosition: any;
   trackBoxPosition: Array<any>;
+  legendRef: any;
 }

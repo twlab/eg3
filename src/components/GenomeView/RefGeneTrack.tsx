@@ -61,6 +61,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackManagerRef,
   trackBoxPosition,
   getLegendPosition,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -522,16 +523,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       legendEle = updateLegendCanvas.current;
     }
     let curLegendEle = ReactDOM.createPortal(
-      <div
-        style={{
-          position: "absolute",
-          left: boxXpos.current,
-          top: boxPos.top + window.scrollY,
-        }}
-      >
-        {legendEle ? legendEle : ""}
-      </div>,
-      document.body
+      legendEle ? legendEle : "",
+      legendRef.current
     );
     prevBoxHeight.current = boxPos.height;
     setLegend(curLegendEle);
