@@ -204,6 +204,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
     let plotLegend = false;
     let chromLabel = "";
     if (trackModel.type === "ruler") {
+      console.log(selectedRegion);
       const drawModel = new LinearDrawingModel(trackViewRegion!, trackWidth!);
       if (drawModel.basesToXWidth(1) > Sequence.MIN_X_WIDTH_PER_BASE) {
         plotLegend = true;

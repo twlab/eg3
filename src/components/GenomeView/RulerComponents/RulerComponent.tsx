@@ -11,6 +11,7 @@ import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import TrackModel from "../../../models/TrackModel";
+import TrackLegend from "../commonComponents/TrackLegend";
 
 const CHROMOSOMES_Y = 60;
 const RULER_Y = 20;
@@ -21,14 +22,15 @@ const HEIGHT = 40;
  *
  * @author Silas Hsu
  */
-class RulerVisualizer extends React.PureComponent {
-  static propTypes = {
-    genomeConfig: PropTypes.object.isRequired,
-    trackModel: PropTypes.instanceOf(TrackModel).isRequired,
-    viewRegion: PropTypes.instanceOf(DisplayedRegionModel).isRequired,
-    width: PropTypes.number.isRequired,
-  };
 
+interface RulerVisualizerProps {
+  viewRegion: DisplayedRegionModel; // Region to visualize
+  width: number; // The width of the ruler
+  x?: number; // Optional x coordinate
+  y?: number; // Optional y coordinate'
+  genomeConfig?: any;
+}
+class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
   constructor(props) {
     super(props);
     this.getTooltipContents = this.getTooltipContents.bind(this);
@@ -63,24 +65,39 @@ class RulerVisualizer extends React.PureComponent {
 }
 
 // const Visualizer = withCurrentGenome(RulerVisualizer);
-
-class RulerTrack extends React.Component {
+interface RulerComponentProps {
+  viewRegion: DisplayedRegionModel; // Region to visualize
+  width: number; // The width of the ruler
+  x?: number; // Optional x coordinate
+  y?: number; // Optional y coordinate'
+  genomeConfig?: any;
+  trackModel: TrackModel;
+  selectedRegion: DisplayedRegionModel;
+  getNumLegend: any;
+}
+class RulerComponent extends React.Component<RulerComponentProps> {
   render() {
-    const sencondaryGenome = this.props.trackModel.getMetadata("genome");
-    const genomeConfig =
-      getGenomeConfig(sencondaryGenome) || this.props.genomeConfig;
-    const selectedRegion = sencondaryGenome
-      ? this.props.viewRegion
-      : this.props.selectedRegion;
+    console.log(this.props.selectedRegion);
+    let legend = (
+      <TrackLegend
+        height={HEIGHT}
+        trackModel={this.props.trackModel}
+        trackViewRegion={this.props.viewRegion}
+        selectedRegion={this.props.selectedRegion}
+        trackWidth={this.props.width}
+      />
+    );
+    if (this.props.getNumLegend) {
+      this.props.getNumLegend(legend);
+    }
     return (
       <RulerVisualizer
-        genomeConfig={genomeConfig}
+        genomeConfig={this.props.genomeConfig}
         viewRegion={this.props.viewRegion}
         width={this.props.width}
-        trackModel={this.props.trackModel}
       />
     );
   }
 }
 
-export default RulerTrack;
+export default RulerComponent;
