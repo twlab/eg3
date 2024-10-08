@@ -78,6 +78,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
   const prevBoxHeight = useRef<any>(0);
+  const updateSide = useRef("right");
   const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
@@ -221,11 +222,12 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
+        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
     }
+    updateSide.current = side;
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -429,9 +431,9 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx! + 1].cacheData;
-        curIdx = dataIdx! + 1;
+      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx!].cacheData;
+        curIdx = dataIdx!;
       }
     } else {
       if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
@@ -442,14 +444,14 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
         ];
 
         curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
+          fetchedDataCache.current[dataIdx! - 1],
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx! + 2],
         ];
 
-        curIdx = dataIdx! + 2;
+        curIdx = dataIdx! + 1;
       }
     }
     if (viewData.length > 0) {
@@ -834,8 +836,8 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
             borderBottom: "1px solid Dodgerblue",
             position: "absolute",
             lineHeight: 0,
-            right: side === "left" ? `${xPos.current}px` : "",
-            left: side === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
             backgroundColor: configOptions.current.backgroundColor,
           }}
         >
@@ -855,8 +857,8 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
               backgroundColor: configOptions.current.backgroundColor,
-              left: side === "right" ? `${xPos.current}px` : "",
-              right: side === "left" ? `${xPos.current}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
             }}
           >
             {canvasComponents}

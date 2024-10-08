@@ -43,6 +43,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const curRegionData = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
+  const updateSide = useRef("right");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<{ [key: string]: any }>(
     {}
@@ -84,11 +85,12 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           trackState.startWindow;
       } else if (trackState.side === "left") {
         xPos.current =
-          Math.floor(trackState.xDist / windowWidth) * windowWidth -
+          (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           trackState.startWindow;
       }
       newTrackWidth.current = trackState.visWidth;
+      updateSide.current = side;
     }
 
     //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
@@ -142,6 +144,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth;
       }
       newTrackWidth.current = trackState.visWidth;
+      updateSide.current = side;
     }
   }
 
@@ -156,9 +159,9 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
-    } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-      viewData = fetchedDataCache.current[dataIdx! + 1].data;
-      curIdx = dataIdx! + 1;
+    } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
     }
     if ("drawData" in viewData) {
       curRegionData.current = {
@@ -315,8 +318,8 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             borderTop: "1px solid Dodgerblue",
             borderBottom: "1px solid Dodgerblue",
             height: `${configOptions.current.height}px`,
-            right: side === "left" ? `${xPos.current!}px` : "",
-            left: side === "right" ? `${xPos.current!}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current!}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current!}px` : "",
           }}
         >
           {svgComponents.svgElements}
@@ -326,8 +329,8 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             style={{
               position: "absolute",
 
-              right: side === "left" ? `${xPos.current!}px` : "",
-              left: side === "right" ? `${xPos.current!}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current!}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current!}px` : "",
               zIndex: 3,
             }}
           >

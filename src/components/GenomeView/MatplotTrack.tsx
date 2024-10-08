@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
+import { update } from "lodash";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -45,6 +46,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
+  const updateSide = useRef("right");
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
@@ -140,11 +142,12 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
+        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
     }
+    updateSide.current = side;
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -220,9 +223,9 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx! + 1].cacheData;
-        curIdx = dataIdx! + 1;
+      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx!].cacheData;
+        curIdx = dataIdx!;
       }
     } else {
       if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
@@ -233,14 +236,14 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         ];
 
         curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
+          fetchedDataCache.current[dataIdx! - 1],
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx! + 2],
         ];
 
-        curIdx = dataIdx! + 2;
+        curIdx = dataIdx! + 1;
       }
     }
     if (viewData.length > 0) {
@@ -565,41 +568,33 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-
-        flexDirection: "column",
+        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
+        // other elements will overlapp
+        height: configOptions.current.height + 2,
+        position: "relative",
       }}
-      onContextMenu={renderConfigMenu}
     >
       <div
         style={{
           display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height: configOptions.current.height + 2,
           position: "relative",
+          height: configOptions.current.height,
         }}
       >
         <div
           style={{
-            display: "flex",
-            position: "relative",
-            height: configOptions.current.height,
+            borderTop: "1px solid Dodgerblue",
+            borderBottom: "1px solid Dodgerblue",
+            position: "absolute",
+            backgroundColor: configOptions.current.backgroundColor,
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
           }}
         >
-          <div
-            style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: side === "right" ? `${xPos.current}px` : "",
-              right: side === "left" ? `${xPos.current}px` : "",
-            }}
-          >
-            {canvasComponents}
-          </div>
+          {canvasComponents}
         </div>
       </div>
     </div>

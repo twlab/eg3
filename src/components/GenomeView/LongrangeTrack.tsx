@@ -12,6 +12,7 @@ import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackCompone
 import { LongRangeTrackConfig } from "../../trackConfigs/config-menu-models.tsx/LongRangeTrackConfig";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
+import TrackLegend from "./commonComponents/TrackLegend";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   side,
   trackData,
@@ -38,9 +39,10 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const xPos = useRef(0);
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
+  const updateLegendCanvas = useRef<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [configChanged, setConfigChanged] = useState(false);
-
+  const updateSide = useRef("right");
   const newTrackWidth = useRef(windowWidth);
 
   async function createCanvas(curTrackData, genesArr) {
@@ -66,6 +68,9 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       }
     });
     let tmpObj = { ...configOptions.current };
+    function getNumLegend(legend: TrackLegend) {
+      updateLegendCanvas.current = legend;
+    }
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
     let canvasElements = (
       <InteractionTrackComponent
@@ -76,6 +81,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
         width={curTrackData.visWidth}
         forceSvg={false}
         trackModel={trackModel}
+        getNumLegend={getNumLegend}
       />
     );
     setCanvasComponents(canvasElements);
@@ -89,10 +95,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
         curTrackData.startWindow;
     } else if (curTrackData.side === "left") {
       xPos.current =
-        Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
         windowWidth +
         curTrackData.startWindow;
     }
+    updateSide.current = side;
     newTrackWidth.current = curTrackData.visWidth;
   }
 
@@ -107,9 +114,9 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
-    } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-      viewData = fetchedDataCache.current[dataIdx! + 1].data;
-      curIdx = dataIdx! + 1;
+    } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
     }
     if (viewData.length > 0) {
       curRegionData.current = {
@@ -282,42 +289,24 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   }, [configChanged]);
   return (
     <div
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-
-        flexDirection: "column",
+        position: "relative",
+        height: configOptions.current.height + 2,
       }}
-      onContextMenu={renderConfigMenu}
     >
       <div
         style={{
-          display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height: configOptions.current.height + 2,
-          position: "relative",
+          borderTop: "1px solid Dodgerblue",
+          borderBottom: "1px solid Dodgerblue",
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            position: "relative",
-            height: configOptions.current.height,
-          }}
-        >
-          <div
-            style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: side === "right" ? `${xPos.current}px` : "",
-              right: side === "left" ? `${xPos.current}px` : "",
-            }}
-          >
-            {canvasComponents}
-          </div>
-        </div>
+        {canvasComponents}
       </div>
     </div>
   );

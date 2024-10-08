@@ -28,6 +28,7 @@ import TrackLegend from "./commonComponents/TrackLegend";
 import useResizeObserver from "./Resize";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { NumericalFeature } from "../../models/Feature";
+import { update } from "lodash";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -67,7 +68,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
-  const boxXpos = useRef(0);
+  const updateSide = useRef("right");
   const boxRef = useRef<HTMLInputElement>(null);
   const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
@@ -222,6 +223,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           curTrackData.startWindow
         : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
     }
+    updateSide.current = side;
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -469,14 +471,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         ];
 
         curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
+          fetchedDataCache.current[dataIdx! - 1],
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx! + 2],
         ];
 
-        curIdx = dataIdx! + 2;
+        curIdx = dataIdx! + 1;
       }
     }
     if (viewData.length > 0) {
@@ -796,6 +798,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         );
       }
     }
+    setConfigChanged(false);
   }, [configChanged]);
 
   useEffect(() => {
@@ -803,16 +806,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       updateTrackLegend();
     }
   }, [trackBoxPosition]);
-  useEffect(() => {
-    let curBox = boxRef.current!.getBoundingClientRect().height;
-    if (configChanged === true && prevBoxHeight.current !== curBox) {
-      getLegendPosition();
-      prevBoxHeight.current = curBox;
-    } else {
-      updateTrackLegend();
-    }
-    setConfigChanged(false);
-  }, [svgComponents, canvasComponents]);
 
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
@@ -847,8 +840,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             borderBottom: "1px solid Dodgerblue",
             position: "absolute",
             lineHeight: 0,
-            right: side === "left" ? `${xPos.current}px` : "",
-            left: side === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
             backgroundColor: configOptions.current.backgroundColor,
           }}
         >
@@ -868,8 +861,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
               backgroundColor: configOptions.current.backgroundColor,
-              left: side === "right" ? `${xPos.current}px` : "",
-              right: side === "left" ? `${xPos.current}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
             }}
           >
             {canvasComponents}

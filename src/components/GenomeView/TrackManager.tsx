@@ -207,13 +207,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let curX;
 
     const dragIdx = dragX.current / windowWidth;
-
-    if (dragX.current! > 0) {
-      curX = Math.ceil(dragX.current! / windowWidth);
-    } else {
+    {
       curX = Math.ceil(dragX.current! / windowWidth);
     }
-    console.log(curX);
+
     setDataIdx(curX);
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
@@ -703,7 +700,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <div>1pixel to {basePerPixel.current}bp</div>
         <div style={{ display: "flex" }}>
           <div
-            onMouseDown={handleMouseDown}
             style={{
               display: "flex",
               //makes components align right or right when we switch sides
@@ -721,6 +717,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }}
           >
             <div
+              onMouseDown={handleMouseDown}
+              ref={block}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -731,26 +729,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
                 return (
                   <div
+                    key={item.id}
                     style={{
                       display: "grid",
+                      WebkitBackfaceVisibility: "hidden",
+                      WebkitPerspective: `${windowWidth}px`,
+                      backfaceVisibility: "hidden",
+                      perspective: `${windowWidth}px`,
                     }}
                   >
                     <div
-                      key={item.id}
                       data-theme={"light"}
                       ref={trackComponents[index].posRef}
                       style={{
                         display: "flex",
 
-                        WebkitBackfaceVisibility: "hidden",
-                        WebkitPerspective: "1000px",
-                        backfaceVisibility: "hidden",
-                        perspective: "1000px",
                         gridArea: "1/1",
                       }}
                     >
                       <Component
-                        key={item.id}
                         id={item.id}
                         trackModel={item.trackModel}
                         bpRegionSize={bpRegionSize.current}

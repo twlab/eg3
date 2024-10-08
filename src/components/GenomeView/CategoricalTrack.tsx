@@ -83,7 +83,8 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   const boxXpos = useRef(0);
   const boxRef = useRef<HTMLInputElement>(null);
   const updateLegend = useRef<any>(null);
-  const updateLegendCanvas = useRef<any>(null);
+
+  const updateSide = useRef("right");
   const prevBoxHeight = useRef<any>(0);
   const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
@@ -193,11 +194,12 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
+        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
     }
+    updateSide.current = side;
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -418,9 +420,9 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx! + 1].refGenes;
-        curIdx = dataIdx! + 1;
+      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx!].refGenes;
+        curIdx = dataIdx!;
       }
     } else {
       if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
@@ -431,14 +433,14 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         ];
 
         curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
+          fetchedDataCache.current[dataIdx! - 1],
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx! + 2],
         ];
 
-        curIdx = dataIdx! + 2;
+        curIdx = dataIdx! + 1;
       }
     }
     if (viewData.length > 0) {
@@ -823,8 +825,8 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           lineHeight: 0,
-          right: side === "left" ? `${xPos.current}px` : "",
-          left: side === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
           backgroundColor: configOptions.current.backgroundColor,
         }}
       >

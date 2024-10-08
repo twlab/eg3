@@ -73,6 +73,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
+  const updateSide = useRef("right");
   const boxRef = useRef<HTMLInputElement>(null);
   const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
@@ -222,11 +223,13 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
+        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
     }
+
+    updateSide.current = side;
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -431,9 +434,9 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
         hasData = true;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx! + 1].cacheData;
-        curIdx = dataIdx! + 1;
+      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx!].cacheData;
+        curIdx = dataIdx!;
         hasData = true;
       }
     } else {
@@ -445,14 +448,14 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         ];
         hasData = true;
         curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
+          fetchedDataCache.current[dataIdx! - 1],
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx! + 2],
         ];
         hasData = true;
-        curIdx = dataIdx! + 2;
+        curIdx = dataIdx! + 1;
       }
     }
     if (hasData) {
@@ -831,8 +834,8 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
             borderBottom: "1px solid Dodgerblue",
             position: "absolute",
             lineHeight: 0,
-            right: side === "left" ? `${xPos.current}px` : "",
-            left: side === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
             backgroundColor: configOptions.current.backgroundColor,
           }}
         >
@@ -852,8 +855,8 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
               backgroundColor: configOptions.current.backgroundColor,
-              left: side === "right" ? `${xPos.current}px` : "",
-              right: side === "left" ? `${xPos.current}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
             }}
           >
             {canvasComponents}

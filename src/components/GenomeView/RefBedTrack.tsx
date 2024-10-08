@@ -60,6 +60,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
+  const updateSide = useRef("right");
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
@@ -196,11 +197,12 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
+        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
     }
+    updateSide.current = side;
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -433,9 +435,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
         hasdata = true;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx! + 1].refGenes;
-        curIdx = dataIdx! + 1;
+      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx!].refGenes;
+        curIdx = dataIdx!;
         hasdata = true;
       }
     } else {
@@ -447,14 +449,14 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         ];
         hasdata = true;
         curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 2 && dataIdx! > 0) {
+      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
+          fetchedDataCache.current[dataIdx! - 1],
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx! + 2],
         ];
         hasdata = true;
-        curIdx = dataIdx! + 2;
+        curIdx = dataIdx! + 1;
       }
     }
     if (hasdata) {
@@ -794,8 +796,8 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
               borderBottom: "1px solid Dodgerblue",
               position: "absolute",
               lineHeight: 0,
-              right: side === "left" ? `${xPos.current}px` : "",
-              left: side === "right" ? `${xPos.current}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
             }}
           >
@@ -815,8 +817,8 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
                 borderBottom: "1px solid Dodgerblue",
                 position: "absolute",
                 backgroundColor: configOptions.current.backgroundColor,
-                left: side === "right" ? `${xPos.current}px` : "",
-                right: side === "left" ? `${xPos.current}px` : "",
+                left: updateSide.current === "right" ? `${xPos.current}px` : "",
+                right: updateSide.current === "left" ? `${xPos.current}px` : "",
               }}
             >
               {canvasComponents}

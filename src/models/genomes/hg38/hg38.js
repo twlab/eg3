@@ -41,7 +41,7 @@ const genome = new Genome("hg38", [
 // https://target.wustl.edu/dli/tmp/test2.g3d
 // chr7:74083652-74084068 dynseq cromorsome
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27195171-27202238");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "refbed",
@@ -89,20 +89,20 @@ const defaultTracks = [
       },
     ],
   }),
-  // new TrackModel({
-  //   type: "hic",
-  //   name: "test hic",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //   // "options": {
-  //   //     "displayMode": "arc"
-  //   // }
-  // }),
+  new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+  }),
 
-  // new TrackModel({
-  //   type: "bigbed",
-  //   name: "test bigbed",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  // }),
+  new TrackModel({
+    type: "bigbed",
+    name: "test bigbed",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  }),
   new TrackModel({
     type: "geneAnnotation",
     name: "refGene",
@@ -169,35 +169,35 @@ const defaultTracks = [
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   }),
-  // new TrackModel({
-  //   type: "categorical",
-  //   name: "ChromHMM",
-  //   url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
-  //   options: {
-  //     category: {
-  //       1: { name: "Active TSS", color: "#ff0000" },
-  //       2: { name: "Flanking Active TSS", color: "#ff4500" },
-  //       3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
-  //       4: { name: "Strong transcription", color: "#008000" },
-  //       5: { name: "Weak transcription", color: "#006400" },
-  //       6: { name: "Genic enhancers", color: "#c2e105" },
-  //       7: { name: "Enhancers", color: "#ffff00" },
-  //       8: { name: "ZNF genes & repeats", color: "#66cdaa" },
-  //       9: { name: "Heterochromatin", color: "#8a91d0" },
-  //       10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
-  //       11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
-  //       12: { name: "Bivalent Enhancer", color: "#bdb76b" },
-  //       13: { name: "Repressed PolyComb", color: "#808080" },
-  //       14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
-  //       15: { name: "Quiescent/Low", color: "#ffffff" },
-  //     },
-  //   },
-  // }),
-  // new TrackModel({
-  //   type: "longrange",
-  //   name: "ES-E14 ChIA-PET",
-  //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  // }),
+  new TrackModel({
+    type: "categorical",
+    name: "ChromHMM",
+    url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
+    options: {
+      category: {
+        1: { name: "Active TSS", color: "#ff0000" },
+        2: { name: "Flanking Active TSS", color: "#ff4500" },
+        3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
+        4: { name: "Strong transcription", color: "#008000" },
+        5: { name: "Weak transcription", color: "#006400" },
+        6: { name: "Genic enhancers", color: "#c2e105" },
+        7: { name: "Enhancers", color: "#ffff00" },
+        8: { name: "ZNF genes & repeats", color: "#66cdaa" },
+        9: { name: "Heterochromatin", color: "#8a91d0" },
+        10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
+        11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
+        12: { name: "Bivalent Enhancer", color: "#bdb76b" },
+        13: { name: "Repressed PolyComb", color: "#808080" },
+        14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
+        15: { name: "Quiescent/Low", color: "#ffffff" },
+      },
+    },
+  }),
+  new TrackModel({
+    type: "longrange",
+    name: "ES-E14 ChIA-PET",
+    url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+  }),
   new TrackModel({
     type: "biginteract",
     name: "test bigInteract",

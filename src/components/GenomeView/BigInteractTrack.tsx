@@ -44,6 +44,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
   const boxRef = useRef<HTMLInputElement>(null);
+  const updateSide = useRef("right");
   const [legend, setLegend] = useState<any>();
   const updateLegendCanvas = useRef<any>(null);
   const prevBoxHeight = useRef<any>(0);
@@ -107,7 +108,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       />
     );
     setCanvasComponents(canvasElements);
-
     if (curTrackData.initial === 1) {
       xPos.current = -curTrackData.startWindow;
     } else if (curTrackData.side === "right") {
@@ -117,10 +117,11 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         curTrackData.startWindow;
     } else if (curTrackData.side === "left") {
       xPos.current =
-        Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
         windowWidth +
         curTrackData.startWindow;
     }
+    updateSide.current = side;
     newTrackWidth.current = curTrackData.visWidth;
   }
 
@@ -364,8 +365,8 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
           borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           backgroundColor: configOptions.current.backgroundColor,
-          left: side === "right" ? `${xPos.current}px` : "",
-          right: side === "left" ? `${xPos.current}px` : "",
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
         {canvasComponents}

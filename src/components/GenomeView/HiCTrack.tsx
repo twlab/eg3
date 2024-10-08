@@ -39,12 +39,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const curRegionData = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
-
+  const updateSide = useRef("right");
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
   const boxRef = useRef<HTMLInputElement>(null);
-  const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
   const prevBoxHeight = useRef<any>(0);
   const [legend, setLegend] = useState<any>();
@@ -85,10 +84,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
         curTrackData.startWindow;
     } else if (curTrackData.side === "left") {
       xPos.current =
-        Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
         windowWidth +
         curTrackData.startWindow;
     }
+    updateSide.current = side;
     newTrackWidth.current = curTrackData.visWidth;
   }
 
@@ -103,9 +103,9 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
       viewData = fetchedDataCache.current[dataIdx!].data;
       curIdx = dataIdx!;
-    } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-      viewData = fetchedDataCache.current[dataIdx! + 1].data;
-      curIdx = dataIdx! + 1;
+    } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
     }
     if (viewData.length > 0) {
       curRegionData.current = {
@@ -318,19 +318,9 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       updateTrackLegend();
     }
   }, [trackBoxPosition]);
-  useEffect(() => {
-    let curBox = boxRef.current!.getBoundingClientRect().height;
-    if (configChanged === true && prevBoxHeight.current !== curBox) {
-      getLegendPosition();
-      prevBoxHeight.current = curBox;
-    } else {
-      updateTrackLegend();
-    }
-    setConfigChanged(false);
-  }, [canvasComponents]);
+
   return (
     <div
-      ref={boxRef}
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
@@ -344,8 +334,8 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
           borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           backgroundColor: configOptions.current.backgroundColor,
-          left: side === "right" ? `${xPos.current}px` : "",
-          right: side === "left" ? `${xPos.current}px` : "",
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
         {canvasComponents}
