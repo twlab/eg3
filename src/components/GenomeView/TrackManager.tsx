@@ -698,8 +698,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               style={{
                 display: "flex",
                 flexDirection: "column",
-
-                lineHeight: 0,
               }}
             >
               {trackComponents.map((item, index) => {
@@ -715,11 +713,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       WebkitPerspective: `${windowWidth}px`,
                       backfaceVisibility: "hidden",
                       perspective: `${windowWidth}px`,
-                      backgroundColor: "",
+                      backgroundColor: "#F2F2F2",
                       width: `${windowWidth}px`,
                       zIndex: 1,
-                      borderTop: "1px solid Dodgerblue",
-                      borderBottom: "1px solid Dodgerblue",
+                      outline: "1px solid Dodgerblue",
                     }}
                   >
                     <div
@@ -758,7 +755,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     <div
                       style={{
                         position: "relative",
-                        zIndex: 3,
+
                         gridArea: "1/1",
                       }}
                       ref={item.legendRef}
