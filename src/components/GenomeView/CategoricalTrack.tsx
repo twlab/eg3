@@ -81,7 +81,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
-  const boxRef = useRef<HTMLInputElement>(null);
+
   const updateLegend = useRef<any>(null);
 
   const updateSide = useRef("right");
@@ -477,29 +477,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     }
   }
 
-  function updateTrackLegend() {
-    let boxPos = boxRef.current!.getBoundingClientRect();
-    let legendEle;
-    if (svgComponents) {
-      legendEle = updateLegend.current;
-    }
-    let curLegendEle = ReactDOM.createPortal(
-      <div
-        style={{
-          position: "absolute",
-          left: boxXpos.current,
-          top: boxPos.top + window.scrollY,
-        }}
-      >
-        {legendEle ? legendEle : ""}
-      </div>,
-      document.body
-    );
-
-    prevBoxHeight.current = boxPos.height;
-
-    setLegend(curLegendEle);
-  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -783,20 +760,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   }, [configChanged]);
 
   useEffect(() => {
-    if (trackBoxPosition) {
-      updateTrackLegend();
-    }
-  }, [trackBoxPosition]);
-  useEffect(() => {
-    let curBox = boxRef.current!.getBoundingClientRect().height;
-    if (configChanged === true && prevBoxHeight.current !== curBox) {
-      getLegendPosition();
-      prevBoxHeight.current = curBox;
-    } else {
-      updateTrackLegend();
-    }
-  }, [svgComponents]);
-  useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
@@ -808,21 +771,18 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
-      ref={boxRef}
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
         // other elements will overlapp
-        height: svgHeight.current + 2,
+        height: svgHeight.current,
 
         position: "relative",
       }}
     >
       <div
         style={{
-          borderTop: "1px solid Dodgerblue",
-          borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           lineHeight: 0,
           right: updateSide.current === "left" ? `${xPos.current}px` : "",

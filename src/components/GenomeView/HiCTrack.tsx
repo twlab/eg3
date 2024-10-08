@@ -43,7 +43,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
-  const boxRef = useRef<HTMLInputElement>(null);
+
   const updateLegendCanvas = useRef<any>(null);
   const prevBoxHeight = useRef<any>(0);
   const [legend, setLegend] = useState<any>();
@@ -279,30 +279,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
-  function updateTrackLegend() {
-    let boxPos = boxRef.current!.getBoundingClientRect();
-    let legendEle;
-    if (canvasComponents) {
-      legendEle = updateLegendCanvas.current;
-    }
-    let curLegendEle = ReactDOM.createPortal(
-      <div
-        style={{
-          position: "absolute",
-          left: boxXpos.current,
-          top: boxPos.top + window.scrollY,
-        }}
-      >
-        {legendEle ? legendEle : ""}
-      </div>,
-      document.body
-    );
-
-    prevBoxHeight.current = boxPos.height;
-
-    setLegend(curLegendEle);
-  }
-
   useEffect(() => {
     if (configChanged === true) {
       createCanvas(
@@ -313,25 +289,17 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     setConfigChanged(false);
   }, [configChanged]);
 
-  useEffect(() => {
-    if (trackBoxPosition) {
-      updateTrackLegend();
-    }
-  }, [trackBoxPosition]);
-
   return (
     <div
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height + 2,
+        height: configOptions.current.height,
       }}
     >
       <div
         style={{
-          borderTop: "1px solid Dodgerblue",
-          borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           backgroundColor: configOptions.current.backgroundColor,
           left: updateSide.current === "right" ? `${xPos.current}px` : "",

@@ -293,13 +293,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height + 2,
+        height: configOptions.current.height,
       }}
     >
       <div
         style={{
-          borderTop: "1px solid Dodgerblue",
-          borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           backgroundColor: configOptions.current.backgroundColor,
           left: updateSide.current === "right" ? `${xPos.current}px` : "",

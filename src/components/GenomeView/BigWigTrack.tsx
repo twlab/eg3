@@ -54,7 +54,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
   const updateSide = useRef("right");
-  const boxRef = useRef<HTMLInputElement>(null);
+
   const updateLegendCanvas = useRef<any>(null);
   const prevBoxHeight = useRef<any>(0);
   const [legend, setLegend] = useState<any>();
@@ -287,28 +287,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       }
     }
   }
-  function updateTrackLegend() {
-    let boxPos = boxRef.current!.getBoundingClientRect();
-    let legendEle;
-    if (canvasComponents) {
-      legendEle = updateLegendCanvas.current;
-    }
-    let curLegendEle = ReactDOM.createPortal(
-      <div
-        style={{
-          position: "absolute",
-          left: boxXpos.current,
-          top: boxPos.top + window.scrollY,
-        }}
-      >
-        {legendEle ? legendEle : ""}
-      </div>,
-      document.body
-    );
 
-    prevBoxHeight.current = boxPos.height;
-    setLegend(curLegendEle);
-  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -576,22 +555,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         );
       }
     }
-  }, [configChanged]);
-  useEffect(() => {
-    if (trackBoxPosition) {
-      updateTrackLegend();
-    }
-  }, [trackBoxPosition]);
-  useEffect(() => {
-    let curBox = boxRef.current!.getBoundingClientRect().height;
-    if (configChanged === true && prevBoxHeight.current !== curBox) {
-      getLegendPosition();
-      prevBoxHeight.current = curBox;
-    } else {
-      updateTrackLegend();
-    }
     setConfigChanged(false);
-  }, [canvasComponents]);
+  }, [configChanged]);
+
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
@@ -603,18 +569,15 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
-      ref={boxRef}
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height + 2,
+        height: configOptions.current.height,
       }}
     >
       <div
         style={{
-          borderTop: "1px solid Dodgerblue",
-          borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           backgroundColor: configOptions.current.backgroundColor,
           left: updateSide.current === "right" ? `${xPos.current}px` : "",

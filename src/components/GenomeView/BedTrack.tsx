@@ -72,7 +72,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
   const updateSide = useRef("right");
-  const boxRef = useRef<HTMLInputElement>(null);
+
   const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
   const prevBoxHeight = useRef<any>(0);
@@ -489,34 +489,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       }
     }
   }
-  function updateTrackLegend() {
-    let boxPos = boxRef.current!.getBoundingClientRect();
-    let legendEle;
-    if (configOptions.current.displayMode === "full" && svgComponents) {
-      legendEle = updateLegend.current;
-    } else if (
-      configOptions.current.displayMode === "density" &&
-      canvasComponents
-    ) {
-      legendEle = updateLegendCanvas.current;
-    }
-    let curLegendEle = ReactDOM.createPortal(
-      <div
-        style={{
-          position: "absolute",
-          left: boxXpos.current,
-          top: boxPos.top + window.scrollY,
-        }}
-      >
-        {legendEle ? legendEle : ""}
-      </div>,
-      document.body
-    );
 
-    prevBoxHeight.current = boxPos.height;
-
-    setLegend(curLegendEle);
-  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -783,23 +756,8 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         );
       }
     }
-  }, [configChanged]);
-
-  useEffect(() => {
-    if (trackBoxPosition) {
-      updateTrackLegend();
-    }
-  }, [trackBoxPosition]);
-  useEffect(() => {
-    let curBox = boxRef.current!.getBoundingClientRect().height;
-    if (configChanged === true && prevBoxHeight.current !== curBox) {
-      getLegendPosition();
-      prevBoxHeight.current = curBox;
-    } else {
-      updateTrackLegend();
-    }
     setConfigChanged(false);
-  }, [svgComponents, canvasComponents]);
+  }, [configChanged]);
 
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
@@ -812,7 +770,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
-      ref={boxRef}
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
@@ -820,16 +777,14 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 2
-            : configOptions.current.height + 2,
+            ? svgHeight.current
+            : configOptions.current.height,
         position: "relative",
       }}
     >
       {configOptions.current.displayMode === "full" ? (
         <div
           style={{
-            borderTop: "1px solid Dodgerblue",
-            borderBottom: "1px solid Dodgerblue",
             position: "absolute",
             lineHeight: 0,
             right: updateSide.current === "left" ? `${xPos.current}px` : "",
@@ -849,8 +804,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         >
           <div
             style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
               position: "absolute",
               backgroundColor: configOptions.current.backgroundColor,
               left: updateSide.current === "right" ? `${xPos.current}px` : "",

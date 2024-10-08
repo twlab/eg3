@@ -43,7 +43,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const boxXpos = useRef(0);
-  const boxRef = useRef<HTMLInputElement>(null);
+
   const updateSide = useRef("right");
   const [legend, setLegend] = useState<any>();
   const updateLegendCanvas = useRef<any>(null);
@@ -150,29 +150,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
     }
   }
 
-  function updateTrackLegend() {
-    let boxPos = boxRef.current!.getBoundingClientRect();
-    let legendEle;
-    if (canvasComponents) {
-      legendEle = updateLegendCanvas.current;
-    }
-    let curLegendEle = ReactDOM.createPortal(
-      <div
-        style={{
-          position: "absolute",
-          left: boxXpos.current,
-          top: boxPos.top + window.scrollY,
-        }}
-      >
-        {legendEle ? legendEle : ""}
-      </div>,
-      document.body
-    );
-
-    prevBoxHeight.current = boxPos.height;
-
-    setLegend(curLegendEle);
-  }
   // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
   useEffect(() => {
     async function handle() {
@@ -332,37 +309,20 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         curRegionData.current.cachedData
       );
     }
+    setConfigChanged(false);
   }, [configChanged]);
 
-  useEffect(() => {
-    if (trackBoxPosition) {
-      updateTrackLegend();
-    }
-  }, [trackBoxPosition]);
-  useEffect(() => {
-    let curBox = boxRef.current!.getBoundingClientRect().height;
-    if (configChanged === true && prevBoxHeight.current !== curBox) {
-      getLegendPosition();
-      prevBoxHeight.current = curBox;
-    } else {
-      updateTrackLegend();
-    }
-    setConfigChanged(false);
-  }, [canvasComponents]);
   return (
     <div
-      ref={boxRef}
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height + 2,
+        height: configOptions.current.height,
       }}
     >
       <div
         style={{
-          borderTop: "1px solid Dodgerblue",
-          borderBottom: "1px solid Dodgerblue",
           position: "absolute",
           backgroundColor: configOptions.current.backgroundColor,
           left: updateSide.current === "right" ? `${xPos.current}px` : "",

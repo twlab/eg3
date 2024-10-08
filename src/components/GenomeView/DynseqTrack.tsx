@@ -566,44 +566,34 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-
-        flexDirection: "column",
+        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
+        // other elements will overlapp
+        height:
+          configOptions.current.displayMode === "full"
+            ? svgHeight.current
+            : configOptions.current.height,
+        position: "relative",
       }}
-      onContextMenu={renderConfigMenu}
     >
       <div
         style={{
           display: "flex",
-          // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-          // other elements will overlapp
-          height:
-            configOptions.current.displayMode === "full"
-              ? svgHeight.current + 2
-              : configOptions.current.height + 2,
           position: "relative",
+          height: configOptions.current.height,
         }}
       >
         <div
           style={{
-            display: "flex",
-            position: "relative",
-            height: configOptions.current.height,
+            position: "absolute",
+            backgroundColor: configOptions.current.backgroundColor,
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
           }}
         >
-          <div
-            style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: updateSide.current === "right" ? `${xPos.current}px` : "",
-              right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            }}
-          >
-            {canvasComponents}
-          </div>
+          {canvasComponents}
         </div>
       </div>
     </div>

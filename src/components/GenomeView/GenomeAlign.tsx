@@ -299,57 +299,45 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-        flexDirection: "column",
+        position: "relative",
         height: `${configOptions.current.height}px`,
       }}
     >
-      <div
+      <svg
+        width={`${newTrackWidth.current}px`}
         style={{
-          display: "flex",
-          position: "relative",
+          display: "block",
+          position: "absolute",
           height: `${configOptions.current.height}px`,
+          right: updateSide.current === "left" ? `${xPos.current!}px` : "",
+          left: updateSide.current === "right" ? `${xPos.current!}px` : "",
         }}
       >
-        <svg
-          width={`${newTrackWidth.current}px`}
+        {svgComponents.svgElements}
+      </svg>
+      {svgComponents.svgElements ? (
+        <div
           style={{
-            display: "block",
             position: "absolute",
-            borderTop: "1px solid Dodgerblue",
-            borderBottom: "1px solid Dodgerblue",
-            height: `${configOptions.current.height}px`,
+
             right: updateSide.current === "left" ? `${xPos.current!}px` : "",
             left: updateSide.current === "right" ? `${xPos.current!}px` : "",
+            zIndex: 3,
           }}
         >
-          {svgComponents.svgElements}
-        </svg>
-        {svgComponents.svgElements ? (
-          <div
-            style={{
-              position: "absolute",
-
-              right: updateSide.current === "left" ? `${xPos.current!}px` : "",
-              left: updateSide.current === "right" ? `${xPos.current!}px` : "",
-              zIndex: 3,
-            }}
-          >
-            <HoverToolTip
-              data={svgComponents.alignment}
-              windowWidth={svgComponents.trackState.visWidth}
-              trackType={
-                useFineModeNav ? "genomealignFine" : "genomealignRough"
-              }
-              height={configOptions.current.height}
-              viewRegion={svgComponents.trackState.visRegion}
-              side={svgComponents.trackState.side}
-              options={configOptions.current}
-            />
-          </div>
-        ) : (
-          ""
-        )}
-      </div>
+          <HoverToolTip
+            data={svgComponents.alignment}
+            windowWidth={svgComponents.trackState.visWidth}
+            trackType={useFineModeNav ? "genomealignFine" : "genomealignRough"}
+            height={configOptions.current.height}
+            viewRegion={svgComponents.trackState.visRegion}
+            side={svgComponents.trackState.side}
+            options={configOptions.current}
+          />
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 });

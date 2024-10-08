@@ -573,7 +573,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         display: "flex",
         // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
         // other elements will overlapp
-        height: configOptions.current.height + 2,
+        height: configOptions.current.height,
         position: "relative",
       }}
     >
@@ -586,8 +586,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       >
         <div
           style={{
-            borderTop: "1px solid Dodgerblue",
-            borderBottom: "1px solid Dodgerblue",
             position: "absolute",
             backgroundColor: configOptions.current.backgroundColor,
             left: updateSide.current === "right" ? `${xPos.current}px` : "",

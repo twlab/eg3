@@ -648,9 +648,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           display: "flex",
           flexDirection: "column",
           whiteSpace: "nowrap",
-
-          alignItems: "center",
-          margin: "auto",
         }}
       >
         <button onClick={handleClick}>add bed</button>
@@ -701,6 +698,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               style={{
                 display: "flex",
                 flexDirection: "column",
+                borderTop: "1px solid Dodgerblue",
+                borderBottom: "1px solid Dodgerblue",
+                position: "absolute",
+                lineHeight: 0,
               }}
             >
               {trackComponents.map((item, index) => {
@@ -718,7 +719,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     }}
                   >
                     <div
-                      data-theme={"light"}
                       ref={trackComponents[index].posRef}
                       style={{
                         display: "flex",

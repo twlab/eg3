@@ -234,7 +234,6 @@ function GenomeHub(props: any) {
         paddingLeft: "1%",
         paddingRight: "2%",
       }}
-      data-theme={"light"}
     >
       {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />

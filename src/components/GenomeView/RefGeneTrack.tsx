@@ -69,7 +69,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
-  const boxRef = useRef<HTMLInputElement>(null);
+
   const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -514,24 +514,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
     }
   }
-  function updateTrackLegend() {
-    let boxPos = boxRef.current!.getBoundingClientRect();
-    let legendEle;
-    if (configOptions.current.displayMode === "full" && svgComponents) {
-      legendEle = updateLegend.current;
-    } else if (
-      configOptions.current.displayMode === "density" &&
-      canvasComponents
-    ) {
-      legendEle = updateLegendCanvas.current;
-    }
-    let curLegendEle = ReactDOM.createPortal(
-      legendEle ? legendEle : "",
-      legendRef.current
-    );
-    prevBoxHeight.current = boxPos.height;
-    setLegend(curLegendEle);
-  }
+
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -802,12 +785,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [configChanged]);
 
   useEffect(() => {
-    if (trackBoxPosition) {
-      updateTrackLegend();
-    }
-  }, [trackBoxPosition]);
-
-  useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
@@ -820,7 +797,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
-      ref={boxRef}
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
@@ -828,16 +804,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 2
-            : configOptions.current.height + 2,
+            ? svgHeight.current
+            : configOptions.current.height,
         position: "relative",
       }}
     >
       {configOptions.current.displayMode === "full" ? (
         <div
           style={{
-            borderTop: "1px solid Dodgerblue",
-            borderBottom: "1px solid Dodgerblue",
             position: "absolute",
             lineHeight: 0,
             right: updateSide.current === "left" ? `${xPos.current}px` : "",
@@ -857,8 +831,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         >
           <div
             style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
               position: "absolute",
               backgroundColor: configOptions.current.backgroundColor,
               left: updateSide.current === "right" ? `${xPos.current}px` : "",
