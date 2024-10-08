@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -17,6 +17,7 @@ import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { update } from "lodash";
+import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -39,6 +40,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   trackIdx,
   id,
   useFineModeNav,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -47,12 +49,14 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
+  const [legend, setLegend] = useState<any>();
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -115,6 +119,14 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
+      function getNumLegend(legend: ReactNode) {
+        console.log(legend);
+        updatedLegend.current = ReactDOM.createPortal(
+          legend,
+          legendRef.current
+        );
+      }
+
       let canvasElements = (
         <MatplotTrackComponent
           data={algoData}
@@ -128,6 +140,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           width={fine ? curTrackData.visWidth : windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
+          getNumLegend={getNumLegend}
         />
       );
       setCanvasComponents(canvasElements);
@@ -563,6 +576,9 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
@@ -595,6 +611,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           {canvasComponents}
         </div>
       </div>
+      {legend}
     </div>
   );
 });

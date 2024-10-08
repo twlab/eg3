@@ -19,6 +19,8 @@ import {
 import { GenomeAlignTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import OpenInterval from "../../models/OpenInterval";
+import ReactDOM from "react-dom";
+import TrackLegend from "./commonComponents/TrackLegend";
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,
@@ -34,6 +36,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   id,
   getConfigMenu,
   useFineModeNav,
+  legendRef,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -44,12 +47,13 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
   const updateSide = useRef("right");
+
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<{ [key: string]: any }>(
     {}
   );
   const [configChanged, setConfigChanged] = useState(false);
-
+  const [legend, setLegend] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
 
   function createSVG(trackState, alignmentData) {
@@ -68,7 +72,15 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           renderGapText(item, index, configOptions.current)
         )
       );
+      let curLegendEle = ReactDOM.createPortal(
+        <TrackLegend
+          height={configOptions.current.height}
+          trackModel={trackModel}
+        />,
+        legendRef.current
+      );
 
+      setLegend(curLegendEle);
       let tempObj = {
         alignment: result,
         svgElements,
@@ -252,6 +264,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   useEffect(() => {
     getCacheData();
   }, [dataIdx]);
+
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;
@@ -338,6 +351,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       ) : (
         ""
       )}
+      {legend}
     </div>
   );
 });

@@ -66,6 +66,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
 
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
@@ -183,8 +184,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       tmpObj.displayMode = "auto";
 
       function getNumLegend(legend: ReactNode) {
-        let curLegendEle = ReactDOM.createPortal(legend, legendRef.current);
-        setLegend(curLegendEle);
+        updatedLegend.current = ReactDOM.createPortal(
+          legend,
+          legendRef.current
+        );
       }
 
       let canvasElements = (
@@ -790,6 +793,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     getCacheData();
     prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.

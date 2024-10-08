@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -18,6 +18,7 @@ import DynseqTrackComputation from "./DynseqComponents/DynseqTrackComputation";
 import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
 import TrackLegend from "./commonComponents/TrackLegend";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
+import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -41,6 +42,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   id,
   useFineModeNav,
   bpToPx,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -52,6 +54,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const updateLegendCanvas = useRef<any>(null);
 
   const [legend, setLegend] = useState<any>();
@@ -111,13 +114,12 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       );
       return new NumericalFeature("", newChrInt).withValue(record.score);
     });
-    function getNumLegend(legend: TrackLegend) {
-      updateLegendCanvas.current = legend;
-    }
 
     let tmpObj = { ...configOptions.current };
     tmpObj.displayMode = "auto";
-
+    function getNumLegend(legend: ReactNode) {
+      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
+    }
     let canvasElements = (
       <DynseqTrackComputation
         data={algoData}
@@ -558,6 +560,9 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
@@ -593,6 +598,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           {canvasComponents}
         </div>
       </div>
+      {legend}
     </div>
   );
 });

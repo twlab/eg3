@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -39,6 +39,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackIdx,
   id,
   useFineModeNav,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -51,6 +52,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
 
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
 
   const updateLegendCanvas = useRef<any>(null);
 
@@ -114,11 +116,12 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       return new NumericalFeature("", newChrInt).withValue(record.score);
     });
 
-    function getNumLegend(legend: TrackLegend) {
-      updateLegendCanvas.current = legend;
-    }
     let tmpObj = { ...configOptions.current };
     tmpObj.displayMode = "auto";
+
+    function getNumLegend(legend: ReactNode) {
+      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
+    }
     let canvasElements = (
       <NumericalTrack
         data={algoData}
@@ -561,6 +564,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
@@ -13,6 +13,7 @@ import { LongRangeTrackConfig } from "../../trackConfigs/config-menu-models.tsx/
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
 import TrackLegend from "./commonComponents/TrackLegend";
+import ReactDOM from "react-dom";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   side,
   trackData,
@@ -26,7 +27,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   genomeIdx,
   id,
   getConfigMenu,
-
+  legendRef,
   trackManagerRef,
 }) {
   //useRef to store data between states without re render the component
@@ -39,12 +40,13 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const xPos = useRef(0);
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const updateLegendCanvas = useRef<any>(null);
+
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [configChanged, setConfigChanged] = useState(false);
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const newTrackWidth = useRef(windowWidth);
-
+  const [legend, setLegend] = useState<any>();
   async function createCanvas(curTrackData, genesArr) {
     const algoData: any = [];
     genesArr.map((record) => {
@@ -68,8 +70,8 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       }
     });
     let tmpObj = { ...configOptions.current };
-    function getNumLegend(legend: TrackLegend) {
-      updateLegendCanvas.current = legend;
+    function getNumLegend(legend: ReactNode) {
+      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
     let canvasElements = (
@@ -244,6 +246,10 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   useEffect(() => {
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
+
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;
@@ -306,6 +312,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       >
         {canvasComponents}
       </div>
+      {legend}
     </div>
   );
 });

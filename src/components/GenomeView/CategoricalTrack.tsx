@@ -66,6 +66,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   trackIdx,
   id,
   useFineModeNav,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -77,8 +78,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-
-  const updateLegend = useRef<any>(null);
 
   const updateSide = useRef("right");
 
@@ -166,9 +165,12 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
 
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
-      updateLegend.current = (
-        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      let curLegendEle = ReactDOM.createPortal(
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />,
+        legendRef.current
       );
+
+      setLegend(curLegendEle);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         fine ? curTrackData.visWidth : windowWidth * 3,

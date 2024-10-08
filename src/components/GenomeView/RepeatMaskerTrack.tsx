@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -28,6 +28,7 @@ import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
 import { scaleLinear } from "d3-scale";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
+import TrackLegend from "./commonComponents/TrackLegend";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
 const ARROW_SIZE = 16;
@@ -91,6 +92,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     trackIdx,
     id,
     useFineModeNav,
+    legendRef,
   }) {
     const configOptions = useRef({ ...DEFAULT_OPTIONS });
     const svgHeight = useRef(0);
@@ -100,6 +102,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     const prevDataIdx = useRef(0);
     const xPos = useRef(0);
     const updateSide = useRef("right");
+    const updatedLegend = useRef<any>();
     const curRegionData = useRef<{ [key: string]: any }>({});
     const parentGenome = useRef("");
     const configMenuPos = useRef<{ [key: string]: any }>({});
@@ -109,6 +112,8 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     const newTrackWidth = useRef(windowWidth);
     const [configChanged, setConfigChanged] = useState(false);
     const [canvasComponents, setCanvasComponents] = useState<any>();
+    const [legend, setLegend] = useState<any>();
+
     // These states are used to update the tracks with new fetched data
     // new track sections are added as the user moves left (lower regions) and right (higher region)
     // New data are fetched only if the user drags to the either ends of the track
@@ -218,6 +223,12 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
 
         const height = configOptions.current.height;
         svgHeight.current = height;
+        let curLegendEle = ReactDOM.createPortal(
+          <TrackLegend height={svgHeight.current} trackModel={trackModel} />,
+          legendRef.current
+        );
+        setLegend(curLegendEle);
+
         let svgDATA = createFullVisualizer(
           placeFeatureData.placements,
           fine ? curTrackData.visWidth : windowWidth * 3,
@@ -230,6 +241,11 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
       } else if (configOptions.current.displayMode === "density") {
         let tmpObj = { ...configOptions.current };
         tmpObj.displayMode = "auto";
+        function getNumLegend(legend: ReactNode) {
+          let curLegendEle = ReactDOM.createPortal(legend, legendRef.current);
+          setLegend(curLegendEle);
+        }
+
         let canvasElements = (
           <NumericalTrack
             data={algoData}
@@ -246,6 +262,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
             width={fine ? curTrackData.visWidth : windowWidth * 3}
             forceSvg={false}
             trackModel={trackModel}
+            getNumLegend={getNumLegend}
           />
         );
         setCanvasComponents(canvasElements);
@@ -911,6 +928,9 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
       getCacheData();
       prevDataIdx.current = dataIdx!;
     }, [dataIdx]);
+    useEffect(() => {
+      setLegend(updatedLegend.current);
+    }, [canvasComponents]);
 
     return (
       //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
@@ -962,6 +982,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
         )}
 
         {toolTipVisible ? toolTip : ""}
+        {legend}
       </div>
     );
   }

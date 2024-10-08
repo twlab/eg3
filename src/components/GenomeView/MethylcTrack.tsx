@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -17,6 +17,7 @@ import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
 import { MethylCTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MethylCTrackConfig";
 import MethylCRecord from "../../models/MethylCRecord";
+import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -39,6 +40,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   trackIdx,
   id,
   useFineModeNav,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -46,6 +48,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
@@ -53,7 +56,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
-
+  const [legend, setLegend] = useState<any>();
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -107,6 +110,12 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
+      function getNumLegend(legend: ReactNode) {
+        updatedLegend.current = ReactDOM.createPortal(
+          legend,
+          legendRef.current
+        );
+      }
       let canvasElements = (
         <MethylCTrackComputation
           data={algoData}
@@ -544,6 +553,9 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
@@ -576,6 +588,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           {canvasComponents}
         </div>
       </div>
+      {legend}
     </div>
   );
 });

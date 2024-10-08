@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
@@ -10,7 +10,7 @@ import InteractionTrackComponent from "./InteractionComponents/InteractionTrackC
 import { objToInstanceAlign } from "./TrackManager";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
-import TrackLegend from "./commonComponents/TrackLegend";
+
 import ReactDOM from "react-dom";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   bpToPx,
@@ -26,7 +26,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   genomeIdx,
   id,
   getConfigMenu,
-
+  legendRef,
   trackManagerRef,
 }) {
   //useRef to store data between states without re render the component
@@ -38,6 +38,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
 
@@ -55,8 +56,8 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     let tmpObj = { ...configOptions.current };
 
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
-    function getNumLegend(legend: TrackLegend) {
-      updateLegendCanvas.current = legend;
+    function getNumLegend(legend: ReactNode) {
+      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
     let canvasElements = (
       <InteractionTrackComponent
@@ -242,6 +243,10 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   useEffect(() => {
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
+
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;

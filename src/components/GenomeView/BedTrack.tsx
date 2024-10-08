@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -57,6 +57,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackIdx,
   id,
   useFineModeNav,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -70,9 +71,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
 
   const updateSide = useRef("right");
-
-  const updateLegend = useRef<any>(null);
-  const updateLegendCanvas = useRef<any>(null);
+  const updatedLegend = useRef<any>();
 
   const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
@@ -163,9 +162,12 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
 
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
-      updateLegend.current = (
-        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      let curLegendEle = ReactDOM.createPortal(
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />,
+        legendRef.current
       );
+
+      setLegend(curLegendEle);
 
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
@@ -187,8 +189,11 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       });
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
-      function getNumLegend(legend: TrackLegend) {
-        updateLegendCanvas.current = legend;
+      function getNumLegend(legend: ReactNode) {
+        updatedLegend.current = ReactDOM.createPortal(
+          legend,
+          legendRef.current
+        );
       }
       let canvasElements = (
         <NumericalTrack
@@ -763,6 +768,9 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
@@ -27,7 +27,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   genomeIdx,
   id,
   getConfigMenu,
-
+  legendRef,
   trackManagerRef,
 }) {
   //useRef to store data between states without re render the component
@@ -42,6 +42,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
 
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const [legend, setLegend] = useState<any>();
   const updateLegendCanvas = useRef<any>(null);
 
@@ -89,8 +90,8 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
 
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
-    function getNumLegend(legend: TrackLegend) {
-      updateLegendCanvas.current = legend;
+    function getNumLegend(legend: ReactNode) {
+      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
     let canvasElements = (
       <InteractionTrackComponent
@@ -265,6 +266,10 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   useEffect(() => {
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
+
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;

@@ -17,6 +17,7 @@ import {
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import Feature from "../../../../models/Feature";
 import TrackModel from "../../../../models/TrackModel";
+import TrackLegend from "../TrackLegend";
 
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -40,6 +41,7 @@ interface MatplotTrackProps {
   viewRegion: any;
   width: any;
   forceSvg: any;
+  getNumLegend: any;
 }
 const TOP_PADDING = 2;
 
@@ -166,8 +168,16 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
   }
 
   render() {
-    const { data, viewRegion, width, trackModel, unit, options, forceSvg } =
-      this.props;
+    const {
+      data,
+      viewRegion,
+      width,
+      trackModel,
+      unit,
+      options,
+      forceSvg,
+      getNumLegend,
+    } = this.props;
 
     const { height, aggregateMethod, smooth, lineWidth } = options;
     const aggreagatedData = data.map((d) =>
@@ -178,14 +188,18 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
         ? aggreagatedData
         : aggreagatedData.map((d) => Smooth(d, smooth));
     this.scales = this.computeScales(this.xToValue, height);
-    // const legend = (
-    //   <TrackLegend
-    //     trackModel={trackModel}
-    //     height={height}
-    //     axisScale={this.scales.valueToY}
-    //     axisLegend={unit}
-    //   />
-    // );
+    const legend = (
+      <TrackLegend
+        trackModel={trackModel}
+        height={height}
+        axisScale={this.scales.valueToY}
+        axisLegend={unit}
+      />
+    );
+    if (getNumLegend) {
+      getNumLegend(legend);
+    }
+
     const visualizer = (
       // <HoverTooltipContext tooltipRelativeY={height} getTooltipContents={this.renderTooltip} >
       <LinePlot

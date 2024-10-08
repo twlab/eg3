@@ -757,7 +757,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         position: "relative",
                         zIndex: 2,
                         gridArea: "1/1",
-                        width: "120px",
+                        width: "100px",
                       }}
                       ref={item.legendRef}
                     ></div>

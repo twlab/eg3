@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -24,6 +24,7 @@ import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/co
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
+import TrackLegend from "./commonComponents/TrackLegend";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -55,12 +56,14 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   useFineModeNav,
   setShow3dGene,
   isThereG3dTrack,
+  legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
@@ -72,6 +75,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
+  const [legend, setLegend] = useState<any>();
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -157,6 +161,11 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       );
       const height = getHeight(placeFeatureData.numRowsAssigned);
       svgHeight.current = height;
+      let curLegendEle = ReactDOM.createPortal(
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />,
+        legendRef.current
+      );
+      setLegend(curLegendEle);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         fine ? curTrackData.visWidth : windowWidth * 3,
@@ -169,6 +178,13 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
     } else if (configOptions.current.displayMode === "density") {
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
+
+      function getNumLegend(legend: ReactNode) {
+        updatedLegend.current = ReactDOM.createPortal(
+          legend,
+          legendRef.current
+        );
+      }
       let canvasElements = (
         <NumericalTrack
           data={algoData}
@@ -765,6 +781,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
     // otherwise when there is new data cuz the user is at the end of the track
     getCacheData();
   }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
@@ -817,6 +836,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       )}
 
       {toolTipVisible ? toolTip : ""}
+      {legend}
     </div>
   );
 });
