@@ -66,9 +66,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   trackIdx,
   id,
   useFineModeNav,
-  trackManagerRef,
-  trackBoxPosition,
-  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -80,12 +77,11 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const boxXpos = useRef(0);
 
   const updateLegend = useRef<any>(null);
 
   const updateSide = useRef("right");
-  const prevBoxHeight = useRef<any>(0);
+
   const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
   const [toolTip, setToolTip] = useState<any>();

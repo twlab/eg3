@@ -39,9 +39,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackIdx,
   id,
   useFineModeNav,
-  trackManagerRef,
-  trackBoxPosition,
-  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -52,11 +49,11 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const boxXpos = useRef(0);
+
   const updateSide = useRef("right");
 
   const updateLegendCanvas = useRef<any>(null);
-  const prevBoxHeight = useRef<any>(0);
+
   const [legend, setLegend] = useState<any>();
 
   const [canvasComponents, setCanvasComponents] = useState<any>();

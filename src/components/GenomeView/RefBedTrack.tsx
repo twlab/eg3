@@ -777,16 +777,15 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current
-            : configOptions.current.height,
+            ? svgHeight.current + 1
+            : configOptions.current.height + 1,
         position: "relative",
+        border: "1px solid Tomato",
       }}
     >
       {configOptions.current.displayMode === "full" ? (
         <div
           style={{
-            borderTop: "1px solid Dodgerblue",
-            borderBottom: "1px solid Dodgerblue",
             position: "absolute",
             lineHeight: 0,
             right: updateSide.current === "left" ? `${xPos.current}px` : "",

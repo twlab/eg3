@@ -28,8 +28,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   getConfigMenu,
 
   trackManagerRef,
-  trackBoxPosition,
-  getLegendPosition,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -42,10 +40,9 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   const updateSide = useRef("right");
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const boxXpos = useRef(0);
 
   const updateLegendCanvas = useRef<any>(null);
-  const prevBoxHeight = useRef<any>(0);
+
   const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [configChanged, setConfigChanged] = useState(false);

@@ -698,9 +698,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               style={{
                 display: "flex",
                 flexDirection: "column",
-                borderTop: "1px solid Dodgerblue",
-                borderBottom: "1px solid Dodgerblue",
-                position: "absolute",
+
                 lineHeight: 0,
               }}
             >
@@ -709,6 +707,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
                 return (
                   <div
+                    data-theme={"light"}
                     key={item.id}
                     style={{
                       display: "grid",
@@ -716,6 +715,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       WebkitPerspective: `${windowWidth}px`,
                       backfaceVisibility: "hidden",
                       perspective: `${windowWidth}px`,
+                      backgroundColor: "lightgrey",
+                      width: `${windowWidth}px`,
+
+                      outline: "1px solid Dodgerblue",
                     }}
                   >
                     <div

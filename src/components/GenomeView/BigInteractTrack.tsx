@@ -29,8 +29,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   getConfigMenu,
 
   trackManagerRef,
-  trackBoxPosition,
-  getLegendPosition,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -42,12 +40,11 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   const xPos = useRef(0);
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const boxXpos = useRef(0);
 
   const updateSide = useRef("right");
   const [legend, setLegend] = useState<any>();
   const updateLegendCanvas = useRef<any>(null);
-  const prevBoxHeight = useRef<any>(0);
+
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [configChanged, setConfigChanged] = useState(false);
 

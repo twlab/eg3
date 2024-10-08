@@ -41,9 +41,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   id,
   useFineModeNav,
   bpToPx,
-  trackManagerRef,
-  trackBoxPosition,
-  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -56,7 +53,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const updateSide = useRef("right");
   const updateLegendCanvas = useRef<any>(null);
-  const prevBoxHeight = useRef<any>(0);
+
   const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const newTrackWidth = useRef(windowWidth);

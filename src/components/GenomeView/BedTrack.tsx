@@ -57,8 +57,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackIdx,
   id,
   useFineModeNav,
-  trackBoxPosition,
-  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -70,12 +68,12 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const boxXpos = useRef(0);
+
   const updateSide = useRef("right");
 
   const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
-  const prevBoxHeight = useRef<any>(0);
+
   const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();

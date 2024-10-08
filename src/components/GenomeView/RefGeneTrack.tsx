@@ -59,9 +59,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   useFineModeNav,
   setShow3dGene,
   isThereG3dTrack,
-  trackManagerRef,
-  trackBoxPosition,
-  getLegendPosition,
   legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
@@ -74,7 +71,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const updateLegendCanvas = useRef<any>(null);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
-  const prevBoxHeight = useRef<any>(0);
+
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");

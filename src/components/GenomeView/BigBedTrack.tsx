@@ -59,9 +59,6 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   trackIdx,
   id,
   useFineModeNav,
-  trackManagerRef,
-  trackBoxPosition,
-  getLegendPosition,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -73,11 +70,10 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const boxXpos = useRef(0);
 
   const updateLegend = useRef<any>(null);
   const updateLegendCanvas = useRef<any>(null);
-  const prevBoxHeight = useRef<any>(0);
+
   const updateSide = useRef("right");
   const [legend, setLegend] = useState<any>();
   const [svgComponents, setSvgComponents] = useState<any>();
@@ -810,8 +806,6 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
         >
           <div
             style={{
-              borderTop: "1px solid Dodgerblue",
-              borderBottom: "1px solid Dodgerblue",
               position: "absolute",
               backgroundColor: configOptions.current.backgroundColor,
               left: updateSide.current === "right" ? `${xPos.current}px` : "",

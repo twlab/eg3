@@ -207,7 +207,7 @@ function App() {
   }, [selectedGenome]);
 
   return (
-    <div data-theme={"light"}>
+    <div>
       <BrowserRouter>
         <div className="app-root-1">
           <header className="Paper-root AppBar-root AppBar-positionStatic AppBar-colorPrimary Paper-elevation4">
