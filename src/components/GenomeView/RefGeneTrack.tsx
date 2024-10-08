@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -67,8 +67,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
 
-  const updateLegend = useRef<any>(null);
-  const updateLegendCanvas = useRef<any>(null);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
 
@@ -155,10 +153,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
       svgHeight.current = height;
 
-      updateLegend.current = (
-        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      let curLegendEle = ReactDOM.createPortal(
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />,
+        legendRef.current
       );
 
+      setLegend(curLegendEle);
       let svgDATA = createFullVisualizer(
         placeFeatureData.placements,
         fine ? curTrackData.visWidth : windowWidth * 3,
@@ -182,8 +182,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
 
-      function getNumLegend(legend: TrackLegend) {
-        updateLegendCanvas.current = legend;
+      function getNumLegend(legend: ReactNode) {
+        let curLegendEle = ReactDOM.createPortal(legend, legendRef.current);
+        setLegend(curLegendEle);
       }
 
       let canvasElements = (
