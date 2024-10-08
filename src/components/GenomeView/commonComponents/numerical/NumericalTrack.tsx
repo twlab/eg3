@@ -14,8 +14,9 @@ import { DefaultAggregators } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
-import HoverToolTip from "../hover-and-tooltip/hoverToolTip";
+import HoverToolTip from "../hoverToolTips/hoverToolTip";
 import { BackgroundColorConfig } from "../../../../trackConfigs/config-menu-components.tsx/ColorConfig";
+import TrackLegend from "../TrackLegend";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data: Feature[]; // Replace 'Feature' with the actual type of your data
@@ -29,6 +30,7 @@ interface NumericalTrackProps {
   viewRegion: any;
   width: any;
   forceSvg: any;
+  getNumLegend?: any;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -59,29 +61,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
   /**
    * Don't forget to look at NumericalFeatureProcessor's propTypes!
    */
-  static propTypes = Object.assign(
-    {},
-    {
-      /**
-       * NumericalFeatureProcessor provides these.  Parents should provide an array of NumericalFeature.
-       */
-      data: PropTypes.array.isRequired, // PropTypes.arrayOf(Feature)
-      unit: PropTypes.string, // Unit to display after the number in tooltips
-      options: PropTypes.shape({
-        aggregateMethod: PropTypes.oneOf(
-          Object.values(DefaultAggregators.types)
-        ),
-        displayMode: PropTypes.oneOf(Object.values(NumericalDisplayModes))
-          .isRequired,
-        height: PropTypes.number.isRequired, // Height of the track
-        // scaleType: PropTypes.any, // Unused for now
-        // scaleRange: PropTypes.array, // Unused for now
-        color: PropTypes.string, // Color to draw bars, if using the default getBarElement
-      }).isRequired,
-      isLoading: PropTypes.bool, // If true, applies loading styling
-      error: PropTypes.any, // If present, applies error styling
-    }
-  );
+
   xToValue: any;
   xToValue2: any;
   scales: any;
@@ -234,8 +214,16 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
 
   render() {
     // console.log("render");
-    const { data, viewRegion, width, trackModel, unit, options, forceSvg } =
-      this.props;
+    const {
+      data,
+      viewRegion,
+      width,
+      trackModel,
+      unit,
+      options,
+      forceSvg,
+      getNumLegend,
+    } = this.props;
     const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
     const xvalues = this.aggregator.xToValueMaker(
@@ -250,7 +238,23 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
     this.hasReverse = xvalues[2];
     this.scales = this.computeScales(this.xToValue, this.xToValue2, height);
     const isDrawingBars =
-      this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap
+      this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap\
+
+    const legend = (
+      <TrackLegend
+        trackModel={trackModel}
+        height={height}
+        axisScale={isDrawingBars ? this.scales.axisScale : undefined}
+        // axisScale={isDrawingBars ? this.scales.valueToY : undefined}
+        // axisScaleReverse={isDrawingBars ? this.scales.valueToYReverse : undefined}
+        axisLegend={unit}
+      />
+    );
+
+    if (getNumLegend) {
+      getNumLegend(legend);
+    }
+
     const visualizer = this.hasReverse ? (
       <React.Fragment>
         <div
@@ -266,9 +270,9 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
             data={this.xToValue}
             data2={this.xToValue2}
             windowWidth={width}
-            trackType={"geneannotation"}
+            trackType={"numerical"}
             trackModel={trackModel}
-            height={DEFAULT_OPTIONS.height}
+            height={height}
             viewRegion={viewRegion}
             unit={unit}
             hasReverse={true}
@@ -282,6 +286,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           colorOut={colorAboveMax}
           isDrawingBars={isDrawingBars}
           forceSvg={forceSvg}
+          width={width}
         />
         <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
         <ValuePlot
@@ -292,6 +297,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           colorOut={color2BelowMin}
           isDrawingBars={isDrawingBars}
           forceSvg={forceSvg}
+          width={width}
         />
       </React.Fragment>
     ) : (
@@ -308,7 +314,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           <HoverToolTip
             data={this.xToValue}
             windowWidth={width}
-            trackType={"refGene"}
+            trackType={"numerical"}
             trackModel={trackModel}
             height={DEFAULT_OPTIONS.height}
             viewRegion={viewRegion}
@@ -324,6 +330,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
           colorOut={colorAboveMax}
           isDrawingBars={isDrawingBars}
           forceSvg={forceSvg}
+          width={width}
         />
       </React.Fragment>
     );
@@ -338,6 +345,7 @@ interface ValueTrackProps {
   isDrawingBars?: boolean;
   colorOut?: any;
   forceSvg?: any;
+  width: any;
 }
 export class ValuePlot extends React.PureComponent<ValueTrackProps> {
   static propTypes = {
@@ -346,6 +354,7 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
     height: PropTypes.number.isRequired,
     color: PropTypes.string,
     isDrawingBars: PropTypes.bool,
+    width: PropTypes.any,
   };
 
   constructor(props) {
@@ -438,8 +447,16 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
 
   render() {
     // console.log("render in valueplot");
-    const { xToValue, height, forceSvg } = this.props;
-    return (
+    const { xToValue, height, forceSvg, width } = this.props;
+
+    return xToValue.length === 0 ? (
+      <div
+        style={{
+          width: width,
+          height: height,
+        }}
+      ></div>
+    ) : (
       <DesignRenderer
         type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
         width={xToValue.length}

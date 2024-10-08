@@ -3,22 +3,22 @@ import { TrackConfig } from "./TrackConfig";
 import { BedTrackConfig } from "./BedTrackConfig";
 // import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
 // import { QBedTrackConfig } from "./QBedTrackConfig";
-// import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
-// import { BigBedTrackConfig } from "./BigBedTrackConfig";
+import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
+import { BigBedTrackConfig } from "./BigBedTrackConfig";
 // import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
 import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import { GeneAnnotationTrackConfig } from "./GeneAnnotationTrackConfig";
 import TrackModel from "../../models/TrackModel";
-// import { HicTrackConfig } from "./HicTrackConfig";
-// import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
+import { HicTrackConfig } from "./HicTrackConfig";
+import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
 // import { LongRangeColorTrackConfig } from "./LongRangeColorTrackConfig";
-// import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
+import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
 // import { CoolTrackConfig } from "./CoolTrackConfig";
-// import { MethylCTrackConfig } from "./MethylCTrackConfig";
-// import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
+import { MethylCTrackConfig } from "./MethylCTrackConfig";
+import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
 import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 // import { RulerTrackConfig } from "./RulerTrackConfig";
-// import { RefBedTrackConfig } from "./RefBedTrackConfig";
+import { RefBedTrackConfig } from "./RefBedTrackConfig";
 // import { SnpTrackConfig } from "./SnpTrackConfig";
 // import { MatplotTrackConfig } from "./MatplotTrackConfig";
 // import { DynamicplotTrackConfig } from "./DynamicplotTrackConfig";
@@ -32,7 +32,7 @@ import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 // import { DynamicLongrangeTrackConfig } from "./DynamicLongrangeTrackConfig";
 // import { OmeroidrTrackConfig } from "./OmeroidrTrackConfig";
 // import { Omero4dnTrackConfig } from "./Omero4dnTrackConfig";
-// import { DynseqTrackConfig } from "./DynseqTrackConfig";
+import { DynseqTrackConfig } from "./DynseqTrackConfig";
 // import { RgbpeakTrackConfig } from "./RgbpeakTrackConfig";
 // import { VcfTrackConfig } from "./VcfTrackConfig";
 // import { BoxplotTrackConfig } from "./BoxplotTrackConfig";
@@ -57,19 +57,19 @@ const TYPE_NAME_TO_CONFIG = {
   bed: BedTrackConfig,
   // dynamicbed: DynamicBedTrackConfig,
   // qbed: QBedTrackConfig,
-  // categorical: CategoricalTrackConfig,
+  categorical: CategoricalTrackConfig,
   // bedgraph: BedGraphTrackConfig,
-  // bigbed: BigBedTrackConfig,
+  bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,
-  // hic: HicTrackConfig,
-  // longrange: LongRangeTrackConfig,
+  hic: HicTrackConfig,
+  longrange: LongRangeTrackConfig,
   // longrangecolor: LongRangeColorTrackConfig,
-  // biginteract: BigInteractTrackConfig,
+  biginteract: BigInteractTrackConfig,
   // cool: CoolTrackConfig,
   geneannotation: GeneAnnotationTrackConfig,
-  // refbed: RefBedTrackConfig,
-  // methylc: MethylCTrackConfig,
-  // repeatmasker: RepeatMaskerTrackConfig,
+  refbed: RefBedTrackConfig,
+  methylc: MethylCTrackConfig,
+  repeatmasker: RepeatMaskerTrackConfig,
   genomealign: GenomeAlignTrackConfig,
   // snp: SnpTrackConfig,
   // ruler: RulerTrackConfig,
@@ -86,7 +86,7 @@ const TYPE_NAME_TO_CONFIG = {
   // dynamiclongrange: DynamicLongrangeTrackConfig,
   // omeroidr: OmeroidrTrackConfig,
   // omero4dn: Omero4dnTrackConfig,
-  // dynseq: DynseqTrackConfig,
+  dynseq: DynseqTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
   // vcf: VcfTrackConfig,
   // boxplot: BoxplotTrackConfig,

@@ -23,4 +23,10 @@ export interface TrackProps {
   getConfigMenu: any;
   onCloseConfigMenu: () => void;
   useFineModeNav: boolean;
+  trackManagerRef: any;
+  setShow3dGene: any;
+  isThereG3dTrack: boolean;
+  getLegendPosition: any;
+  trackBoxPosition: Array<any>;
+  legendRef: any;
 }

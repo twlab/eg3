@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import _ from "lodash";
 import Feature from "../../../../models/Feature";
-import "../hover-and-tooltip/Tooltip.css";
+import "../hoverToolTips/Tooltip.css";
 import { CopyToClip } from "../CopyToClipboard";
 
 /**

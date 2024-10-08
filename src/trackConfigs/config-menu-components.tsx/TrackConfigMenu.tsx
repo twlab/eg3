@@ -24,7 +24,22 @@ const trackConfigMenu: { [key: string]: any } = {
       />
     );
   },
-
+  bigbed: function bedConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+  refbed: function refbedConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
   bigwig: function bigConfigMenu(data: any) {
     return (
       <ConfigMenuComponent
@@ -34,22 +49,62 @@ const trackConfigMenu: { [key: string]: any } = {
     );
   },
 
-  dynseq: function dynseqFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
+  dynseq: function dynseqConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
-  methylc: function methylcFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
+  methylc: function methylcConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
-  hic: function hicFetch(straw, options, loci, basesPerPixel) {
-    return straw.getData(loci, basesPerPixel, options);
+  hic: function hicConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+  categorical: function categoricalConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+  longrange: function longrangeConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+
+  biginteract: function biginteractConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+  repeatmasker: function repeatmaskerConfigMenu(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
   },
   genomealign: function genomeAlignFetch(data: any) {
     return (

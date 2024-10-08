@@ -45,13 +45,12 @@ export class HicSource {
   normOptions: any;
   metadata: any;
   straw: any;
-  regionLength: number;
   /**
    * Makes a new instance specialized in serving data from one URL
    *
    * @param {string} url - the URL to fetch data from
    */
-  constructor(url, regionLength) {
+  constructor(url) {
     let config;
     if (typeof url === "string") {
       config = { url };
@@ -69,7 +68,6 @@ export class HicSource {
     this.metadata = null;
     this.normOptions = null;
     this.currentBinSize = 0;
-    this.regionLength = regionLength;
   }
 
   /**
@@ -93,11 +91,12 @@ export class HicSource {
    * @param {DisplayedRegionModel} region - the region
    * @returns {number} the index of the recommended bin size for the region
    */
-  getAutoBinSize() {
-    const SORTED_BIN_SIZES = this.metadata!.resolutions;
+  getAutoBinSize(region) {
+    const SORTED_BIN_SIZES = this.metadata.resolutions;
+    const regionLength = region.getWidth();
     for (const binSize of SORTED_BIN_SIZES) {
       // SORTED_BIN_SIZES must be sorted from largest to smallest!
-      if (MIN_BINS_PER_REGION * binSize < this.regionLength) {
+      if (MIN_BINS_PER_REGION * binSize < regionLength) {
         return binSize;
       }
     }
@@ -111,10 +110,10 @@ export class HicSource {
    * @param {DisplayedRegionModel} region - region to fetch, to be used in case of auto bin size
    * @return {number} bin size to use during data fetch
    */
-  getBinSize(options) {
+  getBinSize(options, region) {
     const numberBinSize = Number(options.binSize) || 0;
     return numberBinSize <= 0
-      ? this.getAutoBinSize()
+      ? this.getAutoBinSize(region)
       : findClosestNumber(this.metadata.resolutions, numberBinSize);
   }
 
@@ -177,15 +176,13 @@ export class HicSource {
    * @return {Promise<GenomeInteraction[]>} a Promise for the data
    */
   async getData(region, basesPerPixel, options) {
-    await this.straw.hicFile.init();
     this.metadata = await this.straw.getMetaData();
     this.normOptions = await this.straw.getNormalizationOptions();
     // console.log(this.metadata, this.normOptions);
-    const binSize = this.getBinSize(options);
+    const binSize = this.getBinSize(options, region);
     this.currentBinSize = binSize;
     const promises: Array<any> = [];
-    const loci = region;
-
+    const loci = region.getGenomeIntervals();
     for (let i = 0; i < loci.length; i++) {
       for (let j = i; j < loci.length; j++) {
         promises.push(
@@ -211,7 +208,7 @@ export class HicSource {
    * @param {Object} options - rendering options
    * @return {} a meta object
    */
-  getCurrentMeta(options) {
+  getCurrentMeta(region, basesPerPixel, options) {
     return {
       resolution: this.currentBinSize,
       normalization: options.normalization,

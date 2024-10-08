@@ -27,6 +27,7 @@ export class Feature {
   name: string; // - name of the feature
   score?: any;
   id?: string;
+  sequence: any;
   /**
    * Makes a new instance with specified name and locus.  Empty names are valid.  If given `undefined` or `null`, it
    * defaults to the locus as a string.

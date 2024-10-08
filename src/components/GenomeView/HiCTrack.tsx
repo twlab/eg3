@@ -1,428 +1,316 @@
-import { scaleLinear } from "d3-scale";
-import React, { createRef, memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import TestToolTipHic from "./commonComponents/hover-and-tooltip/tooltipHic";
-import { InteractionDisplayMode } from "../../trackConfigs/config-menu-models.tsx/DisplayModes";
+// import worker_script from '../../Worker/worker';
+import _ from "lodash";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
-import percentile from "percentile";
-import { FeaturePlacer } from "../../models/getXSpan/FeaturePlacer";
-export enum ScaleChoices {
-  AUTO = "auto",
-  FIXED = "fixed",
-}
-// SCrolling to 80% view on current epi browser matches default in eg3
-// let worker: Worker;
-let hmData: Array<any> = [];
-const TOP_PADDING = 2;
-const DEFAULT_OPTIONS = {
-  color: "#B8008A",
-  color2: "#006385",
-  backgroundColor: "var(--bg-color)",
-  displayMode: InteractionDisplayMode.HEATMAP,
-  scoreScale: ScaleChoices.AUTO,
-  scoreMax: 10,
-  scalePercentile: 95,
-  scoreMin: 0,
-  height: 500,
-  lineWidth: 2,
-  greedyTooltip: false,
-  fetchViewWindowOnly: false,
-  bothAnchorsInView: false,
-  isThereG3dTrack: false,
-  clampHeight: false,
-};
 
-let defaultHic = {
-  color: "#B8008A",
-  color2: "#006385",
-  backgroundColor: "var(--bg-color)",
-  displayMode: "heatmap",
-  scoreScale: "auto",
-  scoreMax: 10,
-  scalePercentile: 95,
-  scoreMin: 0,
-  height: 100,
-  lineWidth: 2,
-  greedyTooltip: false,
-  fetchViewWindowOnly: false,
-  bothAnchorsInView: false,
-  isThereG3dTrack: false,
-  clampHeight: false,
-  binSize: 0,
-  normalization: "NONE",
-  label: "",
-};
-let featurePlacer = new FeaturePlacer();
+import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+import OpenInterval from "../../models/OpenInterval";
+import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
+import { objToInstanceAlign } from "./TrackManager";
+import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
+import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
+
+import ReactDOM from "react-dom";
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
+  bpToPx,
   side,
-  trackData2,
-  visData,
+  trackData,
   trackIdx,
+  handleDelete,
+  windowWidth,
+  dataIdx,
+  onCloseConfigMenu,
+  trackModel,
+  genomeArr,
+  genomeIdx,
   id,
+  getConfigMenu,
+  legendRef,
+  trackManagerRef,
 }) {
-  let result;
-  if (Object.keys(trackData2!).length > 0) {
-    result = trackData2![`${id}`].fetchData;
-  }
-
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
+  const rightIdx = useRef(0);
+  const leftIdx = useRef(1);
+  const configOptions = useRef({ ...DEFAULT_OPTIONS });
+  const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const curRegionData = useRef<{ [key: string]: any }>({});
+  const xPos = useRef(0);
+  const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
+  const parentGenome = useRef("");
+  const configMenuPos = useRef<{ [key: string]: any }>({});
 
-  const [rightTrackGenes, setRightTrack] = useState<Array<any>>([]);
-  const [leftTrackGenes, setLeftTrack] = useState<Array<any>>([]);
-  const prevOverflowStrand = useRef<{ [key: string]: any }>({});
-  const overflowStrand = useRef<{ [key: string]: any }>({});
+  const updateLegendCanvas = useRef<any>(null);
 
-  const view = useRef(0);
+  const [legend, setLegend] = useState<any>();
+  const [canvasComponents, setCanvasComponents] = useState<any>();
+  const [configChanged, setConfigChanged] = useState(false);
 
-  // step 1 filtered
-  // step 2 change genomeInteraction in placedInteraction
-  // step 3compute the value find the middle rect and display on screen
-  // step 4 show both sides when hovering
-  function fetchGenomeData() {
-    // TO - IF STRAND OVERFLOW THEN NEED TO SET TO MAX WIDTH OR 0 to NOT AFFECT THE LOGIC.
+  const newTrackWidth = useRef(windowWidth);
 
-    if (result === undefined) {
-      return;
+  async function createCanvas(curTrackData, genesArr) {
+    let algoData = genesArr;
+
+    let tmpObj = { ...configOptions.current };
+
+    tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
+    function getNumLegend(legend: ReactNode) {
+      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
-    // initialize the first index of the interval so we can start checking for prev overlapping intervals
-
-    const newCanvasRef = createRef();
-
-    let testInter = featurePlacer.placeInteractions(
-      result,
-      trackData2!.primaryVisData.visRegion,
-      trackData2!.primaryVisData.visWidth
+    let canvasElements = (
+      <InteractionTrackComponent
+        data={algoData}
+        options={tmpObj}
+        viewWindow={new OpenInterval(0, curTrackData.visWidth)}
+        visRegion={objToInstanceAlign(curTrackData.visRegion)}
+        width={curTrackData.visWidth}
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+      />
     );
+    setCanvasComponents(canvasElements);
 
-    let polyCoord = testInter.map((item, index) => renderRect(item, index));
-
-    if (trackData2!.side === "right") {
-      let currData = {
-        drawData: { testInter, polyCoord },
-        canvasRef: newCanvasRef,
-      };
-      setRightTrack(new Array<any>(currData));
-
-      prevOverflowStrand.current = { ...overflowStrand.current };
-      overflowStrand.current = {};
-    } else if (trackData2!.side === "left") {
-      let currData = {
-        drawData: { testInter, polyCoord },
-        canvasRef: newCanvasRef,
-      };
-      setLeftTrack(new Array<any>(currData));
+    if (curTrackData.initial === 1) {
+      xPos.current = -curTrackData.startWindow;
+    } else if (curTrackData.side === "right") {
+      xPos.current =
+        (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
+        windowWidth +
+        curTrackData.startWindow;
+    } else if (curTrackData.side === "left") {
+      xPos.current =
+        (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
+        windowWidth +
+        curTrackData.startWindow;
     }
-    view.current = trackData2!.xDist;
+    updateSide.current = side;
+    newTrackWidth.current = curTrackData.visWidth;
   }
 
-  function renderRect(placedInteraction: any, index: number) {
-    // if (placedInteraction.interaction.color) {
-    //   color = placedInteraction.interaction.color;
-    //   color2 = placedInteraction.interaction.color;
-    // }
-    let color = defaultHic.color;
-    let color2 = defaultHic.color;
-    const score = placedInteraction.interaction.score;
-    if (!score) {
-      return null;
+  // function to get for dataidx change and getting stored data
+  function getCacheData() {
+    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
+    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
+    // otherwise when there is new data cuz the user is at the end of the track
+    let viewData: Array<any> = [];
+    let curIdx;
+
+    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
+    } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
     }
-
-    const { xSpan1, xSpan2 } = placedInteraction;
-    if (
-      xSpan1.end < visData!.viewWindow.start &&
-      xSpan2.start > visData!.viewWindow.end
-    ) {
-      return null;
-    }
-    // if (bothAnchorsInView) {
-    //   if (xSpan1.start < viewWindow.start || xSpan2.end > viewWindow.end) {
-    //     return null;
-    //   }
-    // }
-    const gapCenter = (xSpan1.end + xSpan2.start) / 2;
-    const gapLength = xSpan2.start - xSpan1.end;
-    const topX = gapCenter;
-    const halfSpan1 = Math.max(0.5 * (xSpan1.end - xSpan1.start), 1);
-    const halfSpan2 = Math.max(0.5 * (xSpan2.end - xSpan2.start), 1);
-    let topY, bottomY, leftY, rightY;
-    topY = 0.5 * gapLength;
-    bottomY = topY + halfSpan1 + halfSpan2;
-    leftY = topY + halfSpan1;
-    rightY = topY + halfSpan2;
-
-    const points = [
-      // Going counterclockwise
-      [topX, topY], // Top
-      [topX - halfSpan1, leftY], // Left
-      [topX - halfSpan1 + halfSpan2, bottomY], // Bottom = left + halfSpan2
-      [topX + halfSpan2, rightY], // Right
-    ];
-
-    const key =
-      "" + xSpan1.start + xSpan1.end + xSpan2.start + xSpan2.end + index;
-    // only push the points in screen
-    if (
-      topX + halfSpan2 > visData!.viewWindow.start &&
-      topX - halfSpan1 < visData!.viewWindow.end
-    ) {
-      hmData.push({
-        points,
-        interaction: placedInteraction.interaction,
-        xSpan1,
-        xSpan2,
-      });
-    }
-
-    let currRes = {
-      key: key,
-      points: points, // React can convert the array to a string
-      fill: score >= 0 ? color : color2,
-      opacity: score,
-    };
-
-    return currRes;
-  }
-
-  function computeScales(data: GenomeInteraction[]) {
-    if (defaultHic.scoreScale === ScaleChoices.AUTO) {
-      // const maxScore = this.props.data.length > 0 ? _.maxBy(this.props.data, "score").score : 10;
-      const item = percentile(
-        DEFAULT_OPTIONS.scalePercentile,
-        data,
-        (item) => item.score
-      );
-      // console.log(item)
-      const maxScore = data.length > 0 ? (item as GenomeInteraction).score : 10;
-      // console.log(maxScore)
-      return {
-        opacityScale: scaleLinear()
-          .domain([0, maxScore])
-          .range([0, 1])
-          .clamp(true),
-        heightScale: scaleLinear()
-          .domain([0, maxScore])
-          .range([0, defaultHic.height - TOP_PADDING])
-          .clamp(true),
-        min: 0,
-        max: maxScore,
+    if (viewData.length > 0) {
+      curRegionData.current = {
+        trackState: fetchedDataCache.current[curIdx].trackState,
+        cachedData: viewData,
+        initial: 0,
       };
-    } else {
-      if (defaultHic.scoreMin >= defaultHic.scoreMax) {
-        // notify.show(
-        //   'Score min cannot be greater than Score max',
-        //   'error',
-        //   2000
-        // );
-        return {
-          opacityScale: scaleLinear()
-            .domain([defaultHic.scoreMax - 1, defaultHic.scoreMax])
-            .range([0, 1])
-            .clamp(true),
-          heightScale: scaleLinear()
-            .domain([defaultHic.scoreMax - 1, defaultHic.scoreMax])
-            .range([0, defaultHic.height - TOP_PADDING])
-            .clamp(true),
-          min: defaultHic.scoreMax - 1,
-          max: defaultHic.scoreMax,
-        };
-      }
-      return {
-        opacityScale: scaleLinear()
-          .domain([defaultHic.scoreMin, defaultHic.scoreMax])
-          .range([0, 1])
-          .clamp(true),
-        heightScale: scaleLinear()
-          .domain([defaultHic.scoreMin, defaultHic.scoreMax])
-          .range([0, defaultHic.height - TOP_PADDING])
-          .clamp(true),
-        min: defaultHic.scoreMin,
-        max: defaultHic.scoreMax,
-      };
+      createCanvas(fetchedDataCache.current[curIdx].trackState, viewData);
     }
   }
+  // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
+  useEffect(() => {
+    async function handle() {
+      if (trackData![`${id}`] !== undefined) {
+        const primaryVisData =
+          trackData!.trackState.genomicFetchCoord[
+            trackData!.trackState.primaryGenName
+          ].primaryVisData;
 
-  function filterData(data: any) {
-    let filteredData: Array<any> = [];
-    // if (maxValueFilter && !isNaN(maxValueFilter)) {
-    //   filteredData = data.filter((d) => d.score <= maxValueFilter);
-    // } else {
-    filteredData = data;
-    // }
-    // if (defaultHic.minValueFilter && !isNaN(minValueFilter)) {
-    //   filteredData = filteredData.filter((d) => d.score >= minValueFilter);
-    // }
-    return filteredData;
-  }
+        if (trackData!.initial === 1) {
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          if (trackModel.options) {
+            configOptions.current = {
+              ...configOptions.current,
+              ...trackModel.options,
+            };
+          }
+          if ("genome" in trackData![`${id}`].metadata) {
+            parentGenome.current = trackData![`${id}`].metadata.genome;
+          } else {
+            parentGenome.current = trackData!.trackState.primaryGenName;
+          }
+          let visRegion =
+            "genome" in trackData![`${id}`].metadata
+              ? trackData!.trackState.genomicFetchCoord[
+                  trackData![`${id}`].metadata.genome
+                ].queryRegion
+              : primaryVisData.visRegion;
 
-  function drawCanvas(polyRegionData, canvasRef) {
-    if (canvasRef) {
-      const pixelRatio = getPixelRatioSafely();
-      if (pixelRatio !== 1) {
-        const width = visData!.visWidth;
-        const height = 120;
-        // this.canvasNode.parentNode.style.width = width + 'px';
-        // this.canvasNode.parentNode.style.height = height + 'px';
-        canvasRef.style.width = width + "px";
-        canvasRef.style.height = height + "px";
-        canvasRef.setAttribute("width", width * pixelRatio);
-        canvasRef.setAttribute("height", height * pixelRatio);
-      }
-      let context = canvasRef.getContext("2d");
-      context.scale(pixelRatio, pixelRatio);
-      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-      for (let i = 0; i < polyRegionData.length; i++) {
-        if (polyRegionData[i] !== null) {
-          const points = polyRegionData[i].points;
-          context.fillStyle = "#B8008A";
-          context.globalAlpha = 1 / polyRegionData[i].opacity;
+          let result = await trackData![`${id}`].straw.getData(
+            objToInstanceAlign(visRegion),
+            bpToPx,
+            configOptions.current
+          );
 
-          context.beginPath();
-          context.moveTo(points[0][0], points[0][1]);
-          context.lineTo(points[1][0], points[1][1]);
-          context.lineTo(points[2][0], points[2][1]);
-          context.lineTo(points[3][0], points[3][1]);
-          context.closePath();
-          context.fill();
+          let trackState = {
+            initial: 1,
+            side: "right",
+            xDist: 0,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
+          };
+
+          fetchedDataCache.current[rightIdx.current] = {
+            data: result,
+            trackState: trackState,
+          };
+          rightIdx.current--;
+
+          let curDataArr = fetchedDataCache.current[0].data;
+
+          curRegionData.current = {
+            trackState: trackState,
+            cachedData: curDataArr,
+          };
+          createCanvas(trackState, curDataArr);
+        } else {
+          let visRegion;
+          if ("genome" in trackData![`${id}`].metadata) {
+            visRegion =
+              trackData!.trackState.genomicFetchCoord[
+                `${trackData![`${id}`].metadata.genome}`
+              ].queryRegion;
+          } else {
+            visRegion = primaryVisData.visRegion;
+          }
+          let newTrackState = {
+            initial: 0,
+            side: trackData!.trackState.side,
+            xDist: trackData!.trackState.xDist,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
+          };
+          let result = await trackData![`${id}`].straw.getData(
+            objToInstanceAlign(visRegion),
+            bpToPx,
+            configOptions.current
+          );
+
+          if (trackData!.trackState.side === "right") {
+            newTrackState["index"] = rightIdx.current;
+            fetchedDataCache.current[rightIdx.current] = {
+              data: result,
+              trackState: newTrackState,
+            };
+
+            rightIdx.current--;
+
+            curRegionData.current = {
+              trackState: newTrackState,
+              cachedData: fetchedDataCache.current[rightIdx.current + 1].data,
+              initial: 0,
+            };
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[rightIdx.current + 1].data
+            );
+          } else if (trackData!.trackState.side === "left") {
+            newTrackState["index"] = leftIdx.current;
+            fetchedDataCache.current[leftIdx.current] = {
+              data: result,
+              trackState: newTrackState,
+            };
+
+            leftIdx.current++;
+
+            curRegionData.current = {
+              trackState: newTrackState,
+              cachedData: fetchedDataCache.current[leftIdx.current - 1].data,
+              initial: 0,
+            };
+
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[leftIdx.current - 1].data
+            );
+          }
         }
       }
     }
-  }
-  function getPixelRatioSafely() {
-    const pixelRatio = window.devicePixelRatio;
-    if (Number.isFinite(pixelRatio) && pixelRatio > 0) {
-      return pixelRatio;
+    handle();
+  }, [trackData]);
+  // when INDEX POSITION CHANGE
+
+  useEffect(() => {
+    getCacheData();
+  }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
+
+  function onConfigChange(key, value) {
+    if (value === configOptions.current[`${key}`]) {
+      return;
     } else {
-      return 1;
+      configOptions.current[`${key}`] = value;
     }
+    setConfigChanged(true);
   }
-  // useEffect(() => {
-  //   if (side === "left") {
-  //     leftTrackGenes.forEach((canvasRef, index) => {
-  //       if (canvasRefL[index].current) {
-  //         drawCanvas(
-  //           leftTrackGenes[index].polyCoord,
-  //           canvasRefL[index].current
-  //         );
-  //       }
-  //     });
-  //   } else if (side === "right") {
-  //     rightTrackGenes.forEach((canvasRef, index) => {
-  //       if (canvasRefR[index].current) {
-  //         drawCanvas(
-  //           rightTrackGenes[index].polyCoord,
-  //           canvasRefR[index].current
-  //         );
-  //       }
-  //     });
-  //   }
-  // }, [side]);
+  function renderConfigMenu(event) {
+    event.preventDefault();
+
+    genomeArr![genomeIdx!].options = configOptions.current;
+
+    const renderer = new HicTrackConfig(genomeArr![genomeIdx!]);
+
+    // create object that has key as displayMode and the configmenu component as the value
+    const items = renderer.getMenuComponents();
+    let menu = trackConfigMenu[`${trackModel.type}`]({
+      trackIdx,
+      handleDelete,
+      id,
+      pageX: event.pageX,
+      pageY: event.pageY,
+      onCloseConfigMenu,
+      trackModel,
+      configOptions: configOptions.current,
+      items,
+      onConfigChange,
+    });
+
+    getConfigMenu(menu);
+    configMenuPos.current = { left: event.pageX, top: event.pageY };
+  }
 
   useEffect(() => {
-    if (rightTrackGenes.length > 0) {
-      drawCanvas(
-        rightTrackGenes[rightTrackGenes.length - 1].drawData.polyCoord,
-        rightTrackGenes[rightTrackGenes.length - 1].canvasRef.current
+    if (configChanged === true) {
+      createCanvas(
+        curRegionData.current.trackState,
+        curRegionData.current.cachedData
       );
     }
-  }, [rightTrackGenes]);
+    setConfigChanged(false);
+  }, [configChanged]);
 
-  useEffect(() => {
-    if (leftTrackGenes.length > 0) {
-      drawCanvas(
-        leftTrackGenes[leftTrackGenes.length - 1].drawData.polyCoord,
-        leftTrackGenes[leftTrackGenes.length - 1].canvasRef.current
-      );
-    }
-  }, [leftTrackGenes]);
-
-  useEffect(() => {
-    fetchGenomeData();
-    // create a new state change here to change change between left and right track
-    // or make view a state
-  }, [trackData2]);
-  // use absolute for tooltip and hover element so the position will stack ontop of the track which will display on the right position
-  // absolute element will affect each other position so you need those element to all have absolute
   return (
     <div
+      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",
-        height: 120,
+        height: configOptions.current.height,
       }}
     >
       <div
         style={{
-          overflow: "visible",
-
           position: "absolute",
-          right:
-            side === "left"
-              ? `${view.current! - visData!.viewWindow.start}px`
-              : "",
-          left:
-            side === "right"
-              ? `${-view.current! - visData!.viewWindow.start}px`
-              : "",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        {side === "right"
-          ? rightTrackGenes.map((item, index) => (
-              <canvas
-                key={index}
-                ref={item.canvasRef}
-                height={"120"}
-                width={visData!.visWidth}
-              />
-            ))
-          : leftTrackGenes.map((item, index) => (
-              <canvas
-                key={leftTrackGenes.length - index - 1}
-                ref={
-                  leftTrackGenes[leftTrackGenes.length - index - 1].canvasRef
-                }
-                height={"120"}
-                width={visData!.visWidth}
-              />
-            ))}
+        {canvasComponents}
       </div>
-      <div
-        style={{
-          opacity: 0.5,
-          right:
-            side === "left"
-              ? `${view.current! - visData!.viewWindow.start}px`
-              : "",
-          position: "absolute",
-          left:
-            side === "right"
-              ? `${-view.current! - visData!.viewWindow.start}px`
-              : "",
-        }}
-      >
-        {side === "right"
-          ? rightTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={"hicRight" + trackIdx}
-                data={rightTrackGenes[index].drawData}
-                windowWidth={visData!.visWidth}
-                trackIdx={index}
-                side={"right"}
-              />
-            ))
-          : leftTrackGenes.map((item, index) => (
-              <TestToolTipHic
-                key={"hicLeft" + +trackIdx}
-                data={
-                  leftTrackGenes[leftTrackGenes.length - index - 1].drawData
-                }
-                windowWidth={visData!.visWidth}
-                trackIdx={leftTrackGenes.length - index - 1}
-                side={"left"}
-              />
-            ))}
-      </div>
+      {legend}
     </div>
   );
 });

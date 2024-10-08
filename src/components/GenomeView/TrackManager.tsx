@@ -1,19 +1,19 @@
-import { memo, useEffect, useRef, useState } from "react";
-
+import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
+const fullWindowWidth = window.outerWidth;
 import RefGeneTrack from "./RefGeneTrack";
 import BedTrack from "./BedTrack";
+import BigBedTrack from "./BigBedTrack";
 import BigWigTrack from "./BigWigTrack";
 import DynseqTrack from "./DynseqTrack";
 import MethylcTrack from "./MethylcTrack";
-import HiCTrack from "./HiCTrack";
-import GenomeAlign from "./GenomeAlign/GenomeAlign";
+import GenomeAlign from "./GenomeAlign";
+import MatplotTrack from "./MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
-import { ViewExpansion } from "../../models/RegionExpander";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
-
+import useResizeObserver from "./Resize";
 import { v4 as uuidv4 } from "uuid";
 import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
@@ -21,6 +21,15 @@ import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
+import { HicSource } from "./getRemoteData/hicSource";
+import HiCTrack from "./HiCTrack";
+import CategoricalTrack from "./CategoricalTrack";
+import LongrangeTrack from "./LongrangeTrack";
+import BigInteractTrack from "./BigInteractTrack";
+import RepeatMaskerTrack from "./RepeatMaskerTrack";
+import RefBedTrack from "./RefBedTrack";
+import ThreedmolContainer from "../3dmol/ThreedmolContainer";
+import TrackModel from "../../models/TrackModel";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -53,6 +62,14 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   methylc: MethylcTrack,
   hic: HiCTrack,
   genomealign: GenomeAlign,
+  cool: HiCTrack,
+  categorical: CategoricalTrack,
+  longrange: LongrangeTrack,
+  biginteract: BigInteractTrack,
+  repeatmasker: RepeatMaskerTrack,
+  bigbed: BigBedTrack,
+  refbed: RefBedTrack,
+  matplot: MatplotTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -91,10 +108,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const rightStartCoord = useRef(0);
   const bpRegionSize = useRef(0);
   const block = useRef<HTMLInputElement>(null);
+  const g3dRect = useRef<HTMLInputElement>(null);
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
 
+  const activeTrackModels = useRef<Array<TrackModel>>([]);
+  const hicStrawObj = useRef<{ [key: string]: any }>({});
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
   const frameID = useRef(0);
@@ -102,15 +122,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const dragX = useRef(0);
   const isLoading = useRef(true);
   const lastDragX = useRef(0);
+  const isThereG3dTrack = useRef(false);
   const side = useRef("right");
+  const isDragging = useRef(false);
+  const rightSectionSize = useRef<Array<any>>([windowWidth]);
+  const leftSectionSize = useRef<Array<any>>([]);
+  const boxSizeChange = useRef<boolean>(false);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-  const [initialStart, setInitialStart] = useState(true);
-  const isDragging = useRef(false);
-  const rightSectionSize = useRef<Array<any>>([windowWidth]);
-  const leftSectionSize = useRef<Array<any>>([windowWidth]);
+  const [trackBoxPosition, setTrackBoxPosition] = useState<Array<any> | null>(
+    null
+  );
+  const [initialStart, setInitialStart] = useState("workerNotReady");
+  const [windowRegion, setWindowRegion] = useState<DisplayedRegionModel>();
+  const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
+  const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
+
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
   const [configMenu, setConfigMenu] = useState<any>();
@@ -150,8 +179,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 =
     cancelAnimationFrame(frameID.current);
-    frameID.current = requestAnimationFrame(() => {
-      block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+    trackComponents.forEach((component, i) => {
+      frameID.current = requestAnimationFrame(() => {
+        component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+      });
     });
   }
   const handleClick = () => {
@@ -176,17 +207,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let curX;
 
     const dragIdx = dragX.current / windowWidth;
-
-    if (dragIdx > -1 && dragIdx < 1) {
-      !useFineModeNav.current
-        ? dragX.current > 0
-          ? (curX = 1)
-          : (curX = 0)
-        : (curX = 0);
-    } else if (dragX.current! > 1) {
+    {
       curX = Math.ceil(dragX.current! / windowWidth);
-    } else {
-      curX = Math.floor(dragX.current! / windowWidth);
     }
 
     setDataIdx(curX);
@@ -202,6 +224,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     startBp(genomeCoordLocus.toString(), curBp, curBp + bpRegionSize.current);
     setCurRegion(genomeCoordLocus);
+    setWindowRegion(
+      new DisplayedRegionModel(
+        genomeArr[genomeIdx].navContext,
+        curBp,
+        curBp + bpRegionSize.current
+      )
+    );
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
     if (dragX.current > 0 && side.current === "right") {
@@ -230,7 +259,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left");
     }
   }
+  function getLegendPosition() {
+    const rects: Array<any> = [];
+    const children = block.current!.children;
 
+    Array.from(children).map((child) => {
+      const rect = child.getBoundingClientRect();
+      rects.push({
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        pageY: rect.top + window.scrollY,
+      });
+    });
+
+    setTrackBoxPosition([...rects]);
+  }
   async function fetchGenomeData(initial: number = 0, trackSide) {
     if (initial === 0 || initial === 1) {
       let curFetchRegionNav;
@@ -238,7 +285,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let genomicLoci: Array<ChromosomeInterval> = [];
 
       let initNavLoci: Array<any> = [];
-      let initGenalignNavLoci: Array<any> = [];
+      let newVisData;
+      let expandedGenomeCoordLocus;
       if (initial === 1) {
         initNavLoci.push({
           start: minBp.current - bpRegionSize.current,
@@ -254,111 +302,135 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
 
         //________________________________________________________________________________________________________________
-        initGenalignNavLoci.push({
-          _startBase: minBp.current - bpRegionSize.current * 4,
-          _endBase: minBp.current - bpRegionSize.current,
-        });
-        initGenalignNavLoci.push({
-          _startBase: minBp.current - bpRegionSize.current,
-          _endBase: maxBp.current + bpRegionSize.current,
-        });
-        initGenalignNavLoci.push({
-          _startBase: maxBp.current + bpRegionSize.current,
-          _endBase: maxBp.current + bpRegionSize.current * 4,
-        });
-        //________________________________________________________________________________________________________________
-      }
 
-      //_________________
-      if (trackSide === "right") {
-        curFetchRegionNav = new DisplayedRegionModel(
-          genomeArr[genomeIdx].navContext,
-          maxBp.current - bpRegionSize.current,
-          maxBp.current
-        );
-        let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
-          genomeIdx
-        ].navContext.getFeaturesInInterval(
-          maxBp.current - bpRegionSize.current,
-          maxBp.current
-        );
-
-        genomicLoci = genomeFeatureSegment.map((item, index) =>
-          item.getLocus()
-        );
-
-        //_____________________________________________________________________________
-
-        //___________________________________________________________________________________'
-
-        maxBp.current = maxBp.current + bpRegionSize.current;
-      } else {
         curFetchRegionNav = new DisplayedRegionModel(
           genomeArr[genomeIdx].navContext,
           minBp.current,
-          minBp.current + bpRegionSize.current
+          maxBp.current
         );
-        let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
-          genomeIdx
-        ].navContext.getFeaturesInInterval(
-          minBp.current,
-          minBp.current + bpRegionSize.current
-        );
-
-        genomicLoci = genomeFeatureSegment.map((item, index) =>
-          item.getLocus()
-        );
-
-        //_____________________________________________________________________________
-
-        //_____________________________________________________________________________
-        minBp.current = minBp.current - bpRegionSize.current;
-      }
-      if (initial === 1) {
-        minBp.current = minBp.current - bpRegionSize.current;
-        maxBp.current = maxBp.current + bpRegionSize.current;
-      }
-
-      let sentData = false;
-      try {
-        let newVisData: ViewExpansion = {
+        newVisData = {
           visWidth: windowWidth * 3,
           visRegion: new DisplayedRegionModel(
             genomeArr[genomeIdx].navContext,
-            bpX.current - bpRegionSize.current,
-            bpX.current + bpRegionSize.current * 2
+            minBp.current - bpRegionSize.current,
+            maxBp.current + bpRegionSize.current
           ),
           viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-          viewWindowRegion: new DisplayedRegionModel(
-            genomeArr[genomeIdx].navContext,
-            bpX.current,
-            bpX.current + bpRegionSize.current
-          ),
+          viewWindowRegion: curFetchRegionNav,
         };
 
         let expandedGenomeFeatureSegment: Array<FeatureSegment> = genomeArr[
           genomeIdx
         ].navContext.getFeaturesInInterval(
-          bpX.current - bpRegionSize.current,
-          bpX.current + bpRegionSize.current * 2
+          minBp.current - bpRegionSize.current,
+          maxBp.current + bpRegionSize.current
         );
 
-        let expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
+        expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
           (item, index) => item.getLocus()
         );
+        minBp.current = minBp.current - bpRegionSize.current;
+        maxBp.current = maxBp.current + bpRegionSize.current * 2;
+        setWindowRegion(curFetchRegionNav);
+        //________________________________________________________________________________________________________________
+      } else {
+        if (trackSide === "right") {
+          curFetchRegionNav = new DisplayedRegionModel(
+            genomeArr[genomeIdx].navContext,
+            maxBp.current - bpRegionSize.current,
+            maxBp.current
+          );
+          let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+            genomeIdx
+          ].navContext.getFeaturesInInterval(
+            maxBp.current - bpRegionSize.current,
+            maxBp.current
+          );
 
-        let testDefaultTrack = genomeArr[genomeIdx].defaultTracks;
-        for (let trackModel of testDefaultTrack) {
-          if (trackModel.genome === "mm10") {
-            trackModel.metadata["genome"] = "mm10";
-          }
+          genomicLoci = genomeFeatureSegment.map((item, index) =>
+            item.getLocus()
+          );
+
+          newVisData = {
+            visWidth: windowWidth * 3,
+            visRegion: new DisplayedRegionModel(
+              genomeArr[genomeIdx].navContext,
+              maxBp.current - bpRegionSize.current * 3,
+              maxBp.current
+            ),
+            viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+            viewWindowRegion: curFetchRegionNav,
+          };
+
+          let expandedGenomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+            genomeIdx
+          ].navContext.getFeaturesInInterval(
+            maxBp.current - bpRegionSize.current * 3,
+            maxBp.current
+          );
+
+          expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
+            (item, index) => item.getLocus()
+          );
+          //_____________________________________________________________________________
+
+          //___________________________________________________________________________________'
+
+          maxBp.current = maxBp.current + bpRegionSize.current;
+        } else {
+          curFetchRegionNav = new DisplayedRegionModel(
+            genomeArr[genomeIdx].navContext,
+            minBp.current,
+            minBp.current + bpRegionSize.current
+          );
+          let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+            genomeIdx
+          ].navContext.getFeaturesInInterval(
+            minBp.current,
+            minBp.current + bpRegionSize.current
+          );
+
+          genomicLoci = genomeFeatureSegment.map((item, index) =>
+            item.getLocus()
+          );
+
+          newVisData = {
+            visWidth: windowWidth * 3,
+            visRegion: new DisplayedRegionModel(
+              genomeArr[genomeIdx].navContext,
+              minBp.current,
+              minBp.current + bpRegionSize.current * 3
+            ),
+            viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+            viewWindowRegion: curFetchRegionNav,
+          };
+
+          let expandedGenomeFeatureSegment: Array<FeatureSegment> = genomeArr[
+            genomeIdx
+          ].navContext.getFeaturesInInterval(
+            minBp.current,
+            minBp.current + bpRegionSize.current * 3
+          );
+
+          expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
+            (item, index) => item.getLocus()
+          );
+
+          //_____________________________________________________________________________
+
+          //_____________________________________________________________________________
+          minBp.current = minBp.current - bpRegionSize.current;
         }
-        genomeArr[genomeIdx].defaultTracks.map((item, index) => {
+      }
+
+      let sentData = false;
+      try {
+        activeTrackModels.current.map((item, index) => {
           if (!sentData) {
             sentData = true;
             infiniteScrollWorker.current!.postMessage({
               primaryGenName: genomeArr[genomeIdx].genome.getName(),
-              trackModelArr: testDefaultTrack,
+              trackModelArr: activeTrackModels.current,
               visData: newVisData,
               genomicLoci: genomicLoci,
               expandedGenLoci: expandedGenomeCoordLocus,
@@ -367,11 +439,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               initGenomicLoci: bpNavToGenNav(initNavLoci, genomeArr[genomeIdx]),
               initNavLoci,
 
-              initGenalignGenomicLoci: bpNavToGenNav(
-                initGenalignNavLoci,
-                genomeArr[genomeIdx]
-              ),
-              initGenalignNavLoci,
               trackSide,
               curFetchRegionNav: curFetchRegionNav,
               xDist: dragX.current,
@@ -388,8 +455,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } catch {}
       infiniteScrollWorker.current!.onmessage = (event) => {
         event.data.fetchResults.map((item, index) => {
-          tempObj[item.id] = { result: item.result, metadata: item.metadata };
+          tempObj[item.id] = {
+            result: item.result,
+            metadata: item.metadata,
+          };
+          if (item.name === "hic") {
+            tempObj[item.id]["straw"] = hicStrawObj.current[`${item.id}`];
+          }
         });
+
         tempObj["initial"] = event.data.initial;
         tempObj["side"] = event.data.side;
         tempObj["location"] = event.data.location;
@@ -407,7 +481,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             event.data.curFetchRegionNav._endBase
           ),
         };
-        console.log(tempObj, "fetched data for all tracks with their id");
+        console.log(
+          tempObj,
+          event.data.genomicLoci,
+          event.data.expandGenomicLoci,
+          "fetched data for all tracks with their id"
+        );
         isLoading.current = false;
         setTrackData({ ...tempObj });
       };
@@ -425,7 +504,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return index !== id;
       });
     });
-
+    boxSizeChange.current = true;
     setConfigMenuVisible(false);
   }
   function getConfigMenu(htmlElement: any) {
@@ -437,55 +516,93 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
     // terminate the work when the component is unmounted
     return () => {
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleMouseUp);
       worker.current!.terminate();
       infiniteScrollWorker.current!.terminate();
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleMouseUp);
       console.log("trackmanager terminate");
     };
   }, []);
 
   useEffect(() => {
-    if (!initialStart) {
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [trackComponents]);
+  useEffect(() => {
+    if (boxSizeChange.current) {
+      getLegendPosition();
+    }
+    boxSizeChange.current = false;
+  }, [trackComponents]);
+
+  useEffect(() => {
+    if (initialStart === "workerReady") {
       // go through genome defaultTrack to see what track components we need and give each component
       // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
       let genome = genomeArr[genomeIdx];
 
       let newTrackComponents: Array<any> = [];
+
       for (let i = 0; i < genome.defaultTracks.length; i++) {
-        if (!genome.defaultTracks[i]["id"]) {
+        if (genome.defaultTracks[i].type !== "g3d") {
+          const newPosRef = createRef();
+          const newLegendRef = createRef();
           const uniqueKey = uuidv4();
           genome.defaultTracks[i]["id"] = uniqueKey;
           newTrackComponents.push({
             id: uniqueKey,
             component: componentMap[genome.defaultTracks[i].type],
+            posRef: newPosRef,
+            legendRef: newLegendRef,
+            trackModel: genome.defaultTracks[i],
+          });
+
+          if (
+            genome.defaultTracks[i].type === "genomealign" &&
+            basePerPixel.current < 10
+          ) {
+            useFineModeNav.current = true;
+          }
+
+          if (genome.defaultTracks[i].type === "hic") {
+            hicStrawObj.current[`${uniqueKey}`] = new HicSource(
+              genome.defaultTracks[i].url
+            );
+          }
+        } else {
+          isThereG3dTrack.current = true;
+          let newG3dComponent: Array<any> = [];
+          const uniqueKeyG3d = uuidv4();
+          genome.defaultTracks[i]["id"] = uniqueKeyG3d;
+          newG3dComponent.push({
+            id: uniqueKeyG3d,
+            component: ThreedmolContainer,
 
             trackModel: genome.defaultTracks[i],
           });
-        } else {
-          newTrackComponents.push({
-            id: genome.defaultTracks[i]["id"],
-            component: componentMap[genome.defaultTracks[i].type],
-            trackModel: genome.defaultTracks[i],
-          });
-        }
-        if (
-          genome.defaultTracks[i].type === "genomealign" &&
-          basePerPixel.current < 10
-        ) {
-          useFineModeNav.current = true;
+          setG3dTrackComponents([...newG3dComponent]);
         }
       }
+      activeTrackModels.current = genomeArr[genomeIdx].defaultTracks.filter(
+        (items, index) => {
+          return items.type !== "g3d";
+        }
+      );
 
-      setTrackComponents([...newTrackComponents]);
+      setTrackComponents((prevTrackComponents) => {
+        // Modify prevTrackComponents here
+        return [...prevTrackComponents, ...newTrackComponents];
+      });
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
+
   useEffect(() => {
     if (trackManagerId.current === "") {
       // on initial and when our genome data changes we set the default values here
@@ -505,7 +622,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
-      if (initialStart) {
+      if (initialStart === "workerNotReady") {
         worker.current = new Worker(
           new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url),
           {
@@ -518,7 +635,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             type: "module",
           }
         );
-        setInitialStart(false);
+        setInitialStart("workerReady");
       }
       trackManagerId.current = genome.id;
     }
@@ -531,9 +648,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           display: "flex",
           flexDirection: "column",
           whiteSpace: "nowrap",
-
-          alignItems: "center",
-          margin: "auto",
         }}
       >
         <button onClick={handleClick}>add bed</button>
@@ -560,65 +674,132 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         )}
 
         <div>1pixel to {basePerPixel.current}bp</div>
-
-        <div
-          style={{
-            display: "flex",
-            //makes components align right or right when we switch sides
-            justifyContent: side.current == "right" ? "start" : "end",
-            border: "1px solid Tomato",
-            flexDirection: "row",
-            // full windowwidth will make canvas only loop 0-windowidth
-            // the last value will have no data.
-            // so we have to subtract from the size of the canvas
-            width: `${windowWidth - 1}px`,
-
-            // height: "2000px",
-            overflowX: "hidden",
-            overflowY: "hidden",
-          }}
-        >
+        <div style={{ display: "flex" }}>
           <div
-            data-theme={"light"}
-            ref={block}
-            onMouseDown={handleMouseDown}
             style={{
               display: "flex",
-              flexDirection: "column",
               //makes components align right or right when we switch sides
-              alignItems: side.current == "right" ? "start" : "end",
-              WebkitBackfaceVisibility: "hidden",
-              WebkitPerspective: "1000px", // Note: Add 'px' to the value
-              backfaceVisibility: "hidden",
-              perspective: "1000px", // Note: Add 'px' to the value
+
+              border: "1px solid Tomato",
+              flexDirection: "row",
+              // full windowwidth will make canvas only loop 0-windowidth
+              // the last value will have no data.
+              // so we have to subtract from the size of the canvas
+              width: `${windowWidth - 1}px`,
+              // width: `${fullWindowWidth / 2}px`,
+              // height: "2000px",
+              overflowX: "hidden",
+              overflowY: "hidden",
             }}
           >
-            {trackComponents.map((item, index) => {
-              let Component = item.component;
-              return (
-                <Component
-                  //infinitescroll type track data
-                  key={item.id}
-                  id={item.id}
-                  trackModel={item.trackModel}
-                  bpRegionSize={bpRegionSize.current}
-                  useFineModeNav={useFineModeNav.current}
-                  bpToPx={basePerPixel.current}
-                  trackData={trackData}
-                  side={side.current}
-                  windowWidth={windowWidth}
-                  dragXDist={dragX.current}
-                  handleDelete={handleDelete}
-                  genomeArr={genomeArr}
-                  genomeIdx={genomeIdx}
-                  dataIdx={dataIdx}
-                  getConfigMenu={getConfigMenu}
-                  onCloseConfigMenu={onCloseConfigMenu}
-                  trackIdx={index}
-                />
-              );
-            })}
+            <div
+              onMouseDown={handleMouseDown}
+              ref={block}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {trackComponents.map((item, index) => {
+                let Component = item.component;
+
+                return (
+                  <div
+                    data-theme={"light"}
+                    key={item.id}
+                    style={{
+                      display: "grid",
+                      WebkitBackfaceVisibility: "hidden",
+                      WebkitPerspective: `${windowWidth}px`,
+                      backfaceVisibility: "hidden",
+                      perspective: `${windowWidth}px`,
+                      backgroundColor: "#F2F2F2",
+                      width: `${windowWidth}px`,
+                      zIndex: 1,
+                      outline: "1px solid Dodgerblue",
+                    }}
+                  >
+                    <div
+                      ref={trackComponents[index].posRef}
+                      style={{
+                        display: "flex",
+                        zIndex: 2,
+                        gridArea: "1/1",
+                      }}
+                    >
+                      <Component
+                        id={item.id}
+                        trackModel={item.trackModel}
+                        bpRegionSize={bpRegionSize.current}
+                        useFineModeNav={useFineModeNav.current}
+                        bpToPx={basePerPixel.current}
+                        trackData={trackData}
+                        side={side.current}
+                        windowWidth={windowWidth}
+                        dragXDist={dragX.current}
+                        handleDelete={handleDelete}
+                        genomeArr={genomeArr}
+                        genomeIdx={genomeIdx}
+                        dataIdx={dataIdx}
+                        getConfigMenu={getConfigMenu}
+                        onCloseConfigMenu={onCloseConfigMenu}
+                        trackIdx={index}
+                        trackManagerRef={block}
+                        setShow3dGene={setShow3dGene}
+                        isThereG3dTrack={isThereG3dTrack.current}
+                        trackBoxPosition={trackBoxPosition}
+                        getLegendPosition={getLegendPosition}
+                        legendRef={item.legendRef}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        position: "relative",
+                        zIndex: 2,
+                        gridArea: "1/1",
+                        width: "100px",
+                      }}
+                      ref={item.legendRef}
+                    ></div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+          {/* 
+          <div
+            ref={g3dRect}
+            style={{
+              display: "flex",
+              width: `${fullWindowWidth / 2}px`,
+              backgroundColor: "blue",
+            }}
+          >
+            {g3dtrackComponents.map((item, index) => {
+              const rectInfo = g3dRect.current!.getBoundingClientRect();
+
+              let Component = item.component;
+              if (windowRegion) {
+                return (
+                  <Component
+                    //infinitescroll type track data
+                    key={item.id}
+                    tracks={genomeArr[genomeIdx].defaultTracks}
+                    g3dtrack={item.trackModel}
+                    viewRegion={windowRegion}
+                    width={rectInfo.width}
+                    height={rectInfo.height}
+                    x={rectInfo.x}
+                    y={rectInfo.y}
+                    genomeConfig={genomeArr[genomeIdx]}
+                    geneFor3d={show3dGene}
+                  />
+                );
+              } else {
+                return "";
+              }
+            })}
+          </div> */}
         </div>
       </div>
       {configMenuVisible ? configMenu : ""}

@@ -1,6 +1,8 @@
 import _ from "lodash";
 import getTabixData from "./tabixSource";
 import getBigData from "./bigSource";
+import getCoolSource from "./CoolSource";
+import getRepeatSource from "./RepeatSource";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const trackFetchFunction: { [key: string]: any } = {
@@ -20,7 +22,27 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
-
+  bigbed: async function bigbedFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  refbed: async function refbedFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  matplot: async function matplotFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   bigwig: async function bigwigFetch(regionData: any) {
     return getBigData(
       regionData.nav,
@@ -28,20 +50,56 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
-
-  dynseq: function dynseqFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getBigData(loci, options, url);
+  cool: async function coolFetch(regionData: any) {
+    return getCoolSource(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
   },
-  methylc: function methylcFetch(
-    loci: Array<{ [key: string]: any }>,
-    options: { [key: string]: any },
-    url: string
-  ) {
-    return getTabixData(loci, options, url);
+  categorical: async function coolFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  longrange: async function coolFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  dynseq: async function dynseqFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+
+  repeatmasker: async function repeatmaskerFetch(regionData: any) {
+    return getRepeatSource(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url,
+      regionData.basesPerPixel
+    );
+  },
+  biginteract: async function biginteractFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  methylc: async function methylcFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
   },
   hic: function hicFetch(straw, options, loci, basesPerPixel) {
     return straw.getData(loci, basesPerPixel, options);
