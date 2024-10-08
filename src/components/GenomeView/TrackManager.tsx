@@ -715,17 +715,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       WebkitPerspective: `${windowWidth}px`,
                       backfaceVisibility: "hidden",
                       perspective: `${windowWidth}px`,
-                      backgroundColor: "lightgrey",
+                      backgroundColor: "",
                       width: `${windowWidth}px`,
-
-                      outline: "1px solid Dodgerblue",
+                      zIndex: 1,
+                      borderTop: "1px solid Dodgerblue",
+                      borderBottom: "1px solid Dodgerblue",
                     }}
                   >
                     <div
                       ref={trackComponents[index].posRef}
                       style={{
                         display: "flex",
-
+                        zIndex: 2,
                         gridArea: "1/1",
                       }}
                     >
@@ -757,6 +758,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     <div
                       style={{
                         position: "relative",
+                        zIndex: 3,
                         gridArea: "1/1",
                       }}
                       ref={item.legendRef}
