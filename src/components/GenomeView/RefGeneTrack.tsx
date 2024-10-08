@@ -207,7 +207,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       setCanvasComponents(canvasElements);
     }
 
-    if (curTrackData.initial === 1) {
+    if (curTrackData.initial === 1 || curTrackData.index === 1) {
       xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
     } else if (curTrackData.side === "right") {
       xPos.current = fine
@@ -217,10 +217,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
-        ? Math.floor(curTrackData.xDist / windowWidth) * windowWidth -
+        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
+        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
     }
   }
 
@@ -452,12 +452,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       useFineModeNav ||
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
+      // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
         viewData = fetchedDataCache.current[dataIdx!].refGenes;
         curIdx = dataIdx!;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx! + 1].refGenes;
-        curIdx = dataIdx! + 1;
+      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+        viewData = fetchedDataCache.current[dataIdx!].refGenes;
+        curIdx = dataIdx!;
       }
     } else {
       if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
@@ -817,6 +818,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
+    console.log(dataIdx);
     getCacheData();
     prevDataIdx.current = dataIdx!;
   }, [dataIdx]);

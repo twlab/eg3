@@ -157,7 +157,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (!isDragging.current || isLoading.current) {
       return;
     }
-    console.log(trackComponents);
+
     const deltaX = lastX.current - e.pageX;
     lastX.current = e.pageX;
     let tempDragX = dragX.current;
@@ -208,14 +208,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const dragIdx = dragX.current / windowWidth;
 
-    if (dragIdx > -1 && dragIdx < 1) {
-      curX = Math.round(dragX.current! / windowWidth);
-    } else if (dragX.current! > 1) {
-      curX = Math.floor(dragX.current! / windowWidth);
+    if (dragX.current! > 0) {
+      curX = Math.ceil(dragX.current! / windowWidth);
     } else {
       curX = Math.ceil(dragX.current! / windowWidth);
     }
-
+    console.log(curX);
     setDataIdx(curX);
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
@@ -267,7 +265,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function getLegendPosition() {
     const rects: Array<any> = [];
     const children = block.current!.children;
-    console.log(children, trackComponents);
+
     Array.from(children).map((child) => {
       const rect = child.getBoundingClientRect();
       rects.push({
@@ -709,7 +707,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             style={{
               display: "flex",
               //makes components align right or right when we switch sides
-              justifyContent: side.current == "right" ? "start" : "end",
+
               border: "1px solid Tomato",
               flexDirection: "row",
               // full windowwidth will make canvas only loop 0-windowidth
