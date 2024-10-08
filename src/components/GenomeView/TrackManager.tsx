@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 const fullWindowWidth = window.outerWidth;
@@ -156,7 +156,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (!isDragging.current || isLoading.current) {
       return;
     }
-
+    console.log(trackComponents);
     const deltaX = lastX.current - e.pageX;
     lastX.current = e.pageX;
     let tempDragX = dragX.current;
@@ -174,12 +174,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     dragX.current -= deltaX;
-
+    console.log("ASDASDADASDASDADASDAD", trackComponents);
     //can change speed of scroll by mutipling dragX.current by 0.5 when setting the track position
     // .5 = * 1 ,1 =
-    cancelAnimationFrame(frameID.current);
-    frameID.current = requestAnimationFrame(() => {
-      block.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+    trackComponents.forEach((component, i) => {
+      console.log(component.posRef);
+      requestAnimationFrame(() => {
+        component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+      });
     });
   }
   const handleClick = () => {
@@ -518,18 +520,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
     // terminate the work when the component is unmounted
     return () => {
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleMouseUp);
       worker.current!.terminate();
       infiniteScrollWorker.current!.terminate();
       console.log("trackmanager terminate");
     };
   }, []);
+
+  useEffect(() => {
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [trackComponents]);
   useEffect(() => {
     if (boxSizeChange.current) {
       getLegendPosition();
@@ -547,12 +553,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       for (let i = 0; i < genome.defaultTracks.length; i++) {
         if (genome.defaultTracks[i].type !== "g3d") {
+          const newPosRef = createRef();
           const uniqueKey = uuidv4();
           genome.defaultTracks[i]["id"] = uniqueKey;
           newTrackComponents.push({
             id: uniqueKey,
             component: componentMap[genome.defaultTracks[i].type],
-
+            posRef: newPosRef,
             trackModel: genome.defaultTracks[i],
           });
 
@@ -587,7 +594,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           return items.type !== "g3d";
         }
       );
-      setTrackComponents([...newTrackComponents]);
+      console.log(newTrackComponents);
+      setTrackComponents((prevTrackComponents) => {
+        // Modify prevTrackComponents here
+        return [...prevTrackComponents, ...newTrackComponents];
+      });
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
@@ -668,6 +679,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <div>1pixel to {basePerPixel.current}bp</div>
         <div style={{ display: "flex" }}>
           <div
+            onMouseDown={handleMouseDown}
             style={{
               position: "relative",
               display: "flex",
@@ -685,49 +697,49 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               overflowY: "hidden",
             }}
           >
-            <div
-              data-theme={"light"}
-              ref={block}
-              onMouseDown={handleMouseDown}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                //makes components align right or right when we switch sides
-                alignItems: side.current == "right" ? "start" : "end",
-                WebkitBackfaceVisibility: "hidden",
-                WebkitPerspective: "1000px", // Note: Add 'px' to the value
-                backfaceVisibility: "hidden",
-                perspective: "1000px", // Note: Add 'px' to the value
-              }}
-            >
+            <div style={{ display: "flex", flexDirection: "column" }}>
               {trackComponents.map((item, index) => {
                 let Component = item.component;
 
                 return (
-                  <Component
+                  <div
                     key={item.id}
-                    id={item.id}
-                    trackModel={item.trackModel}
-                    bpRegionSize={bpRegionSize.current}
-                    useFineModeNav={useFineModeNav.current}
-                    bpToPx={basePerPixel.current}
-                    trackData={trackData}
-                    side={side.current}
-                    windowWidth={windowWidth}
-                    dragXDist={dragX.current}
-                    handleDelete={handleDelete}
-                    genomeArr={genomeArr}
-                    genomeIdx={genomeIdx}
-                    dataIdx={dataIdx}
-                    getConfigMenu={getConfigMenu}
-                    onCloseConfigMenu={onCloseConfigMenu}
-                    trackIdx={index}
-                    trackManagerRef={block}
-                    setShow3dGene={setShow3dGene}
-                    isThereG3dTrack={isThereG3dTrack.current}
-                    trackBoxPosition={trackBoxPosition}
-                    getLegendPosition={getLegendPosition}
-                  />
+                    data-theme={"light"}
+                    ref={trackComponents[index].posRef}
+                    style={{
+                      //makes components align right or right when we switch sides
+                      alignItems: side.current == "right" ? "start" : "end",
+                      WebkitBackfaceVisibility: "hidden",
+                      WebkitPerspective: "1000px", // Note: Add 'px' to the value
+                      backfaceVisibility: "hidden",
+                      perspective: "1000px", // Note: Add 'px' to the value
+                    }}
+                  >
+                    <Component
+                      key={item.id}
+                      id={item.id}
+                      trackModel={item.trackModel}
+                      bpRegionSize={bpRegionSize.current}
+                      useFineModeNav={useFineModeNav.current}
+                      bpToPx={basePerPixel.current}
+                      trackData={trackData}
+                      side={side.current}
+                      windowWidth={windowWidth}
+                      dragXDist={dragX.current}
+                      handleDelete={handleDelete}
+                      genomeArr={genomeArr}
+                      genomeIdx={genomeIdx}
+                      dataIdx={dataIdx}
+                      getConfigMenu={getConfigMenu}
+                      onCloseConfigMenu={onCloseConfigMenu}
+                      trackIdx={index}
+                      trackManagerRef={block}
+                      setShow3dGene={setShow3dGene}
+                      isThereG3dTrack={isThereG3dTrack.current}
+                      trackBoxPosition={trackBoxPosition}
+                      getLegendPosition={getLegendPosition}
+                    />
+                  </div>
                 );
               })}
             </div>

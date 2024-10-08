@@ -507,7 +507,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if (trackModel.options) {
             configOptions.current = {
               ...configOptions.current,
@@ -623,7 +623,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           ];
 
         if (trackData!.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if (trackModel.options) {
             configOptions.current = {
               ...configOptions.current,

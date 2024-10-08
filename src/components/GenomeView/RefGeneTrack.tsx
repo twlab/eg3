@@ -545,7 +545,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -655,7 +655,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ];
 
         if (trackData!.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {

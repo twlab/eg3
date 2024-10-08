@@ -521,7 +521,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -631,7 +631,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
           ];
 
         if (trackData!.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {

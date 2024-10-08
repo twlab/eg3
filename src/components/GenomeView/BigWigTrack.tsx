@@ -316,7 +316,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -426,7 +426,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           ];
 
         if (trackData!.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {

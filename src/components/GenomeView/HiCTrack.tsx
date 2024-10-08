@@ -126,7 +126,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
           ].primaryVisData;
 
         if (trackData!.initial === 1) {
-          boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if (trackModel.options) {
             configOptions.current = {
               ...configOptions.current,
