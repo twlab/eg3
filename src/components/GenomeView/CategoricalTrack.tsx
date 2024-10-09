@@ -12,7 +12,6 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { CategoricalTrackConfig } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultCategorical } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
@@ -774,7 +773,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         display: "flex",
         // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
         // other elements will overlapp
-        height: svgHeight.current,
+        height: svgHeight.current + 2,
 
         position: "relative",
       }}

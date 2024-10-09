@@ -14,8 +14,6 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
-
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
 } from "./bedComponents/BedAnnotation";
@@ -783,8 +781,8 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current
-            : configOptions.current.height,
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
         position: "relative",
       }}
     >

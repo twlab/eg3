@@ -12,7 +12,6 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { RepeatMaskerTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RepeatMaskerTrackConfig";
 
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
@@ -933,8 +932,8 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
           // other elements will overlapp
           height:
             configOptions.current.displayMode === "full"
-              ? svgHeight.current
-              : configOptions.current.height,
+              ? svgHeight.current + 2
+              : configOptions.current.height + 2,
           position: "relative",
         }}
       >

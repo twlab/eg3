@@ -16,7 +16,7 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
-import "./TrackContextMenu.css";
+
 import { RefBedTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RefBedTrackConfig";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
@@ -799,10 +799,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 1
-            : configOptions.current.height + 1,
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
         position: "relative",
-        border: "1px solid Tomato",
       }}
     >
       {configOptions.current.displayMode === "full" ? (

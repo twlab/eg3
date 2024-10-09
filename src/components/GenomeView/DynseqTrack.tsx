@@ -6,7 +6,6 @@ import { objToInstanceAlign } from "./TrackManager";
 import OpenInterval from "../../models/OpenInterval";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComputation";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
@@ -571,32 +570,19 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
-        height:
-          configOptions.current.displayMode === "full"
-            ? svgHeight.current
-            : configOptions.current.height,
         position: "relative",
+        height: configOptions.current.height + 2,
       }}
     >
       <div
         style={{
-          display: "flex",
-          position: "relative",
-          height: configOptions.current.height,
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
+        {canvasComponents}
       </div>
       {legend}
     </div>

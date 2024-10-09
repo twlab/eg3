@@ -299,7 +299,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height,
+        height: configOptions.current.height + 2,
       }}
     >
       <div

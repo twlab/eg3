@@ -7,7 +7,7 @@ import OpenInterval from "../../models/OpenInterval";
 
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
-import "./TrackContextMenu.css";
+
 import { MatplotTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MatplotTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
@@ -586,29 +586,19 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
-        height: configOptions.current.height,
         position: "relative",
+        height: configOptions.current.height + 2,
       }}
     >
       <div
         style={{
-          display: "flex",
-          position: "relative",
-          height: configOptions.current.height,
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
+        {canvasComponents}
       </div>
       {legend}
     </div>

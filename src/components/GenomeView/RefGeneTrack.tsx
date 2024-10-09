@@ -16,7 +16,7 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
-import "./TrackContextMenu.css";
+
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
@@ -25,7 +25,7 @@ import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/Track
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
-import useResizeObserver from "./Resize";
+import useResizeObserver from "./commonComponents/Resize";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { NumericalFeature } from "../../models/Feature";
 import { update } from "lodash";
@@ -810,8 +810,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current
-            : configOptions.current.height,
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
         position: "relative",
       }}
     >

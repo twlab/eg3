@@ -8,7 +8,6 @@ import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
@@ -16,7 +15,6 @@ import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import TrackLegend from "./commonComponents/TrackLegend";
 import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
@@ -576,7 +574,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height,
+        height: configOptions.current.height + 2,
       }}
     >
       <div

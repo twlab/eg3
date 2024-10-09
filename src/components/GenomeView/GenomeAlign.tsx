@@ -313,7 +313,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       style={{
         display: "flex",
         position: "relative",
-        height: `${configOptions.current.height}px`,
+        height: `${configOptions.current.height + 2}px`,
       }}
     >
       <svg

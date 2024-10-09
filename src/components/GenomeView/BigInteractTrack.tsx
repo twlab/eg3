@@ -320,7 +320,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height,
+        height: configOptions.current.height + 2,
       }}
     >
       <div

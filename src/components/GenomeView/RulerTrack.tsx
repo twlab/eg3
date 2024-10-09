@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
 
-import "./TrackContextMenu.css";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComputation";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
@@ -11,7 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 
 import { RulerTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RulerTrackConfig";
-import TrackLegend from "./commonComponents/TrackLegend";
+
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import RulerComponent from "./RulerComponents/RulerComponent";
@@ -522,27 +521,18 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
         position: "relative",
       }}
     >
       <div
         style={{
-          display: "flex",
-          position: "relative",
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
+        {canvasComponents}
       </div>
       {legend}
     </div>
