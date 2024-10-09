@@ -14,7 +14,7 @@ import { DefaultAggregators } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
-import HoverToolTip from "../hoverToolTips/hoverToolTip";
+import HoverToolTip from "../hoverToolTips/HoverToolTip";
 import { BackgroundColorConfig } from "../../../../trackConfigs/config-menu-components.tsx/ColorConfig";
 import TrackLegend from "../TrackLegend";
 // import { withLogPropChanges } from "components/withLogPropChanges";

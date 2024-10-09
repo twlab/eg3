@@ -19,7 +19,7 @@ import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 // import TrackLegend from "../commonComponents/TrackLegend";
 import NumericalTrack from "../commonComponents/numerical/NumericalTrack";
 import TrackLegend from "../commonComponents/TrackLegend";
-import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
+import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
 import Chromosomes from "../genomeNavigator/Chromosomes";
 import React from "react";
 const CHROMOSOMES_Y = 60;

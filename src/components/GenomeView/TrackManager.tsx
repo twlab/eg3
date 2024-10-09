@@ -20,7 +20,7 @@ import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
-import { HicSource } from "./getRemoteData/hicSource";
+import { HicSource } from "../../getRemoteData/hicSource";
 import HiCTrack from "./HiCTrack";
 import CategoricalTrack from "./CategoricalTrack";
 import LongrangeTrack from "./LongrangeTrack";
@@ -30,6 +30,7 @@ import RefBedTrack from "./RefBedTrack";
 import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
+import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -134,11 +135,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // New data are fetched only if the user drags to the either ends of the track
 
   const [initialStart, setInitialStart] = useState("workerNotReady");
-  const [windowRegion, setWindowRegion] = useState<DisplayedRegionModel>();
+
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
-
+  const [region, setRegion] = useState<{ [key: string]: any }>({});
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
   const [configMenu, setConfigMenu] = useState<any>();
@@ -217,13 +218,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     startBp(genomeCoordLocus.toString(), curBp, curBp + bpRegionSize.current);
     setCurRegion(genomeCoordLocus);
-    setWindowRegion(
-      new DisplayedRegionModel(
-        genomeArr[genomeIdx].navContext,
-        curBp,
-        curBp + bpRegionSize.current
-      )
+    let tmpObj = {};
+    tmpObj["viewWindow"] = new DisplayedRegionModel(
+      genomeArr[genomeIdx].navContext,
+      curBp,
+      curBp + bpRegionSize.current
     );
+    tmpObj["viewRegion"] = new DisplayedRegionModel(
+      genomeArr[genomeIdx].navContext,
+      curBp - bpRegionSize.current,
+      curBp + bpRegionSize.current * 2
+    );
+    setRegion(tmpObj);
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
     if (dragX.current > 0 && side.current === "right") {
@@ -252,7 +258,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left");
     }
   }
-
+  function onRegionSelected(startBase, endBase) {
+    console.log("GenomeNavSelectBase", startBase, endBase);
+  }
   async function fetchGenomeData(initial: number = 0, trackSide) {
     if (initial === 0 || initial === 1) {
       let curFetchRegionNav;
@@ -306,7 +314,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         );
         minBp.current = minBp.current - bpRegionSize.current;
         maxBp.current = maxBp.current + bpRegionSize.current * 2;
-        setWindowRegion(curFetchRegionNav);
+        let tmpObj = {};
+        tmpObj["viewWindow"] = curFetchRegionNav;
+        tmpObj["viewRegion"] = newVisData.visRegion;
+        setRegion(tmpObj);
         //________________________________________________________________________________________________________________
       } else {
         if (trackSide === "right") {
@@ -591,7 +602,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // start working.Thats why we need the initialStart state.
       if (initialStart === "workerNotReady") {
         infiniteScrollWorker.current = new Worker(
-          new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url),
+          new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
           {
             type: "module",
           }
@@ -612,6 +623,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }}
       >
         <button onClick={handleClick}>add bed</button>
+        {Object.keys(region).length > 0 ? (
+          <GenomeNavigator
+            selectedRegion={region.viewWindow}
+            genomeConfig={genomeArr[genomeIdx]}
+            windowWidth={windowWidth}
+            onRegionSelected={onRegionSelected}
+          />
+        ) : (
+          ""
+        )}
 
         <div> - {curRegion?.toString()}</div>
         <div> {bpX.current + "-" + (bpX.current + bpRegionSize.current)}</div>

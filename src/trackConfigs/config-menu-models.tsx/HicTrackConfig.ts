@@ -25,10 +25,7 @@ import HeightConfig from "../config-menu-components.tsx/HeightConfig";
 import { InteractionDisplayMode } from "./DisplayModes";
 import TrackModel from "../../models/TrackModel";
 import { DEFAULT_OPTIONS } from "../../components/GenomeView/InteractionComponents/InteractionTrackComponent";
-import {
-  BinSize,
-  NormalizationMode,
-} from "../../components/GenomeView/getRemoteData/HicDataModes";
+import { BinSize, NormalizationMode } from "../../getRemoteData/HicDataModes";
 
 export class HicTrackConfig extends TrackConfig {
   constructor(trackModel: TrackModel) {

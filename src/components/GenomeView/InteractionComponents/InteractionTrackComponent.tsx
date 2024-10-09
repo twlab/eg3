@@ -14,12 +14,15 @@ import { SquareDisplay } from "./SquareDisplay";
 
 import { InteractionDisplayMode } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { FeaturePlacer } from "../../../models/getXSpan/FeaturePlacer";
-import { GenomeInteraction } from "../getRemoteData/GenomeInteraction";
+import { GenomeInteraction } from "../../../getRemoteData/GenomeInteraction";
 import { ScaleChoices } from "../../../models/ScaleChoices";
 import TrackModel from "../../../models/TrackModel";
 import OpenInterval from "../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import { BinSize, NormalizationMode } from "../getRemoteData/HicDataModes";
+import {
+  BinSize,
+  NormalizationMode,
+} from "../../../getRemoteData/HicDataModes";
 import TrackLegend from "../commonComponents/TrackLegend";
 
 const TOP_PADDING = 2;

@@ -1,6 +1,6 @@
 import fetch from "isomorphic-fetch";
 import _ from "lodash";
-import ChromosomeInterval from "../../../models/ChromosomeInterval";
+import ChromosomeInterval from "../models/ChromosomeInterval";
 import { GenomeInteraction } from "./GenomeInteraction";
 const HIGLASS_API_URL = "https://higlass.io/api/v1/fragments_by_loci/";
 const MATRIX_SIZE = 50; // how many data chunks returned from the API for a query region

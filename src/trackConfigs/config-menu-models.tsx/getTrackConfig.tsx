@@ -97,6 +97,7 @@ const TYPE_NAME_TO_CONFIG = {
   // brgfa: BrgfaTrackConfig,
   // modbed: FiberTrackConfig, // fiber track was renamed to modbed meaning read modification data
 };
+
 const DefaultConfig = TrackConfig;
 
 if (process.env.NODE_ENV !== "production") {

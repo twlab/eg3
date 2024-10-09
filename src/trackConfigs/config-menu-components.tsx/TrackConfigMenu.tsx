@@ -2,8 +2,8 @@ import ReactDOM from "react-dom";
 import { Manager, Reference, Popper } from "react-popper";
 import { MenuTitle, RemoveOption } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
-import getBigData from "../../components/GenomeView/getRemoteData/bigSource";
-import getTabixData from "../../components/GenomeView/getRemoteData/tabixSource";
+import getBigData from "../../getRemoteData/bigSource";
+import getTabixData from "../../getRemoteData/tabixSource";
 import OutsideClickDetector from "../../components/GenomeView/commonComponents/OutsideClickDetector";
 
 const trackConfigMenu: { [key: string]: any } = {

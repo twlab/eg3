@@ -1,9 +1,6 @@
 import React from "react";
 import SelectConfig from "./SelectConfig";
-import {
-  BinSize,
-  NormalizationMode,
-} from "../../components/GenomeView/getRemoteData/HicDataModes";
+import { BinSize, NormalizationMode } from "../../getRemoteData/HicDataModes";
 
 /**
  * A menu item for configuring bin sizes for hic tracks.

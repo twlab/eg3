@@ -1,13 +1,13 @@
 import React from "react";
 import { PlacedInteraction } from "../../../models/getXSpan/FeaturePlacer";
 import OpenInterval from "../../../models/OpenInterval";
-import { GenomeInteraction } from "../getRemoteData/GenomeInteraction";
+import { GenomeInteraction } from "../../../getRemoteData/GenomeInteraction";
 import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
 import { moveTo, cubicCurveTo } from "./ArcDisplay";
 import { ScaleLinear } from "d3-scale";
-import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
+import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
 
 interface CubicCurveDisplayProps {
   placedInteractions: PlacedInteraction[];

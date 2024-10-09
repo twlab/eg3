@@ -3,7 +3,7 @@ import { scaleLinear, ScaleLinear } from "d3-scale";
 import _ from "lodash";
 import { PlacedInteraction } from "../../../models/getXSpan/FeaturePlacer";
 import OpenInterval from "../../../models/OpenInterval";
-import { GenomeInteraction } from "../getRemoteData/GenomeInteraction";
+import { GenomeInteraction } from "../../../getRemoteData/GenomeInteraction";
 import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
@@ -13,7 +13,7 @@ import { sameLoci } from "../../../models/util";
 import { getRelativeCoordinates } from "../../../models/util";
 
 import "./ArcDisplay.css";
-import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
+import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
 
 interface ArcDisplayProps {
   placedInteractions: PlacedInteraction[];

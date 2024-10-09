@@ -11,7 +11,7 @@ import { objToInstanceAlign } from "./TrackManager";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import { BigInteractTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigInteractTrackConfig";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
+import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
 import TrackLegend from "./commonComponents/TrackLegend";
 import ReactDOM from "react-dom";
 const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({

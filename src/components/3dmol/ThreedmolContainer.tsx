@@ -3,7 +3,7 @@ import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 // import axios from "axios";
 import percentile from "percentile";
-import G3dFile from "../GenomeView/getRemoteData/g3dFileV2";
+import G3dFile from "../../getRemoteData/g3dFileV2";
 import Drawer from "rc-drawer";
 import TrackModel from "../../models/TrackModel";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";

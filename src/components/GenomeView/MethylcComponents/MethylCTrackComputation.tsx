@@ -17,7 +17,7 @@ import TrackModel from "../../../models/TrackModel";
 import { FeatureAggregator } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
 import { getContrastingColor } from "../../../models/util";
-import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
+import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
 // import "./commonComponents/tooltip/Tooltip.css";
 import "./MethylCTrack.css";
 

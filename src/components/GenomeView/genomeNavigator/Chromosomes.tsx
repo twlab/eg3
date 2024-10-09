@@ -10,7 +10,7 @@ import LinearDrawingModel from "../../../models/LinearDrawingModel";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import NavigationContext from "../../../models/NavigationContext";
 import { FeaturePlacer } from "../../../models/getXSpan/FeaturePlacer";
-import TwoBitSource from "../getRemoteData/TwoBitSource";
+import TwoBitSource from "../../../getRemoteData/TwoBitSource";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import { SequenceData } from "../../../models/SequenceData";
 import { GenomeConfig } from "../../../models/genomes/GenomeConfig";
