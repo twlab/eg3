@@ -136,39 +136,29 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
 
       let rawDataArr: Array<RepeatDASFeature> = [];
       genesArr.map((record) => {
-        const regexMatch = record["rest"].match(
-          /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
-        );
+        const restValues = record["rest"].split("\t");
+        const output: RepeatDASFeature = {
+          genoLeft: restValues[7],
+          label: restValues[0],
+          max: record.end,
+          milliDel: restValues[5],
+          milliDiv: restValues[4],
+          milliIns: restValues[6],
+          min: record.start,
+          orientation: restValues[2],
+          repClass: restValues[8],
+          repEnd: restValues[11],
+          repFamily: restValues[9],
+          repLeft: restValues[12],
+          repStart: restValues[10],
+          score: Number(restValues[1]),
+          segment: record.chr,
+          swScore: restValues[3],
+          type: "bigbed",
+          _chromId: record.chromId,
+        };
 
-        if (regexMatch) {
-          const restValues = record["rest"].split("\t");
-          const output: RepeatDASFeature = {
-            genoLeft: restValues[7],
-            label: restValues[0],
-            max: record.end,
-            milliDel: restValues[5],
-            milliDiv: restValues[4],
-            milliIns: restValues[6],
-            min: record.start,
-            orientation: restValues[2],
-            repClass: restValues[8],
-            repEnd: restValues[11],
-            repFamily: restValues[9],
-            repLeft: restValues[12],
-            repStart: restValues[10],
-            score: Number(restValues[1]),
-            segment: record.chr,
-            swScore: restValues[3],
-            type: "bigbed",
-            _chromId: record.chromId,
-          };
-
-          rawDataArr.push(output);
-        } else {
-          console.error(
-            `${record[3]} not formated correctly in  REPEATMASKER track`
-          );
-        }
+        rawDataArr.push(output);
       });
 
       let algoData = rawDataArr.map(
