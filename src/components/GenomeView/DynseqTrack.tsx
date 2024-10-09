@@ -7,13 +7,13 @@ import OpenInterval from "../../models/OpenInterval";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComputation";
+import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComponents";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import DynseqTrackComputation from "./DynseqComponents/DynseqTrackComputation";
+import DynseqTrackComponents from "./DynseqComponents/DynseqTrackComponents";
 import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
 import TrackLegend from "./commonComponents/TrackLegend";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
@@ -120,7 +120,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
     let canvasElements = (
-      <DynseqTrackComputation
+      <DynseqTrackComponents
         data={algoData}
         options={tmpObj}
         viewWindow={

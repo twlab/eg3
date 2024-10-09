@@ -4,7 +4,7 @@ import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
 
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComputation";
+import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComponents";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";

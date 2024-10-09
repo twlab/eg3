@@ -243,7 +243,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       dragX.current < 0
     ) {
       isLoading.current = true;
-
       rightSectionSize.current.push(windowWidth);
       console.log("trigger right");
       fetchGenomeData(0, "right");
@@ -254,7 +253,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       isLoading.current = true;
       console.log("trigger left");
       leftSectionSize.current.push(windowWidth);
-
       fetchGenomeData(0, "left");
     }
   }
@@ -501,7 +499,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
-    // terminate the work when the component is unmounted
+    // terminate the worker and listener when TrackManager  is unmounted
     return () => {
       infiniteScrollWorker.current!.terminate();
       document.removeEventListener("mousemove", handleMove);
@@ -511,6 +509,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, []);
 
   useEffect(() => {
+    // add Listenser again because javacript dom only have the old trackComponents value
+    // it gets the trackComponents at creation so when trackComponent updates we need to
+    // add the listener so it can get the most updated trackComponent
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
     return () => {

@@ -22,6 +22,7 @@ import TrackLegend from "../commonComponents/TrackLegend";
 import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
 import Chromosomes from "../genomeNavigator/Chromosomes";
 import React from "react";
+import DynseqTrack from "../DynseqTrack";
 const CHROMOSOMES_Y = 60;
 const TOP_PADDING = 2;
 export const MAX_PIXELS_PER_BASE_NUMERIC = 0.5;
@@ -63,7 +64,7 @@ interface DynseqTrackProps {
   genomeConfig: any;
 }
 
-class DynseqTrackComputation extends PureComponent<DynseqTrackProps> {
+class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
   static propTypes = {
     data: PropTypes.array.isRequired,
     unit: PropTypes.string,
@@ -299,4 +300,4 @@ class DynseqTrackComputation extends PureComponent<DynseqTrackProps> {
   }
 }
 
-export default DynseqTrackComputation;
+export default DynseqTrackComponents;
