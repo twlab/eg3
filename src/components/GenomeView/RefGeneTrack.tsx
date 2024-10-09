@@ -105,7 +105,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     let currDisplayNav;
     let sortType = SortItemsOptions.NOSORT;
-
+    if (curTrackData.side === "left") {
+      sortType = SortItemsOptions.NONE;
+    }
     if (!fine) {
       if (curTrackData.initial === 1) {
         currDisplayNav = new DisplayedRegionModel(

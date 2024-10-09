@@ -99,7 +99,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
 
     let currDisplayNav;
     let sortType = SortItemsOptions.NOSORT;
-
+    if (curTrackData.side === "left") {
+      sortType = SortItemsOptions.NONE;
+    }
     if (!fine) {
       if (curTrackData.initial === 1) {
         currDisplayNav = new DisplayedRegionModel(
@@ -198,6 +200,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           width={fine ? curTrackData.visWidth : windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
+          getNumLegend={getNumLegend}
         />
       );
       setCanvasComponents(canvasElements);

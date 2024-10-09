@@ -3,19 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
 
-import OpenInterval from "../../models/OpenInterval";
-import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
-
 import "./TrackContextMenu.css";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComputation";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import { NumericalFeature } from "../../models/Feature";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
-import DynseqTrackComputation from "./DynseqComponents/DynseqTrackComputation";
-import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
+
+import { RulerTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RulerTrackConfig";
 import TrackLegend from "./commonComponents/TrackLegend";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
@@ -46,7 +41,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
-  const svgHeight = useRef(0);
+
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -157,7 +152,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
 
       genomeArr![genomeIdx!].options = configOptions.current;
 
-      const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new RulerTrackConfig(genomeArr![genomeIdx!]);
 
       const items = renderer.getMenuComponents();
 
@@ -185,7 +180,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
 
     genomeArr![genomeIdx!].options = configOptions.current;
 
-    const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new RulerTrackConfig(genomeArr![genomeIdx!]);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();

@@ -12,10 +12,7 @@ import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "./commonComponents/check-obj-dupe";
+import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 
 import "./TrackContextMenu.css";
 
@@ -72,8 +69,6 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
 
-  const updateLegendCanvas = useRef<any>(null);
-
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
   const [legend, setLegend] = useState<any>();
@@ -106,7 +101,9 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
 
     let currDisplayNav;
     let sortType = SortItemsOptions.NOSORT;
-
+    if (curTrackData.side === "left") {
+      sortType = SortItemsOptions.NONE;
+    }
     if (!fine) {
       if (curTrackData.side === "right") {
         currDisplayNav = new DisplayedRegionModel(

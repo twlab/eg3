@@ -8,7 +8,7 @@ import OpenInterval from "../../models/OpenInterval";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
 import "./TrackContextMenu.css";
-import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
+import { MatplotTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MatplotTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
@@ -16,7 +16,6 @@ import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { update } from "lodash";
 import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
@@ -176,7 +175,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
 
       genomeArr![genomeIdx!].options = configOptions.current;
 
-      const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new MatplotTrackConfig(genomeArr![genomeIdx!]);
 
       const items = renderer.getMenuComponents();
 
@@ -204,7 +203,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
 
     genomeArr![genomeIdx!].options = configOptions.current;
 
-    const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new MatplotTrackConfig(genomeArr![genomeIdx!]);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();

@@ -114,6 +114,23 @@ const trackConfigMenu: { [key: string]: any } = {
       />
     );
   },
+  ruler: function rulerConfig(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
+
+  matplot: function matplotConfig(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
 };
 function ConfigMenuComponent(props) {
   let menuData = props.menuData;

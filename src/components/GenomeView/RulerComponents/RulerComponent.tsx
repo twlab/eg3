@@ -77,7 +77,6 @@ interface RulerComponentProps {
 }
 class RulerComponent extends React.Component<RulerComponentProps> {
   render() {
-    console.log(this.props.selectedRegion);
     let legend = (
       <TrackLegend
         height={HEIGHT}
