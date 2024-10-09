@@ -30,6 +30,7 @@ import RepeatMaskerTrack from "./RepeatMaskerTrack";
 import RefBedTrack from "./RefBedTrack";
 import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
+import RulerTrack from "./RulerTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -70,6 +71,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   bigbed: BigBedTrack,
   refbed: RefBedTrack,
   matplot: MatplotTrack,
+  ruler: RulerTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -100,7 +102,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeArr,
 }) {
   //useRef to store data between states without re render the component
-  const worker = useRef<Worker>();
+
   const infiniteScrollWorker = useRef<Worker>();
   const useFineModeNav = useRef(false);
   const trackManagerId = useRef("");
@@ -127,13 +129,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const isDragging = useRef(false);
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
   const leftSectionSize = useRef<Array<any>>([]);
-  const boxSizeChange = useRef<boolean>(false);
+
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-  const [trackBoxPosition, setTrackBoxPosition] = useState<Array<any> | null>(
-    null
-  );
+
   const [initialStart, setInitialStart] = useState("workerNotReady");
   const [windowRegion, setWindowRegion] = useState<DisplayedRegionModel>();
   const [show3dGene, setShow3dGene] = useState();
@@ -204,14 +204,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     lastDragX.current = dragX.current;
-    let curX;
 
-    const dragIdx = dragX.current / windowWidth;
-    {
-      curX = Math.ceil(dragX.current! / windowWidth);
-    }
-
-    setDataIdx(curX);
+    setDataIdx(Math.ceil(dragX.current! / windowWidth));
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
     let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
@@ -259,25 +253,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left");
     }
   }
-  function getLegendPosition() {
-    const rects: Array<any> = [];
-    const children = block.current!.children;
 
-    Array.from(children).map((child) => {
-      const rect = child.getBoundingClientRect();
-      rects.push({
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-        pageY: rect.top + window.scrollY,
-      });
-    });
-
-    setTrackBoxPosition([...rects]);
-  }
   async function fetchGenomeData(initial: number = 0, trackSide) {
     if (initial === 0 || initial === 1) {
       let curFetchRegionNav;
@@ -493,18 +469,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   function handleDelete(id: number) {
-    genomeArr[genomeIdx].defaultTracks = genomeArr[
-      genomeIdx
-    ].defaultTracks.filter((items, index) => {
-      return index !== id;
-    });
+    activeTrackModels.current = activeTrackModels.current.filter(
+      (items, index) => {
+        return index !== id;
+      }
+    );
 
     setTrackComponents((prevTracks) => {
       return prevTracks.filter((items, index) => {
         return index !== id;
       });
     });
-    boxSizeChange.current = true;
     setConfigMenuVisible(false);
   }
   function getConfigMenu(htmlElement: any) {
@@ -518,7 +493,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     // terminate the work when the component is unmounted
     return () => {
-      worker.current!.terminate();
       infiniteScrollWorker.current!.terminate();
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -533,12 +507,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [trackComponents]);
-  useEffect(() => {
-    if (boxSizeChange.current) {
-      getLegendPosition();
-    }
-    boxSizeChange.current = false;
   }, [trackComponents]);
 
   useEffect(() => {
@@ -623,12 +591,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
       if (initialStart === "workerNotReady") {
-        worker.current = new Worker(
-          new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url),
-          {
-            type: "module",
-          }
-        );
         infiniteScrollWorker.current = new Worker(
           new URL("./getRemoteData/fetchDataWorker.ts", import.meta.url),
           {
@@ -747,8 +709,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         trackManagerRef={block}
                         setShow3dGene={setShow3dGene}
                         isThereG3dTrack={isThereG3dTrack.current}
-                        trackBoxPosition={trackBoxPosition}
-                        getLegendPosition={getLegendPosition}
                         legendRef={item.legendRef}
                       />
                     </div>

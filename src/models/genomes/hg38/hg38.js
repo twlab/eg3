@@ -40,9 +40,14 @@ const genome = new Genome("hg38", [
 // big interact chr3:63836292-64336395
 // https://target.wustl.edu/dli/tmp/test2.g3d
 // chr7:74083652-74084068 dynseq cromorsome
+// broken area chr7:27212313-27212454
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27212313-27212454");
 const defaultTracks = [
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
   new TrackModel({
     type: "refbed",
     name: "mm10 gencode basic",
@@ -89,14 +94,14 @@ const defaultTracks = [
       },
     ],
   }),
-  new TrackModel({
-    type: "hic",
-    name: "test hic",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-  }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  // }),
 
   new TrackModel({
     type: "bigbed",
@@ -108,22 +113,22 @@ const defaultTracks = [
     name: "refGene",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "repeatmasker",
-    name: "RepeatMasker",
-    url: "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
-  }),
+    new TrackModel({
+        type: "repeatmasker",
+        name: "RepeatMasker",
+        url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+    }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "mm10",
-    metadata: { genome: "mm10" },
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "mm10",
+  //   metadata: { genome: "mm10" },
+  // }),
   new TrackModel({
     type: "bed",
     name: "mm10 bed",

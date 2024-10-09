@@ -361,7 +361,7 @@ self.onmessage = async (event: MessageEvent) => {
       const id = item.id;
       const url = item.url;
 
-      if (trackType === "hic") {
+      if (trackType === "hic" || trackType === "ruler") {
         fetchResults.push({
           name: trackType,
           id,
