@@ -128,6 +128,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           width={fine ? curTrackData.visWidth : windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
+          getNumLegend={getNumLegend}
         />
       );
       setCanvasComponents(canvasElements);
@@ -564,7 +565,8 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height * 2,
+
+        height: configOptions.current.height * 2 + 2,
       }}
     >
       <div

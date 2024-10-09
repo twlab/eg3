@@ -1,4 +1,11 @@
-import { createRef, memo, useEffect, useRef, useState } from "react";
+import {
+  createRef,
+  CSSProperties,
+  memo,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 const fullWindowWidth = window.outerWidth;
@@ -31,6 +38,8 @@ import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
+import "./DivWithBullseye.css";
+import React from "react";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -114,7 +123,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
-
+  const mousePositionRef = useRef({ x: 0, y: 0 });
+  const horizontalLineRef = useRef<any>(0);
+  const verticalLineRef = useRef<any>(0);
   const activeTrackModels = useRef<Array<TrackModel>>([]);
   const hicStrawObj = useRef<{ [key: string]: any }>({});
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -153,7 +164,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return total;
   }
 
+  const horizontalLineStyle: CSSProperties = {
+    position: "absolute",
+    width: "100%",
+    height: "2px",
+
+    zIndex: 3,
+    pointerEvents: "none",
+  };
+  const verticalLineStyle: CSSProperties = {
+    position: "absolute",
+    height: "100%",
+    width: "2px",
+
+    zIndex: 3,
+    pointerEvents: "none",
+  };
+
+  function handleScroll() {
+    const scrollX = window.scrollX || window.pageXOffset;
+    const scrollY = window.scrollY || window.pageYOffset;
+
+    if (horizontalLineRef.current && verticalLineRef.current) {
+      horizontalLineRef.current.style.top = `${
+        mousePositionRef.current.y + scrollY - 1
+      }px`;
+      verticalLineRef.current.style.left = `${
+        mousePositionRef.current.x + scrollX - 1
+      }px`;
+    }
+  }
   function handleMove(e) {
+    mousePositionRef.current = { x: e.clientX, y: e.clientY };
+    horizontalLineRef.current.style.top = `${e.clientY + window.scrollY - 1}px`;
+    verticalLineRef.current.style.left = `${e.clientX}px`;
     if (!isDragging.current || isLoading.current) {
       return;
     }
@@ -500,10 +544,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
+    window.addEventListener("scroll", handleScroll);
     return () => {
       infiniteScrollWorker.current!.terminate();
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("scroll", handleScroll);
       console.log("trackmanager terminate");
     };
   }, []);
@@ -657,6 +703,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         )}
 
         <div>1pixel to {basePerPixel.current}bp</div>
+
         <div style={{ display: "flex" }}>
           <div
             style={{
@@ -683,6 +730,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 flexDirection: "column",
               }}
             >
+              <div
+                ref={horizontalLineRef}
+                className="Bullseye-horizontal-line"
+                style={horizontalLineStyle}
+              />
+              <div
+                ref={verticalLineRef}
+                className="Bullseye-vertical-line"
+                style={verticalLineStyle}
+              />
               {trackComponents.map((item, index) => {
                 let Component = item.component;
 
@@ -747,6 +804,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               })}
             </div>
           </div>
+
           {/* 
           <div
             ref={g3dRect}

@@ -45,6 +45,8 @@ interface ITrackModel {
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
   genome?: string;
+  isSelected?: any;
+  tracks?: any;
 }
 
 /**

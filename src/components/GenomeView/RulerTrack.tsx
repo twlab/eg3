@@ -15,12 +15,7 @@ import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import RulerComponent from "./RulerComponents/RulerComponent";
 
-export const DEFAULT_OPTIONS = {
-  ...defaultNumericalTrack,
-  ...defaultDynseq,
-};
-DEFAULT_OPTIONS.aggregateMethod = "MEAN";
-DEFAULT_OPTIONS.displayMode = "density";
+export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
 
 const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackData,
@@ -36,7 +31,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackIdx,
   id,
   useFineModeNav,
-  bpToPx,
+
   legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
@@ -100,12 +95,10 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       }
     }
 
-    let tmpObj = { ...configOptions.current };
-    tmpObj.displayMode = "auto";
     function getNumLegend(legend: ReactNode) {
       updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
-    console.log(curTrackData.regionNavCoord);
+
     let canvasElements = (
       <RulerComponent
         viewRegion={
@@ -143,33 +136,8 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;
-    } else if (
-      key === "displayMode" &&
-      value !== configOptions.current.displayMode
-    ) {
-      configOptions.current.displayMode = value;
-
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new RulerTrackConfig(genomeArr![genomeIdx!]);
-
-      const items = renderer.getMenuComponents();
-
-      let menu = trackConfigMenu[`${trackModel.type}`]({
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-
-      getConfigMenu(menu);
-    } else {
+    }
+    {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
@@ -257,11 +225,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           false
         );
       } else {
-        console.log(
-          fetchedDataCache.current[curIdx].trackState,
-          viewData,
-          true
-        );
         createCanvas(
           fetchedDataCache.current[curIdx].trackState,
           viewData,

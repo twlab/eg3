@@ -119,7 +119,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
       function getNumLegend(legend: ReactNode) {
-        console.log(legend);
         updatedLegend.current = ReactDOM.createPortal(
           legend,
           legendRef.current

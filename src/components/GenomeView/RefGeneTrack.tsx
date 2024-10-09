@@ -791,7 +791,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-    console.log(dataIdx);
+    console.log(dataIdx, "dataIdex");
     getCacheData();
     prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
