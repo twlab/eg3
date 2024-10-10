@@ -43,6 +43,8 @@ const getGenePadding = (gene) => gene.getName().length * 9;
 const TOP_PADDING = 2;
 const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   side,
   windowWidth = 0,
   genomeArr,
@@ -356,9 +358,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new BedTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new BedTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
@@ -382,11 +382,12 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new BedTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BedTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -737,6 +738,14 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
   useEffect(() => {
     if (configChanged === true) {
@@ -756,6 +765,12 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

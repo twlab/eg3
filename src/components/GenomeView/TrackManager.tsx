@@ -40,6 +40,10 @@ import RulerTrack from "./RulerTrack";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import "./DivWithBullseye.css";
 import React from "react";
+import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
+import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
+import _ from "lodash";
+import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -123,6 +127,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
+  const selectedTracks = useRef<Array<any>>([]);
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const horizontalLineRef = useRef<any>(0);
   const verticalLineRef = useRef<any>(0);
@@ -140,13 +145,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const isDragging = useRef(false);
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
   const leftSectionSize = useRef<Array<any>>([]);
-
+  const isMouseInsideRef = useRef(false);
+  const currTracksConfig = useRef<{ [key: string]: any }>({});
+  const configOptions = useRef({});
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
   const [initialStart, setInitialStart] = useState("workerNotReady");
-
+  const [isMultiSelect, setIsMultiSelect] = useState<boolean>(false);
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
@@ -182,22 +189,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
 
   function handleScroll() {
-    const scrollX = window.scrollX || window.pageXOffset;
-    const scrollY = window.scrollY || window.pageYOffset;
-
-    if (horizontalLineRef.current && verticalLineRef.current) {
-      horizontalLineRef.current.style.top = `${
-        mousePositionRef.current.y + scrollY - 1
-      }px`;
-      verticalLineRef.current.style.left = `${
-        mousePositionRef.current.x + scrollX - 1
-      }px`;
+    // dont need to account for scroll because parenttop will always give the extact location of where the  event is
+    // so we just need the viewport position to get the right location
+    if (isMouseInsideRef.current) {
+      const parentRect = block.current!.getBoundingClientRect();
+      if (horizontalLineRef.current) {
+        horizontalLineRef.current.style.top = `${
+          mousePositionRef.current.y - parentRect.top
+        }px`;
+      }
+      if (verticalLineRef.current) {
+        verticalLineRef.current.style.left = `${
+          mousePositionRef.current.x - parentRect.left
+        }px`;
+      }
     }
   }
+  function onTrackConfigChange(config: any) {
+    currTracksConfig.current[`${config.id}`] = config;
+  }
   function handleMove(e) {
-    mousePositionRef.current = { x: e.clientX, y: e.clientY };
-    horizontalLineRef.current.style.top = `${e.clientY + window.scrollY - 1}px`;
-    verticalLineRef.current.style.left = `${e.clientX}px`;
+    if (isMouseInsideRef.current) {
+      const parentRect = block.current!.getBoundingClientRect();
+      const x = e.clientX - parentRect.left;
+      const y = e.clientY - parentRect.top;
+      mousePositionRef.current = { x: e.clientX, y: e.clientY };
+
+      horizontalLineRef.current.style.top = `${y}px`;
+      verticalLineRef.current.style.left = `${x}px`;
+    }
     if (!isDragging.current || isLoading.current) {
       return;
     }
@@ -236,7 +256,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       genome: genomeArr[genomeIdx],
     });
   };
-  function handleMouseDown(e: { pageX: number; preventDefault: () => void }) {
+  function handleMouseDown(e: any) {
     isDragging.current = true;
     lastX.current = e.pageX;
 
@@ -275,7 +295,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     );
     setRegion(tmpObj);
     bpX.current = curBp;
-    //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE IT WILL NOT UPDATEA FAST ENOUGH
+    //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE when using ref, the new ref data will only be passed to childnre component
+    // after the state changes, we put this here so it changes with other useState variable that changes so we save some computation instead of using
+    // another useState
     if (dragX.current > 0 && side.current === "right") {
       side.current = "left";
     } else if (dragX.current <= 0 && side.current === "left") {
@@ -300,8 +322,83 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left");
     }
   }
-  function onRegionSelected(startBase, endBase) {
-    console.log("GenomeNavSelectBase", startBase, endBase);
+  function genomeNavigatorRegionSelect(startBase, endBase) {
+    console.log("GenomeNavigatorSelectBase", startBase, endBase);
+  }
+  function onConfigChange(key, value) {
+    console.log(key, value);
+  }
+
+  function renderTrackSpecificItems(x, y) {
+    // const selectedTracks = this.props.tracks.filter((track) => track.isSelected);
+    const trackConfigs = selectedTracks.current.map((item) =>
+      getTrackConfig(item.trackModel)
+    );
+
+    let menuComponents: Array<any> = []; // Array of arrays, one for each track
+    let optionsObjects: Array<any> = [];
+    for (const config of selectedTracks.current) {
+      const renderer = getTrackConfig(config.trackModel);
+      const items = renderer.getMenuComponents(basePerPixel.current);
+
+      menuComponents.push(items);
+      optionsObjects.push(config.configOptions);
+    }
+
+    const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
+    console.log(commonMenuComponents, optionsObjects);
+    let menu = trackConfigMenu["multi"]({
+      trackIdx: selectedTracks.current.length,
+      handleDelete,
+      id: "multiSelect",
+      pageX: x,
+      pageY: y,
+      onCloseConfigMenu,
+
+      configOptions: optionsObjects,
+      items: commonMenuComponents,
+      onConfigChange,
+    });
+    getConfigMenu(menu);
+  }
+  function handleShiftSelect(e: any, trackDetails: { [key: string]: any }) {
+    if (e.shiftKey) {
+      selectedTracks.current.push(
+        currTracksConfig.current[`${trackDetails.id}`]
+      );
+
+      trackDetails.legendRef.current.style.backgroundColor = "lightblue";
+      setIsMultiSelect(true);
+    }
+  }
+  function handleMultiConfigMenu(e: any, trackDetails: any) {
+    e.preventDefault();
+
+    if (selectedTracks.current.length === 0) {
+      return;
+    }
+    if (selectedTracks.current.some((item) => item.id === trackDetails.id)) {
+      renderTrackSpecificItems(e.pageX, e.pageY);
+    } else {
+      setIsMultiSelect(false);
+      onClose();
+    }
+  }
+  function onClose() {
+    if (selectedTracks.current.length !== 0) {
+      selectedTracks.current.map(
+        (item, index) =>
+          (item.legendRef.current.style.backgroundColor = "white")
+      );
+    }
+    selectedTracks.current = [];
+  }
+  function handleMouseEnter() {
+    isMouseInsideRef.current = true;
+  }
+
+  function handleMouseLeave() {
+    isMouseInsideRef.current = false;
   }
   async function fetchGenomeData(initial: number = 0, trackSide) {
     if (initial === 0 || initial === 1) {
@@ -545,8 +642,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
     window.addEventListener("scroll", handleScroll);
+
+    const parentElement = block.current;
+    if (parentElement) {
+      parentElement.addEventListener("mousemove", handleMove);
+      parentElement.addEventListener("mouseenter", handleMouseEnter);
+      parentElement.addEventListener("mouseleave", handleMouseLeave);
+      window.addEventListener("scroll", handleScroll);
+    }
     return () => {
       infiniteScrollWorker.current!.terminate();
+      if (parentElement) {
+        parentElement.removeEventListener("mousemove", handleMove);
+        parentElement.removeEventListener("mouseenter", handleMouseEnter);
+        parentElement.removeEventListener("mouseleave", handleMouseLeave);
+      }
+
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("scroll", handleScroll);
@@ -573,7 +684,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let genome = genomeArr[genomeIdx];
 
       let newTrackComponents: Array<any> = [];
-
+      let trackIdx = 0;
+      let track3dIdx = 0;
       for (let i = 0; i < genome.defaultTracks.length; i++) {
         if (genome.defaultTracks[i].type !== "g3d") {
           const newPosRef = createRef();
@@ -581,6 +693,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const uniqueKey = uuidv4();
           genome.defaultTracks[i]["id"] = uniqueKey;
           newTrackComponents.push({
+            trackIdx: trackIdx,
             id: uniqueKey,
             component: componentMap[genome.defaultTracks[i].type],
             posRef: newPosRef,
@@ -600,18 +713,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               genome.defaultTracks[i].url
             );
           }
+          trackIdx++;
         } else {
           isThereG3dTrack.current = true;
           let newG3dComponent: Array<any> = [];
           const uniqueKeyG3d = uuidv4();
           genome.defaultTracks[i]["id"] = uniqueKeyG3d;
           newG3dComponent.push({
+            trackIdx: track3dIdx,
             id: uniqueKeyG3d,
             component: ThreedmolContainer,
 
             trackModel: genome.defaultTracks[i],
           });
           setG3dTrackComponents([...newG3dComponent]);
+          track3dIdx++;
         }
       }
       activeTrackModels.current = genomeArr[genomeIdx].defaultTracks.filter(
@@ -675,7 +791,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             selectedRegion={region.viewWindow}
             genomeConfig={genomeArr[genomeIdx]}
             windowWidth={windowWidth}
-            onRegionSelected={onRegionSelected}
+            onRegionSelected={genomeNavigatorRegionSelect}
           />
         ) : (
           ""
@@ -703,109 +819,116 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         )}
 
         <div>1pixel to {basePerPixel.current}bp</div>
-
-        <div style={{ display: "flex" }}>
-          <div
-            style={{
-              display: "flex",
-              //makes components align right or right when we switch sides
-
-              border: "1px solid Tomato",
-              flexDirection: "row",
-              // full windowwidth will make canvas only loop 0-windowidth
-              // the last value will have no data.
-              // so we have to subtract from the size of the canvas
-              width: `${windowWidth - 1}px`,
-              // width: `${fullWindowWidth / 2}px`,
-              // height: "2000px",
-              overflowX: "hidden",
-              overflowY: "hidden",
-            }}
-          >
+        <OutsideClickDetector onOutsideClick={onClose}>
+          <div style={{ display: "flex" }}>
             <div
-              onMouseDown={handleMouseDown}
-              ref={block}
               style={{
                 display: "flex",
-                flexDirection: "column",
+                //makes components align right or right when we switch sides
+
+                border: "1px solid Tomato",
+                flexDirection: "row",
+                // full windowwidth will make canvas only loop 0-windowidth
+                // the last value will have no data.
+                // so we have to subtract from the size of the canvas
+                width: `${windowWidth - 1}px`,
+                // width: `${fullWindowWidth / 2}px`,
+                // height: "2000px",
+                overflowX: "hidden",
+                overflowY: "hidden",
               }}
             >
               <div
-                ref={horizontalLineRef}
-                className="Bullseye-horizontal-line"
-                style={horizontalLineStyle}
-              />
-              <div
-                ref={verticalLineRef}
-                className="Bullseye-vertical-line"
-                style={verticalLineStyle}
-              />
-              {trackComponents.map((item, index) => {
-                let Component = item.component;
+                onMouseDown={handleMouseDown}
+                ref={block}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <div
+                  ref={horizontalLineRef}
+                  className="Bullseye-horizontal-line"
+                  style={horizontalLineStyle}
+                />
+                <div
+                  ref={verticalLineRef}
+                  className="Bullseye-vertical-line"
+                  style={verticalLineStyle}
+                />
+                {trackComponents.map((item, index) => {
+                  let Component = item.component;
 
-                return (
-                  <div
-                    data-theme={"light"}
-                    key={item.id}
-                    style={{
-                      display: "grid",
-                      WebkitBackfaceVisibility: "hidden",
-                      WebkitPerspective: `${windowWidth}px`,
-                      backfaceVisibility: "hidden",
-                      perspective: `${windowWidth}px`,
-                      backgroundColor: "#F2F2F2",
-                      width: `${windowWidth}px`,
-                      zIndex: 1,
-                      outline: "1px solid Dodgerblue",
-                    }}
-                  >
+                  return (
                     <div
-                      ref={trackComponents[index].posRef}
+                      onMouseDown={(event) => handleShiftSelect(event, item)}
+                      onContextMenu={(event) =>
+                        handleMultiConfigMenu(event, item)
+                      }
+                      data-theme={"light"}
+                      key={item.id}
                       style={{
-                        display: "flex",
-                        zIndex: 2,
-                        gridArea: "1/1",
+                        display: "grid",
+                        WebkitBackfaceVisibility: "hidden",
+                        WebkitPerspective: `${windowWidth}px`,
+                        backfaceVisibility: "hidden",
+                        perspective: `${windowWidth}px`,
+                        backgroundColor: "#F2F2F2",
+                        width: `${windowWidth}px`,
+                        zIndex: 1,
+                        outline: "1px solid Dodgerblue",
                       }}
                     >
-                      <Component
-                        id={item.id}
-                        trackModel={item.trackModel}
-                        bpRegionSize={bpRegionSize.current}
-                        useFineModeNav={useFineModeNav.current}
-                        bpToPx={basePerPixel.current}
-                        trackData={trackData}
-                        side={side.current}
-                        windowWidth={windowWidth}
-                        dragXDist={dragX.current}
-                        handleDelete={handleDelete}
-                        genomeArr={genomeArr}
-                        genomeIdx={genomeIdx}
-                        dataIdx={dataIdx}
-                        getConfigMenu={getConfigMenu}
-                        onCloseConfigMenu={onCloseConfigMenu}
-                        trackIdx={index}
-                        trackManagerRef={block}
-                        setShow3dGene={setShow3dGene}
-                        isThereG3dTrack={isThereG3dTrack.current}
-                        legendRef={item.legendRef}
-                      />
+                      <div
+                        ref={trackComponents[index].posRef}
+                        style={{
+                          display: "flex",
+                          zIndex: 2,
+                          gridArea: "1/1",
+                        }}
+                      >
+                        <Component
+                          id={item.id}
+                          trackModel={item.trackModel}
+                          bpRegionSize={bpRegionSize.current}
+                          useFineModeNav={useFineModeNav.current}
+                          bpToPx={basePerPixel.current}
+                          trackData={trackData}
+                          side={side.current}
+                          windowWidth={windowWidth}
+                          dragXDist={dragX.current}
+                          handleDelete={handleDelete}
+                          genomeArr={genomeArr}
+                          genomeIdx={genomeIdx}
+                          dataIdx={dataIdx}
+                          getConfigMenu={getConfigMenu}
+                          onCloseConfigMenu={onCloseConfigMenu}
+                          trackIdx={index}
+                          trackManagerRef={block}
+                          setShow3dGene={setShow3dGene}
+                          isThereG3dTrack={isThereG3dTrack.current}
+                          legendRef={item.legendRef}
+                          onTrackConfigChange={onTrackConfigChange}
+                          isMultiSelect={isMultiSelect}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          position: "relative",
+                          zIndex: 2,
+                          gridArea: "1/1",
+                          width: "100px",
+                          backgroundColor: "white",
+                        }}
+                        ref={item.legendRef}
+                      ></div>
                     </div>
-                    <div
-                      style={{
-                        position: "relative",
-                        zIndex: 2,
-                        gridArea: "1/1",
-                        width: "100px",
-                      }}
-                      ref={item.legendRef}
-                    ></div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* 
+            {/* 
           <div
             ref={g3dRect}
             style={{
@@ -839,7 +962,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }
             })}
           </div> */}
-        </div>
+          </div>
+        </OutsideClickDetector>
       </div>
       {configMenuVisible ? configMenu : ""}
     </>

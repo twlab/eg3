@@ -17,6 +17,8 @@ import ReactDOM from "react-dom";
 const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   side,
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   trackIdx,
   handleDelete,
   windowWidth,
@@ -44,7 +46,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
   const [legend, setLegend] = useState<any>();
-  const updateLegendCanvas = useRef<any>(null);
 
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [configChanged, setConfigChanged] = useState(false);
@@ -260,6 +261,14 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       }
     }
     handle();
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
   // when INDEX POSITION CHANGE
 
@@ -279,11 +288,12 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new BigInteractTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BigInteractTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -310,6 +320,12 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         curRegionData.current.trackState,
         curRegionData.current.cachedData
       );
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

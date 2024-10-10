@@ -53,6 +53,8 @@ const TOP_PADDING = 2;
 
 const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   side,
   windowWidth = 0,
   genomeArr,
@@ -341,9 +343,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new CategoricalTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new CategoricalTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
@@ -367,11 +367,12 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new CategoricalTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new CategoricalTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -732,6 +733,14 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -752,6 +761,12 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

@@ -45,6 +45,8 @@ const TOP_PADDING = 2;
 
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   side,
   windowWidth = 0,
   genomeArr,
@@ -60,6 +62,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
+  selectedTracks,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -376,6 +379,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
 
   function onConfigChange(key, value) {
+    console.log(isMultiSelect);
     if (value === configOptions.current[`${key}`]) {
       return;
     } else if (
@@ -384,9 +388,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new GeneAnnotationTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
@@ -410,11 +412,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      console.log("YAYA@");
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+    console.log(trackModel);
+    const renderer = new GeneAnnotationTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -764,6 +769,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
   useEffect(() => {
     if (configChanged === true) {
@@ -783,6 +796,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

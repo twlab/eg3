@@ -25,6 +25,8 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   side,
   windowWidth = 0,
   genomeArr,
@@ -167,9 +169,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new BigWigTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
@@ -193,11 +193,12 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BigWigTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -532,6 +533,14 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -552,6 +561,12 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

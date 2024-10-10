@@ -25,6 +25,8 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   trackIdx,
   handleDelete,
   windowWidth,
@@ -72,15 +74,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           renderGapText(item, index, configOptions.current)
         )
       );
-      let curLegendEle = ReactDOM.createPortal(
-        <TrackLegend
-          height={configOptions.current.height}
-          trackModel={trackModel}
-        />,
-        legendRef.current
-      );
 
-      setLegend(curLegendEle);
       let tempObj = {
         alignment: result,
         svgElements,
@@ -158,6 +152,16 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       newTrackWidth.current = trackState.visWidth;
       updateSide.current = side;
     }
+
+    let curLegendEle = ReactDOM.createPortal(
+      <TrackLegend
+        height={configOptions.current.height}
+        trackModel={trackModel}
+      />,
+      legendRef.current
+    );
+
+    setLegend(curLegendEle);
   }
 
   // function to get for dataidx change and getting stored data
@@ -258,6 +262,14 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
   // when INDEX POSITION CHANGE
 
@@ -274,11 +286,12 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new GenomeAlignTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new GenomeAlignTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -304,6 +317,12 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         curRegionData.current.trackState,
         curRegionData.current.cachedData
       );
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

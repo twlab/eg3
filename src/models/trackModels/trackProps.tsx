@@ -29,4 +29,7 @@ export interface TrackProps {
   getLegendPosition: any;
   trackBoxPosition: Array<any>;
   legendRef: any;
+  selectedTracks: Array<any>;
+  onTrackConfigChange: any;
+  isMultiSelect: boolean;
 }

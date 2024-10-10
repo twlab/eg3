@@ -19,6 +19,8 @@ export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
 
 const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   side,
   windowWidth = 0,
   genomeArr,
@@ -143,11 +145,12 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new RulerTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new RulerTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -444,6 +447,14 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -464,6 +475,12 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

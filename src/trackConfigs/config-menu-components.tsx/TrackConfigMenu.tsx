@@ -7,6 +7,14 @@ import getTabixData from "../../getRemoteData/tabixSource";
 import OutsideClickDetector from "../../components/GenomeView/commonComponents/OutsideClickDetector";
 
 const trackConfigMenu: { [key: string]: any } = {
+  multi: function multiConfig(data: any) {
+    return (
+      <ConfigMenuComponent
+        key={"TrackContextMenu" + `${data.id}`}
+        menuData={data}
+      />
+    );
+  },
   geneannotation: function refGeneConfigMenu(data: any) {
     return (
       <ConfigMenuComponent
@@ -134,7 +142,7 @@ const trackConfigMenu: { [key: string]: any } = {
 };
 function ConfigMenuComponent(props) {
   let menuData = props.menuData;
-
+  console.log(menuData);
   return ReactDOM.createPortal(
     // need to set id matching the track component so it rememebers each specific
     // track config settings
@@ -167,7 +175,11 @@ function ConfigMenuComponent(props) {
                 style={{ backgroundColor: "white" }}
               >
                 <MenuTitle
-                  title={menuData.trackModel.getDisplayLabel()}
+                  title={
+                    menuData.trackModel
+                      ? menuData.trackModel.getDisplayLabel()
+                      : "..."
+                  }
                   numTracks={menuData.trackIdx}
                 />
                 {menuData.items.map((MenuComponent, index) => {
@@ -178,7 +190,9 @@ function ConfigMenuComponent(props) {
                   // the new changed option set as new defaultvalue
 
                   if (MenuComponent.name === "LabelConfig") {
-                    defaultVal = menuData.trackModel.name;
+                    defaultVal = menuData.trackModel
+                      ? menuData.trackModel.name
+                      : "multi";
                   } else if (MenuComponent.name === "MaxRowsConfig") {
                     defaultVal = Number(menuData.configOptions.maxRows);
                   } else if (
@@ -188,10 +202,15 @@ function ConfigMenuComponent(props) {
                   } else if (MenuComponent.name === "HiddenPixelsConfig") {
                     defaultVal = menuData.configOptions.hiddenPixels;
                   }
+
                   return (
                     <MenuComponent
                       key={index}
-                      optionsObjects={[menuData.configOptions]}
+                      optionsObjects={
+                        menuData.trackModel
+                          ? menuData.configOptions
+                          : [menuData.configOptions]
+                      }
                       defaultValue={defaultVal}
                       onOptionSet={menuData.onConfigChange}
                     />

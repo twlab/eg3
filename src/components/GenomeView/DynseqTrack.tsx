@@ -28,6 +28,8 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   side,
   windowWidth = 0,
   genomeArr,
@@ -44,7 +46,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
-  const svgHeight = useRef(0);
+
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -54,7 +56,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
-  const updateLegendCanvas = useRef<any>(null);
 
   const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
@@ -168,9 +169,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new DynseqTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
@@ -194,11 +193,12 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new DynseqTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -530,6 +530,14 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -550,6 +558,12 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);

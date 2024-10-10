@@ -8,20 +8,27 @@
  * @param {any} multiValue - value to return if there are multiple different option values
  * @return {any} aggregated option value of the tracks
  */
-function aggregateOptions(optionsObjects, optionName, defaultValue, multiValue) {
-    if (optionsObjects.length === 0) {
-        return defaultValue;
-    }
+function aggregateOptions(
+  optionsObjects,
+  optionName,
+  defaultValue,
+  multiValue
+) {
+  if (optionsObjects.length === 0) {
+    return defaultValue;
+  }
 
-    const firstOptionValue = optionsObjects[0][optionName];
-    if (optionsObjects.every(options => options[optionName] === firstOptionValue)) {
-        if (firstOptionValue === undefined) {
-            return defaultValue;
-        }
-        return firstOptionValue;
-    } else {
-        return multiValue;
+  const firstOptionValue = optionsObjects[0][optionName];
+  if (
+    optionsObjects.every((options) => options[optionName] === firstOptionValue)
+  ) {
+    if (firstOptionValue === undefined) {
+      return defaultValue;
     }
+    return firstOptionValue;
+  } else {
+    return multiValue;
+  }
 }
 
 export default aggregateOptions;

@@ -27,6 +27,8 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   trackData,
+  onTrackConfigChange,
+  isMultiSelect,
   side,
   windowWidth = 0,
   genomeArr,
@@ -172,9 +174,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new MatplotTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new MatplotTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
@@ -198,11 +198,12 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
+    if (isMultiSelect) {
+      return;
+    }
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new MatplotTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new MatplotTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -545,6 +546,14 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -565,6 +574,12 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
