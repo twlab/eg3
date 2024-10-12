@@ -28,7 +28,7 @@ DEFAULT_OPTIONS.displayMode = "density";
 const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -174,6 +174,8 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     ) {
       configOptions.current.displayMode = value;
 
+      trackModel.options = configOptions.current;
+
       const renderer = new MatplotTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
@@ -191,16 +193,13 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new MatplotTrackConfig(trackModel);
@@ -220,7 +219,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -552,6 +551,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -579,6 +579,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

@@ -49,6 +49,25 @@ const defaultTracks = [
     type: "ruler",
     name: "Ruler",
   }),
+
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
+      new TrackModel({
+        type: "geneAnnotation",
+        name: "gencodeV39",
+        genome: "hg38",
+    }),
+    new TrackModel({
+        type: "geneAnnotation",
+        name: "MANE_select_1.0",
+        label: "MANE selection v1.0",
+        genome: "hg38",
+    }),
+
+
   new TrackModel({
     type: "refbed",
     name: "mm10 gencode basic",
@@ -109,11 +128,7 @@ const defaultTracks = [
     name: "test bigbed",
     url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
   }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
-  }),
+
   new TrackModel({
     type: "repeatmasker",
     name: "RepeatMasker",

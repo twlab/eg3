@@ -18,7 +18,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   side,
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   trackIdx,
   handleDelete,
   windowWidth,
@@ -267,6 +267,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -288,9 +289,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new BigInteractTrackConfig(trackModel);
@@ -311,7 +309,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   useEffect(() => {
@@ -325,6 +323,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

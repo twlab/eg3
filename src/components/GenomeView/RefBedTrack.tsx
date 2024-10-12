@@ -43,7 +43,7 @@ const TOP_PADDING = 2;
 const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -59,6 +59,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -379,11 +380,13 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
     ) {
       configOptions.current.displayMode = value;
 
+      trackModel.options = configOptions.current;
+
       const renderer = new RefBedTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
-      let menu = trackConfigMenu[`${trackModel.type}`]({
+      let menu = {
         trackIdx,
         handleDelete,
         id,
@@ -394,18 +397,16 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         configOptions: configOptions.current,
         items,
         onConfigChange,
-      });
+        trackManagerRef,
+      };
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new RefBedTrackConfig(trackModel);
@@ -416,16 +417,18 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       trackIdx,
       handleDelete,
       id,
-      pageX: event.pageX,
-      pageY: event.pageY,
+      pageX: configMenuPos.current.left,
+      pageY: configMenuPos.current.top,
       onCloseConfigMenu,
       trackModel,
+      blockRef: trackManagerRef,
       configOptions: configOptions.current,
       items,
       onConfigChange,
+      trackManagerRef,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   function renderTooltip(event, gene) {
@@ -762,6 +765,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -789,6 +793,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

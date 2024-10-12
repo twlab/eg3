@@ -24,7 +24,7 @@ import TrackModel from "../../models/TrackModel";
 export class AnnotationTrackConfig extends TrackConfig {
   constructor(trackModel: TrackModel) {
     super(trackModel);
-    console.log(trackModel);
+
     this.setDefaultOptions(DEFAULT_OPTIONS);
   }
 

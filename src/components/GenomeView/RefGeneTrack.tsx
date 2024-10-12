@@ -46,7 +46,7 @@ const TOP_PADDING = 2;
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -62,7 +62,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
-  selectedTracks,
+  selectConfigChange,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -79,7 +79,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<any>(null);
-  const [canvasComponents, setCanvasComponents] = useState<any>();
+  const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const newTrackWidth = useRef(windowWidth);
@@ -379,7 +379,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }
 
   function onConfigChange(key, value) {
-    console.log(isMultiSelect);
     if (value === configOptions.current[`${key}`]) {
       return;
     } else if (
@@ -388,6 +387,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     ) {
       configOptions.current.displayMode = value;
 
+      trackModel.options = configOptions.current;
       const renderer = new GeneAnnotationTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
@@ -405,20 +405,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      console.log("YAYA@");
-      return;
-    }
     event.preventDefault();
 
-    console.log(trackModel);
     const renderer = new GeneAnnotationTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
@@ -436,7 +431,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   function renderTooltip(event, gene) {
@@ -775,6 +770,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -801,6 +797,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);
@@ -810,13 +807,31 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-    console.log(dataIdx, "dataIdex");
+
     getCacheData();
     prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
   useEffect(() => {
     setLegend(updatedLegend.current);
   }, [canvasComponents]);
+
+  useEffect(() => {
+    if (svgComponents !== null || canvasComponents !== null) {
+      configOptions.current = {
+        ...configOptions.current,
+        ...selectConfigChange.changedOption,
+      };
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+      setConfigChanged(true);
+      console.log("ASDASDASDASDASDASD", selectConfigChange);
+    }
+  }, [selectConfigChange]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.

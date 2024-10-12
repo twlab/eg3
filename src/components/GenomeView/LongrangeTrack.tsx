@@ -18,7 +18,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   side,
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   trackIdx,
   handleDelete,
   windowWidth,
@@ -248,6 +248,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -269,9 +270,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new LongRangeTrackConfig(trackModel);
@@ -292,7 +290,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   useEffect(() => {
@@ -306,6 +304,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

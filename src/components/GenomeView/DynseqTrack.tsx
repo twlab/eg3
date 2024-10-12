@@ -29,7 +29,7 @@ DEFAULT_OPTIONS.displayMode = "density";
 const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -169,6 +169,8 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     ) {
       configOptions.current.displayMode = value;
 
+      trackModel.options = configOptions.current;
+
       const renderer = new DynseqTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
@@ -186,16 +188,13 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new DynseqTrackConfig(trackModel);
@@ -215,7 +214,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -536,6 +535,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -563,6 +563,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

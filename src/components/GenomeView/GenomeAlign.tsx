@@ -26,7 +26,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   side,
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   trackIdx,
   handleDelete,
   windowWidth,
@@ -268,6 +268,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -286,9 +287,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new GenomeAlignTrackConfig(trackModel);
@@ -308,7 +306,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   useEffect(() => {
@@ -322,6 +320,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

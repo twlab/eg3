@@ -20,7 +20,7 @@ export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
 const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -145,9 +145,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new RulerTrackConfig(trackModel);
@@ -167,7 +164,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -453,6 +450,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -480,6 +478,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

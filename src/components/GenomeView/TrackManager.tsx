@@ -127,7 +127,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
-  const selectedTracks = useRef<Array<any>>([]);
+  const selectedTracks = useRef<{ [key: string]: any }>({});
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const horizontalLineRef = useRef<any>(0);
   const verticalLineRef = useRef<any>(0);
@@ -147,22 +147,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const leftSectionSize = useRef<Array<any>>([]);
   const isMouseInsideRef = useRef(false);
   const currTracksConfig = useRef<{ [key: string]: any }>({});
-  const configOptions = useRef({});
+  const configOptions = useRef({ displayMode: "" });
+  const configMenuPos = useRef<{ [key: string]: any }>({});
+
+  const outsideMultiMenu = useRef<boolean>(false);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
+  const [isOutsideMulti, setIsOutsideMulti] = useState(true);
+  const [isOutsideManager, setIsOutsideManager] = useState(true);
 
   const [initialStart, setInitialStart] = useState("workerNotReady");
-  const [isMultiSelect, setIsMultiSelect] = useState<boolean>(false);
+
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
   const [region, setRegion] = useState<{ [key: string]: any }>({});
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
-  const [configMenu, setConfigMenu] = useState<any>();
-  const [configMenuVisible, setConfigMenuVisible] = useState(false);
+  const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({});
+
   const [curRegion, setCurRegion] = useState<ChromosomeInterval[]>();
+  const [selectConfigChange, setSelectConfigChange] = useState<{
+    [key: string]: any;
+  }>({});
   function sumArray(numbers) {
     let total = 0;
     for (let i = 0; i < numbers.length; i++) {
@@ -206,7 +214,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   function onTrackConfigChange(config: any) {
-    currTracksConfig.current[`${config.id}`] = config;
+    currTracksConfig.current[`${config.id}`] = { ...config };
   }
   function handleMove(e) {
     if (isMouseInsideRef.current) {
@@ -326,73 +334,143 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     console.log("GenomeNavigatorSelectBase", startBase, endBase);
   }
   function onConfigChange(key, value) {
-    console.log(key, value);
+    if (key === "displayMode") {
+      let menuComponents: Array<any> = [];
+      let optionsObjects: Array<any> = [];
+
+      for (const config in selectedTracks.current) {
+        console.log(selectedTracks.current[config]);
+        let curConfig = selectedTracks.current[config];
+        curConfig.configOptions.displayMode = value;
+        curConfig.trackModel.options = curConfig.configOptions;
+        const trackConfig = getTrackConfig(curConfig.trackModel);
+        const menuItems = trackConfig.getMenuComponents(basePerPixel.current);
+
+        menuComponents.push(menuItems);
+        optionsObjects.push(curConfig.configOptions);
+      }
+
+      const commonMenuComponents: Array<any> = _.intersection(
+        ...menuComponents
+      );
+
+      let menu = trackConfigMenu["multi"]({
+        trackIdx: selectedTracks.current.length,
+        handleDelete,
+        id: "multiSelect",
+        pageX: configMenuPos.current.left,
+        pageY: configMenuPos.current.top,
+        onCloseConfigMenu: onOutsideMulti,
+        selectLen: selectedTracks.current.length,
+        configOptions: optionsObjects,
+        items: commonMenuComponents,
+        onConfigChange,
+        blockRef: block,
+      });
+
+      getConfigMenu(menu, "multi");
+    } else {
+      configOptions.current[`${key}`] = value;
+
+      for (const config in selectedTracks.current) {
+        let curConfig = selectedTracks.current[config];
+        curConfig.configOptions[`${key}`] = value;
+        curConfig.trackModel.options = curConfig.configOptions;
+      }
+    }
+
+    setSelectConfigChange({ changedOption: { [key]: value }, selectedTracks });
   }
 
   function renderTrackSpecificItems(x, y) {
-    // const selectedTracks = this.props.tracks.filter((track) => track.isSelected);
-    const trackConfigs = selectedTracks.current.map((item) =>
-      getTrackConfig(item.trackModel)
-    );
-
-    let menuComponents: Array<any> = []; // Array of arrays, one for each track
+    let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
-    for (const config of selectedTracks.current) {
-      const renderer = getTrackConfig(config.trackModel);
-      const items = renderer.getMenuComponents(basePerPixel.current);
+    for (const config in selectedTracks.current) {
+      let curConfig = selectedTracks.current[config];
+      const trackConfig = getTrackConfig(curConfig.trackModel);
+      const menuItems = trackConfig.getMenuComponents(basePerPixel.current);
 
-      menuComponents.push(items);
-      optionsObjects.push(config.configOptions);
+      menuComponents.push(menuItems);
+      optionsObjects.push(curConfig.configOptions);
     }
 
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
-    console.log(commonMenuComponents, optionsObjects);
+
     let menu = trackConfigMenu["multi"]({
       trackIdx: selectedTracks.current.length,
       handleDelete,
       id: "multiSelect",
       pageX: x,
       pageY: y,
-      onCloseConfigMenu,
-
+      onCloseConfigMenu: onOutsideMulti,
+      selectLen: selectedTracks.current.length,
       configOptions: optionsObjects,
       items: commonMenuComponents,
       onConfigChange,
+      blockRef: block,
     });
-    getConfigMenu(menu);
+
+    configMenuPos.current = { left: x, top: y };
+
+    getConfigMenu(menu, "multiSelect");
   }
   function handleShiftSelect(e: any, trackDetails: { [key: string]: any }) {
     if (e.shiftKey) {
-      selectedTracks.current.push(
-        currTracksConfig.current[`${trackDetails.id}`]
-      );
-
-      trackDetails.legendRef.current.style.backgroundColor = "lightblue";
-      setIsMultiSelect(true);
+      if (!selectedTracks.current[`${trackDetails.id}`]) {
+        selectedTracks.current[`${trackDetails.id}`] =
+          currTracksConfig.current[`${trackDetails.id}`];
+        trackDetails.legendRef.current.style.backgroundColor = "lightblue";
+      } else if (trackDetails.id in selectedTracks.current) {
+        trackDetails.legendRef.current.style.backgroundColor = "white";
+        delete selectedTracks.current[`${trackDetails.id}`];
+      }
     }
   }
-  function handleMultiConfigMenu(e: any, trackDetails: any) {
+  function handleMultiRightClick(e: any, trackId: any) {
     e.preventDefault();
 
-    if (selectedTracks.current.length === 0) {
+    if (Object.keys(selectedTracks.current).length === 0) {
       return;
     }
-    if (selectedTracks.current.some((item) => item.id === trackDetails.id)) {
+    if (trackId in selectedTracks.current) {
       renderTrackSpecificItems(e.pageX, e.pageY);
     } else {
-      setIsMultiSelect(false);
-      onClose();
+      onCloseMultiConfigMenu();
     }
   }
-  function onClose() {
-    if (selectedTracks.current.length !== 0) {
-      selectedTracks.current.map(
-        (item, index) =>
-          (item.legendRef.current.style.backgroundColor = "white")
-      );
+
+  function getConfigMenu(htmlElement: any, selectType: string) {
+    if (
+      selectType === "singleSelect" &&
+      Object.keys(selectedTracks.current).length !== 0
+    ) {
+      return;
     }
-    selectedTracks.current = [];
+
+    let tmpObh = { configMenus: htmlElement };
+    setConfigMenu(tmpObh);
   }
+  function onOutsideMulti() {}
+
+  function onCloseMultiConfigMenu() {
+    if (Object.keys(selectedTracks.current).length !== 0) {
+      for (const key in selectedTracks.current) {
+        selectedTracks.current[key].legendRef.current.style.backgroundColor =
+          "white";
+      }
+
+      selectedTracks.current = {};
+      setConfigMenu({ configMenus: "" });
+    }
+  }
+
+  function onCloseConfigMenu() {
+    {
+      selectedTracks.current = {};
+      setConfigMenu({ configMenus: "" });
+    }
+  }
+
   function handleMouseEnter() {
     isMouseInsideRef.current = true;
   }
@@ -629,14 +707,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return index !== id;
       });
     });
-    setConfigMenuVisible(false);
-  }
-  function getConfigMenu(htmlElement: any) {
-    setConfigMenuVisible(true);
-    setConfigMenu(htmlElement);
-  }
-  function onCloseConfigMenu() {
-    setConfigMenuVisible(false);
   }
 
   useEffect(() => {
@@ -819,7 +889,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         )}
 
         <div>1pixel to {basePerPixel.current}bp</div>
-        <OutsideClickDetector onOutsideClick={onClose}>
+        <OutsideClickDetector onOutsideClick={onCloseMultiConfigMenu}>
           <div style={{ display: "flex" }}>
             <div
               style={{
@@ -863,7 +933,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     <div
                       onMouseDown={(event) => handleShiftSelect(event, item)}
                       onContextMenu={(event) =>
-                        handleMultiConfigMenu(event, item)
+                        handleMultiRightClick(event, item.id)
                       }
                       data-theme={"light"}
                       key={item.id}
@@ -909,7 +979,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           isThereG3dTrack={isThereG3dTrack.current}
                           legendRef={item.legendRef}
                           onTrackConfigChange={onTrackConfigChange}
-                          isMultiSelect={isMultiSelect}
+                          selectConfigChange={selectConfigChange}
                         />
                       </div>
                       <div
@@ -965,7 +1035,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           </div>
         </OutsideClickDetector>
       </div>
-      {configMenuVisible ? configMenu : ""}
+      {configMenu.configMenus ? configMenu.configMenus : ""}
     </>
   );
 });

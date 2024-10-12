@@ -28,7 +28,7 @@ DEFAULT_OPTIONS.displayMode = "density";
 const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -164,6 +164,8 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     ) {
       configOptions.current.displayMode = value;
 
+      trackModel.options = configOptions.current;
+
       const renderer = new MethylCTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
@@ -181,16 +183,13 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new MethylCTrackConfig(trackModel);
@@ -210,7 +209,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -531,6 +530,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -558,6 +558,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

@@ -8,6 +8,7 @@ import OutsideClickDetector from "../../components/GenomeView/commonComponents/O
 
 const trackConfigMenu: { [key: string]: any } = {
   multi: function multiConfig(data: any) {
+    data["selectType"] = "multi";
     return (
       <ConfigMenuComponent
         key={"TrackContextMenu" + `${data.id}`}
@@ -154,79 +155,86 @@ function ConfigMenuComponent(props) {
             style={{
               position: "absolute",
               left: menuData.pageX,
-              top: Math.max(0, menuData.pageY - 190),
-            }}
-          />
-        )}
-      </Reference>
-      <Popper>
-        {({ ref, style, placement, arrowProps }) => (
-          <div
-            ref={ref}
-            style={{
-              ...style,
-              position: "absolute",
-              zIndex: 1000,
+              top: menuData.pageY - 50,
             }}
           >
-            <OutsideClickDetector onOutsideClick={menuData.onCloseConfigMenu}>
-              <div
-                className="TrackContextMenu-body"
-                style={{ backgroundColor: "white" }}
-              >
-                <MenuTitle
-                  title={
-                    menuData.trackModel
-                      ? menuData.trackModel.getDisplayLabel()
-                      : "..."
-                  }
-                  numTracks={menuData.trackIdx}
-                />
-                {menuData.items.map((MenuComponent, index) => {
-                  let defaultVal: any;
-                  // if we don't give default option here the state of each
-                  // will persist between displaymodes.
-                  // a new defaultValue will create a new menu component with
-                  // the new changed option set as new defaultvalue
+            {" "}
+            <Popper>
+              {({ ref, style, placement, arrowProps }) => (
+                <div
+                  ref={ref}
+                  style={{
+                    ...style,
 
-                  if (MenuComponent.name === "LabelConfig") {
-                    defaultVal = menuData.trackModel
-                      ? menuData.trackModel.name
-                      : "multi";
-                  } else if (MenuComponent.name === "MaxRowsConfig") {
-                    defaultVal = Number(menuData.configOptions.maxRows);
-                  } else if (
-                    MenuComponent.name === "AnnotationDisplayModeConfig"
-                  ) {
-                    defaultVal = menuData.configOptions.displayMode;
-                  } else if (MenuComponent.name === "HiddenPixelsConfig") {
-                    defaultVal = menuData.configOptions.hiddenPixels;
-                  }
+                    zIndex: 1000,
+                  }}
+                >
+                  <OutsideClickDetector
+                    onOutsideClick={menuData.onCloseConfigMenu}
+                  >
+                    <div
+                      className="TrackContextMenu-body"
+                      style={{ backgroundColor: "white" }}
+                    >
+                      <MenuTitle
+                        title={
+                          menuData.selectType === "multi"
+                            ? menuData.selectLen + " tracks selected"
+                            : menuData.trackModel.getDisplayLabel()
+                        }
+                        numTracks={menuData.trackIdx}
+                      />
+                      {menuData.items.map((MenuComponent, index) => {
+                        let defaultVal: any;
+                        // if we don't give default option here the state of each
+                        // will persist between displaymodes.
+                        // a new defaultValue will create a new menu component with
+                        // the new changed option set as new defaultvalue
 
-                  return (
-                    <MenuComponent
-                      key={index}
-                      optionsObjects={
-                        menuData.trackModel
-                          ? menuData.configOptions
-                          : [menuData.configOptions]
-                      }
-                      defaultValue={defaultVal}
-                      onOptionSet={menuData.onConfigChange}
-                    />
-                  );
-                })}
-                <RemoveOption
-                  onClick={menuData.handleDelete}
-                  numTracks={menuData.trackIdx}
-                />
-              </div>
-            </OutsideClickDetector>
+                        if (MenuComponent.name === "LabelConfig") {
+                          defaultVal =
+                            menuData.selectType === "multi"
+                              ? "multi"
+                              : menuData.trackModel.name;
+                        } else if (MenuComponent.name === "MaxRowsConfig") {
+                          defaultVal = Number(menuData.configOptions.maxRows);
+                        } else if (
+                          MenuComponent.name === "AnnotationDisplayModeConfig"
+                        ) {
+                          defaultVal = menuData.configOptions.displayMode;
+                        } else if (
+                          MenuComponent.name === "HiddenPixelsConfig"
+                        ) {
+                          defaultVal = menuData.configOptions.hiddenPixels;
+                        }
+
+                        return (
+                          <MenuComponent
+                            key={index}
+                            optionsObjects={
+                              menuData.selectType === "multi"
+                                ? menuData.configOptions
+                                : [menuData.configOptions]
+                            }
+                            defaultValue={defaultVal}
+                            onOptionSet={menuData.onConfigChange}
+                          />
+                        );
+                      })}
+                      <RemoveOption
+                        onClick={menuData.handleDelete}
+                        numTracks={menuData.trackIdx}
+                      />
+                    </div>
+                  </OutsideClickDetector>
+                </div>
+              )}
+            </Popper>
           </div>
         )}
-      </Popper>
+      </Reference>
     </Manager>,
-    document.body
+    menuData.blockRef.current
   );
 }
 

@@ -20,11 +20,6 @@ export const ITEM_PROP_TYPES = {
   onOptionSet: PropTypes.func.isRequired,
 };
 
-/**
- * Context menu specialized for managing track options and metadata.
- *
- * @author Silas Hsu
- */
 export function MenuTitle(props) {
   const text =
     props.title !== undefined

@@ -44,7 +44,7 @@ const TOP_PADDING = 2;
 const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -358,6 +358,8 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     ) {
       configOptions.current.displayMode = value;
 
+      trackModel.options = configOptions.current;
+
       const renderer = new BedTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
@@ -375,16 +377,13 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new BedTrackConfig(trackModel);
@@ -404,7 +403,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   function renderTooltip(event, feature) {
@@ -744,6 +743,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -770,6 +770,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);

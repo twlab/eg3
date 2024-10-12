@@ -80,7 +80,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
   function RepeatMaskerTrack({
     trackData,
     onTrackConfigChange,
-    isMultiSelect,
+
     side,
     windowWidth = 0,
     genomeArr,
@@ -492,6 +492,8 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
       ) {
         configOptions.current.displayMode = value;
 
+        trackModel.options = configOptions.current;
+
         const renderer = new RepeatMaskerTrackConfig(trackModel);
 
         const items = renderer.getMenuComponents();
@@ -509,16 +511,13 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
           onConfigChange,
         });
 
-        getConfigMenu(menu);
+        getConfigMenu(menu, "singleSelect");
       } else {
         configOptions.current[`${key}`] = value;
       }
       setConfigChanged(true);
     }
     function renderConfigMenu(event) {
-      if (isMultiSelect) {
-        return;
-      }
       event.preventDefault();
 
       const renderer = new RepeatMaskerTrackConfig(trackModel);
@@ -538,7 +537,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
       configMenuPos.current = { left: event.pageX, top: event.pageY };
     }
     function renderTooltip(event, feature) {

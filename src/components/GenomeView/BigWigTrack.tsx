@@ -26,7 +26,7 @@ DEFAULT_OPTIONS.displayMode = "density";
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
   onTrackConfigChange,
-  isMultiSelect,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -169,6 +169,8 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     ) {
       configOptions.current.displayMode = value;
 
+      trackModel.options = configOptions.current;
+
       const renderer = new BigWigTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
@@ -186,16 +188,13 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
   }
   function renderConfigMenu(event) {
-    if (isMultiSelect) {
-      return;
-    }
     event.preventDefault();
 
     const renderer = new BigWigTrackConfig(trackModel);
@@ -215,7 +214,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -539,6 +538,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
   }, [trackData]);
@@ -566,6 +566,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         trackModel: trackModel,
         id: id,
         trackIdx: trackIdx,
+        legendRef: legendRef,
       });
     }
     setConfigChanged(false);
