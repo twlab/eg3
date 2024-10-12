@@ -94,6 +94,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     id,
     useFineModeNav,
     legendRef,
+    trackManagerRef,
   }) {
     const configOptions = useRef({ ...DEFAULT_OPTIONS });
     const svgHeight = useRef(0);
@@ -499,6 +500,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
         const items = renderer.getMenuComponents();
 
         let menu = trackConfigMenu[`${trackModel.type}`]({
+          blockRef: trackManagerRef,
           trackIdx,
           handleDelete,
           id,
@@ -525,6 +527,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
       // create object that has key as displayMode and the configmenu component as the value
       const items = renderer.getMenuComponents();
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,

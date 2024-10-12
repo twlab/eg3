@@ -297,6 +297,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
     const items = renderer.getMenuComponents();
 
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

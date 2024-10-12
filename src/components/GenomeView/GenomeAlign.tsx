@@ -39,6 +39,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   getConfigMenu,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   //useRef to store data between states without re render the component
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
@@ -294,6 +295,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

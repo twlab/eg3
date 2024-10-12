@@ -24,8 +24,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   dataIdx,
   onCloseConfigMenu,
   trackModel,
-  genomeArr,
-  genomeIdx,
+
   id,
   getConfigMenu,
   legendRef,
@@ -274,6 +273,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

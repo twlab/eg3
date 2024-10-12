@@ -42,6 +42,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -171,6 +172,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -197,6 +199,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

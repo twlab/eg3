@@ -58,6 +58,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -365,6 +366,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -391,6 +393,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

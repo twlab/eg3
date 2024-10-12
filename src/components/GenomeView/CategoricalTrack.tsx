@@ -68,6 +68,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -350,6 +351,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -376,6 +378,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

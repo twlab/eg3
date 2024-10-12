@@ -150,12 +150,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const configOptions = useRef({ displayMode: "" });
   const configMenuPos = useRef<{ [key: string]: any }>({});
 
-  const outsideMultiMenu = useRef<boolean>(false);
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-  const [isOutsideMulti, setIsOutsideMulti] = useState(true);
-  const [isOutsideManager, setIsOutsideManager] = useState(true);
 
   const [initialStart, setInitialStart] = useState("workerNotReady");
 
@@ -165,7 +162,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [region, setRegion] = useState<{ [key: string]: any }>({});
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
-  const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({});
+  const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({
+    configMenus: "",
+  });
 
   const [curRegion, setCurRegion] = useState<ChromosomeInterval[]>();
   const [selectConfigChange, setSelectConfigChange] = useState<{
@@ -339,7 +338,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let optionsObjects: Array<any> = [];
 
       for (const config in selectedTracks.current) {
-        console.log(selectedTracks.current[config]);
         let curConfig = selectedTracks.current[config];
         curConfig.configOptions.displayMode = value;
         curConfig.trackModel.options = curConfig.configOptions;
@@ -360,7 +358,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         id: "multiSelect",
         pageX: configMenuPos.current.left,
         pageY: configMenuPos.current.top,
-        onCloseConfigMenu: onOutsideMulti,
+        onCloseConfigMenu: () => "",
         selectLen: selectedTracks.current.length,
         configOptions: optionsObjects,
         items: commonMenuComponents,
@@ -402,7 +400,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       id: "multiSelect",
       pageX: x,
       pageY: y,
-      onCloseConfigMenu: onOutsideMulti,
+      onCloseConfigMenu: () => "",
       selectLen: selectedTracks.current.length,
       configOptions: optionsObjects,
       items: commonMenuComponents,
@@ -423,6 +421,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else if (trackDetails.id in selectedTracks.current) {
         trackDetails.legendRef.current.style.backgroundColor = "white";
         delete selectedTracks.current[`${trackDetails.id}`];
+      }
+
+      if (
+        configMenu.configMenus !== "" &&
+        Object.keys(selectedTracks.current).length > 0
+      ) {
+        renderTrackSpecificItems(e.pageX, e.pageY);
+      } else {
+        let tmpObh = { configMenus: "" };
+        setConfigMenu(tmpObh);
       }
     }
   }
@@ -450,7 +458,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let tmpObh = { configMenus: htmlElement };
     setConfigMenu(tmpObh);
   }
-  function onOutsideMulti() {}
 
   function onCloseMultiConfigMenu() {
     if (Object.keys(selectedTracks.current).length !== 0) {
@@ -465,10 +472,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function onCloseConfigMenu() {
-    {
-      selectedTracks.current = {};
-      setConfigMenu({ configMenus: "" });
-    }
+    selectedTracks.current = {};
+    setConfigMenu({ configMenus: "" });
   }
 
   function handleMouseEnter() {
@@ -626,35 +631,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      let sentData = false;
       try {
-        activeTrackModels.current.map((item, index) => {
-          if (!sentData) {
-            sentData = true;
-            infiniteScrollWorker.current!.postMessage({
-              primaryGenName: genomeArr[genomeIdx].genome.getName(),
-              trackModelArr: activeTrackModels.current,
-              visData: newVisData,
-              genomicLoci: genomicLoci,
-              expandedGenLoci: expandedGenomeCoordLocus,
-              useFineModeNav: useFineModeNav.current,
-              windowWidth,
-              initGenomicLoci: bpNavToGenNav(initNavLoci, genomeArr[genomeIdx]),
-              initNavLoci,
+        infiniteScrollWorker.current!.postMessage({
+          primaryGenName: genomeArr[genomeIdx].genome.getName(),
+          trackModelArr: activeTrackModels.current,
+          visData: newVisData,
+          genomicLoci: genomicLoci,
+          expandedGenLoci: expandedGenomeCoordLocus,
+          useFineModeNav: useFineModeNav.current,
+          windowWidth,
+          initGenomicLoci: bpNavToGenNav(initNavLoci, genomeArr[genomeIdx]),
+          initNavLoci,
 
-              trackSide,
-              curFetchRegionNav: curFetchRegionNav,
-              xDist: dragX.current,
-              initial,
-              bpRegionSize: bpRegionSize.current,
-            });
-
-            if (initial === 1) {
-              //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
-              minBp.current = minBp.current - bpRegionSize.current;
-            }
-          }
+          trackSide,
+          curFetchRegionNav: curFetchRegionNav,
+          xDist: dragX.current,
+          initial,
+          bpRegionSize: bpRegionSize.current,
         });
+
+        if (initial === 1) {
+          //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
+          minBp.current = minBp.current - bpRegionSize.current;
+        }
       } catch {}
       infiniteScrollWorker.current!.onmessage = (event) => {
         event.data.fetchResults.map((item, index) => {

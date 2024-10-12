@@ -144,6 +144,9 @@ const trackConfigMenu: { [key: string]: any } = {
 function ConfigMenuComponent(props) {
   let menuData = props.menuData;
   console.log(menuData);
+  let blockPosData = menuData.blockRef.current.getBoundingClientRect();
+  let leftMargin = blockPosData.left;
+  let topMargin = blockPosData.top;
   return ReactDOM.createPortal(
     // need to set id matching the track component so it rememebers each specific
     // track config settings
@@ -154,18 +157,19 @@ function ConfigMenuComponent(props) {
             ref={ref}
             style={{
               position: "absolute",
-              left: menuData.pageX,
-              top: menuData.pageY - 50,
+              left: menuData.pageX - leftMargin,
+              top: menuData.pageY - 300,
             }}
           >
             {" "}
-            <Popper>
+            <Popper placement="right">
               {({ ref, style, placement, arrowProps }) => (
                 <div
                   ref={ref}
                   style={{
                     ...style,
-
+                    maxHeight: "calc(100vh - 20px)",
+                    overflow: "auto",
                     zIndex: 1000,
                   }}
                 >

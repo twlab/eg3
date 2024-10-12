@@ -44,6 +44,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   useFineModeNav,
   bpToPx,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -176,6 +177,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -202,6 +204,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

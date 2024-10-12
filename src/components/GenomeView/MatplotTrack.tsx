@@ -42,6 +42,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -181,6 +182,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -207,6 +209,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

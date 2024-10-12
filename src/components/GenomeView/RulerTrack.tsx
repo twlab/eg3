@@ -33,7 +33,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackIdx,
   id,
   useFineModeNav,
-
+  trackManagerRef,
   legendRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
@@ -152,6 +152,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,

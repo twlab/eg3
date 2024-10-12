@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
-import ReactModal from "react-modal";
-import Hotkeys from "react-hot-keys";
+// import ReactModal from "react-modal";
+// import Hotkeys from "react-hot-keys";
 import { withTrackData } from "./TrackDataManager";
 import { withTrackView } from "./TrackViewManager";
 import TrackHandle from "./TrackHandle";
@@ -14,7 +14,6 @@ import { Tools, ToolButtons } from "./Tools";
 import ZoomButtons from "./ZoomButtons";
 import OutsideClickDetector from "../commonComponents/OutsideClickDetector";
 
-import DivWithBullseye from "../DivWithBullseye";
 import TrackModel from "../../../models/TrackModel";
 
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
@@ -37,7 +36,6 @@ import "./TrackContainer.css";
 // import { DEFAULT_OPTIONS as DYNAMIC_OPTIONS } from "components/trackVis/commonComponents/numerical/DynamicplotTrack";
 
 const DEFAULT_CURSOR = "crosshair";
-const SELECTION_BEHAVIOR = new TrackSelectionBehavior();
 
 /**
  * Container for holding all the tracks, and an avenue for manipulating state common to all tracks.
@@ -148,10 +146,7 @@ class TrackContainer extends React.Component<
     this.rightBeam = React.createRef();
 
     this.toggleTool = this.toggleTool.bind(this);
-    this.handleTrackClicked = this.handleTrackClicked.bind(this);
-    this.handleMetadataClicked = this.handleMetadataClicked.bind(this);
-    this.handleContextMenu = this.handleContextMenu.bind(this);
-    this.deselectAllTracks = this.deselectAllTracks.bind(this);
+
     this.changeXOffset = this.changeXOffset.bind(this);
     this.handleOpenModal = this.handleOpenModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
@@ -343,58 +338,6 @@ class TrackContainer extends React.Component<
     }
   }
 
-  /**
-   * Handles selection behavior when a track is clicked.
-   *
-   * @param {MouseEvent} event - click event
-   * @param {number} index - index of the clicked track
-   */
-  handleTrackClicked(event, index) {
-    this.changeTrackSelection(
-      SELECTION_BEHAVIOR.handleClick(this.props.tracks, index, event)
-    );
-  }
-
-  /**
-   * Handles selection behavior when a track's context menu is opened.
-   *
-   * @param {MouseEvent} event - context menu event.  Unused.
-   * @param {number} index - index of the track where the context menu event originated
-   */
-  handleContextMenu(event, index) {
-    this.changeTrackSelection(
-      SELECTION_BEHAVIOR.handleContextMenu(this.props.tracks, index)
-    );
-  }
-
-  /**
-   * Handles selection behavior when a track's metadata indicator is clicked.
-   *
-   * @param {MouseEvent} event - click event
-   * @param {string} term - the metadata term that was clicked
-   * @param {number} index - index of the clicked track
-   */
-  handleMetadataClicked(event, term, index) {
-    this.changeTrackSelection(
-      SELECTION_BEHAVIOR.handleMetadataClick(
-        this.props.tracks,
-        index,
-        term,
-        event
-      )
-    );
-  }
-
-  /**
-   * Requests deselection of all tracks.
-   */
-  deselectAllTracks() {
-    this.changeTrackSelection(Array(this.props.tracks.length).fill(false));
-  }
-
-  /**
-   * happens when user selects matplot
-   */
   applyMatPlot = (tracks) => {
     // console.log(tracks);
     // const tracksLeft = this.props.tracks.filter(tk => !tk.isSelected);
@@ -752,37 +695,13 @@ class TrackContainer extends React.Component<
   renderModal() {
     const { primaryView, trackData } = this.props;
     const { trackForCircletView, circletColor } = this.state;
-    return (
-      <ReactModal
-        isOpen={this.state.showModal}
-        contentLabel="circlet-opener"
-        ariaHideApp={false}
-      >
-        <button onClick={this.handleCloseModal}>Close</button>
-        <CircletView
-          primaryView={primaryView}
-          trackData={trackData}
-          track={trackForCircletView}
-          color={circletColor}
-          setCircletColor={this.setCircletColor}
-        />
-      </ReactModal>
-    );
+    return "";
   }
 
   renderChordModal() {
     const { trackData } = this.props;
     const { trackForChordView } = this.state;
-    return (
-      <ReactModal
-        isOpen={this.state.showChordModal}
-        contentLabel="chord-opener"
-        ariaHideApp={false}
-      >
-        <button onClick={this.handleCloseChordModal}>Close</button>
-        <ChordView trackData={trackData} track={trackForChordView} />
-      </ReactModal>
-    );
+    return "";
   }
 
   /**
@@ -814,35 +733,7 @@ class TrackContainer extends React.Component<
       paddingBottom: "3px",
       cursor: selectedTool ? selectedTool.cursor : DEFAULT_CURSOR,
     };
-    return (
-      <React.Fragment>
-        <OutsideClickDetector onOutsideClick={this.deselectAllTracks}>
-          {this.renderControls()}
-
-          <DivWithBullseye style={trackDivStyle} id="trackContainer">
-            {/* <div id="beamLeft" ref={this.leftBeam}>
-                {" "}
-                <div id="beamLeftInner"></div>{" "}
-              </div>
-              <div id="beamRight" ref={this.rightBeam}>
-                {" "}
-                <div id="beamRightInner"></div>{" "}
-              </div> */}
-            <VerticalDivider
-              visData={primaryView}
-              genomeRegion={viewRegion}
-              xOffset={this.state.xOffset}
-            ></VerticalDivider>
-          </DivWithBullseye>
-        </OutsideClickDetector>
-        {this.renderModal()}
-        {this.renderChordModal()}
-        <Hotkeys
-          keyName="alt+d,alt+h,alt+r,alt+s,alt+m,alt+n,alt+z,alt+x,alt+i,alt+o,alt+g,alt+u"
-          onKeyDown={this.onKeyDown.bind(this)}
-        />
-      </React.Fragment>
-    );
+    return "";
   }
 }
 

@@ -193,7 +193,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
         <svg
           width={AXIS_WIDTH}
           height={axisHeight}
-          style={{ overflow: "visible", backgroundColor: "#ffffff" }}
+          style={{ overflow: "visible" }}
         >
           <TranslatableG innerRef={this.handleRef} x={AXIS_WIDTH - 1} />
         </svg>
