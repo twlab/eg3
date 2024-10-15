@@ -69,6 +69,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const updatedLegend = useRef<any>();
 
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const displayCache = useRef<{ [key: string]: any }>({});
   const prevDataIdx = useRef(0);
 
   const xPos = useRef(0);
@@ -151,6 +152,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       );
 
       setSvgComponents(svgDATA);
+
+      if (curTrackData.side === "right") {
+        displayCache.current[rightIdx.current + 2] = svgDATA;
+      } else if (curTrackData.side === "left") {
+        displayCache.current[leftIdx.current - 2] = svgDATA;
+      }
     } else if (configOptions.current.displayMode === "density") {
       let algoData = genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(
@@ -206,6 +213,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     }
     updateSide.current = side;
+    console.log("YEET", rightIdx.current);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -432,69 +440,111 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     let viewData: Array<any> = [];
     let curIdx;
 
-    if (
-      useFineModeNav ||
-      genomeArr![genomeIdx!].genome._name !== parentGenome.current
-    ) {
-      // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
-      if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-        viewData = fetchedDataCache.current[dataIdx!].refGenes;
-        curIdx = dataIdx!;
-      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx!].refGenes;
-        curIdx = dataIdx!;
-      }
-    } else {
-      if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
-        viewData = [
-          fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx!],
-          fetchedDataCache.current[dataIdx! - 1],
-        ];
+    // if (
+    //   useFineModeNav ||
+    //   genomeArr![genomeIdx!].genome._name !== parentGenome.current
+    // ) {
+    // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
 
-        curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = [
-          fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx!],
-          fetchedDataCache.current[dataIdx! - 1],
-        ];
-
-        curIdx = dataIdx! + 1;
-      }
-    }
-    if (viewData.length > 0) {
-      curRegionData.current = {
-        trackState: fetchedDataCache.current[curIdx].trackState,
-        deDupRefGenesArr: viewData,
-        initial: 0,
-      };
+    if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
+      viewData = fetchedDataCache.current[dataIdx!].refGenes;
+      curIdx = dataIdx!;
+      setSvgComponents(displayCache.current[dataIdx!]);
       if (
-        !useFineModeNav &&
-        genomeArr![genomeIdx!].genome._name === parentGenome.current
+        fetchedDataCache.current[dataIdx!].trackState.initial === 1 ||
+        fetchedDataCache.current[dataIdx!].trackState.index === 1
       ) {
-        let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
-        viewData = deDupRefGenesArr;
-        curRegionData.current = {
-          trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupRefGenesArr: viewData,
-          initial: 0,
-        };
-
-        createSVGOrCanvas(
-          fetchedDataCache.current[curIdx].trackState,
-          viewData,
-          false
-        );
-      } else {
-        createSVGOrCanvas(
-          fetchedDataCache.current[curIdx].trackState,
-          viewData,
-          true
-        );
+        xPos.current =
+          -fetchedDataCache.current[dataIdx!].trackState.startWindow;
+      } else if (
+        fetchedDataCache.current[dataIdx!].trackState.side === "right"
+      ) {
+        xPos.current =
+          Math.floor(
+            -fetchedDataCache.current[dataIdx!].trackState.xDist / windowWidth
+          ) *
+            windowWidth -
+          windowWidth +
+          fetchedDataCache.current[dataIdx!].trackState.startWindow;
       }
+      updateSide.current = side;
+    } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
+      viewData = fetchedDataCache.current[dataIdx!].refGenes;
+      curIdx = dataIdx!;
+
+      setSvgComponents(displayCache.current[dataIdx!]);
+      if (
+        fetchedDataCache.current[dataIdx!].trackState.initial === 1 ||
+        fetchedDataCache.current[dataIdx!].trackState.index === 1
+      ) {
+        xPos.current =
+          -fetchedDataCache.current[dataIdx!].trackState.startWindow;
+      } else if (
+        fetchedDataCache.current[dataIdx!].trackState.side === "left"
+      ) {
+        xPos.current =
+          Math.floor(
+            fetchedDataCache.current[dataIdx!].trackState.xDist / windowWidth
+          ) *
+            windowWidth -
+          windowWidth +
+          fetchedDataCache.current[dataIdx!].trackState.startWindow;
+      }
+      updateSide.current = side;
     }
+
+    // }
+    // else {
+    //   if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
+    //     viewData = [
+    //       fetchedDataCache.current[dataIdx! + 1],
+    //       fetchedDataCache.current[dataIdx!],
+    //       fetchedDataCache.current[dataIdx! - 1],
+    //     ];
+
+    //     curIdx = dataIdx!;
+    //   } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
+    //     viewData = [
+    //       fetchedDataCache.current[dataIdx! + 1],
+    //       fetchedDataCache.current[dataIdx!],
+    //       fetchedDataCache.current[dataIdx! - 1],
+    //     ];
+
+    //     curIdx = dataIdx!;
+    //   }
+    // }
+    // if (viewData.length > 0) {
+    //   curRegionData.current = {
+    //     trackState: fetchedDataCache.current[curIdx].trackState,
+    //     deDupRefGenesArr: viewData,
+    //     initial: 0,
+    //   };
+    //   if (
+    //     !useFineModeNav &&
+    //     genomeArr![genomeIdx!].genome._name === parentGenome.current
+    //   ) {
+    //     let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
+    //     let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
+    //     viewData = deDupRefGenesArr;
+    //     curRegionData.current = {
+    //       trackState: fetchedDataCache.current[curIdx].trackState,
+    //       deDupRefGenesArr: viewData,
+    //       initial: 0,
+    //     };
+
+    //     createSVGOrCanvas(
+    //       fetchedDataCache.current[curIdx].trackState,
+    //       viewData,
+    //       false
+    //     );
+    //   } else {
+    //     createSVGOrCanvas(
+    //       fetchedDataCache.current[curIdx].trackState,
+    //       viewData,
+    //       true
+    //     );
+    //   }
+    // }
   }
 
   useEffect(() => {
@@ -715,13 +765,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               deDupRefGenesArr,
               initial: 0,
             };
-
+            rightIdx.current--;
             createSVGOrCanvas(
-              fetchedDataCache.current[rightIdx.current + 1].trackState,
+              fetchedDataCache.current[rightIdx.current + 2].trackState,
               deDupRefGenesArr,
               false
             );
-            rightIdx.current--;
+
+            console.log("YEET0", rightIdx.current);
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
@@ -742,12 +793,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               deDupRefGenesArr,
               initial: 0,
             };
+            leftIdx.current++;
             createSVGOrCanvas(
-              fetchedDataCache.current[leftIdx.current - 1].trackState,
+              fetchedDataCache.current[leftIdx.current - 2].trackState,
               deDupRefGenesArr,
               false
             );
-            leftIdx.current++;
           }
         }
       }
