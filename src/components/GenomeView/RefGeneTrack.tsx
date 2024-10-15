@@ -16,19 +16,15 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
-
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
-import useResizeObserver from "./commonComponents/Resize";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { NumericalFeature } from "../../models/Feature";
-import { update } from "lodash";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -281,7 +277,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     return (
       <GeneAnnotationScaffold
-        key={uuidv4()}
+        key={gene.id + id}
         gene={gene}
         xSpan={placedGroup.xSpan}
         viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -292,7 +288,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
           <GeneAnnotation
-            key={i}
+            key={i + id + gene.id}
+            id={i + id + gene.id}
             placedGene={placedGene}
             y={y}
             options={configOptions.current}
@@ -479,9 +476,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -748,10 +745,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               trackState: newTrackState,
             };
 
-            let currIdx = leftIdx.current - 2;
+            let currIdx = leftIdx.current;
             for (let i = 0; i < 3; i++) {
               testData.push(fetchedDataCache.current[currIdx]);
-              currIdx++;
+              currIdx--;
             }
 
             leftIdx.current++;

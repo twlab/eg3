@@ -16,7 +16,6 @@ import { RepeatMaskerTrackConfig } from "../../trackConfigs/config-menu-models.t
 
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import Feature from "../../models/Feature";
 import { getContrastingColor } from "../../models/util";

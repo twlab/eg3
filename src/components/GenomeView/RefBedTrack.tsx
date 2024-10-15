@@ -22,7 +22,6 @@ import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationT
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
 
@@ -273,7 +272,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
 
     return (
       <GeneAnnotationScaffold
-        key={uuidv4()}
+        key={gene.id + id}
         gene={gene}
         xSpan={placedGroup.xSpan}
         viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -284,7 +283,8 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
           <GeneAnnotation
-            key={i}
+            key={i + id + gene.id}
+            id={i + id + gene.id}
             placedGene={placedGene}
             y={y}
             options={configOptions.current}
@@ -475,9 +475,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
         hasdata = true;
         curIdx = dataIdx! + 1;
@@ -740,11 +740,10 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
               refGenes: trackData![`${id}`].result,
               trackState: newTrackState,
             };
-
-            let currIdx = leftIdx.current - 2;
+            let currIdx = leftIdx.current;
             for (let i = 0; i < 3; i++) {
               testData.push(fetchedDataCache.current[currIdx]);
-              currIdx++;
+              currIdx--;
             }
 
             leftIdx.current++;

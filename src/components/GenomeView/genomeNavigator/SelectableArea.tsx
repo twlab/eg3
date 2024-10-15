@@ -141,6 +141,7 @@ export class SelectableArea extends React.PureComponent<
   dragEnd() {
     if (this.state.isDragging) {
       const selectedSpan = this.getSelectedSpan();
+      console.log(selectedSpan, "spannnn");
       if (this.props.getIsAreaValid!(selectedSpan)) {
         this.props.onAreaSelected!(selectedSpan);
       }

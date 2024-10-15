@@ -44,6 +44,10 @@ import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import _ from "lodash";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+import { SelectableArea } from "./genomeNavigator/SelectableArea";
+import ZoomButtons from "./ToolsComponents/ZoomButtons";
+import TrackContainer from "./ToolsComponents/TrackContainer";
+import SubToolButtons from "./ToolsComponents/SubToolButtons";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -155,7 +159,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // New data are fetched only if the user drags to the either ends of the track
 
   const [initialStart, setInitialStart] = useState("workerNotReady");
-
+  const [selectedTool, setSelectedTool] = useState("none");
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
@@ -268,6 +272,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     lastX.current = e.pageX;
 
     e.preventDefault();
+  }
+  function onToolClicked(tool: any) {
+    setSelectedTool((prevState) => {
+      if (prevState === "none") {
+        isLoading.current = true;
+        return tool.title;
+      } else {
+        isLoading.current = false;
+        return "none";
+      }
+    });
   }
   function handleMouseUp() {
     isDragging.current = false;
@@ -886,10 +901,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) : (
           <div style={{ height: 20 }}>DATA READY LETS GO</div>
         )}
-
+        <ZoomButtons />
         <div>1pixel to {basePerPixel.current}bp</div>
+
+        <SubToolButtons onToolClicked={onToolClicked} />
         <OutsideClickDetector onOutsideClick={onCloseMultiConfigMenu}>
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
               style={{
                 display: "flex",
@@ -995,6 +1012,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   );
                 })}
               </div>
+              <div
+                style={{
+                  display: "flex",
+                  position: "absolute",
+                  width: `${windowWidth - 1}px`,
+                  zIndex: 10,
+                }}
+              >
+                {selectedTool !== "none" ? (
+                  <SelectableArea>
+                    <div
+                      style={{
+                        height: block.current
+                          ? block.current?.getBoundingClientRect().height
+                          : 0,
+                        width: `${windowWidth - 1}px`,
+                      }}
+                    ></div>
+                  </SelectableArea>
+                ) : (
+                  ""
+                )}
+              </div>
             </div>
 
             {/* 
@@ -1021,7 +1061,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     width={rectInfo.width}
                     height={rectInfo.height}
                     x={rectInfo.x}
-                    y={rectInfo.y}
+                    y={rectInfo.y}  
                     genomeConfig={genomeArr[genomeIdx]}
                     geneFor3d={show3dGene}
                   />
