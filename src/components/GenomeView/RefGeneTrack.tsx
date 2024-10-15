@@ -108,37 +108,16 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     if (curTrackData.side === "left") {
       sortType = SortItemsOptions.NONE;
     }
-    if (!fine) {
-      if (curTrackData.initial === 1) {
-        currDisplayNav = new DisplayedRegionModel(
-          curTrackData.regionNavCoord._navContext,
-          curTrackData.regionNavCoord._startBase -
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase),
-          curTrackData.regionNavCoord._endBase +
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase)
-        );
-      } else if (curTrackData.side === "right") {
-        currDisplayNav = new DisplayedRegionModel(
-          curTrackData.regionNavCoord._navContext,
-          curTrackData.regionNavCoord._startBase -
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase) *
-              2,
-          curTrackData.regionNavCoord._endBase
-        );
-      } else if (curTrackData.side === "left") {
-        currDisplayNav = new DisplayedRegionModel(
-          curTrackData.regionNavCoord._navContext,
-          curTrackData.regionNavCoord._startBase,
-          curTrackData.regionNavCoord._endBase +
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase) *
-              2
-        );
-      }
-    }
+
+    currDisplayNav = new DisplayedRegionModel(
+      curTrackData.regionNavCoord._navContext,
+      curTrackData.regionNavCoord._startBase -
+        (curTrackData.regionNavCoord._endBase -
+          curTrackData.regionNavCoord._startBase),
+      curTrackData.regionNavCoord._endBase +
+        (curTrackData.regionNavCoord._endBase -
+          curTrackData.regionNavCoord._startBase)
+    );
 
     if (configOptions.current.displayMode === "full") {
       let algoData = genesArr.map((record) => new Gene(record));
@@ -218,13 +197,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         ? (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
+        : Math.floor(-curTrackData.xDist / windowWidth) * windowWidth;
     } else if (curTrackData.side === "left") {
       xPos.current = fine
         ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
           windowWidth +
           curTrackData.startWindow
-        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
+        : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     }
     updateSide.current = side;
   }
@@ -729,7 +708,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               currIdx--;
             }
 
-            rightIdx.current--;
             let refGenesArray = testData.map((item) => item.refGenes).flat(1);
             let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
             curRegionData.current = {
@@ -737,7 +715,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               deDupRefGenesArr,
               initial: 0,
             };
-            createSVGOrCanvas(newTrackState, deDupRefGenesArr, false);
+
+            createSVGOrCanvas(
+              fetchedDataCache.current[rightIdx.current + 1].trackState,
+              deDupRefGenesArr,
+              false
+            );
+            rightIdx.current--;
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
@@ -751,7 +735,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               currIdx--;
             }
 
-            leftIdx.current++;
             let refGenesArray = testData.map((item) => item.refGenes).flat(1);
             let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
             curRegionData.current = {
@@ -759,7 +742,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               deDupRefGenesArr,
               initial: 0,
             };
-            createSVGOrCanvas(newTrackState, deDupRefGenesArr, false);
+            createSVGOrCanvas(
+              fetchedDataCache.current[leftIdx.current - 1].trackState,
+              deDupRefGenesArr,
+              false
+            );
+            leftIdx.current++;
           }
         }
       }
