@@ -177,7 +177,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           legendRef.current
         );
       }
-
+      //
       let canvasElements = (
         <NumericalTrack
           data={algoData}
