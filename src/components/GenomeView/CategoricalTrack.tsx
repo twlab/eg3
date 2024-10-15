@@ -12,12 +12,10 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { CategoricalTrackConfig } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultCategorical } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import Feature from "../../models/Feature";
 import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
@@ -54,6 +52,8 @@ const TOP_PADDING = 2;
 
 const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -67,6 +67,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -342,13 +343,14 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
+      trackModel.options = configOptions.current;
 
-      const renderer = new CategoricalTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new CategoricalTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -361,7 +363,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -370,13 +372,12 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new CategoricalTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new CategoricalTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -389,7 +390,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   function renderTooltip(event, gene) {
@@ -433,9 +434,9 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -733,6 +734,15 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -753,6 +763,13 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -774,7 +791,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
         display: "flex",
         // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
         // other elements will overlapp
-        height: svgHeight.current,
+        height: svgHeight.current + 2,
 
         position: "relative",
       }}

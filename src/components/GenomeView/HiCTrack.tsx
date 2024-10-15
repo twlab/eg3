@@ -16,14 +16,15 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   bpToPx,
   side,
   trackData,
+  onTrackConfigChange,
+
   trackIdx,
   handleDelete,
   windowWidth,
   dataIdx,
   onCloseConfigMenu,
   trackModel,
-  genomeArr,
-  genomeIdx,
+
   id,
   getConfigMenu,
   legendRef,
@@ -237,6 +238,15 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       }
     }
     handle();
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
   // when INDEX POSITION CHANGE
 
@@ -258,13 +268,12 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new HicTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new HicTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -277,7 +286,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -287,6 +296,13 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
         curRegionData.current.trackState,
         curRegionData.current.cachedData
       );
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -297,7 +313,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height,
+        height: configOptions.current.height + 2,
       }}
     >
       <div

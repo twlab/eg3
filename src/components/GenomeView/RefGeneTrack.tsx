@@ -16,19 +16,15 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
-import "./TrackContextMenu.css";
 import { GeneAnnotationTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GeneAnnotationTrackConfig";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
-import useResizeObserver from "./Resize";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { NumericalFeature } from "../../models/Feature";
-import { update } from "lodash";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -45,6 +41,8 @@ const TOP_PADDING = 2;
 
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -60,6 +58,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
+  selectConfigChange,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -76,7 +76,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<any>(null);
-  const [canvasComponents, setCanvasComponents] = useState<any>();
+  const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const newTrackWidth = useRef(windowWidth);
@@ -105,7 +105,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     let currDisplayNav;
     let sortType = SortItemsOptions.NOSORT;
-
+    if (curTrackData.side === "left") {
+      sortType = SortItemsOptions.NONE;
+    }
     if (!fine) {
       if (curTrackData.initial === 1) {
         currDisplayNav = new DisplayedRegionModel(
@@ -275,7 +277,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     return (
       <GeneAnnotationScaffold
-        key={uuidv4()}
+        key={gene.id + id}
         gene={gene}
         xSpan={placedGroup.xSpan}
         viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -286,7 +288,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
           <GeneAnnotation
-            key={i}
+            key={i + id + gene.id}
+            id={i + id + gene.id}
             placedGene={placedGene}
             y={y}
             options={configOptions.current}
@@ -382,13 +385,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+      trackModel.options = configOptions.current;
+      const renderer = new GeneAnnotationTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -401,7 +404,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -410,13 +413,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new GeneAnnotationTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new GeneAnnotationTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -429,7 +431,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   function renderTooltip(event, gene) {
@@ -474,9 +476,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -743,10 +745,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               trackState: newTrackState,
             };
 
-            let currIdx = leftIdx.current - 2;
+            let currIdx = leftIdx.current;
             for (let i = 0; i < 3; i++) {
               testData.push(fetchedDataCache.current[currIdx]);
-              currIdx++;
+              currIdx--;
             }
 
             leftIdx.current++;
@@ -761,6 +763,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           }
         }
       }
+    }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
   }, [trackData]);
   useEffect(() => {
@@ -781,6 +792,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -789,13 +807,31 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-    console.log(dataIdx);
+
     getCacheData();
     prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
   useEffect(() => {
     setLegend(updatedLegend.current);
   }, [canvasComponents]);
+
+  useEffect(() => {
+    if (svgComponents !== null || canvasComponents !== null) {
+      configOptions.current = {
+        ...configOptions.current,
+        ...selectConfigChange.changedOption,
+      };
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+      setConfigChanged(true);
+      console.log("ASDASDASDASDASDASD", selectConfigChange);
+    }
+  }, [selectConfigChange]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
@@ -808,8 +844,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current
-            : configOptions.current.height,
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
         position: "relative",
       }}
     >

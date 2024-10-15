@@ -4,10 +4,10 @@ import _ from "lodash";
 // import HicStraw from "hic-straw/dist/hic-straw.esm.js";
 import HicStraw from "hic-straw/dist/hic-straw.min.js";
 
-import ChromosomeInterval from "../../../models/ChromosomeInterval";
+import ChromosomeInterval from "../models/ChromosomeInterval";
 import { NormalizationMode } from "./HicDataModes";
 import { GenomeInteraction } from "./GenomeInteraction";
-import { findClosestNumber } from "../../../models/util";
+import { findClosestNumber } from "../models/util";
 
 /**
  * First, some monkey patching for juicebox.js

@@ -11,12 +11,14 @@ import { objToInstanceAlign } from "./TrackManager";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import { BigInteractTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigInteractTrackConfig";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { GenomeInteraction } from "./getRemoteData/GenomeInteraction";
-import TrackLegend from "./commonComponents/TrackLegend";
+import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
+
 import ReactDOM from "react-dom";
 const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   side,
   trackData,
+  onTrackConfigChange,
+
   trackIdx,
   handleDelete,
   windowWidth,
@@ -44,7 +46,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
   const [legend, setLegend] = useState<any>();
-  const updateLegendCanvas = useRef<any>(null);
 
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const [configChanged, setConfigChanged] = useState(false);
@@ -260,6 +261,15 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       }
     }
     handle();
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
   // when INDEX POSITION CHANGE
 
@@ -281,14 +291,13 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new BigInteractTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BigInteractTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
 
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -301,7 +310,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   useEffect(() => {
@@ -310,6 +319,13 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         curRegionData.current.trackState,
         curRegionData.current.cachedData
       );
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -320,7 +336,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height,
+        height: configOptions.current.height + 2,
       }}
     >
       <div

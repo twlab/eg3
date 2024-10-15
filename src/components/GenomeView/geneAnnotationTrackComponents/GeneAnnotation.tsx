@@ -40,6 +40,7 @@ interface GeneAnnotationProps {
   placedGene: PlacedFeature; // Gene and its placement
   options?: GeneDisplayOptions;
   y?: number;
+  id: string;
 }
 
 const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
@@ -54,7 +55,7 @@ const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
       const width = Math.max(placedSegment.xSpan.getLength(), 3); // min 3 px for exon
       return (
         <rect
-          key={x + uuidv4()}
+          key={props.id + x}
           x={x}
           y={(HEIGHT - height) / 2}
           width={width}

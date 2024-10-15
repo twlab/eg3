@@ -12,12 +12,7 @@ import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "./commonComponents/check-obj-dupe";
-
-import "./TrackContextMenu.css";
+import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBigBedTrack,
@@ -25,7 +20,7 @@ import BedAnnotation, {
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
+
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import Feature from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
@@ -47,6 +42,8 @@ const getGenePadding = (gene) => gene.getName().length * 9;
 const TOP_PADDING = 2;
 const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -60,6 +57,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -71,8 +69,6 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-
-  const updateLegendCanvas = useRef<any>(null);
 
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -106,7 +102,9 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
 
     let currDisplayNav;
     let sortType = SortItemsOptions.NOSORT;
-
+    if (curTrackData.side === "left") {
+      sortType = SortItemsOptions.NONE;
+    }
     if (!fine) {
       if (curTrackData.side === "right") {
         currDisplayNav = new DisplayedRegionModel(
@@ -358,13 +356,14 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
+      trackModel.options = configOptions.current;
 
-      const renderer = new BigBedTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new BigBedTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -377,7 +376,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -386,13 +385,12 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new BigBedTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BigBedTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -405,7 +403,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   function renderTooltip(event, feature) {
@@ -449,9 +447,9 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -745,6 +743,15 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
   useEffect(() => {
     if (configChanged === true) {
@@ -764,6 +771,13 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -789,8 +803,8 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current
-            : configOptions.current.height,
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
         position: "relative",
       }}
     >

@@ -193,7 +193,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
         <svg
           width={AXIS_WIDTH}
           height={axisHeight}
-          style={{ overflow: "visible", backgroundColor: "#ffffff" }}
+          style={{ overflow: "visible" }}
         >
           <TranslatableG innerRef={this.handleRef} x={AXIS_WIDTH - 1} />
         </svg>
@@ -204,7 +204,6 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
     let plotLegend = false;
     let chromLabel = "";
     if (trackModel.type === "ruler") {
-      console.log(selectedRegion);
       const drawModel = new LinearDrawingModel(trackViewRegion!, trackWidth!);
       if (drawModel.basesToXWidth(1) > Sequence.MIN_X_WIDTH_PER_BASE) {
         plotLegend = true;

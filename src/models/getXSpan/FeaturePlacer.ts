@@ -5,7 +5,7 @@ import OpenInterval from "../OpenInterval";
 import LinearDrawingModel from "../LinearDrawingModel";
 import NavigationContext from "../NavigationContext";
 import { FeatureSegment } from "../FeatureSegment";
-import { GenomeInteraction } from "../../components/GenomeView/getRemoteData/GenomeInteraction";
+import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
 import ChromosomeInterval from "../ChromosomeInterval";
 
 /**

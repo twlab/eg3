@@ -17,9 +17,10 @@ import TrackModel from "../../../models/TrackModel";
 import { FeatureAggregator } from "../../../models/FeatureAggregator";
 import MethylCRecord from "../../../models/MethylCRecord";
 import { getContrastingColor } from "../../../models/util";
-import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
+import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
 // import "./commonComponents/tooltip/Tooltip.css";
 import "./MethylCTrack.css";
+import TrackLegend from "../commonComponents/TrackLegend";
 
 const VERTICAL_PADDING = 0;
 const PLOT_DOWNWARDS_STRAND = "reverse";
@@ -74,6 +75,7 @@ interface MethylCTrackProps {
     end: number;
   };
   forceSvg: boolean;
+  getNumLegend: any;
 }
 
 class MethylCTrack extends PureComponent<MethylCTrackProps> {
@@ -123,8 +125,9 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
   };
 
   renderVisualizer() {
-    const { width, options, forceSvg, viewRegion, trackModel } = this.props;
-    const {
+    let { width, options, forceSvg, viewRegion, trackModel, getNumLegend } =
+      this.props;
+    let {
       height,
       colorsForContext,
       depthColor,
@@ -179,19 +182,48 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
           />
         </div>
         {strandRenderers}
-        //{" "}
       </>
     );
   }
 
   render() {
-    const { data, trackModel, viewRegion, width, options } = this.props;
+    const { data, trackModel, viewRegion, width, options, getNumLegend } =
+      this.props;
     this.aggregatedRecords = this.aggregateRecords(data, viewRegion, width);
     this.scales = this.computeScales(
       this.aggregatedRecords,
       options.height,
       options.maxMethyl
     );
+
+    let legend = (
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ zIndex: 4 }}>
+          <TrackLegend
+            trackModel={trackModel}
+            height={options.height}
+            axisScale={this.scales.methylToY}
+            noShiftFirstAxisLabel={!options.isCombineStrands}
+          />
+        </div>
+        <div style={{ zIndex: 3 }}>
+          {!options.isCombineStrands && (
+            <ReverseStrandLegend
+              trackModel={trackModel}
+              height={options.height}
+              maxMethyl={options.maxMethyl}
+            />
+          )}
+        </div>
+      </div>
+    );
+    getNumLegend(legend);
     return this.renderVisualizer();
   }
 }
@@ -337,4 +369,21 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
       </DesignRenderer>
     );
   }
+}
+
+function ReverseStrandLegend(props) {
+  const mockTrackModel = new TrackModel({
+    name: " ",
+    isSelected: props.trackModel.isSelected,
+  });
+  return (
+    <TrackLegend
+      trackModel={mockTrackModel}
+      height={props.height}
+      hideFirstAxisLabel={true}
+      axisScale={scaleLinear()
+        .domain([0, props.maxMethyl])
+        .range([0, props.height - VERTICAL_PADDING])}
+    />
+  );
 }

@@ -7,11 +7,10 @@ import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultDynseq } from "./MethylcComponents/MethylCTrackComputation";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
+
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
@@ -28,6 +27,8 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -41,6 +42,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -129,6 +131,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           width={fine ? curTrackData.visWidth : windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
+          getNumLegend={getNumLegend}
         />
       );
       setCanvasComponents(canvasElements);
@@ -162,13 +165,14 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
+      trackModel.options = configOptions.current;
 
-      const renderer = new MethylCTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new MethylCTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -181,7 +185,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -190,13 +194,12 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new MethylCTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new MethylCTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -209,7 +212,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -239,9 +242,9 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -524,6 +527,15 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -544,6 +556,13 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -564,29 +583,20 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
-        height: configOptions.current.height * 2,
         position: "relative",
+
+        height: configOptions.current.height * 2 + 2,
       }}
     >
       <div
         style={{
-          display: "flex",
-          position: "relative",
-          height: configOptions.current.height,
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
+        {canvasComponents}
       </div>
       {legend}
     </div>

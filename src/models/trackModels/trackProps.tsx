@@ -9,9 +9,9 @@ export interface TrackProps {
   windowWidth: number;
   handleDelete: (trackIndex: number) => void;
   trackData?: { [key: string]: any }; // Replace with the actual type
-  trackData2?: { [key: string]: any }; // Replace with the actual type
+
   dragXDist?: number;
-  featureArray?: any;
+
   genomeName?: string;
   visData?: ViewExpansion;
   trackManagerId: string;
@@ -26,7 +26,10 @@ export interface TrackProps {
   trackManagerRef: any;
   setShow3dGene: any;
   isThereG3dTrack: boolean;
-  getLegendPosition: any;
-  trackBoxPosition: Array<any>;
+
   legendRef: any;
+
+  onTrackConfigChange: any;
+
+  selectConfigChange;
 }

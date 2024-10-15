@@ -1,4 +1,4 @@
-import { SequenceData } from "../../../models/SequenceData";
+import { SequenceData } from "../models/SequenceData";
 import { TwoBitFile } from "@gmod/twobit";
 import { RemoteFile } from "generic-filehandle";
 

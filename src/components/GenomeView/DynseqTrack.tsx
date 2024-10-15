@@ -6,17 +6,15 @@ import { objToInstanceAlign } from "./TrackManager";
 import OpenInterval from "../../models/OpenInterval";
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComputation";
+import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComponents";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import DynseqTrackComputation from "./DynseqComponents/DynseqTrackComputation";
+import DynseqTrackComponents from "./DynseqComponents/DynseqTrackComponents";
 import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
-import TrackLegend from "./commonComponents/TrackLegend";
+
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 
@@ -29,6 +27,8 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -43,9 +43,10 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   useFineModeNav,
   bpToPx,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
-  const svgHeight = useRef(0);
+
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -55,7 +56,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
-  const updateLegendCanvas = useRef<any>(null);
 
   const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
@@ -121,7 +121,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
     let canvasElements = (
-      <DynseqTrackComputation
+      <DynseqTrackComponents
         data={algoData}
         options={tmpObj}
         viewWindow={
@@ -169,13 +169,14 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
+      trackModel.options = configOptions.current;
 
-      const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new DynseqTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -188,7 +189,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -197,13 +198,12 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new DynseqTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new DynseqTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -216,7 +216,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -246,9 +246,9 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -531,6 +531,15 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -551,6 +560,13 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -571,32 +587,19 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
-        height:
-          configOptions.current.displayMode === "full"
-            ? svgHeight.current
-            : configOptions.current.height,
         position: "relative",
+        height: configOptions.current.height + 2,
       }}
     >
       <div
         style={{
-          display: "flex",
-          position: "relative",
-          height: configOptions.current.height,
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
+        {canvasComponents}
       </div>
       {legend}
     </div>

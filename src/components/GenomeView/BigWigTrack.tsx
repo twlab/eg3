@@ -8,15 +8,12 @@ import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import TrackLegend from "./commonComponents/TrackLegend";
 import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
@@ -27,6 +24,8 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -40,6 +39,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -169,13 +169,14 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
+      trackModel.options = configOptions.current;
 
-      const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new BigWigTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -188,7 +189,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -197,13 +198,12 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new BigWigTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -216,7 +216,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -246,9 +246,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -534,6 +534,15 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -554,6 +563,13 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -576,7 +592,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height,
+        height: configOptions.current.height + 2,
       }}
     >
       <div

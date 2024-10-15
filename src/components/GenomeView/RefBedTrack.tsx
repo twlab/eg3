@@ -16,13 +16,12 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
-import "./TrackContextMenu.css";
+
 import { RefBedTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RefBedTrackConfig";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
 
@@ -42,6 +41,8 @@ const TOP_PADDING = 2;
 
 const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -57,6 +58,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -99,7 +101,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
 
     let currDisplayNav;
     let sortType = SortItemsOptions.NOSORT;
-
+    if (curTrackData.side === "left") {
+      sortType = SortItemsOptions.NONE;
+    }
     if (!fine) {
       if (curTrackData.initial === 1) {
         currDisplayNav = new DisplayedRegionModel(
@@ -198,6 +202,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           width={fine ? curTrackData.visWidth : windowWidth * 3}
           forceSvg={false}
           trackModel={trackModel}
+          getNumLegend={getNumLegend}
         />
       );
       setCanvasComponents(canvasElements);
@@ -267,7 +272,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
 
     return (
       <GeneAnnotationScaffold
-        key={uuidv4()}
+        key={gene.id + id}
         gene={gene}
         xSpan={placedGroup.xSpan}
         viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -278,7 +283,8 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
           <GeneAnnotation
-            key={i}
+            key={i + id + gene.id}
+            id={i + id + gene.id}
             placedGene={placedGene}
             y={y}
             options={configOptions.current}
@@ -374,13 +380,13 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
+      trackModel.options = configOptions.current;
 
-      const renderer = new RefBedTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new RefBedTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
-      let menu = trackConfigMenu[`${trackModel.type}`]({
+      let menu = {
         trackIdx,
         handleDelete,
         id,
@@ -391,9 +397,10 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         configOptions: configOptions.current,
         items,
         onConfigChange,
-      });
+        trackManagerRef,
+      };
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -402,26 +409,27 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new RefBedTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new RefBedTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
-      pageX: event.pageX,
-      pageY: event.pageY,
+      pageX: configMenuPos.current.left,
+      pageY: configMenuPos.current.top,
       onCloseConfigMenu,
       trackModel,
+
       configOptions: configOptions.current,
       items,
       onConfigChange,
+      trackManagerRef,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
   function renderTooltip(event, gene) {
@@ -467,9 +475,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
         hasdata = true;
         curIdx = dataIdx! + 1;
@@ -732,11 +740,10 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
               refGenes: trackData![`${id}`].result,
               trackState: newTrackState,
             };
-
-            let currIdx = leftIdx.current - 2;
+            let currIdx = leftIdx.current;
             for (let i = 0; i < 3; i++) {
               testData.push(fetchedDataCache.current[currIdx]);
-              currIdx++;
+              currIdx--;
             }
 
             leftIdx.current++;
@@ -751,6 +758,15 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           }
         }
       }
+    }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
   }, [trackData]);
 
@@ -772,6 +788,13 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -796,10 +819,9 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 1
-            : configOptions.current.height + 1,
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
         position: "relative",
-        border: "1px solid Tomato",
       }}
     >
       {configOptions.current.displayMode === "full" ? (

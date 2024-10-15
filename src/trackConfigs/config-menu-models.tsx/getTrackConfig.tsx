@@ -17,10 +17,10 @@ import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
 import { MethylCTrackConfig } from "./MethylCTrackConfig";
 import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
 import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
-// import { RulerTrackConfig } from "./RulerTrackConfig";
+import { RulerTrackConfig } from "./RulerTrackConfig";
 import { RefBedTrackConfig } from "./RefBedTrackConfig";
 // import { SnpTrackConfig } from "./SnpTrackConfig";
-// import { MatplotTrackConfig } from "./MatplotTrackConfig";
+import { MatplotTrackConfig } from "./MatplotTrackConfig";
 // import { DynamicplotTrackConfig } from "./DynamicplotTrackConfig";
 // import { HammockTrackConfig } from "./HammockTrackConfig";
 // import { PairwiseSegmentTrackConfig } from "./PairwiseSegmentTrackConfig";
@@ -72,8 +72,8 @@ const TYPE_NAME_TO_CONFIG = {
   repeatmasker: RepeatMaskerTrackConfig,
   genomealign: GenomeAlignTrackConfig,
   // snp: SnpTrackConfig,
-  // ruler: RulerTrackConfig,
-  // matplot: MatplotTrackConfig,
+  ruler: RulerTrackConfig,
+  matplot: MatplotTrackConfig,
   // dynamic: DynamicplotTrackConfig,
   // hammock: HammockTrackConfig,
   // g3d: G3dTrackConfig,
@@ -97,6 +97,7 @@ const TYPE_NAME_TO_CONFIG = {
   // brgfa: BrgfaTrackConfig,
   // modbed: FiberTrackConfig, // fiber track was renamed to modbed meaning read modification data
 };
+
 const DefaultConfig = TrackConfig;
 
 if (process.env.NODE_ENV !== "production") {

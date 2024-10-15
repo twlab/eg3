@@ -7,7 +7,7 @@ import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
 
-import HoverToolTip from "../commonComponents/hoverToolTips/hoverToolTip";
+import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
 
 interface HeatmapProps {
   placedInteractions: PlacedInteraction[];

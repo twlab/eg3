@@ -12,12 +12,10 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 
-import "./TrackContextMenu.css";
 import { RepeatMaskerTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RepeatMaskerTrackConfig";
 
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import Feature from "../../models/Feature";
 import { getContrastingColor } from "../../models/util";
@@ -80,6 +78,8 @@ const TOP_PADDING = 2;
 const RepeatMaskerTrack: React.FC<TrackProps> = memo(
   function RepeatMaskerTrack({
     trackData,
+    onTrackConfigChange,
+
     side,
     windowWidth = 0,
     genomeArr,
@@ -93,6 +93,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     id,
     useFineModeNav,
     legendRef,
+    trackManagerRef,
   }) {
     const configOptions = useRef({ ...DEFAULT_OPTIONS });
     const svgHeight = useRef(0);
@@ -491,13 +492,14 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
       ) {
         configOptions.current.displayMode = value;
 
-        genomeArr![genomeIdx!].options = configOptions.current;
+        trackModel.options = configOptions.current;
 
-        const renderer = new RepeatMaskerTrackConfig(genomeArr![genomeIdx!]);
+        const renderer = new RepeatMaskerTrackConfig(trackModel);
 
         const items = renderer.getMenuComponents();
 
         let menu = trackConfigMenu[`${trackModel.type}`]({
+          blockRef: trackManagerRef,
           trackIdx,
           handleDelete,
           id,
@@ -510,7 +512,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
           onConfigChange,
         });
 
-        getConfigMenu(menu);
+        getConfigMenu(menu, "singleSelect");
       } else {
         configOptions.current[`${key}`] = value;
       }
@@ -519,13 +521,12 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     function renderConfigMenu(event) {
       event.preventDefault();
 
-      genomeArr![genomeIdx!].options = configOptions.current;
-
-      const renderer = new RepeatMaskerTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new RepeatMaskerTrackConfig(trackModel);
 
       // create object that has key as displayMode and the configmenu component as the value
       const items = renderer.getMenuComponents();
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -538,7 +539,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
       configMenuPos.current = { left: event.pageX, top: event.pageY };
     }
     function renderTooltip(event, feature) {
@@ -888,6 +889,14 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
           }
         }
       }
+      if (trackData![`${id}`] && trackData!.initial === 1) {
+        onTrackConfigChange({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+        });
+      }
     }, [trackData]);
 
     useEffect(() => {
@@ -908,6 +917,12 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
             true
           );
         }
+        onTrackConfigChange({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+        });
       }
       setConfigChanged(false);
     }, [configChanged]);
@@ -933,8 +948,8 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
           // other elements will overlapp
           height:
             configOptions.current.displayMode === "full"
-              ? svgHeight.current
-              : configOptions.current.height,
+              ? svgHeight.current + 2
+              : configOptions.current.height + 2,
           position: "relative",
         }}
       >

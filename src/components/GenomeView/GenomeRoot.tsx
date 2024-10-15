@@ -7,7 +7,7 @@ import Drag from "./commonComponents/chr-order/ChrOrder";
 import { chrType } from "../../localdata/genomename";
 
 import { v4 as uuidv4 } from "uuid";
-import useResizeObserver from "./Resize";
+import useResizeObserver from "./commonComponents/Resize";
 import HG38 from "../../models/genomes/hg38/hg38";
 import OpenInterval from "../../models/OpenInterval";
 

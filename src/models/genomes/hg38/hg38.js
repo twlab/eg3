@@ -41,13 +41,32 @@ const genome = new Genome("hg38", [
 // https://target.wustl.edu/dli/tmp/test2.g3d
 // chr7:74083652-74084068 dynseq cromorsome
 // broken area chr7:27212313-27212454
+// long range chr7:23208969-31218193
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27212313-27212454");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
-  // new TrackModel({
-  //   type: "ruler",
-  //   name: "Ruler",
-  // }),
+  new TrackModel({
+    type: "ruler",
+    name: "Ruler",
+  }),
+
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV39",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "MANE_select_1.0",
+    label: "MANE selection v1.0",
+    genome: "hg38",
+  }),
+
   new TrackModel({
     type: "refbed",
     name: "mm10 gencode basic",
@@ -103,26 +122,22 @@ const defaultTracks = [
   //   // }
   // }),
 
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
+
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "RepeatMasker",
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  // }),
   new TrackModel({
     type: "geneAnnotation",
-    name: "refGene",
+    name: "gencodeV39",
     genome: "hg38",
   }),
-    new TrackModel({
-        type: "repeatmasker",
-        name: "RepeatMasker",
-        url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-    }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV39",
-  //   genome: "hg38",
-  // }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",
@@ -166,48 +181,48 @@ const defaultTracks = [
   //   },
   // }),
 
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  }),
-  new TrackModel({
-    type: "categorical",
-    name: "ChromHMM",
-    url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
-    options: {
-      category: {
-        1: { name: "Active TSS", color: "#ff0000" },
-        2: { name: "Flanking Active TSS", color: "#ff4500" },
-        3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
-        4: { name: "Strong transcription", color: "#008000" },
-        5: { name: "Weak transcription", color: "#006400" },
-        6: { name: "Genic enhancers", color: "#c2e105" },
-        7: { name: "Enhancers", color: "#ffff00" },
-        8: { name: "ZNF genes & repeats", color: "#66cdaa" },
-        9: { name: "Heterochromatin", color: "#8a91d0" },
-        10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
-        11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
-        12: { name: "Bivalent Enhancer", color: "#bdb76b" },
-        13: { name: "Repressed PolyComb", color: "#808080" },
-        14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
-        15: { name: "Quiescent/Low", color: "#ffffff" },
-      },
-    },
-  }),
-  new TrackModel({
-    type: "longrange",
-    name: "ES-E14 ChIA-PET",
-    url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  }),
-  new TrackModel({
-    type: "biginteract",
-    name: "test bigInteract",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
-  }),
+  // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  // }),
+  // new TrackModel({
+  //   type: "categorical",
+  //   name: "ChromHMM",
+  //   url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
+  //   options: {
+  //     category: {
+  //       1: { name: "Active TSS", color: "#ff0000" },
+  //       2: { name: "Flanking Active TSS", color: "#ff4500" },
+  //       3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
+  //       4: { name: "Strong transcription", color: "#008000" },
+  //       5: { name: "Weak transcription", color: "#006400" },
+  //       6: { name: "Genic enhancers", color: "#c2e105" },
+  //       7: { name: "Enhancers", color: "#ffff00" },
+  //       8: { name: "ZNF genes & repeats", color: "#66cdaa" },
+  //       9: { name: "Heterochromatin", color: "#8a91d0" },
+  //       10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
+  //       11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
+  //       12: { name: "Bivalent Enhancer", color: "#bdb76b" },
+  //       13: { name: "Repressed PolyComb", color: "#808080" },
+  //       14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
+  //       15: { name: "Quiescent/Low", color: "#ffffff" },
+  //     },
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "ES-E14 ChIA-PET",
+  //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+  // }),
+  // new TrackModel({
+  //   type: "biginteract",
+  //   name: "test bigInteract",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
+  // }),
   // new TrackModel({
   //   type: "cool",
   //   name: "Aiden et al. (2009) GM06900 HINDIII 1kb",

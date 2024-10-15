@@ -7,16 +7,15 @@ import OpenInterval from "../../models/OpenInterval";
 
 import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
-import "./TrackContextMenu.css";
-import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
+
+import { MatplotTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MatplotTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { v4 as uuidv4 } from "uuid";
+
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import { NumericalFeature } from "../../models/Feature";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { update } from "lodash";
 import ReactDOM from "react-dom";
 
 export const DEFAULT_OPTIONS = {
@@ -28,6 +27,8 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   trackData,
+  onTrackConfigChange,
+
   side,
   windowWidth = 0,
   genomeArr,
@@ -41,6 +42,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   id,
   useFineModeNav,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -120,7 +122,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       let tmpObj = { ...configOptions.current };
       tmpObj.displayMode = "auto";
       function getNumLegend(legend: ReactNode) {
-        console.log(legend);
         updatedLegend.current = ReactDOM.createPortal(
           legend,
           legendRef.current
@@ -174,13 +175,14 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     ) {
       configOptions.current.displayMode = value;
 
-      genomeArr![genomeIdx!].options = configOptions.current;
+      trackModel.options = configOptions.current;
 
-      const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+      const renderer = new MatplotTrackConfig(trackModel);
 
       const items = renderer.getMenuComponents();
 
       let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
         trackIdx,
         handleDelete,
         id,
@@ -193,7 +195,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         onConfigChange,
       });
 
-      getConfigMenu(menu);
+      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -202,13 +204,12 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    genomeArr![genomeIdx!].options = configOptions.current;
-
-    const renderer = new BigWigTrackConfig(genomeArr![genomeIdx!]);
+    const renderer = new MatplotTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
+      blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
       id,
@@ -221,7 +222,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       onConfigChange,
     });
 
-    getConfigMenu(menu);
+    getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
@@ -251,9 +252,9 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         curIdx = dataIdx! - 1;
       } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
         viewData = [
-          fetchedDataCache.current[dataIdx! - 1],
-          fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
         ];
 
         curIdx = dataIdx! + 1;
@@ -547,6 +548,15 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         }
       }
     }
+    if (trackData![`${id}`] && trackData!.initial === 1) {
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
+    }
   }, [trackData]);
 
   useEffect(() => {
@@ -567,6 +577,13 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           true
         );
       }
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
     setConfigChanged(false);
   }, [configChanged]);
@@ -587,29 +604,19 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
-        height: configOptions.current.height,
         position: "relative",
+        height: configOptions.current.height + 2,
       }}
     >
       <div
         style={{
-          display: "flex",
-          position: "relative",
-          height: configOptions.current.height,
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
+        {canvasComponents}
       </div>
       {legend}
     </div>

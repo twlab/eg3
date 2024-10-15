@@ -1,0 +1,13 @@
+.History button.btn-info {
+    margin-left: 10px;
+}
+
+.History button.btn-warning {
+    padding: 2px;
+    margin-bottom: 2px
+}
+
+.History p {
+    font-size: 1.1em;
+    font-style: italic;
+}

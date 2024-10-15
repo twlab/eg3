@@ -1,18 +1,18 @@
 import _ from "lodash";
 import JSON5 from "json5";
-import { SequenceSegment } from "../../../models/AlignmentStringUtils";
-import AlignmentRecord from "../../../models/AlignmentRecord";
-import { AlignmentSegment } from "../../../models/AlignmentSegment";
-import { NavContextBuilder } from "../../../models/NavContextBuilder";
-import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import OpenInterval from "../../../models/OpenInterval";
-import NavigationContext from "../../../models/NavigationContext";
-import Feature from "../../../models/Feature";
-import { ViewExpansion } from "../../../models/RegionExpander";
-import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import { MultiAlignmentViewCalculator } from "../GenomeAlignComponents/MultiAlignmentViewCalculator";
+import { SequenceSegment } from "../models/AlignmentStringUtils";
+import AlignmentRecord from "../models/AlignmentRecord";
+import { AlignmentSegment } from "../models/AlignmentSegment";
+import { NavContextBuilder } from "../models/NavContextBuilder";
+import ChromosomeInterval from "../models/ChromosomeInterval";
+import OpenInterval from "../models/OpenInterval";
+import NavigationContext from "../models/NavigationContext";
+import Feature from "../models/Feature";
+import { ViewExpansion } from "../models/RegionExpander";
+import DisplayedRegionModel from "../models/DisplayedRegionModel";
+import { MultiAlignmentViewCalculator } from "../components/GenomeView/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
-import { niceBpCount } from "../../../models/util";
+import { niceBpCount } from "../models/util";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
