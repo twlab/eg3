@@ -17,7 +17,6 @@ export function getCacheData(
 ) {
   let dataValid = false;
   if (useFineOrSecondaryParentNav) {
-    // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
     if (dataIdx! > rightIdx && dataIdx! <= 0) {
       dataValid = true;
     } else if (dataIdx! < leftIdx && dataIdx! > 0) {

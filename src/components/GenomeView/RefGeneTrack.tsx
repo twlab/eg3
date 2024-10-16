@@ -2,7 +2,7 @@ import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
-import { v4 as uuidv4 } from "uuid";
+
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
@@ -26,7 +26,7 @@ import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { NumericalFeature } from "../../models/Feature";
-import { getTrackXOffset } from "./CommonTrackFunctions.tsx/getTrackXOffset";
+import { getTrackXOffset } from "./CommonTrackFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackFunctions.tsx/getCacheData";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -79,14 +79,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const useFineOrSecondaryParentNav = useRef(false);
 
   const xPos = useRef(0);
-  const curRegionData = useRef<{ [key: string]: any }>({});
-  const parentGenome = useRef("");
+
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-  const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
 
@@ -99,9 +97,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     },
   };
 
-  // These states are used to update the tracks with new fetched data
-  // new track sections are added as the user moves left (lower regions) and right (higher region)
-  // New data are fetched only if the user drags to the either ends of the track
   function getHeight(numRows: number): number {
     let rowHeight = ROW_HEIGHT;
     let options = configOptions.current;
@@ -115,9 +110,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
   async function createSVGOrCanvas(curTrackData, genesArr, cacheIdx) {
-    if (useFineOrSecondaryParentNav.current) {
-      newTrackWidth.current = curTrackData.visWidth;
-    }
     let curXPos = getTrackXOffset(
       curTrackData,
       windowWidth,
@@ -125,7 +117,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     );
     xPos.current = curXPos;
 
-    newTrackWidth.current = curTrackData.visWidth;
     updateSide.current = side;
 
     let sortType = SortItemsOptions.NOSORT;
@@ -462,89 +453,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setToolTipVisible(false);
   }
 
-  function checkCacheData() {
-    // if (
-    //   useFineModeNav ||
-    //   genomeArr![genomeIdx!].genome._name !== parentGenome.current
-    // ) {
-    // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
-    // if (useFineOrSecondaryParentNav.current) {
-    //   // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
-    //   if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-    //     dataValid = true;
-    //   } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-    //     dataValid = true;
-    //   }
-    // } else {
-    //   if (
-    //     (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
-    //     (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
-    //   ) {
-    //     dataValid = true;
-    //   }
-    // }
-    // if (dataValid) {
-    //   if (
-    //     dataIdx! in displayCache.current[`${configOptions.current.displayMode}`]
-    //   ) {
-    //     let displayType = `${configOptions.current.displayMode}`;
-    //     updatedLegend.current = (
-    //       <TrackLegend
-    //         height={displayCache.current[`${displayType}`][dataIdx!].height}
-    //         trackModel={trackModel}
-    //       />
-    //     );
-    //     xPos.current = displayCache.current[`${displayType}`][dataIdx!].xPos;
-    //     updateSide.current = side;
-    //     if (displayType === "full") {
-    //       setSvgComponents(
-    //         displayCache.current[`${displayType}`][dataIdx!].svgDATA
-    //       );
-    //       svgHeight.current =
-    //         displayCache.current[`${displayType}`][dataIdx!].height;
-    //     } else {
-    //       console.log(
-    //         displayCache.current[`${displayType}`][dataIdx!].height,
-    //         "HERERERERER"
-    //       );
-    //       setCanvasComponents(
-    //         displayCache.current[`${displayType}`][dataIdx!].canvasData
-    //       );
-    //     }
-    //   } else {
-    //     let viewData: Array<any> = [];
-    //     if (useFineOrSecondaryParentNav.current) {
-    //       // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
-    //       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-    //         viewData = fetchedDataCache.current[dataIdx!].refGenes;
-    //       } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-    //         viewData = fetchedDataCache.current[dataIdx!].refGenes;
-    //       }
-    //     } else {
-    //       if (
-    //         (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
-    //         (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
-    //       ) {
-    //         viewData = [
-    //           fetchedDataCache.current[dataIdx! + 1],
-    //           fetchedDataCache.current[dataIdx!],
-    //           fetchedDataCache.current[dataIdx! - 1],
-    //         ];
-    //         let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-    //         viewData = removeDuplicates(refGenesArray, "id");
-    //       }
-    //     }
-    //     if (viewData.length > 0) {
-    //       createSVGOrCanvas(
-    //         fetchedDataCache.current[dataIdx!].trackState,
-    //         viewData,
-    //         dataIdx!
-    //       );
-    //     }
-    //   }
-    // }
-  }
-
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
@@ -555,12 +463,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ].primaryVisData;
 
         if (trackData!.trackState.initial === 1) {
-          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
-          if ("genome" in trackData![`${id}`].metadata) {
-            parentGenome.current = trackData![`${id}`].metadata.genome;
-          } else {
-            parentGenome.current = trackData!.trackState.primaryGenName;
-          }
           let visRegion =
             "genome" in trackData![`${id}`].metadata
               ? trackData!.trackState.genomicFetchCoord[
@@ -585,11 +487,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           rightIdx.current--;
 
           const curDataArr = fetchedDataCache.current[0].refGenes;
-          curRegionData.current = {
-            trackState: createTrackState(1, "right"),
-            deDupRefGenesArr: curDataArr,
-            cacheIdx: rightIdx.current + 1,
-          };
 
           createSVGOrCanvas(
             createTrackState(1, "right"),
@@ -655,13 +552,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           ];
 
         if (trackData!.initial === 1) {
-          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
-          if ("genome" in trackData![`${id}`].metadata) {
-            parentGenome.current = trackData![`${id}`].metadata.genome;
-            useFineOrSecondaryParentNav.current = true;
-          } else {
-            parentGenome.current = trackData!.trackState.primaryGenName;
-          }
           const visRegionArr = primaryVisData.initNavLoci.map(
             (item) =>
               new DisplayedRegionModel(
@@ -724,11 +614,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           let refGenesArray = testData.map((item) => item.refGenes).flat(1);
 
           let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
-          curRegionData.current = {
-            trackState: trackState1,
-            deDupRefGenesArr,
-            cacheIdx: rightIdx.current + 2,
-          };
+
           createSVGOrCanvas(
             trackState1,
             deDupRefGenesArr,
@@ -758,13 +644,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
 
             rightIdx.current--;
-            curRegionData.current = {
-              trackState:
-                fetchedDataCache.current[rightIdx.current + 2].trackState,
-              deDupRefGenesArr,
-              initial: 0,
-              cacheIdx: rightIdx.current + 2,
-            };
+
             createSVGOrCanvas(
               fetchedDataCache.current[rightIdx.current + 2].trackState,
               deDupRefGenesArr,
@@ -788,13 +668,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
 
             leftIdx.current++;
-            curRegionData.current = {
-              trackState:
-                fetchedDataCache.current[leftIdx.current - 2].trackState,
-              deDupRefGenesArr,
-              initial: 0,
-              cacheData: leftIdx.current - 2,
-            };
+
             createSVGOrCanvas(
               fetchedDataCache.current[leftIdx.current - 2].trackState,
               deDupRefGenesArr,
