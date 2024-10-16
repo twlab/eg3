@@ -26,7 +26,8 @@ import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import TrackLegend from "./commonComponents/TrackLegend";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { NumericalFeature } from "../../models/Feature";
-import { getTrackXOffset } from "./CommonTrackFunctions.tsx/getCacheData";
+import { getTrackXOffset } from "./CommonTrackFunctions.tsx/getTrackXOffset";
+import { getCacheData } from "./CommonTrackFunctions.tsx/getCacheData";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -89,6 +90,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
 
+  const displaySetter = {
+    full: {
+      setComponents: setSvgComponents,
+    },
+    density: {
+      setComponents: setCanvasComponents,
+    },
+  };
+
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -117,7 +127,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     newTrackWidth.current = curTrackData.visWidth;
     updateSide.current = side;
-    console.log(updateSide.current);
+
     let sortType = SortItemsOptions.NOSORT;
     let currDisplayNav;
     if (!useFineOrSecondaryParentNav.current) {
@@ -149,7 +159,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       );
       const height = getHeight(placeFeatureData.numRowsAssigned);
 
-      svgHeight.current = getHeight(placeFeatureData.numRowsAssigned);
+      svgHeight.current = height;
 
       updatedLegend.current = (
         <TrackLegend height={svgHeight.current} trackModel={trackModel} />
@@ -164,8 +174,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         configOptions.current.maxRows
       );
 
-      setSvgComponents(svgDATA);
-
+      displaySetter.full.setComponents(svgDATA);
       displayCache.current.full[cacheIdx] = {
         svgDATA,
         height,
@@ -185,9 +194,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       tmpObj.displayMode = "auto";
 
       function getNumLegend(legend: ReactNode) {
+        //this will be trigger when
+        console.log(legend, "HOW");
         updatedLegend.current = legend;
       }
-      //
       let canvasElements = (
         <NumericalTrack
           data={algoData}
@@ -216,8 +226,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         />
       );
 
-      setCanvasComponents(canvasElements);
-
+      displaySetter.density.setComponents(canvasElements);
       displayCache.current.density[cacheIdx] = {
         canvasData: canvasElements,
         height: configOptions.current.height,
@@ -453,109 +462,87 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setToolTipVisible(false);
   }
 
-  function getCacheData() {
+  function checkCacheData() {
     // if (
     //   useFineModeNav ||
     //   genomeArr![genomeIdx!].genome._name !== parentGenome.current
     // ) {
     // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
-    let dataValid = false;
-
-    if (useFineOrSecondaryParentNav.current) {
-      // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
-      if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-        dataValid = true;
-      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-        dataValid = true;
-      }
-    } else {
-      if (
-        (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
-        (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
-      ) {
-        dataValid = true;
-      }
-    }
-
-    if (dataValid) {
-      let viewData: Array<any> = [];
-      let curIdx;
-      if (
-        dataIdx! in displayCache.current[`${configOptions.current.displayMode}`]
-      ) {
-        let displayType = `${configOptions.current.displayMode}`;
-
-        updatedLegend.current = (
-          <TrackLegend
-            height={displayCache.current[`${displayType}`][dataIdx!].height}
-            trackModel={trackModel}
-          />
-        );
-        xPos.current = displayCache.current[`${displayType}`][dataIdx!].xPos;
-        updateSide.current = side;
-        if (displayType === "full") {
-          setSvgComponents(
-            displayCache.current[`${displayType}`][dataIdx!].svgDATA
-          );
-
-          svgHeight.current =
-            displayCache.current[`${displayType}`][dataIdx!].height;
-        } else {
-          setCanvasComponents(
-            displayCache.current[`${displayType}`][dataIdx!].canvasData
-          );
-        }
-      } else {
-        let viewData: Array<any> = [];
-
-        if (
-          useFineModeNav ||
-          genomeArr![genomeIdx!].genome._name !== parentGenome.current
-        ) {
-          // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
-          if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-            viewData = fetchedDataCache.current[dataIdx!].refGenes;
-            curIdx = dataIdx!;
-          } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-            viewData = fetchedDataCache.current[dataIdx!].refGenes;
-            curIdx = dataIdx!;
-          }
-        } else {
-          if (
-            (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
-            (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
-          ) {
-            viewData = [
-              fetchedDataCache.current[dataIdx! + 1],
-              fetchedDataCache.current[dataIdx!],
-              fetchedDataCache.current[dataIdx! - 1],
-            ];
-          }
-        }
-        if (viewData.length > 0) {
-          curRegionData.current = {
-            trackState: fetchedDataCache.current[dataIdx!].trackState,
-            deDupRefGenesArr: viewData,
-            initial: 0,
-            cacheIdx: dataIdx,
-          };
-          if (
-            !useFineModeNav &&
-            genomeArr![genomeIdx!].genome._name === parentGenome.current
-          ) {
-            let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-            let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
-            viewData = deDupRefGenesArr;
-          }
-          createSVGOrCanvas(
-            fetchedDataCache.current[dataIdx!].trackState,
-            viewData,
-
-            dataIdx!
-          );
-        }
-      }
-    }
+    // if (useFineOrSecondaryParentNav.current) {
+    //   // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
+    //   if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
+    //     dataValid = true;
+    //   } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+    //     dataValid = true;
+    //   }
+    // } else {
+    //   if (
+    //     (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
+    //     (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
+    //   ) {
+    //     dataValid = true;
+    //   }
+    // }
+    // if (dataValid) {
+    //   if (
+    //     dataIdx! in displayCache.current[`${configOptions.current.displayMode}`]
+    //   ) {
+    //     let displayType = `${configOptions.current.displayMode}`;
+    //     updatedLegend.current = (
+    //       <TrackLegend
+    //         height={displayCache.current[`${displayType}`][dataIdx!].height}
+    //         trackModel={trackModel}
+    //       />
+    //     );
+    //     xPos.current = displayCache.current[`${displayType}`][dataIdx!].xPos;
+    //     updateSide.current = side;
+    //     if (displayType === "full") {
+    //       setSvgComponents(
+    //         displayCache.current[`${displayType}`][dataIdx!].svgDATA
+    //       );
+    //       svgHeight.current =
+    //         displayCache.current[`${displayType}`][dataIdx!].height;
+    //     } else {
+    //       console.log(
+    //         displayCache.current[`${displayType}`][dataIdx!].height,
+    //         "HERERERERER"
+    //       );
+    //       setCanvasComponents(
+    //         displayCache.current[`${displayType}`][dataIdx!].canvasData
+    //       );
+    //     }
+    //   } else {
+    //     let viewData: Array<any> = [];
+    //     if (useFineOrSecondaryParentNav.current) {
+    //       // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
+    //       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
+    //         viewData = fetchedDataCache.current[dataIdx!].refGenes;
+    //       } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+    //         viewData = fetchedDataCache.current[dataIdx!].refGenes;
+    //       }
+    //     } else {
+    //       if (
+    //         (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
+    //         (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
+    //       ) {
+    //         viewData = [
+    //           fetchedDataCache.current[dataIdx! + 1],
+    //           fetchedDataCache.current[dataIdx!],
+    //           fetchedDataCache.current[dataIdx! - 1],
+    //         ];
+    //         let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
+    //         viewData = removeDuplicates(refGenesArray, "id");
+    //       }
+    //     }
+    //     if (viewData.length > 0) {
+    //       createSVGOrCanvas(
+    //         fetchedDataCache.current[dataIdx!].trackState,
+    //         viewData,
+    //         dataIdx!
+    //       );
+    //     }
+    //   }
+    // }
   }
 
   useEffect(() => {
@@ -865,7 +852,29 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
 
-    getCacheData();
+    let returnData: any = getCacheData(
+      useFineOrSecondaryParentNav.current,
+      rightIdx.current,
+      leftIdx.current,
+      dataIdx,
+      displayCache.current,
+      fetchedDataCache.current,
+      configOptions.current.displayMode,
+      displaySetter,
+      svgHeight,
+      xPos,
+      updatedLegend,
+      trackModel
+    );
+    if (returnData.dataValid && returnData.buildNew) {
+      createSVGOrCanvas(
+        returnData.data.trackState,
+        returnData.data.viewData,
+        returnData.data.dataIdx!
+      );
+    }
+
+    updateSide.current = side;
   }, [dataIdx]);
   useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));

@@ -252,6 +252,7 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
     );
 
     if (getNumLegend) {
+      console.log("HGUIGHUGHU");
       getNumLegend(legend);
     }
 
