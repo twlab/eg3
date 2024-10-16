@@ -13,7 +13,10 @@ export function getCacheData(
   svgHeight,
   xPos,
   updatedLegend,
-  trackModel
+  trackModel,
+  createViewElement,
+  side,
+  updateSide
 ) {
   let dataValid = false;
   if (useFineOrSecondaryParentNav) {
@@ -30,9 +33,7 @@ export function getCacheData(
       dataValid = true;
     }
   }
-  if (!dataValid) {
-    return { dataValid };
-  }
+
   if (dataValid) {
     if (dataIdx! in displayCache[`${displayType}`]) {
       updatedLegend.current = (
@@ -42,7 +43,7 @@ export function getCacheData(
         />
       );
       xPos.current = displayCache[`${displayType}`][dataIdx!].xPos;
-
+      updateSide.current = side;
       if (displayType === "full") {
         displaySetter.full.setComponents(
           displayCache[`${displayType}`][dataIdx!].svgDATA
@@ -54,7 +55,6 @@ export function getCacheData(
           displayCache[`${displayType}`][dataIdx!].canvasData
         );
       }
-      return { dataValid, buildNew: false };
     } else {
       let viewData: Array<any> = [];
 
@@ -80,16 +80,12 @@ export function getCacheData(
         }
       }
 
-      return {
-        dataValid,
-        buildNew: true,
-        data: {
-          trackState: fetchedDataCache[dataIdx!].trackState,
-          viewData,
+      createViewElement(
+        fetchedDataCache[dataIdx!].trackState,
+        viewData,
 
-          dataIdx,
-        },
-      };
+        dataIdx
+      );
     }
   }
 }

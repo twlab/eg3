@@ -41,7 +41,7 @@ const genome = new Genome("hg38", [
 // https://target.wustl.edu/dli/tmp/test2.g3d
 // chr7:74083652-74084068 dynseq cromorsome
 // broken area chr7:27212313-27212454
-// long  range chr7:23208969-31218193
+// long range chr7:23208969-31218193
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [
