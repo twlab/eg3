@@ -954,7 +954,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       data-theme={"light"}
                       key={item.id}
                       style={{
-                        display: "grid",
+                        display: "flex",
                         WebkitBackfaceVisibility: "hidden",
                         WebkitPerspective: `${windowWidth}px`,
                         backfaceVisibility: "hidden",
@@ -966,11 +966,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       }}
                     >
                       <div
+                        style={{
+                          zIndex: 3,
+
+                          width: "100px",
+                          backgroundColor: "white",
+                        }}
+                        ref={item.legendRef}
+                      ></div>
+                      <div
                         ref={trackComponents[index].posRef}
                         style={{
                           display: "flex",
                           zIndex: 2,
-                          gridArea: "1/1",
                         }}
                       >
                         <Component
@@ -998,16 +1006,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           selectConfigChange={selectConfigChange}
                         />
                       </div>
-                      <div
+                      {/* <div
                         style={{
-                          position: "relative",
-                          zIndex: 2,
-                          gridArea: "1/1",
-                          width: "100px",
-                          backgroundColor: "white",
+                          display: "flex",
+                          position: "absolute",
+                          width: `${windowWidth - 1}px`,
+                          zIndex: 10,
                         }}
-                        ref={item.legendRef}
-                      ></div>
+                      >
+                        {selectedTool !== "none" ? (
+                          <SelectableArea>
+                            <div
+                              style={{
+                                height: block.current
+                                  ? block.current?.getBoundingClientRect()
+                                      .height
+                                  : 0,
+                                width: `${windowWidth - 1}px`,
+                              }}
+                            ></div>
+                          </SelectableArea>
+                        ) : (
+                          ""
+                        )}
+                      </div> */}
                     </div>
                   );
                 })}
