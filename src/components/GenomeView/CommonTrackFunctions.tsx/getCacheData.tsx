@@ -5,7 +5,7 @@ export function getTrackXOffset(
 ) {
   let resXPos;
 
-  if (trackState.initial === 1) {
+  if (trackState.initial === 1 || (!useFineModeNav && trackState.index === 1)) {
     resXPos = -trackState.startWindow;
   } else if (trackState.side === "right") {
     resXPos =
