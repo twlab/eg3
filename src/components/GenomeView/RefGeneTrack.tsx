@@ -107,23 +107,25 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     if (fine) {
       newTrackWidth.current = curTrackData.visWidth;
     }
-    let curXPos = getTrackXOffset(
-      fetchedDataCache.current[dataIdx!].trackState,
-      windowWidth
-    );
+    let curXPos = getTrackXOffset(curTrackData, windowWidth, fine);
     xPos.current = curXPos;
+
+    newTrackWidth.current = curTrackData.visWidth;
+    updateSide.current = side;
+    console.log(updateSide.current);
     let sortType = SortItemsOptions.NOSORT;
-
-    let currDisplayNav = new DisplayedRegionModel(
-      curTrackData.regionNavCoord._navContext,
-      curTrackData.regionNavCoord._startBase -
-        (curTrackData.regionNavCoord._endBase -
-          curTrackData.regionNavCoord._startBase),
-      curTrackData.regionNavCoord._endBase +
-        (curTrackData.regionNavCoord._endBase -
-          curTrackData.regionNavCoord._startBase)
-    );
-
+    let currDisplayNav;
+    if (!fine) {
+      currDisplayNav = new DisplayedRegionModel(
+        curTrackData.regionNavCoord._navContext,
+        curTrackData.regionNavCoord._startBase -
+          (curTrackData.regionNavCoord._endBase -
+            curTrackData.regionNavCoord._startBase),
+        curTrackData.regionNavCoord._endBase +
+          (curTrackData.regionNavCoord._endBase -
+            curTrackData.regionNavCoord._startBase)
+      );
+    }
     if (configOptions.current.displayMode === "full") {
       let algoData = genesArr.map((record) => new Gene(record));
       let featureArrange = new FeatureArranger();
@@ -217,9 +219,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //       curTrackData.startWindow
     //     : Math.floor(curTrackData.xDist / windowWidth) * windowWidth;
     // }
-
-    updateSide.current = side;
-    console.log(displayCache.current);
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -396,8 +395,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         items,
         onConfigChange,
       });
-
-      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -449,12 +446,26 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     // ) {
     // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
     let dataValid = false;
+
     if (
-      (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
-      (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
+      useFineModeNav ||
+      genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
-      dataValid = true;
+      // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
+      if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
+        dataValid = true;
+      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+        dataValid = true;
+      }
+    } else {
+      if (
+        (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) ||
+        (dataIdx! < leftIdx.current - 1 && dataIdx! > 0)
+      ) {
+        dataValid = true;
+      }
     }
+
     if (dataValid) {
       let viewData: Array<any> = [];
       let curIdx;
@@ -483,31 +494,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             displayCache.current[`${displayType}`][dataIdx!].canvasData
           );
         }
-
-        viewData = [
-          fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx!],
-          fetchedDataCache.current[dataIdx! - 1],
-        ];
-        if (fetchedDataCache.current[dataIdx!].trackState.side === "right") {
-          curIdx = dataIdx!;
-        } else if (
-          fetchedDataCache.current[dataIdx!].trackState.side === "left"
-        ) {
-          curIdx = dataIdx!;
-        }
-        let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
-        viewData = deDupRefGenesArr;
-        curRegionData.current = {
-          trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupRefGenesArr: viewData,
-          initial: 0,
-          cacheIdx: curIdx,
-        };
       } else {
         let viewData: Array<any> = [];
-        let curIdx;
 
         if (
           useFineModeNav ||
@@ -531,15 +519,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               fetchedDataCache.current[dataIdx!],
               fetchedDataCache.current[dataIdx! - 1],
             ];
-            if (
-              fetchedDataCache.current[dataIdx!].trackState.side === "right"
-            ) {
-              curIdx = dataIdx!;
-            } else if (
-              fetchedDataCache.current[dataIdx!].trackState.side === "left"
-            ) {
-              curIdx = dataIdx!;
-            }
           }
         }
         if (viewData.length > 0) {
@@ -556,22 +535,16 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
             let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
             viewData = deDupRefGenesArr;
-            curRegionData.current = {
-              trackState: fetchedDataCache.current[curIdx].trackState,
-              deDupRefGenesArr: viewData,
-              initial: 0,
-              cacheIdx: curIdx,
-            };
-            console.log(curRegionData.current);
+
             createSVGOrCanvas(
-              fetchedDataCache.current[curIdx].trackState,
+              fetchedDataCache.current[dataIdx!].trackState,
               viewData,
               false,
-              curIdx
+              dataIdx!
             );
           } else {
             createSVGOrCanvas(
-              fetchedDataCache.current[curIdx].trackState,
+              fetchedDataCache.current[dataIdx!].trackState,
               viewData,
               true,
               dataIdx!
@@ -662,15 +635,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
             rightIdx.current--;
 
-            curRegionData.current = {
-              trackState:
-                fetchedDataCache.current[rightIdx.current + 1].trackState,
-              deDupRefGenesArr:
-                fetchedDataCache.current[rightIdx.current + 1].refGenes,
-              initial: 0,
-              cacheIdx: rightIdx.current + 1,
-            };
-
             createSVGOrCanvas(
               newTrackState,
               fetchedDataCache.current[rightIdx.current + 1].refGenes,
@@ -685,15 +649,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             };
 
             leftIdx.current++;
-
-            curRegionData.current = {
-              trackState:
-                fetchedDataCache.current[leftIdx.current - 1].trackState,
-              deDupRefGenesArr:
-                fetchedDataCache.current[leftIdx.current - 1].refGenes,
-              initial: 0,
-              cacheIdx: leftIdx.current - 1,
-            };
 
             createSVGOrCanvas(
               newTrackState,
@@ -872,23 +827,31 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [trackData]);
   useEffect(() => {
     if (configChanged === true) {
+      let viewData = [
+        fetchedDataCache.current[dataIdx! + 1],
+        fetchedDataCache.current[dataIdx!],
+        fetchedDataCache.current[dataIdx! - 1],
+      ];
+
+      let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
+      let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
+
       if (
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
-        console.log(curRegionData.current);
         createSVGOrCanvas(
-          curRegionData.current.trackState,
-          curRegionData.current.deDupRefGenesArr,
+          fetchedDataCache.current[dataIdx!].trackState,
+          deDupRefGenesArr,
           false,
           dataIdx
         );
       } else {
         createSVGOrCanvas(
-          curRegionData.current.trackState,
-          curRegionData.current.deDupRefGenesArr,
+          fetchedDataCache.current[dataIdx!].trackState,
+          deDupRefGenesArr,
           true,
-          curRegionData.current.cacheIdx
+          dataIdx
         );
       }
       onTrackConfigChange({
@@ -906,7 +869,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
-    console.log(dataIdx!);
+
     getCacheData();
     prevDataIdx.current = dataIdx!;
   }, [dataIdx]);
@@ -928,7 +891,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         legendRef: legendRef,
       });
       setConfigChanged(true);
-      console.log("ASDASDASDASDASDASD", selectConfigChange);
     }
   }, [selectConfigChange]);
 
