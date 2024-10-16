@@ -2,6 +2,7 @@ import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
+import { v4 as uuidv4 } from "uuid";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
@@ -151,7 +152,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         height,
         ROW_HEIGHT,
         configOptions.current.maxRows,
-        configOptions.current
+        configOptions.current,
+        cacheIdx
       );
 
       setSvgComponents(svgDATA);
@@ -229,7 +231,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     height,
     rowHeight,
     maxRows,
-    options
+    options,
+    cacheIdx
   ) {
     // FullVisualizer class from eg2
     function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
@@ -269,7 +272,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     return (
       <GeneAnnotationScaffold
-        key={gene.id + id}
+        key={index}
         gene={gene}
         xSpan={placedGroup.xSpan}
         viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -280,8 +283,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       >
         {placedGroup.placedFeatures.map((placedGene, i) => (
           <GeneAnnotation
-            key={i + id + gene.id}
-            id={i + id + gene.id}
+            key={i}
+            id={i}
             placedGene={placedGene}
             y={y}
             options={configOptions.current}
