@@ -5,7 +5,7 @@ import { NumericalFeature } from "../../models/Feature";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
-import Gene from "../../models/Gene";
+import Gene, { IdbRecord } from "../../models/Gene";
 import OpenInterval from "../../models/OpenInterval";
 import { SortItemsOptions } from "../../models/SortItemsOptions";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
@@ -17,7 +17,7 @@ import { objToInstanceAlign } from "./TrackManager";
 const TOP_PADDING = 2;
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull(
-    genesArr,
+    formattedData,
     useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
@@ -102,7 +102,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
 
-    let algoData = genesArr.map((record) => new Gene(record));
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
@@ -119,9 +118,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
     //FullDisplayMode part from eg2
-    console.log(trackState, useFineOrSecondaryParentNav);
+
     let placeFeatureData = featureArrange.arrange(
-      algoData,
+      formattedData,
       useFineOrSecondaryParentNav
         ? objToInstanceAlign(trackState.visRegion)
         : currDisplayNav,
@@ -148,7 +147,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
   },
 
   density: function getDensity(
-    genesArr,
+    formattedData,
     useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
@@ -168,14 +167,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
             trackState.regionNavCoord._startBase)
       );
     }
-    let algoData = genesArr.map((record) => {
-      let newChrInt = new ChromosomeInterval(
-        record.chrom,
-        record.txStart,
-        record.txEnd
-      );
-      return new NumericalFeature("", newChrInt).withValue(record.score);
-    });
 
     function getNumLegend(legend: ReactNode) {
       //this will be trigger when creating canvaselemebt here and the saved canvaselement
@@ -185,7 +176,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     }
     let canvasElements = (
       <NumericalTrack
-        data={algoData}
+        data={formattedData}
         options={configOptions}
         viewWindow={
           new OpenInterval(
@@ -211,44 +202,87 @@ export const displayModeComponentMap: { [key: string]: any } = {
 };
 
 export function getDisplayModeFunction(
-  drawDate: { [key: string]: any },
+  drawData: { [key: string]: any },
   displaySetter,
   displayCache,
   cacheIdx,
   curXPos
 ) {
-  if (drawDate.configOptions.displayMode === "full") {
+  if (drawData.configOptions.displayMode === "full") {
+    let formattedData: Array<any> = [];
+    if (drawData.trackModel.type === "geneannotation") {
+      formattedData = drawData.genesArr.map((record) => new Gene(record));
+    } else if (drawData.trackModel.type === "refbed") {
+      formattedData = drawData.genesArr.map((record) => {
+        const refBedRecord = {} as IdbRecord;
+        refBedRecord.chrom = record.chr;
+        refBedRecord.txStart = record.start;
+        refBedRecord.txEnd = record.end;
+        refBedRecord.id = record[7];
+        refBedRecord.name = record[6];
+        refBedRecord.description = record[11] ? record[11] : "";
+        refBedRecord.transcriptionClass = record[8];
+        refBedRecord.exonStarts = record[9];
+        refBedRecord.exonEnds = record[10];
+        refBedRecord.cdsStart = Number.parseInt(record[3], 10);
+        refBedRecord.cdsEnd = Number.parseInt(record[4], 10);
+        refBedRecord.strand = record[5];
+        return new Gene(refBedRecord);
+      });
+    }
     let svgDATA = displayModeComponentMap["full"](
-      drawDate.genesArr,
-      drawDate.useFineOrSecondaryParentNav,
-      drawDate.trackState,
-      drawDate.windowWidth,
-      drawDate.configOptions,
-      drawDate.renderTooltip,
-      drawDate.svgHeight,
-      drawDate.updatedLegend,
-      drawDate.trackModel,
-      drawDate.getGenePadding,
-      drawDate.getHeight,
-      drawDate.ROW_HEIGHT
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      drawData.configOptions,
+      drawData.renderTooltip,
+      drawData.svgHeight,
+      drawData.updatedLegend,
+      drawData.trackModel,
+      drawData.getGenePadding,
+      drawData.getHeight,
+      drawData.ROW_HEIGHT
     );
     displaySetter.full.setComponents(svgDATA);
     displayCache.current.full[cacheIdx] = {
       svgDATA,
-      height: drawDate.svgHeight.current,
+      height: drawData.svgHeight.current,
       xPos: curXPos,
     };
-  } else if (drawDate.configOptions.displayMode === "density") {
-    let tmpObj = { ...drawDate.configOptions };
+  } else if (drawData.configOptions.displayMode === "density") {
+    let formattedData;
+    if (drawData.trackModel.type === "geneannotation") {
+      formattedData = drawData.genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chrom,
+          record.txStart,
+          record.txEnd
+        );
+        return new NumericalFeature("", newChrInt).withValue(record.score);
+      });
+    } else if (drawData.trackModel.type === "refbed") {
+      formattedData = drawData.genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        return new NumericalFeature("", newChrInt).withValue(record.score);
+      });
+    }
+
+    let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "auto";
+
     let canvasElements = displayModeComponentMap["density"](
-      drawDate.genesArr,
-      drawDate.useFineOrSecondaryParentNav,
-      drawDate.trackState,
-      drawDate.windowWidth,
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
       tmpObj,
-      drawDate.updatedLegend,
-      drawDate.trackModel
+      drawData.updatedLegend,
+      drawData.trackModel
     );
 
     displaySetter.density.setComponents(canvasElements);

@@ -1,4 +1,7 @@
-import { removeDuplicates } from "../commonComponents/check-obj-dupe";
+import {
+  removeDuplicates,
+  removeDuplicatesWithoutId,
+} from "../commonComponents/check-obj-dupe";
 import TrackLegend from "../commonComponents/TrackLegend";
 
 export function getCacheData(
@@ -16,7 +19,8 @@ export function getCacheData(
   trackModel,
   createViewElement,
   side,
-  updateSide
+  updateSide,
+  keyDupe = "none"
 ) {
   let dataValid = false;
   if (useFineOrSecondaryParentNav) {
@@ -42,6 +46,7 @@ export function getCacheData(
           trackModel={trackModel}
         />
       );
+
       xPos.current = displayCache[`${displayType}`][dataIdx!].xPos;
       updateSide.current = side;
       if (displayType === "full") {
@@ -61,9 +66,9 @@ export function getCacheData(
       if (useFineOrSecondaryParentNav) {
         // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
         if (dataIdx! > rightIdx && dataIdx! <= 0) {
-          viewData = fetchedDataCache[dataIdx!].refGenes;
+          viewData = fetchedDataCache[dataIdx!].dataCache;
         } else if (dataIdx! < leftIdx && dataIdx! > 0) {
-          viewData = fetchedDataCache[dataIdx!].refGenes;
+          viewData = fetchedDataCache[dataIdx!].dataCache;
         }
       } else {
         if (
@@ -75,8 +80,12 @@ export function getCacheData(
             fetchedDataCache[dataIdx!],
             fetchedDataCache[dataIdx! - 1],
           ];
-          let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-          viewData = removeDuplicates(refGenesArray, "id");
+          let dataCacheArray = viewData.map((item) => item.dataCache).flat(1);
+
+          viewData =
+            keyDupe !== "none"
+              ? removeDuplicates(dataCacheArray, keyDupe)
+              : removeDuplicatesWithoutId(dataCacheArray);
         }
       }
 

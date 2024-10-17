@@ -1,5 +1,8 @@
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import { removeDuplicates } from "../commonComponents/check-obj-dupe";
+import {
+  removeDuplicates,
+  removeDuplicatesWithoutId,
+} from "../commonComponents/check-obj-dupe";
 
 export function cacheTrackData(
   useFineOrSecondaryParentNav,
@@ -9,7 +12,8 @@ export function cacheTrackData(
   rightIdx,
   leftIdx,
   createViewElement,
-  genome
+  genome,
+  keyDupe
 ) {
   if (useFineOrSecondaryParentNav) {
     const primaryVisData =
@@ -36,12 +40,12 @@ export function cacheTrackData(
       });
 
       fetchedDataCache.current[rightIdx.current] = {
-        refGenes: trackData![`${id}`].result[0],
+        dataCache: trackData![`${id}`].result[0],
         trackState: createTrackState(1, "right"),
       };
       rightIdx.current--;
 
-      const curDataArr = fetchedDataCache.current[0].refGenes;
+      const curDataArr = fetchedDataCache.current[0].dataCache;
 
       createViewElement(
         createTrackState(1, "right"),
@@ -70,7 +74,7 @@ export function cacheTrackData(
       if (trackData!.trackState.side === "right") {
         newTrackState["index"] = rightIdx.current;
         fetchedDataCache.current[rightIdx.current] = {
-          refGenes: trackData![`${id}`].result,
+          dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
 
@@ -78,14 +82,14 @@ export function cacheTrackData(
 
         createViewElement(
           newTrackState,
-          fetchedDataCache.current[rightIdx.current + 1].refGenes,
+          fetchedDataCache.current[rightIdx.current + 1].dataCache,
 
           rightIdx.current + 1
         );
       } else if (trackData!.trackState.side === "left") {
         trackData!.trackState["index"] = leftIdx.current;
         fetchedDataCache.current[leftIdx.current] = {
-          refGenes: trackData![`${id}`].result,
+          dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
 
@@ -93,7 +97,7 @@ export function cacheTrackData(
 
         createViewElement(
           newTrackState,
-          fetchedDataCache.current[leftIdx.current - 1].refGenes,
+          fetchedDataCache.current[leftIdx.current - 1].dataCache,
 
           leftIdx.current - 1
         );
@@ -145,18 +149,18 @@ export function cacheTrackData(
       };
 
       fetchedDataCache.current[leftIdx.current] = {
-        refGenes: trackData![`${id}`].result[0],
+        dataCache: trackData![`${id}`].result[0],
         trackState: trackState0,
       };
       leftIdx.current++;
 
       fetchedDataCache.current[rightIdx.current] = {
-        refGenes: trackData![`${id}`].result[1],
+        dataCache: trackData![`${id}`].result[1],
         trackState: trackState1,
       };
       rightIdx.current--;
       fetchedDataCache.current[rightIdx.current] = {
-        refGenes: trackData![`${id}`].result[2],
+        dataCache: trackData![`${id}`].result[2],
         trackState: trackState2,
       };
       rightIdx.current--;
@@ -167,13 +171,16 @@ export function cacheTrackData(
         fetchedDataCache.current[-1],
       ];
 
-      let refGenesArray = testData.map((item) => item.refGenes).flat(1);
+      let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
 
-      let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
-
+      let viewData =
+        keyDupe !== "none"
+          ? removeDuplicates(dataCacheArray, keyDupe)
+          : removeDuplicatesWithoutId(dataCacheArray);
+      console.log(viewData);
       createViewElement(
         trackState1,
-        deDupRefGenesArr,
+        viewData,
 
         rightIdx.current + 2
       );
@@ -187,7 +194,7 @@ export function cacheTrackData(
       if (trackData!.trackState.side === "right") {
         trackData!.trackState["index"] = rightIdx.current;
         fetchedDataCache.current[rightIdx.current] = {
-          refGenes: trackData![`${id}`].result,
+          dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
         let currIdx = rightIdx.current + 2;
@@ -196,21 +203,24 @@ export function cacheTrackData(
           currIdx--;
         }
 
-        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
+        let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
+        let viewData =
+          keyDupe !== "none"
+            ? removeDuplicates(dataCacheArray, keyDupe)
+            : removeDuplicatesWithoutId(dataCacheArray);
 
         rightIdx.current--;
 
         createViewElement(
           fetchedDataCache.current[rightIdx.current + 2].trackState,
-          deDupRefGenesArr,
+          viewData,
 
           rightIdx.current + 2
         );
       } else if (trackData!.trackState.side === "left") {
         trackData!.trackState["index"] = leftIdx.current;
         fetchedDataCache.current[leftIdx.current] = {
-          refGenes: trackData![`${id}`].result,
+          dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
 
@@ -220,14 +230,17 @@ export function cacheTrackData(
           currIdx--;
         }
 
-        let refGenesArray = testData.map((item) => item.refGenes).flat(1);
-        let deDupRefGenesArr = removeDuplicates(refGenesArray, "id");
+        let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
+        let viewData =
+          keyDupe !== "none"
+            ? removeDuplicates(dataCacheArray, keyDupe)
+            : removeDuplicatesWithoutId(dataCacheArray);
 
         leftIdx.current++;
 
         createViewElement(
           fetchedDataCache.current[leftIdx.current - 2].trackState,
-          deDupRefGenesArr,
+          viewData,
 
           leftIdx.current - 2
         );

@@ -1,17 +1,7 @@
 import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { objToInstanceAlign } from "./TrackManager";
 
-import FeatureArranger, {
-  PlacedFeatureGroup,
-} from "../../models/FeatureArranger";
-import Gene from "../../models/Gene";
-import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
-import GeneAnnotation from "./geneAnnotationTrackComponents/GeneAnnotation";
-import { SortItemsOptions } from "../../models/SortItemsOptions";
-import OpenInterval from "../../models/OpenInterval";
-import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
@@ -22,10 +12,7 @@ import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationT
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import TrackLegend from "./commonComponents/TrackLegend";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { NumericalFeature } from "../../models/Feature";
+
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
@@ -312,7 +299,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         rightIdx,
         leftIdx,
         createSVGOrCanvas,
-        genomeArr![genomeIdx!]
+        genomeArr![genomeIdx!],
+        "id"
       );
     }
 
@@ -329,10 +317,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   useEffect(() => {
     if (configChanged === true) {
       getConfigChangeData(
-        useFineOrSecondaryParentNav,
+        useFineOrSecondaryParentNav.current,
         fetchedDataCache.current,
         dataIdx,
-        createSVGOrCanvas
+        createSVGOrCanvas,
+        "id"
       );
 
       onTrackConfigChange({
@@ -366,7 +355,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       trackModel,
       createSVGOrCanvas,
       side,
-      updateSide
+      updateSide,
+      "id"
     );
   }, [dataIdx]);
   useEffect(() => {

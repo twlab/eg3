@@ -1,23 +1,30 @@
-import { removeDuplicates } from "../commonComponents/check-obj-dupe";
+import {
+  removeDuplicates,
+  removeDuplicatesWithoutId,
+} from "../commonComponents/check-obj-dupe";
 
 export function getConfigChangeData(
   useFineOrSecondaryParentNav,
   fetchedDataCache,
   dataIdx,
-  createViewElement
+  createViewElement,
+  keyDupe
 ) {
   let viewData;
   if (useFineOrSecondaryParentNav) {
-    viewData = fetchedDataCache[dataIdx!].refGenes;
+    viewData = fetchedDataCache[dataIdx!].dataCache;
   } else {
-    let viewData = [
+    viewData = [
       fetchedDataCache[dataIdx! + 1],
       fetchedDataCache[dataIdx!],
       fetchedDataCache[dataIdx! - 1],
     ];
 
-    let refGenesArray = viewData.map((item) => item.refGenes).flat(1);
-    viewData = removeDuplicates(refGenesArray, "id");
+    let dataCacheArray = viewData.map((item) => item.dataCache).flat(1);
+    viewData =
+      keyDupe !== "none"
+        ? removeDuplicates(dataCacheArray, keyDupe)
+        : removeDuplicatesWithoutId(dataCacheArray);
   }
 
   createViewElement(

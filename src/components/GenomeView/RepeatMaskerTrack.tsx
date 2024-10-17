@@ -118,18 +118,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     // These states are used to update the tracks with new fetched data
     // new track sections are added as the user moves left (lower regions) and right (higher region)
     // New data are fetched only if the user drags to the either ends of the track
-    function getHeight(numRows: number): number {
-      let rowHeight = ROW_HEIGHT;
-      let options = configOptions.current;
-      let rowsToDraw = Math.min(numRows, options.maxRows);
-      if (options.hideMinimalItems) {
-        rowsToDraw -= 1;
-      }
-      if (rowsToDraw < 1) {
-        rowsToDraw = 1;
-      }
-      return rowsToDraw * rowHeight + TOP_PADDING;
-    }
+
     async function createSVGOrCanvas(curTrackData, genesArr, fine) {
       if (fine) {
         newTrackWidth.current = curTrackData.visWidth;

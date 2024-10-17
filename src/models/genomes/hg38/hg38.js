@@ -67,20 +67,20 @@ const defaultTracks = [
     genome: "hg38",
   }),
 
-  // new TrackModel({
-  //   type: "refbed",
-  //   name: "mm10 gencode basic",
-  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-  //   options: {
-  //     categoryColors: {
-  //       coding: "rgb(101,1,168)",
-  //       nonCoding: "rgb(1,193,75)",
-  //       pseudo: "rgb(230,0,172)",
-  //       problem: "rgb(224,2,2)",
-  //       other: "rgb(128,128,128)",
-  //     },
-  //   },
-  // }),
+  new TrackModel({
+    type: "refbed",
+    name: "mm10 gencode basic",
+    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+    options: {
+      categoryColors: {
+        coding: "rgb(101,1,168)",
+        nonCoding: "rgb(1,193,75)",
+        pseudo: "rgb(230,0,172)",
+        problem: "rgb(224,2,2)",
+        other: "rgb(128,128,128)",
+      },
+    },
+  }),
   // new TrackModel({
   //   type: "matplot",
   //   name: "matplot wrap",
