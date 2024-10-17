@@ -129,6 +129,11 @@ export function cacheTrackData(
         startWindow: primaryVisData.primaryVisData.viewWindow.start,
         visWidth: primaryVisData.primaryVisData.visWidth,
       };
+      console.log(
+        trackState1,
+
+        rightIdx.current + 2
+      );
       let trackState2 = {
         initial: 0,
         side: "right",
