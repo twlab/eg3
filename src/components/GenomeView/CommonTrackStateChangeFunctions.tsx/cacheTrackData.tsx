@@ -173,7 +173,7 @@ export function cacheTrackData(
         keyDupe !== "none"
           ? removeDuplicates(dataCacheArray, keyDupe)
           : removeDuplicatesWithoutId(dataCacheArray);
-      console.log(viewData);
+
       createViewElement(
         trackState1,
         viewData,

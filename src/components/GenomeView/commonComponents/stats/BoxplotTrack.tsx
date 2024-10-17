@@ -6,7 +6,7 @@ import * as d3 from "d3";
 import memoizeOne from "memoize-one";
 import Track from "../Track";
 import TrackLegend from "../TrackLegend";
-import GenomicCoordinates from "../hoverToolTips/GenomicCoordinates";
+import GenomicCoordinates from "../HoverToolTips/GenomicCoordinates";
 
 import { RenderTypes, DesignRenderer } from "../art/DesignRenderer";
 import { FeatureAggregator } from "../../../../models/FeatureAggregator";

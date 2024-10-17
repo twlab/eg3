@@ -143,7 +143,7 @@ const trackConfigMenu: { [key: string]: any } = {
 };
 function ConfigMenuComponent(props) {
   let menuData = props.menuData;
-  console.log(menuData);
+
   let blockPosData = menuData.blockRef.current.getBoundingClientRect();
   let leftMargin = blockPosData.left;
   let topMargin = blockPosData.top;

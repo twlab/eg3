@@ -172,7 +172,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             .range([TOP_PADDING, configOptions.height]);
           let y = scale(feature.value);
           const drawHeight = configOptions.height - y;
-          console.log(drawHeight);
+
           const width = xSpan.getLength();
           if (drawHeight <= 0) {
             return null;

@@ -149,14 +149,14 @@ const defaultTracks = [
     name: "mm10 bed",
     url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
   }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+    options: {
+      color: "blue",
+    },
+  }),
   // new TrackModel({
   //   type: "dynseq",
   //   name: "example dynseq",
