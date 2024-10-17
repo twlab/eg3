@@ -289,6 +289,20 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
+      if (trackData!.initial === 1) {
+        configOptions.current = {
+          ...configOptions.current,
+          ...trackModel.options,
+        };
+
+        onTrackConfigChange({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+      }
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
@@ -530,15 +544,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           }
         }
       }
-    }
-    if (trackData![`${id}`] && trackData!.initial === 1) {
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
     }
   }, [trackData]);
 

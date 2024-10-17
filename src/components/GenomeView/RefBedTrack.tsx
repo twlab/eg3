@@ -296,6 +296,20 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
 
   useEffect(() => {
     if (trackData![`${id}`]) {
+      if (trackData!.initial === 1) {
+        configOptions.current = {
+          ...configOptions.current,
+          ...trackModel.options,
+        };
+
+        onTrackConfigChange({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+      }
       if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
         useFineOrSecondaryParentNav.current = true;
       }
@@ -311,16 +325,6 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
         genomeArr![genomeIdx!],
         "7"
       );
-    }
-
-    if (trackData![`${id}`] && trackData!.initial === 1) {
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
     }
   }, [trackData]);
 

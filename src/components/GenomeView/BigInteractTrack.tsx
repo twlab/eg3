@@ -18,7 +18,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   side,
   trackData,
   onTrackConfigChange,
-
   trackIdx,
   handleDelete,
   windowWidth,
@@ -32,23 +31,22 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
   legendRef,
   trackManagerRef,
 }) {
-  //useRef to store data between states without re render the component
-  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
+  const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
-  const configOptions = useRef({ ...DEFAULT_OPTIONS });
+  const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
+
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const curRegionData = useRef<{ [key: string]: any }>({});
+
   const xPos = useRef(0);
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
 
-  const updateSide = useRef("right");
-  const updatedLegend = useRef<any>();
-  const [legend, setLegend] = useState<any>();
-
-  const [canvasComponents, setCanvasComponents] = useState<any>();
+  const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [configChanged, setConfigChanged] = useState(false);
+  const [legend, setLegend] = useState<any>();
 
   const newTrackWidth = useRef(windowWidth);
 
@@ -84,17 +82,19 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         algoData.push(new GenomeInteraction(recordLocus1, recordLocus2, score));
       } else {
         console.error(
-          `${record[3]} not formated correctly in  BIGinteract track`
+          `${record[3]} not formatted correctly in BIGinteract track`
         );
       }
     });
 
-    let tmpObj = { ...configOptions.current };
+    const tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
-    function getNumLegend(legend: ReactNode) {
+
+    const getNumLegend = (legend: ReactNode) => {
       updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
-    }
-    let canvasElements = (
+    };
+
+    const canvasElements = (
       <InteractionTrackComponent
         data={algoData}
         options={tmpObj}
@@ -106,7 +106,9 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         getNumLegend={getNumLegend}
       />
     );
+
     setCanvasComponents(canvasElements);
+
     if (curTrackData.initial === 1) {
       xPos.current = -curTrackData.startWindow;
     } else if (curTrackData.side === "right") {
@@ -120,63 +122,37 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
         windowWidth +
         curTrackData.startWindow;
     }
+
     updateSide.current = side;
     newTrackWidth.current = curTrackData.visWidth;
   }
 
-  // function to get for dataidx change and getting stored data
-  function getCacheData() {
-    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
-    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
-    // otherwise when there is new data cuz the user is at the end of the track
-    let viewData: Array<any> = [];
-    let curIdx;
-
-    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
-      viewData = fetchedDataCache.current[dataIdx!].data;
-      curIdx = dataIdx!;
-    } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-      viewData = fetchedDataCache.current[dataIdx! + 1].data;
-      curIdx = dataIdx! + 1;
-    }
-    if (viewData.length > 0) {
-      curRegionData.current = {
-        trackState: fetchedDataCache.current[curIdx].trackState,
-        cachedData: viewData,
-        initial: 0,
-      };
-      createCanvas(fetchedDataCache.current[curIdx].trackState, viewData);
-    }
-  }
-
-  // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
   useEffect(() => {
     async function handle() {
-      if (trackData![`${id}`] !== undefined) {
+      if (trackData![`${id}`]) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
             trackData!.trackState.primaryGenName
           ].primaryVisData;
 
         if (trackData!.initial === 1) {
-          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
           if (trackModel.options) {
             configOptions.current = {
               ...configOptions.current,
               ...trackModel.options,
             };
           }
-          if ("genome" in trackData![`${id}`].metadata) {
+          if (trackData![`${id}`].metadata.genome) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
             parentGenome.current = trackData!.trackState.primaryGenName;
           }
-          let visRegion =
-            "genome" in trackData![`${id}`].metadata
-              ? trackData!.trackState.genomicFetchCoord[
-                  trackData![`${id}`].metadata.genome
-                ].queryRegion
-              : primaryVisData.visRegion;
+
+          let visRegion = trackData![`${id}`].metadata.genome
+            ? trackData!.trackState.genomicFetchCoord[
+                trackData![`${id}`].metadata.genome
+              ].queryRegion
+            : primaryVisData.visRegion;
 
           let trackState = {
             initial: 1,
@@ -193,23 +169,19 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
           };
           rightIdx.current--;
 
-          let curDataArr = fetchedDataCache.current[0].data;
-
           curRegionData.current = {
             trackState: trackState,
-            cachedData: curDataArr,
+            cachedData: fetchedDataCache.current[0].data,
           };
-          createCanvas(trackState, curDataArr);
+
+          createCanvas(trackState, fetchedDataCache.current[0].data);
         } else {
-          let visRegion;
-          if ("genome" in trackData![`${id}`].metadata) {
-            visRegion =
-              trackData!.trackState.genomicFetchCoord[
+          let visRegion = trackData![`${id}`].metadata.genome
+            ? trackData!.trackState.genomicFetchCoord[
                 `${trackData![`${id}`].metadata.genome}`
-              ].queryRegion;
-          } else {
-            visRegion = primaryVisData.visRegion;
-          }
+              ].queryRegion
+            : primaryVisData.visRegion;
+
           let newTrackState = {
             initial: 0,
             side: trackData!.trackState.side,
@@ -219,44 +191,22 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
             visWidth: primaryVisData.visWidth,
           };
 
-          if (trackData!.trackState.side === "right") {
-            newTrackState["index"] = rightIdx.current;
-            fetchedDataCache.current[rightIdx.current] = {
-              data: trackData![`${id}`].result,
-              trackState: newTrackState,
-            };
+          const isRightSide = trackData!.trackState.side === "right";
+          let trackIdx = isRightSide ? rightIdx.current : leftIdx.current;
+          let cacheKey = isRightSide ? rightIdx.current : leftIdx.current;
 
-            rightIdx.current--;
+          fetchedDataCache.current[trackIdx] = {
+            data: trackData![`${id}`].result,
+            trackState: newTrackState,
+          };
 
-            curRegionData.current = {
-              trackState: newTrackState,
-              cachedData: fetchedDataCache.current[rightIdx.current + 1].data,
-              initial: 0,
-            };
-            createCanvas(
-              newTrackState,
-              fetchedDataCache.current[rightIdx.current + 1].data
-            );
-          } else if (trackData!.trackState.side === "left") {
-            newTrackState["index"] = leftIdx.current;
-            fetchedDataCache.current[leftIdx.current] = {
-              data: trackData![`${id}`].result,
-              trackState: newTrackState,
-            };
+          curRegionData.current = {
+            trackState: newTrackState,
+            cachedData: fetchedDataCache.current[cacheKey].data,
+          };
 
-            leftIdx.current++;
-
-            curRegionData.current = {
-              trackState: newTrackState,
-              cachedData: fetchedDataCache.current[leftIdx.current - 1].data,
-              initial: 0,
-            };
-
-            createCanvas(
-              newTrackState,
-              fetchedDataCache.current[leftIdx.current - 1].data
-            );
-          }
+          createCanvas(newTrackState, fetchedDataCache.current[cacheKey].data);
+          isRightSide ? rightIdx.current-- : leftIdx.current++;
         }
       }
     }
@@ -271,32 +221,52 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
       });
     }
   }, [trackData]);
-  // when INDEX POSITION CHANGE
 
-  useEffect(() => {
-    getCacheData();
-  }, [dataIdx]);
   useEffect(() => {
     setLegend(updatedLegend.current);
   }, [canvasComponents]);
 
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[`${key}`]) {
-      return;
-    } else {
-      configOptions.current[`${key}`] = value;
+  useEffect(() => {
+    if (configChanged) {
+      createCanvas(
+        curRegionData.current.trackState,
+        curRegionData.current.cachedData
+      );
+      onTrackConfigChange({
+        configOptions: configOptions.current,
+        trackModel: trackModel,
+        id: id,
+        trackIdx: trackIdx,
+        legendRef: legendRef,
+      });
     }
-    setConfigChanged(true);
+    setConfigChanged(false);
+  }, [configChanged]);
+
+  useEffect(() => {
+    if (dataIdx! < rightIdx.current && dataIdx! >= 0) {
+      let viewData = fetchedDataCache.current[dataIdx!].data;
+      curRegionData.current = {
+        trackState: fetchedDataCache.current[dataIdx!].trackState,
+        cachedData: viewData,
+      };
+      createCanvas(fetchedDataCache.current[dataIdx!].trackState, viewData);
+    }
+  }, [dataIdx]);
+
+  function onConfigChange(key, value) {
+    if (configOptions.current[key] !== value) {
+      configOptions.current[key] = value;
+      setConfigChanged(true);
+    }
   }
+
   function renderConfigMenu(event) {
     event.preventDefault();
 
     const renderer = new BigInteractTrackConfig(trackModel);
-
-    // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
-
-    let menu = trackConfigMenu[`${trackModel.type}`]({
+    const menu = trackConfigMenu[trackModel.type]({
       blockRef: trackManagerRef,
       trackIdx,
       handleDelete,
@@ -313,22 +283,6 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack({
     getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
-  useEffect(() => {
-    if (configChanged === true) {
-      createCanvas(
-        curRegionData.current.trackState,
-        curRegionData.current.cachedData
-      );
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
 
   return (
     <div

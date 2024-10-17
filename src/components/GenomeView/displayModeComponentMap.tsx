@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import { NumericalFeature } from "../../models/Feature";
+import Feature, { NumericalFeature } from "../../models/Feature";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
@@ -14,6 +14,18 @@ import TrackLegend from "./commonComponents/TrackLegend";
 import GeneAnnotation from "./geneAnnotationTrackComponents/GeneAnnotation";
 import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
 import { objToInstanceAlign } from "./TrackManager";
+import BedAnnotation from "./bedComponents/BedAnnotation";
+import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
+import { RepeatDASFeature } from "./RepeatMaskerTrack";
+import { RepeatMaskerFeature } from "../../models/RepeatMaskerFeature";
+import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
+import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
+import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
+import { getContrastingColor } from "../../models/util";
+import { scaleLinear } from "d3-scale";
+enum BedColumnIndex {
+  CATEGORY = 3,
+}
 const TOP_PADDING = 2;
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull(
@@ -44,11 +56,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const rowIndex = Math.min(placedGroup.row, maxRowIndex);
         const y = rowIndex * rowHeight + TOP_PADDING;
 
-        return getAnnotationElement(
+        return getAnnotationElementMap[`${trackModel.type}`](
           placedGroup,
           y,
           rowIndex === maxRowIndex,
-          i
+          i,
+          configOptions.height
         );
       }
       return (
@@ -75,6 +88,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
     // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
+
     function getAnnotationElement(placedGroup, y, isLastRow, index) {
       const gene = placedGroup.feature;
 
@@ -86,7 +100,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           viewWindow={new OpenInterval(0, windowWidth * 3)}
           y={y}
           isMinimal={isLastRow}
-          options={configOptions.current}
+          options={configOptions}
           onClick={renderTooltip}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
@@ -95,12 +109,157 @@ export const displayModeComponentMap: { [key: string]: any } = {
               id={i}
               placedGene={placedGene}
               y={y}
-              options={configOptions.current}
+              options={configOptions}
             />
           ))}
         </GeneAnnotationScaffold>
       );
     }
+    function getBedAnnotationElement(placedGroup, y, isLastRow, index) {
+      return placedGroup.placedFeatures.map((placement, i) => (
+        <BedAnnotation
+          key={i}
+          feature={placement.feature}
+          xSpan={placement.xSpan}
+          y={y}
+          isMinimal={isLastRow}
+          color={configOptions.color}
+          reverseStrandColor={configOptions.color2}
+          isInvertArrowDirection={placement.isReverse}
+          onClick={renderTooltip}
+          alwaysDrawLabel={configOptions.alwaysDrawLabel}
+          hiddenPixels={configOptions.hiddenPixels}
+        />
+      ));
+    }
+    const getAnnotationElementMap: { [key: string]: any } = {
+      geneannotation: (placedGroup, y, isLastRow, index) =>
+        getAnnotationElement(placedGroup, y, isLastRow, index),
+
+      refbed: (placedGroup, y, isLastRow, index) =>
+        getAnnotationElement(placedGroup, y, isLastRow, index),
+      bed: (placedGroup, y, isLastRow, index) =>
+        getBedAnnotationElement(placedGroup, y, isLastRow, index),
+      bigbed: (placedGroup, y, isLastRow, index) =>
+        getBedAnnotationElement(placedGroup, y, isLastRow, index),
+
+      repeatmasker: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        const { categoryColors } = configOptions;
+        const TEXT_HEIGHT = 9; // height for both text label and arrows.
+        return placedGroup.placedFeatures.map((placement, i) => {
+          const { xSpan, feature, isReverse } = placement;
+          if (placement.xSpan.getLength <= 0) {
+            return null;
+          }
+          let color;
+
+          if (feature.rgb) {
+            color = `rgb(${feature.rgb})`;
+          } else {
+            const categoryId = feature.getCategoryId();
+            color = categoryColors[categoryId];
+          }
+
+          const contrastColor = getContrastingColor(color);
+          let scale = scaleLinear()
+            .domain([1, 0])
+            .range([TOP_PADDING, configOptions.height]);
+          let y = scale(feature.value);
+          const drawHeight = configOptions.height - y;
+          console.log(drawHeight);
+          const width = xSpan.getLength();
+          if (drawHeight <= 0) {
+            return null;
+          }
+          const mainBody = (
+            <rect
+              x={xSpan.start}
+              y={y}
+              width={width}
+              height={drawHeight}
+              fill={color}
+              fillOpacity={0.75}
+            />
+          );
+          let label;
+          const labelText = feature.getName();
+          const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
+          if (estimatedLabelWidth < 0.9 * width) {
+            const centerX = xSpan.start + 0.5 * width;
+            const centerY = height - TEXT_HEIGHT * 2;
+            label = (
+              <BackgroundedText
+                x={centerX}
+                y={centerY}
+                height={TEXT_HEIGHT - 1}
+                fill={contrastColor}
+                dominantBaseline="hanging"
+                textAnchor="middle"
+              >
+                {labelText}
+              </BackgroundedText>
+            );
+          }
+          const arrows = (
+            <AnnotationArrows
+              startX={xSpan.start}
+              endX={xSpan.end}
+              y={height - TEXT_HEIGHT}
+              height={TEXT_HEIGHT}
+              opacity={0.75}
+              isToRight={isReverse === (feature.strand === "-")}
+              color="white"
+            />
+          );
+          return (
+            <TranslatableG
+              onClick={(event) => renderTooltip(event, feature)}
+              key={i}
+            >
+              {mainBody}
+              {arrows}
+              {label}
+            </TranslatableG>
+          );
+        });
+      },
+      categorical: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        return placedGroup.placedFeatures.map((placement, i) => {
+          const featureName = placement.feature.getName();
+          const color =
+            configOptions.category && configOptions.category[featureName]
+              ? configOptions.category[`${featureName}`].color
+              : "blue";
+
+          return (
+            <CategoricalAnnotation
+              key={i}
+              feature={placement.feature}
+              xSpan={placement.xSpan}
+              y={y}
+              isMinimal={false}
+              color={color}
+              onClick={renderTooltip}
+              category={configOptions.category}
+              height={configOptions.height}
+              alwaysDrawLabel={configOptions.alwaysDrawLabel}
+            />
+          );
+        });
+      },
+    };
 
     let featureArrange = new FeatureArranger();
 
@@ -129,7 +288,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
       configOptions.hiddenPixels,
       sortType
     );
-    const height = getHeight(placeFeatureData.numRowsAssigned);
+    let height;
+    height =
+      trackModel.type === "repeatmasker"
+        ? configOptions.height
+        : getHeight(placeFeatureData.numRowsAssigned);
     let svgDATA = createFullVisualizer(
       placeFeatureData.placements,
       useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3,
@@ -229,6 +392,72 @@ export function getDisplayModeFunction(
         refBedRecord.strand = record[5];
         return new Gene(refBedRecord);
       });
+    } else if (drawData.trackModel.type === "bed") {
+      formattedData = drawData.genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        return new Feature(
+          newChrInt.toStringWithOther(newChrInt),
+          newChrInt,
+          ""
+        );
+      });
+    } else if (drawData.trackModel.type === "categorical") {
+      formattedData = drawData.genesArr.map(
+        (record) =>
+          new Feature(
+            record[BedColumnIndex.CATEGORY],
+            new ChromosomeInterval(record.chr, record.start, record.end)
+          )
+      );
+    } else if (drawData.trackModel.type === "bigbed") {
+      formattedData = drawData.genesArr.map((record) => {
+        const fields = record["rest"].split("\t");
+
+        const name = fields[0];
+        const numVal = fields[1];
+        const strand = fields[2];
+
+        return new Feature(
+          name,
+          new ChromosomeInterval(record.chr, record.start, record.end),
+          strand
+        );
+      });
+    } else if (drawData.trackModel.type === "repeatmasker") {
+      let rawDataArr: Array<RepeatDASFeature> = [];
+      drawData.genesArr.map((record) => {
+        const restValues = record["rest"].split("\t");
+        const output: RepeatDASFeature = {
+          genoLeft: restValues[7],
+          label: restValues[0],
+          max: record.end,
+          milliDel: restValues[5],
+          milliDiv: restValues[4],
+          milliIns: restValues[6],
+          min: record.start,
+          orientation: restValues[2],
+          repClass: restValues[8],
+          repEnd: restValues[11],
+          repFamily: restValues[9],
+          repLeft: restValues[12],
+          repStart: restValues[10],
+          score: Number(restValues[1]),
+          segment: record.chr,
+          swScore: restValues[3],
+          type: "bigbed",
+          _chromId: record.chromId,
+        };
+
+        rawDataArr.push(output);
+      });
+
+      formattedData = rawDataArr.map(
+        (feature) => new RepeatMaskerFeature(feature)
+      );
     }
     let svgDATA = displayModeComponentMap["full"](
       formattedData,
@@ -261,7 +490,23 @@ export function getDisplayModeFunction(
         );
         return new NumericalFeature("", newChrInt).withValue(record.score);
       });
-    } else if (drawData.trackModel.type === "refbed") {
+    } else if (drawData.trackModel.type === "bigbed") {
+      formattedData = drawData.genesArr.map((record) => {
+        const fields = record["rest"].split("\t");
+
+        const name = fields[0];
+        const numVal = fields[1];
+        const strand = fields[2];
+        let newChrInt = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        return new NumericalFeature(name, newChrInt, strand).withValue(
+          record.score
+        );
+      });
+    } else {
       formattedData = drawData.genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(
           record.chr,

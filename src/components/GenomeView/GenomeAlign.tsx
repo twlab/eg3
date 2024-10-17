@@ -263,15 +263,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         }
       }
     }
-    if (trackData![`${id}`] && trackData!.initial === 1) {
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
   }, [trackData]);
   // when INDEX POSITION CHANGE
 

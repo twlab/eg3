@@ -242,15 +242,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
       }
     }
     handle();
-    if (trackData![`${id}`] && trackData!.initial === 1) {
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
   }, [trackData]);
   // when INDEX POSITION CHANGE
 
