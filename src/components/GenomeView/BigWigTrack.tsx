@@ -1,4 +1,4 @@
-import React, { memo, ReactNode } from "react";
+import React, { FunctionComponentElement, memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
@@ -62,6 +62,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const xPos = useRef(0);
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
+  const [testcanvasComponents, testsetCanvasComponents] = useState<any>(null);
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
 
@@ -193,14 +194,28 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
 
   useEffect(() => {
     if (configChanged === true) {
-      getConfigChangeData(
-        useFineOrSecondaryParentNav.current,
-        fetchedDataCache.current,
-        dataIdx,
-        createSVGOrCanvas,
-        "none"
-      );
+      // getConfigChangeData(
+      //   useFineOrSecondaryParentNav.current,
+      //   fetchedDataCache.current,
+      //   dataIdx,
+      //   createSVGOrCanvas,
+      //   "none"
+      // );
+      let tmpObj2 = { ...configOptions.current };
+      tmpObj2.displayMode = "heatmap";
 
+      let newCheck = React.cloneElement(
+        displayCache.current.density[`${dataIdx}`].canvasData,
+        { options: tmpObj2 }
+      );
+      console.log(newCheck.props);
+
+      testsetCanvasComponents(newCheck);
+      // setCanvasComponents(
+      //   <div>
+      //     <ReactComp options={tmpObj} />
+      //   </div>
+      // );
       onTrackConfigChange({
         configOptions: configOptions.current,
         trackModel: trackModel,
@@ -260,7 +275,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height + 2,
+        height: configOptions.current.height * 2 + 2,
       }}
     >
       <div
@@ -272,6 +287,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         }}
       >
         {canvasComponents}
+        {testcanvasComponents ? testcanvasComponents : ""}
       </div>
       {legend}
     </div>

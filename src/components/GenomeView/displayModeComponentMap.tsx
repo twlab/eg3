@@ -23,6 +23,7 @@ import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
 import { getContrastingColor } from "../../models/util";
 import { scaleLinear } from "d3-scale";
+import React from "react";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -529,7 +530,9 @@ export function getDisplayModeFunction(
       drawData.updatedLegend,
       drawData.trackModel
     );
-
+    // let tmpObj2 = { ...drawData.configOptions };
+    // tmpObj2.displayMode = "heatmap";
+    // let newCheck = React.cloneElement(canvasElements, { options: tmpObj2 });
     displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
