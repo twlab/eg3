@@ -24,7 +24,7 @@ export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
 };
 DEFAULT_OPTIONS.aggregateMethod = "MEAN";
-DEFAULT_OPTIONS.displayMode = "density";
+DEFAULT_OPTIONS.displayMode = "auto";
 
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
@@ -62,7 +62,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const xPos = useRef(0);
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
-  const [testcanvasComponents, testsetCanvasComponents] = useState<any>(null);
+
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
 
@@ -193,29 +193,23 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   }, [trackData]);
 
   useEffect(() => {
-    if (configChanged === true) {
-      // getConfigChangeData(
-      //   useFineOrSecondaryParentNav.current,
-      //   fetchedDataCache.current,
-      //   dataIdx,
-      //   createSVGOrCanvas,
-      //   "none"
-      // );
-      let tmpObj2 = { ...configOptions.current };
-      tmpObj2.displayMode = "heatmap";
+    if (dataIdx! in displayCache.current.density) {
+      let tmpNewConfig = { ...configOptions.current };
 
-      let newCheck = React.cloneElement(
-        displayCache.current.density[`${dataIdx}`].canvasData,
-        { options: tmpObj2 }
+      for (let key in displayCache.current.density) {
+        let curCacheComponent =
+          displayCache.current.density[`${key}`].canvasData;
+        let newComponent = React.cloneElement(curCacheComponent, {
+          options: tmpNewConfig,
+        });
+        displayCache.current.density[`${key}`].canvasData = newComponent;
+      }
+      configOptions.current = tmpNewConfig;
+      console.log(configOptions.current);
+      setCanvasComponents(
+        displayCache.current.density[`${dataIdx}`].canvasData
       );
-      console.log(newCheck.props);
 
-      testsetCanvasComponents(newCheck);
-      // setCanvasComponents(
-      //   <div>
-      //     <ReactComp options={tmpObj} />
-      //   </div>
-      // );
       onTrackConfigChange({
         configOptions: configOptions.current,
         trackModel: trackModel,
@@ -249,6 +243,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   }, [dataIdx]);
 
   useEffect(() => {
+    console.log(displayCache, fetchedDataCache);
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 
@@ -275,7 +270,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       style={{
         display: "flex",
         position: "relative",
-        height: configOptions.current.height * 2 + 2,
+        height: configOptions.current.height + 2,
       }}
     >
       <div
@@ -287,7 +282,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         }}
       >
         {canvasComponents}
-        {testcanvasComponents ? testcanvasComponents : ""}
       </div>
       {legend}
     </div>

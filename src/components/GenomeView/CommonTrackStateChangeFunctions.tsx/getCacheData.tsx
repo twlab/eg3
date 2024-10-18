@@ -37,7 +37,9 @@ export function getCacheData(
       dataValid = true;
     }
   }
-
+  if (trackModel.type === "bigwig") {
+    displayType = "density";
+  }
   if (dataValid) {
     if (dataIdx! in displayCache[`${displayType}`]) {
       updatedLegend.current = (

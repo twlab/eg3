@@ -480,7 +480,10 @@ export function getDisplayModeFunction(
       height: drawData.svgHeight.current,
       xPos: curXPos,
     };
-  } else if (drawData.configOptions.displayMode === "density") {
+  } else if (
+    drawData.trackModel.type === "bigwig" ||
+    drawData.configOptions.displayMode === "density"
+  ) {
     let formattedData;
     if (drawData.trackModel.type === "geneannotation") {
       formattedData = drawData.genesArr.map((record) => {
@@ -517,9 +520,10 @@ export function getDisplayModeFunction(
         return new NumericalFeature("", newChrInt).withValue(record.score);
       });
     }
-
     let tmpObj = { ...drawData.configOptions };
-    tmpObj.displayMode = "auto";
+    if (drawData.trackModel.type !== "bigwig") {
+      tmpObj.displayMode = "auto";
+    }
 
     let canvasElements = displayModeComponentMap["density"](
       formattedData,
