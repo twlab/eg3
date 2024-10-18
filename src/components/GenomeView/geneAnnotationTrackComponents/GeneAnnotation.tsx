@@ -14,7 +14,7 @@ const HEIGHT = 9;
 const UTR_HEIGHT = 5;
 export const DEFAULT_OPTIONS = {
   color: "blue",
-  backgroundColor: "var(--bg-color)",
+  backgroundColor: "white",
   categoryColors: {
     coding: "rgb(101,1,168)",
     protein_coding: "rgb(101,1,168)",
@@ -110,7 +110,7 @@ const GeneAnnotation: React.FC<GeneAnnotationProps> = (props: any) => {
       endX={xEnd}
       height={HEIGHT}
       isToRight={isToRight}
-      color={backgroundColor}
+      color={"white"}
       clipId={_exonClipId}
     />
   );

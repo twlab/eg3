@@ -1,0 +1,29 @@
+declare const _default: {
+    "Ruler": [
+        {
+            "type": "ruler",
+            "label": "Ruler",
+            "name": "Ruler"
+        }
+    ],
+    "Genes": [
+        {
+            "type": "refbed",
+            "name": "ensembl_gene",
+            "url": "https://vizhub.wustl.edu/public/lepOcu1/lepOcu1_Gene.bed.gz"
+        }
+    ],
+    "RepeatMasker": {
+        "All Repeats": [
+            {
+                "name": "rmsk_all",
+                "label": "RepeatMasker",
+                "filetype": "repeatmasker",
+                "url": "https://vizhub.wustl.edu/public/lepOcu1/lepOcu1.bb",
+                "height": 30
+            }
+        ]
+    }
+};
+
+export default _default;

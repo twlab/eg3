@@ -26,7 +26,7 @@ var s3Config = new S3Client({
 
 const isLocal = 1;
 
-function App() {
+function GenomeApp() {
   // Used to display the home screen and GenomeView
   // if a user add or update a new genome to aws bucket the homeView will be updated with a new state and render the newly added genome
   // if a user select or delete from their selected genomes of choice then the genomeView will update our GenomeView
@@ -239,4 +239,4 @@ function App() {
   );
 }
 
-export default App;
+export default GenomeApp;

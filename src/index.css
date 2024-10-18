@@ -1,10 +1,7 @@
 html {
-  overflow-x: hidden;
-  margin-right: calc(-1 * (100vw - 100%));
-  -webkit-backface-visibility: hidden;
-    -webkit-perspective: 1000;
-backface-visibility: hidden;
-  perspective: 1000;
+  /* overflow-x: hidden;
+  margin-right: calc(-1 * (100vw - 100%)); */
+
 }
 
 

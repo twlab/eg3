@@ -50,7 +50,7 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
       y={0}
       width={xSpan.getLength()}
       height={HEIGHT}
-      fill={isMinimal ? color : backgroundColor}
+      fill={"white"}
       opacity={isMinimal ? 1 : 0}
     />
   );
@@ -102,7 +102,7 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
       x={labelX}
       y={0}
       height={9}
-      fill={color}
+      fill={"white"}
       dy="0.65em"
       textAnchor={textAnchor}
       backgroundColor={backgroundColor}

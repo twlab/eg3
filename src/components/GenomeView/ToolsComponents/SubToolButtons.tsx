@@ -1,6 +1,6 @@
 import TrackRegionController from "../genomeNavigator/TrackRegionController";
 import ButtonGroup from "./ButtonGroup";
-import { HighlightMenu } from "./HighlightMenu";
+
 import MetadataHeader from "./MetadataHeader";
 import ReorderMany from "./ReorderMany";
 import { ToolButtons, Tools } from "./Tools";
