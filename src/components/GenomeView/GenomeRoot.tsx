@@ -8,7 +8,8 @@ import { chrType } from "../../localdata/genomename";
 
 import { v4 as uuidv4 } from "uuid";
 import useResizeObserver from "./commonComponents/Resize";
-import HG38 from "../../models/genomes/hg38/hg38";
+
+import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
@@ -96,13 +97,13 @@ function GenomeHub(props: any) {
         // second state change we set genomeList with the new size width, or if there a session data we can set it here, or if theres no data from homepage or session can set empty track, or link back to homepagea
 
         // FOR TESTTING________________________________________________________________________________________
+        let curGenome = getGenomeConfig("hg38");
+        curGenome["genomeID"] = uuidv4();
+        curGenome["windowWidth"] = size.width;
+        setGenomeList(new Array<any>(curGenome));
 
-        HG38["genomeID"] = uuidv4();
-        HG38["windowWidth"] = size.width;
-        setGenomeList(new Array<any>(HG38));
-
-        curNavRegion.current.start = HG38.defaultRegion.start;
-        curNavRegion.current.end = HG38.defaultRegion.end;
+        curNavRegion.current.start = curGenome.defaultRegion.start;
+        curNavRegion.current.end = curGenome.defaultRegion.end;
         // uncomment this when we are done
         // getSelectedGenome(size.width);
       } else if (stateChangeCount.current > 0) {
@@ -193,15 +194,15 @@ function GenomeHub(props: any) {
         //   let tempGenomeArr = new Array<any>(testGen);
 
         //   setGenomeList([...tempGenomeArr]);
-
-        HG38["genomeID"] = uuidv4();
-        HG38["windowWidth"] = size.width;
-        HG38["defaultRegion"] = new OpenInterval(
+        let curGenome = getGenomeConfig("hg38");
+        curGenome["genomeID"] = uuidv4();
+        curGenome["windowWidth"] = size.width;
+        curGenome["defaultRegion"] = new OpenInterval(
           Math.round(curNavRegion.current.start),
           Math.round(curNavRegion.current.end)
         );
 
-        setGenomeList(new Array<any>(HG38));
+        setGenomeList(new Array<any>(curGenome));
       }
 
       stateChangeCount.current++;
