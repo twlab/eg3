@@ -1,0 +1,24 @@
+import { default as React } from 'react';
+import { TrackProps } from '../../models/trackModels/trackProps';
+export declare const DEFAULT_OPTIONS: {
+    displayMode: string;
+    color: string;
+    color2: string;
+    maxRows: number;
+    height: number;
+    hideMinimalItems: boolean;
+    sortItems: boolean;
+    aggregateMethod: string;
+    colorAboveMax: string;
+    color2BelowMin: string;
+    yScale: import('../../models/ScaleChoices').ScaleChoices;
+    yMax: number;
+    yMin: number;
+    smooth: number;
+    ensemblStyle: boolean;
+    backgroundColor: string;
+    hiddenPixels: number;
+    alwaysDrawLabel: boolean;
+};
+declare const _default: React.NamedExoticComponent<TrackProps>;
+export default _default;

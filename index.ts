@@ -1,2 +1,2 @@
-import GenomeApp from "./src/components/App";
-export default GenomeApp;
+import GenomeHub from "./src/components/GenomeView/GenomeRoot";
+export default GenomeHub;
