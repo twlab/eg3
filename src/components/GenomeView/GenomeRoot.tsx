@@ -13,7 +13,7 @@ function GenomeHub(props: any) {
   const [items, setItems] = useState(chrType);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
-
+  const [isInitial, setIsInitial] = useState<boolean>(true);
   const addTrack = (curGen: any) => {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
@@ -65,28 +65,47 @@ function GenomeHub(props: any) {
       setGenomeList(tempGeneArr);
     }
   };
-
   useEffect(() => {
-    if (curNavRegion.current.start === 0) {
-      let curGenome = getGenomeConfig("hg38");
+    if (props.name || genomeList.length > 0) {
+      let curGenome = getGenomeConfig(props.name);
       curGenome["genomeID"] = uuidv4();
       curGenome["windowWidth"] = size.width;
-      setGenomeList(new Array<any>(curGenome));
+      setGenomeList([curGenome]);
 
       curNavRegion.current.start = curGenome.defaultRegion.start;
       curNavRegion.current.end = curGenome.defaultRegion.end;
+      setIsInitial(false);
     } else {
       let curGenome = getGenomeConfig("hg38");
       curGenome["genomeID"] = uuidv4();
       curGenome["windowWidth"] = size.width;
-      curGenome["defaultRegion"] = new OpenInterval(
-        Math.round(curNavRegion.current.start),
-        Math.round(curNavRegion.current.end)
-      );
+      setGenomeList([curGenome]);
 
-      setGenomeList(new Array<any>(curGenome));
+      curNavRegion.current.start = curGenome.defaultRegion.start;
+      curNavRegion.current.end = curGenome.defaultRegion.end;
+      setIsInitial(false);
     }
-  }, [size.width]);
+  }, []);
+  useEffect(() => {
+    if (!isInitial) {
+      let curGenome = getGenomeConfig("hg38");
+      curGenome["genomeID"] = uuidv4();
+      curGenome["windowWidth"] = size.width;
+      if (curNavRegion.current.start === 0) {
+        setGenomeList([curGenome]);
+
+        curNavRegion.current.start = curGenome.defaultRegion.start;
+        curNavRegion.current.end = curGenome.defaultRegion.end;
+      } else {
+        curGenome["defaultRegion"] = new OpenInterval(
+          Math.round(curNavRegion.current.start),
+          Math.round(curNavRegion.current.end)
+        );
+
+        setGenomeList([curGenome]);
+      }
+    }
+  }, [isInitial, size.width]);
 
   return (
     <div

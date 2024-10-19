@@ -13,12 +13,11 @@ const useResizeObserver = () => {
         const { width, height } = entry.contentRect;
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
         if (Math.abs(width - prevSize.current.width) > 100) {
-          console.log(width - prevSize.current.width);
           setSize({ width, height });
           prevSize.current = { width, height };
         }
       }
-    }, 100); // Adjust debounce delay as needed
+    }, 0); // Adjust debounce delay as needed
 
     const observer = new ResizeObserver(handleResize as any);
 
