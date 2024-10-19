@@ -11,22 +11,17 @@ export default defineConfig({
     },
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
   },
-
   define: {
-    // By default, Vite doesn't include shims for NodeJS/
-    // necessary for segment analytics lib to work
     "process.env": {},
   },
   server: {
     fs: {
-      allow: [
-        fileURLToPath(new URL(".", import.meta.url)), // Allow serving files from project root
-      ],
+      allow: [fileURLToPath(new URL(".", import.meta.url))],
     },
   },
   build: {
     lib: {
-      entry: path.resolve(__dirname, "index.ts"),
+      entry: path.resolve(__dirname, "src/lib/index.ts"),
       name: "GenBrowser",
       fileName: (format) => `index.${format}.js`,
     },
@@ -40,5 +35,11 @@ export default defineConfig({
       },
     },
   },
-  plugins: [react(), dts()],
+  plugins: [
+    react(),
+    dts({
+      outDir: "dist",
+      entryRoot: "src/lib",
+    }),
+  ],
 });
