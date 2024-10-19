@@ -2,8 +2,7 @@ import React from "react";
 import { DragAcrossDiv } from "./DragAcrossDiv";
 import OpenInterval from "../../../models/OpenInterval";
 import { MouseButton, getRelativeCoordinates } from "../../../models/util";
-
-import "./SelectableArea.css";
+import styles from "./SelectableArea.module.css";
 
 const CANCEL_KEY = 27; // Escape
 
@@ -175,9 +174,9 @@ export class SelectableArea extends React.PureComponent<
     let theBox;
     if (this.state.isDragging) {
       const selectedSpan = this.getSelectedSpan();
-      let className = "SelectableArea-box";
+      let className = styles["SelectableArea-box"];
       if (!getIsAreaValid!(selectedSpan)) {
-        className += " SelectableArea-box-invalid";
+        className += styles["SelectableArea-box-invalid"];
       }
       const style = {
         left: selectedSpan.start + "px",
