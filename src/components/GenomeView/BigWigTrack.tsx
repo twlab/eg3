@@ -205,7 +205,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         displayCache.current.density[`${key}`].canvasData = newComponent;
       }
       configOptions.current = tmpNewConfig;
-      console.log(configOptions.current);
+
       setCanvasComponents(
         displayCache.current.density[`${dataIdx}`].canvasData
       );

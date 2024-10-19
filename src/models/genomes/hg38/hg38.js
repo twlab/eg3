@@ -81,38 +81,38 @@ const defaultTracks = [
       },
     },
   }),
-  // new TrackModel({
-  //   type: "matplot",
-  //   name: "matplot wrap",
-  //   tracks: [
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  //       name: "MeDIP",
-  //       options: {
-  //         color: "red",
-  //         backgroundColor: "#FFE7AB",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MeDIP",
-  //       },
-  //     },
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-  //       name: "MRE",
-  //       options: {
-  //         color: "blue",
-  //         backgroundColor: "#C0E3CC",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MRE",
-  //       },
-  //     },
-  //   ],
-  // }),
+  new TrackModel({
+    type: "matplot",
+    name: "matplot wrap",
+    tracks: [
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+        name: "MeDIP",
+        options: {
+          color: "red",
+          backgroundColor: "#FFE7AB",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MeDIP",
+        },
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+        name: "MRE",
+        options: {
+          color: "blue",
+          backgroundColor: "#C0E3CC",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MRE",
+        },
+      },
+    ],
+  }),
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",
@@ -166,20 +166,20 @@ const defaultTracks = [
   //     height: 100,
   //   },
   // }),
-  // new TrackModel({
-  //   type: "methylc",
-  //   name: "H1",
-  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-  //   options: {
-  //     label: "Methylation",
-  //     colorsForContext: {
-  //       CG: { color: "#648bd8", background: "#d9d9d9" },
-  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
-  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
-  //     },
-  //     depthColor: "#01E9FE",
-  //   },
-  // }),
+  new TrackModel({
+    type: "methylc",
+    name: "H1",
+    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+    options: {
+      label: "Methylation",
+      colorsForContext: {
+        CG: { color: "#648bd8", background: "#d9d9d9" },
+        CHG: { color: "#ff944d", background: "#ffe0cc" },
+        CHH: { color: "#ff00ff", background: "#ffe5ff" },
+      },
+      depthColor: "#01E9FE",
+    },
+  }),
 
   new TrackModel({
     name: "hg38tomm10",

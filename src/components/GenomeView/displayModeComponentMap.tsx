@@ -23,7 +23,9 @@ import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
 import { getContrastingColor } from "../../models/util";
 import { scaleLinear } from "d3-scale";
-import React from "react";
+
+import MethylCRecord from "../../models/MethylCRecord";
+import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -309,7 +311,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return svgDATA;
   },
-
+  // this part for numerical track____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
   density: function getDensity(
     formattedData,
     useFineOrSecondaryParentNav,
@@ -361,6 +365,61 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getNumLegend={getNumLegend}
       />
     );
+    return canvasElements;
+  },
+
+  methylc: function getMethylc(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+    let canvasElements = (
+      <MethylCTrackComputation
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+      />
+    );
+
     return canvasElements;
   },
 };
@@ -480,7 +539,44 @@ export function getDisplayModeFunction(
       height: drawData.svgHeight.current,
       xPos: curXPos,
     };
-  } else if (
+  }
+
+  // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
+  else if (drawData.trackModel.type === "methylc") {
+    let formattedData;
+    if (drawData.trackModel.type === "methylc") {
+      formattedData = drawData.genesArr.map((record) => {
+        return new MethylCRecord(record);
+      });
+    }
+    let tmpObj = { ...drawData.configOptions };
+
+    tmpObj.displayMode = "auto";
+
+    let canvasElements = displayModeComponentMap["methylc"](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+    console.log(canvasElements, formattedData);
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  }
+
+  // this part for numerical track____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
+  else if (
     drawData.trackModel.type === "bigwig" ||
     drawData.configOptions.displayMode === "density"
   ) {
@@ -534,9 +630,7 @@ export function getDisplayModeFunction(
       drawData.updatedLegend,
       drawData.trackModel
     );
-    // let tmpObj2 = { ...drawData.configOptions };
-    // tmpObj2.displayMode = "heatmap";
-    // let newCheck = React.cloneElement(canvasElements, { options: tmpObj2 });
+
     displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,

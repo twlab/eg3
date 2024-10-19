@@ -127,7 +127,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           legendRef.current
         );
       }
-
+      console.log(genesArr);
       let canvasElements = (
         <MatplotTrackComponent
           data={algoData}
