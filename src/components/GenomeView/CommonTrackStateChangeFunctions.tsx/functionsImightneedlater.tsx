@@ -324,3 +324,140 @@
 //       );
 //     }
 //   }
+
+//  useEffect(() => {
+//    if (Math.floor(prevSize.current) !== Math.floor(size.width)) {
+//      if (stateChangeCount.current === 0) {
+//        // second state change we set genomeList with the new size width, or if there a session data we can set it here, or if theres no data from homepage or session can set empty track, or link back to homepagea
+
+//        // FOR TESTTING________________________________________________________________________________________
+//        let curGenome = getGenomeConfig("hg38");
+//        curGenome["genomeID"] = uuidv4();
+//        curGenome["windowWidth"] = size.width;
+//        setGenomeList(new Array<any>(curGenome));
+
+//        curNavRegion.current.start = curGenome.defaultRegion.start;
+//        curNavRegion.current.end = curGenome.defaultRegion.end;
+//        // uncomment this when we are done
+//        // getSelectedGenome(size.width);
+//      } else if (stateChangeCount.current > 0) {
+//        // every state change after 1 will be resizing, need to get navCoord from trackmanager and set it with new genome object and new key to sent
+
+//        //______ for test
+//        // let chrObj = {};
+//        // for (const chromosome of ChromosomeData["HG38"]) {
+//        //   chrObj[chromosome.getName()] = chromosome.getLength();
+//        // }
+
+//        // let featureArray = makeNavContext("HG38");
+
+//        // let testGen: any = {
+//        //   name: "hg38",
+//        //   species: "human",
+//        //   id: uuidv4(),
+//        //   windowWidth: size.width,
+//        //   visData: "",
+//        //   // testing mutiple chr 'chr7:150924404-152924404'
+
+//        //   //chr7:27053397-27373765
+//        //   // chr7:10000-20000
+//        //   //testing finemode  27213325-27213837
+//        //   //chr7:159159564-chr8:224090
+//        //   featureArray,
+//        //   defaultRegion: "chr7:27053397-27373765",
+//        //   chrOrder: items,
+//        //   chromosomes: chrObj,
+//        //   size: false,
+//        //   defaultTracks: [
+//        //     new TrackModel({
+//        //       type: "geneAnnotation",
+//        //       name: "refGene",
+//        //       genome: "hg38",
+//        //     }),
+//        //     // {
+//        //     //   name: "bed",
+//        //     //   genome: "hg19",
+//        //     //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+//        //     // },
+
+//        //     {
+//        //       name: "bigWig",
+//        //       genome: "hg19",
+//        //       url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+//        //     },
+
+//        //     {
+//        //       name: "dynseq",
+//        //       genome: "hg19",
+//        //       url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+//        //     },
+//        //     {
+//        //       name: "methylc",
+//        //       genome: "hg19",
+//        //       url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+//        //     },
+//        //     {
+//        //       name: "hic",
+//        //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+//        //       genome: "hg19",
+//        //     },
+//        //     {
+//        //       name: "hic",
+//        //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+//        //       genome: "hg19",
+//        //     },
+//        //     {
+//        //       name: "genomealign",
+//        //       genome: "hg38",
+//        //       url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+//        //       trackModel: {
+//        //         name: "hg38tomm10",
+//        //         label: "Query mouse mm10 to hg38 blastz",
+//        //         querygenome: "mm10",
+//        //         filetype: "genomealign",
+//        //         url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+//        //       },
+//        //     },
+//        //   ],
+//        //   annotationTrackData: AnnotationTrackData["HG19"],
+//        //   publicHubData: PublicHubAllData["HG19"]["publicHubData"],
+//        //   publicHubList: PublicHubAllData["HG19"]["publicHubList"],
+//        //   twoBitURL: TwoBitUrlData["HG19"],
+//        // };
+
+//        //   let tempGenomeArr = new Array<any>(testGen);
+
+//        //   setGenomeList([...tempGenomeArr]);
+//        let curGenome = getGenomeConfig("hg38");
+//        curGenome["genomeID"] = uuidv4();
+//        curGenome["windowWidth"] = size.width;
+//        curGenome["defaultRegion"] = new OpenInterval(
+//          Math.round(curNavRegion.current.start),
+//          Math.round(curNavRegion.current.end)
+//        );
+
+//        setGenomeList(new Array<any>(curGenome));
+//      }
+
+//      stateChangeCount.current++;
+
+//      // if(props.selectedGenome.length === 0)
+//      // const storedArray = sessionStorage.getItem("myArray");
+//      // const chrOrderStorage = sessionStorage.getItem("chrOrder");
+//      // if (storedArray !== null) {
+//      //   const parsedArray = JSON.parse(storedArray);
+//      //   if (chrOrderStorage !== null) {
+//      //     setItems([...JSON.parse(chrOrderStorage)]);
+//      //     parsedArray.chrOrder = [...JSON.parse(chrOrderStorage)];
+//      //   }
+//      //   setGenomeList(new Array<any>(parsedArray));
+//      // } else
+
+//      //  else else {
+//      //     initialRender.current = false;
+//      //   }
+//      //   // }
+//      // }
+//    }
+//    prevSize.current = size.width;
+//  }, [size]);

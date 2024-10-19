@@ -8,7 +8,7 @@ import {
 } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-const fullWindowWidth = window.outerWidth;
+
 import RefGeneTrack from "./RefGeneTrack";
 import BedTrack from "./BedTrack";
 import BigBedTrack from "./BigBedTrack";

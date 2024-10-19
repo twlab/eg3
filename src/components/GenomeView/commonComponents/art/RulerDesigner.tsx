@@ -149,7 +149,7 @@ export class RulerDesigner {
       while (x < xEnd) {
         elements.push(getTickElement(x));
         const numberToDisplay = (base / unit.size).toFixed(unit.digits);
-        if (numberToDisplay > 0) {
+        if (numberToDisplay > "0") {
           elements.push(getTextElement(x, numberToDisplay + unit.name));
         }
 
@@ -179,6 +179,9 @@ const FONT_SIZE = 12;
  * @author Silas Hsu
  */
 export class RulerElementFactory {
+  color: string;
+  majorTickHeight: number;
+  fontSize: number;
   /**
    * Configures a new instance that returns React elements that are valid <svg> elements.
    *
@@ -246,16 +249,12 @@ export class RulerElementFactory {
    * @return {JSX.Element}
    */
   majorTickText(x, text) {
-    const style = {
-      textAnchor: "middle",
-      fontSize: this.fontSize,
-    };
     return (
       <text
         key={"text" + x}
         x={x}
         y={this.fontSize + 2}
-        style={style}
+        style={{ textAnchor: "middle", fontSize: this.fontSize }}
         className="svg-text-bg"
       >
         {text}
