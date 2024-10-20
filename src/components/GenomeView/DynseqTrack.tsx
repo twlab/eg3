@@ -50,7 +50,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
-
+  const parentGenome = useRef("");
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const useFineOrSecondaryParentNav = useRef(false);
@@ -83,6 +83,8 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         svgHeight,
         updatedLegend,
         trackModel,
+        genomeConfig: getGenomeConfig(parentGenome.current),
+        basesByPixel: bpToPx,
       },
       displaySetter,
       displayCache,
@@ -151,6 +153,11 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (trackData!.initial === 1) {
+        if ("genome" in trackData![`${id}`].metadata) {
+          parentGenome.current = trackData![`${id}`].metadata.genome;
+        } else {
+          parentGenome.current = trackData!.trackState.primaryGenName;
+        }
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,

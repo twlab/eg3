@@ -189,12 +189,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     zIndex: 3,
     pointerEvents: "none",
+
+    borderTop: "1px dotted grey",
   };
   const verticalLineStyle: CSSProperties = {
     position: "absolute",
     height: "100%",
     width: "2px",
-
+    top: 0,
+    borderLeft: "1px dotted grey",
     zIndex: 3,
     pointerEvents: "none",
   };
@@ -932,16 +935,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   flexDirection: "column",
                 }}
               >
-                <div
-                  ref={horizontalLineRef}
-                  className="Bullseye-horizontal-line"
-                  style={horizontalLineStyle}
-                />
-                <div
-                  ref={verticalLineRef}
-                  className="Bullseye-vertical-line"
-                  style={verticalLineStyle}
-                />
+                <div ref={horizontalLineRef} style={horizontalLineStyle} />
+                <div ref={verticalLineRef} style={verticalLineStyle} />
                 {trackComponents.map((item, index) => {
                   let Component = item.component;
 

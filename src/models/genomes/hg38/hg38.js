@@ -157,15 +157,15 @@ const defaultTracks = [
       color: "blue",
     },
   }),
-  // new TrackModel({
-  //   type: "dynseq",
-  //   name: "example dynseq",
-  //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-  //   options: {
-  //     color: "blue",
-  //     height: 100,
-  //   },
-  // }),
+  new TrackModel({
+    type: "dynseq",
+    name: "example dynseq",
+    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+    options: {
+      color: "blue",
+      height: 100,
+    },
+  }),
   new TrackModel({
     type: "methylc",
     name: "H1",

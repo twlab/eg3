@@ -59,7 +59,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   const [legend, setLegend] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
 
-  function createSVG(trackState, alignmentData) {
+  function createSVGOrCanvas(trackState, alignmentData) {
     let result = alignmentData;
     let svgElements;
 
@@ -186,7 +186,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         cachedData: viewData,
         initial: 0,
       };
-      createSVG(fetchedDataCache.current[curIdx].trackState, viewData);
+      createSVGOrCanvas(fetchedDataCache.current[curIdx].trackState, viewData);
     }
   }
   // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
@@ -214,7 +214,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           trackState: trackState,
           cachedData: curDataArr,
         };
-        createSVG(trackState, curDataArr);
+        createSVGOrCanvas(trackState, curDataArr);
       } else {
         let newTrackState = {
           ...trackData!.trackState,
@@ -237,7 +237,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             cachedData: fetchedDataCache.current[rightIdx.current + 1].data,
             initial: 0,
           };
-          createSVG(
+          createSVGOrCanvas(
             newTrackState,
             fetchedDataCache.current[rightIdx.current + 1].data
           );
@@ -256,7 +256,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             initial: 0,
           };
 
-          createSVG(
+          createSVGOrCanvas(
             newTrackState,
             fetchedDataCache.current[leftIdx.current - 1].data
           );
@@ -304,7 +304,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }
   useEffect(() => {
     if (configChanged === true) {
-      createSVG(
+      createSVGOrCanvas(
         curRegionData.current.trackState,
         curRegionData.current.cachedData
       );

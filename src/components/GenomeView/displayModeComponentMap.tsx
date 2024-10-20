@@ -26,6 +26,7 @@ import { scaleLinear } from "d3-scale";
 
 import MethylCRecord from "../../models/MethylCRecord";
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
+import DynseqTrackComponents from "./DynseqComponents/DynseqTrackComponents";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -422,6 +423,65 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     return canvasElements;
   },
+  dynseq: function getDynseq(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel,
+    genomeConfig,
+    basesByPixel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+
+    let canvasElements = (
+      <DynseqTrackComponents
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+        basesByPixel={basesByPixel}
+        genomeConfig={genomeConfig}
+      />
+    );
+
+    return canvasElements;
+  },
 };
 
 export function getDisplayModeFunction(
@@ -544,27 +604,38 @@ export function getDisplayModeFunction(
   // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
-  else if (drawData.trackModel.type === "methylc") {
+  else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
     let formattedData;
     if (drawData.trackModel.type === "methylc") {
       formattedData = drawData.genesArr.map((record) => {
         return new MethylCRecord(record);
+      });
+    } else if (drawData.trackModel.type === "dynseq") {
+      formattedData = drawData.genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        return new NumericalFeature("", newChrInt).withValue(record.score);
       });
     }
     let tmpObj = { ...drawData.configOptions };
 
     tmpObj.displayMode = "auto";
 
-    let canvasElements = displayModeComponentMap["methylc"](
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
       drawData.trackState,
       drawData.windowWidth,
       tmpObj,
       drawData.updatedLegend,
-      drawData.trackModel
+      drawData.trackModel,
+      drawData.genomeConfig,
+      drawData.basesByPixel
     );
-    console.log(canvasElements, formattedData);
+
     displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,

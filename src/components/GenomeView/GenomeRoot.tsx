@@ -15,13 +15,11 @@ import OpenInterval from "../../models/OpenInterval";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub(props: any) {
-  const stateChangeCount = useRef(0);
   const curNavRegion = useRef<{ [key: string]: any }>({ start: 0, end: 0 });
   const [items, setItems] = useState(chrType);
   const [isInitial, setIsInitial] = useState<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
-  const prevSize = useRef<any>(0);
 
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
