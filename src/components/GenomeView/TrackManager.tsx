@@ -38,7 +38,7 @@ import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
-
+import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
@@ -121,6 +121,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const infiniteScrollWorker = useRef<Worker>();
   const useFineModeNav = useRef(false);
+  const ToolChange = useRef(false);
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
@@ -396,7 +397,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     setSelectConfigChange({ changedOption: { [key]: value }, selectedTracks });
   }
-
+  function onAreaSelected(startbase: any, endbase: any) {
+    console.log(startbase, endbase, selectedTool);
+  }
   function renderTrackSpecificItems(x, y) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
@@ -725,10 +728,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      setSelectedTool("none");
+      isLoading.current = false;
+    }
+  };
+
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
     window.addEventListener("scroll", handleScroll);
-
+    document.addEventListener("keydown", handleKeyDown);
     const parentElement = block.current;
     if (parentElement) {
       parentElement.addEventListener("mousemove", handleMove);
@@ -743,7 +753,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
       }
-
+      document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("scroll", handleScroll);
@@ -829,7 +839,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
-
   useEffect(() => {
     if (trackManagerId.current === "") {
       // on initial and when our genome data changes we set the default values here
@@ -999,31 +1008,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           onTrackConfigChange={onTrackConfigChange}
                           selectConfigChange={selectConfigChange}
                         />
+                        <div
+                          style={{
+                            display: "flex",
+                            position: "absolute",
+                            width: `${windowWidth - 1}px`,
+                            zIndex: 10,
+                          }}
+                        >
+                          {selectedTool !== "none" ? (
+                            <SelectableArea>
+                              <div
+                                style={{
+                                  height: block.current
+                                    ? block.current?.getBoundingClientRect()
+                                        .height
+                                    : 0,
+                                  width: `${windowWidth - 1}px`,
+                                }}
+                              ></div>
+                            </SelectableArea>
+                          ) : (
+                            ""
+                          )}
+                        </div>
                       </div>
-                      {/* <div
-                        style={{
-                          display: "flex",
-                          position: "absolute",
-                          width: `${windowWidth - 1}px`,
-                          zIndex: 10,
-                        }}
-                      >
-                        {selectedTool !== "none" ? (
-                          <SelectableArea>
-                            <div
-                              style={{
-                                height: block.current
-                                  ? block.current?.getBoundingClientRect()
-                                      .height
-                                  : 0,
-                                width: `${windowWidth - 1}px`,
-                              }}
-                            ></div>
-                          </SelectableArea>
-                        ) : (
-                          ""
-                        )}
-                      </div> */}
                     </div>
                   );
                 })}
@@ -1035,22 +1044,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   width: `${windowWidth - 1}px`,
                   zIndex: 10,
                 }}
-              >
-                {selectedTool !== "none" ? (
-                  <SelectableArea>
-                    <div
-                      style={{
-                        height: block.current
-                          ? block.current?.getBoundingClientRect().height
-                          : 0,
-                        width: `${windowWidth - 1}px`,
-                      }}
-                    ></div>
-                  </SelectableArea>
-                ) : (
-                  ""
-                )}
-              </div>
+              ></div>
             </div>
 
             {/* 

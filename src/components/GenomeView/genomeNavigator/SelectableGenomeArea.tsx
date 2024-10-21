@@ -13,7 +13,7 @@ interface SelectableGenomeAreaProps {
   dragLimits: OpenInterval; // Drawing limits of the selection box
   y?: number | string; // Relative Y of the top of the selection box; how far from the top of this container
   height?: number | string; // Height of the selection box
-  children: React.ReactNode;
+  children?: React.ReactNode;
   /**
    * Callback for when a region is selected.
    *
