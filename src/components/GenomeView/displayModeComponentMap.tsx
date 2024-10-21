@@ -38,6 +38,7 @@ import {
 import { GapText } from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
 import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
+import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -797,9 +798,78 @@ export function getDisplayModeFunction(
   // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
   //_________________________________
-  else if (drawData.trackModel.type === "hic") {
+  else if (
+    drawData.trackModel.type in { hic: "", biginteract: "", longrange: "" }
+  ) {
+    let formattedData: any = [];
+    if (drawData.trackModel.type === "biginteract") {
+      drawData.genesArr.map((record) => {
+        const regexMatch = record["rest"].match(
+          /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
+        );
+
+        if (regexMatch) {
+          const fields = record["rest"].split("\t");
+
+          const score = parseInt(fields[1]);
+          const value = fields[2];
+          const region1Chrom = fields[5];
+          const region1Start = parseInt(fields[6]);
+          const region1End = parseInt(fields[7]);
+          const region2Chrom = fields[10];
+          const region2Start = parseInt(fields[11]);
+          const region2End = parseInt(fields[12]);
+
+          const recordLocus1 = new ChromosomeInterval(
+            region1Chrom,
+            region1Start,
+            region1End
+          );
+          const recordLocus2 = new ChromosomeInterval(
+            region2Chrom,
+            region2Start,
+            region2End
+          );
+          formattedData.push(
+            new GenomeInteraction(recordLocus1, recordLocus2, score)
+          );
+        } else {
+          console.error(
+            `${record[3]} not formatted correctly in BIGinteract track`
+          );
+        }
+      });
+    } else if (drawData.trackModel.type === "longrange") {
+      drawData.genesArr.map((record) => {
+        const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
+
+        if (regexMatch) {
+          const chr = regexMatch[1];
+          const start = Number.parseInt(regexMatch[2], 10);
+          const end = Number.parseInt(regexMatch[3], 10);
+          // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
+          const score = Number.parseFloat(record[3].split(",")[1]);
+          const recordLocus1 = new ChromosomeInterval(
+            record.chr,
+            record.start,
+            record.end
+          );
+          const recordLocus2 = new ChromosomeInterval(chr, start, end);
+          formattedData.push(
+            new GenomeInteraction(recordLocus1, recordLocus2, score)
+          );
+        } else {
+          console.error(
+            `${record[3]} not formated correctly in longrange track`
+          );
+        }
+      });
+    } else {
+      formattedData = drawData.genesArr;
+    }
+
     let canvasElements = displayModeComponentMap["interaction"](
-      drawData.genesArr,
+      formattedData,
       drawData.useFineOrSecondaryParentNav,
       drawData.trackState,
       drawData.windowWidth,

@@ -38,7 +38,9 @@ export function getCacheData(
     }
   }
 
-  if (trackModel.type in { bigwig: "", hic: "" }) {
+  if (
+    trackModel.type in { bigwig: "", hic: "", biginteract: "", longrange: "" }
+  ) {
     displayType = "density";
   }
   if (dataValid) {
