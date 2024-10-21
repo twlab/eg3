@@ -214,7 +214,6 @@ export function cacheTrackData(
 
       let viewData;
       if (trackModel.type === "matplot") {
-        console.log(testData);
         viewData = getDeDupeArrMatPlot(testData);
       } else {
         let dataCacheArray = testData.map((item) => item.dataCache).flat(1);

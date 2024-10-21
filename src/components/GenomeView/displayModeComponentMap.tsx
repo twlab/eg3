@@ -37,6 +37,7 @@ import {
 } from "./GenomeAlignComponents/GenomeAlignComponents";
 import { GapText } from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
+import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -431,7 +432,50 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+  interaction: function getInteraction(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
 
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+
+    let canvasElements = (
+      <InteractionTrackComponent
+        data={formattedData}
+        options={configOptions}
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        visRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+      />
+    );
+
+    return canvasElements;
+  },
   methylc: function getMethylc(
     formattedData,
     useFineOrSecondaryParentNav,
@@ -753,7 +797,24 @@ export function getDisplayModeFunction(
   // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
   //_________________________________
-  else if (drawData.trackModel.type === "matplot") {
+  else if (drawData.trackModel.type === "hic") {
+    let canvasElements = displayModeComponentMap["interaction"](
+      drawData.genesArr,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      drawData.configOptions,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: drawData.configOptions.height,
+      xPos: curXPos,
+    };
+  } else if (drawData.trackModel.type === "matplot") {
     let formattedData: Array<any> = [];
     for (let i = 0; i < drawData.genesArr.length; i++) {
       formattedData.push(

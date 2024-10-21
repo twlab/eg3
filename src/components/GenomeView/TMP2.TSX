@@ -1,201 +1,256 @@
 import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+// import worker_script from '../../Worker/worker';
+import _ from "lodash";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { objToInstanceAlign } from "./TrackManager";
 
-import OpenInterval from "../../models/OpenInterval";
-
-import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
-import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
-
-import { MatplotTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MatplotTrackConfig";
-import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+import OpenInterval from "../../models/OpenInterval";
+import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
+import { objToInstanceAlign } from "./TrackManager";
+import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
+import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
 
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import { NumericalFeature } from "../../models/Feature";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
 import ReactDOM from "react-dom";
-
-export const DEFAULT_OPTIONS = {
-  ...defaultNumericalTrack,
-  ...defaultMatplot,
-};
-DEFAULT_OPTIONS.aggregateMethod = "MEAN";
-DEFAULT_OPTIONS.displayMode = "density";
-
-const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
+const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack({
+  bpToPx,
+  side,
   trackData,
   onTrackConfigChange,
 
-  side,
-  windowWidth = 0,
-  genomeArr,
-  genomeIdx,
-  trackModel,
-  dataIdx,
-  getConfigMenu,
-  onCloseConfigMenu,
-  handleDelete,
   trackIdx,
+  handleDelete,
+  windowWidth,
+  dataIdx,
+  onCloseConfigMenu,
+  trackModel,
+
   id,
-  useFineModeNav,
+  getConfigMenu,
   legendRef,
   trackManagerRef,
 }) {
-  const configOptions = useRef({ ...DEFAULT_OPTIONS });
-
+  //useRef to store data between states without re render the component
+  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
+  const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const curRegionData = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
-  const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const [canvasComponents, setCanvasComponents] = useState<any>();
-  const newTrackWidth = useRef(windowWidth);
-  const [configChanged, setConfigChanged] = useState(false);
+
+  const updateLegendCanvas = useRef<any>(null);
+
   const [legend, setLegend] = useState<any>();
+  const [canvasComponents, setCanvasComponents] = useState<any>();
+  const [configChanged, setConfigChanged] = useState(false);
 
-  // These states are used to update the tracks with new fetched data
-  // new track sections are added as the user moves left (lower regions) and right (higher region)
-  // New data are fetched only if the user drags to the either ends of the track
+  const newTrackWidth = useRef(windowWidth);
 
-  async function createCanvas(curTrackData, genesArr, fine) {
-    if (fine) {
-      newTrackWidth.current = curTrackData.visWidth;
+  async function createCanvas(curTrackData, genesArr) {
+    let algoData = genesArr;
+
+    let tmpObj = { ...configOptions.current };
+
+    tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
+    function getNumLegend(legend: ReactNode) {
+      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
     }
+    let canvasElements = (
+      <InteractionTrackComponent
+        data={algoData}
+        options={tmpObj}
+        viewWindow={new OpenInterval(0, curTrackData.visWidth)}
+        visRegion={objToInstanceAlign(curTrackData.visRegion)}
+        width={curTrackData.visWidth}
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+      />
+    );
+    setCanvasComponents(canvasElements);
 
-    let currDisplayNav;
-
-    if (!fine) {
-      if (curTrackData.side === "right") {
-        currDisplayNav = new DisplayedRegionModel(
-          curTrackData.regionNavCoord._navContext,
-          curTrackData.regionNavCoord._startBase -
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase) *
-              2,
-          curTrackData.regionNavCoord._endBase
-        );
-        if (curTrackData.index === 0) {
-          currDisplayNav = new DisplayedRegionModel(
-            curTrackData.regionNavCoord._navContext,
-            curTrackData.regionNavCoord._startBase -
-              (curTrackData.regionNavCoord._endBase -
-                curTrackData.regionNavCoord._startBase),
-            curTrackData.regionNavCoord._endBase +
-              (curTrackData.regionNavCoord._endBase -
-                curTrackData.regionNavCoord._startBase)
-          );
-        }
-      } else if (curTrackData.side === "left") {
-        currDisplayNav = new DisplayedRegionModel(
-          curTrackData.regionNavCoord._navContext,
-          curTrackData.regionNavCoord._startBase,
-          curTrackData.regionNavCoord._endBase +
-            (curTrackData.regionNavCoord._endBase -
-              curTrackData.regionNavCoord._startBase) *
-              2
-        );
-      }
-    }
-
-    let algoData: Array<any> = [];
-    for (let i = 0; i < genesArr.length; i++) {
-      algoData.push(
-        genesArr[i].map((record) => {
-          let newChrInt = new ChromosomeInterval(
-            record.chr,
-            record.start,
-            record.end
-          );
-          return new NumericalFeature("", newChrInt).withValue(record.score);
-        })
-      );
-    }
-
-    if (configOptions.current.displayMode === "density") {
-      let tmpObj = { ...configOptions.current };
-      tmpObj.displayMode = "auto";
-      function getNumLegend(legend: ReactNode) {
-        updatedLegend.current = ReactDOM.createPortal(
-          legend,
-          legendRef.current
-        );
-      }
-      console.log(genesArr);
-      let canvasElements = (
-        <MatplotTrackComponent
-          data={algoData}
-          options={tmpObj}
-          viewWindow={
-            new OpenInterval(0, fine ? curTrackData.visWidth : windowWidth * 3)
-          }
-          viewRegion={
-            fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
-          }
-          width={fine ? curTrackData.visWidth : windowWidth * 3}
-          forceSvg={false}
-          trackModel={trackModel}
-          getNumLegend={getNumLegend}
-        />
-      );
-      setCanvasComponents(canvasElements);
-    }
     if (curTrackData.initial === 1) {
-      xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
+      xPos.current = -curTrackData.startWindow;
     } else if (curTrackData.side === "right") {
-      xPos.current = fine
-        ? (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
-          windowWidth +
-          curTrackData.startWindow
-        : (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth;
+      xPos.current =
+        (Math.floor(-curTrackData.xDist / windowWidth) - 1) * windowWidth -
+        windowWidth +
+        curTrackData.startWindow;
     } else if (curTrackData.side === "left") {
-      xPos.current = fine
-        ? (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
-          windowWidth +
-          curTrackData.startWindow
-        : (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth;
+      xPos.current =
+        (Math.floor(curTrackData.xDist / windowWidth) - 1) * windowWidth -
+        windowWidth +
+        curTrackData.startWindow;
     }
     updateSide.current = side;
+    newTrackWidth.current = curTrackData.visWidth;
   }
 
-  //________________________________________________________________________________________________________________________________________________________
+  // function to get for dataidx change and getting stored data
+  function getCacheData() {
+    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
+    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
+    // otherwise when there is new data cuz the user is at the end of the track
+    let viewData: Array<any> = [];
+    let curIdx;
+
+    if (dataIdx! !== rightIdx.current && dataIdx! <= 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
+    } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
+      viewData = fetchedDataCache.current[dataIdx!].data;
+      curIdx = dataIdx!;
+    }
+    if (viewData.length > 0) {
+      curRegionData.current = {
+        trackState: fetchedDataCache.current[curIdx].trackState,
+        cachedData: viewData,
+        initial: 0,
+      };
+      createCanvas(fetchedDataCache.current[curIdx].trackState, viewData);
+    }
+  }
+  // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
+  useEffect(() => {
+    async function handle() {
+      if (trackData![`${id}`] !== undefined) {
+        const primaryVisData =
+          trackData!.trackState.genomicFetchCoord[
+            trackData!.trackState.primaryGenName
+          ].primaryVisData;
+
+        if (trackData!.initial === 1) {
+          //boxXpos.current = trackManagerRef.current!.getBoundingClientRect().x;
+          if (trackModel.options) {
+            configOptions.current = {
+              ...configOptions.current,
+              ...trackModel.options,
+            };
+          }
+          if ("genome" in trackData![`${id}`].metadata) {
+            parentGenome.current = trackData![`${id}`].metadata.genome;
+          } else {
+            parentGenome.current = trackData!.trackState.primaryGenName;
+          }
+          let visRegion =
+            "genome" in trackData![`${id}`].metadata
+              ? trackData!.trackState.genomicFetchCoord[
+                  trackData![`${id}`].metadata.genome
+                ].queryRegion
+              : primaryVisData.visRegion;
+
+          let result = await trackData![`${id}`].straw.getData(
+            objToInstanceAlign(visRegion),
+            bpToPx,
+            configOptions.current
+          );
+
+          let trackState = {
+            initial: 1,
+            side: "right",
+            xDist: 0,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
+          };
+
+          fetchedDataCache.current[rightIdx.current] = {
+            data: result,
+            trackState: trackState,
+          };
+          rightIdx.current--;
+
+          let curDataArr = fetchedDataCache.current[0].data;
+
+          curRegionData.current = {
+            trackState: trackState,
+            cachedData: curDataArr,
+          };
+          createCanvas(trackState, curDataArr);
+        } else {
+          let visRegion;
+          if ("genome" in trackData![`${id}`].metadata) {
+            visRegion =
+              trackData!.trackState.genomicFetchCoord[
+                `${trackData![`${id}`].metadata.genome}`
+              ].queryRegion;
+          } else {
+            visRegion = primaryVisData.visRegion;
+          }
+          let newTrackState = {
+            initial: 0,
+            side: trackData!.trackState.side,
+            xDist: trackData!.trackState.xDist,
+            visRegion: visRegion,
+            startWindow: primaryVisData.viewWindow.start,
+            visWidth: primaryVisData.visWidth,
+          };
+          let result = await trackData![`${id}`].straw.getData(
+            objToInstanceAlign(visRegion),
+            bpToPx,
+            configOptions.current
+          );
+
+          if (trackData!.trackState.side === "right") {
+            newTrackState["index"] = rightIdx.current;
+            fetchedDataCache.current[rightIdx.current] = {
+              data: result,
+              trackState: newTrackState,
+            };
+
+            rightIdx.current--;
+
+            curRegionData.current = {
+              trackState: newTrackState,
+              cachedData: fetchedDataCache.current[rightIdx.current + 1].data,
+              initial: 0,
+            };
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[rightIdx.current + 1].data
+            );
+          } else if (trackData!.trackState.side === "left") {
+            newTrackState["index"] = leftIdx.current;
+            fetchedDataCache.current[leftIdx.current] = {
+              data: result,
+              trackState: newTrackState,
+            };
+
+            leftIdx.current++;
+
+            curRegionData.current = {
+              trackState: newTrackState,
+              cachedData: fetchedDataCache.current[leftIdx.current - 1].data,
+              initial: 0,
+            };
+
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[leftIdx.current - 1].data
+            );
+          }
+        }
+      }
+    }
+    handle();
+  }, [trackData]);
+  // when INDEX POSITION CHANGE
+
+  useEffect(() => {
+    getCacheData();
+  }, [dataIdx]);
+  useEffect(() => {
+    setLegend(updatedLegend.current);
+  }, [canvasComponents]);
 
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;
-    } else if (
-      key === "displayMode" &&
-      value !== configOptions.current.displayMode
-    ) {
-      configOptions.current.displayMode = value;
-
-      trackModel.options = configOptions.current;
-
-      const renderer = new MatplotTrackConfig(trackModel);
-
-      const items = renderer.getMenuComponents();
-
-      let menu = trackConfigMenu[`${trackModel.type}`]({
-        blockRef: trackManagerRef,
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-
-      getConfigMenu(menu, "singleSelect");
     } else {
       configOptions.current[`${key}`] = value;
     }
@@ -204,7 +259,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    const renderer = new MatplotTrackConfig(trackModel);
+    const renderer = new HicTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -226,362 +281,12 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
 
-  function getCacheData() {
-    let viewData: Array<any> = [];
-    let curIdx;
-
-    if (
-      useFineModeNav ||
-      genomeArr![genomeIdx!].genome._name !== parentGenome.current
-    ) {
-      if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-        viewData = fetchedDataCache.current[dataIdx!].cacheData;
-        curIdx = dataIdx!;
-      } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-        viewData = fetchedDataCache.current[dataIdx!].cacheData;
-        curIdx = dataIdx!;
-      }
-    } else {
-      if (dataIdx! > rightIdx.current + 1 && dataIdx! <= 0) {
-        viewData = [
-          fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx!],
-          fetchedDataCache.current[dataIdx! - 1],
-        ];
-
-        curIdx = dataIdx! - 1;
-      } else if (dataIdx! < leftIdx.current - 1 && dataIdx! > 0) {
-        viewData = [
-          fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx!],
-          fetchedDataCache.current[dataIdx! - 1],
-        ];
-
-        curIdx = dataIdx! + 1;
-      }
-    }
-    if (viewData.length > 0) {
-      curRegionData.current = {
-        trackState: fetchedDataCache.current[curIdx].trackState,
-        deDupcacheDataArr: viewData,
-        initial: 0,
-      };
-      if (
-        !useFineModeNav &&
-        genomeArr![genomeIdx!].genome._name === parentGenome.current
-      ) {
-        let deDupcacheDataArr = getDeDupeArr(viewData);
-        viewData = deDupcacheDataArr;
-        curRegionData.current = {
-          trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupcacheDataArr: viewData,
-          initial: 0,
-        };
-
-        createCanvas(
-          fetchedDataCache.current[curIdx].trackState,
-          viewData,
-          false
-        );
-      } else {
-        createCanvas(
-          fetchedDataCache.current[curIdx].trackState,
-          viewData,
-          true
-        );
-      }
-    }
-  }
-  function getDeDupeArr(data: Array<any>) {
-    let tempMap = new Map<number, any[]>();
-
-    data.forEach((data) => {
-      data.cacheData.forEach((featArr, j) => {
-        if (tempMap.has(j)) {
-          tempMap.get(j)!.push(featArr);
-        } else {
-          tempMap.set(j, [featArr]);
-        }
-      });
-    });
-
-    let deDupcacheDataArr: Array<any> = [];
-    tempMap.forEach((value, key) => {
-      deDupcacheDataArr.push(removeDuplicatesWithoutId(value.flat(1)));
-    });
-
-    return deDupcacheDataArr;
-  }
-  useEffect(() => {
-    if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
-        configOptions.current = {
-          ...configOptions.current,
-          ...trackModel.options,
-        };
-
-        onTrackConfigChange({
-          configOptions: configOptions.current,
-          trackModel: trackModel,
-          id: id,
-          trackIdx: trackIdx,
-          legendRef: legendRef,
-        });
-      }
-      if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
-        const primaryVisData =
-          trackData!.trackState.genomicFetchCoord[
-            trackData!.trackState.primaryGenName
-          ].primaryVisData;
-        if (trackData!.trackState.initial === 1) {
-          if ("genome" in trackData![`${id}`].metadata) {
-            parentGenome.current = trackData![`${id}`].metadata.genome;
-          } else {
-            parentGenome.current = trackData!.trackState.primaryGenName;
-          }
-          let visRegion =
-            "genome" in trackData![`${id}`].metadata
-              ? trackData!.trackState.genomicFetchCoord[
-                  trackData![`${id}`].metadata.genome
-                ].queryRegion
-              : primaryVisData.visRegion;
-          const createTrackState = (index: number, side: string) => ({
-            initial: index === 1 ? 1 : 0,
-            side,
-            xDist: 0,
-            visRegion: visRegion,
-            startWindow: primaryVisData.viewWindow.start,
-            visWidth: primaryVisData.visWidth,
-          });
-
-          fetchedDataCache.current[rightIdx.current] = {
-            cacheData: trackData![`${id}`].result.flat(1),
-            trackState: createTrackState(1, "right"),
-          };
-          rightIdx.current--;
-          const curDataArr = fetchedDataCache.current[0].cacheData;
-          curRegionData.current = {
-            trackState: createTrackState(1, "right"),
-            deDupcacheDataArr: curDataArr,
-          };
-          createCanvas(createTrackState(1, "right"), curDataArr, true);
-        } else {
-          let visRegion;
-          if ("genome" in trackData![`${id}`].metadata) {
-            visRegion =
-              trackData!.trackState.genomicFetchCoord[
-                `${trackData![`${id}`].metadata.genome}`
-              ].queryRegion;
-          } else {
-            visRegion = primaryVisData.visRegion;
-          }
-          let newTrackState = {
-            initial: 0,
-            side: trackData!.trackState.side,
-            xDist: trackData!.trackState.xDist,
-            visRegion: visRegion,
-            startWindow: primaryVisData.viewWindow.start,
-            visWidth: primaryVisData.visWidth,
-            useFineModeNav: true,
-          };
-          if (trackData!.trackState.side === "right") {
-            newTrackState["index"] = rightIdx.current;
-            fetchedDataCache.current[rightIdx.current] = {
-              cacheData: trackData![`${id}`].result,
-              trackState: newTrackState,
-            };
-            rightIdx.current--;
-            curRegionData.current = {
-              trackState:
-                fetchedDataCache.current[rightIdx.current + 1].trackState,
-              deDupcacheDataArr:
-                fetchedDataCache.current[rightIdx.current + 1].cacheData,
-              initial: 0,
-            };
-            createCanvas(
-              newTrackState,
-              fetchedDataCache.current[rightIdx.current + 1].cacheData,
-              true
-            );
-          } else if (trackData!.trackState.side === "left") {
-            trackData!.trackState["index"] = leftIdx.current;
-            fetchedDataCache.current[leftIdx.current] = {
-              cacheData: trackData![`${id}`].result,
-              trackState: newTrackState,
-            };
-            leftIdx.current++;
-            curRegionData.current = {
-              trackState:
-                fetchedDataCache.current[leftIdx.current - 1].trackState,
-              deDupcacheDataArr:
-                fetchedDataCache.current[leftIdx.current - 1].cacheData,
-              initial: 0,
-            };
-            createCanvas(
-              newTrackState,
-              fetchedDataCache.current[leftIdx.current - 1].cacheData,
-              true
-            );
-          }
-        }
-      } else {
-        //_________________________________________________________________________________________________________________________________________________
-        const primaryVisData =
-          trackData!.trackState.genomicFetchCoord[
-            `${trackData!.trackState.primaryGenName}`
-          ];
-        if (trackData!.initial === 1) {
-          if ("genome" in trackData![`${id}`].metadata) {
-            parentGenome.current = trackData![`${id}`].metadata.genome;
-          } else {
-            parentGenome.current = trackData!.trackState.primaryGenName;
-          }
-          const visRegionArr = primaryVisData.initNavLoci.map(
-            (item) =>
-              new DisplayedRegionModel(
-                genomeArr![genomeIdx!].navContext,
-                item.start,
-                item.end
-              )
-          );
-          let trackState0 = {
-            initial: 0,
-            side: "left",
-            xDist: 0,
-            regionNavCoord: visRegionArr[0],
-            index: 1,
-            startWindow: primaryVisData.primaryVisData.viewWindow.start,
-            visWidth: primaryVisData.primaryVisData.visWidth,
-          };
-          let trackState1 = {
-            initial: 1,
-            side: "right",
-            xDist: 0,
-            regionNavCoord: visRegionArr[1],
-            index: 0,
-            startWindow: primaryVisData.primaryVisData.viewWindow.start,
-            visWidth: primaryVisData.primaryVisData.visWidth,
-          };
-          let trackState2 = {
-            initial: 0,
-            side: "right",
-            xDist: 0,
-            regionNavCoord: visRegionArr[2],
-            index: -1,
-            startWindow: primaryVisData.primaryVisData.viewWindow.start,
-            visWidth: primaryVisData.primaryVisData.visWidth,
-          };
-          fetchedDataCache.current[leftIdx.current] = {
-            cacheData: trackData![`${id}`].result.map((item, index) => {
-              return item[0];
-            }),
-            trackState: trackState0,
-          };
-          leftIdx.current++;
-          fetchedDataCache.current[rightIdx.current] = {
-            cacheData: trackData![`${id}`].result.map((item, index) => {
-              return item[1];
-            }),
-            trackState: trackState1,
-          };
-          rightIdx.current--;
-          fetchedDataCache.current[rightIdx.current] = {
-            cacheData: trackData![`${id}`].result.map((item, index) => {
-              return item[2];
-            }),
-            trackState: trackState2,
-          };
-          rightIdx.current--;
-          let testData = [
-            fetchedDataCache.current[1],
-            fetchedDataCache.current[0],
-            fetchedDataCache.current[-1],
-          ];
-
-          let deDupcacheDataArr = getDeDupeArr(testData);
-          curRegionData.current = {
-            trackState: trackState1,
-            deDupcacheDataArr,
-          };
-          createCanvas(trackState1, deDupcacheDataArr, false);
-        } else {
-          let testData: Array<any> = [];
-          let newTrackState = {
-            ...trackData!.trackState,
-            startWindow: primaryVisData.primaryVisData.viewWindow.start,
-            visWidth: primaryVisData.primaryVisData.visWidth,
-          };
-          if (trackData!.trackState.side === "right") {
-            trackData!.trackState["index"] = rightIdx.current;
-            fetchedDataCache.current[rightIdx.current] = {
-              cacheData: trackData![`${id}`].result.map((item, index) => {
-                return item;
-              }),
-              trackState: newTrackState,
-            };
-
-            let currIdx = rightIdx.current + 2;
-            for (let i = 0; i < 3; i++) {
-              testData.push(fetchedDataCache.current[currIdx]);
-              currIdx--;
-            }
-            rightIdx.current--;
-
-            let deDupcacheDataArr = getDeDupeArr(testData);
-
-            curRegionData.current = {
-              trackState: newTrackState,
-              deDupcacheDataArr,
-              initial: 0,
-            };
-            createCanvas(newTrackState, deDupcacheDataArr, false);
-          } else if (trackData!.trackState.side === "left") {
-            trackData!.trackState["index"] = leftIdx.current;
-            fetchedDataCache.current[leftIdx.current] = {
-              cacheData: trackData![`${id}`].result.map((item, index) => {
-                return item;
-              }),
-              trackState: newTrackState,
-            };
-            let currIdx = leftIdx.current - 2;
-            for (let i = 0; i < 3; i++) {
-              testData.push(fetchedDataCache.current[currIdx]);
-              currIdx++;
-            }
-            leftIdx.current++;
-
-            let deDupcacheDataArr = getDeDupeArr(testData);
-
-            curRegionData.current = {
-              trackState: trackData!.trackState,
-              deDupcacheDataArr,
-              initial: 0,
-            };
-            createCanvas(newTrackState, deDupcacheDataArr, false);
-          }
-        }
-      }
-    }
-  }, [trackData]);
-
   useEffect(() => {
     if (configChanged === true) {
-      if (
-        !useFineModeNav &&
-        genomeArr![genomeIdx!].genome._name === parentGenome.current
-      ) {
-        createCanvas(
-          curRegionData.current.trackState,
-          curRegionData.current.deDupcacheDataArr,
-          false
-        );
-      } else {
-        createCanvas(
-          curRegionData.current.trackState,
-          curRegionData.current.deDupcacheDataArr,
-          true
-        );
-      }
+      createCanvas(
+        curRegionData.current.trackState,
+        curRegionData.current.cachedData
+      );
       onTrackConfigChange({
         configOptions: configOptions.current,
         trackModel: trackModel,
@@ -592,19 +297,8 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     }
     setConfigChanged(false);
   }, [configChanged]);
-  useEffect(() => {
-    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
-    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
-    // otherwise when there is new data cuz the user is at the end of the track
-    getCacheData();
-  }, [dataIdx]);
-  useEffect(() => {
-    setLegend(updatedLegend.current);
-  }, [canvasComponents]);
 
   return (
-    //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
-
     <div
       onContextMenu={renderConfigMenu}
       style={{
@@ -627,5 +321,4 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     </div>
   );
 });
-
-export default memo(MatplotTrack);
+export default memo(HiCTrack);

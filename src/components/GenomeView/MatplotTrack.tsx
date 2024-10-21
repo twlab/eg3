@@ -208,7 +208,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   }, [configChanged]);
 
   useEffect(() => {
-    console.log(displayCache.current);
     getCacheData(
       useFineOrSecondaryParentNav.current,
       rightIdx.current,

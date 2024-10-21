@@ -306,7 +306,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     setConfigChanged(false);
   }, [configChanged]);
   useEffect(() => {
-    console.log(svgComponents);
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents]);
   function renderConfigMenu(event) {

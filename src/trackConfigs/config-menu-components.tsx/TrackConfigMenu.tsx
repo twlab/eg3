@@ -146,7 +146,7 @@ function ConfigMenuComponent(props) {
 
   let blockPosData = menuData.blockRef.current.getBoundingClientRect();
   let leftMargin = blockPosData.left;
-  console.log(menuData.configOptions);
+
   return ReactDOM.createPortal(
     // need to set id matching the track component so it rememebers each specific
     // track config settings
@@ -208,7 +208,6 @@ function ConfigMenuComponent(props) {
                             "AnnotationDisplayModeConfig" ||
                           MenuComponent.name === "NumericalDisplayModeConfig"
                         ) {
-                          console.log(menuData.configOptions);
                           defaultVal = menuData.configOptions.displayMode;
                         } else if (
                           MenuComponent.name === "HiddenPixelsConfig"
