@@ -23,17 +23,24 @@ export function getCacheData(
   keyDupe = "none"
 ) {
   let dataValid = false;
-
-  if (
-    (dataIdx! > rightIdx + 2 && dataIdx! <= 0) ||
-    (dataIdx! < leftIdx - 2 && dataIdx! > 0)
-  ) {
-    dataValid = true;
+  if (useFineOrSecondaryParentNav) {
+    if (dataIdx! > rightIdx && dataIdx! <= 0) {
+      dataValid = true;
+    } else if (dataIdx! < leftIdx && dataIdx! > 0) {
+      dataValid = true;
+    }
+  } else {
+    if (
+      (dataIdx! > rightIdx + 1 && dataIdx! <= 0) ||
+      (dataIdx! < leftIdx - 1 && dataIdx! > 0)
+    ) {
+      dataValid = true;
+    }
   }
+
   if (trackModel.type in { bigwig: "", hic: "" }) {
     displayType = "density";
   }
-
   if (dataValid) {
     if (dataIdx! in displayCache[`${displayType}`]) {
       updatedLegend.current = (
