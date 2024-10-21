@@ -1012,22 +1012,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           style={{
                             display: "flex",
                             position: "absolute",
-                            width: `${windowWidth - 1}px`,
+                            width: `${windowWidth}px`,
                             zIndex: 10,
                           }}
                         >
                           {selectedTool !== "none" ? (
-                            <SelectableArea>
+                            <SelectableGenomeArea
+                              selectableRegion={region.viewWindow}
+                              dragLimits={new OpenInterval(0, windowWidth)}
+                              onRegionSelected={onAreaSelected}
+                            >
                               <div
                                 style={{
                                   height: block.current
                                     ? block.current?.getBoundingClientRect()
                                         .height
                                     : 0,
-                                  width: `${windowWidth - 1}px`,
+                                  zIndex: 3,
+                                  width: `${windowWidth}px`,
                                 }}
                               ></div>
-                            </SelectableArea>
+                            </SelectableGenomeArea>
                           ) : (
                             ""
                           )}
