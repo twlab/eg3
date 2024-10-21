@@ -1,9 +1,29 @@
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+
 import {
   removeDuplicates,
   removeDuplicatesWithoutId,
 } from "../commonComponents/check-obj-dupe";
+function getDeDupeArrMatPlot(data: Array<any>) {
+  let tempMap = new Map<number, any[]>();
 
+  data.forEach((data) => {
+    data.dataCache.forEach((featArr, j) => {
+      if (tempMap.has(j)) {
+        tempMap.get(j)!.push(featArr);
+      } else {
+        tempMap.set(j, [featArr]);
+      }
+    });
+  });
+
+  let deDupcacheDataArr: Array<any> = [];
+  tempMap.forEach((value, key) => {
+    deDupcacheDataArr.push(removeDuplicatesWithoutId(value.flat(1)));
+  });
+
+  return deDupcacheDataArr;
+}
 export function cacheTrackData(
   useFineOrSecondaryParentNav,
   id,
@@ -13,7 +33,8 @@ export function cacheTrackData(
   leftIdx,
   createViewElement,
   genome,
-  keyDupe
+  keyDupe,
+  trackModel: any = ""
 ) {
   if (useFineOrSecondaryParentNav) {
     const primaryVisData =
@@ -40,7 +61,10 @@ export function cacheTrackData(
       });
 
       fetchedDataCache.current[rightIdx.current] = {
-        dataCache: trackData![`${id}`].result[0],
+        dataCache:
+          trackModel !== "" && trackModel.type === "matplot"
+            ? trackData![`${id}`].result.flat(1)
+            : trackData![`${id}`].result[0],
         trackState: createTrackState(1, "right"),
       };
       rightIdx.current--;
@@ -74,7 +98,10 @@ export function cacheTrackData(
       if (trackData!.trackState.side === "right") {
         newTrackState["index"] = rightIdx.current;
         fetchedDataCache.current[rightIdx.current] = {
-          dataCache: trackData![`${id}`].result,
+          dataCache:
+            trackData![`${id}`].metadata["track type"] === "genomealign"
+              ? trackData![`${id}`].result[0]
+              : trackData![`${id}`].result,
           trackState: newTrackState,
         };
 
@@ -89,7 +116,10 @@ export function cacheTrackData(
       } else if (trackData!.trackState.side === "left") {
         trackData!.trackState["index"] = leftIdx.current;
         fetchedDataCache.current[leftIdx.current] = {
-          dataCache: trackData![`${id}`].result,
+          dataCache:
+            trackData![`${id}`].metadata["track type"] === "genomealign"
+              ? trackData![`${id}`].result[0]
+              : trackData![`${id}`].result,
           trackState: newTrackState,
         };
 
@@ -145,18 +175,33 @@ export function cacheTrackData(
       };
 
       fetchedDataCache.current[leftIdx.current] = {
-        dataCache: trackData![`${id}`].result[0],
+        dataCache:
+          trackModel !== "" && trackModel.type === "matplot"
+            ? trackData![`${id}`].result.map((item, index) => {
+                return item[0];
+              })
+            : trackData![`${id}`].result[0],
         trackState: trackState0,
       };
       leftIdx.current++;
 
       fetchedDataCache.current[rightIdx.current] = {
-        dataCache: trackData![`${id}`].result[1],
+        dataCache:
+          trackModel !== "" && trackModel.type === "matplot"
+            ? trackData![`${id}`].result.map((item, index) => {
+                return item[1];
+              })
+            : trackData![`${id}`].result[1],
         trackState: trackState1,
       };
       rightIdx.current--;
       fetchedDataCache.current[rightIdx.current] = {
-        dataCache: trackData![`${id}`].result[2],
+        dataCache:
+          trackModel !== "" && trackModel.type === "matplot"
+            ? trackData![`${id}`].result.map((item, index) => {
+                return item[2];
+              })
+            : trackData![`${id}`].result[2],
         trackState: trackState2,
       };
       rightIdx.current--;
@@ -167,12 +212,17 @@ export function cacheTrackData(
         fetchedDataCache.current[-1],
       ];
 
-      let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
-
-      let viewData =
-        keyDupe !== "none"
-          ? removeDuplicates(dataCacheArray, keyDupe)
-          : removeDuplicatesWithoutId(dataCacheArray);
+      let viewData;
+      if (trackModel.type === "matplot") {
+        console.log(testData);
+        viewData = getDeDupeArrMatPlot(testData);
+      } else {
+        let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
+        viewData =
+          keyDupe !== "none"
+            ? removeDuplicates(dataCacheArray, keyDupe)
+            : removeDuplicatesWithoutId(dataCacheArray);
+      }
 
       createViewElement(
         trackState1,
@@ -199,12 +249,16 @@ export function cacheTrackData(
           currIdx--;
         }
 
-        let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
-        let viewData =
-          keyDupe !== "none"
-            ? removeDuplicates(dataCacheArray, keyDupe)
-            : removeDuplicatesWithoutId(dataCacheArray);
-
+        let viewData;
+        if (trackModel.type === "matplot") {
+          viewData = getDeDupeArrMatPlot(testData);
+        } else {
+          let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
+          viewData =
+            keyDupe !== "none"
+              ? removeDuplicates(dataCacheArray, keyDupe)
+              : removeDuplicatesWithoutId(dataCacheArray);
+        }
         rightIdx.current--;
 
         createViewElement(
@@ -226,11 +280,16 @@ export function cacheTrackData(
           currIdx--;
         }
 
-        let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
-        let viewData =
-          keyDupe !== "none"
-            ? removeDuplicates(dataCacheArray, keyDupe)
-            : removeDuplicatesWithoutId(dataCacheArray);
+        let viewData;
+        if (trackModel.type === "matplot") {
+          viewData = getDeDupeArrMatPlot(testData);
+        } else {
+          let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
+          viewData =
+            keyDupe !== "none"
+              ? removeDuplicates(dataCacheArray, keyDupe)
+              : removeDuplicatesWithoutId(dataCacheArray);
+        }
 
         leftIdx.current++;
 

@@ -38,7 +38,7 @@ import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
-import "./DivWithBullseye.css";
+
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
@@ -46,7 +46,6 @@ import _ from "lodash";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { SelectableArea } from "./genomeNavigator/SelectableArea";
 import ZoomButtons from "./ToolsComponents/ZoomButtons";
-import TrackContainer from "./ToolsComponents/TrackContainer";
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];

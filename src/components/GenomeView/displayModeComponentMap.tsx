@@ -27,6 +27,16 @@ import { scaleLinear } from "d3-scale";
 import MethylCRecord from "../../models/MethylCRecord";
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
 import DynseqTrackComponents from "./DynseqComponents/DynseqTrackComponents";
+import {
+  PlacedAlignment,
+  PlacedMergedAlignment,
+  renderFineAlignment,
+  renderGapText,
+  renderRoughAlignment,
+  renderRoughStrand,
+} from "./GenomeAlignComponents/GenomeAlignComponents";
+import { GapText } from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
+import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -368,6 +378,59 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+  matplot: function getMatplot(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+    let canvasElements = (
+      <MatplotTrackComponent
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+      />
+    );
+    return canvasElements;
+  },
 
   methylc: function getMethylc(
     formattedData,
@@ -491,7 +554,10 @@ export function getDisplayModeFunction(
   cacheIdx,
   curXPos
 ) {
-  if (drawData.configOptions.displayMode === "full") {
+  if (
+    drawData.configOptions.displayMode === "full" &&
+    drawData.trackModel.type !== "genomealign"
+  ) {
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
       formattedData = drawData.genesArr.map((record) => new Gene(record));
@@ -601,10 +667,126 @@ export function getDisplayModeFunction(
     };
   }
 
+  // this are genomealign track____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
+  //____________________________________________________________________________________________________________________________________________________________________________
+  else if (drawData.trackModel.type === "genomealign") {
+    let result = drawData.genesArr;
+    let svgElements;
+    if (drawData.basesByPixel <= 10) {
+      const drawDatas = result.drawData as PlacedAlignment[];
+
+      svgElements = drawDatas.map((item, index) =>
+        renderFineAlignment(item, index, drawData.configOptions)
+      );
+      const drawGapText = result.drawGapText as GapText[];
+      svgElements.push(
+        drawGapText.map((item, index) =>
+          renderGapText(item, index, drawData.configOptions)
+        )
+      );
+
+      let tempObj = {
+        alignment: drawData.genesArr,
+        svgElements,
+        trackState: drawData.trackState,
+      };
+
+      displaySetter.full.setComponents(tempObj);
+      displayCache.current.full[cacheIdx] = {
+        svgDATA: tempObj,
+        height: drawData.svgHeight.current,
+        xPos: curXPos,
+      };
+    } else {
+      const drawDatas = result.drawData as PlacedMergedAlignment[];
+
+      const strand = result.plotStrand;
+      const targetGenome = result.primaryGenome;
+      const queryGenome = result.queryGenome;
+      svgElements = drawDatas.map((placement) =>
+        renderRoughAlignment(
+          placement,
+          strand === "-",
+          80,
+          targetGenome,
+          queryGenome
+        )
+      );
+      const arrows = renderRoughStrand(
+        "+",
+        0,
+        new OpenInterval(0, drawData.windowWidth * 3),
+        false
+      );
+      svgElements.push(arrows);
+      // const primaryViewWindow = result.primaryVisData.viewWindow;
+
+      const primaryArrows = renderRoughStrand(
+        strand,
+        80 - 15,
+        new OpenInterval(0, drawData.windowWidth * 3),
+        true
+      );
+      svgElements.push(primaryArrows);
+
+      let tempObj = {
+        alignment: result,
+        svgElements,
+        trackState: drawData.trackState,
+      };
+      displaySetter.full.setComponents(tempObj);
+      displayCache.current.full[cacheIdx] = {
+        svgDATA: tempObj,
+        height: drawData.svgHeight.current,
+        xPos: curXPos,
+      };
+    }
+    drawData.updatedLegend.current = (
+      <TrackLegend
+        height={drawData.configOptions.height}
+        trackModel={drawData.trackModel}
+      />
+    );
+  }
+
   // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
+  //_________________________________
+  else if (drawData.trackModel.type === "matplot") {
+    let formattedData: Array<any> = [];
+    for (let i = 0; i < drawData.genesArr.length; i++) {
+      formattedData.push(
+        drawData.genesArr[i].map((record) => {
+          let newChrInt = new ChromosomeInterval(
+            record.chr,
+            record.start,
+            record.end
+          );
+          return new NumericalFeature("", newChrInt).withValue(record.score);
+        })
+      );
+    }
+    let tmpObj = { ...drawData.configOptions };
+    tmpObj.displayMode = "auto";
+
+    let canvasElements = displayModeComponentMap["matplot"](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
     let formattedData;
     if (drawData.trackModel.type === "methylc") {
       formattedData = drawData.genesArr.map((record) => {

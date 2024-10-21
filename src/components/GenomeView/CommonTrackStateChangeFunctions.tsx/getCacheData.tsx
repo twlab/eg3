@@ -24,15 +24,15 @@ export function getCacheData(
 ) {
   let dataValid = false;
   if (useFineOrSecondaryParentNav) {
-    if (dataIdx! > rightIdx && dataIdx! <= 0) {
+    if (dataIdx! > rightIdx + 1 && dataIdx! <= 0) {
       dataValid = true;
-    } else if (dataIdx! < leftIdx && dataIdx! > 0) {
+    } else if (dataIdx! < leftIdx - 1 && dataIdx! > 0) {
       dataValid = true;
     }
   } else {
     if (
-      (dataIdx! > rightIdx + 1 && dataIdx! <= 0) ||
-      (dataIdx! < leftIdx - 1 && dataIdx! > 0)
+      (dataIdx! > rightIdx + 2 && dataIdx! <= 0) ||
+      (dataIdx! < leftIdx - 2 && dataIdx! > 0)
     ) {
       dataValid = true;
     }
@@ -55,7 +55,6 @@ export function getCacheData(
         displaySetter.full.setComponents(
           displayCache[`${displayType}`][dataIdx!].svgDATA
         );
-
         svgHeight.current = displayCache[`${displayType}`][dataIdx!].height;
       } else {
         displaySetter.density.setComponents(

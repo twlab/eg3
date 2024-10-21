@@ -95,10 +95,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
 
-  enum BedColumnIndex {
-    CATEGORY = 3,
-  }
-
   const displaySetter = {
     full: {
       setComponents: setSvgComponents,
@@ -299,20 +295,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           legendRef: legendRef,
         });
       }
-      if (trackData!.initial === 1) {
-        configOptions.current = {
-          ...configOptions.current,
-          ...trackModel.options,
-        };
 
-        onTrackConfigChange({
-          configOptions: configOptions.current,
-          trackModel: trackModel,
-          id: id,
-          trackIdx: trackIdx,
-          legendRef: legendRef,
-        });
-      }
       cacheTrackData(
         useFineOrSecondaryParentNav.current,
         id,
