@@ -111,6 +111,8 @@ self.onmessage = async (event: MessageEvent) => {
         id: item.id,
         queryRegion: item.result.queryRegion,
       };
+      item["metadata"] = { "track type": "genomealign" };
+      item["result"] = [item.result];
       fetchResults.push(item);
     });
   } else {

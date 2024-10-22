@@ -1,9 +1,7 @@
-import React, { memo } from "react";
-import { useEffect, useRef, useState } from "react";
-// import worker_script from '../../Worker/worker';
-import _ from "lodash";
-import HoverToolTip from "./commonComponents/hoverToolTips/HoverToolTip";
+import React, { memo, useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import { TrackProps } from "../../models/trackModels/trackProps";
+import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
 import {
   GapText,
   PlacedAlignment,
@@ -19,14 +17,18 @@ import {
 import { GenomeAlignTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import OpenInterval from "../../models/OpenInterval";
-import ReactDOM from "react-dom";
 import TrackLegend from "./commonComponents/TrackLegend";
+import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
+import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
+import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
+import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
+import { getDisplayModeFunction } from "./displayModeComponentMap";
+
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   bpToPx,
   side,
   trackData,
   onTrackConfigChange,
-
   trackIdx,
   handleDelete,
   windowWidth,
@@ -41,229 +43,258 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   legendRef,
   trackManagerRef,
 }) {
-  //useRef to store data between states without re render the component
-  //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
+  const configOptions = useRef({ ...DEFAULT_OPTIONS, displayMode: "full" });
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
-  const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
-  const curRegionData = useRef<{ [key: string]: any }>({});
+  const displayCache = useRef<{ [key: string]: any }>({
+    full: {},
+  });
+  const updatedLegend = useRef<any>();
+  const svgHeight = useRef(0);
+  const useFineOrSecondaryParentNav = useRef(useFineModeNav);
+
   const xPos = useRef(0);
   const updateSide = useRef("right");
-
+  const newTrackWidth = useRef(windowWidth);
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<{ [key: string]: any }>(
     {}
   );
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
-  const newTrackWidth = useRef(windowWidth);
 
-  function createSVG(trackState, alignmentData) {
-    let result = alignmentData;
-    let svgElements;
+  const displaySetter = {
+    full: { setComponents: setSvgComponents },
+  };
 
-    if (bpToPx! <= 10) {
-      const drawData = result.drawData as PlacedAlignment[];
+  async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+    let curXPos = getTrackXOffset(trackState, windowWidth, true);
 
-      svgElements = drawData.map((item, index) =>
-        renderFineAlignment(item, index, configOptions.current)
-      );
-      const drawGapText = result.drawGapText as GapText[];
-      svgElements.push(
-        drawGapText.map((item, index) =>
-          renderGapText(item, index, configOptions.current)
-        )
-      );
-
-      let tempObj = {
-        alignment: result,
-        svgElements,
+    getDisplayModeFunction(
+      {
+        genesArr,
+        useFineOrSecondaryParentNav: true,
         trackState,
-      };
-      setSvgComponents(tempObj);
-
-      if (trackState.initial === 1) {
-        xPos.current = -trackState.startWindow;
-      } else if (trackState.side === "right") {
-        xPos.current =
-          (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth -
-          windowWidth +
-          trackState.startWindow;
-      } else if (trackState.side === "left") {
-        xPos.current =
-          (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth -
-          windowWidth +
-          trackState.startWindow;
-      }
-      newTrackWidth.current = trackState.visWidth;
-      updateSide.current = side;
-    }
-
-    //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
-    //step 1
-    else {
-      const drawData = result.drawData as PlacedMergedAlignment[];
-
-      const strand = result.plotStrand;
-      const targetGenome = result.primaryGenome;
-      const queryGenome = result.queryGenome;
-      svgElements = drawData.map((placement) =>
-        renderRoughAlignment(
-          placement,
-          strand === "-",
-          80,
-          targetGenome,
-          queryGenome
-        )
-      );
-      const arrows = renderRoughStrand(
-        "+",
-        0,
-        new OpenInterval(0, windowWidth * 3),
-        false
-      );
-      svgElements.push(arrows);
-      // const primaryViewWindow = result.primaryVisData.viewWindow;
-
-      const primaryArrows = renderRoughStrand(
-        strand,
-        80 - 15,
-        new OpenInterval(0, windowWidth * 3),
-        true
-      );
-      svgElements.push(primaryArrows);
-
-      let tempObj = {
-        alignment: result,
-        svgElements,
-        trackState,
-      };
-      setSvgComponents(tempObj);
-
-      if (trackState.initial === 1) {
-        xPos.current = -windowWidth;
-      } else if (trackState.side === "right") {
-        xPos.current =
-          (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth;
-      } else if (trackState.side === "left") {
-        xPos.current =
-          (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth;
-      }
-      newTrackWidth.current = trackState.visWidth;
-      updateSide.current = side;
-    }
-
-    let curLegendEle = ReactDOM.createPortal(
-      <TrackLegend
-        height={configOptions.current.height}
-        trackModel={trackModel}
-      />,
-      legendRef.current
+        windowWidth,
+        configOptions: configOptions.current,
+        svgHeight,
+        updatedLegend,
+        trackModel,
+        basesByPixel: bpToPx,
+      },
+      displaySetter,
+      displayCache,
+      cacheIdx,
+      curXPos
     );
-
-    setLegend(curLegendEle);
+    newTrackWidth.current = trackState.visWidth;
+    xPos.current = curXPos;
+    updateSide.current = side;
   }
+  // async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  //   let result = genesArr;
+  //   let svgElements;
 
-  // function to get for dataidx change and getting stored data
-  function getCacheData() {
-    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
-    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
-    // otherwise when there is new data cuz the user is at the end of the track
-    let viewData = {};
-    let curIdx;
+  //   if (bpToPx! <= 10) {
+  //     const drawData = result.drawData as PlacedAlignment[];
 
-    if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-      viewData = fetchedDataCache.current[dataIdx!].data;
-      curIdx = dataIdx!;
-    } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-      viewData = fetchedDataCache.current[dataIdx!].data;
-      curIdx = dataIdx!;
-    }
-    if ("drawData" in viewData) {
-      curRegionData.current = {
-        trackState: fetchedDataCache.current[curIdx].trackState,
-        cachedData: viewData,
-        initial: 0,
-      };
-      createSVG(fetchedDataCache.current[curIdx].trackState, viewData);
-    }
-  }
-  // INITIAL AND NEW DATA &&&&&&&&&&&&&&&&&&&
+  //     svgElements = drawData.map((item, index) =>
+  //       renderFineAlignment(item, index, configOptions.current)
+  //     );
+  //     const drawGapText = result.drawGapText as GapText[];
+  //     svgElements.push(
+  //       drawGapText.map((item, index) =>
+  //         renderGapText(item, index, configOptions.current)
+  //       )
+  //     );
+
+  //     let tempObj = {
+  //       alignment: result,
+  //       svgElements,
+  //       trackState,
+  //     };
+  //     console.log(tempObj);
+  //     setSvgComponents(tempObj);
+
+  //     if (trackState.initial === 1) {
+  //       xPos.current = -trackState.startWindow;
+  //     } else if (trackState.side === "right") {
+  //       xPos.current =
+  //         (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth -
+  //         windowWidth +
+  //         trackState.startWindow;
+  //     } else if (trackState.side === "left") {
+  //       xPos.current =
+  //         (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth -
+  //         windowWidth +
+  //         trackState.startWindow;
+  //     }
+  //     newTrackWidth.current = trackState.visWidth;
+  //     updateSide.current = side;
+  //   }
+
+  //   //ROUGHMODE __________________________________________________________________________________________________________________________________________________________
+  //   //step 1
+  //   else {
+  //     const drawData = result.drawData as PlacedMergedAlignment[];
+
+  //     const strand = result.plotStrand;
+  //     const targetGenome = result.primaryGenome;
+  //     const queryGenome = result.queryGenome;
+  //     svgElements = drawData.map((placement) =>
+  //       renderRoughAlignment(
+  //         placement,
+  //         strand === "-",
+  //         80,
+  //         targetGenome,
+  //         queryGenome
+  //       )
+  //     );
+  //     const arrows = renderRoughStrand(
+  //       "+",
+  //       0,
+  //       new OpenInterval(0, windowWidth * 3),
+  //       false
+  //     );
+  //     svgElements.push(arrows);
+  //     // const primaryViewWindow = result.primaryVisData.viewWindow;
+
+  //     const primaryArrows = renderRoughStrand(
+  //       strand,
+  //       80 - 15,
+  //       new OpenInterval(0, windowWidth * 3),
+  //       true
+  //     );
+  //     svgElements.push(primaryArrows);
+
+  //     let tempObj = {
+  //       alignment: result,
+  //       svgElements,
+  //       trackState,
+  //     };
+  //     setSvgComponents(tempObj);
+
+  //     if (trackState.initial === 1) {
+  //       xPos.current = -windowWidth;
+  //     } else if (trackState.side === "right") {
+  //       xPos.current =
+  //         (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth;
+  //     } else if (trackState.side === "left") {
+  //       xPos.current =
+  //         (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth;
+  //     }
+  //     newTrackWidth.current = trackState.visWidth;
+  //     updateSide.current = side;
+  //   }
+
+  //   let curLegendEle = ReactDOM.createPortal(
+  //     <TrackLegend
+  //       height={configOptions.current.height}
+  //       trackModel={trackModel}
+  //     />,
+  //     legendRef.current
+  //   );
+
+  //   setLegend(curLegendEle);
+  // }
   useEffect(() => {
-    if (trackData![`${id}`] !== undefined) {
+    if (trackData![`${id}`]) {
       if (trackData!.initial === 1) {
-        let trackState = {
-          initial: 1,
-          side: "right",
-          xDist: 0,
-          startWindow:
-            trackData![`${id}`].result.primaryVisData.viewWindow.start,
-          visWidth: trackData![`${id}`].result.primaryVisData.visWidth,
+        configOptions.current = {
+          ...configOptions.current,
+          ...trackModel.options,
         };
 
-        fetchedDataCache.current[rightIdx.current] = {
-          data: trackData![`${id}`].result,
-          trackState: trackState,
-        };
-        rightIdx.current--;
-
-        let curDataArr = fetchedDataCache.current[0].data;
-
-        curRegionData.current = {
-          trackState: trackState,
-          cachedData: curDataArr,
-        };
-        createSVG(trackState, curDataArr);
-      } else {
-        let newTrackState = {
-          ...trackData!.trackState,
-          startWindow:
-            trackData![`${id}`].result.primaryVisData.viewWindow.start,
-          visWidth: trackData![`${id}`].result.primaryVisData.visWidth,
-        };
-
-        if (trackData!.trackState.side === "right") {
-          newTrackState["index"] = rightIdx.current;
-          fetchedDataCache.current[rightIdx.current] = {
-            data: trackData![`${id}`].result,
-            trackState: newTrackState,
-          };
-
-          rightIdx.current--;
-
-          curRegionData.current = {
-            trackState: newTrackState,
-            cachedData: fetchedDataCache.current[rightIdx.current + 1].data,
-            initial: 0,
-          };
-          createSVG(
-            newTrackState,
-            fetchedDataCache.current[rightIdx.current + 1].data
-          );
-        } else if (trackData!.trackState.side === "left") {
-          newTrackState["index"] = leftIdx.current;
-          fetchedDataCache.current[leftIdx.current] = {
-            data: trackData![`${id}`].result,
-            trackState: newTrackState,
-          };
-
-          leftIdx.current++;
-
-          curRegionData.current = {
-            trackState: newTrackState,
-            cachedData: fetchedDataCache.current[leftIdx.current - 1].data,
-            initial: 0,
-          };
-
-          createSVG(
-            newTrackState,
-            fetchedDataCache.current[leftIdx.current - 1].data
-          );
-        }
+        onTrackConfigChange({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
       }
+
+      cacheTrackData(
+        true,
+        id,
+        trackData,
+        fetchedDataCache,
+        rightIdx,
+        leftIdx,
+        createSVGOrCanvas,
+        genomeArr![genomeIdx!],
+        "none"
+      );
     }
-    if (trackData![`${id}`] && trackData!.initial === 1) {
+  }, [trackData]);
+
+  useEffect(() => {
+    getCacheData(
+      true,
+      rightIdx.current,
+      leftIdx.current,
+      dataIdx,
+      displayCache.current,
+      fetchedDataCache.current,
+      configOptions.current.displayMode,
+      displaySetter,
+      svgHeight,
+      xPos,
+      updatedLegend,
+      trackModel,
+      createSVGOrCanvas,
+      side,
+      updateSide,
+      "none"
+    );
+  }, [dataIdx]);
+
+  function onConfigChange(key, value) {
+    if (value === configOptions.current[key]) {
+      return;
+    } else if (
+      key === "displayMode" &&
+      value !== configOptions.current.displayMode
+    ) {
+      configOptions.current.displayMode = value;
+
+      trackModel.options = configOptions.current;
+      const renderer = new GenomeAlignTrackConfig(trackModel);
+
+      const items = renderer.getMenuComponents();
+
+      let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
+        trackIdx,
+        handleDelete,
+        id,
+        pageX: configMenuPos.current.left,
+        pageY: configMenuPos.current.top,
+        onCloseConfigMenu,
+        trackModel,
+        configOptions: configOptions.current,
+        items,
+        onConfigChange,
+        basesByPixel: bpToPx,
+      });
+      getConfigMenu(menu, "singleSelect");
+    } else {
+      configOptions.current[key] = value;
+    }
+    setConfigChanged(true);
+  }
+
+  useEffect(() => {
+    if (configChanged === true) {
+      getConfigChangeData(
+        true,
+        fetchedDataCache.current,
+        dataIdx,
+        createSVGOrCanvas,
+        "none"
+      );
+
       onTrackConfigChange({
         configOptions: configOptions.current,
         trackModel: trackModel,
@@ -272,27 +303,15 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         legendRef: legendRef,
       });
     }
-  }, [trackData]);
-  // when INDEX POSITION CHANGE
-
+    setConfigChanged(false);
+  }, [configChanged]);
   useEffect(() => {
-    getCacheData();
-  }, [dataIdx]);
-
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[`${key}`]) {
-      return;
-    } else {
-      configOptions.current[`${key}`] = value;
-    }
-    setConfigChanged(true);
-  }
+    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
+  }, [svgComponents]);
   function renderConfigMenu(event) {
     event.preventDefault();
 
     const renderer = new GenomeAlignTrackConfig(trackModel);
-
-    // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
     let menu = trackConfigMenu[`${trackModel.type}`]({
       blockRef: trackManagerRef,
@@ -311,22 +330,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     getConfigMenu(menu, "singleSelect");
     configMenuPos.current = { left: event.pageX, top: event.pageY };
   }
-  useEffect(() => {
-    if (configChanged === true) {
-      createSVG(
-        curRegionData.current.trackState,
-        curRegionData.current.cachedData
-      );
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
+
   return (
     <div
       onContextMenu={renderConfigMenu}
@@ -342,19 +346,18 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           display: "block",
           position: "absolute",
           height: `${configOptions.current.height}px`,
-          right: updateSide.current === "left" ? `${xPos.current!}px` : "",
-          left: updateSide.current === "right" ? `${xPos.current!}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
         }}
       >
         {svgComponents.svgElements}
       </svg>
-      {svgComponents.svgElements ? (
+      {svgComponents.svgElements && (
         <div
           style={{
             position: "absolute",
-
-            right: updateSide.current === "left" ? `${xPos.current!}px` : "",
-            left: updateSide.current === "right" ? `${xPos.current!}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
             zIndex: 3,
           }}
         >
@@ -368,11 +371,10 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
             options={configOptions.current}
           />
         </div>
-      ) : (
-        ""
       )}
       {legend}
     </div>
   );
 });
+
 export default memo(GenomeAlign);

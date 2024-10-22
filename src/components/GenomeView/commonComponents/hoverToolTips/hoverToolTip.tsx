@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, memo } from "react";
 import "./Tooltip.css";
 import AlignmentSequence from "../../GenomeAlignComponents/AlignmentCoordinate";
 import HorizontalFragment from "../../GenomeAlignComponents/HorizontalFragment";
-import GenomicCoordinates from "./GenomicCoordinates";
+import GenomicCoordinates from "../numerical/GenomicCoordinates";
 import TrackModel from "../../../../models/TrackModel";
 import { getContrastingColor } from "../../../../models/util";
 import _ from "lodash";

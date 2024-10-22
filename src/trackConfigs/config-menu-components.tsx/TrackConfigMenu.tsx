@@ -143,13 +143,14 @@ const trackConfigMenu: { [key: string]: any } = {
 };
 function ConfigMenuComponent(props) {
   let menuData = props.menuData;
-  console.log(menuData);
+
   let blockPosData = menuData.blockRef.current.getBoundingClientRect();
   let leftMargin = blockPosData.left;
-  let topMargin = blockPosData.top;
+
   return ReactDOM.createPortal(
     // need to set id matching the track component so it rememebers each specific
     // track config settings
+
     <Manager>
       <Reference>
         {({ ref }) => (
@@ -203,7 +204,9 @@ function ConfigMenuComponent(props) {
                         } else if (MenuComponent.name === "MaxRowsConfig") {
                           defaultVal = Number(menuData.configOptions.maxRows);
                         } else if (
-                          MenuComponent.name === "AnnotationDisplayModeConfig"
+                          MenuComponent.name ===
+                            "AnnotationDisplayModeConfig" ||
+                          MenuComponent.name === "NumericalDisplayModeConfig"
                         ) {
                           defaultVal = menuData.configOptions.displayMode;
                         } else if (

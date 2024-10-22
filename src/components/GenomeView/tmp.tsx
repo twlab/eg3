@@ -3,19 +3,29 @@ import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "./TrackManager";
 
+import OpenInterval from "../../models/OpenInterval";
+
+import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
+import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
+
+import { MatplotTrackConfig } from "../../trackConfigs/config-menu-models.tsx/MatplotTrackConfig";
+import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
+import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-
-import { RulerTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RulerTrackConfig";
-
-import { getGenomeConfig } from "../../models/genomes/allGenomes";
+import { NumericalFeature } from "../../models/Feature";
+import ChromosomeInterval from "../../models/ChromosomeInterval";
 import ReactDOM from "react-dom";
-import RulerComponent from "./RulerComponents/RulerComponent";
 
-export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
+export const DEFAULT_OPTIONS = {
+  ...defaultNumericalTrack,
+  ...defaultMatplot,
+};
+DEFAULT_OPTIONS.aggregateMethod = "MEAN";
+DEFAULT_OPTIONS.displayMode = "density";
 
-const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
+const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   trackData,
   onTrackConfigChange,
 
@@ -31,8 +41,8 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackIdx,
   id,
   useFineModeNav,
-  trackManagerRef,
   legendRef,
+  trackManagerRef,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -40,16 +50,15 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const xPos = useRef(0);
+  const updateSide = useRef("right");
+  const updatedLegend = useRef<any>();
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const updateSide = useRef("right");
-  const updatedLegend = useRef<any>();
-
-  const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
   const [configChanged, setConfigChanged] = useState(false);
+  const [legend, setLegend] = useState<any>();
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -95,24 +104,48 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       }
     }
 
-    function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
+    let algoData: Array<any> = [];
+    for (let i = 0; i < genesArr.length; i++) {
+      algoData.push(
+        genesArr[i].map((record) => {
+          let newChrInt = new ChromosomeInterval(
+            record.chr,
+            record.start,
+            record.end
+          );
+          return new NumericalFeature("", newChrInt).withValue(record.score);
+        })
+      );
     }
 
-    let canvasElements = (
-      <RulerComponent
-        viewRegion={
-          fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
-        }
-        width={fine ? curTrackData.visWidth : windowWidth * 3}
-        trackModel={trackModel}
-        selectedRegion={curTrackData.regionNavCoord}
-        getNumLegend={getNumLegend}
-        genomeConfig={getGenomeConfig(parentGenome.current)}
-      />
-    );
-    setCanvasComponents(canvasElements);
-
+    if (configOptions.current.displayMode === "density") {
+      let tmpObj = { ...configOptions.current };
+      tmpObj.displayMode = "auto";
+      function getNumLegend(legend: ReactNode) {
+        updatedLegend.current = ReactDOM.createPortal(
+          legend,
+          legendRef.current
+        );
+      }
+      console.log(genesArr);
+      let canvasElements = (
+        <MatplotTrackComponent
+          data={algoData}
+          options={tmpObj}
+          viewWindow={
+            new OpenInterval(0, fine ? curTrackData.visWidth : windowWidth * 3)
+          }
+          viewRegion={
+            fine ? objToInstanceAlign(curTrackData.visRegion) : currDisplayNav
+          }
+          width={fine ? curTrackData.visWidth : windowWidth * 3}
+          forceSvg={false}
+          trackModel={trackModel}
+          getNumLegend={getNumLegend}
+        />
+      );
+      setCanvasComponents(canvasElements);
+    }
     if (curTrackData.initial === 1) {
       xPos.current = fine ? -curTrackData.startWindow : -windowWidth;
     } else if (curTrackData.side === "right") {
@@ -136,8 +169,34 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   function onConfigChange(key, value) {
     if (value === configOptions.current[`${key}`]) {
       return;
-    }
-    {
+    } else if (
+      key === "displayMode" &&
+      value !== configOptions.current.displayMode
+    ) {
+      configOptions.current.displayMode = value;
+
+      trackModel.options = configOptions.current;
+
+      const renderer = new MatplotTrackConfig(trackModel);
+
+      const items = renderer.getMenuComponents();
+
+      let menu = trackConfigMenu[`${trackModel.type}`]({
+        blockRef: trackManagerRef,
+        trackIdx,
+        handleDelete,
+        id,
+        pageX: configMenuPos.current.left,
+        pageY: configMenuPos.current.top,
+        onCloseConfigMenu,
+        trackModel,
+        configOptions: configOptions.current,
+        items,
+        onConfigChange,
+      });
+
+      getConfigMenu(menu, "singleSelect");
+    } else {
       configOptions.current[`${key}`] = value;
     }
     setConfigChanged(true);
@@ -145,7 +204,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   function renderConfigMenu(event) {
     event.preventDefault();
 
-    const renderer = new RulerTrackConfig(trackModel);
+    const renderer = new MatplotTrackConfig(trackModel);
 
     // create object that has key as displayMode and the configmenu component as the value
     const items = renderer.getMenuComponents();
@@ -176,10 +235,10 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       genomeArr![genomeIdx!].genome._name !== parentGenome.current
     ) {
       if (dataIdx! > rightIdx.current && dataIdx! <= 0) {
-        viewData = [1];
+        viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
       } else if (dataIdx! < leftIdx.current && dataIdx! > 0) {
-        viewData = [1];
+        viewData = fetchedDataCache.current[dataIdx!].cacheData;
         curIdx = dataIdx!;
       }
     } else {
@@ -204,17 +263,18 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     if (viewData.length > 0) {
       curRegionData.current = {
         trackState: fetchedDataCache.current[curIdx].trackState,
-        deDupcacheDataArr: [],
+        deDupcacheDataArr: viewData,
         initial: 0,
       };
       if (
         !useFineModeNav &&
         genomeArr![genomeIdx!].genome._name === parentGenome.current
       ) {
-        viewData = [];
+        let deDupcacheDataArr = getDeDupeArr(viewData);
+        viewData = deDupcacheDataArr;
         curRegionData.current = {
           trackState: fetchedDataCache.current[curIdx].trackState,
-          deDupcacheDataArr: [],
+          deDupcacheDataArr: viewData,
           initial: 0,
         };
 
@@ -231,6 +291,26 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
         );
       }
     }
+  }
+  function getDeDupeArr(data: Array<any>) {
+    let tempMap = new Map<number, any[]>();
+
+    data.forEach((data) => {
+      data.cacheData.forEach((featArr, j) => {
+        if (tempMap.has(j)) {
+          tempMap.get(j)!.push(featArr);
+        } else {
+          tempMap.set(j, [featArr]);
+        }
+      });
+    });
+
+    let deDupcacheDataArr: Array<any> = [];
+    tempMap.forEach((value, key) => {
+      deDupcacheDataArr.push(removeDuplicatesWithoutId(value.flat(1)));
+    });
+
+    return deDupcacheDataArr;
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
@@ -253,7 +333,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           trackData!.trackState.genomicFetchCoord[
             trackData!.trackState.primaryGenName
           ].primaryVisData;
-
         if (trackData!.trackState.initial === 1) {
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
@@ -266,29 +345,26 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
                   trackData![`${id}`].metadata.genome
                 ].queryRegion
               : primaryVisData.visRegion;
-
           const createTrackState = (index: number, side: string) => ({
             initial: index === 1 ? 1 : 0,
             side,
             xDist: 0,
-            regionNavCoord: trackData!.trackState.regionNavCoord,
             visRegion: visRegion,
             startWindow: primaryVisData.viewWindow.start,
             visWidth: primaryVisData.visWidth,
           });
 
           fetchedDataCache.current[rightIdx.current] = {
-            cacheData: [],
+            cacheData: trackData![`${id}`].result.flat(1),
             trackState: createTrackState(1, "right"),
           };
           rightIdx.current--;
-
+          const curDataArr = fetchedDataCache.current[0].cacheData;
           curRegionData.current = {
             trackState: createTrackState(1, "right"),
-            deDupcacheDataArr: [],
+            deDupcacheDataArr: curDataArr,
           };
-
-          createCanvas(createTrackState(1, "right"), [], true);
+          createCanvas(createTrackState(1, "right"), curDataArr, true);
         } else {
           let visRegion;
           if ("genome" in trackData![`${id}`].metadata) {
@@ -303,47 +379,49 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
             initial: 0,
             side: trackData!.trackState.side,
             xDist: trackData!.trackState.xDist,
-            regionNavCoord: trackData!.trackState.regionNavCoord,
             visRegion: visRegion,
             startWindow: primaryVisData.viewWindow.start,
             visWidth: primaryVisData.visWidth,
             useFineModeNav: true,
           };
-
           if (trackData!.trackState.side === "right") {
             newTrackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              cacheData: [],
+              cacheData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
-
             rightIdx.current--;
-
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[rightIdx.current + 1].trackState,
-              deDupcacheDataArr: [],
+              deDupcacheDataArr:
+                fetchedDataCache.current[rightIdx.current + 1].cacheData,
               initial: 0,
             };
-
-            createCanvas(newTrackState, [], true);
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[rightIdx.current + 1].cacheData,
+              true
+            );
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              cacheData: [],
+              cacheData: trackData![`${id}`].result,
               trackState: newTrackState,
             };
-
             leftIdx.current++;
-
             curRegionData.current = {
               trackState:
                 fetchedDataCache.current[leftIdx.current - 1].trackState,
-              deDupcacheDataArr: [],
+              deDupcacheDataArr:
+                fetchedDataCache.current[leftIdx.current - 1].cacheData,
               initial: 0,
             };
-
-            createCanvas(newTrackState, [], true);
+            createCanvas(
+              newTrackState,
+              fetchedDataCache.current[leftIdx.current - 1].cacheData,
+              true
+            );
           }
         }
       } else {
@@ -352,7 +430,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           trackData!.trackState.genomicFetchCoord[
             `${trackData!.trackState.primaryGenName}`
           ];
-
         if (trackData!.initial === 1) {
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
@@ -394,30 +471,41 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
             startWindow: primaryVisData.primaryVisData.viewWindow.start,
             visWidth: primaryVisData.primaryVisData.visWidth,
           };
-
           fetchedDataCache.current[leftIdx.current] = {
-            cacheData: [],
+            cacheData: trackData![`${id}`].result.map((item, index) => {
+              return item[0];
+            }),
             trackState: trackState0,
           };
           leftIdx.current++;
-
           fetchedDataCache.current[rightIdx.current] = {
-            cacheData: [],
+            cacheData: trackData![`${id}`].result.map((item, index) => {
+              return item[1];
+            }),
             trackState: trackState1,
           };
           rightIdx.current--;
           fetchedDataCache.current[rightIdx.current] = {
-            cacheData: [],
+            cacheData: trackData![`${id}`].result.map((item, index) => {
+              return item[2];
+            }),
             trackState: trackState2,
           };
           rightIdx.current--;
+          let testData = [
+            fetchedDataCache.current[1],
+            fetchedDataCache.current[0],
+            fetchedDataCache.current[-1],
+          ];
 
+          let deDupcacheDataArr = getDeDupeArr(testData);
           curRegionData.current = {
             trackState: trackState1,
-            deDupcacheDataArr: [],
+            deDupcacheDataArr,
           };
-          createCanvas(trackState1, [], false);
+          createCanvas(trackState1, deDupcacheDataArr, false);
         } else {
+          let testData: Array<any> = [];
           let newTrackState = {
             ...trackData!.trackState,
             startWindow: primaryVisData.primaryVisData.viewWindow.start,
@@ -426,33 +514,50 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           if (trackData!.trackState.side === "right") {
             trackData!.trackState["index"] = rightIdx.current;
             fetchedDataCache.current[rightIdx.current] = {
-              cacheData: [],
+              cacheData: trackData![`${id}`].result.map((item, index) => {
+                return item;
+              }),
               trackState: newTrackState,
             };
 
+            let currIdx = rightIdx.current + 2;
+            for (let i = 0; i < 3; i++) {
+              testData.push(fetchedDataCache.current[currIdx]);
+              currIdx--;
+            }
             rightIdx.current--;
+
+            let deDupcacheDataArr = getDeDupeArr(testData);
 
             curRegionData.current = {
               trackState: newTrackState,
-              deDupcacheDataArr: [],
+              deDupcacheDataArr,
               initial: 0,
             };
-            createCanvas(newTrackState, [], false);
+            createCanvas(newTrackState, deDupcacheDataArr, false);
           } else if (trackData!.trackState.side === "left") {
             trackData!.trackState["index"] = leftIdx.current;
             fetchedDataCache.current[leftIdx.current] = {
-              cacheData: [],
+              cacheData: trackData![`${id}`].result.map((item, index) => {
+                return item;
+              }),
               trackState: newTrackState,
             };
-
+            let currIdx = leftIdx.current - 2;
+            for (let i = 0; i < 3; i++) {
+              testData.push(fetchedDataCache.current[currIdx]);
+              currIdx++;
+            }
             leftIdx.current++;
+
+            let deDupcacheDataArr = getDeDupeArr(testData);
 
             curRegionData.current = {
               trackState: trackData!.trackState,
-              deDupcacheDataArr: [],
+              deDupcacheDataArr,
               initial: 0,
             };
-            createCanvas(newTrackState, [], false);
+            createCanvas(newTrackState, deDupcacheDataArr, false);
           }
         }
       }
@@ -505,6 +610,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       style={{
         display: "flex",
         position: "relative",
+        height: configOptions.current.height + 2,
       }}
     >
       <div
@@ -522,4 +628,4 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   );
 });
 
-export default memo(RulerTrack);
+export default memo(MatplotTrack);

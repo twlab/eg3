@@ -8,7 +8,7 @@ import {
 } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-const fullWindowWidth = window.outerWidth;
+
 import RefGeneTrack from "./RefGeneTrack";
 import BedTrack from "./BedTrack";
 import BigBedTrack from "./BigBedTrack";
@@ -38,7 +38,7 @@ import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
-import "./DivWithBullseye.css";
+import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
@@ -46,7 +46,6 @@ import _ from "lodash";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { SelectableArea } from "./genomeNavigator/SelectableArea";
 import ZoomButtons from "./ToolsComponents/ZoomButtons";
-import TrackContainer from "./ToolsComponents/TrackContainer";
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
@@ -122,6 +121,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const infiniteScrollWorker = useRef<Worker>();
   const useFineModeNav = useRef(false);
+  const ToolChange = useRef(false);
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
@@ -153,7 +153,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const currTracksConfig = useRef<{ [key: string]: any }>({});
   const configOptions = useRef({ displayMode: "" });
   const configMenuPos = useRef<{ [key: string]: any }>({});
-
+  const saveState = useRef<{ [key: string]: any }>({ selectedTool: "" });
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -189,12 +189,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     zIndex: 3,
     pointerEvents: "none",
+
+    borderTop: "1px dotted grey",
   };
   const verticalLineStyle: CSSProperties = {
     position: "absolute",
     height: "100%",
     width: "2px",
-
+    top: 0,
+    borderLeft: "1px dotted grey",
     zIndex: 3,
     pointerEvents: "none",
   };
@@ -394,7 +397,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     setSelectConfigChange({ changedOption: { [key]: value }, selectedTracks });
   }
-
+  function onRegionSelected(startbase: any, endbase: any) {
+    let newDefaultTracksArr: Array<TrackModel> = [];
+    for (let key in currTracksConfig.current) {
+      let curOption = currTracksConfig.current[`${key}`];
+      curOption["trackModel"].options = curOption.configOptions;
+      newDefaultTracksArr.push(curOption[`${key}`]["trackModel"]);
+    }
+    console.log(newDefaultTracksArr);
+    saveState.current["selectedTool"] = selectedTool;
+    saveState.current["savedTrackConfigs"] = currTracksConfig.current;
+  }
   function renderTrackSpecificItems(x, y) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
@@ -723,10 +736,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      setSelectedTool("none");
+      isLoading.current = false;
+    }
+  };
+
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
     window.addEventListener("scroll", handleScroll);
-
+    document.addEventListener("keydown", handleKeyDown);
     const parentElement = block.current;
     if (parentElement) {
       parentElement.addEventListener("mousemove", handleMove);
@@ -741,7 +761,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
       }
-
+      document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("scroll", handleScroll);
@@ -827,11 +847,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
-
   useEffect(() => {
     if (trackManagerId.current === "") {
       // on initial and when our genome data changes we set the default values here
-
+      console.log(windowWidth);
       let genome = genomeArr[genomeIdx];
 
       leftStartCoord.current = genome.defaultRegion.start;
@@ -901,7 +920,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) : (
           <div style={{ height: 20 }}>DATA READY LETS GO</div>
         )}
-        <ZoomButtons />
+
         <div>1pixel to {basePerPixel.current}bp</div>
 
         <SubToolButtons onToolClicked={onToolClicked} />
@@ -932,16 +951,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   flexDirection: "column",
                 }}
               >
-                <div
-                  ref={horizontalLineRef}
-                  className="Bullseye-horizontal-line"
-                  style={horizontalLineStyle}
-                />
-                <div
-                  ref={verticalLineRef}
-                  className="Bullseye-vertical-line"
-                  style={verticalLineStyle}
-                />
+                <div ref={horizontalLineRef} style={horizontalLineStyle} />
+                <div ref={verticalLineRef} style={verticalLineStyle} />
                 {trackComponents.map((item, index) => {
                   let Component = item.component;
 
@@ -954,7 +965,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       data-theme={"light"}
                       key={item.id}
                       style={{
-                        display: "grid",
+                        display: "flex",
                         WebkitBackfaceVisibility: "hidden",
                         WebkitPerspective: `${windowWidth}px`,
                         backfaceVisibility: "hidden",
@@ -966,11 +977,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       }}
                     >
                       <div
+                        style={{
+                          zIndex: 3,
+
+                          width: "120px",
+                          backgroundColor: "white",
+                        }}
+                        ref={item.legendRef}
+                      ></div>
+                      <div
                         ref={trackComponents[index].posRef}
                         style={{
                           display: "flex",
-                          zIndex: 2,
-                          gridArea: "1/1",
                         }}
                       >
                         <Component
@@ -998,42 +1016,38 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           selectConfigChange={selectConfigChange}
                         />
                       </div>
-                      <div
-                        style={{
-                          position: "relative",
-                          zIndex: 2,
-                          gridArea: "1/1",
-                          width: "100px",
-                          backgroundColor: "white",
-                        }}
-                        ref={item.legendRef}
-                      ></div>
                     </div>
                   );
                 })}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  position: "absolute",
-                  width: `${windowWidth - 1}px`,
-                  zIndex: 10,
-                }}
-              >
-                {selectedTool !== "none" ? (
-                  <SelectableArea>
-                    <div
-                      style={{
-                        height: block.current
-                          ? block.current?.getBoundingClientRect().height
-                          : 0,
-                        width: `${windowWidth - 1}px`,
-                      }}
-                    ></div>
-                  </SelectableArea>
-                ) : (
-                  ""
-                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    position: "absolute",
+                    width: `${windowWidth - 1}px`,
+                    zIndex: 10,
+                  }}
+                >
+                  {selectedTool !== "none" ? (
+                    <SelectableGenomeArea
+                      selectableRegion={region.viewWindow}
+                      dragLimits={new OpenInterval(120, windowWidth)}
+                      onRegionSelected={onRegionSelected}
+                    >
+                      <div
+                        style={{
+                          height: block.current
+                            ? block.current?.getBoundingClientRect().height
+                            : 0,
+                          zIndex: 3,
+                          width: `${windowWidth}px`,
+                        }}
+                      ></div>
+                    </SelectableGenomeArea>
+                  ) : (
+                    ""
+                  )}
+                </div>
               </div>
             </div>
 

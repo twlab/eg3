@@ -13,7 +13,7 @@ import { sameLoci } from "../../../models/util";
 import { getRelativeCoordinates } from "../../../models/util";
 
 import "./ArcDisplay.css";
-import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
+import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 
 interface ArcDisplayProps {
   placedInteractions: PlacedInteraction[];

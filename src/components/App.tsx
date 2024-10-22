@@ -30,7 +30,7 @@ function App() {
   // Used to display the home screen and GenomeView
   // if a user add or update a new genome to aws bucket the homeView will be updated with a new state and render the newly added genome
   // if a user select or delete from their selected genomes of choice then the genomeView will update our GenomeView
-  const [genomeView, setGenomeView] = useState(<></>);
+  const [genomeView, setGenomeView] = useState(<GenomeView />);
   const [homeView, setHomeView] = useState(<></>);
 
   // list of genome the user has choosen to view
@@ -197,13 +197,16 @@ function App() {
   //This useeffect triggers when selectedGenome data is updated
   //This tells us that the GenomeView component needs to update because a user added or delete a genome from their list
   useEffect(() => {
-    setGenomeView(
-      <GenomeView
-        selectedGenome={selectedGenome}
-        allGenome={allGenome}
-        addToView={addGenomeView}
-      />
-    );
+    if (selectedGenome.length > 0) {
+      setGenomeView(
+        <GenomeView
+          selectedGenome={selectedGenome}
+          allGenome={allGenome}
+          addToView={addGenomeView}
+          name={selectedGenome[0].genome._name}
+        />
+      );
+    }
   }, [selectedGenome]);
 
   return (

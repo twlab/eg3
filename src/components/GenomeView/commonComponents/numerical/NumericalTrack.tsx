@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
@@ -14,22 +14,22 @@ import { DefaultAggregators } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
-import HoverToolTip from "../hoverToolTips/HoverToolTip";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 import { BackgroundColorConfig } from "../../../../trackConfigs/config-menu-components.tsx/ColorConfig";
 import TrackLegend from "../TrackLegend";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
-  data: Feature[]; // Replace 'Feature' with the actual type of your data
+  data?: Feature[]; // Replace 'Feature' with the actual type of your data
   unit?: string;
-  options: any;
+  options?: any;
   isLoading?: boolean;
   error?: any;
   trackModel?: any;
   groupScale?: any;
-  viewWindow: any;
-  viewRegion: any;
-  width: any;
-  forceSvg: any;
+  viewWindow?: any;
+  viewRegion?: any;
+  width?: any;
+  forceSvg?: any;
   getNumLegend?: any;
 }
 export const DEFAULT_OPTIONS = {
@@ -57,144 +57,142 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
  *
  * @author Silas Hsu
  */
-class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
-  /**
-   * Don't forget to look at NumericalFeatureProcessor's propTypes!
-   */
+const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
+  const {
+    data,
+    viewRegion,
+    width,
+    trackModel,
+    unit,
+    options,
+    forceSvg,
+    getNumLegend,
+  } = props;
+  const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
-  xToValue: any;
-  xToValue2: any;
-  scales: any;
-  hasReverse: boolean;
-  renderTooltip: any;
-  aggregator: NumericalAggregator;
+  const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  constructor(props) {
-    super(props);
-    this.xToValue = null;
-    this.xToValue2 = null;
-    this.scales = null;
-    this.hasReverse = false;
+  const xvalues = useMemo(
+    () => aggregator.xToValueMaker(data, viewRegion, width, options),
+    [data, viewRegion, width, options]
+  );
 
-    this.computeScales = memoizeOne(this.computeScales);
-    // this.renderTooltip = this.renderTooltip.bind(this);
-    this.aggregator = new NumericalAggregator();
-  }
+  const [xToValue, xToValue2, hasReverse] = xvalues;
 
-  computeScales(xToValue, xToValue2, height) {
-    const { yScale, yMin, yMax } = this.props.options;
-    if (yMin >= yMax) {
-      console.log("Y-axis min must less than max", "error", 2000);
-    }
-    const { trackModel, groupScale } = this.props;
-    let gscale: any = {},
-      min,
-      max,
-      xValues2 = [];
-    if (groupScale) {
-      if (trackModel.options.hasOwnProperty("group")) {
-        gscale = groupScale[trackModel.options.group];
+  const computeScales = useMemo(() => {
+    return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
+      const { yScale, yMin, yMax } = options;
+      if (yMin >= yMax) {
+        console.log("Y-axis min must less than max", "error", 2000);
       }
-    }
-    if (!_.isEmpty(gscale)) {
-      max = _.max(Object.values(gscale.max));
-      min = _.min(Object.values(gscale.min));
-    } else {
-      const visibleValues = xToValue.slice(
-        this.props.viewWindow.start,
-        this.props.viewWindow.end
-      );
-      max = _.max(visibleValues) || 1; // in case undefined returned here, cause maxboth be undefined too
-      xValues2 = xToValue2.filter((x) => x);
-      min =
-        (xValues2.length
-          ? _.min(
-              xToValue2.slice(
-                this.props.viewWindow.start,
-                this.props.viewWindow.end
+      const { trackModel, groupScale } = props;
+      let gscale: any = {},
+        min,
+        max,
+        xValues2: Array<any> = [];
+      if (groupScale) {
+        if (trackModel.options.hasOwnProperty("group")) {
+          gscale = groupScale[trackModel.options.group];
+        }
+      }
+      if (!_.isEmpty(gscale)) {
+        max = _.max(Object.values(gscale.max));
+        min = _.min(Object.values(gscale.min));
+      } else {
+        const visibleValues = xToValue.slice(
+          props.viewWindow.start,
+          props.viewWindow.end
+        );
+        max = _.max(visibleValues) || 1;
+        xValues2 = xToValue2.filter((x) => x);
+        min =
+          (xValues2.length
+            ? _.min(
+                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
               )
-            )
-          : 0) || 0;
-      const maxBoth = Math.max(Math.abs(max), Math.abs(min));
-      max = maxBoth;
-      min = xValues2.length ? -maxBoth : 0;
-      if (yScale === ScaleChoices.FIXED) {
-        max = yMax ? yMax : max;
-        min = yMin !== undefined ? yMin : min;
+            : 0) || 0;
+        const maxBoth = Math.max(Math.abs(max), Math.abs(min));
+        max = maxBoth;
+        min = xValues2.length ? -maxBoth : 0;
+        if (yScale === ScaleChoices.FIXED) {
+          max = yMax ? yMax : max;
+          min = yMin !== undefined ? yMin : min;
+        }
       }
-    }
-    if (min > max) {
-      console.log("Y-axis min should less than Y-axis max", "warning", 5000);
-      min = 0;
-    }
+      if (min > max) {
+        console.log("Y-axis min should less than Y-axis max", "warning", 5000);
+        min = 0;
+      }
 
-    const zeroLine =
-      min < 0
-        ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-        : height;
+      const zeroLine =
+        min < 0
+          ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
+          : height;
 
-    if (
-      xValues2.length &&
-      (yScale === ScaleChoices.AUTO ||
-        (yScale === ScaleChoices.FIXED && yMin < 0))
-    ) {
-      return {
-        axisScale: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height - TOP_PADDING])
-          .clamp(true),
-        valueToY: scaleLinear()
-          .domain([max, 0])
-          .range([TOP_PADDING, zeroLine])
-          .clamp(true),
-        valueToYReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, height - zeroLine - TOP_PADDING])
-          .clamp(true),
-        valueToOpacity: scaleLinear()
-          .domain([0, max])
-          .range([0, 1])
-          .clamp(true),
-        valueToOpacityReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, 1])
-          .clamp(true),
-        min,
-        max,
-        zeroLine,
-      };
-    } else {
-      return {
-        axisScale: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height])
-          .clamp(true),
-        valueToY: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height])
-          .clamp(true),
-        valueToOpacity: scaleLinear()
-          .domain([min, max])
-          .range([0, 1])
-          .clamp(true),
-        // for group feature when there is only nagetiva data, to be fixed
-        valueToYReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, height - zeroLine - TOP_PADDING])
-          .clamp(true),
-        valueToOpacityReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, 1])
-          .clamp(true),
-        min,
-        max,
-        zeroLine,
-      };
-    }
-  }
+      if (
+        xValues2.length &&
+        (yScale === ScaleChoices.AUTO ||
+          (yScale === ScaleChoices.FIXED && yMin < 0))
+      ) {
+        return {
+          axisScale: scaleLinear()
+            .domain([max, min])
+            .range([TOP_PADDING, height - TOP_PADDING])
+            .clamp(true),
+          valueToY: scaleLinear()
+            .domain([max, 0])
+            .range([TOP_PADDING, zeroLine])
+            .clamp(true),
+          valueToYReverse: scaleLinear()
+            .domain([0, min])
+            .range([0, height - zeroLine - TOP_PADDING])
+            .clamp(true),
+          valueToOpacity: scaleLinear()
+            .domain([0, max])
+            .range([0, 1])
+            .clamp(true),
+          valueToOpacityReverse: scaleLinear()
+            .domain([0, min])
+            .range([0, 1])
+            .clamp(true),
+          min,
+          max,
+          zeroLine,
+        };
+      } else {
+        return {
+          axisScale: scaleLinear()
+            .domain([max, min])
+            .range([TOP_PADDING, height])
+            .clamp(true),
+          valueToY: scaleLinear()
+            .domain([max, min])
+            .range([TOP_PADDING, height])
+            .clamp(true),
+          valueToOpacity: scaleLinear()
+            .domain([min, max])
+            .range([0, 1])
+            .clamp(true),
+          valueToYReverse: scaleLinear()
+            .domain([0, min])
+            .range([0, height - zeroLine - TOP_PADDING])
+            .clamp(true),
+          valueToOpacityReverse: scaleLinear()
+            .domain([0, min])
+            .range([0, 1])
+            .clamp(true),
+          min,
+          max,
+          zeroLine,
+        };
+      }
+    });
+  }, [options, props]);
 
-  getEffectiveDisplayMode() {
-    const { displayMode, height } = this.props.options;
+  const scales = computeScales(xToValue, xToValue2, height);
+
+  const getEffectiveDisplayMode = () => {
+    const { displayMode, height } = options;
     if (displayMode === NumericalDisplayModes.AUTO) {
       return height < AUTO_HEATMAP_THRESHOLD
         ? NumericalDisplayModes.HEATMAP
@@ -202,141 +200,105 @@ class NumericalTrack extends React.PureComponent<NumericalTrackProps> {
     } else {
       return displayMode;
     }
-  }
+  };
+  console.log(options);
+  let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
-  /**
-   * Renders the default tooltip that is displayed on hover.
-   *
-   * @param {number} relativeX - x coordinate of hover relative to the visualizer
-   * @param {number} value -
-   * @return {JSX.Element} tooltip to render
-   */
-
-  render() {
-    // console.log("render");
-    const {
-      data,
-      viewRegion,
-      width,
-      trackModel,
-      unit,
-      options,
-      forceSvg,
-      getNumLegend,
-    } = this.props;
-    const { height, color, color2, colorAboveMax, color2BelowMin } = options;
-
-    const xvalues = this.aggregator.xToValueMaker(
-      data,
-      viewRegion,
-      width,
-      options
-    );
-
-    this.xToValue = xvalues[0];
-    this.xToValue2 = xvalues[1];
-    this.hasReverse = xvalues[2];
-    this.scales = this.computeScales(this.xToValue, this.xToValue2, height);
-    const isDrawingBars =
-      this.getEffectiveDisplayMode() === NumericalDisplayModes.BAR; // As opposed to heatmap\
-
-    const legend = (
-      <TrackLegend
-        trackModel={trackModel}
-        height={height}
-        axisScale={isDrawingBars ? this.scales.axisScale : undefined}
-        // axisScale={isDrawingBars ? this.scales.valueToY : undefined}
-        // axisScaleReverse={isDrawingBars ? this.scales.valueToYReverse : undefined}
-        axisLegend={unit}
-      />
-    );
-
+  const legend = (
+    <TrackLegend
+      trackModel={trackModel}
+      height={height}
+      axisScale={isDrawingBars ? scales.axisScale : undefined}
+      axisLegend={unit}
+    />
+  );
+  console.log(isDrawingBars, getEffectiveDisplayMode());
+  useEffect(() => {
     if (getNumLegend) {
       getNumLegend(legend);
     }
+  }, [getNumLegend, legend]);
 
-    const visualizer = this.hasReverse ? (
-      <React.Fragment>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
+  const visualizer = hasReverse ? (
+    <React.Fragment>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          position: "absolute",
+          zIndex: 3,
+        }}
+      >
+        <HoverToolTip
+          data={xToValue}
+          data2={xToValue2}
+          windowWidth={width}
+          trackType={"numerical"}
+          trackModel={trackModel}
+          height={height}
+          viewRegion={viewRegion}
+          unit={unit}
+          hasReverse={true}
+        />
+      </div>
+      <ValuePlot
+        xToValue={xToValue}
+        scales={scales}
+        height={scales.zeroLine}
+        color={color}
+        colorOut={colorAboveMax}
+        isDrawingBars={isDrawingBars}
+        forceSvg={forceSvg}
+        width={width}
+      />
+      <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+      <ValuePlot
+        xToValue={xToValue2}
+        scales={scales}
+        height={height - scales.zeroLine}
+        color={color2}
+        colorOut={color2BelowMin}
+        isDrawingBars={isDrawingBars}
+        forceSvg={forceSvg}
+        width={width}
+      />
+    </React.Fragment>
+  ) : (
+    <React.Fragment>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          position: "absolute",
+          zIndex: 3,
+        }}
+      >
+        <HoverToolTip
+          data={xToValue}
+          windowWidth={width}
+          trackType={"numerical"}
+          trackModel={trackModel}
+          height={DEFAULT_OPTIONS.height}
+          viewRegion={viewRegion}
+          unit={unit}
+          hasReverse={false}
+        />
+      </div>
+      <ValuePlot
+        xToValue={xToValue}
+        scales={scales}
+        height={scales.zeroLine}
+        color={color}
+        colorOut={colorAboveMax}
+        isDrawingBars={isDrawingBars}
+        forceSvg={forceSvg}
+        width={width}
+      />
+    </React.Fragment>
+  );
 
-            zIndex: 3,
-          }}
-        >
-          <HoverToolTip
-            data={this.xToValue}
-            data2={this.xToValue2}
-            windowWidth={width}
-            trackType={"numerical"}
-            trackModel={trackModel}
-            height={height}
-            viewRegion={viewRegion}
-            unit={unit}
-            hasReverse={true}
-          />
-        </div>
-        <ValuePlot
-          xToValue={this.xToValue}
-          scales={this.scales}
-          height={this.scales.zeroLine}
-          color={color}
-          colorOut={colorAboveMax}
-          isDrawingBars={isDrawingBars}
-          forceSvg={forceSvg}
-          width={width}
-        />
-        <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
-        <ValuePlot
-          xToValue={this.xToValue2}
-          scales={this.scales}
-          height={height - this.scales.zeroLine}
-          color={color2}
-          colorOut={color2BelowMin}
-          isDrawingBars={isDrawingBars}
-          forceSvg={forceSvg}
-          width={width}
-        />
-      </React.Fragment>
-    ) : (
-      <React.Fragment>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
-
-            zIndex: 3,
-          }}
-        >
-          <HoverToolTip
-            data={this.xToValue}
-            windowWidth={width}
-            trackType={"numerical"}
-            trackModel={trackModel}
-            height={DEFAULT_OPTIONS.height}
-            viewRegion={viewRegion}
-            unit={unit}
-            hasReverse={false}
-          />
-        </div>
-        <ValuePlot
-          xToValue={this.xToValue}
-          scales={this.scales}
-          height={this.scales.zeroLine}
-          color={color}
-          colorOut={colorAboveMax}
-          isDrawingBars={isDrawingBars}
-          forceSvg={forceSvg}
-          width={width}
-        />
-      </React.Fragment>
-    );
-    return visualizer;
-  }
-}
+  return visualizer;
+};
 interface ValueTrackProps {
   xToValue: any[]; // Replace 'any' with the actual type for xToValue
   scales: Record<string, any>; // Replace 'any' with the actual type for scales

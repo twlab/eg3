@@ -34,7 +34,7 @@ const genome = new Genome("hg38", [
 //   //chr7:27053397-27373765
 //   // chr7:10000-20000
 //   //testing finemode  27213325-27213837
-//   //chr7:159159564-chr8:224090
+//   //chr7:157159564-158159564
 // //27195171-27202238
 //chr7:26805572-26825594
 // big interact chr3:63836292-64336395
@@ -122,28 +122,28 @@ const defaultTracks = [
   //   // }
   // }),
 
-  // new TrackModel({
-  //   type: "bigbed",
-  //   name: "test bigbed",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  // }),
-
-  // new TrackModel({
-  //   type: "repeatmasker",
-  //   name: "RepeatMasker",
-  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  // }),
   new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
+    type: "bigbed",
+    name: "test bigbed",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  }),
+
+  new TrackModel({
+    type: "repeatmasker",
+    name: "RepeatMasker",
+    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
   }),
   // new TrackModel({
   //   type: "geneAnnotation",
-  //   name: "refGene",
-  //   genome: "mm10",
-  //   metadata: { genome: "mm10" },
+  //   name: "gencodeV39",
+  //   genome: "hg38",
   // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "mm10",
+    metadata: { genome: "mm10" },
+  }),
   new TrackModel({
     type: "bed",
     name: "mm10 bed",
@@ -166,53 +166,53 @@ const defaultTracks = [
       height: 100,
     },
   }),
-  // new TrackModel({
-  //   type: "methylc",
-  //   name: "H1",
-  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-  //   options: {
-  //     label: "Methylation",
-  //     colorsForContext: {
-  //       CG: { color: "#648bd8", background: "#d9d9d9" },
-  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
-  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
-  //     },
-  //     depthColor: "#01E9FE",
-  //   },
-  // }),
+  new TrackModel({
+    type: "methylc",
+    name: "H1",
+    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+    options: {
+      label: "Methylation",
+      colorsForContext: {
+        CG: { color: "#648bd8", background: "#d9d9d9" },
+        CHG: { color: "#ff944d", background: "#ffe0cc" },
+        CHH: { color: "#ff00ff", background: "#ffe5ff" },
+      },
+      depthColor: "#01E9FE",
+    },
+  }),
 
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  // }),
-  // new TrackModel({
-  //   type: "categorical",
-  //   name: "ChromHMM",
-  //   url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
-  //   options: {
-  //     category: {
-  //       1: { name: "Active TSS", color: "#ff0000" },
-  //       2: { name: "Flanking Active TSS", color: "#ff4500" },
-  //       3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
-  //       4: { name: "Strong transcription", color: "#008000" },
-  //       5: { name: "Weak transcription", color: "#006400" },
-  //       6: { name: "Genic enhancers", color: "#c2e105" },
-  //       7: { name: "Enhancers", color: "#ffff00" },
-  //       8: { name: "ZNF genes & repeats", color: "#66cdaa" },
-  //       9: { name: "Heterochromatin", color: "#8a91d0" },
-  //       10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
-  //       11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
-  //       12: { name: "Bivalent Enhancer", color: "#bdb76b" },
-  //       13: { name: "Repressed PolyComb", color: "#808080" },
-  //       14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
-  //       15: { name: "Quiescent/Low", color: "#ffffff" },
-  //     },
-  //   },
-  // }),
+  new TrackModel({
+    name: "hg38tomm10",
+    label: "Query mouse mm10 to hg38 blastz",
+    type: "genomealign",
+    querygenome: "mm10",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  }),
+  new TrackModel({
+    type: "categorical",
+    name: "ChromHMM",
+    url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
+    options: {
+      category: {
+        1: { name: "Active TSS", color: "#ff0000" },
+        2: { name: "Flanking Active TSS", color: "#ff4500" },
+        3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
+        4: { name: "Strong transcription", color: "#008000" },
+        5: { name: "Weak transcription", color: "#006400" },
+        6: { name: "Genic enhancers", color: "#c2e105" },
+        7: { name: "Enhancers", color: "#ffff00" },
+        8: { name: "ZNF genes & repeats", color: "#66cdaa" },
+        9: { name: "Heterochromatin", color: "#8a91d0" },
+        10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
+        11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
+        12: { name: "Bivalent Enhancer", color: "#bdb76b" },
+        13: { name: "Repressed PolyComb", color: "#808080" },
+        14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
+        15: { name: "Quiescent/Low", color: "#ffffff" },
+      },
+    },
+  }),
   // new TrackModel({
   //   type: "longrange",
   //   name: "ES-E14 ChIA-PET",

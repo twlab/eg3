@@ -7,7 +7,7 @@ import OpenInterval from "../../../models/OpenInterval";
 import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
-import HoverToolTip from "../commonComponents/hoverToolTips/HoverToolTip";
+import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 
 interface SquareDisplayProps {
   placedInteractions: PlacedInteraction[];

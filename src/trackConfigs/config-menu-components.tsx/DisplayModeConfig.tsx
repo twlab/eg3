@@ -41,8 +41,8 @@ export function NumericalDisplayModeConfig(props) {
     <SelectConfig
       {...props}
       optionName="displayMode"
+      defaultValue={props.defaultValue}
       label="Display mode:"
-      defaultValue={NumericalDisplayModes.AUTO}
       choices={NumericalDisplayModes}
     />
   );
