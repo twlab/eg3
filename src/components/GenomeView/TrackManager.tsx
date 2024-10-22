@@ -920,7 +920,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) : (
           <div style={{ height: 20 }}>DATA READY LETS GO</div>
         )}
-        <ZoomButtons />
+
         <div>1pixel to {basePerPixel.current}bp</div>
 
         <SubToolButtons onToolClicked={onToolClicked} />

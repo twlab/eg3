@@ -43,7 +43,7 @@ const genome = new Genome("hg38", [
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:157159564-158159564");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",

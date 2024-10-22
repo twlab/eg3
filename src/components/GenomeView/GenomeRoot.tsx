@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import TrackManager from "./TrackManager";
 import Drag from "./commonComponents/chr-order/ChrOrder";
 import { chrType } from "../../localdata/genomename";
-
+import { SelectDemo } from "./tesShadcn";
 import { v4 as uuidv4 } from "uuid";
 import useResizeObserver from "./commonComponents/Resize";
 
@@ -143,7 +143,7 @@ function GenomeHub(props: any) {
         {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
-
+        <SelectDemo />
         {genomeList.map((item, index) => (
           <TrackManager
             key={item.genomeID}
