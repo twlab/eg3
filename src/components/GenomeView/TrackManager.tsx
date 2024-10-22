@@ -398,7 +398,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setSelectConfigChange({ changedOption: { [key]: value }, selectedTracks });
   }
   function onRegionSelected(startbase: any, endbase: any) {
-    console.log(startbase, endbase, selectedTool);
+    let newDefaultTracksArr: Array<TrackModel> = [];
+    for (let key in currTracksConfig.current) {
+      let curOption = currTracksConfig.current[`${key}`];
+      curOption["trackModel"].options = curOption.configOptions;
+      newDefaultTracksArr.push(curOption[`${key}`]["trackModel"]);
+    }
+    console.log(newDefaultTracksArr);
     saveState.current["selectedTool"] = selectedTool;
     saveState.current["savedTrackConfigs"] = currTracksConfig.current;
   }
