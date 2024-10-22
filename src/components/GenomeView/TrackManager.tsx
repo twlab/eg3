@@ -153,7 +153,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const currTracksConfig = useRef<{ [key: string]: any }>({});
   const configOptions = useRef({ displayMode: "" });
   const configMenuPos = useRef<{ [key: string]: any }>({});
-
+  const saveState = useRef<{ [key: string]: any }>({ selectedTool: "" });
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
@@ -397,8 +397,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     setSelectConfigChange({ changedOption: { [key]: value }, selectedTracks });
   }
-  function onAreaSelected(startbase: any, endbase: any) {
+  function onRegionSelected(startbase: any, endbase: any) {
     console.log(startbase, endbase, selectedTool);
+    saveState.current["selectedTool"] = selectedTool;
+    saveState.current["savedTrackConfigs"] = currTracksConfig.current;
   }
   function renderTrackSpecificItems(x, y) {
     let menuComponents: Array<any> = [];
@@ -842,7 +844,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (trackManagerId.current === "") {
       // on initial and when our genome data changes we set the default values here
-
+      console.log(windowWidth);
       let genome = genomeArr[genomeIdx];
 
       leftStartCoord.current = genome.defaultRegion.start;
@@ -972,7 +974,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         style={{
                           zIndex: 3,
 
-                          width: "100px",
+                          width: "120px",
                           backgroundColor: "white",
                         }}
                         ref={item.legendRef}
@@ -981,7 +983,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         ref={trackComponents[index].posRef}
                         style={{
                           display: "flex",
-                          zIndex: 2,
                         }}
                       >
                         <Component
@@ -1008,48 +1009,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           onTrackConfigChange={onTrackConfigChange}
                           selectConfigChange={selectConfigChange}
                         />
-                        <div
-                          style={{
-                            display: "flex",
-                            position: "absolute",
-                            width: `${windowWidth}px`,
-                            zIndex: 10,
-                          }}
-                        >
-                          {selectedTool !== "none" ? (
-                            <SelectableGenomeArea
-                              selectableRegion={region.viewWindow}
-                              dragLimits={new OpenInterval(0, windowWidth)}
-                              onRegionSelected={onAreaSelected}
-                            >
-                              <div
-                                style={{
-                                  height: block.current
-                                    ? block.current?.getBoundingClientRect()
-                                        .height
-                                    : 0,
-                                  zIndex: 3,
-                                  width: `${windowWidth}px`,
-                                }}
-                              ></div>
-                            </SelectableGenomeArea>
-                          ) : (
-                            ""
-                          )}
-                        </div>
                       </div>
                     </div>
                   );
                 })}
+
+                <div
+                  style={{
+                    display: "flex",
+                    position: "absolute",
+                    width: `${windowWidth - 1}px`,
+                    zIndex: 10,
+                  }}
+                >
+                  {selectedTool !== "none" ? (
+                    <SelectableGenomeArea
+                      selectableRegion={region.viewWindow}
+                      dragLimits={new OpenInterval(120, windowWidth)}
+                      onRegionSelected={onRegionSelected}
+                    >
+                      <div
+                        style={{
+                          height: block.current
+                            ? block.current?.getBoundingClientRect().height
+                            : 0,
+                          zIndex: 3,
+                          width: `${windowWidth}px`,
+                        }}
+                      ></div>
+                    </SelectableGenomeArea>
+                  ) : (
+                    ""
+                  )}
+                </div>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  position: "absolute",
-                  width: `${windowWidth - 1}px`,
-                  zIndex: 10,
-                }}
-              ></div>
             </div>
 
             {/* 

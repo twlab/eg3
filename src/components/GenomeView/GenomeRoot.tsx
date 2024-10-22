@@ -134,26 +134,27 @@ function GenomeHub(props: any) {
   }, [isInitial, size.width]);
   return (
     <div
-      ref={ref as React.RefObject<HTMLDivElement>}
       style={{
         paddingLeft: "1%",
         paddingRight: "1%",
       }}
     >
-      {/* <div style={{ display: "flex" }}>
+      <div ref={ref as React.RefObject<HTMLDivElement>}>
+        {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
 
-      {genomeList.map((item, index) => (
-        <TrackManager
-          key={item.genomeID}
-          genomeIdx={index}
-          addTrack={addTrack}
-          startBp={startBp}
-          genomeArr={genomeList}
-          windowWidth={item.windowWidth}
-        />
-      ))}
+        {genomeList.map((item, index) => (
+          <TrackManager
+            key={item.genomeID}
+            genomeIdx={index}
+            addTrack={addTrack}
+            startBp={startBp}
+            genomeArr={genomeList}
+            windowWidth={size.width}
+          />
+        ))}
+      </div>
     </div>
   );
 }

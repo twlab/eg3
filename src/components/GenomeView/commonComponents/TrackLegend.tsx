@@ -37,7 +37,7 @@ const AXIS_WIDTH = 32;
  */
 class TrackLegend extends React.PureComponent<TrackLegendProps> {
   static defaultProps = {
-    width: 100,
+    width: 120,
   };
 
   private gNode: any;

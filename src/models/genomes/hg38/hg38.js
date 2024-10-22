@@ -34,7 +34,7 @@ const genome = new Genome("hg38", [
 //   //chr7:27053397-27373765
 //   // chr7:10000-20000
 //   //testing finemode  27213325-27213837
-//   //chr7:159159564-chr8:224090
+//   //chr7:157159564-158159564
 // //27195171-27202238
 //chr7:26805572-26825594
 // big interact chr3:63836292-64336395
@@ -43,7 +43,7 @@ const genome = new Genome("hg38", [
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:157159564-158159564");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
