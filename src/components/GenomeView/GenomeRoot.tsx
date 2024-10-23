@@ -5,7 +5,7 @@ import useResizeObserver from "./commonComponents/Resize";
 import { v4 as uuidv4 } from "uuid";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
-
+import "../../index.css";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub(props: any) {

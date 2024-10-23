@@ -38,7 +38,6 @@ import RefBedTrack from "./RefBedTrack";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
-import "./DivWithBullseye.css";
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
@@ -180,23 +179,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     return total;
   }
-
-  const horizontalLineStyle: CSSProperties = {
-    position: "absolute",
-    width: "100%",
-    height: "2px",
-
-    zIndex: 3,
-    pointerEvents: "none",
-  };
-  const verticalLineStyle: CSSProperties = {
-    position: "absolute",
-    height: "100%",
-    width: "2px",
-
-    zIndex: 3,
-    pointerEvents: "none",
-  };
 
   function handleScroll() {
     // dont need to account for scroll because parenttop will always give the extact location of where the  event is
@@ -940,16 +922,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   flexDirection: "column",
                 }}
               >
-                <div
-                  ref={horizontalLineRef}
-                  className="Bullseye-horizontal-line"
-                  style={horizontalLineStyle}
-                />
-                <div
-                  ref={verticalLineRef}
-                  className="Bullseye-vertical-line"
-                  style={verticalLineStyle}
-                />
+                <div ref={horizontalLineRef} className="horizontal-line" />
+                <div ref={verticalLineRef} className="vertical-line" />
                 {trackComponents.map((item, index) => {
                   let Component = item.component;
 
