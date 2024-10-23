@@ -107,7 +107,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       useFineOrSecondaryParentNav.current
     );
 
-    getDisplayModeFunction(
+    await getDisplayModeFunction(
       {
         genesArr,
         useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
