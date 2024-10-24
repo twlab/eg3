@@ -102,12 +102,14 @@ function GenomeHub(props: any) {
       let curGenome = getGenomeConfig(props.name);
       curGenome["genomeID"] = uuidv4();
       curGenome["windowWidth"] = size.width;
+
       setGenomeList([curGenome]);
 
       curNavRegion.current.start = curGenome.defaultRegion.start;
       curNavRegion.current.end = curGenome.defaultRegion.end;
       setIsInitial(false);
     } else {
+      console.log(size.width);
       let curGenome = getGenomeConfig("hg38");
       curGenome["genomeID"] = uuidv4();
       curGenome["windowWidth"] = size.width;
@@ -158,17 +160,19 @@ function GenomeHub(props: any) {
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
         <SelectDemo />
-        {genomeList.map((item, index) => (
-          <TrackManager
-            key={item.genomeID}
-            genomeIdx={index}
-            addTrack={addTrack}
-            startBp={startBp}
-            recreateTrackmanager={recreateTrackmanager}
-            genomeArr={genomeList}
-            windowWidth={size.width}
-          />
-        ))}
+        {size.width > 0
+          ? genomeList.map((item, index) => (
+              <TrackManager
+                key={item.genomeID}
+                genomeIdx={index}
+                addTrack={addTrack}
+                startBp={startBp}
+                recreateTrackmanager={recreateTrackmanager}
+                genomeArr={genomeList}
+                windowWidth={size.width}
+              />
+            ))
+          : ""}
       </div>
     </div>
   );

@@ -578,6 +578,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           minBp.current,
           maxBp.current
         );
+        console.log(windowWidth, windowWidth * 2);
         newVisData = {
           visWidth: windowWidth * 3,
           visRegion: new DisplayedRegionModel(
@@ -758,7 +759,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   function onRegionSelected(startbase: number, endbase: number, xSpan) {
-    console.log(xSpan);
+    console.log(xSpan, startbase);
     // let newDefaultTracksArr: Array<TrackModel> = [];
     // for (let key in currTracksConfig.current) {
     //   let curTrackOptions = currTracksConfig.current[`${key}`];
@@ -772,13 +773,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //   genomeConfig: genomeArr[genomeIdx],
     //   scrollY: window.scrollY,
     // });
+    console.log(windowWidth);
+    let pixelPerBase = windowWidth / bpRegionSize.current;
     let length = xSpan.end - xSpan.start;
-    let curXPos = -dragX.current + xSpan.start;
+    let curXPos =
+      side.current === "right"
+        ? -dragX.current + xSpan.start - 120
+        : dragX.current - xSpan.end + 120;
+    // 120 is the width of the legend
     let newRef: any = createRef();
-
+    console.log(
+      curXPos,
+      (startbase - leftStartCoord.current) * pixelPerBase,
+      startbase
+    );
     setHighlight([
       ...highlight,
-      { highlightRef: newRef, xPos: curXPos, length },
+      { highlightRef: newRef, xPos: curXPos, length, side: side.current },
     ]);
   }
 
@@ -896,14 +907,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [initialStart]);
   useEffect(() => {
-    if (trackManagerId.current === "") {
+    if (trackManagerId.current === "" && windowWidth > 0) {
       // on initial and when our genome data changes we set the default values here
       console.log(windowWidth);
       let genome = genomeArr[genomeIdx];
 
       leftStartCoord.current = genome.defaultRegion.start;
       rightStartCoord.current = genome.defaultRegion.end;
-
+      console.log(leftStartCoord.current);
       bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
 
       basePerPixel.current = bpRegionSize.current / windowWidth;
@@ -942,7 +953,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           <GenomeNavigator
             selectedRegion={region.viewWindow}
             genomeConfig={genomeArr[genomeIdx]}
-            windowWidth={windowWidth}
+            windowWidth={windowWidth + 120}
             onRegionSelected={genomeNavigatorRegionSelect}
           />
         ) : (
@@ -985,7 +996,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 // full windowwidth will make canvas only loop 0-windowidth
                 // the last value will have no data.
                 // so we have to subtract from the size of the canvas
-                width: `${windowWidth - 1}px`,
+                width: `${windowWidth}px`,
                 // width: `${fullWindowWidth / 2}px`,
                 // height: "2000px",
                 overflowX: "hidden",
@@ -998,67 +1009,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 style={{
                   display: "flex",
                   flexDirection: "column",
+                  position: "relative",
                 }}
               >
                 <div ref={horizontalLineRef} style={horizontalLineStyle} />
                 <div ref={verticalLineRef} style={verticalLineStyle} />
-                {highlight.length > 0 ? (
-                  <div
-                    data-theme={"light"}
-                    style={{
-                      position: "absolute",
-                      display: "flex",
-                      WebkitBackfaceVisibility: "hidden",
-                      WebkitPerspective: `${windowWidth}px`,
-                      backfaceVisibility: "hidden",
-                      perspective: `${windowWidth}px`,
-                      zIndex: 15, // Ensure it's on top of other elements
-                    }}
-                  >
-                    {highlight.map((item, index) => {
-                      console.log(item);
-                      return (
-                        <div
-                          key={index}
-                          ref={item.highlightRef}
-                          style={{
-                            display: "flex",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              position: "relative",
-                              height: "500px",
-                            }}
-                          >
-                            <div
-                              key={index}
-                              style={{
-                                position: "absolute",
-                                backgroundColor: "yellow",
-                                top: "0",
-                                height: "200px",
-                                left:
-                                  side.current === "right"
-                                    ? `${item.xPos}px`
-                                    : "",
-                                right:
-                                  side.current === "left"
-                                    ? `${item.xPos}px`
-                                    : "",
-                                width: item.length,
-                                pointerEvents: "none", // This makes the highlighted area non-interactive
-                              }}
-                            ></div>
-                          </div>{" "}
-                        </div>
-                      );
-                    })}{" "}
-                  </div>
-                ) : (
-                  ""
-                )}
+
                 {trackComponents.map((item, index) => {
                   let Component = item.component;
 
@@ -1078,22 +1034,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         perspective: `${windowWidth}px`,
                         backgroundColor: "#F2F2F2",
                         width: `${windowWidth}px`,
-                        zIndex: 1,
                         outline: "1px solid Dodgerblue",
                       }}
                     >
                       <div
                         style={{
-                          zIndex: 3,
-
+                          zIndex: 10, // Ensure the legend is on top
                           width: "120px",
                           backgroundColor: "white",
+                          position: "relative", // Ensure zIndex works with relative positioning
                         }}
                         ref={item.legendRef}
                       ></div>
                       <div
                         ref={trackComponents[index].posRef}
                         style={{
+                          zIndex: 1, // Set a lower zIndex for the main track components
                           display: "flex",
                         }}
                       >
@@ -1121,6 +1077,65 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           onTrackConfigChange={onTrackConfigChange}
                           selectConfigChange={selectConfigChange}
                         />
+
+                        {highlight.length > 0 ? (
+                          <div
+                            style={{
+                              position: "absolute",
+                              display: "flex",
+                              WebkitBackfaceVisibility: "hidden",
+                              WebkitPerspective: `${windowWidth}px`,
+                              backfaceVisibility: "hidden",
+                              perspective: `${windowWidth}px`,
+                              zIndex: 4, // Ensure it's on top of other elements
+                              height: "100%",
+                            }}
+                          >
+                            {highlight.map((item, index) => {
+                              return (
+                                <div
+                                  key={index}
+                                  ref={item.highlightRef}
+                                  style={{
+                                    display: "flex",
+                                    height: "100%",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      position: "relative",
+                                      height: "100%",
+                                    }}
+                                  >
+                                    <div
+                                      key={index}
+                                      style={{
+                                        position: "absolute",
+                                        backgroundColor:
+                                          "rgba(0, 123, 255, 0.15)",
+                                        top: "0",
+                                        height: "100%",
+                                        left:
+                                          item.side === "right"
+                                            ? `${item.xPos}px`
+                                            : "",
+                                        right:
+                                          item.side === "left"
+                                            ? `${item.xPos}px`
+                                            : "",
+                                        width: item.length,
+                                        pointerEvents: "none", // This makes the highlighted area non-interactive
+                                      }}
+                                    ></div>
+                                  </div>{" "}
+                                </div>
+                              );
+                            })}{" "}
+                          </div>
+                        ) : (
+                          ""
+                        )}
                       </div>
                     </div>
                   );

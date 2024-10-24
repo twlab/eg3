@@ -105,8 +105,8 @@ export class SelectableArea extends React.PureComponent<
    */
   getSelectedSpan(): OpenInterval {
     return new OpenInterval(
-      Math.min(this.state.dragStartX, this.state.currentDragX),
-      Math.max(this.state.dragStartX, this.state.currentDragX)
+      Math.floor(Math.min(this.state.dragStartX, this.state.currentDragX)),
+      Math.floor(Math.max(this.state.dragStartX, this.state.currentDragX))
     );
   }
 
