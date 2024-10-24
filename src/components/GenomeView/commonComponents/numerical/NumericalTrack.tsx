@@ -201,7 +201,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       return displayMode;
     }
   };
-  console.log(options);
+
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
   const legend = (
@@ -212,7 +212,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       axisLegend={unit}
     />
   );
-  console.log(isDrawingBars, getEffectiveDisplayMode());
+
   useEffect(() => {
     if (getNumLegend) {
       getNumLegend(legend);

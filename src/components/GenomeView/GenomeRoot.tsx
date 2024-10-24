@@ -143,7 +143,6 @@ function GenomeHub(props: any) {
   }, [isInitial, size.width]);
   useEffect(() => {
     if (!isInitial) {
-      console.log("???????????????????", size.height);
       window.scrollTo({ top: scrollYPos.current, behavior: "smooth" });
     }
   }, [isInitial, size.height]);
@@ -159,7 +158,7 @@ function GenomeHub(props: any) {
         {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
-        <SelectDemo />
+
         {size.width > 0
           ? genomeList.map((item, index) => (
               <TrackManager

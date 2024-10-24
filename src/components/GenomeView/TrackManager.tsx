@@ -42,9 +42,15 @@ import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
-import _ from "lodash";
+import _, { debounce } from "lodash";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-
+function sumArray(numbers) {
+  let total = 0;
+  for (let i = 0; i < numbers.length; i++) {
+    total += numbers[i];
+  }
+  return total;
+}
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
@@ -146,6 +152,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const saveState = useRef<{ [key: string]: any }>({ selectedTool: "" });
   const lastDragX = useRef(0);
   const isThereG3dTrack = useRef(false);
+  let blockPos = useRef<{ [key: string]: any } | null>(null);
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
   const frameID = useRef(0);
@@ -180,33 +187,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [selectConfigChange, setSelectConfigChange] = useState<{
     [key: string]: any;
   }>({});
-  function sumArray(numbers) {
-    let total = 0;
-    for (let i = 0; i < numbers.length; i++) {
-      total += numbers[i];
-    }
-    return total;
-  }
 
-  const horizontalLineStyle: CSSProperties = {
-    position: "absolute",
-    width: "100%",
-    height: "2px",
-
-    zIndex: 3,
-    pointerEvents: "none",
-
-    borderTop: "1px dotted grey",
-  };
-  const verticalLineStyle: CSSProperties = {
-    position: "absolute",
-    height: "100%",
-    width: "2px",
-    top: 0,
-    borderLeft: "1px dotted grey",
-    zIndex: 3,
-    pointerEvents: "none",
-  };
   // MOUSE EVENTS FUNCTION HANDLER, HOW THE TRACK WILL CHANGE BASED ON WHAT THE USER DOES: DRAGGING, MOUSESCROLL, CLICK
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -219,33 +200,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
 
   function handleScroll(e) {
-    // dont need to account for scroll because parenttop will always give the extact location of where the  event is
-    // so we just need the viewport position to get the right location
-    if (isMouseInsideRef.current) {
-      const parentRect = block.current!.getBoundingClientRect();
-      if (horizontalLineRef.current) {
-        horizontalLineRef.current.style.top = `${
-          mousePositionRef.current.y - parentRect.top
-        }px`;
-      }
-      if (verticalLineRef.current) {
-        verticalLineRef.current.style.left = `${
-          mousePositionRef.current.x - parentRect.left
-        }px`;
-      }
+    if (isMouseInsideRef.current && blockPos.current) {
+      let tmpRes = block.current!.getBoundingClientRect();
+      blockPos.current = { y: tmpRes.top, x: tmpRes.left };
+
+      horizontalLineRef.current.style.top = `${
+        mousePositionRef.current.y - blockPos.current.y
+      }px`;
+
+      verticalLineRef.current.style.left = `${
+        mousePositionRef.current.x - blockPos.current.x
+      }px`;
     }
   }
 
   function handleMove(e) {
-    if (isMouseInsideRef.current) {
-      const parentRect = block.current!.getBoundingClientRect();
-      const x = e.clientX - parentRect.left;
-      const y = e.clientY - parentRect.top;
-      mousePositionRef.current = { x: e.clientX, y: e.clientY };
+    const x = e.clientX - blockPos.current!.x;
+    const y = e.clientY - blockPos.current!.y;
+    mousePositionRef.current = { x: e.clientX, y: e.clientY };
 
-      horizontalLineRef.current.style.top = `${y}px`;
-      verticalLineRef.current.style.left = `${x}px`;
-    }
+    horizontalLineRef.current.style.top = `${y}px`;
+
+    verticalLineRef.current.style.left = `${x}px`;
     if (!isDragging.current || isLoading.current) {
       return;
     }
@@ -364,13 +340,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
 
-  function handleMouseEnter() {
-    isMouseInsideRef.current = true;
-  }
-
-  function handleMouseLeave() {
-    isMouseInsideRef.current = false;
-  }
   // FUNCTIONS HANDLER FOR WHEN CONFIG FOR TRACKS CHANGES OR WHEN USER IS SELECTING MULITPLE TRACKS
   // the trackmanager will handle the config menu when mutiple  tracks are selected otherwise each
   // track will create their own configmenu.
@@ -573,7 +542,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           minBp.current,
           maxBp.current
         );
-        console.log(windowWidth, windowWidth * 2);
+
         newVisData = {
           visWidth: windowWidth * 3,
           visRegion: new DisplayedRegionModel(
@@ -754,41 +723,50 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   function onRegionSelected(startbase: number, endbase: number, xSpan) {
-    console.log(xSpan, startbase);
-    // let newDefaultTracksArr: Array<TrackModel> = [];
-    // for (let key in currTracksConfig.current) {
-    //   let curTrackOptions = currTracksConfig.current[`${key}`];
-    //   curTrackOptions["trackModel"].options = curTrackOptions.configOptions;
-    //   newDefaultTracksArr.push(curTrackOptions["trackModel"]);
-    // }
-    // genomeArr[genomeIdx].defaultTracks = newDefaultTracksArr;
-    // genomeArr[genomeIdx].defaultRegion = new OpenInterval(startbase, endbase);
-    // recreateTrackmanager({
-    //   selectedTool: selectedTool,
-    //   genomeConfig: genomeArr[genomeIdx],
-    //   scrollY: window.scrollY,
-    // });
+    if (
+      selectedTool ===
+      `Zoom-in tool
+(Alt+M)`
+    ) {
+      let newDefaultTracksArr: Array<TrackModel> = [];
+      for (let key in currTracksConfig.current) {
+        let curTrackOptions = currTracksConfig.current[`${key}`];
+        curTrackOptions["trackModel"].options = curTrackOptions.configOptions;
+        newDefaultTracksArr.push(curTrackOptions["trackModel"]);
+      }
+      genomeArr[genomeIdx].defaultTracks = newDefaultTracksArr;
+      genomeArr[genomeIdx].defaultRegion = new OpenInterval(startbase, endbase);
+      recreateTrackmanager({
+        selectedTool: selectedTool,
+        genomeConfig: genomeArr[genomeIdx],
+        scrollY: window.scrollY,
+      });
+    } else if (
+      selectedTool ===
+      `Highlight tool
+(Alt+N)`
+    ) {
+      let highlightWidth = xSpan.end - xSpan.start;
+      let highlightSide =
+        startbase - leftStartCoord.current <= 0 ? "right" : "left";
 
-    let highlightWidth = xSpan.end - xSpan.start;
-    let highlightSide =
-      startbase - leftStartCoord.current <= 0 ? "right" : "left";
+      let curXPos =
+        highlightSide === "right"
+          ? (startbase - leftStartCoord.current) * pixelPerBase.current
+          : -(endbase - leftStartCoord.current) * pixelPerBase.current;
+      // 120 is the width of the legend
 
-    let curXPos =
-      highlightSide === "right"
-        ? (startbase - leftStartCoord.current) * pixelPerBase.current
-        : -(endbase - leftStartCoord.current) * pixelPerBase.current;
-    // 120 is the width of the legend
-
-    setHighlight([
-      ...highlight,
-      {
-        xPos: curXPos,
-        width: highlightWidth,
-        side: highlightSide,
-        startbase,
-        endbase,
-      },
-    ]);
+      setHighlight([
+        ...highlight,
+        {
+          xPos: curXPos,
+          width: highlightWidth,
+          side: highlightSide,
+          startbase,
+          endbase,
+        },
+      ]);
+    }
   }
 
   // USEEFFECTS
@@ -799,22 +777,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // terminate the worker and listener when TrackManager  is unmounted
     window.addEventListener("scroll", handleScroll);
     document.addEventListener("keydown", handleKeyDown);
-    const parentElement = block.current;
-    if (parentElement) {
-      parentElement.addEventListener("mousemove", handleMove);
-      parentElement.addEventListener("mouseenter", handleMouseEnter);
-      parentElement.addEventListener("mouseleave", handleMouseLeave);
-      window.addEventListener("scroll", handleScroll);
-    }
+
+    let tmpRes = block.current!.getBoundingClientRect();
+    blockPos.current = { y: tmpRes.top, x: tmpRes.left };
+
     return () => {
       if (infiniteScrollWorker.current) {
         infiniteScrollWorker.current!.terminate();
       }
-      if (parentElement) {
-        parentElement.removeEventListener("mousemove", handleMove);
-        parentElement.removeEventListener("mouseenter", handleMouseEnter);
-        parentElement.removeEventListener("mouseleave", handleMouseLeave);
-      }
+
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -833,7 +804,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [trackComponents, highlight]);
+  }, [trackComponents]);
 
   useEffect(() => {
     if (initialStart === "workerReady") {
@@ -944,7 +915,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }}
       >
         <button onClick={handleClick}>add bed</button>
-        {Object.keys(region).length > 0 ? (
+        {/* {Object.keys(region).length > 0 ? (
           <GenomeNavigator
             selectedRegion={region.viewWindow}
             genomeConfig={genomeArr[genomeIdx]}
@@ -953,7 +924,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           />
         ) : (
           ""
-        )}
+        )} */}
 
         <div> - {curRegion?.toString()}</div>
         <div> {bpX.current + "-" + (bpX.current + bpRegionSize.current)}</div>
@@ -1007,8 +978,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   position: "relative",
                 }}
               >
-                <div ref={horizontalLineRef} style={horizontalLineStyle} />
-                <div ref={verticalLineRef} style={verticalLineStyle} />
+                <div ref={horizontalLineRef} className="horizontal-line" />
+                <div ref={verticalLineRef} className="vertical-line" />
 
                 {trackComponents.map((item, index) => {
                   let Component = item.component;
