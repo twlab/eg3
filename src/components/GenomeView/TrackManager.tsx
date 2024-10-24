@@ -753,7 +753,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     }
   }
-
+  function calculatePercentage(value, minRange, maxRange) {
+    if (minRange >= maxRange || value < minRange || value > maxRange) {
+      throw new Error(
+        "Please provide a valid range and value within the range."
+      );
+    }
+    return ((value - minRange) / (maxRange - minRange)) * 100;
+  }
   // TOOL FUNCTIONS
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -775,6 +782,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // });
     console.log(windowWidth);
     let pixelPerBase = windowWidth / bpRegionSize.current;
+    console.log(pixelPerBase);
     let length = xSpan.end - xSpan.start;
     let curXPos =
       side.current === "right"
@@ -996,7 +1004,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 // full windowwidth will make canvas only loop 0-windowidth
                 // the last value will have no data.
                 // so we have to subtract from the size of the canvas
-                width: `${windowWidth}px`,
+                width: `${windowWidth + 120}px`,
                 // width: `${fullWindowWidth / 2}px`,
                 // height: "2000px",
                 overflowX: "hidden",
@@ -1029,11 +1037,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       style={{
                         display: "flex",
                         WebkitBackfaceVisibility: "hidden",
-                        WebkitPerspective: `${windowWidth}px`,
+                        WebkitPerspective: `${windowWidth + 120}px`,
                         backfaceVisibility: "hidden",
-                        perspective: `${windowWidth}px`,
+                        perspective: `${windowWidth + 120}px`,
                         backgroundColor: "#F2F2F2",
-                        width: `${windowWidth}px`,
+                        width: `${windowWidth + 120}px`,
                         outline: "1px solid Dodgerblue",
                       }}
                     >
@@ -1145,14 +1153,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   style={{
                     display: "flex",
                     position: "absolute",
-                    width: `${windowWidth - 1}px`,
+                    width: `${windowWidth + 120}px`,
                     zIndex: 10,
                   }}
                 >
                   {selectedTool !== "none" ? (
                     <SelectableGenomeArea
                       selectableRegion={region.viewWindow}
-                      dragLimits={new OpenInterval(120, windowWidth)}
+                      dragLimits={new OpenInterval(120, windowWidth + 120)}
                       onRegionSelected={onRegionSelected}
                     >
                       <div
@@ -1161,7 +1169,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             ? block.current?.getBoundingClientRect().height
                             : 0,
                           zIndex: 3,
-                          width: `${windowWidth}px`,
+                          width: `${windowWidth + 120}px`,
                         }}
                       ></div>
                     </SelectableGenomeArea>

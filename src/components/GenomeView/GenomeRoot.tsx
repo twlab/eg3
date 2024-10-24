@@ -169,7 +169,7 @@ function GenomeHub(props: any) {
                 startBp={startBp}
                 recreateTrackmanager={recreateTrackmanager}
                 genomeArr={genomeList}
-                windowWidth={size.width}
+                windowWidth={size.width - 120}
               />
             ))
           : ""}
