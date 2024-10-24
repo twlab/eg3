@@ -275,7 +275,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
       });
     });
-    console.log(highlight);
+
     highlight.forEach((item, i) => {
       frameID.current = requestAnimationFrame(() => {
         item.highlightRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
@@ -817,6 +817,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // add Listenser again because javacript dom only have the old trackComponents value
     // it gets the trackComponents at creation so when trackComponent updates we need to
     // add the listener so it can get the most updated trackComponent
+    highlight.forEach((item, i) => {
+      frameID.current = requestAnimationFrame(() => {
+        item.highlightRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+      });
+    });
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
     return () => {
@@ -1015,6 +1020,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       console.log(item);
                       return (
                         <div
+                          key={index}
                           ref={item.highlightRef}
                           style={{
                             display: "flex",
