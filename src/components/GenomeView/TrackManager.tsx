@@ -773,8 +773,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //   scrollY: window.scrollY,
     // });
     let length = xSpan.end - xSpan.start;
-    let curXPos =
-      -dragX.current < windowWidth ? xSpan.start : -dragX.current + xSpan.start;
+    let curXPos = -dragX.current + xSpan.start;
     let newRef: any = createRef();
 
     setHighlight([
