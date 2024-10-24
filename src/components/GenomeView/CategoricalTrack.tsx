@@ -1,27 +1,17 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { objToInstanceAlign } from "./TrackManager";
-import FeatureArranger, {
-  PlacedFeatureGroup,
-} from "../../models/FeatureArranger";
-import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
 import { CategoricalTrackConfig } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultCategorical } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import Feature from "../../models/Feature";
-import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
 import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
-import TrackLegend from "./commonComponents/TrackLegend";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";

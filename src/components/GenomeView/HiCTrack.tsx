@@ -1,11 +1,9 @@
-import React, { memo, ReactNode, useEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
-import OpenInterval from "../../models/OpenInterval";
-import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
 import { objToInstanceAlign } from "./TrackManager";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";

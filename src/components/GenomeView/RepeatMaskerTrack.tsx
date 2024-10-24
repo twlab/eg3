@@ -1,32 +1,18 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { objToInstanceAlign } from "./TrackManager";
-import FeatureArranger, {
-  PlacedFeatureGroup,
-} from "../../models/FeatureArranger";
-import { SortItemsOptions } from "../../models/SortItemsOptions";
 import OpenInterval from "../../models/OpenInterval";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 
 import { RepeatMaskerTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RepeatMaskerTrackConfig";
 
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import Feature from "../../models/Feature";
-import { getContrastingColor } from "../../models/util";
 import { AnnotationDisplayModes } from "../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { RepeatMaskerFeature } from "../../models/RepeatMaskerFeature";
-import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
-import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
-import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
-import { scaleLinear } from "d3-scale";
-import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-import TrackLegend from "./commonComponents/TrackLegend";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";

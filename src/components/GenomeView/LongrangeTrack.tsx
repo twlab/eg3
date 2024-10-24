@@ -1,18 +1,12 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 // import worker_script from '../../Worker/worker';
 import _ from "lodash";
 import { TrackProps } from "../../models/trackModels/trackProps";
 
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import OpenInterval from "../../models/OpenInterval";
-import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
-import { objToInstanceAlign } from "./TrackManager";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import { LongRangeTrackConfig } from "../../trackConfigs/config-menu-models.tsx/LongRangeTrackConfig";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
-import TrackLegend from "./commonComponents/TrackLegend";
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
@@ -22,7 +16,6 @@ const LongrangeTrack: React.FC<TrackProps> = memo(function LongrangeTrack(
   props
 ) {
   const {
-    basePerPixel,
     side,
     trackData,
     onTrackConfigChange,

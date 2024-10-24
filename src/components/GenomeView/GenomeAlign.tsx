@@ -2,22 +2,9 @@ import React, { memo, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
-import {
-  GapText,
-  PlacedAlignment,
-} from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
-import {
-  renderFineAlignment,
-  renderGapText,
-  renderRoughStrand,
-  renderRoughAlignment,
-  DEFAULT_OPTIONS,
-  PlacedMergedAlignment,
-} from "./GenomeAlignComponents/GenomeAlignComponents";
+import { DEFAULT_OPTIONS } from "./GenomeAlignComponents/GenomeAlignComponents";
 import { GenomeAlignTrackConfig } from "../../trackConfigs/config-menu-models.tsx/GenomeAlignTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import OpenInterval from "../../models/OpenInterval";
-import TrackLegend from "./commonComponents/TrackLegend";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";

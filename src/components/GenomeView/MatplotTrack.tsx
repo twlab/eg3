@@ -6,13 +6,6 @@ import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/num
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import ReactDOM from "react-dom";
-import { objToInstanceAlign } from "./TrackManager";
-import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
-import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { NumericalFeature } from "../../models/Feature";
-import OpenInterval from "../../models/OpenInterval";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";

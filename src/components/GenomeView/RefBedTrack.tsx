@@ -1,20 +1,9 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { objToInstanceAlign } from "./TrackManager";
-import FeatureArranger, {
-  PlacedFeatureGroup,
-} from "../../models/FeatureArranger";
-import Gene, { IdbRecord } from "../../models/Gene";
-import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
-import GeneAnnotation from "./geneAnnotationTrackComponents/GeneAnnotation";
-import { SortItemsOptions } from "../../models/SortItemsOptions";
-import OpenInterval from "../../models/OpenInterval";
-import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 
 import { RefBedTrackConfig } from "../../trackConfigs/config-menu-models.tsx/RefBedTrackConfig";
@@ -22,8 +11,6 @@ import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationT
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import TrackLegend from "./commonComponents/TrackLegend";
 
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";

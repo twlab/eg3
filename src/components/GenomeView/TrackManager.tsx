@@ -37,12 +37,12 @@ import RefBedTrack from "./RefBedTrack";
 import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
-import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
+
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
-import _, { debounce } from "lodash";
+
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 function sumArray(numbers) {
   let total = 0;
@@ -52,6 +52,7 @@ function sumArray(numbers) {
   return total;
 }
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
+import _ from "lodash";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -199,29 +200,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   };
 
-  function handleScroll(e) {
-    if (isMouseInsideRef.current && blockPos.current) {
-      let tmpRes = block.current!.getBoundingClientRect();
-      blockPos.current = { y: tmpRes.top, x: tmpRes.left };
-
-      horizontalLineRef.current.style.top = `${
-        mousePositionRef.current.y - blockPos.current.y
-      }px`;
-
-      verticalLineRef.current.style.left = `${
-        mousePositionRef.current.x - blockPos.current.x
-      }px`;
+  function handleScroll() {
+    // dont need to account for scroll because parenttop will always give the extact location of where the  event is
+    // so we just need the viewport position to get the right location
+    if (isMouseInsideRef.current) {
+      const parentRect = block.current!.getBoundingClientRect();
+      if (horizontalLineRef.current) {
+        horizontalLineRef.current.style.top = `${
+          mousePositionRef.current.y - parentRect.top
+        }px`;
+      }
+      if (verticalLineRef.current) {
+        verticalLineRef.current.style.left = `${
+          mousePositionRef.current.x - parentRect.left
+        }px`;
+      }
     }
   }
+  function handleMouseEnter() {
+    isMouseInsideRef.current = true;
+  }
 
+  function handleMouseLeave() {
+    isMouseInsideRef.current = false;
+  }
   function handleMove(e) {
-    const x = e.clientX - blockPos.current!.x;
-    const y = e.clientY - blockPos.current!.y;
-    mousePositionRef.current = { x: e.clientX, y: e.clientY };
+    if (isMouseInsideRef.current) {
+      const parentRect = block.current!.getBoundingClientRect();
+      const x = e.clientX - parentRect.left;
+      const y = e.clientY - parentRect.top;
+      mousePositionRef.current = { x: e.clientX, y: e.clientY };
 
-    horizontalLineRef.current.style.top = `${y}px`;
-
-    verticalLineRef.current.style.left = `${x}px`;
+      horizontalLineRef.current.style.top = `${y}px`;
+      verticalLineRef.current.style.left = `${x}px`;
+    }
     if (!isDragging.current || isLoading.current) {
       return;
     }
@@ -349,9 +361,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function onTrackConfigChange(config: any) {
     currTracksConfig.current[`${config.id}`] = { ...config };
   }
-  function genomeNavigatorRegionSelect(startBase, endBase) {
-    console.log("GenomeNavigatorSelectBase", startBase, endBase);
-  }
+
   function onConfigChange(key, value) {
     if (key === "displayMode") {
       let menuComponents: Array<any> = [];
@@ -778,14 +788,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     window.addEventListener("scroll", handleScroll);
     document.addEventListener("keydown", handleKeyDown);
 
-    let tmpRes = block.current!.getBoundingClientRect();
-    blockPos.current = { y: tmpRes.top, x: tmpRes.left };
-
+    const parentElement = block.current;
+    if (parentElement) {
+      parentElement.addEventListener("mouseenter", handleMouseEnter);
+      parentElement.addEventListener("mouseleave", handleMouseLeave);
+    }
     return () => {
       if (infiniteScrollWorker.current) {
         infiniteScrollWorker.current!.terminate();
       }
-
+      if (parentElement) {
+        parentElement.removeEventListener("mouseenter", handleMouseEnter);
+        parentElement.removeEventListener("mouseleave", handleMouseLeave);
+      }
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -875,7 +890,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (trackManagerId.current === "" && windowWidth > 0) {
       // on initial and when our genome data changes we set the default values here
-
+      console.log(genomeArr[genomeIdx]);
       let genome = genomeArr[genomeIdx];
 
       leftStartCoord.current = genome.defaultRegion.start;
@@ -915,16 +930,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }}
       >
         <button onClick={handleClick}>add bed</button>
-        {/* {Object.keys(region).length > 0 ? (
-          <GenomeNavigator
-            selectedRegion={region.viewWindow}
-            genomeConfig={genomeArr[genomeIdx]}
-            windowWidth={windowWidth + 120}
-            onRegionSelected={genomeNavigatorRegionSelect}
-          />
-        ) : (
-          ""
-        )} */}
 
         <div> - {curRegion?.toString()}</div>
         <div> {bpX.current + "-" + (bpX.current + bpRegionSize.current)}</div>

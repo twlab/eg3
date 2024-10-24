@@ -43,7 +43,7 @@ const genome = new Genome("hg38", [
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27195171-27202238");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -67,20 +67,20 @@ const defaultTracks = [
     genome: "hg38",
   }),
 
-  new TrackModel({
-    type: "refbed",
-    name: "mm10 gencode basic",
-    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-    options: {
-      categoryColors: {
-        coding: "rgb(101,1,168)",
-        nonCoding: "rgb(1,193,75)",
-        pseudo: "rgb(230,0,172)",
-        problem: "rgb(224,2,2)",
-        other: "rgb(128,128,128)",
-      },
-    },
-  }),
+  // new TrackModel({
+  //   type: "refbed",
+  //   name: "mm10 gencode basic",
+  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+  //   options: {
+  //     categoryColors: {
+  //       coding: "rgb(101,1,168)",
+  //       nonCoding: "rgb(1,193,75)",
+  //       pseudo: "rgb(230,0,172)",
+  //       problem: "rgb(224,2,2)",
+  //       other: "rgb(128,128,128)",
+  //     },
+  //   },
+  // }),
   // new TrackModel({
   //   type: "matplot",
   //   name: "matplot wrap",
@@ -122,11 +122,11 @@ const defaultTracks = [
   //   // }
   // }),
 
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
 
   new TrackModel({
     type: "repeatmasker",
@@ -181,14 +181,14 @@ const defaultTracks = [
   //   },
   // }),
 
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  }),
+  // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  // }),
   // new TrackModel({
   //   type: "categorical",
   //   name: "ChromHMM",
