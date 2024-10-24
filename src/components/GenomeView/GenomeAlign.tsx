@@ -25,7 +25,7 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
-  bpToPx,
+  basePerPixel,
   side,
   trackData,
   onTrackConfigChange,
@@ -81,7 +81,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         svgHeight,
         updatedLegend,
         trackModel,
-        basesByPixel: bpToPx,
+        basesByPixel: basePerPixel,
       },
       displaySetter,
       displayCache,
@@ -96,7 +96,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   //   let result = genesArr;
   //   let svgElements;
 
-  //   if (bpToPx! <= 10) {
+  //   if (basePerPixel! <= 10) {
   //     const drawData = result.drawData as PlacedAlignment[];
 
   //     svgElements = drawData.map((item, index) =>
@@ -276,7 +276,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         configOptions: configOptions.current,
         items,
         onConfigChange,
-        basesByPixel: bpToPx,
+        basesByPixel: basePerPixel,
       });
       getConfigMenu(menu, "singleSelect");
     } else {

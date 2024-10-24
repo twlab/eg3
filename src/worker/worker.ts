@@ -64,8 +64,10 @@ self.onmessage = (event: MessageEvent) => {
 
       {
         if (Object.keys(singleStrand).length > 0) {
-          let xSpanStart = (singleStrand.start - startPos) / event.data.bpToPx!;
-          let xSpanEnd = (singleStrand.start - startPos) / event.data.bpToPx!;
+          let xSpanStart =
+            (singleStrand.start - startPos) / event.data.basePerPixel!;
+          let xSpanEnd =
+            (singleStrand.start - startPos) / event.data.basePerPixel!;
           const startX = Math.max(0, Math.floor(xSpanStart));
           const endX = Math.min(
             event.data.windowWidth * 2 - 1,

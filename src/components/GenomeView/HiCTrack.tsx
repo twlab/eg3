@@ -14,7 +14,7 @@ import { getDisplayModeFunction } from "./displayModeComponentMap";
 
 const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
   const {
-    bpToPx,
+    basePerPixel,
     side,
     trackData,
     onTrackConfigChange,
@@ -114,13 +114,13 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
             ? [
                 await trackData![`${id}`].straw.getData(
                   objToInstanceAlign(visRegion),
-                  bpToPx,
+                  basePerPixel,
                   configOptions.current
                 ),
               ]
             : await trackData![`${id}`].straw.getData(
                 objToInstanceAlign(visRegion),
-                bpToPx,
+                basePerPixel,
                 configOptions.current
               );
 

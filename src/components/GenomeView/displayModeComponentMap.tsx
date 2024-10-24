@@ -107,7 +107,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     function getAnnotationElement(placedGroup, y, isLastRow, index) {
       const gene = placedGroup.feature;
-
+      console.log(configOptions);
       return (
         <GeneAnnotationScaffold
           key={index}
@@ -233,6 +233,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               color="white"
             />
           );
+
           return (
             <TranslatableG
               onClick={(event) => renderTooltip(event, feature)}
@@ -318,7 +319,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
 
     svgHeight.current = height;
-
+    console.log(svgDATA, configOptions);
     updatedLegend.current = (
       <TrackLegend height={svgHeight.current} trackModel={trackModel} />
     );

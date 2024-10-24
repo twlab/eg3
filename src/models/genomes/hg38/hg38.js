@@ -43,76 +43,76 @@ const genome = new Genome("hg38", [
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
     name: "Ruler",
   }),
 
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
+  // }),
   new TrackModel({
     type: "geneAnnotation",
     name: "gencodeV39",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "MANE_select_1.0",
-    label: "MANE selection v1.0",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "MANE_select_1.0",
+  //   label: "MANE selection v1.0",
+  //   genome: "hg38",
+  // }),
 
-  new TrackModel({
-    type: "refbed",
-    name: "mm10 gencode basic",
-    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-    options: {
-      categoryColors: {
-        coding: "rgb(101,1,168)",
-        nonCoding: "rgb(1,193,75)",
-        pseudo: "rgb(230,0,172)",
-        problem: "rgb(224,2,2)",
-        other: "rgb(128,128,128)",
-      },
-    },
-  }),
-  new TrackModel({
-    type: "matplot",
-    name: "matplot wrap",
-    tracks: [
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-        name: "MeDIP",
-        options: {
-          color: "red",
-          backgroundColor: "#FFE7AB",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MeDIP",
-        },
-      },
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-        name: "MRE",
-        options: {
-          color: "blue",
-          backgroundColor: "#C0E3CC",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MRE",
-        },
-      },
-    ],
-  }),
+  // new TrackModel({
+  //   type: "refbed",
+  //   name: "mm10 gencode basic",
+  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+  //   options: {
+  //     categoryColors: {
+  //       coding: "rgb(101,1,168)",
+  //       nonCoding: "rgb(1,193,75)",
+  //       pseudo: "rgb(230,0,172)",
+  //       problem: "rgb(224,2,2)",
+  //       other: "rgb(128,128,128)",
+  //     },
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "matplot",
+  //   name: "matplot wrap",
+  //   tracks: [
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //       name: "MeDIP",
+  //       options: {
+  //         color: "red",
+  //         backgroundColor: "#FFE7AB",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MeDIP",
+  //       },
+  //     },
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //       name: "MRE",
+  //       options: {
+  //         color: "blue",
+  //         backgroundColor: "#C0E3CC",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MRE",
+  //       },
+  //     },
+  //   ],
+  // }),
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",
@@ -181,14 +181,14 @@ const defaultTracks = [
   //   },
   // }),
 
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  // }),
+  new TrackModel({
+    name: "hg38tomm10",
+    label: "Query mouse mm10 to hg38 blastz",
+    type: "genomealign",
+    querygenome: "mm10",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  }),
   // new TrackModel({
   //   type: "categorical",
   //   name: "ChromHMM",

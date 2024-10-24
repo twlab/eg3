@@ -127,6 +127,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const leftStartCoord = useRef(0);
   const rightStartCoord = useRef(0);
   const bpRegionSize = useRef(0);
+  const pixelPerBase = useRef(0);
   const block = useRef<HTMLInputElement>(null);
   const g3dRect = useRef<HTMLInputElement>(null);
   const bpX = useRef(0);
@@ -273,12 +274,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackComponents.forEach((component, i) => {
       frameID.current = requestAnimationFrame(() => {
         component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
-      });
-    });
-
-    highlight.forEach((item, i) => {
-      frameID.current = requestAnimationFrame(() => {
-        item.highlightRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
       });
     });
   }
@@ -753,14 +748,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     }
   }
-  function calculatePercentage(value, minRange, maxRange) {
-    if (minRange >= maxRange || value < minRange || value > maxRange) {
-      throw new Error(
-        "Please provide a valid range and value within the range."
-      );
-    }
-    return ((value - minRange) / (maxRange - minRange)) * 100;
-  }
+
   // TOOL FUNCTIONS
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -780,24 +768,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //   genomeConfig: genomeArr[genomeIdx],
     //   scrollY: window.scrollY,
     // });
-    console.log(windowWidth);
-    let pixelPerBase = windowWidth / bpRegionSize.current;
-    console.log(pixelPerBase);
-    let length = xSpan.end - xSpan.start;
+
+    let highlightWidth = xSpan.end - xSpan.start;
+    let highlightSide =
+      startbase - leftStartCoord.current <= 0 ? "right" : "left";
+
     let curXPos =
-      side.current === "right"
-        ? -dragX.current + xSpan.start - 120
-        : dragX.current - xSpan.end + 120;
+      highlightSide === "right"
+        ? (startbase - leftStartCoord.current) * pixelPerBase.current
+        : -(endbase - leftStartCoord.current) * pixelPerBase.current;
     // 120 is the width of the legend
-    let newRef: any = createRef();
-    console.log(
-      curXPos,
-      (startbase - leftStartCoord.current) * pixelPerBase,
-      startbase
-    );
+
     setHighlight([
       ...highlight,
-      { highlightRef: newRef, xPos: curXPos, length, side: side.current },
+      {
+        xPos: curXPos,
+        width: highlightWidth,
+        side: highlightSide,
+        startbase,
+        endbase,
+      },
     ]);
   }
 
@@ -817,7 +807,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       window.addEventListener("scroll", handleScroll);
     }
     return () => {
-      infiniteScrollWorker.current!.terminate();
+      if (infiniteScrollWorker.current) {
+        infiniteScrollWorker.current!.terminate();
+      }
       if (parentElement) {
         parentElement.removeEventListener("mousemove", handleMove);
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
@@ -835,11 +827,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // add Listenser again because javacript dom only have the old trackComponents value
     // it gets the trackComponents at creation so when trackComponent updates we need to
     // add the listener so it can get the most updated trackComponent
-    highlight.forEach((item, i) => {
-      frameID.current = requestAnimationFrame(() => {
-        item.highlightRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
-      });
-    });
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
     return () => {
@@ -917,16 +904,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (trackManagerId.current === "" && windowWidth > 0) {
       // on initial and when our genome data changes we set the default values here
-      console.log(windowWidth);
+
       let genome = genomeArr[genomeIdx];
 
       leftStartCoord.current = genome.defaultRegion.start;
       rightStartCoord.current = genome.defaultRegion.end;
-      console.log(leftStartCoord.current);
+
       bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
 
       basePerPixel.current = bpRegionSize.current / windowWidth;
-
+      pixelPerBase.current = windowWidth / bpRegionSize.current;
       bpX.current = leftStartCoord.current;
       maxBp.current = genome.defaultRegion.end;
       minBp.current = genome.defaultRegion.start;
@@ -1066,7 +1053,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           trackModel={item.trackModel}
                           bpRegionSize={bpRegionSize.current}
                           useFineModeNav={useFineModeNav.current}
-                          bpToPx={basePerPixel.current}
+                          basePerPixel={basePerPixel.current}
                           trackData={trackData}
                           side={side.current}
                           windowWidth={windowWidth}
@@ -1086,24 +1073,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           selectConfigChange={selectConfigChange}
                         />
 
-                        {highlight.length > 0 ? (
-                          <div
-                            style={{
-                              position: "absolute",
-                              display: "flex",
-                              WebkitBackfaceVisibility: "hidden",
-                              WebkitPerspective: `${windowWidth}px`,
-                              backfaceVisibility: "hidden",
-                              perspective: `${windowWidth}px`,
-                              zIndex: 4, // Ensure it's on top of other elements
-                              height: "100%",
-                            }}
-                          >
-                            {highlight.map((item, index) => {
+                        {highlight.length > 0
+                          ? highlight.map((item, index) => {
                               return (
                                 <div
                                   key={index}
-                                  ref={item.highlightRef}
                                   style={{
                                     display: "flex",
                                     height: "100%",
@@ -1132,18 +1106,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                                           item.side === "left"
                                             ? `${item.xPos}px`
                                             : "",
-                                        width: item.length,
+                                        width: item.width,
                                         pointerEvents: "none", // This makes the highlighted area non-interactive
                                       }}
                                     ></div>
                                   </div>{" "}
                                 </div>
                               );
-                            })}{" "}
-                          </div>
-                        ) : (
-                          ""
-                        )}
+                            })
+                          : ""}
                       </div>
                     </div>
                   );

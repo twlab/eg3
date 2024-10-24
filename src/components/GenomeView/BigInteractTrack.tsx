@@ -18,7 +18,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
   props
 ) {
   const {
-    bpToPx,
+    basePerPixel,
     side,
     trackData,
     onTrackConfigChange,

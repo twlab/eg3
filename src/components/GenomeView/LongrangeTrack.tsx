@@ -22,7 +22,7 @@ const LongrangeTrack: React.FC<TrackProps> = memo(function LongrangeTrack(
   props
 ) {
   const {
-    bpToPx,
+    basePerPixel,
     side,
     trackData,
     onTrackConfigChange,

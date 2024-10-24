@@ -40,7 +40,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackIdx,
   id,
   useFineModeNav,
-  bpToPx,
+  basePerPixel,
   legendRef,
   trackManagerRef,
 }) {
@@ -84,7 +84,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
         updatedLegend,
         trackModel,
         genomeConfig: getGenomeConfig(parentGenome.current),
-        basesByPixel: bpToPx,
+        basesByPixel: basePerPixel,
       },
       displaySetter,
       displayCache,
