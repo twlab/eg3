@@ -106,6 +106,7 @@ interface TrackManagerProps {
   genomeIdx: number;
   addTrack: (track: any) => void;
   startBp: (bp: string, startNav: number, endNav: number) => void;
+  recreateTrackmanager: (trackOptions: {}) => void;
   windowWidth: number;
   genomeArr: Array<any>;
 }
@@ -113,6 +114,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
   addTrack,
   startBp,
+  recreateTrackmanager,
   windowWidth,
   genomeArr,
 }) {
@@ -154,7 +156,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
   const leftSectionSize = useRef<Array<any>>([]);
 
-  // These states are used to update the tracks with new fetched data
+  // These states are used to update the tracks with new fetch(data);
+  const containerRef = useRef(null);
+  const scrollPosition = useRef(0);
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
@@ -166,6 +170,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [region, setRegion] = useState<{ [key: string]: any }>({});
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
+  const [highlight, setHighlight] = useState<Array<any>>([]);
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({
     configMenus: "",
   });
@@ -212,7 +217,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   };
 
-  function handleScroll() {
+  function handleScroll(e) {
     // dont need to account for scroll because parenttop will always give the extact location of where the  event is
     // so we just need the viewport position to get the right location
     if (isMouseInsideRef.current) {
@@ -268,6 +273,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackComponents.forEach((component, i) => {
       frameID.current = requestAnimationFrame(() => {
         component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+      });
+    });
+    console.log(highlight);
+    highlight.forEach((item, i) => {
+      frameID.current = requestAnimationFrame(() => {
+        item.highlightRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
       });
     });
   }
@@ -366,6 +377,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     isMouseInsideRef.current = false;
   }
   // FUNCTIONS HANDLER FOR WHEN CONFIG FOR TRACKS CHANGES OR WHEN USER IS SELECTING MULITPLE TRACKS
+  // the trackmanager will handle the config menu when mutiple  tracks are selected otherwise each
+  // track will create their own configmenu.
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -422,17 +435,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     setSelectConfigChange({ changedOption: { [key]: value }, selectedTracks });
   }
-  function onRegionSelected(startbase: any, endbase: any) {
-    let newDefaultTracksArr: Array<TrackModel> = [];
-    for (let key in currTracksConfig.current) {
-      let curOption = currTracksConfig.current[`${key}`];
-      curOption["trackModel"].options = curOption.configOptions;
-      newDefaultTracksArr.push(curOption[`${key}`]["trackModel"]);
-    }
-    console.log(newDefaultTracksArr);
-    saveState.current["selectedTool"] = selectedTool;
-    saveState.current["savedTrackConfigs"] = currTracksConfig.current;
-  }
+
   function renderTrackSpecificItems(x, y) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
@@ -542,7 +545,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
 
-  // FUNCTION TO FETCH DATA AND CHANGING STATE AFTER GETTING NAV COORD
+  // FUNCTION TO FETCH DATA AND CHANGE STATE TO INDICATE THERE ARE NEW DATA AFTER GETTING NAV COORD TELLING THE each TRACK
+  // COMPONENTS TO UPDATE AND DRAW WITH THE NEW DATA
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -749,6 +753,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
 
+  // TOOL FUNCTIONS
+  //_________________________________________________________________________________________________________________________________
+  //_________________________________________________________________________________________________________________________________
+  //_________________________________________________________________________________________________________________________________
+  function onRegionSelected(startbase: number, endbase: number, xSpan) {
+    console.log(xSpan);
+    // let newDefaultTracksArr: Array<TrackModel> = [];
+    // for (let key in currTracksConfig.current) {
+    //   let curTrackOptions = currTracksConfig.current[`${key}`];
+    //   curTrackOptions["trackModel"].options = curTrackOptions.configOptions;
+    //   newDefaultTracksArr.push(curTrackOptions["trackModel"]);
+    // }
+    // genomeArr[genomeIdx].defaultTracks = newDefaultTracksArr;
+    // genomeArr[genomeIdx].defaultRegion = new OpenInterval(startbase, endbase);
+    // recreateTrackmanager({
+    //   selectedTool: selectedTool,
+    //   genomeConfig: genomeArr[genomeIdx],
+    //   scrollY: window.scrollY,
+    // });
+    let length = xSpan.end - xSpan.start;
+    let curXPos =
+      -dragX.current < windowWidth ? xSpan.start : -dragX.current + xSpan.start;
+    let newRef: any = createRef();
+
+    setHighlight([
+      ...highlight,
+      { highlightRef: newRef, xPos: curXPos, length },
+    ]);
+  }
+
+  // USEEFFECTS
+  //_________________________________________________________________________________________________________________________________
+  //_________________________________________________________________________________________________________________________________
+  //_________________________________________________________________________________________________________________________________
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
     window.addEventListener("scroll", handleScroll);
@@ -785,7 +823,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [trackComponents]);
+  }, [trackComponents, highlight]);
 
   useEffect(() => {
     if (initialStart === "workerReady") {
@@ -888,6 +926,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   return (
     <>
       <div
+        ref={containerRef}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -959,6 +998,62 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               >
                 <div ref={horizontalLineRef} style={horizontalLineStyle} />
                 <div ref={verticalLineRef} style={verticalLineStyle} />
+                {highlight.length > 0 ? (
+                  <div
+                    data-theme={"light"}
+                    style={{
+                      position: "absolute",
+                      display: "flex",
+                      WebkitBackfaceVisibility: "hidden",
+                      WebkitPerspective: `${windowWidth}px`,
+                      backfaceVisibility: "hidden",
+                      perspective: `${windowWidth}px`,
+                      zIndex: 15, // Ensure it's on top of other elements
+                    }}
+                  >
+                    {highlight.map((item, index) => {
+                      console.log(item);
+                      return (
+                        <div
+                          ref={item.highlightRef}
+                          style={{
+                            display: "flex",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              position: "relative",
+                              height: "500px",
+                            }}
+                          >
+                            <div
+                              key={index}
+                              style={{
+                                position: "absolute",
+                                backgroundColor: "yellow",
+                                top: "0",
+                                height: "200px",
+                                left:
+                                  side.current === "right"
+                                    ? `${item.xPos}px`
+                                    : "",
+                                right:
+                                  side.current === "left"
+                                    ? `${item.xPos}px`
+                                    : "",
+                                width: item.length,
+                                pointerEvents: "none", // This makes the highlighted area non-interactive
+                              }}
+                            ></div>
+                          </div>{" "}
+                        </div>
+                      );
+                    })}{" "}
+                  </div>
+                ) : (
+                  ""
+                )}
                 {trackComponents.map((item, index) => {
                   let Component = item.component;
 

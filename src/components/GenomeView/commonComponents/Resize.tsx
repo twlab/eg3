@@ -16,6 +16,13 @@ const useResizeObserver = () => {
           setSize({ width, height });
           prevSize.current = { width, height };
           initial.current = false;
+        } else if (
+          initial.current ||
+          Math.abs(height - prevSize.current.height) > 400
+        ) {
+          setSize({ width, height });
+          prevSize.current = { width, height };
+          initial.current = false;
         }
       }
     }, 50); // Adjust debounce delay as needed

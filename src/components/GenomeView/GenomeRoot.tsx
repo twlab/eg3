@@ -20,7 +20,7 @@ function GenomeHub(props: any) {
   const [isInitial, setIsInitial] = useState<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
-
+  const scrollYPos = useRef(0);
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
@@ -39,6 +39,13 @@ function GenomeHub(props: any) {
     sessionStorage.setItem("myArray", serializedArray);
 
     setGenomeList(new Array<any>(newList));
+  }
+
+  function recreateTrackmanager(trackConfig: { [key: string]: any }) {
+    let curGenomeConfig = trackConfig.genomeConfig;
+    curGenomeConfig["genomeID"] = uuidv4();
+    scrollYPos.current = trackConfig.scrollY;
+    setGenomeList(new Array<any>(curGenomeConfig));
   }
   function startBp(region: string, startNav: number, endNav: number) {
     curNavRegion.current.start = startNav;
@@ -132,6 +139,13 @@ function GenomeHub(props: any) {
       }
     }
   }, [isInitial, size.width]);
+  useEffect(() => {
+    if (!isInitial) {
+      console.log("???????????????????", size.height);
+      window.scrollTo({ top: scrollYPos.current, behavior: "smooth" });
+    }
+  }, [isInitial, size.height]);
+
   return (
     <div
       style={{
@@ -150,6 +164,7 @@ function GenomeHub(props: any) {
             genomeIdx={index}
             addTrack={addTrack}
             startBp={startBp}
+            recreateTrackmanager={recreateTrackmanager}
             genomeArr={genomeList}
             windowWidth={size.width}
           />

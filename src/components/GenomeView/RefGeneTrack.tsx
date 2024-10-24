@@ -415,21 +415,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       ) : (
         <div
           style={{
-            display: "flex",
-            position: "relative",
-            height: configOptions.current.height,
+            position: "absolute",
+            backgroundColor: configOptions.current.backgroundColor,
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: updateSide.current === "right" ? `${xPos.current}px` : "",
-              right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            }}
-          >
-            {canvasComponents}
-          </div>
+          {canvasComponents}
         </div>
       )}
       {toolTipVisible ? toolTip : ""}
