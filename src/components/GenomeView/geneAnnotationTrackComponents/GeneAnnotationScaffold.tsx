@@ -37,7 +37,6 @@ const GeneAnnotationScaffold: React.FC<GeneAnnotationScaffoldProps> = ({
   onClick,
 }) => {
   const [xStart, xEnd] = xSpan;
-
   const { color, backgroundColor, italicizeText } = getDrawColors(
     gene,
     options

@@ -3,10 +3,8 @@ import Homepage from "./Home/Homepage";
 import { BrowserRouter, Link, Switch, Route } from "react-router-dom";
 import GenomeView from "./GenomeView/GenomeRoot";
 import { treeOfLifeObj } from "../localdata/treeoflife";
-import "./App.css";
-import "./DarkMode.css";
 import mainLogo from "../assets/images/icon.png";
-import "../assets/main.css";
+
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { genName, genKeyName, chrType } from "../localdata/genomename";
 

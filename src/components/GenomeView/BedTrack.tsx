@@ -1,37 +1,22 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
-import { objToInstanceAlign } from "./TrackManager";
-import FeatureArranger, {
-  PlacedFeatureGroup,
-} from "../../models/FeatureArranger";
 import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
-import { SortItemsOptions } from "../../models/SortItemsOptions";
-import OpenInterval from "../../models/OpenInterval";
-import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import { removeDuplicatesWithoutId } from "./commonComponents/check-obj-dupe";
 
-import BedAnnotation, {
-  DEFAULT_OPTIONS as defaultBedTrack,
-} from "./bedComponents/BedAnnotation";
+import { DEFAULT_OPTIONS as defaultBedTrack } from "./bedComponents/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import Feature, { NumericalFeature } from "../../models/Feature";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
 import { BedTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BedTrackConfig";
-import TrackLegend from "./commonComponents/TrackLegend";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import RefGeneTrack from "./RefGeneTrack";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;

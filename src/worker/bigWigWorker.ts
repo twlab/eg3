@@ -15,8 +15,10 @@ const workerFunction = function () {
         let singleStrand = regionData.trackGene[j];
 
         if (Object.keys(singleStrand).length > 0) {
-          let xSpanStart = (singleStrand.start - startPos) / regionData.bpToPx!;
-          let xSpanEnd = (singleStrand.end - startPos) / regionData.bpToPx!;
+          let xSpanStart =
+            (singleStrand.start - startPos) / regionData.basePerPixel!;
+          let xSpanEnd =
+            (singleStrand.end - startPos) / regionData.basePerPixel!;
           const startX = Math.max(0, Math.floor(xSpanStart));
           const endX = Math.min(
             regionData.windowWidth * 2 - 1,

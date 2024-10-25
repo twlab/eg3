@@ -1,24 +1,18 @@
-import React, { memo, ReactNode, useEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import { BigInteractTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigInteractTrackConfig";
-import OpenInterval from "../../models/OpenInterval";
-import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
-import { objToInstanceAlign } from "./TrackManager";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
-import ChromosomeInterval from "../../models/ChromosomeInterval";
-import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 
 const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
   props
 ) {
   const {
-    bpToPx,
     side,
     trackData,
     onTrackConfigChange,

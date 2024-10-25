@@ -234,7 +234,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    console.log(displayCache, fetchedDataCache);
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 

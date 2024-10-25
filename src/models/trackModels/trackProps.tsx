@@ -4,7 +4,7 @@ export interface TrackProps {
   id: String;
   trackIdx: number;
   bpRegionSize: number;
-  bpToPx: number;
+  basePerPixel: number;
   side: string;
   windowWidth: number;
   handleDelete: (trackIndex: number) => void;

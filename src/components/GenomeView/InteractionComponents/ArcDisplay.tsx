@@ -280,7 +280,6 @@ export class ArcDisplay extends React.PureComponent<ArcDisplayProps, {}> {
       .range([0, 1])
       .clamp(false);
 
-    console.log(this.arcData, placedInteractions);
     // const sortedInteractions = placedInteractions.slice().sort((a, b)
     //        => b.interaction.score - a.interaction.score);
     // const slicedInteractions = sortedInteractions.slice(0, ITEM_LIMIT); // Only render ITEM_LIMIT highest scores

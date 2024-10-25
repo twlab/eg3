@@ -1,4 +1,4 @@
-import React, { memo, ReactNode, useEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";

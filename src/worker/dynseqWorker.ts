@@ -8,7 +8,7 @@ self.onmessage = (event: MessageEvent) => {
     data: any,
     windowWidth: number,
     startRegionBp: number,
-    bpToPx
+    basePerPixel
   ) {
     const xToFeatures: Array<any> = Array.from(
       { length: Number(windowWidth * 2) },
@@ -19,8 +19,8 @@ self.onmessage = (event: MessageEvent) => {
       let singleStrand = data[j];
 
       if (Object.keys(singleStrand).length > 0) {
-        let xSpanStart = (singleStrand.start - startRegionBp) / bpToPx!;
-        let xSpanEnd = (singleStrand.end - startRegionBp) / bpToPx!;
+        let xSpanStart = (singleStrand.start - startRegionBp) / basePerPixel!;
+        let xSpanEnd = (singleStrand.end - startRegionBp) / basePerPixel!;
         const startX = Math.max(0, Math.floor(xSpanStart));
         const endX = Math.min(windowWidth * 2 - 1, Math.ceil(xSpanEnd));
 
@@ -75,14 +75,14 @@ self.onmessage = (event: MessageEvent) => {
     dataForward,
     trackData.windowWidth,
     trackData.startBpRegion,
-    trackData.bpToPx
+    trackData.basePerPixel
   );
 
   let featureReverse = findFeatureInPixel(
     dataReverse,
     trackData.windowWidth,
     trackData.startBpRegion,
-    trackData.bpToPx
+    trackData.basePerPixel
   );
 
   avgHeightFeature(featureForward);

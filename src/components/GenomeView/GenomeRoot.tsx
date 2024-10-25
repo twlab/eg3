@@ -11,15 +11,25 @@ import useResizeObserver from "./commonComponents/Resize";
 
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
+import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
+import DisplayedRegionModel from "@/models/DisplayedRegionModel";
+import SubToolButtons from "./ToolsComponents/SubToolButtons";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub(props: any) {
   const curNavRegion = useRef<{ [key: string]: any }>({ start: 0, end: 0 });
+  const trackSessionData = useRef<{ [key: string]: any }>({});
+  const scrollYPos = useRef(0);
   const [items, setItems] = useState(chrType);
   const [isInitial, setIsInitial] = useState<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
+  const [region, setRegion] = useState<{ [key: string]: any }>({});
+  const [selectedTool, setSelectedTool] = useState<{ [key: string]: any }>({
+    isSelected: false,
+    title: "none",
+  });
 
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
@@ -40,9 +50,58 @@ function GenomeHub(props: any) {
 
     setGenomeList(new Array<any>(newList));
   }
+  function onToolClicked(tool: any) {
+    setSelectedTool((prevState) => {
+      if (prevState.title === tool.title) {
+        let newSelectedTool = {};
+        newSelectedTool["title"] = "none";
+        newSelectedTool["isSelected"] = false;
+        return newSelectedTool;
+      } else {
+        let newSelectedTool = {};
+        newSelectedTool["title"] = tool.title;
+        newSelectedTool["isSelected"] = true;
+
+        return newSelectedTool;
+      }
+    });
+  }
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      let newSelectedTool = {};
+      newSelectedTool["tool"] = "none";
+      newSelectedTool["isSelected"] = false;
+      setSelectedTool(newSelectedTool);
+    }
+  };
+  function updateSessionData(data: any) {
+    console.log(data);
+  }
+  function recreateTrackmanager(trackConfig: { [key: string]: any }) {
+    let curGenomeConfig = trackConfig.genomeConfig;
+    curNavRegion.current.start = curGenomeConfig.defaultRegion.start;
+    curNavRegion.current.end = curGenomeConfig.defaultRegion.end;
+    let tmpObj = {};
+    tmpObj["viewWindow"] = new DisplayedRegionModel(
+      curGenomeConfig.navContext,
+      curGenomeConfig.defaultRegion.start,
+      curGenomeConfig.defaultRegion.end
+    );
+    setRegion(tmpObj);
+    curGenomeConfig["genomeID"] = uuidv4();
+    scrollYPos.current = trackConfig.scrollY;
+    setGenomeList(new Array<any>(curGenomeConfig));
+  }
   function startBp(region: string, startNav: number, endNav: number) {
     curNavRegion.current.start = startNav;
     curNavRegion.current.end = endNav;
+    let tmpObj = {};
+    tmpObj["viewWindow"] = new DisplayedRegionModel(
+      genomeList[0].navContext,
+      curNavRegion.current.start,
+      curNavRegion.current.end
+    );
+    setRegion(tmpObj);
     let newList = { ...genomeList[0] };
     newList.defaultRegion = region;
     const serializedArray = JSON.stringify(newList);
@@ -95,10 +154,18 @@ function GenomeHub(props: any) {
       let curGenome = getGenomeConfig(props.name);
       curGenome["genomeID"] = uuidv4();
       curGenome["windowWidth"] = size.width;
-      setGenomeList([curGenome]);
 
+      setGenomeList([curGenome]);
+      let tmpObj = {};
       curNavRegion.current.start = curGenome.defaultRegion.start;
       curNavRegion.current.end = curGenome.defaultRegion.end;
+
+      tmpObj["viewWindow"] = new DisplayedRegionModel(
+        curGenome.navContext,
+        curNavRegion.current.start,
+        curNavRegion.current.end
+      );
+      setRegion(tmpObj);
       setIsInitial(false);
     } else {
       let curGenome = getGenomeConfig("hg38");
@@ -108,9 +175,23 @@ function GenomeHub(props: any) {
 
       curNavRegion.current.start = curGenome.defaultRegion.start;
       curNavRegion.current.end = curGenome.defaultRegion.end;
+      let tmpObj = {};
+      tmpObj["viewWindow"] = new DisplayedRegionModel(
+        curGenome.navContext,
+        curNavRegion.current.start,
+        curNavRegion.current.end
+      );
+      setRegion(tmpObj);
       setIsInitial(false);
     }
+    document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
+  function genomeNavigatorRegionSelect(startBase, endBase) {
+    console.log("GenomeNavigatorSelectBase", startBase, endBase);
+  }
 
   useEffect(() => {
     if (!isInitial) {
@@ -132,6 +213,12 @@ function GenomeHub(props: any) {
       }
     }
   }, [isInitial, size.width]);
+  // useEffect(() => {
+  //   if (!isInitial) {
+  //     window.scrollTo({ top: scrollYPos.current, behavior: "smooth" });
+  //   }
+  // }, [isInitial, size.height]);
+
   return (
     <div
       style={{
@@ -143,17 +230,38 @@ function GenomeHub(props: any) {
         {/* <div style={{ display: "flex" }}>
         <Drag items={items} changeChrOrder={changeChrOrder} />
       </div> */}
-        <SelectDemo />
-        {genomeList.map((item, index) => (
-          <TrackManager
-            key={item.genomeID}
-            genomeIdx={index}
-            addTrack={addTrack}
-            startBp={startBp}
-            genomeArr={genomeList}
-            windowWidth={size.width}
-          />
-        ))}
+
+        {size.width > 0
+          ? genomeList.map((item, index) => {
+              return (
+                <div key={index}>
+                  {Object.keys(region).length > 0 ? (
+                    <GenomeNavigator
+                      key={uuidv4()}
+                      selectedRegion={region.viewWindow}
+                      genomeConfig={genomeList[index]}
+                      windowWidth={size.width}
+                      onRegionSelected={genomeNavigatorRegionSelect}
+                    />
+                  ) : (
+                    ""
+                  )}
+                  <SubToolButtons onToolClicked={onToolClicked} />
+
+                  <TrackManager
+                    key={item.genomeID}
+                    genomeIdx={index}
+                    addTrack={addTrack}
+                    startBp={startBp}
+                    selectedTool={selectedTool}
+                    recreateTrackmanager={recreateTrackmanager}
+                    genomeArr={genomeList}
+                    windowWidth={size.width - 120}
+                  />
+                </div>
+              );
+            })
+          : ""}
       </div>
     </div>
   );

@@ -233,6 +233,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               color="white"
             />
           );
+
           return (
             <TranslatableG
               onClick={(event) => renderTooltip(event, feature)}
