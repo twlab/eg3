@@ -1,11 +1,4 @@
-import {
-  createRef,
-  CSSProperties,
-  memo,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 
@@ -116,6 +109,7 @@ interface TrackManagerProps {
   recreateTrackmanager: (trackOptions: {}) => void;
   windowWidth: number;
   genomeArr: Array<any>;
+  selectedTool: { [key: string]: any };
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
@@ -124,6 +118,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   recreateTrackmanager,
   windowWidth,
   genomeArr,
+  selectedTool,
 }) {
   //useRef to store data between states without re render the component
 
@@ -150,7 +145,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const currTracksConfig = useRef<{ [key: string]: any }>({});
   const configOptions = useRef({ displayMode: "" });
   const configMenuPos = useRef<{ [key: string]: any }>({});
-  const saveState = useRef<{ [key: string]: any }>({ selectedTool: "" });
+
   const lastDragX = useRef(0);
   const isThereG3dTrack = useRef(false);
   let blockPos = useRef<{ [key: string]: any } | null>(null);
@@ -160,6 +155,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const lastX = useRef(0);
   const dragX = useRef(0);
   const isLoading = useRef(true);
+  const isToolSelected = useRef(false);
   const side = useRef("right");
   const isDragging = useRef(false);
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
@@ -167,12 +163,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // These states are used to update the tracks with new fetch(data);
   const containerRef = useRef(null);
-  const scrollPosition = useRef(0);
+
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
   const [initialStart, setInitialStart] = useState("workerNotReady");
-  const [selectedTool, setSelectedTool] = useState("none");
+
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
@@ -193,12 +189,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
-  const handleKeyDown = (event) => {
-    if (event.key === "Escape") {
-      setSelectedTool("none");
-      isLoading.current = false;
-    }
-  };
 
   function handleScroll() {
     // dont need to account for scroll because parenttop will always give the extact location of where the  event is
@@ -234,7 +224,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       horizontalLineRef.current.style.top = `${y}px`;
       verticalLineRef.current.style.left = `${x}px`;
     }
-    if (!isDragging.current || isLoading.current) {
+
+    if (!isDragging.current || isLoading.current || isToolSelected.current) {
       return;
     }
 
@@ -278,17 +269,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     e.preventDefault();
   }
-  function onToolClicked(tool: any) {
-    setSelectedTool((prevState) => {
-      if (prevState === "none") {
-        isLoading.current = true;
-        return tool.title;
-      } else {
-        isLoading.current = false;
-        return "none";
-      }
-    });
-  }
+
   function handleMouseUp() {
     isDragging.current = false;
     if (lastDragX.current === dragX.current) {
@@ -728,13 +709,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
 
-  // TOOL FUNCTIONS
+  // SELECTABLE DRAG AREA TO GET DATA FOR TOOL FUNCTIONS
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   function onRegionSelected(startbase: number, endbase: number, xSpan) {
     if (
-      selectedTool ===
+      selectedTool.title ===
       `Zoom-in tool
 (Alt+M)`
     ) {
@@ -752,7 +733,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         scrollY: window.scrollY,
       });
     } else if (
-      selectedTool ===
+      selectedTool.title ===
       `Highlight tool
 (Alt+N)`
     ) {
@@ -786,7 +767,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
     window.addEventListener("scroll", handleScroll);
-    document.addEventListener("keydown", handleKeyDown);
 
     const parentElement = block.current;
     if (parentElement) {
@@ -801,7 +781,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
       }
-      document.removeEventListener("keydown", handleKeyDown);
+
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("scroll", handleScroll);
@@ -809,6 +789,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, []);
 
+  useEffect(() => {
+    isToolSelected.current = selectedTool.isSelected ? true : false;
+  }, [selectedTool]);
   useEffect(() => {
     // add Listenser again because javacript dom only have the old trackComponents value
     // it gets the trackComponents at creation so when trackComponent updates we need to
@@ -890,7 +873,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (trackManagerId.current === "" && windowWidth > 0) {
       // on initial and when our genome data changes we set the default values here
-      console.log(genomeArr[genomeIdx]);
       let genome = genomeArr[genomeIdx];
 
       leftStartCoord.current = genome.defaultRegion.start;
@@ -934,27 +916,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <div> - {curRegion?.toString()}</div>
         <div> {bpX.current + "-" + (bpX.current + bpRegionSize.current)}</div>
         <div>Pixel distance from starting point : {dragX.current}px</div>
-        {isLoading.current ? (
-          <CircularProgress
-            variant="indeterminate"
-            disableShrink
-            sx={{
-              color: (theme) =>
-                theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
-              animationDuration: "550ms",
+        <div style={{ display: "flex" }}>
+          {" "}
+          {selectedTool.isSelected ? (
+            <CircularProgress
+              variant="indeterminate"
+              disableShrink
+              sx={{
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "pink" : "#308fe8",
+                animationDuration: "550ms",
 
-              left: 0,
-            }}
-            size={20}
-            thickness={4}
-          />
-        ) : (
-          <div style={{ height: 20 }}>DATA READY LETS GO</div>
-        )}
+                left: 0,
+              }}
+              size={20}
+              thickness={4}
+            />
+          ) : (
+            ""
+          )}
+          {isLoading.current ? (
+            <CircularProgress
+              variant="indeterminate"
+              disableShrink
+              sx={{
+                color: (theme) =>
+                  theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
+                animationDuration: "550ms",
+
+                left: 0,
+              }}
+              size={20}
+              thickness={4}
+            />
+          ) : (
+            <div style={{ height: 20 }}>DATA READY LETS GO</div>
+          )}
+        </div>
 
         <div>1pixel to {basePerPixel.current}bp</div>
 
-        <SubToolButtons onToolClicked={onToolClicked} />
         <OutsideClickDetector onOutsideClick={onCloseMultiConfigMenu}>
           <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
@@ -1104,7 +1105,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     zIndex: 10,
                   }}
                 >
-                  {selectedTool !== "none" ? (
+                  {selectedTool.isSelected ? (
                     <SelectableGenomeArea
                       selectableRegion={region.viewWindow}
                       dragLimits={new OpenInterval(120, windowWidth + 120)}

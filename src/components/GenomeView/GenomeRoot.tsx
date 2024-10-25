@@ -13,17 +13,24 @@ import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
+import SubToolButtons from "./ToolsComponents/SubToolButtons";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub(props: any) {
   const curNavRegion = useRef<{ [key: string]: any }>({ start: 0, end: 0 });
+  const trackSessionData = useRef<{ [key: string]: any }>({});
+  const scrollYPos = useRef(0);
   const [items, setItems] = useState(chrType);
   const [isInitial, setIsInitial] = useState<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
-  const scrollYPos = useRef(0);
   const [region, setRegion] = useState<{ [key: string]: any }>({});
+  const [selectedTool, setSelectedTool] = useState<{ [key: string]: any }>({
+    isSelected: false,
+    title: "none",
+  });
+
   // for hic track when being added, create an instance of straw to be sent to the track so it can be used to query
   function addTrack(curGen: any) {
     curGen.genome.defaultRegion = curGen.region;
@@ -43,7 +50,33 @@ function GenomeHub(props: any) {
 
     setGenomeList(new Array<any>(newList));
   }
+  function onToolClicked(tool: any) {
+    setSelectedTool((prevState) => {
+      if (prevState.title === tool.title) {
+        let newSelectedTool = {};
+        newSelectedTool["title"] = "none";
+        newSelectedTool["isSelected"] = false;
+        return newSelectedTool;
+      } else {
+        let newSelectedTool = {};
+        newSelectedTool["title"] = tool.title;
+        newSelectedTool["isSelected"] = true;
 
+        return newSelectedTool;
+      }
+    });
+  }
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      let newSelectedTool = {};
+      newSelectedTool["tool"] = "none";
+      newSelectedTool["isSelected"] = false;
+      setSelectedTool(newSelectedTool);
+    }
+  };
+  function updateSessionData(data: any) {
+    console.log(data);
+  }
   function recreateTrackmanager(trackConfig: { [key: string]: any }) {
     let curGenomeConfig = trackConfig.genomeConfig;
     curNavRegion.current.start = curGenomeConfig.defaultRegion.start;
@@ -151,10 +184,15 @@ function GenomeHub(props: any) {
       setRegion(tmpObj);
       setIsInitial(false);
     }
+    document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
   function genomeNavigatorRegionSelect(startBase, endBase) {
     console.log("GenomeNavigatorSelectBase", startBase, endBase);
   }
+
   useEffect(() => {
     if (!isInitial) {
       let curGenome = getGenomeConfig("hg38");
@@ -208,15 +246,18 @@ function GenomeHub(props: any) {
                   ) : (
                     ""
                   )}
+                  <SubToolButtons onToolClicked={onToolClicked} />
+
                   <TrackManager
                     key={item.genomeID}
                     genomeIdx={index}
                     addTrack={addTrack}
                     startBp={startBp}
+                    selectedTool={selectedTool}
                     recreateTrackmanager={recreateTrackmanager}
                     genomeArr={genomeList}
                     windowWidth={size.width - 120}
-                  />{" "}
+                  />
                 </div>
               );
             })
