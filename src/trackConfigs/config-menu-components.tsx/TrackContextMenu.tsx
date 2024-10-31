@@ -31,7 +31,7 @@ export function MenuTitle(props) {
 export function RemoveOption(props) {
   return (
     <div
-      onClick={() => props.onClick(props.numTracks)}
+      onClick={() => props.onClick(props.trackId)}
       className="TrackContextMenu-item TrackContextMenu-hoverable-item-danger"
     >
       {/* eslint-disable-next-line jsx-a11y/accessible-emoji */}❌{" "}

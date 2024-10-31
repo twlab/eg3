@@ -1,5 +1,5 @@
 import React from "react";
-import { ColorPicker } from "./ColorPicker";
+import ColorPicker from "./ColorPicker";
 
 export const StaticLegend = (props) => {
   const { categories } = props;

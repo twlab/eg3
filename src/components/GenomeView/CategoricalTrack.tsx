@@ -6,10 +6,9 @@ import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 
-import { CategoricalTrackConfig } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultCategorical } from "../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
-import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+
 import Feature from "../../models/Feature";
 import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
@@ -47,21 +46,20 @@ const TOP_PADDING = 2;
 
 const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   trackData,
-  onTrackConfigChange,
+  updateGlobalTrackConfig,
   side,
   windowWidth = 0,
   genomeArr,
   genomeIdx,
   trackModel,
   dataIdx,
-  getConfigMenu,
-  onCloseConfigMenu,
-  handleDelete,
+
   trackIdx,
   id,
   useFineModeNav,
   legendRef,
-  trackManagerRef,
+
+  applyTrackConfigChange,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -78,7 +76,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   const useFineOrSecondaryParentNav = useRef(useFineModeNav);
 
   const xPos = useRef(0);
-  const configMenuPos = useRef<{ [key: string]: any }>({});
+
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
@@ -104,7 +102,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
       windowWidth,
@@ -212,63 +210,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
     setToolTipVisible(false);
   }
 
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[`${key}`]) {
-      return;
-    } else if (
-      key === "displayMode" &&
-      value !== configOptions.current.displayMode
-    ) {
-      configOptions.current.displayMode = value;
-
-      trackModel.options = configOptions.current;
-      const renderer = new CategoricalTrackConfig(trackModel);
-
-      const items = renderer.getMenuComponents();
-
-      let menu = trackConfigMenu[`${trackModel.type}`]({
-        blockRef: trackManagerRef,
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-      getConfigMenu(menu, "singleSelect");
-    } else {
-      configOptions.current[`${key}`] = value;
-    }
-    setConfigChanged(true);
-  }
-
-  function renderConfigMenu(event) {
-    event.preventDefault();
-
-    const renderer = new CategoricalTrackConfig(trackModel);
-    const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[`${trackModel.type}`]({
-      blockRef: trackManagerRef,
-      trackIdx,
-      handleDelete,
-      id,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      onCloseConfigMenu,
-      trackModel,
-      configOptions: configOptions.current,
-      items,
-      onConfigChange,
-    });
-
-    getConfigMenu(menu, "singleSelect");
-    configMenuPos.current = { left: event.pageX, top: event.pageY };
-  }
-
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (trackData!.initial === 1) {
@@ -277,7 +218,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           ...trackModel.options,
         };
 
-        onTrackConfigChange({
+        updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
           id: id,
@@ -299,27 +240,6 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
       );
     }
   }, [trackData]);
-
-  useEffect(() => {
-    if (configChanged === true) {
-      getConfigChangeData(
-        useFineOrSecondaryParentNav.current,
-        fetchedDataCache.current,
-        dataIdx,
-        createSVGOrCanvas,
-        "none"
-      );
-
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
 
   useEffect(() => {
     getCacheData(
@@ -345,10 +265,40 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents]);
+  useEffect(() => {
+    if (svgComponents !== null) {
+      if (id in applyTrackConfigChange) {
+        if ("type" in applyTrackConfigChange) {
+          configOptions.current = {
+            ...DEFAULT_OPTIONS,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        } else {
+          configOptions.current = {
+            ...configOptions.current,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        }
 
+        updateGlobalTrackConfig({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+        getConfigChangeData(
+          useFineOrSecondaryParentNav.current,
+          fetchedDataCache.current,
+          dataIdx,
+          createSVGOrCanvas,
+          "none"
+        );
+      }
+    }
+  }, [applyTrackConfigChange]);
   return (
     <div
-      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         height:

@@ -27,6 +27,16 @@ export const Tools = {
 (Alt+N)`,
     cursor: "ew-resize",
   },
+  UNDO: {
+    buttonContent: "⟲",
+    title: `undo`,
+    cursor: "pointer",
+  },
+  REDO: {
+    title: "redo",
+    buttonContent: "⟳",
+    cursor: "pointer",
+  },
 };
 
 ToolButtons.propTypes = {
@@ -50,6 +60,7 @@ export function ToolButtons(props: ToolButtonsProps) {
         className={className}
         title={tool.title}
         onClick={() => props.onToolClicked(tool)}
+        style={{ margin: "0 10px", border: "1px solid black", padding: "5px" }}
       >
         {tool.buttonContent}
       </button>

@@ -134,10 +134,10 @@ export class FeatureSegment {
   /**
    * @return {string} human-readable representation of this interval
    */
-  // toString(): string {
-  //   // web 1 based
-  //   return `${this.getName()}:${this.relativeStart + 1}-${this.relativeEnd}`;
-  // }
+  toString(): string {
+    // web 1 based
+    return `${this.getName()}:${this.relativeStart + 1}-${this.relativeEnd}`;
+  }
 
   // /**
   //  * Interprets this and another interval as a multi-feature interval, with this being the start and the other being
@@ -146,10 +146,10 @@ export class FeatureSegment {
   //  * @param {FeatureSegment} other - the end of the multi-feature interval
   //  * @return {string} a human-readable representation of a multi-feature interval
   //  */
-  // toStringWithOther(other: FeatureSegment): string {
-  //   // web 1 based
-  //   return `${this.getName()}:${this.relativeStart + 1}-${other.getName()}:${
-  //     other.relativeEnd
-  //   }`;
-  // }
+  toStringWithOther(other: FeatureSegment): string {
+    // web 1 based
+    return `${this.getName()}:${this.relativeStart + 1}-${other.getName()}:${
+      other.relativeEnd
+    }`;
+  }
 }

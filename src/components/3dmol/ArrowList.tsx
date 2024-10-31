@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import _ from "lodash";
 // import { CheckCircleIcon, XCircleIcon } from "@primer/octicons-react";
-import { ColorPicker } from "./ColorPicker";
+import ColorPicker from "./ColorPicker";
 import { usePrevious } from "./ShapeList";
 
 export const ArrowList = (props) => {

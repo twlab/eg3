@@ -17,7 +17,7 @@ export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
 
 const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackData,
-  onTrackConfigChange,
+  updateGlobalTrackConfig,
 
   side,
   windowWidth = 0,
@@ -55,7 +55,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
-  async function createCanvas(curTrackData, genesArr, fine) {
+  function createCanvas(curTrackData, genesArr, fine) {
     if (fine) {
       newTrackWidth.current = curTrackData.visWidth;
     }
@@ -240,7 +240,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           ...trackModel.options,
         };
 
-        onTrackConfigChange({
+        updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
           id: id,
@@ -248,7 +248,12 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           legendRef: legendRef,
         });
       }
-      if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
+      if (
+        useFineModeNav ||
+        (trackData![`${id}`].metadata.genome !== undefined &&
+          genomeArr![genomeIdx!].genome.getName() !==
+            trackData![`${id}`].metadata.genome)
+      ) {
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
             trackData!.trackState.primaryGenName
@@ -477,7 +482,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           true
         );
       }
-      onTrackConfigChange({
+      updateGlobalTrackConfig({
         configOptions: configOptions.current,
         trackModel: trackModel,
         id: id,

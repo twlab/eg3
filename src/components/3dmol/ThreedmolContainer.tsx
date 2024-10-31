@@ -26,7 +26,7 @@ import { ModelListMenu } from "./ModelListMenu";
 import { FrameListMenu } from "./FrameListMenu";
 import { ShapeList } from "./ShapeList";
 import { OpacityThickness } from "./OpacityThickness";
-import { ColorPicker } from "./ColorPicker";
+import ColorPicker from "./ColorPicker";
 import { ArrowList } from "./ArrowList";
 import { StaticLegend } from "./StaticLegend";
 import * as $3Dmol from "3dmol/build/3Dmol.js";

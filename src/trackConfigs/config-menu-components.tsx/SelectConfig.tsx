@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 import SingleInputConfig from "./SingleInputConfig";
 
@@ -23,8 +23,6 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
 }) => {
   // Initialize state to store the selected value
 
-  const [selectedValue, setSelectedValue] = useState(defaultValue);
-
   // When the component mounts, set the selected value based on the defaultValue
 
   const renderInputElement = (
@@ -46,10 +44,10 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
 
     return (
       <select
-        value={selectedValue} // Use the selected value from state
+        value={inputValue} // Use the selected value from state
         onChange={(event) => {
           const newValue = event.target.value;
-          setSelectedValue(newValue); // Update the selected value in state
+
           setNewValue(newValue);
         }}
       >

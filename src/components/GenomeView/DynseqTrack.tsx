@@ -2,8 +2,7 @@ import React, { memo, useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComponents";
-import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { DynseqTrackConfig } from "../../trackConfigs/config-menu-models.tsx/DynseqTrackConfig";
+
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
@@ -20,22 +19,21 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   trackData,
-  onTrackConfigChange,
+  updateGlobalTrackConfig,
   side,
   windowWidth = 0,
   genomeArr,
   genomeIdx,
   trackModel,
   dataIdx,
-  getConfigMenu,
-  onCloseConfigMenu,
-  handleDelete,
+
   trackIdx,
   id,
   useFineModeNav,
   basePerPixel,
   legendRef,
-  trackManagerRef,
+
+  applyTrackConfigChange,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -48,7 +46,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const useFineOrSecondaryParentNav = useRef(false);
   const xPos = useRef(0);
-  const configMenuPos = useRef<{ [key: string]: any }>({});
+
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
@@ -59,7 +57,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     },
   };
 
-  async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
       windowWidth,
@@ -89,60 +87,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     updateSide.current = side;
   }
 
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[key]) {
-      return;
-    } else if (
-      key === "displayMode" &&
-      value !== configOptions.current.displayMode
-    ) {
-      configOptions.current.displayMode = value;
-
-      trackModel.options = configOptions.current;
-      const renderer = new DynseqTrackConfig(trackModel);
-      const items = renderer.getMenuComponents();
-      let menu = trackConfigMenu[trackModel.type]({
-        blockRef: trackManagerRef,
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-      getConfigMenu(menu, "singleSelect");
-    } else {
-      configOptions.current[key] = value;
-    }
-    setConfigChanged(true);
-  }
-
-  function renderConfigMenu(event) {
-    event.preventDefault();
-
-    const renderer = new DynseqTrackConfig(trackModel);
-    const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[trackModel.type]({
-      blockRef: trackManagerRef,
-      trackIdx,
-      handleDelete,
-      id,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      onCloseConfigMenu,
-      trackModel,
-      configOptions: configOptions.current,
-      items,
-      onConfigChange,
-    });
-    getConfigMenu(menu, "singleSelect");
-    configMenuPos.current = { left: event.pageX, top: event.pageY };
-  }
-
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (trackData!.initial === 1) {
@@ -156,7 +100,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           ...trackModel.options,
         };
 
-        onTrackConfigChange({
+        updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
           id: id,
@@ -164,7 +108,12 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
           legendRef: legendRef,
         });
       }
-      if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
+      if (
+        useFineModeNav ||
+        (trackData![`${id}`].metadata.genome !== undefined &&
+          genomeArr![genomeIdx!].genome.getName() !==
+            trackData![`${id}`].metadata.genome)
+      ) {
         useFineOrSecondaryParentNav.current = true;
       }
 
@@ -181,31 +130,6 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
       );
     }
   }, [trackData]);
-
-  useEffect(() => {
-    if (dataIdx! in displayCache.current.density) {
-      let tmpNewConfig = { ...configOptions.current };
-
-      for (let key in displayCache.current.density) {
-        let curCacheComponent = displayCache.current.density[key].canvasData;
-        let newComponent = React.cloneElement(curCacheComponent, {
-          options: tmpNewConfig,
-        });
-        displayCache.current.density[key].canvasData = newComponent;
-      }
-      configOptions.current = tmpNewConfig;
-      setCanvasComponents(displayCache.current.density[dataIdx!].canvasData);
-
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
 
   useEffect(() => {
     getCacheData(
@@ -232,9 +156,50 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 
+  useEffect(() => {
+    if (canvasComponents !== null) {
+      if (id in applyTrackConfigChange) {
+        if ("type" in applyTrackConfigChange) {
+          configOptions.current = {
+            ...DEFAULT_OPTIONS,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        } else {
+          configOptions.current = {
+            ...configOptions.current,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        }
+
+        updateGlobalTrackConfig({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+        if (dataIdx! in displayCache.current.density) {
+          let tmpNewConfig = { ...configOptions.current };
+
+          for (let key in displayCache.current.density) {
+            let curCacheComponent =
+              displayCache.current.density[`${key}`].canvasData;
+            let newComponent = React.cloneElement(curCacheComponent, {
+              options: tmpNewConfig,
+            });
+            displayCache.current.density[`${key}`].canvasData = newComponent;
+          }
+          configOptions.current = tmpNewConfig;
+
+          setCanvasComponents(
+            displayCache.current.density[`${dataIdx}`].canvasData
+          );
+        }
+      }
+    }
+  }, [applyTrackConfigChange]);
   return (
     <div
-      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",

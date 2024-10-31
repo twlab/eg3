@@ -19,6 +19,7 @@ function aggregateOptions(
   }
 
   const firstOptionValue = optionsObjects[0][optionName];
+
   if (
     optionsObjects.every((options) => options[optionName] === firstOptionValue)
   ) {

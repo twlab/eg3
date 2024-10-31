@@ -9,9 +9,7 @@ import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { DEFAULT_OPTIONS as defaultBedTrack } from "./bedComponents/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
-import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 
-import { BedTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BedTrackConfig";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
@@ -35,21 +33,20 @@ const TOP_PADDING = 2;
 
 const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   trackData,
-  onTrackConfigChange,
+  updateGlobalTrackConfig,
   side,
   windowWidth = 0,
   genomeArr,
   genomeIdx,
   trackModel,
   dataIdx,
-  getConfigMenu,
-  onCloseConfigMenu,
-  handleDelete,
+
   trackIdx,
   id,
   useFineModeNav,
   legendRef,
-  trackManagerRef,
+
+  applyTrackConfigChange,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -96,7 +93,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
       windowWidth,
@@ -186,63 +183,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     );
   }
 
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[`${key}`]) {
-      return;
-    } else if (
-      key === "displayMode" &&
-      value !== configOptions.current.displayMode
-    ) {
-      configOptions.current.displayMode = value;
-
-      trackModel.options = configOptions.current;
-      const renderer = new BedTrackConfig(trackModel);
-
-      const items = renderer.getMenuComponents();
-
-      let menu = trackConfigMenu[`${trackModel.type}`]({
-        blockRef: trackManagerRef,
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-      getConfigMenu(menu, "singleSelect");
-    } else {
-      configOptions.current[`${key}`] = value;
-    }
-    setConfigChanged(true);
-  }
-
-  function renderConfigMenu(event) {
-    event.preventDefault();
-
-    const renderer = new BedTrackConfig(trackModel);
-    const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[`${trackModel.type}`]({
-      blockRef: trackManagerRef,
-      trackIdx,
-      handleDelete,
-      id,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      onCloseConfigMenu,
-      trackModel,
-      configOptions: configOptions.current,
-      items,
-      onConfigChange,
-    });
-
-    getConfigMenu(menu, "singleSelect");
-    configMenuPos.current = { left: event.pageX, top: event.pageY };
-  }
-
   function renderTooltip(event, feature) {
     const currtooltip = bedClickTooltip(
       feature,
@@ -267,7 +207,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           ...trackModel.options,
         };
 
-        onTrackConfigChange({
+        updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
           id: id,
@@ -288,27 +228,6 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       );
     }
   }, [trackData]);
-
-  useEffect(() => {
-    if (configChanged === true) {
-      getConfigChangeData(
-        useFineOrSecondaryParentNav.current,
-        fetchedDataCache.current,
-        dataIdx,
-        createSVGOrCanvas,
-        "none"
-      );
-
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
 
   useEffect(() => {
     getCacheData(
@@ -334,10 +253,40 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
+  useEffect(() => {
+    if (svgComponents !== null || canvasComponents !== null) {
+      if (id in applyTrackConfigChange) {
+        if ("type" in applyTrackConfigChange) {
+          configOptions.current = {
+            ...DEFAULT_OPTIONS,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        } else {
+          configOptions.current = {
+            ...configOptions.current,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        }
 
+        updateGlobalTrackConfig({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+        getConfigChangeData(
+          useFineOrSecondaryParentNav.current,
+          fetchedDataCache.current,
+          dataIdx,
+          createSVGOrCanvas,
+          "none"
+        );
+      }
+    }
+  }, [applyTrackConfigChange]);
   return (
     <div
-      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         height:

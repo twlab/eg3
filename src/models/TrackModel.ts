@@ -47,6 +47,7 @@ interface ITrackModel {
   genome?: string;
   isSelected?: any;
   tracks?: any;
+  datahub?: any;
 }
 
 /**

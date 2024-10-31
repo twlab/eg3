@@ -2,8 +2,7 @@ import React, { memo, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
-import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import { HicTrackConfig } from "../../trackConfigs/config-menu-models.tsx/HicTrackConfig";
+
 import { objToInstanceAlign } from "./TrackManager";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
@@ -15,17 +14,18 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
     basePerPixel,
     side,
     trackData,
-    onTrackConfigChange,
+    updateGlobalTrackConfig,
     trackIdx,
-    handleDelete,
+
     windowWidth,
     dataIdx,
-    onCloseConfigMenu,
+
     trackModel,
     id,
-    getConfigMenu,
+
     legendRef,
     trackManagerRef,
+    applyTrackConfigChange,
   } = props;
 
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
@@ -40,7 +40,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
   });
   const useFineOrSecondaryParentNav = useRef(false);
   const xPos = useRef(0);
-  const configMenuPos = useRef<{ [key: string]: any }>({});
+
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
@@ -49,7 +49,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
     density: { setComponents: setCanvasComponents },
   };
 
-  async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
       windowWidth,
@@ -86,7 +86,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
             ...configOptions.current,
             ...trackModel.options,
           };
-          onTrackConfigChange({
+          updateGlobalTrackConfig({
             configOptions: configOptions.current,
             trackModel: trackModel,
             id: id,
@@ -140,37 +140,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
   }, [trackData]);
 
   useEffect(() => {
-    if (configChanged) {
-      if (dataIdx! in displayCache.current.density) {
-        let tmpNewConfig = { ...configOptions.current };
-
-        for (let key in displayCache.current.density) {
-          let curCacheComponent =
-            displayCache.current.density[`${key}`].canvasData;
-          let newComponent = React.cloneElement(curCacheComponent, {
-            options: tmpNewConfig,
-          });
-          displayCache.current.density[`${key}`].canvasData = newComponent;
-        }
-        configOptions.current = tmpNewConfig;
-
-        setCanvasComponents(
-          displayCache.current.density[`${dataIdx}`].canvasData
-        );
-
-        onTrackConfigChange({
-          configOptions: configOptions.current,
-          trackModel: trackModel,
-          id: id,
-          trackIdx: trackIdx,
-          legendRef: legendRef,
-        });
-      }
-      setConfigChanged(false);
-    }
-  }, [configChanged]);
-
-  useEffect(() => {
     getCacheData(
       true,
       rightIdx.current,
@@ -195,59 +164,50 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[`${key}`]) return;
-    if (key === "displayMode" && value !== configOptions.current.displayMode) {
-      configOptions.current.displayMode = value;
-      trackModel.options = configOptions.current;
+  useEffect(() => {
+    if (canvasComponents !== null) {
+      if (id in applyTrackConfigChange) {
+        if ("type" in applyTrackConfigChange) {
+          configOptions.current = {
+            ...DEFAULT_OPTIONS,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        } else {
+          configOptions.current = {
+            ...configOptions.current,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        }
 
-      const renderer = new HicTrackConfig(trackModel);
-      const items = renderer.getMenuComponents();
+        updateGlobalTrackConfig({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+        if (dataIdx! in displayCache.current.density) {
+          let tmpNewConfig = { ...configOptions.current };
 
-      let menu = trackConfigMenu[`${trackModel.type}`]({
-        blockRef: trackManagerRef,
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-      getConfigMenu(menu, "singleSelect");
-    } else {
-      configOptions.current[`${key}`] = value;
+          for (let key in displayCache.current.density) {
+            let curCacheComponent =
+              displayCache.current.density[`${key}`].canvasData;
+            let newComponent = React.cloneElement(curCacheComponent, {
+              options: tmpNewConfig,
+            });
+            displayCache.current.density[`${key}`].canvasData = newComponent;
+          }
+          configOptions.current = tmpNewConfig;
+
+          setCanvasComponents(
+            displayCache.current.density[`${dataIdx}`].canvasData
+          );
+        }
+      }
     }
-    setConfigChanged(true);
-  }
-
-  function renderConfigMenu(event) {
-    event.preventDefault();
-    const renderer = new HicTrackConfig(trackModel);
-    const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[`${trackModel.type}`]({
-      blockRef: trackManagerRef,
-      trackIdx,
-      handleDelete,
-      id,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      onCloseConfigMenu,
-      trackModel,
-      configOptions: configOptions.current,
-      items,
-      onConfigChange,
-    });
-    getConfigMenu(menu, "singleSelect");
-    configMenuPos.current = { left: event.pageX, top: event.pageY };
-  }
-
+  }, [applyTrackConfigChange]);
   return (
     <div
-      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",

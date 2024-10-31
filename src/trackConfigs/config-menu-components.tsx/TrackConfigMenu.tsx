@@ -2,145 +2,9 @@ import ReactDOM from "react-dom";
 import { Manager, Reference, Popper } from "react-popper";
 import { MenuTitle, RemoveOption } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
-import getBigData from "../../getRemoteData/bigSource";
-import getTabixData from "../../getRemoteData/tabixSource";
+
 import OutsideClickDetector from "../../components/GenomeView/commonComponents/OutsideClickDetector";
 
-const trackConfigMenu: { [key: string]: any } = {
-  multi: function multiConfig(data: any) {
-    data["selectType"] = "multi";
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  geneannotation: function refGeneConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-
-  bed: function bedConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  bigbed: function bedConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  refbed: function refbedConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  bigwig: function bigConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-
-  dynseq: function dynseqConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  methylc: function methylcConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  hic: function hicConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  categorical: function categoricalConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  longrange: function longrangeConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-
-  biginteract: function biginteractConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  repeatmasker: function repeatmaskerConfigMenu(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  genomealign: function genomeAlignFetch(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-  ruler: function rulerConfig(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-
-  matplot: function matplotConfig(data: any) {
-    return (
-      <ConfigMenuComponent
-        key={"TrackContextMenu" + `${data.id}`}
-        menuData={data}
-      />
-    );
-  },
-};
 function ConfigMenuComponent(props) {
   let menuData = props.menuData;
 
@@ -175,18 +39,14 @@ function ConfigMenuComponent(props) {
                   }}
                 >
                   <OutsideClickDetector
-                    onOutsideClick={menuData.onCloseConfigMenu}
+                    onOutsideClick={menuData.onConfigMenuClose}
                   >
                     <div
                       className="TrackContextMenu-body"
                       style={{ backgroundColor: "white" }}
                     >
                       <MenuTitle
-                        title={
-                          menuData.selectType === "multi"
-                            ? menuData.selectLen + " tracks selected"
-                            : menuData.trackModel.getDisplayLabel()
-                        }
+                        title={menuData.selectLen + " tracks selected"}
                         numTracks={menuData.trackIdx}
                       />
                       {menuData.items.map((MenuComponent, index) => {
@@ -196,33 +56,10 @@ function ConfigMenuComponent(props) {
                         // a new defaultValue will create a new menu component with
                         // the new changed option set as new defaultvalue
 
-                        if (MenuComponent.name === "LabelConfig") {
-                          defaultVal =
-                            menuData.selectType === "multi"
-                              ? "multi"
-                              : menuData.trackModel.name;
-                        } else if (MenuComponent.name === "MaxRowsConfig") {
-                          defaultVal = Number(menuData.configOptions.maxRows);
-                        } else if (
-                          MenuComponent.name ===
-                            "AnnotationDisplayModeConfig" ||
-                          MenuComponent.name === "NumericalDisplayModeConfig"
-                        ) {
-                          defaultVal = menuData.configOptions.displayMode;
-                        } else if (
-                          MenuComponent.name === "HiddenPixelsConfig"
-                        ) {
-                          defaultVal = menuData.configOptions.hiddenPixels;
-                        }
-
                         return (
                           <MenuComponent
                             key={index}
-                            optionsObjects={
-                              menuData.selectType === "multi"
-                                ? menuData.configOptions
-                                : [menuData.configOptions]
-                            }
+                            optionsObjects={menuData.configOptions}
                             defaultValue={defaultVal}
                             onOptionSet={menuData.onConfigChange}
                           />
@@ -230,7 +67,9 @@ function ConfigMenuComponent(props) {
                       })}
                       <RemoveOption
                         onClick={menuData.handleDelete}
-                        numTracks={menuData.trackIdx}
+                        trackId={menuData.configOptions.map(
+                          (item, index) => item.trackId
+                        )}
                       />
                     </div>
                   </OutsideClickDetector>
@@ -245,4 +84,4 @@ function ConfigMenuComponent(props) {
   );
 }
 
-export default trackConfigMenu;
+export default ConfigMenuComponent;

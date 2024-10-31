@@ -22,22 +22,20 @@ DEFAULT_OPTIONS.displayMode = "density";
 
 const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   trackData,
-  onTrackConfigChange,
+  updateGlobalTrackConfig,
   side,
   windowWidth = 0,
   genomeArr,
   genomeIdx,
   trackModel,
   dataIdx,
-  getConfigMenu,
-  onCloseConfigMenu,
-  handleDelete,
+
   trackIdx,
   id,
   useFineModeNav,
   legendRef,
-  trackManagerRef,
-  selectConfigChange,
+
+  applyTrackConfigChange,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -61,7 +59,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     },
   };
 
-  async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
       windowWidth,
@@ -88,60 +86,6 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
     xPos.current = curXPos;
     updateSide.current = side;
   }
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[key]) {
-      return;
-    } else if (
-      key === "displayMode" &&
-      value !== configOptions.current.displayMode
-    ) {
-      configOptions.current.displayMode = value;
-
-      trackModel.options = configOptions.current;
-      const renderer = new MethylCTrackConfig(trackModel);
-
-      const items = renderer.getMenuComponents();
-      let menu = trackConfigMenu[trackModel.type]({
-        blockRef: trackManagerRef,
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-      getConfigMenu(menu, "singleSelect");
-    } else {
-      configOptions.current[key] = value;
-    }
-    setConfigChanged(true);
-  }
-
-  function renderConfigMenu(event) {
-    event.preventDefault();
-    const renderer = new MethylCTrackConfig(trackModel);
-
-    const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[trackModel.type]({
-      blockRef: trackManagerRef,
-      trackIdx,
-      handleDelete,
-      id,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      onCloseConfigMenu,
-      trackModel,
-      configOptions: configOptions.current,
-      items,
-      onConfigChange,
-    });
-    getConfigMenu(menu, "singleSelect");
-    configMenuPos.current = { left: event.pageX, top: event.pageY };
-  }
 
   useEffect(() => {
     if (trackData![`${id}`]) {
@@ -151,7 +95,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           ...trackModel.options,
         };
 
-        onTrackConfigChange({
+        updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
           id: id,
@@ -159,7 +103,12 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           legendRef: legendRef,
         });
       }
-      if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
+      if (
+        useFineModeNav ||
+        (trackData![`${id}`].metadata.genome !== undefined &&
+          genomeArr![genomeIdx!].genome.getName() !==
+            trackData![`${id}`].metadata.genome)
+      ) {
         useFineOrSecondaryParentNav.current = true;
       }
 
@@ -176,31 +125,6 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       );
     }
   }, [trackData]);
-
-  useEffect(() => {
-    if (dataIdx! in displayCache.current.density) {
-      let tmpNewConfig = { ...configOptions.current };
-
-      for (let key in displayCache.current.density) {
-        let curCacheComponent = displayCache.current.density[key].canvasData;
-        let newComponent = React.cloneElement(curCacheComponent, {
-          options: tmpNewConfig,
-        });
-        displayCache.current.density[key].canvasData = newComponent;
-      }
-      configOptions.current = tmpNewConfig;
-      setCanvasComponents(displayCache.current.density[dataIdx!].canvasData);
-
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
 
   useEffect(() => {
     getCacheData(
@@ -229,24 +153,49 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
 
   useEffect(() => {
     if (canvasComponents !== null) {
-      configOptions.current = {
-        ...configOptions.current,
-        ...selectConfigChange.changedOption,
-      };
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-      setConfigChanged(true);
+      if (id in applyTrackConfigChange) {
+        if ("type" in applyTrackConfigChange) {
+          configOptions.current = {
+            ...DEFAULT_OPTIONS,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        } else {
+          configOptions.current = {
+            ...configOptions.current,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        }
+
+        updateGlobalTrackConfig({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+        if (dataIdx! in displayCache.current.density) {
+          let tmpNewConfig = { ...configOptions.current };
+
+          for (let key in displayCache.current.density) {
+            let curCacheComponent =
+              displayCache.current.density[`${key}`].canvasData;
+            let newComponent = React.cloneElement(curCacheComponent, {
+              options: tmpNewConfig,
+            });
+            displayCache.current.density[`${key}`].canvasData = newComponent;
+          }
+          configOptions.current = tmpNewConfig;
+
+          setCanvasComponents(
+            displayCache.current.density[`${dataIdx}`].canvasData
+          );
+        }
+      }
     }
-  }, [selectConfigChange]);
+  }, [applyTrackConfigChange]);
 
   return (
     <div
-      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",

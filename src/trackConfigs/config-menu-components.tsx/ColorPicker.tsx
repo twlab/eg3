@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Manager, Reference, Popper } from "react-popper";
 import { SketchPicker } from "react-color";
@@ -15,111 +15,63 @@ const PICKER_OPENER_STYLE = {
   minWidth: 50,
   minHeight: "1em",
 };
+
 interface ColorPickerProps {
   color: any;
-  label: any; // Predefined color palette
+  label?: string; // Predefined color palette
   onChange: (color: any) => void;
-  disableAlpha: any;
-}
-/**
- * A color picker.
- *
- * @author Silas Hsu
- */
-
-interface MyState {
-  isOpen?: boolean;
+  disableAlpha?: boolean;
 }
 
-class ColorPicker extends React.PureComponent<ColorPickerProps, MyState> {
-  static propTypes = {
-    color: PropTypes.any.isRequired, // The color for the picker to display
-    label: PropTypes.string, // Label of the picker opener.  If not provided, then displays the color's hex value.
+const ColorPicker: React.FC<ColorPickerProps> = ({
+  color,
+  label,
+  onChange,
+  disableAlpha = true, // Set default here
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-    /**
-     * Called when the user picks a color.  See http://casesandberg.github.io/react-color/#api-onChange
-     */
-    onChange: PropTypes.func,
-    disableAlpha: PropTypes.bool,
+  const openPicker = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+
+  const closePicker = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const parsedColor = parseColor(color);
+  const openerStyle = {
+    ...PICKER_OPENER_STYLE,
+    backgroundColor: color,
+    color: getContrastingColor(color),
   };
 
-  static defaultProps = {
-    disableAlpha: true,
-  };
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      isOpen: false,
-    };
-    this.openPicker = this.openPicker.bind(this);
-    this.closePicker = this.closePicker.bind(this);
-  }
-
-  /**
-   * Opens the picker UI.
-   */
-  openPicker() {
-    this.setState({ isOpen: true });
-  }
-
-  /**
-   * Closes the picker UI.
-   */
-  closePicker() {
-    this.setState({ isOpen: false });
-  }
-
-  /**
-   * @inheritdoc
-   */
-  render() {
-    const { color, label, onChange, disableAlpha } = this.props;
-
-    const parsedColor = parseColor(color);
-    let openerStyle = {
-      backgroundColor: color,
-      color: getContrastingColor(color),
-    };
-    Object.assign(openerStyle, PICKER_OPENER_STYLE);
-
-    let pickerElement;
-    if (this.state.isOpen) {
-      pickerElement = (
-        <OutsideClickDetector onOutsideClick={this.closePicker}>
-          <SketchPicker
-            color={color}
-            onChangeComplete={onChange}
-            disableAlpha={disableAlpha}
-          />
-        </OutsideClickDetector>
-      );
-    } else {
-      pickerElement = null;
-    }
-
-    return (
-      <Manager>
-        <Reference>
-          {({ ref }) => (
-            <span ref={ref} style={openerStyle} onClick={this.openPicker}>
-              {label || parsedColor.keyword.hex}
-            </span>
-          )}
-        </Reference>
-        <Popper
-          placement="bottom"
-          modifiers={[{ name: "flip", enabled: false }]}
-        >
-          {({ ref, style, placement, arrowProps }) => (
-            <div ref={ref} style={{ zIndex: 2 }}>
-              {pickerElement}
-            </div>
-          )}
-        </Popper>
-      </Manager>
-    );
-  }
-}
+  return (
+    <Manager>
+      <Reference>
+        {({ ref }) => (
+          <span ref={ref} style={openerStyle} onClick={openPicker}>
+            {label || parsedColor.keyword.hex}
+          </span>
+        )}
+      </Reference>
+      <Popper placement="bottom" modifiers={[{ name: "flip", enabled: false }]}>
+        {({ ref, style, placement, arrowProps }) => (
+          <div ref={ref} style={{ zIndex: 2 }}>
+            {isOpen && (
+              <OutsideClickDetector onOutsideClick={closePicker}>
+                <SketchPicker
+                  color={color}
+                  onChangeComplete={onChange}
+                  disableAlpha={disableAlpha}
+                />
+              </OutsideClickDetector>
+            )}
+          </div>
+        )}
+      </Popper>
+    </Manager>
+  );
+};
 
 export default ColorPicker;

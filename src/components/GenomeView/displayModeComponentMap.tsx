@@ -21,6 +21,7 @@ import { RepeatMaskerFeature } from "../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
+import { v4 as uuidv4 } from "uuid";
 import { getContrastingColor } from "../../models/util";
 import { scaleLinear } from "d3-scale";
 
@@ -80,8 +81,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.height
         );
       }
+      let svgKey = uuidv4();
       return (
-        <svg width={width} height={height} display={"block"}>
+        <svg key={svgKey} width={width} height={height} display={"block"}>
           {placements.map(renderAnnotation)}
           <line
             x1={width / 3}
@@ -107,10 +109,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     function getAnnotationElement(placedGroup, y, isLastRow, index) {
       const gene = placedGroup.feature;
+      let uniquekey = uuidv4();
 
       return (
         <GeneAnnotationScaffold
-          key={index}
+          key={index + uniquekey + "scafford"}
           gene={gene}
           xSpan={placedGroup.xSpan}
           viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -121,8 +124,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
-              key={i}
-              id={i}
+              key={i + uniquekey + "GeneAnno"}
+              id={i + uniquekey + "GeneAnno"}
               placedGene={placedGene}
               y={y}
               options={configOptions}
