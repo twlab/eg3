@@ -1,4 +1,4 @@
-import { ColorPicker } from "./ColorPicker";
+import ColorPicker from "./ColorPicker";
 
 export const CategoryLegend = (props) => {
   const { categories, onUpdateLegendColor, fullWidth } = props;

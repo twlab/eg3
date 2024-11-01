@@ -19,11 +19,6 @@ interface ColorConfigProps {
   optionName: string;
 }
 export class ColorConfig extends React.PureComponent<ColorConfigProps> {
-  static propTypes = Object.assign({}, SingleInputConfig.propTypes, {
-    optionName: PropTypes.string.isRequired, // The prop to change of a TrackModel's options object.
-    label: PropTypes.string, // Label of the color picker
-  });
-
   constructor(props) {
     super(props);
     this.renderColorPicker = this.renderColorPicker.bind(this);

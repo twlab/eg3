@@ -17,12 +17,12 @@ const GAP_CHR = ""; // The special chromosome that gaps lie in.
  * @author Silas Hsu
  */
 class NavigationContext {
-  private _name: string;
-  private _features: Feature[];
-  private _sortedFeatureStarts: number[];
-  private _minCoordinateForFeature: Map<Feature, number>;
-  private _featuresForChr: { [chr: string]: Feature[] };
-  private _totalBases: number;
+  public _name: string;
+  public _features: Feature[];
+  public _sortedFeatureStarts: number[];
+  public _minCoordinateForFeature: Map<Feature, number>;
+  public _featuresForChr: { [chr: string]: Feature[] };
+  public _totalBases: number;
 
   /**
    * Makes a special "feature" representing a gap in the genome.  To use, insert such objects into the feature list

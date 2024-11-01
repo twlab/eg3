@@ -1,7 +1,7 @@
 import { ViewExpansion } from "../RegionExpander";
 
 export interface TrackProps {
-  id: String;
+  id: string;
   trackIdx: number;
   bpRegionSize: number;
   basePerPixel: number;
@@ -29,7 +29,7 @@ export interface TrackProps {
 
   legendRef: any;
 
-  onTrackConfigChange: any;
+  updateGlobalTrackConfig: any;
 
-  selectConfigChange;
+  applyTrackConfigChange;
 }

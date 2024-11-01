@@ -2,9 +2,8 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../models/trackModels/trackProps";
 
-import { BigWigTrackConfig } from "../../trackConfigs/config-menu-models.tsx/BigWigTrackConfig";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import trackConfigMenu from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+
 import ReactDOM from "react-dom";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
@@ -19,7 +18,7 @@ DEFAULT_OPTIONS.displayMode = "auto";
 
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
-  onTrackConfigChange,
+  updateGlobalTrackConfig,
 
   side,
   windowWidth = 0,
@@ -27,15 +26,12 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   genomeIdx,
   trackModel,
   dataIdx,
-  getConfigMenu,
-  onCloseConfigMenu,
-  handleDelete,
+
   trackIdx,
   id,
   useFineModeNav,
   legendRef,
-  selectConfigChange,
-  trackManagerRef,
+  applyTrackConfigChange,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -51,7 +47,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   });
   const useFineOrSecondaryParentNav = useRef(false);
   const xPos = useRef(0);
-  const configMenuPos = useRef<{ [key: string]: any }>({});
+
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
   const [configChanged, setConfigChanged] = useState(false);
@@ -63,7 +59,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     },
   };
 
-  async function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
       windowWidth,
@@ -91,64 +87,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     updateSide.current = side;
   }
 
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[`${key}`]) {
-      return;
-    } else if (
-      key === "displayMode" &&
-      value !== configOptions.current.displayMode
-    ) {
-      configOptions.current.displayMode = value;
-
-      trackModel.options = configOptions.current;
-      const renderer = new BigWigTrackConfig(trackModel);
-
-      const items = renderer.getMenuComponents();
-
-      let menu = trackConfigMenu[`${trackModel.type}`]({
-        blockRef: trackManagerRef,
-        trackIdx,
-        handleDelete,
-        id,
-        pageX: configMenuPos.current.left,
-        pageY: configMenuPos.current.top,
-        onCloseConfigMenu,
-        trackModel,
-        configOptions: configOptions.current,
-        items,
-        onConfigChange,
-      });
-      getConfigMenu(menu, "singleSelect");
-    } else {
-      configOptions.current[`${key}`] = value;
-    }
-    setConfigChanged(true);
-  }
-
-  function renderConfigMenu(event) {
-    event.preventDefault();
-
-    const renderer = new BigWigTrackConfig(trackModel);
-
-    const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[`${trackModel.type}`]({
-      blockRef: trackManagerRef,
-      trackIdx,
-      handleDelete,
-      id,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      onCloseConfigMenu,
-      trackModel,
-      configOptions: configOptions.current,
-      items,
-      onConfigChange,
-    });
-
-    getConfigMenu(menu, "singleSelect");
-    configMenuPos.current = { left: event.pageX, top: event.pageY };
-  }
-
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (trackData!.initial === 1) {
@@ -157,7 +95,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           ...trackModel.options,
         };
 
-        onTrackConfigChange({
+        updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
           id: id,
@@ -165,7 +103,13 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           legendRef: legendRef,
         });
       }
-      if (useFineModeNav || trackData![`${id}`].metadata.genome !== undefined) {
+
+      if (
+        useFineModeNav ||
+        (trackData![`${id}`].metadata.genome !== undefined &&
+          genomeArr![genomeIdx!].genome.getName() !==
+            trackData![`${id}`].metadata.genome)
+      ) {
         useFineOrSecondaryParentNav.current = true;
       }
 
@@ -182,35 +126,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       );
     }
   }, [trackData]);
-
-  useEffect(() => {
-    if (dataIdx! in displayCache.current.density) {
-      let tmpNewConfig = { ...configOptions.current };
-
-      for (let key in displayCache.current.density) {
-        let curCacheComponent =
-          displayCache.current.density[`${key}`].canvasData;
-        let newComponent = React.cloneElement(curCacheComponent, {
-          options: tmpNewConfig,
-        });
-        displayCache.current.density[`${key}`].canvasData = newComponent;
-      }
-      configOptions.current = tmpNewConfig;
-
-      setCanvasComponents(
-        displayCache.current.density[`${dataIdx}`].canvasData
-      );
-
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
 
   useEffect(() => {
     getCacheData(
@@ -239,24 +154,49 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
 
   useEffect(() => {
     if (canvasComponents !== null) {
-      configOptions.current = {
-        ...configOptions.current,
-        ...selectConfigChange.changedOption,
-      };
-      onTrackConfigChange({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-      setConfigChanged(true);
+      if (id in applyTrackConfigChange) {
+        if ("type" in applyTrackConfigChange) {
+          configOptions.current = {
+            ...DEFAULT_OPTIONS,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        } else {
+          configOptions.current = {
+            ...configOptions.current,
+            ...applyTrackConfigChange[`${id}`],
+          };
+        }
+
+        updateGlobalTrackConfig({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+        });
+        if (dataIdx! in displayCache.current.density) {
+          let tmpNewConfig = { ...configOptions.current };
+
+          for (let key in displayCache.current.density) {
+            let curCacheComponent =
+              displayCache.current.density[`${key}`].canvasData;
+            let newComponent = React.cloneElement(curCacheComponent, {
+              options: tmpNewConfig,
+            });
+            displayCache.current.density[`${key}`].canvasData = newComponent;
+          }
+          configOptions.current = tmpNewConfig;
+
+          setCanvasComponents(
+            displayCache.current.density[`${dataIdx}`].canvasData
+          );
+        }
+      }
     }
-  }, [selectConfigChange]);
+  }, [applyTrackConfigChange]);
 
   return (
     <div
-      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",
