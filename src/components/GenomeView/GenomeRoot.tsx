@@ -58,6 +58,7 @@ function GenomeHub(props: any) {
   const isInitial = useRef<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [resizeRef, size] = useResizeObserver();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   //data that changes the page based on the global state and what the user
   // interactions with
   const curTestId = useRef(0);
@@ -249,7 +250,12 @@ function GenomeHub(props: any) {
   function onGenomeSelected() {
     console.log("ASDADAS");
   }
-
+  function getStateArr(request) {
+    if (request.action === "getAllState") {
+      return;
+    }
+    return;
+  }
   useEffect(() => {
     if (size.width !== 0) {
       // getSession("958ffc3f-d543-4a4f-99e5-273ef5778276");
@@ -296,6 +302,7 @@ function GenomeHub(props: any) {
                 <div
                   key={index}
                   style={{ display: "flex", flexDirection: "column" }}
+                  ref={containerRef}
                 >
                   {viewRegion ? (
                     <Nav
@@ -330,6 +337,8 @@ function GenomeHub(props: any) {
                     windowWidth={size.width - 120}
                     addSessionState={addSessionState}
                     undoRedo={undoRedo}
+                    stateArr={stateArr.current}
+                    container={containerRef}
                   />
                 </div>
               );

@@ -60,6 +60,7 @@ import _ from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
 import { HighlightInterval } from "./ToolsComponents/HighlightMenu";
+import ReactDOM from "react-dom";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -126,17 +127,21 @@ interface TrackManagerProps {
   genomeArr: Array<any>;
   undoRedo: any;
   addSessionState: (trackState: any) => void;
+  stateArr: Array<any>;
+  container: any;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
   addTrack,
-
+  stateArr,
   recreateTrackmanager,
   windowWidth,
   genomeArr,
   undoRedo,
   addSessionState,
+  container,
 }) {
+  console.log(stateArr);
   //useRef to store data between states without re render the component
 
   const infiniteScrollWorker = useRef<Worker>();
@@ -220,6 +225,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({
     configMenus: "",
   });
+  const [isContainerReady, setIsContainerReady] = useState(false);
   const curTestId = useRef(0);
   const [curRegion, setCurRegion] = useState<ChromosomeInterval[]>();
   const [applyTrackConfigChange, setApplyTrackConfigChange] = useState<{
@@ -1139,7 +1145,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         );
         setHighlight([...highlight, ...highlightElement]);
       }
-
+      setIsContainerReady(true);
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
       if (initialStart === "workerNotReady") {
@@ -1215,7 +1221,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <div>1pixel to {basePerPixel.current}bp</div>
         <button onClick={handleButtonClick}>Add Favorite Color to User</button>
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-          <SubToolButtons onToolClicked={onToolClicked} />
+          {isContainerReady
+            ? ReactDOM.createPortal(
+                <SubToolButtons onToolClicked={onToolClicked} />,
+                container.current
+              )
+            : ""}
+          {isContainerReady
+            ? ReactDOM.createPortal(
+                <SubToolButtons onToolClicked={onToolClicked} />,
+                container.current
+              )
+            : ""}
+
           <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
               style={{
