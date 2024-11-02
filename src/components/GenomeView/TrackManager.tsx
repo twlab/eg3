@@ -56,11 +56,11 @@ import {
   set,
   update,
 } from "firebase/database";
-import _ from "lodash";
+import _, { create } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
-import { HighlightInterval } from "./ToolsComponents/HighlightMenu";
-import ReactDOM from "react-dom";
+import HighlightMenu from "./ToolsComponents/HighlightMenu";
+
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -120,28 +120,20 @@ export function bpNavToGenNav(bpNavArr, genome) {
 
 interface TrackManagerProps {
   genomeIdx: number;
-  addTrack: (track: any) => void;
-
   recreateTrackmanager: (trackOptions: {}) => void;
   windowWidth: number;
   genomeArr: Array<any>;
   undoRedo: any;
   addSessionState: (trackState: any) => void;
-  stateArr: Array<any>;
-  container: any;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
-  addTrack,
-  stateArr,
   recreateTrackmanager,
   windowWidth,
   genomeArr,
   undoRedo,
   addSessionState,
-  container,
 }) {
-  console.log(stateArr);
   //useRef to store data between states without re render the component
 
   const infiniteScrollWorker = useRef<Worker>();
@@ -225,9 +217,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({
     configMenus: "",
   });
-  const [isContainerReady, setIsContainerReady] = useState(false);
+
   const curTestId = useRef(0);
-  const [curRegion, setCurRegion] = useState<ChromosomeInterval[]>();
+
   const [applyTrackConfigChange, setApplyTrackConfigChange] = useState<{
     [key: string]: any;
   }>({});
@@ -331,13 +323,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     });
   }
-  const handleClick = () => {
-    addTrack({
-      region: curRegion,
-      trackType: "bigWig",
-      genome: genomeArr[genomeIdx],
-    });
-  };
+
   function handleMouseDown(e: any) {
     if (e.button !== 0) {
       // If not the left button, exit the function
@@ -359,13 +345,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setDataIdx(Math.ceil(dragX.current! / windowWidth));
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
-    let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
-      genomeIdx
-    ].navContext.getFeaturesInInterval(curBp, curBp + bpRegionSize.current);
 
-    let genomeCoordLocus = genomeFeatureSegment.map((item, index) =>
-      item.getLocus()
-    );
     trackManagerState.current.viewRegion._startBase = curBp;
     trackManagerState.current.viewRegion._endBase =
       curBp + bpRegionSize.current;
@@ -375,7 +355,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
 
     addSessionState(newStateObj);
-    setCurRegion(genomeCoordLocus);
 
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE when using ref,
@@ -414,28 +393,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
-  function deepEqual(object1: any, object2: any): boolean {
-    if (object1 === object2) return true;
 
-    if (object1 == null || object2 == null) return false;
-
-    if (object1.constructor !== object2.constructor) return false;
-
-    if (typeof object1 === "object" && typeof object2 === "object") {
-      let keys1 = Object.keys(object1);
-      let keys2 = Object.keys(object2);
-
-      if (keys1.length !== keys2.length) return false;
-
-      for (let key of keys1) {
-        if (!deepEqual(object1[key], object2[key])) return false;
-      }
-
-      return true;
-    }
-
-    return false;
-  }
   function setTrackState(state: any) {
     if (!state) {
       return;
@@ -987,13 +945,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         side: highlightSide,
         startbase: curhighlight.start,
         endbase: curhighlight.end,
-        color: "rgba(0, 123, 255, 0.15)",
+        color: curhighlight.color,
       };
       resHighlights.push(tmpObj);
     }
     return resHighlights;
   }
+  function getHighlightState(highlightState: any) {
+    trackManagerState.current.highlights = highlightState;
 
+    let newStateObj = createNewTrackState(trackManagerState.current, {});
+    addSessionState(newStateObj);
+
+    let highlightElements = createHighlight(highlightState);
+    setHighlight([...highlightElements]);
+  }
   // USEEFFECTS
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -1107,6 +1073,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
+  function onNewRegion() {}
   useEffect(() => {
     if (trackManagerId.current === "") {
       let genome = genomeArr[genomeIdx];
@@ -1145,7 +1112,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         );
         setHighlight([...highlight, ...highlightElement]);
       }
-      setIsContainerReady(true);
+
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
       if (initialStart === "workerNotReady") {
@@ -1171,8 +1138,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           whiteSpace: "nowrap",
         }}
       >
-        <button onClick={handleClick}>add bed</button>
-
         <div>
           {" "}
           {Math.round(bpX.current) +
@@ -1219,21 +1184,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         </div>
 
         <div>1pixel to {basePerPixel.current}bp</div>
-        <button onClick={handleButtonClick}>Add Favorite Color to User</button>
+        {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-          {isContainerReady
-            ? ReactDOM.createPortal(
-                <SubToolButtons onToolClicked={onToolClicked} />,
-                container.current
-              )
-            : ""}
-          {isContainerReady
-            ? ReactDOM.createPortal(
-                <SubToolButtons onToolClicked={onToolClicked} />,
-                container.current
-              )
-            : ""}
-
+          <HighlightMenu
+            highlights={trackManagerState.current.highlights}
+            viewRegion={trackManagerState.current.viewRegion}
+            showHighlightMenuModal={true}
+            onNewRegion={onNewRegion}
+            onSetHighlights={getHighlightState}
+          />
+          <SubToolButtons onToolClicked={onToolClicked} />
           <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
               style={{
@@ -1342,6 +1302,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                                       style={{
                                         position: "absolute",
                                         backgroundColor: item.color,
+
                                         top: "0",
                                         height: "100%",
                                         left:

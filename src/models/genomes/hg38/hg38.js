@@ -76,181 +76,181 @@ const defaultTracks = [
     genome: "hg38",
   }),
 
-  new TrackModel({
-    type: "refbed",
-    name: "mm10 gencode basic",
-    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-    options: {
-      categoryColors: {
-        coding: "rgb(101,1,168)",
-        nonCoding: "rgb(1,193,75)",
-        pseudo: "rgb(230,0,172)",
-        problem: "rgb(224,2,2)",
-        other: "rgb(128,128,128)",
-      },
-    },
-  }),
-  new TrackModel({
-    type: "matplot",
-    name: "matplot wrap",
-    tracks: [
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-        name: "MeDIP",
-        options: {
-          color: "red",
-          backgroundColor: "#FFE7AB",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MeDIP",
-        },
-      },
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-        name: "MRE",
-        options: {
-          color: "blue",
-          backgroundColor: "#C0E3CC",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MRE",
-        },
-      },
-    ],
-  }),
-  new TrackModel({
-    type: "hic",
-    name: "test hic",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-  }),
+  // new TrackModel({
+  //   type: "refbed",
+  //   name: "mm10 gencode basic",
+  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+  //   options: {
+  //     categoryColors: {
+  //       coding: "rgb(101,1,168)",
+  //       nonCoding: "rgb(1,193,75)",
+  //       pseudo: "rgb(230,0,172)",
+  //       problem: "rgb(224,2,2)",
+  //       other: "rgb(128,128,128)",
+  //     },
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "matplot",
+  //   name: "matplot wrap",
+  //   tracks: [
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //       name: "MeDIP",
+  //       options: {
+  //         color: "red",
+  //         backgroundColor: "#FFE7AB",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MeDIP",
+  //       },
+  //     },
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //       name: "MRE",
+  //       options: {
+  //         color: "blue",
+  //         backgroundColor: "#C0E3CC",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MRE",
+  //       },
+  //     },
+  //   ],
+  // }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  // }),
 
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
 
-  new TrackModel({
-    type: "repeatmasker",
-    name: "RepeatMasker",
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "mm10",
-    metadata: { genome: "mm10" },
-  }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "RepeatMasker",
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "mm10",
+  //   metadata: { genome: "mm10" },
+  // }),
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
-  new TrackModel({
-    type: "dynseq",
-    name: "example dynseq",
-    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-    options: {
-      color: "blue",
-      height: 100,
-    },
-  }),
-  new TrackModel({
-    type: "methylc",
-    name: "H1",
-    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-    options: {
-      label: "Methylation",
-      colorsForContext: {
-        CG: { color: "#648bd8", background: "#d9d9d9" },
-        CHG: { color: "#ff944d", background: "#ffe0cc" },
-        CHH: { color: "#ff00ff", background: "#ffe5ff" },
-      },
-      depthColor: "#01E9FE",
-    },
-  }),
+  // new TrackModel({
+  //   type: "dynseq",
+  //   name: "example dynseq",
+  //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+  //   options: {
+  //     color: "blue",
+  //     height: 100,
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "methylc",
+  //   name: "H1",
+  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+  //   options: {
+  //     label: "Methylation",
+  //     colorsForContext: {
+  //       CG: { color: "#648bd8", background: "#d9d9d9" },
+  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
+  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
+  //     },
+  //     depthColor: "#01E9FE",
+  //   },
+  // }),
 
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  }),
-  new TrackModel({
-    type: "categorical",
-    name: "ChromHMM",
-    url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
-    options: {
-      category: {
-        1: { name: "Active TSS", color: "#ff0000" },
-        2: { name: "Flanking Active TSS", color: "#ff4500" },
-        3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
-        4: { name: "Strong transcription", color: "#008000" },
-        5: { name: "Weak transcription", color: "#006400" },
-        6: { name: "Genic enhancers", color: "#c2e105" },
-        7: { name: "Enhancers", color: "#ffff00" },
-        8: { name: "ZNF genes & repeats", color: "#66cdaa" },
-        9: { name: "Heterochromatin", color: "#8a91d0" },
-        10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
-        11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
-        12: { name: "Bivalent Enhancer", color: "#bdb76b" },
-        13: { name: "Repressed PolyComb", color: "#808080" },
-        14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
-        15: { name: "Quiescent/Low", color: "#ffffff" },
-      },
-    },
-  }),
-  new TrackModel({
-    type: "longrange",
-    name: "ES-E14 ChIA-PET",
-    url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  }),
-  new TrackModel({
-    type: "biginteract",
-    name: "test bigInteract",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
-  }),
+  // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  // }),
+  // new TrackModel({
+  //   type: "categorical",
+  //   name: "ChromHMM",
+  //   url: "https://egg.wustl.edu/d/hg19/E017_15_coreMarks_dense.gz",
+  //   options: {
+  //     category: {
+  //       1: { name: "Active TSS", color: "#ff0000" },
+  //       2: { name: "Flanking Active TSS", color: "#ff4500" },
+  //       3: { name: "Transcr at gene 5' and 3'", color: "#32cd32" },
+  //       4: { name: "Strong transcription", color: "#008000" },
+  //       5: { name: "Weak transcription", color: "#006400" },
+  //       6: { name: "Genic enhancers", color: "#c2e105" },
+  //       7: { name: "Enhancers", color: "#ffff00" },
+  //       8: { name: "ZNF genes & repeats", color: "#66cdaa" },
+  //       9: { name: "Heterochromatin", color: "#8a91d0" },
+  //       10: { name: "Bivalent/Poised TSS", color: "#cd5c5c" },
+  //       11: { name: "Flanking Bivalent TSS/Enh", color: "#e9967a" },
+  //       12: { name: "Bivalent Enhancer", color: "#bdb76b" },
+  //       13: { name: "Repressed PolyComb", color: "#808080" },
+  //       14: { name: "Weak Repressed PolyComb", color: "#c0c0c0" },
+  //       15: { name: "Quiescent/Low", color: "#ffffff" },
+  //     },
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "ES-E14 ChIA-PET",
+  //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+  // }),
+  // new TrackModel({
+  //   type: "biginteract",
+  //   name: "test bigInteract",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
+  // }),
   // new TrackModel({
   //   type: "cool",
   //   name: "Aiden et al. (2009) GM06900 HINDIII 1kb",

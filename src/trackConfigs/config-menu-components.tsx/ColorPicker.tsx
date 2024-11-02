@@ -51,7 +51,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
       <Reference>
         {({ ref }) => (
           <span ref={ref} style={openerStyle} onClick={openPicker}>
-            {label || parsedColor.keyword.hex}
+            {label || parsedColor.hex}
           </span>
         )}
       </Reference>

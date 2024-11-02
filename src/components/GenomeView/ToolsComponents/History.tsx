@@ -1,12 +1,118 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ReactModal from "react-modal";
 
 import "./History.css";
 
 /**
- * a component to show users' history of operations
- * @author Daofeng Li
+ * A component to show users' history of operations
+ * @param props The component props
+ * @returns The History component
  */
+
+type Props = {
+  state: {
+    past: any[];
+    future: any[];
+  };
+  jumpToPast: (actionType: string, index: number) => void;
+  jumpToFuture: (actionType: string, index: number) => void;
+  clearHistory: (actionType: string) => any;
+};
+const History: React.FC<Props> = ({
+  state,
+  jumpToPast,
+  jumpToFuture,
+  clearHistory,
+}) => {
+  const [showModal, setShowModal] = useState(false);
+  const [checkStateEmpty, setCheckStateEmpty] = useState(false);
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+  function handleClear() {
+    clearHistory("clear");
+    setCheckStateEmpty(true);
+    renderHistory();
+  }
+  const renderHistory = () => {
+    const { past, future } = state;
+
+    if ((past.length === 0 && future.length === 0) || checkStateEmpty) {
+      return <div>No operation history yet!</div>;
+    }
+
+    const pastItems = makeItemList(past, jumpToPast, "past");
+    const futureItems = makeItemList(future, jumpToFuture, "future");
+
+    return (
+      <div className="History">
+        {past.length > 0 && <p>Go back:</p>}
+        {pastItems}
+        {future.length > 0 && <p>Go forward:</p>}
+        {futureItems}
+      </div>
+    );
+  };
+
+  const makeItemList = (
+    stateList: any[],
+    callback: (actionType: string, index: number) => void,
+    type: string
+  ) => {
+    const items = stateList.map((value, index) => (
+      <li key={index} onClick={() => callback(type, index)}>
+        <button className="btn btn-sm btn-warning">
+          Region:{" "}
+          {value.viewRegion
+            ? value.viewRegion.currentRegionAsString()
+            : "(none)"}
+          , # of tracks: {value.tracks ? value.tracks.length : 0}
+        </button>
+      </li>
+    ));
+    return <ol>{items}</ol>;
+  };
+  useEffect(() => {
+    setCheckStateEmpty(false);
+  }, [state]);
+  return (
+    <>
+      <button
+        onClick={handleOpenModal}
+        title="Operation history"
+        className="btn btn-light"
+        style={{ width: "50px" }}
+      >
+        <span role="img" aria-label="History">
+          📗
+        </span>
+      </button>
+      <ReactModal
+        isOpen={showModal}
+        contentLabel="History"
+        ariaHideApp={false}
+        onRequestClose={handleCloseModal}
+        shouldCloseOnOverlayClick={true}
+        style={MODAL_STYLE}
+      >
+        <div className="History">
+          <h5>Operation history</h5>
+          <button onClick={handleCloseModal} className="btn btn-sm btn-danger">
+            Close
+          </button>
+          <button onClick={() => handleClear()} className="btn btn-sm btn-info">
+            Clear History
+          </button>
+        </div>
+        <div>{renderHistory()}</div>
+      </ReactModal>
+    </>
+  );
+};
 
 const MODAL_STYLE = {
   content: {
@@ -19,98 +125,5 @@ const MODAL_STYLE = {
     color: "black",
   },
 };
-
-class History extends React.Component {
-  constructor() {
-    super();
-
-    this.handleOpenModal = this.handleOpenModal.bind(this);
-    this.handleCloseModal = this.handleCloseModal.bind(this);
-    this.renderHistory = this.renderHistory.bind(this);
-  }
-
-  handleOpenModal() {
-    this.setState({ showModal: true });
-  }
-
-  handleCloseModal() {
-    this.setState({ showModal: false });
-  }
-
-  renderHistory() {
-    const { past, future } = this.props.state;
-    if (past.length === 0 && future.length === 0) {
-      return <div>No operation history yet!</div>;
-    }
-
-    const pastItems = makeItemList(past, this.props.jumpToPast);
-    const futureItems = makeItemList(future, this.props.jumpToFuture);
-
-    return (
-      <div className="History">
-        {past.length > 0 && <p>Go back:</p>}
-        {pastItems}
-        {future.length > 0 && <p>Go forward:</p>}
-        {futureItems}
-      </div>
-    );
-
-    function makeItemList(stateList, callback) {
-      const items = stateList.map((value, index) => (
-        <li key={index} onClick={() => callback(index)}>
-          <button className="btn btn-sm btn-warning">
-            Region:{" "}
-            {value.viewRegion
-              ? value.viewRegion.currentRegionAsString()
-              : "(none)"}
-            , # of tracks: {value.tracks ? value.tracks.length : 0}
-          </button>
-        </li>
-      ));
-      return <ol>{items}</ol>;
-    }
-  }
-
-  render() {
-    return (
-      <React.Fragment>
-        <button
-          onClick={this.handleOpenModal}
-          title="Operation history"
-          className="btn btn-light"
-        >
-          <span role="img" aria-label="History">
-            📗
-          </span>
-        </button>
-        <ReactModal
-          isOpen={this.state.showModal}
-          contentLabel="History"
-          ariaHideApp={false}
-          onRequestClose={this.handleCloseModal}
-          shouldCloseOnOverlayClick={true}
-          style={MODAL_STYLE}
-        >
-          <div className="History">
-            <h5>Operation history</h5>
-            <button
-              onClick={this.handleCloseModal}
-              className="btn btn-sm btn-danger"
-            >
-              Close
-            </button>
-            <button
-              onClick={this.props.clearHistory}
-              className="btn btn-sm btn-info"
-            >
-              Clear History
-            </button>
-          </div>
-          <div>{this.renderHistory()}</div>
-        </ReactModal>
-      </React.Fragment>
-    );
-  }
-}
 
 export default History;
