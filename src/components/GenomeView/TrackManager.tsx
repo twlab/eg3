@@ -946,6 +946,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         startbase: curhighlight.start,
         endbase: curhighlight.end,
         color: curhighlight.color,
+        display: curhighlight.display,
+        tag: curhighlight.tag,
       };
       resHighlights.push(tmpObj);
     }
@@ -959,6 +961,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     let highlightElements = createHighlight(highlightState);
     setHighlight([...highlightElements]);
+  }
+
+  function highlightJump(startbase: any, endbase: any) {
+    trackManagerState.current.viewRegion._startBase = startbase;
+    trackManagerState.current.viewRegion._endBase = endbase;
+    let newStateObj = createNewTrackState(trackManagerState.current, {
+      viewRegion: trackManagerState.current.viewRegion.clone(),
+    });
+    addSessionState(newStateObj);
+    let newDefaultTracksArr: Array<TrackModel> = [];
+    for (let key in globalTrackConfig.current) {
+      let curTrackOptions = globalTrackConfig.current[`${key}`];
+      curTrackOptions["trackModel"].options = curTrackOptions.configOptions;
+      newDefaultTracksArr.push(curTrackOptions["trackModel"]);
+    }
+    genomeArr[genomeIdx].defaultTracks = newDefaultTracksArr;
+    genomeArr[genomeIdx].defaultRegion = new OpenInterval(startbase, endbase);
+
+    recreateTrackmanager({
+      selectedTool: selectedTool,
+      genomeConfig: genomeArr[genomeIdx],
+      scrollY: window.scrollY,
+    });
   }
   // USEEFFECTS
   //_________________________________________________________________________________________________________________________________
@@ -1190,7 +1215,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             highlights={trackManagerState.current.highlights}
             viewRegion={trackManagerState.current.viewRegion}
             showHighlightMenuModal={true}
-            onNewRegion={onNewRegion}
+            onNewRegion={highlightJump}
             onSetHighlights={getHighlightState}
           />
           <SubToolButtons onToolClicked={onToolClicked} />
@@ -1282,44 +1307,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
                         {highlight.length > 0
                           ? highlight.map((item, index) => {
-                              return (
-                                <div
-                                  key={index}
-                                  style={{
-                                    display: "flex",
-                                    height: "100%",
-                                  }}
-                                >
+                              if (item.display) {
+                                return (
                                   <div
+                                    key={index}
                                     style={{
                                       display: "flex",
-                                      position: "relative",
                                       height: "100%",
                                     }}
                                   >
                                     <div
-                                      key={index}
                                       style={{
-                                        position: "absolute",
-                                        backgroundColor: item.color,
-
-                                        top: "0",
+                                        display: "flex",
+                                        position: "relative",
                                         height: "100%",
-                                        left:
-                                          item.side === "right"
-                                            ? `${item.xPos}px`
-                                            : "",
-                                        right:
-                                          item.side === "left"
-                                            ? `${item.xPos}px`
-                                            : "",
-                                        width: item.width,
-                                        pointerEvents: "none", // This makes the highlighted area non-interactive
                                       }}
-                                    ></div>
+                                    >
+                                      <div
+                                        key={index}
+                                        style={{
+                                          position: "absolute",
+                                          backgroundColor: item.color,
+
+                                          top: "0",
+                                          height: "100%",
+                                          left:
+                                            item.side === "right"
+                                              ? `${item.xPos}px`
+                                              : "",
+                                          right:
+                                            item.side === "left"
+                                              ? `${item.xPos}px`
+                                              : "",
+                                          width: item.width,
+                                          pointerEvents: "none", // This makes the highlighted area non-interactive
+                                        }}
+                                      ></div>
+                                    </div>
                                   </div>
-                                </div>
-                              );
+                                );
+                              }
                             })
                           : ""}
                       </div>

@@ -177,16 +177,6 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
   viewRegion,
 }) => {
   const navContext = viewRegion.getNavigationContext();
-  const handleColorChange = (color: any) => {
-    const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b}, ${color.rgb.a})`;
-    const newInterval = new HighlightInterval(
-      interval.start,
-      interval.end,
-      interval.tag,
-      newColor
-    );
-    onHandleHighlightIntervalUpdate(false, index, newInterval);
-  };
 
   return (
     <div
