@@ -19,7 +19,7 @@ import TrackModel from "@/models/TrackModel";
 // import FacetTableUI from "./FacetTableUI";
 
 import "./Nav.css";
-import GenomePicker from "@/components/Home/Genome-Picker";
+import GenomePicker from "@/components/Home/GenomePicker";
 import CustomTrackAdder from "../TrackTabComponent/CustomTrackAdder";
 
 interface NavProps {

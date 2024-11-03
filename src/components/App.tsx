@@ -28,8 +28,6 @@ function App() {
   // Used to display the home screen and GenomeView
   // if a user add or update a new genome to aws bucket the homeView will be updated with a new state and render the newly added genome
   // if a user select or delete from their selected genomes of choice then the genomeView will update our GenomeView
-  const [genomeView, setGenomeView] = useState(<GenomeView />);
-  const [homeView, setHomeView] = useState(<></>);
 
   // list of genome the user has choosen to view
   const [selectedGenome, setSelectedGenome] = useState<Array<any>>([]);
@@ -179,33 +177,9 @@ function App() {
 
   //This useeffect triggers when data is update to allGenome, selectedGenome or treeOfLife
   // the new data will be passed to Homepage component and re render the page with new data
-  useEffect(() => {
-    setHomeView(
-      <Homepage
-        addToView={addGenomeView}
-        treeOfLife={treeOfLife}
-        allGenome={allGenome}
-        s3Config={s3Config}
-        addNewGenomeObj={addNewGenomeObj}
-        selectedGenome={selectedGenome}
-      />
-    );
-  }, [allGenome, selectedGenome, treeOfLife]);
 
   //This useeffect triggers when selectedGenome data is updated
   //This tells us that the GenomeView component needs to update because a user added or delete a genome from their list
-  useEffect(() => {
-    if (selectedGenome.length > 0) {
-      setGenomeView(
-        <GenomeView
-          selectedGenome={selectedGenome}
-          allGenome={allGenome}
-          addToView={addGenomeView}
-          name={selectedGenome[0].genome._name}
-        />
-      );
-    }
-  }, [selectedGenome]);
 
   return (
     <div>
@@ -230,10 +204,27 @@ function App() {
         </div>
         <Switch>
           <Route exact path="/">
-            {/* <TrackManagerDemo currGenome={testGen} /> */}
-            {homeView}
+            <Homepage
+              addToView={addGenomeView}
+              treeOfLife={treeOfLife}
+              allGenome={allGenome}
+              s3Config={s3Config}
+              addNewGenomeObj={addNewGenomeObj}
+              selectedGenome={selectedGenome}
+            />
           </Route>
-          <Route path="/genome">{genomeView}</Route>
+          <Route path="/genome">
+            {selectedGenome.length > 0 ? (
+              <GenomeView
+                selectedGenome={selectedGenome}
+                allGenome={allGenome}
+                addToView={addGenomeView}
+                name={selectedGenome[0].genome._name}
+              />
+            ) : (
+              ""
+            )}
+          </Route>
         </Switch>
       </BrowserRouter>
     </div>

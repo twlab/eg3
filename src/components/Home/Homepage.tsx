@@ -1,8 +1,8 @@
 import { Box, AppBar, Tabs, Tab } from "@mui/material";
 import React, { ChangeEvent } from "react";
-import UpdateGenome from "./Update-Genome";
-import GenomePicker from "./Genome-Picker";
-import AddGenome from "./Add-Genome";
+import UpdateGenome from "./UpdateGenome";
+import GenomePicker from "./GenomePicker";
+import AddGenome from "./AddGenome";
 /**
  * The Homepage root component. This is where the tab components Add-Genome, Genome-Picker,
  *  and Update-Genome are gathered and structurally organized to be displayed
