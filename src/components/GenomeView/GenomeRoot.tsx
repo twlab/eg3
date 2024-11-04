@@ -212,28 +212,40 @@ function GenomeHub(props: any) {
   }
 
   function onGenomeSelected(name: any) {
-    console.log("ASDADAS", name);
-  }
+    let curGenomeConfig = getGenomeConfig(name);
+    curGenomeConfig.defaultTracks.map((item, index) => {
+      item.id = trackModelId.current;
+      trackModelId.current++;
+    });
+    let newTrackState = {
+      bundleId: "",
+      customTracksPool: [],
+      darkTheme: false,
+      genomeName: curGenomeConfig.genome.getName(),
+      highlights: [
+        /* HighlightInterval objects */
+      ],
+      isShowingNavigator: true,
+      layout: {
+        global: {}, // Populate based on your need
+        layout: {}, // Populate based on your need
+        borders: [],
+      },
+      metadataTerms: [],
+      regionSetView: null,
+      regionSets: [],
+      viewRegion: new DisplayedRegionModel(
+        curGenomeConfig.navContext,
+        curGenomeConfig.defaultRegion.start,
+        curGenomeConfig.defaultRegion.end
+      ),
+      trackLegendWidth: 120,
+      tracks: curGenomeConfig.defaultTracks,
+    };
+    addSessionState(newTrackState);
 
-  useEffect(() => {
-    if (size.width !== 0) {
-      let curGenome = getGenomeConfig("hg38");
-      curGenome["genomeID"] = uuidv4();
-      curGenome["windowWidth"] = size.width;
-      curGenome["isInitial"] = isInitial.current;
-      if (!isInitial.current) {
-        curGenome["curState"] = stateArr.current[presentStateIdx.current];
-      }
-      if (isInitial.current) {
-        curGenome.defaultTracks.map((trackModel) => {
-          trackModel.id = trackModelId.current;
-          trackModelId.current++;
-        });
-      }
-      setGenomeList([curGenome]);
-      isInitial.current = false;
-    }
-  }, [size.width]);
+    recreateTrackmanager({ genomeConfig: curGenomeConfig });
+  }
 
   function jumpToState(actionType, index = 0) {
     let curPresentIdx = 0;
@@ -257,7 +269,25 @@ function GenomeHub(props: any) {
     );
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
-
+  useEffect(() => {
+    if (size.width !== 0) {
+      let curGenome = getGenomeConfig("hg38");
+      curGenome["genomeID"] = uuidv4();
+      curGenome["windowWidth"] = size.width;
+      curGenome["isInitial"] = isInitial.current;
+      if (!isInitial.current) {
+        curGenome["curState"] = stateArr.current[presentStateIdx.current];
+      }
+      if (isInitial.current) {
+        curGenome.defaultTracks.map((trackModel) => {
+          trackModel.id = trackModelId.current;
+          trackModelId.current++;
+        });
+      }
+      setGenomeList([curGenome]);
+      isInitial.current = false;
+    }
+  }, [size.width]);
   return (
     <div style={{}}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
