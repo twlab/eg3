@@ -37,7 +37,10 @@ export class ColorConfig extends React.PureComponent<ColorConfigProps> {
       <ColorPicker
         color={inputValue}
         label={this.props.label}
-        onChange={(color) => setNewValue(color.hex)}
+        onChange={(color) => {
+          console.log(color);
+          setNewValue(color.hex);
+        }}
       />
     );
   }

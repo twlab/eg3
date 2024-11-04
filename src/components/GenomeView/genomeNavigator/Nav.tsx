@@ -1,6 +1,6 @@
 import React, { useState, useCallback, FC } from "react";
 import ReactModal from "react-modal";
-
+import { treeOfLife } from "@/models/genomes/allGenomes";
 import { Button } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
@@ -19,7 +19,7 @@ import TrackModel from "@/models/TrackModel";
 // import FacetTableUI from "./FacetTableUI";
 
 import "./Nav.css";
-import GenomePicker from "@/components/Home/Genome-Picker";
+import GenomePicker from "@/components/Home/GenomePicker";
 import CustomTrackAdder from "../TrackTabComponent/CustomTrackAdder";
 
 interface NavProps {
@@ -135,7 +135,9 @@ const Nav: FC<NavProps> = ({
           </IconButton>
           <GenomePicker
             onGenomeSelected={handleGenomeSelected}
-            title="Choose a new genome"
+            selectedGenome={[]}
+            treeOfLife={treeOfLife}
+            addToView={handleGenomeSelected}
           />
           <Button
             variant="contained"

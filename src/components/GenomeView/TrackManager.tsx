@@ -56,10 +56,11 @@ import {
   set,
   update,
 } from "firebase/database";
-import _ from "lodash";
+import _, { create } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
-import { HighlightInterval } from "./ToolsComponents/HighlightMenu";
+import HighlightMenu from "./ToolsComponents/HighlightMenu";
+
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -119,8 +120,6 @@ export function bpNavToGenNav(bpNavArr, genome) {
 
 interface TrackManagerProps {
   genomeIdx: number;
-  addTrack: (track: any) => void;
-
   recreateTrackmanager: (trackOptions: {}) => void;
   windowWidth: number;
   genomeArr: Array<any>;
@@ -129,8 +128,6 @@ interface TrackManagerProps {
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
-  addTrack,
-
   recreateTrackmanager,
   windowWidth,
   genomeArr,
@@ -220,8 +217,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({
     configMenus: "",
   });
+
   const curTestId = useRef(0);
-  const [curRegion, setCurRegion] = useState<ChromosomeInterval[]>();
+
   const [applyTrackConfigChange, setApplyTrackConfigChange] = useState<{
     [key: string]: any;
   }>({});
@@ -325,13 +323,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     });
   }
-  const handleClick = () => {
-    addTrack({
-      region: curRegion,
-      trackType: "bigWig",
-      genome: genomeArr[genomeIdx],
-    });
-  };
+
   function handleMouseDown(e: any) {
     if (e.button !== 0) {
       // If not the left button, exit the function
@@ -353,13 +345,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setDataIdx(Math.ceil(dragX.current! / windowWidth));
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
-    let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
-      genomeIdx
-    ].navContext.getFeaturesInInterval(curBp, curBp + bpRegionSize.current);
 
-    let genomeCoordLocus = genomeFeatureSegment.map((item, index) =>
-      item.getLocus()
-    );
     trackManagerState.current.viewRegion._startBase = curBp;
     trackManagerState.current.viewRegion._endBase =
       curBp + bpRegionSize.current;
@@ -369,7 +355,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
 
     addSessionState(newStateObj);
-    setCurRegion(genomeCoordLocus);
 
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE when using ref,
@@ -408,28 +393,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
-  function deepEqual(object1: any, object2: any): boolean {
-    if (object1 === object2) return true;
 
-    if (object1 == null || object2 == null) return false;
-
-    if (object1.constructor !== object2.constructor) return false;
-
-    if (typeof object1 === "object" && typeof object2 === "object") {
-      let keys1 = Object.keys(object1);
-      let keys2 = Object.keys(object2);
-
-      if (keys1.length !== keys2.length) return false;
-
-      for (let key of keys1) {
-        if (!deepEqual(object1[key], object2[key])) return false;
-      }
-
-      return true;
-    }
-
-    return false;
-  }
   function setTrackState(state: any) {
     if (!state) {
       return;
@@ -981,13 +945,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         side: highlightSide,
         startbase: curhighlight.start,
         endbase: curhighlight.end,
-        color: "rgba(0, 123, 255, 0.15)",
+        color: curhighlight.color,
+        display: curhighlight.display,
+        tag: curhighlight.tag,
       };
       resHighlights.push(tmpObj);
     }
     return resHighlights;
   }
+  function getHighlightState(highlightState: any) {
+    trackManagerState.current.highlights = highlightState;
 
+    let newStateObj = createNewTrackState(trackManagerState.current, {});
+    addSessionState(newStateObj);
+
+    let highlightElements = createHighlight(highlightState);
+    setHighlight([...highlightElements]);
+  }
+
+  function highlightJump(startbase: any, endbase: any) {
+    trackManagerState.current.viewRegion._startBase = startbase;
+    trackManagerState.current.viewRegion._endBase = endbase;
+    let newStateObj = createNewTrackState(trackManagerState.current, {
+      viewRegion: trackManagerState.current.viewRegion.clone(),
+    });
+    addSessionState(newStateObj);
+    let newDefaultTracksArr: Array<TrackModel> = [];
+    for (let key in globalTrackConfig.current) {
+      let curTrackOptions = globalTrackConfig.current[`${key}`];
+      curTrackOptions["trackModel"].options = curTrackOptions.configOptions;
+      newDefaultTracksArr.push(curTrackOptions["trackModel"]);
+    }
+    genomeArr[genomeIdx].defaultTracks = newDefaultTracksArr;
+    genomeArr[genomeIdx].defaultRegion = new OpenInterval(startbase, endbase);
+
+    recreateTrackmanager({
+      selectedTool: selectedTool,
+      genomeConfig: genomeArr[genomeIdx],
+      scrollY: window.scrollY,
+    });
+  }
   // USEEFFECTS
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -1101,6 +1098,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
+  function onNewRegion() {}
   useEffect(() => {
     if (trackManagerId.current === "") {
       let genome = genomeArr[genomeIdx];
@@ -1165,8 +1163,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           whiteSpace: "nowrap",
         }}
       >
-        <button onClick={handleClick}>add bed</button>
-
         <div>
           {" "}
           {Math.round(bpX.current) +
@@ -1213,8 +1209,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         </div>
 
         <div>1pixel to {basePerPixel.current}bp</div>
-        <button onClick={handleButtonClick}>Add Favorite Color to User</button>
+        {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
+          <HighlightMenu
+            highlights={trackManagerState.current.highlights}
+            viewRegion={trackManagerState.current.viewRegion}
+            showHighlightMenuModal={true}
+            onNewRegion={highlightJump}
+            onSetHighlights={getHighlightState}
+          />
           <SubToolButtons onToolClicked={onToolClicked} />
           <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
@@ -1304,43 +1307,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
                         {highlight.length > 0
                           ? highlight.map((item, index) => {
-                              return (
-                                <div
-                                  key={index}
-                                  style={{
-                                    display: "flex",
-                                    height: "100%",
-                                  }}
-                                >
+                              if (item.display) {
+                                return (
                                   <div
+                                    key={index}
                                     style={{
                                       display: "flex",
-                                      position: "relative",
                                       height: "100%",
                                     }}
                                   >
                                     <div
-                                      key={index}
                                       style={{
-                                        position: "absolute",
-                                        backgroundColor: item.color,
-                                        top: "0",
+                                        display: "flex",
+                                        position: "relative",
                                         height: "100%",
-                                        left:
-                                          item.side === "right"
-                                            ? `${item.xPos}px`
-                                            : "",
-                                        right:
-                                          item.side === "left"
-                                            ? `${item.xPos}px`
-                                            : "",
-                                        width: item.width,
-                                        pointerEvents: "none", // This makes the highlighted area non-interactive
                                       }}
-                                    ></div>
+                                    >
+                                      <div
+                                        key={index}
+                                        style={{
+                                          position: "absolute",
+                                          backgroundColor: item.color,
+
+                                          top: "0",
+                                          height: "100%",
+                                          left:
+                                            item.side === "right"
+                                              ? `${item.xPos}px`
+                                              : "",
+                                          right:
+                                            item.side === "left"
+                                              ? `${item.xPos}px`
+                                              : "",
+                                          width: item.width,
+                                          pointerEvents: "none", // This makes the highlighted area non-interactive
+                                        }}
+                                      ></div>
+                                    </div>
                                   </div>
-                                </div>
-                              );
+                                );
+                              }
                             })
                           : ""}
                       </div>

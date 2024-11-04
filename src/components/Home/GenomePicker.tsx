@@ -17,7 +17,8 @@ import {
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-
+import Logo from "../images/logo.png";
+import "./GenomePicker.css";
 /**
  * loading page for choose genome
  * @author Daofeng Li
@@ -28,6 +29,7 @@ function GenomePicker(props: any) {
   // Map the genomes to a list of cards. Genome search engine filters by both the species and the different assemblies.
   // It is not case sensitive.
   const [selectedIndex, setSelectedIndex] = useState(1);
+  console.log(props);
   return (
     <Container maxWidth="md">
       <Grid container spacing={4}>
@@ -121,7 +123,9 @@ function GenomePicker(props: any) {
                           <ListItem
                             key={idx}
                             onClick={() =>
-                              props.addToView(props.allGenome[gene])
+                              props.addToView(
+                                props.allGenome ? props.allGenome[gene] : gene
+                              )
                             }
                             style={{ height: 30 }}
                           >

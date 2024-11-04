@@ -1,8 +1,10 @@
 import { Box, AppBar, Tabs, Tab } from "@mui/material";
 import React, { ChangeEvent } from "react";
-import UpdateGenome from "./Update-Genome";
-import GenomePicker from "./Genome-Picker";
-import AddGenome from "./Add-Genome";
+import UpdateGenome from "./UpdateGenome";
+import GenomePicker from "./GenomePicker";
+import AddGenome from "./AddGenome";
+import SwipeableViews from "react-swipeable-views";
+import { SessionUI } from "./SessionUI";
 /**
  * The Homepage root component. This is where the tab components Add-Genome, Genome-Picker,
  *  and Update-Genome are gathered and structurally organized to be displayed
@@ -43,6 +45,10 @@ function Homepage(props: any) {
   function handleTabChange(_event: ChangeEvent<{}>, newValue: any) {
     setValue(newValue);
   }
+  const handleChangeIndex = (index: number) => {
+    setValue(index);
+  };
+
   return (
     <div>
       <AppBar position="static" color="default">
@@ -56,21 +62,27 @@ function Homepage(props: any) {
         >
           <Tab label="Choose a Genome" {...a11yProps(0)} />
           <Tab label="Load a session" {...a11yProps(1)} />
-          <Tab label="Update a genome" {...a11yProps(2)} />
-          <Tab label="Add a genome" {...a11yProps(3)} />
+          {/* <Tab label="Update a genome" {...a11yProps(2)} />
+          <Tab label="Add a genome" {...a11yProps(3)} /> */}
         </Tabs>
-        <TabPanel value={value} index={0}>
-          <GenomePicker
-            addToView={props.addToView}
-            allGenome={props.allGenome}
-            treeOfLife={props.treeOfLife}
-            selectedGenome={props.selectedGenome}
-          />
-        </TabPanel>
-        <TabPanel value={value} index={1}>
-          Item Two
-        </TabPanel>
-        <TabPanel value={value} index={2}>
+        <SwipeableViews
+          axis={"x"}
+          index={value}
+          onChangeIndex={handleChangeIndex}
+        >
+          <TabPanel value={value} index={0}>
+            <GenomePicker
+              addToView={props.addToView}
+              allGenome={props.allGenome}
+              treeOfLife={props.treeOfLife}
+              selectedGenome={props.selectedGenome}
+            />
+          </TabPanel>
+          <TabPanel value={value} index={1} dir={"x"}>
+            <SessionUI bundleId={"1234"} withGenomePicker={true} />
+          </TabPanel>
+        </SwipeableViews>
+        {/* <TabPanel value={value} index={2}>
           <UpdateGenome
             allGenome={props.allGenome}
             s3Config={props.s3Config}
@@ -83,7 +95,7 @@ function Homepage(props: any) {
             s3Config={props.s3Config}
             addNewGenomeObj={props.addNewGenomeObj}
           />
-        </TabPanel>
+        </TabPanel> */}
       </AppBar>
     </div>
   );
