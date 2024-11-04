@@ -1,6 +1,6 @@
 import React, { useState, useCallback, FC } from "react";
 import ReactModal from "react-modal";
-
+import { treeOfLife } from "@/models/genomes/allGenomes";
 import { Button } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
@@ -135,7 +135,9 @@ const Nav: FC<NavProps> = ({
           </IconButton>
           <GenomePicker
             onGenomeSelected={handleGenomeSelected}
-            title="Choose a new genome"
+            selectedGenome={[]}
+            treeOfLife={treeOfLife}
+            addToView={handleGenomeSelected}
           />
           <Button
             variant="contained"

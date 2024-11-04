@@ -214,16 +214,14 @@ function App() {
             />
           </Route>
           <Route path="/genome">
-            {selectedGenome.length > 0 ? (
-              <GenomeView
-                selectedGenome={selectedGenome}
-                allGenome={allGenome}
-                addToView={addGenomeView}
-                name={selectedGenome[0].genome._name}
-              />
-            ) : (
-              ""
-            )}
+            <GenomeView
+              selectedGenome={selectedGenome}
+              allGenome={allGenome}
+              addToView={addGenomeView}
+              name={
+                selectedGenome.length > 0 ? selectedGenome[0].genome._name : ""
+              }
+            />
           </Route>
         </Switch>
       </BrowserRouter>

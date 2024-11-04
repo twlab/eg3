@@ -123,7 +123,9 @@ function GenomePicker(props: any) {
                           <ListItem
                             key={idx}
                             onClick={() =>
-                              props.addToView(props.allGenome[gene])
+                              props.addToView(
+                                props.allGenome ? props.allGenome[gene] : gene
+                              )
                             }
                             style={{ height: 30 }}
                           >

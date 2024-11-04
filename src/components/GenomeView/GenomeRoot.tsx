@@ -211,8 +211,8 @@ function GenomeHub(props: any) {
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
 
-  function onGenomeSelected() {
-    console.log("ASDADAS");
+  function onGenomeSelected(name: any) {
+    console.log("ASDADAS", name);
   }
 
   useEffect(() => {
