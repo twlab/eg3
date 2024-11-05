@@ -56,23 +56,26 @@ function GenomeHub(props: any) {
   const scrollYPos = useRef(0);
 
   const [items, setItems] = useState(chrType);
+  const bundleId = useRef("");
   const isInitial = useRef<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [resizeRef, size] = useResizeObserver();
 
   const stateArr = useRef<Array<any>>([]);
+  const [sessionArr, setSessionArr] = useState<{ [key: string]: any }>({});
   const presentStateIdx = useRef(0);
   const trackModelId = useRef(0);
   const [viewRegion, setViewRegion] = useState<DisplayedRegionModel | null>(
     null
   );
-
-  function addSessionState(data: any) {
+  const testSessionArr = useRef<Array<any>>([]);
+  function addGlobalState(data: any) {
     if (presentStateIdx.current !== stateArr.current.length - 1) {
       stateArr.current.splice(presentStateIdx.current + 1);
     } else if (stateArr.current.length >= 20) {
       stateArr.current.shift();
     }
+    data.bundleId = bundleId.current;
     stateArr.current.push(data);
     presentStateIdx.current = stateArr.current.length - 1;
     setViewRegion(data.viewRegion);
@@ -160,6 +163,9 @@ function GenomeHub(props: any) {
   }
 
   function onTracksAdded(trackModel: any) {
+    trackModel.genomeName =
+      stateArr.current[presentStateIdx.current].genomeName;
+    console.log(stateArr.current[presentStateIdx.current].genomeName);
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {}
@@ -167,7 +173,7 @@ function GenomeHub(props: any) {
     trackModel.id = trackModelId.current;
     trackModelId.current++;
     newStateObj.tracks.push(trackModel);
-    addSessionState(newStateObj);
+    addGlobalState(newStateObj);
     let state = stateArr.current[presentStateIdx.current];
     let curGenomeConfig = getGenomeConfig(state.genomeName);
     curGenomeConfig.defaultTracks = state.tracks;
@@ -200,7 +206,7 @@ function GenomeHub(props: any) {
           : undefined,
       }
     );
-    addSessionState(newStateObj);
+    addGlobalState(newStateObj);
     let state = stateArr.current[presentStateIdx.current];
     let curGenomeConfig = getGenomeConfig(state.genomeName);
     curGenomeConfig.defaultTracks = state.tracks;
@@ -242,7 +248,7 @@ function GenomeHub(props: any) {
       trackLegendWidth: 120,
       tracks: curGenomeConfig.defaultTracks,
     };
-    addSessionState(newTrackState);
+    addGlobalState(newTrackState);
 
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
@@ -269,6 +275,12 @@ function GenomeHub(props: any) {
     );
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
+  function addSessionState(sessionState) {
+    console.log(sessionArr);
+    setSessionArr(sessionState);
+  }
+
+  function onRetrieveBundle() {}
   useEffect(() => {
     if (size.width !== 0) {
       let curGenome = getGenomeConfig("hg38");
@@ -279,6 +291,7 @@ function GenomeHub(props: any) {
         curGenome["curState"] = stateArr.current[presentStateIdx.current];
       }
       if (isInitial.current) {
+        bundleId.current = uuidv4();
         curGenome.defaultTracks.map((trackModel) => {
           trackModel.id = trackModelId.current;
           trackModelId.current++;
@@ -305,8 +318,11 @@ function GenomeHub(props: any) {
                       trackLegendWidth={size.width}
                       onRegionSelected={genomeNavigatorRegionSelect}
                       onGenomeSelected={onGenomeSelected}
-                      tracks={stateArr.current[presentStateIdx.current].tracks}
+                      state={stateArr.current[presentStateIdx.current]}
                       onTracksAdded={onTracksAdded}
+                      addSessionState={addSessionState}
+                      sessionArr={sessionArr}
+                      onRetrieveBundle={onRetrieveBundle}
                     />
                   ) : (
                     <div>hii2</div>
@@ -341,7 +357,7 @@ function GenomeHub(props: any) {
                     recreateTrackmanager={recreateTrackmanager}
                     genomeArr={genomeList}
                     windowWidth={size.width - 120}
-                    addSessionState={addSessionState}
+                    addGlobalState={addGlobalState}
                     undoRedo={undoRedo}
                   />
                 </div>

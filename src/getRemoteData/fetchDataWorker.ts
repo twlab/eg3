@@ -360,7 +360,7 @@ self.onmessage = async (event: MessageEvent) => {
   await Promise.all(
     normDefaultTracks.map(async (item, index) => {
       const trackType = item.type;
-      const genomeName = item.genome;
+      const genomeName = item.genome ? item.genome : event.data.primaryGenName;
       const id = item.id;
       const url = item.url;
 

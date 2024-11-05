@@ -1,4 +1,4 @@
-import React, { useState, useCallback, FC } from "react";
+import React, { useState, useCallback, FC, useEffect } from "react";
 import ReactModal from "react-modal";
 import { treeOfLife } from "@/models/genomes/allGenomes";
 import { Button } from "@mui/material";
@@ -6,26 +6,20 @@ import { ArrowBack } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
 import AnnotationTrackUI from "../TrackTabComponent/AnnotationTrackUI";
 import _ from "lodash";
-
 import { getSpeciesInfo } from "@/models/genomes/allGenomes";
 import TrackRegionController from "./TrackRegionController";
-
 import TrackModel from "@/models/TrackModel";
-// import { AnnotationTrackUI } from "./trackManagers/AnnotationTrackUI";
-// import HubPane from "./trackManagers/HubPane";
-
-// import { RegionExpander } from "../model/RegionExpander";
-
-// import FacetTableUI from "./FacetTableUI";
-
-import "./Nav.css";
 import GenomePicker from "@/components/Home/GenomePicker";
 import CustomTrackAdder from "../TrackTabComponent/CustomTrackAdder";
+import SessionUI from "@/components/Home/SessionUI";
+import "./Nav.css";
+import { TrackState } from "../CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 
 interface NavProps {
   selectedRegion: any;
   onRegionSelected: any;
-  tracks: TrackModel[];
+
+  state: TrackState;
   genomeConfig: any;
   onTracksAdded?: (tracks: TrackModel[]) => void;
   onTrackRemoved?: (track: TrackModel) => void;
@@ -34,35 +28,42 @@ interface NavProps {
   darkTheme?: boolean;
   onGenomeSelected: (name: string) => void;
   onToggleNavigator?: () => void;
+  addSessionState?: any;
+  sessionArr?: any;
+  onRetrieveBundle?: any;
 }
 
 const Nav: FC<NavProps> = ({
-  tracks,
+  state,
   genomeConfig,
   onTracksAdded,
   onTrackRemoved,
   selectedRegion,
   onRegionSelected,
   darkTheme,
+  onRetrieveBundle,
   onGenomeSelected,
+  addSessionState,
+  sessionArr,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
+  const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
+  const [appDropdownOpen, setAppDropdownOpen] = useState(false);
 
-  const handleGenomeOpenModal = () => {
-    setGenomeModal(true);
-  };
-
-  const handleGenomeCloseModal = () => {
-    setGenomeModal(false);
-  };
+  const handleGenomeOpenModal = () => setGenomeModal(true);
+  const handleGenomeCloseModal = () => setGenomeModal(false);
 
   const handleGenomeSelected = (name: string) => {
     onGenomeSelected(name);
     handleGenomeCloseModal();
   };
+
+  const toggleTrackDropdown = () => setTrackDropdownOpen(!trackDropdownOpen);
+  const toggleAppDropdown = () => setAppDropdownOpen(!appDropdownOpen);
+
   function groupTrackByGenome() {
-    const grouped = {}; // key: genome name like `hg19`, value: a set of track name or url
-    tracks.forEach((track) => {
+    const grouped = {};
+    state.tracks.forEach((track) => {
       const gname = track.getMetadata("genome");
       const targeName = gname ? gname : genomeConfig.genome.getName();
       if (grouped[targeName]) {
@@ -76,16 +77,14 @@ const Nav: FC<NavProps> = ({
 
   const genomeName = genomeConfig.genome.getName();
   const { name, logo, color } = getSpeciesInfo(genomeName);
-
   const modalfg = "#222";
   const modalbg = "white";
   const tracksUrlSets = new Set([
-    ...tracks.filter((track) => track.url).map((track) => track.url),
-    ...tracks.filter((track) => !track.url).map((track) => track.name),
+    ...state.tracks.filter((track) => track.url).map((track) => track.url),
+    ...state.tracks.filter((track) => !track.url).map((track) => track.name),
   ]);
-  // tracksUrlSets.delete('Ruler'); // allow ruler to be added many times
-  // const publicHubs = genomeConfig.publicHubList ? genomeConfig.publicHubList.slice() : [] ;
   const groupedTrackSets = groupTrackByGenome();
+
   return (
     <div className="Nav-container bg">
       <div className="panel">
@@ -120,14 +119,8 @@ const Nav: FC<NavProps> = ({
           onRequestClose={handleGenomeCloseModal}
           shouldCloseOnOverlayClick={true}
           style={{
-            content: {
-              color: modalfg,
-              background: modalbg,
-              zIndex: 5,
-            },
-            overlay: {
-              backgroundColor: "rgba(111,107,101, 0.7)",
-            },
+            content: { color: modalfg, background: modalbg, zIndex: 5 },
+            overlay: { backgroundColor: "rgba(111,107,101, 0.7)" },
           }}
         >
           <IconButton color="secondary" onClick={handleGenomeCloseModal}>
@@ -147,140 +140,90 @@ const Nav: FC<NavProps> = ({
             Close
           </Button>
         </ReactModal>
-        <div className="element Nav-center" style={{}}>
+        <div className="element Nav-center">
           <TrackRegionController
             selectedRegion={selectedRegion}
             onRegionSelected={onRegionSelected}
             contentColorSetup={{ background: "white", color: "#222" }}
             genomeConfig={genomeConfig}
-          />{" "}
+          />
         </div>
-        <div className="element Nav-center btn-group">
-          <DropdownOpener extraClassName="btn-primary" label="🎹Tracks" />
-          <div className="dropdown-menu bg">
-            <ModalMenuItem
-              itemLabel="Annotation Tracks"
-              style={{
-                content: {
-                  color: modalfg,
-                  background: modalbg,
-                },
-              }}
+        <div
+          className="element Nav-center btn-group"
+          style={{ display: "flex" }}
+        >
+          <div className="dropdown">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={toggleTrackDropdown}
             >
-              <AnnotationTrackUI
-                addedTracks={tracks}
-                onTracksAdded={onTracksAdded}
-                addedTrackSets={tracksUrlSets}
-                genomeConfig={genomeConfig}
-                groupedTrackSets={groupedTrackSets}
-              />
-            </ModalMenuItem>
-            {/* <ModalMenuItem
-              itemLabel="Public Data Hubs"
-              style={{
-                content: {
-                  color: modalfg,
-                  background: modalbg,
-                }, 
-              }}
+              🎹 Tracks
+            </button>
+            <div
+              className={`dropdown-menu ${trackDropdownOpen ? "show" : "hide"}`}
             >
-              <HubPane
-                addedTracks={tracks}
-                onTracksAdded={onTracksAdded}
-                onTrackRemoved={onTrackRemoved}
-                onAddTracksToPool={onAddTracksToPool}
-                publicTracksPool={publicTracksPool}
-                publicHubs={publicHubs}
-                onHubUpdated={onHubUpdated}
-                publicTrackSets={publicTrackSets}
-                addedTrackSets={addedTrackSets}
-                addTermToMetaSets={addTermToMetaSets}
-                contentColorSetup={{
-                  color: modalfg,
-                  background: modalbg,
+              <ModalMenuItem
+                itemLabel="Annotation Tracks"
+                style={{ content: { color: modalfg, background: modalbg } }}
+              >
+                <AnnotationTrackUI
+                  addedTracks={state.tracks}
+                  onTracksAdded={onTracksAdded}
+                  addedTrackSets={tracksUrlSets}
+                  genomeConfig={genomeConfig}
+                  groupedTrackSets={groupedTrackSets}
+                />
+              </ModalMenuItem>
+              <ModalMenuItem
+                itemLabel="Remote Tracks"
+                style={{ content: { color: modalfg, background: modalbg } }}
+              >
+                <CustomTrackAdder
+                  addedTracks={state.tracks}
+                  onTracksAdded={onTracksAdded}
+                  genomeConfig={genomeConfig}
+                />
+              </ModalMenuItem>
+            </div>
+          </div>
+          <div className="dropdown" style={{ marginLeft: "10px" }}>
+            <button
+              type="button"
+              className="btn btn-success"
+              onClick={toggleAppDropdown}
+            >
+              🔧 Apps
+            </button>
+            <div
+              className={`dropdown-menu ${appDropdownOpen ? "show" : "hide"}`}
+            >
+              <ModalMenuItem
+                itemLabel="Session"
+                style={{
+                  content: {
+                    right: "unset",
+                    bottom: "unset",
+                    overflow: "visible",
+                    padding: "5px",
+                    zIndex: 5,
+                    color: modalfg,
+                    background: modalbg,
+                  },
                 }}
-              />
-            </ModalMenuItem> */}
-            {/* <ModalMenuItem
-              itemLabel="Track Facet Table"
-              style={{
-                content: {
-                  color: modalfg,
-                  background: modalbg,
-                },
-              }}
-            >
-              <FacetTableUI
-                publicTracksPool={publicTracksPool}
-                customTracksPool={customTracksPool}
-                addedTracks={tracks}
-                onTracksAdded={onTracksAdded}
-                publicTrackSets={publicTrackSets}
-                customTrackSets={customTrackSets}
-                addedTrackSets={addedTrackSets}
-                addTermToMetaSets={addTermToMetaSets}
-                contentColorSetup={{
-                  color: modalfg,
-                  background: modalbg,
-                }}
-              />
-            </ModalMenuItem> */}
-            <ModalMenuItem
-              itemLabel="Remote Tracks"
-              style={{
-                content: {
-                  color: modalfg,
-                  background: modalbg,
-                },
-              }}
-            >
-              <CustomTrackAdder
-                addedTracks={tracks}
-                onTracksAdded={onTracksAdded}
-                genomeConfig={genomeConfig}
-              />
-            </ModalMenuItem>
-            {/* <ModalMenuItem
-              itemLabel="Local Tracks"
-              style={{
-                content: {
-                  color: modalfg,
-                  background: modalbg,
-                },
-              }}
-            >
-              <TrackUpload onTracksAdded={onTracksAdded} />
-            </ModalMenuItem> */}
-            {/* <ModalMenuItem
-              itemLabel="Local Text Tracks"
-              style={{
-                content: {
-                  color: modalfg,
-                  background: modalbg,
-                },
-              }}
-            >
-              <TextTrack onTracksAdded={onTracksAdded} />
-            </ModalMenuItem> */}
-            {/* <ModalMenuItem
-              itemLabel="Track List"
-              style={{
-                content: {
-                  color: modalfg,
-                  background: modalbg,
-                },
-              }}
-            >
-              <TrackList
-                addedTracks={tracks}
-                onTracksAdded={onTracksAdded}
-                onTrackRemoved={onTrackRemoved}
-                addedTrackSets={addedTrackSets}
-                availableTrackSets={availableTrackSets}
-                addTracktoAvailable={addTracktoAvailable}
-                removeTrackFromAvailable={removeTrackFromAvailable}
-              />
-            </ModalMenuItem> */}
+              >
+                <SessionUI
+                  bundleId={state.bundleId}
+                  state={state}
+                  addSessionState={addSessionState}
+                  sessionArr={sessionArr}
+                  onRestoreSession={function (session: object): void {
+                    throw new Error("Function not implemented.");
+                  }}
+                  onRetrieveBundle={onRetrieveBundle}
+                />
+              </ModalMenuItem>
+            </div>
           </div>
         </div>
       </div>
@@ -321,16 +264,10 @@ const ModalMenuItem: FC<ModalMenuItemProps> = ({
   children,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const toggleOpen = useCallback(() => {
-    setIsOpen(!isOpen);
-  }, [isOpen]);
+  const toggleOpen = useCallback(() => setIsOpen(!isOpen), [isOpen]);
 
   const finalStyle = {
-    overlay: {
-      backgroundColor: "rgba(111,107,101, 0.7)",
-      zIndex: 4,
-    },
+    overlay: { backgroundColor: "rgba(111,107,101, 0.7)", zIndex: 4 },
     ...style,
   };
 

@@ -1,14 +1,12 @@
-import React from "react";
+import React, { useState, useEffect, ChangeEvent, useRef } from "react";
 import shortid from "shortid";
-
 import JSZip from "jszip";
 import _ from "lodash";
-// import { AppStateSaver } from "../model/AppSaveLoad";
-
-import { CopyToClip } from "../GenomeView/commonComponents/CopyToClipboard";
+import { child, get, getDatabase, ref, set } from "firebase/database";
 import { readFileAsText, HELP_LINKS } from "@/models/util";
-
+import { CopyToClip } from "../GenomeView/commonComponents/CopyToClipboard";
 import "./SessionUI.css";
+import { TrackState } from "../GenomeView/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 
 interface SessionBundle {
   bundleId: string;
@@ -23,113 +21,97 @@ interface Session {
   state: object;
 }
 
-// interface CombinedAppState {
-//     browser: StateWithHistory<AppState>;
-//     firebase: any;
-// }
-
 interface HasBundleId {
   bundleId: string;
 }
 
 interface SessionUIProps extends HasBundleId {
   bundle?: SessionBundle;
-  onRestoreSession: any;
-  onRetrieveBundle: any;
+  onRestoreSession: (session: object) => void;
+  onRetrieveBundle: (id: string) => void;
   withGenomePicker?: boolean;
+  state?: TrackState;
+  addSessionState?: any;
+  sessionArr?: any;
 }
 
-interface SessionUIState {
-  newSessionLabel: string;
-  retrieveId: string;
-  lastBundleId: string;
-  sortSession: string;
-}
-
-class SessionUINotConnected extends React.Component<
-  SessionUIProps,
-  SessionUIState
-> {
-  static displayName = "SessionUI";
-
-  constructor(props: SessionUIProps) {
-    super(props);
-    this.state = {
-      newSessionLabel: getFunName(),
-      retrieveId: "",
-      lastBundleId: "",
-      sortSession: "date", // or label
+const SessionUI: React.FC<SessionUIProps> = ({
+  bundleId,
+  onRestoreSession,
+  onRetrieveBundle,
+  withGenomePicker,
+  state,
+  addSessionState,
+  sessionArr,
+}) => {
+  const [newSessionLabel, setNewSessionLabel] = useState<string>(getFunName());
+  const [retrieveId, setRetrieveId] = useState<string>("");
+  const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
+  const [sortSession, setSortSession] = useState<string>("date"); // or label
+  const [bundle, setBundle] = useState<any>({
+    bundleId: bundleId,
+    currentId: "",
+    sessionsInBundle: {},
+  });
+  const testBundle = useRef<Array<any>>([]);
+  // useEffect(() => {
+  //   setLastBundleId(bundleId);
+  // }, [bundleId]);
+  useEffect(() => {
+    setBundle(sessionArr);
+  }, [sessionArr]);
+  const saveSession = async () => {
+    const newSessionObj = {
+      label: newSessionLabel,
+      date: Date.now(),
+      state: state, // Replace with actual state
     };
-  }
+    const sessionId = shortid.generate();
 
-  getBundle(): SessionBundle {
-    return (
-      this.props.bundle || {
-        sessionsInBundle: {},
-        bundleId: this.props.bundleId,
-        currentId: "",
-      }
-    );
-  }
+    let newBundle = {
+      bundleId: bundleId,
+      currentId: sessionId,
+      sessionsInBundle: {
+        ...bundle.sessionsInBundle,
+        [sessionId]: newSessionObj,
+      },
+    };
 
-  componentDidMount() {
-    this.setState({
-      lastBundleId: this.props.bundleId,
-    });
-  }
+    addSessionState(newBundle);
 
-  saveSession = async () => {
-    // const { firebase, browser } = this.props;
-    // const bundle = this.getBundle();
-    // const sessionId = shortid.generate();
-    // const newSessionObj = {
-    //     label: this.state.newSessionLabel,
-    //     date: Date.now(),
-    //     state: new AppStateSaver().toObject(browser.present),
-    // };
-    // const newBundle = {
-    //     ...bundle,
-    //     sessionsInBundle: {
-    //         ...bundle.sessionsInBundle,
-    //         [sessionId]: newSessionObj,
-    //     },
-    //     currentId: sessionId,
-    // };
-    // try {
-    //     await firebase.set(`sessions/${bundle.bundleId}`, JSON.parse(JSON.stringify(newBundle)));
-    // } catch (error) {
-    //     console.error(error);
-    //     console.log("Error while saving session", "error", 2000);
-    // }
-    // console.log("Session saved!", "success", 2000);
-    // this.setRandomLabel();
+    const db = getDatabase();
+    try {
+      await set(
+        ref(db, `sessions/${bundleId}`),
+        JSON.parse(JSON.stringify(newBundle))
+      );
+      setNewSessionLabel(getFunName());
+      console.log("Session saved!", "success", 2000);
+    } catch (error) {
+      console.error(error);
+      console.log("Error while saving session", "error", 2000);
+    }
+
+    setRandomLabel();
+  };
+  useEffect(() => {
+    if (bundle) {
+      console.log(bundle);
+    }
+  }, [bundle]);
+  const downloadSession = (asHub = false) => {
+    // Add your session saving logic here
   };
 
-  downloadSession = (asHub = false): any => {
-    // const { browser } = this.props;
-    // const bundle = this.getBundle();
-    // const sessionInJSON = new AppStateSaver().toObject(browser.present);
-    // const content = asHub ? (sessionInJSON as any).tracks : sessionInJSON;
-    // const descriptor = asHub ? "hub" : "session";
-    // const sessionString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(content));
-    // const dl = document.createElement("a");
-    // document.body.appendChild(dl); // This line makes it work in Firefox.
-    // dl.setAttribute("href", sessionString);
-    // dl.setAttribute("download", `eg-${descriptor}-${bundle.currentId}-${bundle.bundleId}.json`);
-    // dl.click();
-    // console.log("Session downloaded!", "success", 2000);
+  const downloadAsSession = () => {
+    downloadSession(false);
   };
 
-  downloadAsSession = () => {
-    this.downloadSession(false);
+  const downloadAsHub = () => {
+    downloadSession(true);
   };
 
-  downloadAsHub = () => {
-    this.downloadSession(true);
-  };
-
-  downloadWholeBundle = () => {
-    const bundle = this.getBundle();
+  const downloadWholeBundle = () => {
     const { sessionsInBundle, bundleId } = bundle;
     if (_.isEmpty(sessionsInBundle)) {
       console.log("Session bundle is empty, skipping...", "error", 2000);
@@ -144,7 +126,7 @@ class SessionUINotConnected extends React.Component<
         JSON.stringify(session.state) + "\n"
       );
     });
-    zip.generateAsync({ type: "base64" }).then(function (content) {
+    zip.generateAsync({ type: "base64" }).then((content) => {
       const dl = document.createElement("a");
       document.body.appendChild(dl); // This line makes it work in Firefox.
       dl.setAttribute("href", "data:application/zip;base64," + content);
@@ -154,127 +136,84 @@ class SessionUINotConnected extends React.Component<
     });
   };
 
-  setSessionLabel = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ newSessionLabel: event.target.value.trim() });
+  const restoreSession = async (sessionId: string) => {
+    const newBundle = {
+      ...bundle,
+      currentId: sessionId,
+    };
+    addSessionState(newBundle);
+    const db = getDatabase();
+    try {
+      await set(
+        ref(db, `sessions/${bundleId}`),
+        JSON.parse(JSON.stringify(newBundle))
+      );
+      setNewSessionLabel(getFunName());
+      console.log("Session restored.", "success", 2000);
+    } catch (error) {
+      console.error(error);
+      console.log("Error while restoring session", "error", 2000);
+    }
   };
 
-  setRandomLabel = () => {
-    this.setState({ newSessionLabel: getFunName() });
-  };
-
-  restoreSession = async (sessionId: string) => {
-    // const { firebase } = this.props;
-    // const bundle = this.getBundle();
-    // this.setState({ lastBundleId: bundle.bundleId });
-    // const newBundle = {
-    //     ...bundle,
-    //     currentId: sessionId,
-    // };
+  const deleteSession = async (sessionId: string) => {
+    // Uncomment the following section if you're using a backend to store sessions
     // try {
-    //     await firebase.set(`sessions/${bundle.bundleId}`, newBundle);
+    //   await firebase.remove(`sessions/${bundleId}/sessionsInBundle/${sessionId}`);
+    //   console.log("Session deleted.", "success", 2000);
     // } catch (error) {
-    //     console.error(error);
-    //     if (!this.props.withGenomePicker) {
-    //         console.log("Error while restoring session", "error", 2000);
-    //     }
-    // }
-    // this.props.onRestoreSession(bundle.sessionsInBundle[sessionId].state);
-    // if (!this.props.withGenomePicker) {
-    //     console.log("Session restored.", "success", 2000);
+    //   console.error(error);
+    //   console.log("Error while deleting session", "error", 2000);
     // }
   };
 
-  deleteSession = async (sessionId: string) => {
-    // const { firebase, bundleId } = this.props;
-    // const removePath = `sessions/${bundleId}/sessionsInBundle/${sessionId}`;
-    // try {
-    //     await firebase.remove(removePath);
-    // } catch (error) {
-    //     console.error(error);
-    //     console.log("Error while deleting session", "error", 2000);
-    // }
-    // console.log("Session deleted.", "success", 2000);
-  };
-
-  onSortChaneg = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      sortSession: e.target.value,
-    });
-  };
-
-  renderSavedSessions = () => {
-    const bundle: SessionBundle = this.getBundle();
-    const { lastBundleId, sortSession } = this.state;
+  const renderSavedSessions = () => {
     const sessions = Object.entries(bundle.sessionsInBundle || {});
     if (!sessions.length) {
       return null;
     }
     if (sortSession === "date") {
-      sessions.sort((a, b) => b[1].date - a[1].date);
+      sessions.sort(([, a]: any, [, b]: any) => b.date - a.date);
     }
     if (sortSession === "label") {
-      sessions.sort((a, b) => {
-        if (a[1].label > b[1].label) {
-          return 1;
-        }
-        if (b[1].label > a[1].label) {
-          return -1;
-        }
-        return 0;
-      });
+      sessions.sort(([, a]: any, [, b]: any) =>
+        a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+      );
     }
-    const buttons = sessions.map(([id, session]) => {
-      let button;
-      if (lastBundleId === bundle.bundleId && id === bundle.currentId) {
-        button = (
-          <button
-            className="SessionUI btn btn-secondary btn-sm"
-            disabled={true}
-          >
+    const buttons = sessions.map(([id, session]: any) => (
+      <li key={id}>
+        <span style={{ marginRight: "1ch" }}>{session.label}</span>(
+        {new Date(session.date).toLocaleString()})
+        {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
+          <button className="SessionUI btn btn-secondary btn-sm" disabled>
             Restored
           </button>
-        );
-      } else {
-        // tslint:disable-next-line jsx-no-lambda
-        button = (
+        ) : (
           <button
             className="SessionUI btn btn-success btn-sm"
-            onClick={() => this.restoreSession(id)}
+            onClick={() => restoreSession(id)}
           >
             Restore
           </button>
-        );
-      }
-
-      // tslint:disable-next-line jsx-no-lambda
-      const deleteButton = (
+        )}
         <button
-          onClick={() => this.deleteSession(id)}
+          onClick={() => deleteSession(id)}
           className="SessionUI btn btn-danger btn-sm"
         >
           Delete
         </button>
-      );
-
-      return (
-        <li key={id}>
-          <span style={{ marginRight: "1ch" }}>{session.label}</span>(
-          {new Date(session.date).toLocaleString()}){button}
-          {deleteButton}
-        </li>
-      );
-    });
-
+      </li>
+    ));
     return (
       <div className="SessionUI-sessionlist">
-        Sort session by:{" "}
+        Sort session by:
         <label>
           <input
             type="radio"
             value="date"
             name="sort"
             checked={sortSession === "date"}
-            onChange={this.onSortChaneg}
+            onChange={(e) => setSortSession(e.target.value)}
           />
           <span>Date</span>
         </label>
@@ -284,7 +223,7 @@ class SessionUINotConnected extends React.Component<
             name="sort"
             value="label"
             checked={sortSession === "label"}
-            onChange={this.onSortChaneg}
+            onChange={(e) => setSortSession(e.target.value)}
           />
           <span>Label</span>
         </label>
@@ -293,150 +232,125 @@ class SessionUINotConnected extends React.Component<
     );
   };
 
-  setRetrieveId = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ retrieveId: event.target.value.trim() });
-  };
-
-  // retrieveSession = () => {
-  //     const { retrieveId } = this.state;
-  //     if (retrieveId.length === 0) {
-  //         console.log("Session bundle Id cannot be empty.", "error", 2000);
-  //         return null;
-  //     }
-  //     this.props.onRetrieveBundle(retrieveId);
-  //     console.log("Session retrieved.", "success", 2000);
-  //     return <LoadSession bundleId={retrieveId} />;
-  // };
-
-  uploadSession = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadSession = async (event: ChangeEvent<HTMLInputElement>) => {
     const contents = await readFileAsText(event.target.files![0]);
-    this.props.onRestoreSession(JSON.parse(contents as string));
-    if (!this.props.withGenomePicker) {
+    onRestoreSession(JSON.parse(contents as string));
+    if (!withGenomePicker) {
       console.log("Session uploaded and restored.", "success", 2000);
     }
   };
+  const setRandomLabel = () => {
+    setNewSessionLabel(getFunName());
+  };
 
-  render() {
-    return (
-      <div
-        style={{
-          margin: "20px",
-          display: this.props.withGenomePicker ? "flex" : "block",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <div>
-          <label htmlFor="retrieveId">
-            <input
-              type="text"
-              size={50}
-              placeholder="Session bundle Id"
-              value={this.state.retrieveId}
-              onChange={this.setRetrieveId}
-            />
-          </label>
-          {/* this.retrieveSession */}
-          <button className="SessionUI btn btn-info" onClick={() => {}}>
-            Retrieve
-          </button>
-          <div className="SessionUI-upload-btn-wrapper">
-            Or use a session file:{" "}
-            <button className="SessionUI btn btn-success">Upload</button>
-            <input
-              type="file"
-              name="sessionfile"
-              onChange={this.uploadSession}
-            />
-          </div>
-        </div>
-        {!this.props.withGenomePicker && (
-          <React.Fragment>
-            <div>
-              <p>
-                Session bundle Id: {this.props.bundleId}{" "}
-                <CopyToClip value={this.props.bundleId} />
-              </p>
-              <label htmlFor="sessionLabel">
-                Name your session:{" "}
-                <input
-                  type="text"
-                  value={this.state.newSessionLabel}
-                  size={40}
-                  onChange={this.setSessionLabel}
-                />{" "}
-                or use a{" "}
-                <button
-                  type="button"
-                  className="SessionUI btn btn-warning btn-sm"
-                  onClick={this.setRandomLabel}
-                >
-                  {" "}
-                  Random name
-                </button>
-              </label>
-            </div>
-            <button
-              className="SessionUI btn btn-primary"
-              onClick={this.saveSession}
-            >
-              Save session
-            </button>{" "}
-            <button
-              className="SessionUI btn btn-success"
-              onClick={this.downloadAsSession}
-            >
-              Download current session
-            </button>{" "}
-            <button
-              className="SessionUI btn btn-info"
-              onClick={this.downloadAsHub}
-            >
-              Download as datahub
-            </button>{" "}
-            <button
-              className="SessionUI btn btn-warning"
-              onClick={this.downloadWholeBundle}
-            >
-              Download whole bundle
-            </button>
-          </React.Fragment>
-        )}
-        {this.renderSavedSessions()}
-        <div className="font-italic" style={{ maxWidth: "600px" }}>
-          Disclaimer: please use{" "}
-          <span className="font-weight-bold">sessionFile</span> or{" "}
-          <span className="font-weight-bold">hub</span> URL for publishing using
-          the Browser. Session id is supposed to be shared with trusted people
-          only. Please check our docs for{" "}
-          <a
-            href={HELP_LINKS.publish}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Publish with the browser
-          </a>
-          . Thank you!
+  const retrieveSession = () => {
+    if (retrieveId.length === 0) {
+      console.log("Session bundle Id cannot be empty.", "error", 2000);
+      return null;
+    }
+
+    const dbRef = ref(getDatabase());
+    get(child(dbRef, `sessions/${retrieveId}`))
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          console.log(snapshot.val());
+        } else {
+          console.log("No data available");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  return (
+    <div
+      style={{
+        margin: "20px",
+        display: withGenomePicker ? "flex" : "block",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <div>
+        <label htmlFor="retrieveId">
+          <input
+            type="text"
+            size={50}
+            placeholder="Session bundle Id"
+            value={retrieveId}
+            onChange={(e) => setRetrieveId(e.target.value.trim())}
+          />
+        </label>
+        <button className="SessionUI btn btn-info" onClick={retrieveSession}>
+          Retrieve
+        </button>
+
+        <div className="SessionUI-upload-btn-wrapper">
+          Or use a session file:
+          <button className="SessionUI btn btn-success">Upload</button>
+          <input type="file" name="sessionfile" onChange={uploadSession} />
         </div>
       </div>
-    );
-  }
-}
-
-// const enhance = compose(
-//     firebaseConnect((props: HasBundleId) => {
-//         return [{ path: `sessions/${props.bundleId}` }];
-//     }),
-//     connect(
-//         (combinedState: CombinedAppState, props: HasBundleId) => ({
-//             bundle: getVal(combinedState.firebase, `data/sessions/${props.bundleId}`),
-//             browser: combinedState.browser,
-//         }),
-//         mapDispatchToProps
-//     )
-// );
-
-export const SessionUI = SessionUINotConnected as any;
+      {!withGenomePicker && (
+        <>
+          <div>
+            <p>
+              Session bundle Id: {bundleId} <CopyToClip value={bundleId} />
+            </p>
+            <label htmlFor="sessionLabel">
+              Name your session:
+              <input
+                type="text"
+                value={newSessionLabel}
+                size={40}
+                onChange={(e) => setNewSessionLabel(e.target.value.trim())}
+              />
+              or use a{" "}
+              <button
+                type="button"
+                className="SessionUI btn btn-warning btn-sm"
+                onClick={() => setNewSessionLabel(getFunName())}
+              >
+                Random name
+              </button>
+            </label>
+          </div>
+          <button className="SessionUI btn btn-primary" onClick={saveSession}>
+            Save session
+          </button>{" "}
+          <button
+            className="SessionUI btn btn-success"
+            onClick={downloadAsSession}
+          >
+            Download current session
+          </button>{" "}
+          <button className="SessionUI btn btn-info" onClick={downloadAsHub}>
+            Download as datahub
+          </button>{" "}
+          <button
+            className="SessionUI btn btn-warning"
+            onClick={downloadWholeBundle}
+          >
+            Download whole bundle
+          </button>
+        </>
+      )}
+      {renderSavedSessions()}
+      <div className="font-italic" style={{ maxWidth: "600px" }}>
+        Disclaimer: please use{" "}
+        <span className="font-weight-bold">sessionFile</span> or{" "}
+        <span className="font-weight-bold">hub</span> URL for publishing using
+        the Browser. Session id is supposed to be shared with trusted people
+        only. Please check our docs for{" "}
+        <a href={HELP_LINKS.publish} target="_blank" rel="noopener noreferrer">
+          Publish with the browser
+        </a>{" "}
+        . Thank you!
+      </div>
+    </div>
+  );
+};
 
 function getFunName() {
   const adjectives = [
@@ -669,11 +583,12 @@ function getFunName() {
     "zonkey",
   ];
 
+  const getRandomElement = (array: string[]) =>
+    array[Math.floor(Math.random() * array.length)];
+
   return `${getRandomElement(adjectives)}-${getRandomElement(
     colors
   )}-${getRandomElement(nouns)}`;
-
-  function getRandomElement(array: string[]) {
-    return array[Math.floor(Math.random() * array.length)];
-  }
 }
+
+export default SessionUI;

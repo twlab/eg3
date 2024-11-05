@@ -124,7 +124,7 @@ interface TrackManagerProps {
   windowWidth: number;
   genomeArr: Array<any>;
   undoRedo: any;
-  addSessionState: (trackState: any) => void;
+  addGlobalState: (trackState: any) => void;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
@@ -132,7 +132,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
   genomeArr,
   undoRedo,
-  addSessionState,
+  addGlobalState,
 }) {
   //useRef to store data between states without re render the component
 
@@ -354,7 +354,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       viewRegion: trackManagerState.current.viewRegion.clone(),
     });
 
-    addSessionState(newStateObj);
+    addGlobalState(newStateObj);
 
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE when using ref,
@@ -500,7 +500,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
     let newStateObj = createNewTrackState(trackManagerState.current, {});
 
-    addSessionState(newStateObj);
+    addGlobalState(newStateObj);
     let newSelected = {};
     for (const selected in selectedTracks.current) {
       newSelected[`${selected}`] = { [key]: value };
@@ -564,7 +564,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       let newStateObj = createNewTrackState(trackManagerState.current, {});
 
-      addSessionState(newStateObj);
+      addGlobalState(newStateObj);
 
       if (
         configMenu.configMenus !== "" &&
@@ -591,7 +591,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
       let newStateObj = createNewTrackState(trackManagerState.current, {});
 
-      addSessionState(newStateObj);
+      addGlobalState(newStateObj);
       trackDetails.legendRef.current.style.backgroundColor = "lightblue";
 
       selectedTracks.current[`${trackDetails.trackModel.id}`] =
@@ -614,7 +614,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
       let newStateObj = createNewTrackState(trackManagerState.current, {});
 
-      addSessionState(newStateObj);
+      addGlobalState(newStateObj);
 
       selectedTracks.current = {};
       setConfigMenu({ configMenus: "" });
@@ -629,7 +629,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     );
     let newStateObj = createNewTrackState(trackManagerState.current, {});
 
-    addSessionState(newStateObj);
+    addGlobalState(newStateObj);
 
     setTrackComponents((prevTracks) => {
       return prevTracks.filter((item, index) => {
@@ -882,7 +882,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let newStateObj = createNewTrackState(trackManagerState.current, {
         viewRegion: trackManagerState.current.viewRegion.clone(),
       });
-      addSessionState(newStateObj);
+      addGlobalState(newStateObj);
       let newDefaultTracksArr: Array<TrackModel> = [];
       for (let key in globalTrackConfig.current) {
         let curTrackOptions = globalTrackConfig.current[`${key}`];
@@ -914,7 +914,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         highlights: [newHightlight],
       });
 
-      addSessionState(newStateObj);
+      addGlobalState(newStateObj);
       trackManagerState.current.highlights = [
         ...trackManagerState.current.highlights,
         newHightlight,
@@ -957,7 +957,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackManagerState.current.highlights = highlightState;
 
     let newStateObj = createNewTrackState(trackManagerState.current, {});
-    addSessionState(newStateObj);
+    addGlobalState(newStateObj);
 
     let highlightElements = createHighlight(highlightState);
     setHighlight([...highlightElements]);
@@ -969,7 +969,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newStateObj = createNewTrackState(trackManagerState.current, {
       viewRegion: trackManagerState.current.viewRegion.clone(),
     });
-    addSessionState(newStateObj);
+    addGlobalState(newStateObj);
     let newDefaultTracksArr: Array<TrackModel> = [];
     for (let key in globalTrackConfig.current) {
       let curTrackOptions = globalTrackConfig.current[`${key}`];
@@ -1125,7 +1125,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         let newStateObj = createNewTrackState(trackManagerState.current, {
           viewRegion: trackManagerState.current.viewRegion.clone(),
         });
-        addSessionState(newStateObj);
+        addGlobalState(newStateObj);
       } else {
         trackManagerState.current = createNewTrackState(
           genomeArr[genomeIdx].curState,
