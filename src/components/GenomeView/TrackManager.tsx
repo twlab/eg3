@@ -1121,10 +1121,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genome.defaultRegion.start;
         trackManagerState.current.viewRegion._endBase =
           genome.defaultRegion.end;
-
+        trackManagerState.current.bundleId = genome.bundleId;
         let newStateObj = createNewTrackState(trackManagerState.current, {
           viewRegion: trackManagerState.current.viewRegion.clone(),
         });
+
         addGlobalState(newStateObj);
       } else {
         trackManagerState.current = createNewTrackState(

@@ -7,6 +7,11 @@ import { readFileAsText, HELP_LINKS } from "@/models/util";
 import { CopyToClip } from "../GenomeView/commonComponents/CopyToClipboard";
 import "./SessionUI.css";
 import { TrackState } from "../GenomeView/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import TrackModel from "@/models/TrackModel";
+import RegionSet from "@/models/RegionSet";
+import { getGenomeConfig } from "@/models/genomes/allGenomes";
+import OpenInterval from "@/models/OpenInterval";
+import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 
 interface SessionBundle {
   bundleId: string;
@@ -26,40 +31,29 @@ interface HasBundleId {
 }
 
 interface SessionUIProps extends HasBundleId {
-  bundle?: SessionBundle;
   onRestoreSession: (session: object) => void;
-  onRetrieveBundle: (id: string) => void;
+  onRetrieveBundle: (newBundle: any) => void;
   withGenomePicker?: boolean;
   state?: TrackState;
-  addSessionState?: any;
-  sessionArr?: any;
+  curBundle?: any;
+  addSessionState: any;
 }
 
 const SessionUI: React.FC<SessionUIProps> = ({
-  bundleId,
   onRestoreSession,
   onRetrieveBundle,
   withGenomePicker,
   state,
+  curBundle,
   addSessionState,
-  sessionArr,
 }) => {
   const [newSessionLabel, setNewSessionLabel] = useState<string>(getFunName());
   const [retrieveId, setRetrieveId] = useState<string>("");
-  const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
+  const [lastBundleId, setLastBundleId] = useState<string>(
+    curBundle.currentId !== "none" ? state!.bundleId : "none"
+  );
   const [sortSession, setSortSession] = useState<string>("date"); // or label
-  const [bundle, setBundle] = useState<any>({
-    bundleId: bundleId,
-    currentId: "",
-    sessionsInBundle: {},
-  });
-  const testBundle = useRef<Array<any>>([]);
-  // useEffect(() => {
-  //   setLastBundleId(bundleId);
-  // }, [bundleId]);
-  useEffect(() => {
-    setBundle(sessionArr);
-  }, [sessionArr]);
+
   const saveSession = async () => {
     const newSessionObj = {
       label: newSessionLabel,
@@ -67,22 +61,21 @@ const SessionUI: React.FC<SessionUIProps> = ({
       state: state, // Replace with actual state
     };
     const sessionId = shortid.generate();
-
+    console.log(state);
     let newBundle = {
-      bundleId: bundleId,
+      bundleId: curBundle.bundleId,
       currentId: sessionId,
       sessionsInBundle: {
-        ...bundle.sessionsInBundle,
+        ...curBundle.sessionsInBundle,
         [sessionId]: newSessionObj,
       },
     };
-
     addSessionState(newBundle);
 
     const db = getDatabase();
     try {
       await set(
-        ref(db, `sessions/${bundleId}`),
+        ref(db, `sessions/${curBundle.bundleId}`),
         JSON.parse(JSON.stringify(newBundle))
       );
       setNewSessionLabel(getFunName());
@@ -93,12 +86,9 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
 
     setRandomLabel();
+    setLastBundleId(curBundle.bundleId);
   };
-  useEffect(() => {
-    if (bundle) {
-      console.log(bundle);
-    }
-  }, [bundle]);
+
   const downloadSession = (asHub = false) => {
     // Add your session saving logic here
   };
@@ -112,13 +102,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const downloadWholeBundle = () => {
-    const { sessionsInBundle, bundleId } = bundle;
+    const { sessionsInBundle, bundleId } = curBundle;
     if (_.isEmpty(sessionsInBundle)) {
       console.log("Session bundle is empty, skipping...", "error", 2000);
       return;
     }
     const zip = new JSZip();
-    const zipName = `${bundleId}.zip`;
+    const zipName = `${curBundle.bundleId}.zip`;
     Object.keys(sessionsInBundle).forEach((k) => {
       const session = sessionsInBundle[k];
       zip.file(
@@ -138,17 +128,20 @@ const SessionUI: React.FC<SessionUIProps> = ({
 
   const restoreSession = async (sessionId: string) => {
     const newBundle = {
-      ...bundle,
+      ...curBundle,
       currentId: sessionId,
     };
-    addSessionState(newBundle);
+    setLastBundleId(curBundle.bundleId);
+    onRestoreSession(newBundle);
     const db = getDatabase();
     try {
       await set(
-        ref(db, `sessions/${bundleId}`),
+        ref(db, `sessions/${curBundle.bundleId}`),
         JSON.parse(JSON.stringify(newBundle))
       );
+
       setNewSessionLabel(getFunName());
+
       console.log("Session restored.", "success", 2000);
     } catch (error) {
       console.error(error);
@@ -168,7 +161,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const renderSavedSessions = () => {
-    const sessions = Object.entries(bundle.sessionsInBundle || {});
+    const sessions = Object.entries(curBundle.sessionsInBundle || {});
     if (!sessions.length) {
       return null;
     }
@@ -184,7 +177,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       <li key={id}>
         <span style={{ marginRight: "1ch" }}>{session.label}</span>(
         {new Date(session.date).toLocaleString()})
-        {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
+        {lastBundleId === curBundle.bundleId && id === curBundle.currentId ? (
           <button className="SessionUI btn btn-secondary btn-sm" disabled>
             Restored
           </button>
@@ -242,18 +235,79 @@ const SessionUI: React.FC<SessionUIProps> = ({
   const setRandomLabel = () => {
     setNewSessionLabel(getFunName());
   };
+  function _restoreViewRegion(object: any, regionSetView: RegionSet) {
+    console.log("ASDASDASDASD");
+    const genomeConfig = getGenomeConfig(object.genomeName);
+    if (!genomeConfig) {
+      return null;
+    }
 
+    let viewInterval;
+    if ("viewRegion" in object) {
+      viewInterval = OpenInterval.deserialize(object.viewRegion);
+    } else {
+      viewInterval = genomeConfig.navContext.parse(object.displayRegion);
+    }
+    if (regionSetView) {
+      return new DisplayedRegionModel(
+        regionSetView.makeNavContext(),
+        ...viewInterval
+      );
+    } else {
+      return new DisplayedRegionModel(genomeConfig.navContext, ...viewInterval);
+    }
+  }
   const retrieveSession = () => {
     if (retrieveId.length === 0) {
       console.log("Session bundle Id cannot be empty.", "error", 2000);
       return null;
     }
-
+    console.log(retrieveId);
     const dbRef = ref(getDatabase());
     get(child(dbRef, `sessions/${retrieveId}`))
       .then((snapshot) => {
         if (snapshot.exists()) {
-          console.log(snapshot.val());
+          let res = snapshot.val();
+          for (let curId in res.sessionsInBundle) {
+            if (res.sessionsInBundle.hasOwnProperty(curId)) {
+              let object = res.sessionsInBundle[curId].state;
+              console.log(object);
+
+              const regionSets = object.regionSets
+                ? object.regionSets.map(RegionSet.deserialize)
+                : [];
+              const regionSetView =
+                regionSets[object.regionSetViewIndex] || null;
+
+              // Create the newBundle object based on the existing object.
+              let newBundle = {
+                genomeName: object.genomeName,
+                viewRegion: new DisplayedRegionModel(
+                  getGenomeConfig(object.genomeName).navContext,
+                  object.viewRegion._startBase,
+                  object.viewRegion._endBase
+                ),
+
+                tracks: object.tracks.map((data) =>
+                  TrackModel.deserialize(data)
+                ),
+                metadataTerms: object.metadataTerms || [],
+                regionSets,
+                regionSetView,
+                trackLegendWidth: object.trackLegendWidth || 120,
+                bundleId: object.bundleId,
+                isShowingNavigator: object.isShowingNavigator,
+                isShowingVR: object.isShowingVR,
+                layout: object.layout || {},
+                highlights: object.highlights || [],
+                darkTheme: object.darkTheme || false,
+              };
+
+              // Replace the state key with the newBundle in the session.
+              res.sessionsInBundle[curId].state = newBundle;
+            }
+          }
+          onRetrieveBundle(res);
         } else {
           console.log("No data available");
         }
@@ -296,7 +350,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
         <>
           <div>
             <p>
-              Session bundle Id: {bundleId} <CopyToClip value={bundleId} />
+              Session bundle Id: {curBundle.bundleId}{" "}
+              <CopyToClip value={curBundle.bundleId} />
             </p>
             <label htmlFor="sessionLabel">
               Name your session:

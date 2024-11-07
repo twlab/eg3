@@ -14,7 +14,10 @@ import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 import Nav from "./genomeNavigator/Nav";
-import { createNewTrackState } from "./CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import {
+  createNewTrackState,
+  TrackState,
+} from "./CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 // Import the functions you need from the SDKs you need
 import * as firebase from "firebase/app";
 import History from "./ToolsComponents/History";
@@ -55,30 +58,33 @@ function GenomeHub(props: any) {
   const scrollYPos = useRef(0);
 
   const [items, setItems] = useState(chrType);
-  const bundleId = useRef("");
+
   const isInitial = useRef<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
+
   const [resizeRef, size] = useResizeObserver();
 
   const stateArr = useRef<Array<any>>([]);
-  const [sessionArr, setSessionArr] = useState<{ [key: string]: any }>({});
+
   const presentStateIdx = useRef(0);
   const trackModelId = useRef(0);
   const [viewRegion, setViewRegion] = useState<DisplayedRegionModel | null>(
     null
   );
-  const testSessionArr = useRef<Array<any>>([]);
+  const [curBundle, setCurBundle] = useState<{ [key: string]: any } | null>();
+
   function addGlobalState(data: any) {
     if (presentStateIdx.current !== stateArr.current.length - 1) {
       stateArr.current.splice(presentStateIdx.current + 1);
     } else if (stateArr.current.length >= 20) {
       stateArr.current.shift();
     }
-    data.bundleId = bundleId.current;
+
     stateArr.current.push(data);
     presentStateIdx.current = stateArr.current.length - 1;
+
+    console.log(stateArr.current);
     setViewRegion(data.viewRegion);
-    console.log(stateArr.current, "state " + presentStateIdx.current);
   }
 
   function recreateTrackmanager(trackConfig: { [key: string]: any }) {
@@ -164,7 +170,7 @@ function GenomeHub(props: any) {
   function onTracksAdded(trackModel: any) {
     trackModel.genomeName =
       stateArr.current[presentStateIdx.current].genomeName;
-    console.log(stateArr.current[presentStateIdx.current].genomeName);
+
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {}
@@ -274,12 +280,46 @@ function GenomeHub(props: any) {
     );
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
-  function addSessionState(sessionState) {
-    console.log(sessionArr);
-    setSessionArr(sessionState);
+
+  //Control and manage the state of user's sessions
+  //_________________________________________________________________________________________________________________________
+  function addSessionState(bundle) {
+    setCurBundle(bundle);
+  }
+  function onRestoreSession(bundle) {
+    let state: TrackState = createNewTrackState(
+      bundle.sessionsInBundle[`${bundle.currentId}`].state,
+      {}
+    );
+    state.tracks.map((trackModel) => {
+      trackModel.id = trackModelId.current;
+      trackModelId.current++;
+    });
+    let curGenomeConfig = getGenomeConfig(state.genomeName);
+
+    curGenomeConfig.defaultTracks = state.tracks;
+    curGenomeConfig.defaultRegion = new OpenInterval(
+      state.viewRegion._startBase!,
+      state.viewRegion._endBase!
+    );
+    addGlobalState(state);
+
+    recreateTrackmanager({ genomeConfig: curGenomeConfig });
+
+    setCurBundle(bundle);
   }
 
-  function onRetrieveBundle() {}
+  function onRetrieveBundle(bundle) {
+    bundle.currentId = "none";
+    setCurBundle(bundle);
+    let newState = createNewTrackState(
+      stateArr.current[presentStateIdx.current],
+      {}
+    );
+    newState.bundleId = bundle.bundleId;
+    addGlobalState(newState);
+  }
+
   useEffect(() => {
     if (size.width !== 0) {
       let curGenome = getGenomeConfig("hg38");
@@ -290,7 +330,14 @@ function GenomeHub(props: any) {
         curGenome["curState"] = stateArr.current[presentStateIdx.current];
       }
       if (isInitial.current) {
-        bundleId.current = uuidv4();
+        let bundleId = uuidv4();
+
+        setCurBundle({
+          bundleId: bundleId,
+          currentId: "",
+          sessionsInBundle: {},
+        });
+        curGenome["bundleId"] = bundleId;
         curGenome.defaultTracks.map((trackModel) => {
           trackModel.id = trackModelId.current;
           trackModelId.current++;
@@ -320,8 +367,9 @@ function GenomeHub(props: any) {
                       state={stateArr.current[presentStateIdx.current]}
                       onTracksAdded={onTracksAdded}
                       addSessionState={addSessionState}
-                      sessionArr={sessionArr}
                       onRetrieveBundle={onRetrieveBundle}
+                      onRestoreSession={onRestoreSession}
+                      curBundle={curBundle}
                     />
                   ) : (
                     <div>hii2</div>

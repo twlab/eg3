@@ -28,9 +28,11 @@ interface NavProps {
   darkTheme?: boolean;
   onGenomeSelected: (name: string) => void;
   onToggleNavigator?: () => void;
+  onRestoreSession: any;
   addSessionState?: any;
-  sessionArr?: any;
+  bundle?: any;
   onRetrieveBundle?: any;
+  curBundle?: any;
 }
 
 const Nav: FC<NavProps> = ({
@@ -43,8 +45,10 @@ const Nav: FC<NavProps> = ({
   darkTheme,
   onRetrieveBundle,
   onGenomeSelected,
+  onRestoreSession,
   addSessionState,
-  sessionArr,
+  bundle,
+  curBundle,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
@@ -215,12 +219,10 @@ const Nav: FC<NavProps> = ({
                 <SessionUI
                   bundleId={state.bundleId}
                   state={state}
-                  addSessionState={addSessionState}
-                  sessionArr={sessionArr}
-                  onRestoreSession={function (session: object): void {
-                    throw new Error("Function not implemented.");
-                  }}
+                  onRestoreSession={onRestoreSession}
                   onRetrieveBundle={onRetrieveBundle}
+                  curBundle={curBundle}
+                  addSessionState={addSessionState}
                 />
               </ModalMenuItem>
             </div>
