@@ -94,7 +94,7 @@ const FileHubAdder = ({ onTracksAdded }) => {
     const contents: any = await readFileAsText(event.target.files[0]);
     const json = JSON5.parse(contents);
     const parser = new DataHubParser();
-    const tracks = await parser.getTracksInHub(json, "Custom hub");
+    const tracks = parser.getTracksInHub(json, "Custom hub");
     if (tracks) {
       const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
       if (tracksToShow.length > 0) {

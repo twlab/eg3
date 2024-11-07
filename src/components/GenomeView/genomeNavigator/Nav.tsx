@@ -14,6 +14,8 @@ import CustomTrackAdder from "../TrackTabComponent/CustomTrackAdder";
 import SessionUI from "@/components/Home/SessionUI";
 import "./Nav.css";
 import { TrackState } from "../CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import HubPane from "../TrackTabComponent/HubPane";
+import FacetTableUI from "../TrackTabComponent/FacetTableUI";
 
 interface NavProps {
   selectedRegion: any;
@@ -22,17 +24,19 @@ interface NavProps {
   state: TrackState;
   genomeConfig: any;
   onTracksAdded?: (tracks: TrackModel[]) => void;
-  onTrackRemoved?: (track: TrackModel) => void;
+  onTrackRemoved?: any;
   trackLegendWidth: number;
   isShowingNavigator?: boolean;
   darkTheme?: boolean;
   onGenomeSelected: (name: string) => void;
   onToggleNavigator?: () => void;
+  onHubUpdated: any;
   onRestoreSession: any;
   addSessionState?: any;
   bundle?: any;
   onRetrieveBundle?: any;
   curBundle?: any;
+  publicTracksPool: Array<any>;
 }
 
 const Nav: FC<NavProps> = ({
@@ -48,7 +52,9 @@ const Nav: FC<NavProps> = ({
   onRestoreSession,
   addSessionState,
   bundle,
+  onHubUpdated,
   curBundle,
+  publicTracksPool,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
@@ -179,6 +185,49 @@ const Nav: FC<NavProps> = ({
                   groupedTrackSets={groupedTrackSets}
                 />
               </ModalMenuItem>
+              <ModalMenuItem
+                itemLabel="Public Data Hubs"
+                style={{
+                  content: {
+                    color: modalfg,
+                    background: modalbg,
+                  },
+                }}
+              >
+                <HubPane
+                  addedTracks={state.tracks}
+                  onTracksAdded={onTracksAdded}
+                  onHubUpdated={onHubUpdated}
+                  publicTracksPool={publicTracksPool}
+                  publicHubs={genomeConfig.publicHubList}
+                  publicTrackSets={undefined}
+                  addedTrackSets={undefined}
+                  contentColorSetup={{ color: modalfg, background: modalbg }}
+                  genomeConfig={genomeConfig}
+                />
+              </ModalMenuItem>
+              <ModalMenuItem
+                itemLabel="Track Facet Table"
+                style={{
+                  content: {
+                    color: modalfg,
+                    background: modalbg,
+                  },
+                }}
+              >
+                <FacetTableUI
+                  publicTracksPool={[]}
+                  customTracksPool={[]}
+                  addedTracks={state.tracks}
+                  onTracksAdded={onTracksAdded}
+                  addedTrackSets={undefined}
+                  contentColorSetup={{
+                    color: modalfg,
+                    background: modalbg,
+                  }}
+                />
+              </ModalMenuItem>
+
               <ModalMenuItem
                 itemLabel="Remote Tracks"
                 style={{ content: { color: modalfg, background: modalbg } }}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent, useRef } from "react";
-import shortid from "shortid";
+import { v4 as uuidv4 } from "uuid";
 import JSZip from "jszip";
 import _ from "lodash";
 import { child, get, getDatabase, ref, set } from "firebase/database";
@@ -60,7 +60,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       date: Date.now(),
       state: state, // Replace with actual state
     };
-    const sessionId = shortid.generate();
+    const sessionId = uuidv4();
     console.log(state);
     let newBundle = {
       bundleId: curBundle.bundleId,

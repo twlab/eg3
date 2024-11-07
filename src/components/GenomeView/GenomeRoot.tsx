@@ -72,7 +72,7 @@ function GenomeHub(props: any) {
     null
   );
   const [curBundle, setCurBundle] = useState<{ [key: string]: any } | null>();
-
+  const [publicTracksPool, setPublicTracksPool] = useState<Array<any>>([]);
   function addGlobalState(data: any) {
     if (presentStateIdx.current !== stateArr.current.length - 1) {
       stateArr.current.splice(presentStateIdx.current + 1);
@@ -320,6 +320,10 @@ function GenomeHub(props: any) {
     addGlobalState(newState);
   }
 
+  //Control and manage the state of Hub
+  //_________________________________________________________________________________________________________________________
+  function onHubUpdated() {}
+
   useEffect(() => {
     if (size.width !== 0) {
       let curGenome = getGenomeConfig("hg38");
@@ -370,6 +374,8 @@ function GenomeHub(props: any) {
                       onRetrieveBundle={onRetrieveBundle}
                       onRestoreSession={onRestoreSession}
                       curBundle={curBundle}
+                      onHubUpdated={onHubUpdated}
+                      publicTracksPool={publicTracksPool}
                     />
                   ) : (
                     <div>hii2</div>
