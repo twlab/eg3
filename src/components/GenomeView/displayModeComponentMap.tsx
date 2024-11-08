@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import Feature, { NumericalFeature } from "../../models/Feature";
+import Feature, { Fiber, NumericalFeature } from "../../models/Feature";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
@@ -22,7 +22,7 @@ import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
 import { v4 as uuidv4 } from "uuid";
-import { getContrastingColor } from "../../models/util";
+import { getContrastingColor, parseNumberString } from "../../models/util";
 import { scaleLinear } from "d3-scale";
 
 import MethylCRecord from "../../models/MethylCRecord";
@@ -40,6 +40,7 @@ import { GapText } from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
 import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
 import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
+import FiberTrackComponent from "./bedComponents/FiberTrackComponent";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -437,6 +438,69 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+  modbed: function getModbed(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    console.log(
+      formattedData,
+      useFineOrSecondaryParentNav,
+      trackState,
+      windowWidth,
+      configOptions,
+      updatedLegend,
+      trackModel
+    );
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+    let canvasElements = (
+      <FiberTrackComponent
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        visRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        forceSvg={false}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+        isLoading={false}
+      />
+    );
+    return canvasElements;
+  },
   interaction: function getInteraction(
     formattedData,
     useFineOrSecondaryParentNav,
@@ -802,7 +866,37 @@ export function getDisplayModeFunction(
   // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
   //_________________________________
-  else if (
+  else if (drawData.trackModel.type === "modbed") {
+    console.log("HJUIASDFHDAS");
+    let formattedData;
+    formattedData = drawData.genesArr.map((record) => {
+      return new Fiber(
+        record[3],
+        new ChromosomeInterval(record.chr, record.start, record.end),
+        record[5]
+      ).withFiber(parseNumberString(record[4]), record[6], record[7]);
+    });
+
+    let tmpObj = { ...drawData.configOptions };
+    tmpObj.displayMode = "auto";
+
+    let canvasElements = displayModeComponentMap["modbed"](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  } else if (
     drawData.trackModel.type in { hic: "", biginteract: "", longrange: "" }
   ) {
     let formattedData: any = [];

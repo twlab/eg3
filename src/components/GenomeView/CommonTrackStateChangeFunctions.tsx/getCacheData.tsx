@@ -39,7 +39,8 @@ export function getCacheData(
   }
 
   if (
-    trackModel.type in { bigwig: "", hic: "", biginteract: "", longrange: "" }
+    trackModel.type in
+    { bigwig: "", hic: "", biginteract: "", longrange: "", modbed: "" }
   ) {
     displayType = "density";
   }

@@ -70,6 +70,11 @@ const defaultTracks = [
     genome: "hg38",
   }),
   new TrackModel({
+    type: "modbed",
+    name: "examplemod",
+    url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
+  }),
+  new TrackModel({
     type: "geneAnnotation",
     name: "MANE_select_1.0",
     label: "MANE selection v1.0",

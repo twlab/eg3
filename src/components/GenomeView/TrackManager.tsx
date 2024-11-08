@@ -30,7 +30,7 @@ import RefBedTrack from "./RefBedTrack";
 import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
-
+import FiberTrack from "./FiberTrack";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
@@ -102,6 +102,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   refbed: RefBedTrack,
   matplot: MatplotTrack,
   ruler: RulerTrack,
+  modbed: FiberTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];

@@ -36,9 +36,7 @@ const HubPane: React.FC<HubPaneProps> = ({
         ): void {
           throw new Error("Function not implemented.");
         }}
-        onHubUpdated={function (hubs: any): void {
-          throw new Error("Function not implemented.");
-        }}
+        onHubUpdated={onHubUpdated}
       />
       {publicTracksPool.length > 0 ? (
         <FacetTable
@@ -55,11 +53,6 @@ const HubPane: React.FC<HubPaneProps> = ({
       )}
     </div>
   );
-};
-
-HubPane.defaultProps = {
-  addedTracks: [],
-  publicTracksPool: [],
 };
 
 export default HubPane;

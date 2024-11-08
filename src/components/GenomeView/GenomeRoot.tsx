@@ -322,7 +322,9 @@ function GenomeHub(props: any) {
 
   //Control and manage the state of Hub
   //_________________________________________________________________________________________________________________________
-  function onHubUpdated() {}
+  function onHubUpdated(tracksToShow, publicTracks) {
+    console.log(tracksToShow, publicTracks);
+  }
 
   useEffect(() => {
     if (size.width !== 0) {

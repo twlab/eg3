@@ -22,6 +22,13 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
+  modbed: async function bedFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   bigbed: async function bigbedFetch(regionData: any) {
     return getBigData(
       regionData.nav,

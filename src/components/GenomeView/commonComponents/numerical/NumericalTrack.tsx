@@ -14,9 +14,9 @@ import { DefaultAggregators } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 import Feature from "../../../../models/Feature";
-import HoverToolTip from "../HoverToolTips/HoverToolTip";
-import { BackgroundColorConfig } from "../../../../trackConfigs/config-menu-components.tsx/ColorConfig";
+
 import TrackLegend from "../TrackLegend";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data?: Feature[]; // Replace 'Feature' with the actual type of your data

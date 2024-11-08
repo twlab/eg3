@@ -10,9 +10,6 @@ import Json5Fetcher from "@/models/Json5Fetcher";
 import DataHubParser from "@/models/DataHubParser";
 import TrackModel from "@/models/TrackModel";
 
-/**
- * Represents content that can be displayed in a table.
- */
 interface ObjectAsTableProps {
   title?: string;
   content: any;
@@ -23,22 +20,28 @@ const ObjectAsTable: React.FC<ObjectAsTableProps> = ({ title, content }) => {
     return <div>{content}</div>;
   }
 
-  const rows = Object.entries(content).map((values, idx) => {
-    let tdContent;
-    if (React.isValidElement(values[1])) {
-      tdContent = values[1];
-    } else if (variableIsObject(values[1])) {
-      tdContent = <ObjectAsTable content={values[1]} />;
-    } else {
-      tdContent = Array.isArray(values[1]) ? values[1].join(" > ") : values[1];
-    }
-    return (
-      <tr key={idx}>
-        <td>{values[0]}</td>
-        <td>{tdContent}</td>
-      </tr>
-    );
-  });
+  const rows = useMemo(
+    () =>
+      Object.entries(content).map((values: any, idx) => {
+        let tdContent;
+        if (React.isValidElement(values[1])) {
+          tdContent = values[1];
+        } else if (typeof values[1] === "object" && values[1] !== null) {
+          tdContent = <ObjectAsTable content={values[1]} />;
+        } else {
+          tdContent = Array.isArray(values[1])
+            ? values[1].join(" > ")
+            : values[1];
+        }
+        return (
+          <tr key={idx}>
+            <td>{values[0]}</td>
+            <td>{tdContent}</td>
+          </tr>
+        );
+      }),
+    [content]
+  );
 
   return (
     <>
@@ -50,12 +53,6 @@ const ObjectAsTable: React.FC<ObjectAsTableProps> = ({ title, content }) => {
   );
 };
 
-/**
- * Table that displays available public track hubs.
- *
- * @param {Object} props - React props
- * @returns {JSX.Element} the rendered component
- */
 const HubTable: React.FC<HubTableProps> = ({
   onHubLoaded,
   onHubUpdated,
@@ -63,12 +60,12 @@ const HubTable: React.FC<HubTableProps> = ({
   onTracksAdded,
   genomeConfig,
 }) => {
-  let newHub = new DataHubParser();
+  const hubParser = useMemo(() => new DataHubParser(), []);
 
   const _cloneHubsAndModifyOne = useCallback(
     (index: number, propsToMerge: Partial<Hub>) => {
-      let hubs = publicHubs.slice();
-      let hub = _.cloneDeep(hubs[index]);
+      const hubs = [...publicHubs];
+      const hub = _.cloneDeep(hubs[index]);
       Object.assign(hub, propsToMerge);
       hubs[index] = hub;
       return hubs;
@@ -87,9 +84,9 @@ const HubTable: React.FC<HubTableProps> = ({
         const hubBase = hub.url
           .substring(0, lastSlashIndex)
           .replace(/\/+$/, "");
-        const tracksStartIndex = 0;
+        const tracksStartIndex = hub.oldHubFormat ? 1 : 0;
 
-        const tracks: any = await newHub.getTracksInHub(
+        const tracks: any = await hubParser.getTracksInHub(
           json,
           hub.name,
           hub.genome,
@@ -97,33 +94,25 @@ const HubTable: React.FC<HubTableProps> = ({
           tracksStartIndex,
           hubBase
         );
-        console.log(tracks);
         const loadedHubs = _cloneHubsAndModifyOne(index, {
           isLoading: false,
           isLoaded: true,
         });
-        onHubUpdated!(loadedHubs);
+        onHubUpdated!(loadedHubs, tracks);
         const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
-        if (tracksToShow.length > 0) {
-          onTracksAdded!(tracksToShow);
+        if (tracksToShow.length > 0 && onTracksAdded) {
+          // onTracksAdded(tracksToShow);
         }
       } catch (error) {
         console.error(error);
         const loadedHubs = _cloneHubsAndModifyOne(index, {
-          error: 1,
+          error: true,
           isLoading: false,
         });
-        onHubUpdated!(loadedHubs);
+        onHubUpdated!(loadedHubs, []);
       }
     },
-    [
-      onHubLoaded,
-      onHubUpdated,
-      publicHubs,
-      onTracksAdded,
-      _cloneHubsAndModifyOne,
-      newHub,
-    ]
+    [publicHubs, onHubUpdated, onTracksAdded, _cloneHubsAndModifyOne, hubParser]
   );
 
   const getAddHubCell = useCallback(
@@ -145,19 +134,9 @@ const HubTable: React.FC<HubTableProps> = ({
 
   const columns = useMemo(
     () => [
-      {
-        Header: "Genome",
-        accessor: "genome",
-        width: 100,
-      },
-      {
-        Header: "Collection",
-        accessor: "collection",
-      },
-      {
-        Header: "Hub name",
-        accessor: "name",
-      },
+      { Header: "Genome", accessor: "genome", width: 100 },
+      { Header: "Collection", accessor: "collection" },
+      { Header: "Hub name", accessor: "name" },
       {
         Header: "Tracks",
         accessor: "numTracks",
@@ -213,22 +192,36 @@ const HubTable: React.FC<HubTableProps> = ({
         className="table table-bordered table-striped table-hover"
       >
         <thead>
-          {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps()}>{column.render("Header")}</th>
-              ))}
-            </tr>
-          ))}
+          {headerGroups.map((headerGroup, headerIndex) => {
+            const { key, ...restProps } = headerGroup.getHeaderGroupProps();
+            return (
+              <tr key={key || headerIndex} {...restProps}>
+                {headerGroup.headers.map((column, columnIndex) => {
+                  const { key, ...restProps } = column.getHeaderProps();
+                  return (
+                    <th key={key || columnIndex} {...restProps}>
+                      {column.render("Header")}
+                    </th>
+                  );
+                })}
+              </tr>
+            );
+          })}
         </thead>
         <tbody {...getTableBodyProps()}>
           {page.map((row, rowIndex) => {
             prepareRow(row);
+            const { key, ...restProps } = row.getRowProps();
             return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map((cell) => (
-                  <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
-                ))}
+              <tr key={key || rowIndex} {...restProps}>
+                {row.cells.map((cell, cellIndex) => {
+                  const { key, ...restProps } = cell.getCellProps();
+                  return (
+                    <td key={key || cellIndex} {...restProps}>
+                      {cell.render("Cell")}
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}
@@ -246,8 +239,7 @@ const HubTable: React.FC<HubTableProps> = ({
         </button>{" "}
         <button onClick={() => previousPage()} disabled={!canPreviousPage}>
           {"<"}
-        </button>
-        {" : "}
+        </button>{" "}
         <button onClick={() => nextPage()} disabled={!canNextPage}>
           {">"}
         </button>{" "}
@@ -306,13 +298,8 @@ interface HubTableProps {
     visible: boolean,
     hubUrl: string
   ) => void;
-  onHubUpdated?: (hubs: Hub[]) => void;
+  onHubUpdated?: (hubs: Hub[], publicTracks: Array<any>) => void;
   publicHubs: Hub[];
   onTracksAdded?: (tracks: TrackModel[]) => void;
   genomeConfig?: any;
 }
-
-// Helper function - You may need to define this elsewhere in your project
-const variableIsObject = (variable: any): boolean => {
-  return typeof variable === "object" && variable !== null;
-};
