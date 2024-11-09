@@ -64,7 +64,7 @@ interface HubPaneProps {
   onTracksAdded?: (tracks: TrackModel[]) => void;
   onAddTracksToPool?: (tracks: TrackModel[]) => void;
   addTermToMetaSets?: any;
-  addedTrackSets?: Set<string>;
+  addedTrackSets: Set<string>;
   publicTrackSets?: Set<string>;
   publicHubs: any[];
   onHubUpdated?: () => void;

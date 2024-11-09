@@ -101,7 +101,7 @@ const HubTable: React.FC<HubTableProps> = ({
         onHubUpdated!(loadedHubs, tracks);
         const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
         if (tracksToShow.length > 0 && onTracksAdded) {
-          // onTracksAdded(tracksToShow);
+          onTracksAdded(tracksToShow);
         }
       } catch (error) {
         console.error(error);

@@ -21,6 +21,7 @@ import {
 // Import the functions you need from the SDKs you need
 import * as firebase from "firebase/app";
 import History from "./ToolsComponents/History";
+import _ from "lodash";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -73,6 +74,7 @@ function GenomeHub(props: any) {
   );
   const [curBundle, setCurBundle] = useState<{ [key: string]: any } | null>();
   const [publicTracksPool, setPublicTracksPool] = useState<Array<any>>([]);
+  const [suggestedMetaSets, setSuggestedMetaSets] = useState<any>(new Set());
   function addGlobalState(data: any) {
     if (presentStateIdx.current !== stateArr.current.length - 1) {
       stateArr.current.splice(presentStateIdx.current + 1);
@@ -167,17 +169,20 @@ function GenomeHub(props: any) {
     }
   }
 
-  function onTracksAdded(trackModel: any) {
-    trackModel.genomeName =
-      stateArr.current[presentStateIdx.current].genomeName;
-
+  function onTracksAdded(trackModels: any) {
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {}
     );
-    trackModel.id = trackModelId.current;
-    trackModelId.current++;
-    newStateObj.tracks.push(trackModel);
+
+    for (let trackModel of trackModels) {
+      trackModel.genomeName =
+        stateArr.current[presentStateIdx.current].genomeName;
+      trackModel.id = trackModelId.current;
+      trackModelId.current++;
+      newStateObj.tracks.push(trackModel);
+    }
+
     addGlobalState(newStateObj);
     let state = stateArr.current[presentStateIdx.current];
     let curGenomeConfig = getGenomeConfig(state.genomeName);
@@ -322,8 +327,19 @@ function GenomeHub(props: any) {
 
   //Control and manage the state of Hub
   //_________________________________________________________________________________________________________________________
-  function onHubUpdated(tracksToShow, publicTracks) {
-    console.log(tracksToShow, publicTracks);
+  function onHubUpdated(addedPublicTrackPool, trackModels) {
+    console.log(suggestedMetaSets);
+    setPublicTracksPool([...publicTracksPool, ...trackModels]);
+  }
+  function addTermToMetaSets(term) {
+    const toBeAdded = Array.isArray(term) ? term : [term];
+    setSuggestedMetaSets(new Set([...suggestedMetaSets, ...toBeAdded]));
+  }
+
+  function initializeMetaSets(tracks: any[]) {
+    const allKeys = tracks.map((track) => Object.keys(track.metadata));
+    const metaKeys = _.union(...allKeys);
+    addTermToMetaSets(metaKeys);
   }
 
   useEffect(() => {
@@ -348,6 +364,8 @@ function GenomeHub(props: any) {
           trackModel.id = trackModelId.current;
           trackModelId.current++;
         });
+
+        initializeMetaSets(curGenome.defaultTracks);
       }
       setGenomeList([curGenome]);
       isInitial.current = false;
@@ -378,6 +396,7 @@ function GenomeHub(props: any) {
                       curBundle={curBundle}
                       onHubUpdated={onHubUpdated}
                       publicTracksPool={publicTracksPool}
+                      addTermToMetaSets={addTermToMetaSets}
                     />
                   ) : (
                     <div>hii2</div>

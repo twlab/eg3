@@ -9,14 +9,14 @@ import "./FacetTable.css";
 
 const DEFAULT_ROW = "Sample";
 const DEFAULT_COLUMN = "Assay";
-export const UNUSED_META_KEY = "notused";
+const UNUSED_META_KEY = "notused";
 
 type FacetTableProps = {
   tracks: TrackModel[];
   addedTracks: TrackModel[];
   onTracksAdded?: (tracks: TrackModel[]) => void;
   addTermToMetaSets: (keys: string[]) => void;
-  addedTrackSets?: Set<string>;
+  addedTrackSets: Set<string>;
   publicTrackSets?: Set<string>;
   contentColorSetup: any;
 };
@@ -47,6 +47,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
 
   const initializeTracks = useCallback(
     (allTracks: TrackModel[]) => {
+      console.log(allTracks);
       const allKeys = allTracks.map((track) => Object.keys(track.metadata));
       const metaKeys = _.union(...allKeys);
       addTermToMetaSets(metaKeys);
@@ -81,8 +82,8 @@ const FacetTable: React.FC<FacetTableProps> = ({
               parent2children[metaKey].add(metaValue.name);
               child2ancestor[metaValue.name] = metaKey;
             } else {
-              parent2children[metaKey].add(metaValue.toString());
-              child2ancestor[metaValue.toString()] = metaKey;
+              parent2children[metaKey].add(metaValue);
+              child2ancestor[metaValue] = metaKey;
             }
           }
           metadata[metaKey] = metaValue;
@@ -160,9 +161,10 @@ const FacetTable: React.FC<FacetTableProps> = ({
 
   useEffect(() => {
     initializeTracks(tracks);
-  }, [tracks, initializeTracks]);
+  }, [tracks]);
 
   const handleOpenModal = (id: string) => {
+    console.log(id);
     setState((prevState) => ({ ...prevState, showModalId: id }));
   };
 
@@ -333,6 +335,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
 
   const countTracks = (row: any, col: any) => {
     const { tracks, rowHeader, columnHeader, showModalId } = state;
+    console.log(tracks, rowHeader, columnHeader, showModalId);
     let found: Array<any> = [];
     for (let track of tracks) {
       if (!track.metadata[rowHeader]) continue;
