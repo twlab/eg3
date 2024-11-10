@@ -9,6 +9,7 @@ import { HELP_LINKS } from "@/models/util";
 import TrackOptionsUI from "./TrackOptionsUI";
 import { getTrackConfig } from "@/trackConfigs/config-menu-models.tsx/getTrackConfig";
 import { Tabs, Tab } from "./CustomTabs";
+import FacetTable from "./FacetTable";
 
 export const TRACK_TYPES = {
   Numerical: ["bigWig", "bedGraph", "qBED"],
@@ -93,11 +94,13 @@ export const TYPES_DESC = {
 
 interface CustomTrackAdderProps {
   addedTracks: TrackModel[];
-  customTracksPool?: TrackModel[];
+  customTracksPool: TrackModel[];
   onTracksAdded?: (tracks: TrackModel[]) => void;
-  addTermToMetaSets?: (term: string) => void;
+  addTermToMetaSets: any;
   genomeConfig: { genome: { getName: () => string } };
-  addedTrackSets?: Set<string>;
+  addedTrackSets: Set<string>;
+  onHubUpdated: any;
+  contentColorSetup?: any;
 }
 
 const CustomTrackAdder = ({
@@ -107,6 +110,8 @@ const CustomTrackAdder = ({
   addTermToMetaSets,
   genomeConfig,
   addedTrackSets,
+  onHubUpdated,
+  contentColorSetup,
 }: CustomTrackAdderProps) => {
   const [state, setState] = useState<any>({
     type: TRACK_TYPES.Numerical[0],
@@ -148,6 +153,7 @@ const CustomTrackAdder = ({
           }
         }
         onTracksAdded([newTrack]);
+        onHubUpdated([], [newTrack], "custom");
         setState((prevState) => ({
           ...prevState,
           urlError: "",
@@ -155,7 +161,7 @@ const CustomTrackAdder = ({
         }));
       }
     },
-    [state, onTracksAdded]
+    [state]
   );
 
   const getOptions = (value: string) => {
@@ -358,15 +364,16 @@ const CustomTrackAdder = ({
           <Tab label="Add Remote Data Hub">{renderCustomHubAdder()}</Tab>
         </Tabs>
       </div>
-      {/* {customTracksPool.length > 0 && (
+      {customTracksPool!.length > 0 && (
         <FacetTable
           tracks={customTracksPool}
           addedTracks={addedTracks}
           onTracksAdded={onTracksAdded}
           addedTrackSets={addedTrackSets}
           addTermToMetaSets={addTermToMetaSets}
+          contentColorSetup={contentColorSetup}
         />
-      )} */}
+      )}
     </div>
   );
 };

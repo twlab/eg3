@@ -14,6 +14,7 @@ import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 import Nav from "./genomeNavigator/Nav";
+import querySting from "query-string";
 import {
   createNewTrackState,
   TrackState,
@@ -75,6 +76,7 @@ function GenomeHub(props: any) {
   const [curBundle, setCurBundle] = useState<{ [key: string]: any } | null>();
   const [publicTracksPool, setPublicTracksPool] = useState<Array<any>>([]);
   const [suggestedMetaSets, setSuggestedMetaSets] = useState<any>(new Set());
+  const [customTracksPool, setCustomTracksPool] = useState<Array<any>>([]);
   function addGlobalState(data: any) {
     if (presentStateIdx.current !== stateArr.current.length - 1) {
       stateArr.current.splice(presentStateIdx.current + 1);
@@ -325,11 +327,14 @@ function GenomeHub(props: any) {
     addGlobalState(newState);
   }
 
-  //Control and manage the state of Hub
+  //Control and manage the state of Hub and facet table
   //_________________________________________________________________________________________________________________________
-  function onHubUpdated(addedPublicTrackPool, trackModels) {
-    console.log(suggestedMetaSets);
-    setPublicTracksPool([...publicTracksPool, ...trackModels]);
+  function onHubUpdated(addedPublicTrackPool, trackModels, poolType) {
+    if (poolType === "public") {
+      setPublicTracksPool([...publicTracksPool, ...trackModels]);
+    } else {
+      setCustomTracksPool([...customTracksPool, ...trackModels]);
+    }
   }
   function addTermToMetaSets(term) {
     const toBeAdded = Array.isArray(term) ? term : [term];
@@ -352,6 +357,8 @@ function GenomeHub(props: any) {
         curGenome["curState"] = stateArr.current[presentStateIdx.current];
       }
       if (isInitial.current) {
+        const { query } = querySting.parseUrl(window.location.href);
+        console.log(query);
         let bundleId = uuidv4();
 
         setCurBundle({
@@ -396,6 +403,7 @@ function GenomeHub(props: any) {
                       curBundle={curBundle}
                       onHubUpdated={onHubUpdated}
                       publicTracksPool={publicTracksPool}
+                      customTracksPool={customTracksPool}
                       addTermToMetaSets={addTermToMetaSets}
                     />
                   ) : (

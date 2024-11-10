@@ -98,7 +98,7 @@ const HubTable: React.FC<HubTableProps> = ({
           isLoading: false,
           isLoaded: true,
         });
-        onHubUpdated!(loadedHubs, tracks);
+        onHubUpdated!(loadedHubs, tracks, "public");
         const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
         if (tracksToShow.length > 0 && onTracksAdded) {
           onTracksAdded(tracksToShow);
@@ -109,7 +109,7 @@ const HubTable: React.FC<HubTableProps> = ({
           error: true,
           isLoading: false,
         });
-        onHubUpdated!(loadedHubs, []);
+        onHubUpdated!(loadedHubs, [], "public");
       }
     },
     [publicHubs, onHubUpdated, onTracksAdded, _cloneHubsAndModifyOne, hubParser]
@@ -298,7 +298,7 @@ interface HubTableProps {
     visible: boolean,
     hubUrl: string
   ) => void;
-  onHubUpdated?: (hubs: Hub[], publicTracks: Array<any>) => void;
+  onHubUpdated?: (hubs: Hub[], publicTracks: Array<any>, type: string) => void;
   publicHubs: Hub[];
   onTracksAdded?: (tracks: TrackModel[]) => void;
   genomeConfig?: any;

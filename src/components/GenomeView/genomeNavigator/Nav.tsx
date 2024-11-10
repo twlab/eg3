@@ -37,6 +37,7 @@ interface NavProps {
   onRetrieveBundle?: any;
   curBundle?: any;
   publicTracksPool: Array<any>;
+  customTracksPool: Array<any>;
   addTermToMetaSets: any;
 }
 
@@ -57,6 +58,7 @@ const Nav: FC<NavProps> = ({
   curBundle,
   publicTracksPool,
   addTermToMetaSets,
+  customTracksPool,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
@@ -220,7 +222,7 @@ const Nav: FC<NavProps> = ({
               >
                 <FacetTableUI
                   publicTracksPool={publicTracksPool}
-                  customTracksPool={[]}
+                  customTracksPool={customTracksPool}
                   addedTracks={state.tracks}
                   onTracksAdded={onTracksAdded}
                   addTermToMetaSets={addTermToMetaSets}
@@ -240,6 +242,14 @@ const Nav: FC<NavProps> = ({
                   addedTracks={state.tracks}
                   onTracksAdded={onTracksAdded}
                   genomeConfig={genomeConfig}
+                  onHubUpdated={onHubUpdated}
+                  customTracksPool={customTracksPool}
+                  addTermToMetaSets={addTermToMetaSets}
+                  addedTrackSets={tracksUrlSets}
+                  contentColorSetup={{
+                    color: modalfg,
+                    background: modalbg,
+                  }}
                 />
               </ModalMenuItem>
             </div>

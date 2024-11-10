@@ -7,9 +7,9 @@ interface FacetTableUIProps {
   customTracksPool: TrackModel[];
   addedTracks: TrackModel[];
   onTracksAdded?: (tracks: TrackModel[]) => void;
-  addedTrackSets?: Set<string>;
+  addedTrackSets: Set<string>;
   addTermToMetaSets?: any;
-  contentColorSetup?: any; // Adjust type accordingly
+  contentColorSetup?: any;
 }
 
 const FacetTableUI: React.FC<FacetTableUIProps> = ({

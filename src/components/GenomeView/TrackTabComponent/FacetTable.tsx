@@ -517,6 +517,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
             {renderHeader(state.columnHeader)}
             {renderHeader(state.rowHeader)}
             {buildMatrix()}
+            {setColNumber()}
           </div>
         </div>
       </div>
