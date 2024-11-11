@@ -867,7 +867,6 @@ export function getDisplayModeFunction(
   //____________________________________________________________________________________________________________________________________________________________________________
   //_________________________________
   else if (drawData.trackModel.type === "modbed") {
-    console.log("HJUIASDFHDAS");
     let formattedData;
     formattedData = drawData.genesArr.map((record) => {
       return new Fiber(

@@ -657,6 +657,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let newVisData;
       let expandedGenomeCoordLocus;
       if (initial === 1) {
+        console.log(maxBp.current);
         initNavLoci.push({
           start: minBp.current - bpRegionSize.current,
           end: minBp.current,
@@ -700,6 +701,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         minBp.current = minBp.current - bpRegionSize.current;
         maxBp.current = maxBp.current + bpRegionSize.current * 2;
       } else {
+        console.log(maxBp.current);
         if (trackSide === "right") {
           curFetchRegionNav = new DisplayedRegionModel(
             genomeArr[genomeIdx].navContext,
@@ -716,7 +718,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genomicLoci = genomeFeatureSegment.map((item, index) =>
             item.getLocus()
           );
-
+          console.log(genomicLoci);
           newVisData = {
             visWidth: windowWidth * 3,
             visRegion: new DisplayedRegionModel(
@@ -738,7 +740,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
             (item, index) => item.getLocus()
           );
-
+          console.log(expandedGenomeCoordLocus);
           maxBp.current = maxBp.current + bpRegionSize.current;
         } else {
           curFetchRegionNav = new DisplayedRegionModel(
@@ -756,7 +758,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genomicLoci = genomeFeatureSegment.map((item, index) =>
             item.getLocus()
           );
-
+          console.log(genomicLoci);
           newVisData = {
             visWidth: windowWidth * 3,
             visRegion: new DisplayedRegionModel(
@@ -782,7 +784,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           minBp.current = minBp.current - bpRegionSize.current;
         }
       }
-
+      console.log(genomicLoci);
       try {
         infiniteScrollWorker.current!.postMessage({
           primaryGenName: genomeArr[genomeIdx].genome.getName(),
@@ -1099,7 +1101,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
-  function onNewRegion() {}
+
   useEffect(() => {
     if (trackManagerId.current === "") {
       let genome = genomeArr[genomeIdx];

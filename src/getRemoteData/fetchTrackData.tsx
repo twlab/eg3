@@ -51,6 +51,7 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
   bigwig: async function bigwigFetch(regionData: any) {
+    console.log(regionData);
     return getBigData(
       regionData.nav,
       regionData.trackModel.options,

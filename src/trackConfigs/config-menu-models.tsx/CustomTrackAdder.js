@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Tabs, Tab } from "react-bootstrap-tabs";
 import JSON5 from "json5";
 // import { notify } from 'react-notify-toast';
 import TrackModel from "../../model/TrackModel";
@@ -11,9 +10,6 @@ import { HELP_LINKS } from "../../util";
 import { TrackOptionsUI } from "./TrackOptionsUI";
 import { getTrackConfig } from "components/trackConfig/getTrackConfig";
 
-// Just add a new entry here to support adding a new track type.
-// const TRACK_TYPES = ['bigWig', 'bedGraph', 'methylC', 'categorical', 'bed', 'bigBed', 'repeatmasker','refBed', 'hic', 'longrange', 'bigInteract', 'cool', 'bam'];
-
 export const TRACK_TYPES = {
     Numerical: ["bigWig", "bedGraph", "qBED"],
     Variant: ["vcf"],
@@ -21,7 +17,6 @@ export const TRACK_TYPES = {
     Annotation: ["bed", "bigBed", "refBed", "bedcolor"],
     Peak: ["rgbpeak"],
     Categorical: ["categorical"],
-    // "Transcription Factor": ["jaspar"],
     "Genome graph": ["brgfa", "graph"],
     Methylation: ["methylC", "modbed"],
     Interaction: ["hic", "cool", "bigInteract", "longrange", "longrangecolor"],
@@ -33,7 +28,7 @@ export const TRACK_TYPES = {
     Image: ["omero4dn", "omeroidr"],
 };
 
-export const NUMERRICAL_TRACK_TYPES = ["bigwig", "bedgraph"]; // the front UI we allow any case of types, in TrackModel only lower case
+export const NUMERRICAL_TRACK_TYPES = ["bigwig", "bedgraph"];
 
 const TYPES_NEED_INDEX = [
     "bedgraph",
@@ -90,14 +85,13 @@ export const TYPES_DESC = {
     genomealign: "genome pairwise alignment",
     brgfa: "local genome graph in bed like rGFA format",
     graph: "global genome graph in bed like rGFA format",
-    // jaspar: "transcription factor binding data from Jaspar",
     modbed: "read modification for methylation etc.",
 };
 
 /**
  * UI for adding custom tracks.
  *
- * @author Silas Hsu and Daofeng Li
+ * @type {React.FC}
  */
 class CustomTrackAdder extends React.Component {
     static propTypes = {
@@ -126,6 +120,7 @@ class CustomTrackAdder extends React.Component {
             indexUrl: undefined,
         };
         this.handleSubmitClick = this.handleSubmitClick.bind(this);
+        this.handleTabClick = this.handleTabClick.bind(this);
     }
 
     handleSubmitClick(e) {
@@ -149,6 +144,10 @@ class CustomTrackAdder extends React.Component {
             this.props.onAddTracksToPool([newTrack], false);
             this.setState({ urlError: "", trackAdded: true });
         }
+    }
+
+    handleTabClick(index) {
+        this.setState({ selectedTabIndex: index });
     }
 
     renderTypeOptions() {
@@ -294,18 +293,51 @@ class CustomTrackAdder extends React.Component {
     }
 
     render() {
+        const { selectedTabIndex } = this.state;
+        const tabHeaderStyle = {
+            flex: 1,
+            padding: '10px',
+            cursor: 'pointer',
+            textAlign: 'center',
+            border: '1px solid #ddd',
+            backgroundColor: '#f1f1f1',
+        };
+        const activeTabHeaderStyle = {
+            ...tabHeaderStyle,
+            backgroundColor: '#fff',
+            borderBottom: 'none',
+        };
+        const tabContentStyle = {
+            border: '1px solid #ddd',
+            padding: '10px',
+        };
         return (
             <div id="CustomTrackAdder">
                 <div>
-                    <Tabs
-                        onSelect={(index, label) => this.setState({ selectedTabIndex: index })}
-                        selected={this.state.selectedTabIndex}
-                        headerStyle={{ fontWeight: "bold" }}
-                        activeHeaderStyle={{ color: "blue" }}
-                    >
-                        <Tab label="Add Remote Track">{this.renderCustomTrackAdder()}</Tab>
-                        <Tab label="Add Remote Data Hub">{this.renderCustomHubAdder()}</Tab>
-                    </Tabs>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex' }}>
+                            <button
+                                style={selectedTabIndex === 0 ? activeTabHeaderStyle : tabHeaderStyle}
+                                onClick={() => this.handleTabClick(0)}
+                            >
+                                Add Remote Track
+                            </button>
+                            <button
+                                style={selectedTabIndex === 1 ? activeTabHeaderStyle : tabHeaderStyle}
+                                onClick={() => this.handleTabClick(1)}
+                            >
+                                Add Remote Data Hub
+                            </button>
+                        </div>
+                        <div>
+                            {selectedTabIndex === 0 && (
+                                <div style={tabContentStyle}>{this.renderCustomTrackAdder()}</div>
+                            )}
+                            {selectedTabIndex === 1 && (
+                                <div style={tabContentStyle}>{this.renderCustomHubAdder()}</div>
+                            )}
+                        </div>
+                    </div>
                 </div>
                 {this.props.customTracksPool.length > 0 && (
                     <FacetTable
@@ -321,4 +353,4 @@ class CustomTrackAdder extends React.Component {
     }
 }
 
-export default CustomTrackAdder;
+export default CustomTrackAdder

@@ -16,7 +16,9 @@ import "./Nav.css";
 import { TrackState } from "../CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import HubPane from "../TrackTabComponent/HubPane";
 import FacetTableUI from "../TrackTabComponent/FacetTableUI";
-
+import RegionSetSelector from "../TrackTabComponent/RegionSetSelector/RegionSetSelector";
+import Geneplot from "../TrackTabComponent/Geneplot/Geneplot";
+import ScatterPlot from "../TrackTabComponent/Geneplot/ScatterPlot";
 interface NavProps {
   selectedRegion: any;
   onRegionSelected: any;
@@ -39,6 +41,10 @@ interface NavProps {
   publicTracksPool: Array<any>;
   customTracksPool: Array<any>;
   addTermToMetaSets: any;
+  onSetSelected: any;
+  onSetsChanged: any;
+  sets: Array<any>;
+  selectedSet: any;
 }
 
 const Nav: FC<NavProps> = ({
@@ -59,11 +65,15 @@ const Nav: FC<NavProps> = ({
   publicTracksPool,
   addTermToMetaSets,
   customTracksPool,
+  onSetSelected,
+  onSetsChanged,
+  sets,
+  selectedSet,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
   const [appDropdownOpen, setAppDropdownOpen] = useState(false);
-
+  const [settingDropdownOpen, setSettingDropdownOpen] = useState(false);
   const handleGenomeOpenModal = () => setGenomeModal(true);
   const handleGenomeCloseModal = () => setGenomeModal(false);
 
@@ -74,7 +84,8 @@ const Nav: FC<NavProps> = ({
 
   const toggleTrackDropdown = () => setTrackDropdownOpen(!trackDropdownOpen);
   const toggleAppDropdown = () => setAppDropdownOpen(!appDropdownOpen);
-
+  const toggleSettingDropdown = () =>
+    setSettingDropdownOpen(!settingDropdownOpen);
   function groupTrackByGenome() {
     const grouped = {};
     state.tracks.forEach((track) => {
@@ -266,6 +277,74 @@ const Nav: FC<NavProps> = ({
               className={`dropdown-menu ${appDropdownOpen ? "show" : "hide"}`}
             >
               <ModalMenuItem
+                itemLabel="Region Set View"
+                style={{
+                  content: {
+                    right: "unset",
+                    bottom: "unset",
+                    overflow: "visible",
+                    padding: "5px",
+                    zIndex: 5,
+                    color: modalfg,
+                    background: modalbg,
+                  },
+                }}
+              >
+                <RegionSetSelector
+                  genome={genomeConfig.genome}
+                  sets={sets}
+                  selectedSet={selectedSet}
+                  onSetSelected={onSetSelected}
+                  onSetsChanged={onSetsChanged}
+                />
+              </ModalMenuItem>
+
+              <ModalMenuItem
+                itemLabel="Gene Plot"
+                style={{
+                  content: {
+                    right: "unset",
+                    bottom: "unset",
+                    overflow: "visible",
+                    padding: "5px",
+                    zIndex: 5,
+                    color: modalfg,
+                    background: modalbg,
+                  },
+                }}
+              >
+                <Geneplot
+                  genome={genomeConfig.genome}
+                  sets={sets}
+                  selectedSet={selectedSet}
+                  tracks={state.tracks}
+                  onSetSelected={onSetSelected}
+                  onSetsChanged={onSetsChanged}
+                />
+              </ModalMenuItem>
+
+              <ModalMenuItem
+                itemLabel="Scatter Plot"
+                style={{
+                  content: {
+                    right: "unset",
+                    bottom: "unset",
+                    overflow: "visible",
+                    padding: "5px",
+                    zIndex: 5,
+                    color: modalfg,
+                    background: modalbg,
+                  },
+                }}
+              >
+                <ScatterPlot
+                  genomeConfig={genomeConfig.genome}
+                  sets={sets}
+                  selectedSet={selectedSet}
+                  tracks={state.tracks}
+                />
+              </ModalMenuItem>
+              <ModalMenuItem
                 itemLabel="Session"
                 style={{
                   content: {
@@ -288,6 +367,66 @@ const Nav: FC<NavProps> = ({
                   addSessionState={addSessionState}
                 />
               </ModalMenuItem>
+            </div>
+          </div>
+
+          <div className="dropdown" style={{ marginLeft: "10px" }}>
+            <button
+              type="button"
+              className="btn btn-success"
+              style={{ backgroundColor: "lightblue" }}
+              onClick={toggleSettingDropdown}
+            >
+              ⚙Settings
+            </button>
+            <div
+              className={`dropdown-menu ${
+                settingDropdownOpen ? "show" : "hide"
+              }`}
+            >
+              <div
+                className="dropdown-menu bg"
+                style={{ display: "flex", flexDirection: "column" }}
+              >
+                <label className="dropdown-item" htmlFor="switchNavigator">
+                  <input id="switchNavigator" type="checkbox" />
+                  <span style={{ marginLeft: "1ch" }}>
+                    Show genome-wide navigator
+                  </span>
+                  <span
+                    className="GenomeNavigator-tooltip"
+                    role="img"
+                    aria-label="genomenavigator"
+                  >
+                    ❓
+                    <div className="GenomeNavigator-tooltiptext">
+                      <ul style={{ lineHeight: "1.2em", marginBottom: 0 }}>
+                        <li>Left mouse drag: select</li>
+                        <li>Right mouse drag: pan</li>
+                        <li>Mousewheel: zoom</li>
+                      </ul>
+                    </div>
+                  </span>
+                </label>
+                <label className="dropdown-item" htmlFor="cacheToggle">
+                  <input id="cacheToggle" type="checkbox" />
+                  <span style={{ marginLeft: "1ch" }}>
+                    Restore current view after Refresh
+                  </span>
+                </label>
+                <label className="dropdown-item" htmlFor="setLegendWidth">
+                  <input
+                    type="number"
+                    id="legendWidth"
+                    step="5"
+                    min="60"
+                    max="200"
+                  />
+                  <span style={{ marginLeft: "1ch" }}>
+                    Change track legend width
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
