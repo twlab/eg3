@@ -19,6 +19,9 @@ import FacetTableUI from "../TrackTabComponent/FacetTableUI";
 import RegionSetSelector from "../TrackTabComponent/RegionSetSelector/RegionSetSelector";
 import Geneplot from "../TrackTabComponent/Geneplot/Geneplot";
 import ScatterPlot from "../TrackTabComponent/Geneplot/ScatterPlot";
+import ShareUI from "../TrackTabComponent/ShareUI";
+import { HotKeyInfo } from "../TrackTabComponent/HotKeyInfo";
+
 interface NavProps {
   selectedRegion: any;
   onRegionSelected: any;
@@ -45,6 +48,7 @@ interface NavProps {
   onSetsChanged: any;
   sets: Array<any>;
   selectedSet: any;
+  onTabSettingsChange: any;
 }
 
 const Nav: FC<NavProps> = ({
@@ -69,11 +73,16 @@ const Nav: FC<NavProps> = ({
   onSetsChanged,
   sets,
   selectedSet,
+  onTabSettingsChange,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
   const [appDropdownOpen, setAppDropdownOpen] = useState(false);
   const [settingDropdownOpen, setSettingDropdownOpen] = useState(false);
+  const [helpDropDownOpen, setHelpDropDownOpen] = useState(false);
+  const [share, setShare] = useState(false);
+  const [openModal, setOpenModal] = useState<string | null>(null); // Track the currently open modal
+  console.log(openModal);
   const handleGenomeOpenModal = () => setGenomeModal(true);
   const handleGenomeCloseModal = () => setGenomeModal(false);
 
@@ -84,8 +93,13 @@ const Nav: FC<NavProps> = ({
 
   const toggleTrackDropdown = () => setTrackDropdownOpen(!trackDropdownOpen);
   const toggleAppDropdown = () => setAppDropdownOpen(!appDropdownOpen);
+  const toggleHelpDropdown = () => setHelpDropDownOpen(!helpDropDownOpen);
+
+  const toggleShare = () => setShare(!share);
+
   const toggleSettingDropdown = () =>
     setSettingDropdownOpen(!settingDropdownOpen);
+
   function groupTrackByGenome() {
     const grouped = {};
     state.tracks.forEach((track) => {
@@ -190,6 +204,9 @@ const Nav: FC<NavProps> = ({
             >
               <ModalMenuItem
                 itemLabel="Annotation Tracks"
+                isOpen={openModal === "Annotation Tracks"}
+                onOpen={() => setOpenModal("Annotation Tracks")}
+                onClose={() => setOpenModal(null)}
                 style={{ content: { color: modalfg, background: modalbg } }}
               >
                 <AnnotationTrackUI
@@ -202,6 +219,9 @@ const Nav: FC<NavProps> = ({
               </ModalMenuItem>
               <ModalMenuItem
                 itemLabel="Public Data Hubs"
+                isOpen={openModal === "Public Data Hubs"}
+                onOpen={() => setOpenModal("Public Data Hubs")}
+                onClose={() => setOpenModal(null)}
                 style={{
                   content: {
                     color: modalfg,
@@ -224,6 +244,9 @@ const Nav: FC<NavProps> = ({
               </ModalMenuItem>
               <ModalMenuItem
                 itemLabel="Track Facet Table"
+                isOpen={openModal === "Track Facet Table"}
+                onOpen={() => setOpenModal("Track Facet Table")}
+                onClose={() => setOpenModal(null)}
                 style={{
                   content: {
                     color: modalfg,
@@ -247,6 +270,9 @@ const Nav: FC<NavProps> = ({
 
               <ModalMenuItem
                 itemLabel="Remote Tracks"
+                isOpen={openModal === "Remote Tracks"}
+                onOpen={() => setOpenModal("Remote Tracks")}
+                onClose={() => setOpenModal(null)}
                 style={{ content: { color: modalfg, background: modalbg } }}
               >
                 <CustomTrackAdder
@@ -278,6 +304,9 @@ const Nav: FC<NavProps> = ({
             >
               <ModalMenuItem
                 itemLabel="Region Set View"
+                isOpen={openModal === "Region Set View"}
+                onOpen={() => setOpenModal("Region Set View")}
+                onClose={() => setOpenModal(null)}
                 style={{
                   content: {
                     right: "unset",
@@ -301,6 +330,9 @@ const Nav: FC<NavProps> = ({
 
               <ModalMenuItem
                 itemLabel="Gene Plot"
+                isOpen={openModal === "Gene Plot"}
+                onOpen={() => setOpenModal("Gene Plot")}
+                onClose={() => setOpenModal(null)}
                 style={{
                   content: {
                     right: "unset",
@@ -325,6 +357,9 @@ const Nav: FC<NavProps> = ({
 
               <ModalMenuItem
                 itemLabel="Scatter Plot"
+                isOpen={openModal === "Scatter Plot"}
+                onOpen={() => setOpenModal("Scatter Plot")}
+                onClose={() => setOpenModal(null)}
                 style={{
                   content: {
                     right: "unset",
@@ -346,6 +381,9 @@ const Nav: FC<NavProps> = ({
               </ModalMenuItem>
               <ModalMenuItem
                 itemLabel="Session"
+                isOpen={openModal === "Session"}
+                onOpen={() => setOpenModal("Session")}
+                onClose={() => setOpenModal(null)}
                 style={{
                   content: {
                     right: "unset",
@@ -429,6 +467,137 @@ const Nav: FC<NavProps> = ({
               </div>
             </div>
           </div>
+
+          <div className="dropdown" style={{ marginLeft: "10px" }}>
+            <button
+              type="button"
+              className="btn btn-success"
+              style={{ backgroundColor: "red" }}
+              onClick={toggleShare}
+            >
+              📨Share
+            </button>
+            <div className={`dropdown-menu ${share ? "show" : "hide"}`}>
+              <ModalMenuItem
+                itemLabel="Share"
+                isOpen={share}
+                onOpen={() => setOpenModal("Share")}
+                onClose={() => setShare(false)}
+                hasDropDown={false}
+                style={{
+                  content: {
+                    right: "unset",
+                    bottom: "unset",
+                    overflow: "visible",
+                    padding: "5px",
+                    zIndex: 5,
+                    color: modalfg,
+                    background: modalbg,
+                  },
+                }}
+              >
+                <ShareUI browser={state} color={modalfg} background={modalbg} />
+              </ModalMenuItem>
+            </div>
+          </div>
+
+          <div className="dropdown" style={{ marginLeft: "10px" }}>
+            <button
+              type="button"
+              className="btn btn-success"
+              style={{ backgroundColor: "orange" }}
+              onClick={toggleHelpDropdown}
+            >
+              📖Help
+            </button>
+            <div
+              className={`dropdown-menu ${helpDropDownOpen ? "show" : "hide"}`}
+            >
+              <div
+                className="dropdown-menu bg"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <label className="dropdown-item">
+                  <ModalMenuItem
+                    isOpen={openModal === "Hotkeys"}
+                    itemLabel="Hotkeys"
+                    onOpen={() => setOpenModal("Hotkeys")}
+                    onClose={() => setOpenModal(null)}
+                    style={{
+                      content: {
+                        left: "unset",
+                        bottom: "unset",
+                        overflow: "visible",
+                        padding: "5px",
+                        zIndex: 5,
+                        color: modalfg,
+                        background: modalbg,
+                      },
+                    }}
+                  >
+                    <HotKeyInfo />
+                  </ModalMenuItem>
+                </label>
+                <label className="dropdown-item">
+                  <a
+                    href="https://epigenomegateway.readthedocs.io/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Documentation
+                  </a>
+                </label>
+                <label className="dropdown-item">
+                  <a
+                    href="http://epigenomegateway.wustl.edu/legacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    The 'old' browser
+                  </a>
+                </label>
+                <label className="dropdown-item">
+                  <a
+                    href="https://groups.google.com/d/forum/epgg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Google groups
+                  </a>
+                </label>
+                <label className="dropdown-item">
+                  <a
+                    href="https://join.slack.com/t/epgg/shared_invite/enQtNTA5NDY5MDIwNjc4LTlhYjJlZWM4MmRlMTcyODEzMDI0ZTlmNmM2ZjIyYmY2NTU5ZTY2MWRmOWExMDg1N2U5ZWE3NzhkMjVkZDVhNTc"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Join our Slack
+                  </a>
+                </label>
+                <label className="dropdown-item">
+                  <a
+                    href="https://github.com/lidaof/eg-react"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Source code @ Github
+                  </a>
+                </label>
+                <label className="dropdown-item">
+                  <a
+                    href="https://www.youtube.com/channel/UCnGVWbxJv-DPDCAFDQ1oFQA"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    YouTube channel
+                  </a>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -459,6 +628,10 @@ interface ModalMenuItemProps {
   itemClassName?: string;
   style?: ReactModal.Styles;
   children: React.ReactNode;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  hasDropDown?: boolean;
 }
 
 const ModalMenuItem: FC<ModalMenuItemProps> = ({
@@ -466,9 +639,18 @@ const ModalMenuItem: FC<ModalMenuItemProps> = ({
   itemClassName = "dropdown-item",
   style,
   children,
+  isOpen,
+  onOpen,
+  onClose,
+  hasDropDown = true,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const toggleOpen = useCallback(() => setIsOpen(!isOpen), [isOpen]);
+  const toggleOpen = useCallback(() => {
+    if (isOpen) {
+      onClose();
+    } else {
+      onOpen();
+    }
+  }, [isOpen, onOpen, onClose]);
 
   const finalStyle = {
     overlay: { backgroundColor: "rgba(111,107,101, 0.7)", zIndex: 4 },
@@ -477,9 +659,13 @@ const ModalMenuItem: FC<ModalMenuItemProps> = ({
 
   return (
     <>
-      <div className={itemClassName} onClick={toggleOpen}>
-        {itemLabel}
-      </div>
+      {hasDropDown ? (
+        <div className={itemClassName} onClick={toggleOpen}>
+          {itemLabel}
+        </div>
+      ) : (
+        ""
+      )}
       <ReactModal
         isOpen={isOpen}
         ariaHideApp={false}

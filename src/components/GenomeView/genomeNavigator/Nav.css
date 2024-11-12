@@ -101,6 +101,7 @@ followint this example https://codepen.io/EightArmsHQ/pen/mvqJwg?editors=1100
 .dropdown-item {
   background-color: var(--bg-color);
   color: var(--font-color);
+
   cursor: pointer;
 }
 

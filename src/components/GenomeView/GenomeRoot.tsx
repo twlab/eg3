@@ -392,7 +392,9 @@ function GenomeHub(props: any) {
 
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
-
+  //Control and manage the state of genomeNavigator, restoreview, and legend Width
+  //_________________________________________________________________________________________________________________________
+  function onTabSettingsChange() {}
   useEffect(() => {
     if (size.width !== 0) {
       let curGenome = getGenomeConfig("hg38");
@@ -453,6 +455,7 @@ function GenomeHub(props: any) {
                       addTermToMetaSets={addTermToMetaSets}
                       onSetsChanged={onSetsChanged}
                       onSetSelected={onSetsSelected}
+                      onTabSettingsChange={onTabSettingsChange}
                       sets={regionSets}
                       selectedSet={selectedSet}
                     />
