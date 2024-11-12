@@ -46,7 +46,8 @@ export const DEFAULT_OPTIONS = {
   hiddenPixels: 0.5,
   rowHeight: 40,
   color: "orangered",
-  color2: "blue",
+  color2: "lightgray",
+  backgroundColor: "var(--bg-color)",
   height: 40,
   maxRows: 20,
   displayMode: FiberDisplayModes.AUTO,
@@ -91,28 +92,6 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
    * @param {number} index - iteration index
    * @return {JSX.Element} element visualizing the feature
    */
-  // renderAnnotation(
-  //   placedGroup: PlacedFeatureGroup,
-  //   y: number,
-  //   isLastRow: boolean,
-  //   index: number
-  // ) {
-  //   return placedGroup.placedFeatures.map((placement, i) => (
-  //     <FiberAnnotation
-  //       key={i}
-  //       placement={placement}
-  //       y={y}
-  //       isMinimal={isLastRow}
-  //       color={this.props.options.color}
-  //       color2={this.props.options.color2}
-  //       rowHeight={this.props.options.rowHeight}
-  //       hiddenPixels={this.props.options.hiddenPixels}
-  //       displayMode={this.props.options.displayMode}
-  //       hideMinimalItems={this.props.options.hideMinimalItems}
-  //       pixelsPadding={this.props.options.pixelsPadding}
-  //     />
-  //   ));
-  // }
 
   /**
    *
@@ -269,21 +248,11 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
   };
 
   render() {
-    const { data, visRegion, width, options, trackModel } = this.props;
-    if (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
-      this.xMap = this.aggregateFibers(data, visRegion, width);
-      this.scales = this.computeScales();
-      return this.visualizer();
-    }
-    return (
-      <div></div>
-      // <AnnotationTrack
-      //     {...this.props}
-      //     rowHeight={options.rowHeight + ROW_VERTICAL_PADDING}
-      //     getAnnotationElement={this.renderAnnotation}
-      //     featurePadding={this.paddingFunc}
-      // />
-    );
+    const { data, visRegion, width } = this.props;
+
+    this.xMap = this.aggregateFibers(data, visRegion, width);
+    this.scales = this.computeScales();
+    return this.visualizer();
   }
 }
 

@@ -1,66 +1,44 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
-
 import { FiberDisplayModes } from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 
 const DOT_BP_PIXEL_CUTOFF = 2.5;
 
-/**
- * Visualizer for fiber.
- *
- */
-class FiberAnnotation extends React.Component {
-  static propTypes = {
-    // placement: PropTypes.instanceOf(PlacedFeature).isRequired, // fiber segment to visualize
-    placement: PropTypes.object.isRequired, // fiber segment to visualize
-    y: PropTypes.number, // Y offset
-    color: PropTypes.string, // Primary color to draw
-    color2: PropTypes.string, // Color of reverse strand annotations
-    rowHeight: PropTypes.number,
-    isMinimal: PropTypes.bool, // Whether to just render a plain box
-    displayMode: PropTypes.string,
-    /**
-     * Callback for click events.  Signature: (event: MouseEvent, feature: Feature): void
-     *     `event`: the triggering click event
-     *     `feature`: the same Feature as the one passed via props
-     */
-    onShowTooltip: PropTypes.func,
-    onHideTooltip: PropTypes.func,
-  };
+interface Feature {
+  getName: () => string;
+  ons: number[];
+  offs: number[];
+  strand: string;
+}
 
-  /**
-   * Renders the tooltip for an element in a fiber.
-   */
-  renderTooltip = (event, feature, bs) => {
-    const tooltip = (
-      <Tooltip pageX={event.pageX} pageY={event.pageY} ignoreMouse={true}>
-        <div>
-          {bs && `position ${bs} in`} {feature.getName()} read
-        </div>
-      </Tooltip>
-    );
-    this.props.onShowTooltip(tooltip);
+interface Placement {
+  feature: Feature;
+  xSpan: [number, number];
+  visiblePart: {
+    relativeStart: number;
+    relativeEnd: number;
   };
+}
 
-  /**
-   * Renders the bar tooltip in a fiber.
-   */
-  renderBarTooltip = (event, feature, onCount, onPct, total) => {
-    const tooltip = (
-      <Tooltip pageX={event.pageX} pageY={event.pageY} ignoreMouse={true}>
-        <div>
-          {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
-        </div>
-        <div>{feature.getName()}</div>
-      </Tooltip>
-    );
-    this.props.onShowTooltip(tooltip);
-  };
+interface FiberAnnotationProps {
+  placement: Placement;
+  y?: number;
+  color?: string;
+  color2?: string;
+  rowHeight?: any;
+  isMinimal?: boolean;
+  displayMode?: string;
+  hiddenPixels?: number;
+  hideMinimalItems?: boolean;
+  pixelsPadding?: number;
+  renderTooltip?: any;
+  onHideTooltip?: any;
+}
 
+class FiberAnnotation extends React.Component<FiberAnnotationProps> {
   render() {
     const {
       placement,
@@ -70,6 +48,7 @@ class FiberAnnotation extends React.Component {
       isMinimal,
       hiddenPixels,
       rowHeight,
+      renderTooltip,
       onHideTooltip,
       displayMode,
       hideMinimalItems,
@@ -80,7 +59,7 @@ class FiberAnnotation extends React.Component {
     const segmentWidth = relativeEnd - relativeStart;
     const [startX, endX] = xSpan;
     const width = endX - startX;
-    if (width < hiddenPixels) {
+    if (width < hiddenPixels!) {
       return null;
     }
     if (isMinimal) {
@@ -90,7 +69,7 @@ class FiberAnnotation extends React.Component {
       return (
         <TranslatableG
           y={y}
-          onMouseEnter={(event) => this.renderTooltip(event, feature)}
+          onMouseEnter={(event) => renderTooltip(event, feature, 0)}
           onMouseOut={onHideTooltip}
         >
           <rect
@@ -143,7 +122,7 @@ class FiberAnnotation extends React.Component {
       const totals = xMap.map((x) => x.on + x.off);
       const maxValue = _.max(totals);
       const pcts = xMap.map((x, i) => x.on / totals[i]);
-      const bars = [];
+      const bars: Array<any> = [];
       const barWidth = Math.max(bpPixel, 1);
       const scale = scaleLinear()
         .domain([0, 1])
@@ -155,7 +134,6 @@ class FiberAnnotation extends React.Component {
         .clamp(true);
       xMap.forEach((x, idx) => {
         if (x.on || x.off) {
-          // if (x.on) {
           if (displayMode === FiberDisplayModes.AUTO) {
             bars.push(
               <rect
@@ -163,7 +141,7 @@ class FiberAnnotation extends React.Component {
                 x={startX + idx}
                 y={0}
                 height={rowHeight}
-                width={barWidth + pixelsPadding}
+                width={barWidth + (pixelsPadding || 0)}
                 fill="lightgray"
                 opacity={bgScale(totals[idx])}
               />
@@ -175,13 +153,15 @@ class FiberAnnotation extends React.Component {
                 x={startX + idx}
                 y={rowHeight - barHeight}
                 height={barHeight}
-                width={barWidth + pixelsPadding}
+                width={barWidth + (pixelsPadding || 0)}
                 fill={color}
                 opacity={0.7}
                 onMouseEnter={(event) =>
-                  this.renderBarTooltip(
+                  renderTooltip(
                     event,
                     feature,
+                    undefined,
+                    "bar",
                     x.on,
                     pcts[idx],
                     totals[idx]
@@ -191,24 +171,22 @@ class FiberAnnotation extends React.Component {
               />
             );
           } else {
-            // bar heatmap
             const fillColor = pcts[idx] >= 0.5 ? color : color2;
-            // const opacity = pcts[idx] >= 0.5 ? 1 : 0.3;
             bars.push(
               <rect
                 key={idx + "fgrect"}
                 x={startX + idx}
                 y={0}
                 height={rowHeight}
-                width={barWidth + pixelsPadding}
-                // width={10}
+                width={barWidth + (pixelsPadding || 0)}
                 fill={fillColor}
                 opacity={1}
-                // opacity={opacity}
                 onMouseEnter={(event) =>
-                  this.renderBarTooltip(
+                  renderTooltip(
                     event,
                     feature,
+                    undefined,
+                    "bar",
                     x.on,
                     pcts[idx],
                     totals[idx]
@@ -228,7 +206,6 @@ class FiberAnnotation extends React.Component {
         </TranslatableG>
       );
     } else {
-      // bp level
       const mainBody = (
         <rect
           x={startX}
@@ -241,8 +218,8 @@ class FiberAnnotation extends React.Component {
       );
       const arrows = feature.strand !== "." && (
         <AnnotationArrows
-          startX={xSpan.start}
-          endX={xSpan.end}
+          startX={startX}
+          endX={endX}
           y={rowHeight * 0.25}
           height={rowHeight * 0.5}
           opacity={0.75}
@@ -251,7 +228,7 @@ class FiberAnnotation extends React.Component {
           separation={100}
         />
       );
-      const blocks = [];
+      const blocks: Array<any> = [];
       feature.ons.forEach((rbs, idx) => {
         const bs = Math.abs(rbs);
         if (bs >= relativeStart && bs < relativeEnd) {
@@ -274,7 +251,9 @@ class FiberAnnotation extends React.Component {
                 stroke={fillColor}
                 strokeWidth={2}
                 opacity={0.7}
-                onMouseEnter={(event) => this.renderTooltip(event, feature, bs)}
+                onMouseEnter={(event) =>
+                  renderTooltip(event, feature, bs, "norm")
+                }
                 onMouseOut={onHideTooltip}
               />
             );
@@ -292,7 +271,9 @@ class FiberAnnotation extends React.Component {
                 fill={fillColor}
                 strokeWidth={0}
                 opacity={0.6}
-                onMouseEnter={(event) => this.renderTooltip(event, feature, bs)}
+                onMouseEnter={(event) =>
+                  renderTooltip(event, feature, bs, "norm")
+                }
                 onMouseOut={onHideTooltip}
               />
             );
@@ -322,7 +303,9 @@ class FiberAnnotation extends React.Component {
                 strokeWidth={2}
                 fillOpacity={0}
                 opacity={0.7}
-                onMouseEnter={(event) => this.renderTooltip(event, feature, bs)}
+                onMouseEnter={(event) =>
+                  renderTooltip(event, feature, bs, "norm")
+                }
                 onMouseOut={onHideTooltip}
               />
             );
@@ -340,7 +323,9 @@ class FiberAnnotation extends React.Component {
                 fill="lightgrey"
                 strokeWidth={0}
                 opacity={0.5}
-                onMouseEnter={(event) => this.renderTooltip(event, feature, bs)}
+                onMouseEnter={(event) =>
+                  renderTooltip(event, feature, bs, "norm")
+                }
                 onMouseOut={onHideTooltip}
               />
             );

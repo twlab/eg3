@@ -42,44 +42,45 @@ const genome = new Genome("hg38", [
 // chr7:74083652-74084068 dynseq cromorsome
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
+// for renmora
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27207174-27219988");
 const defaultTracks = [
   // new TrackModel({
   //   type: "ruler",
   //   name: "Ruler",
   // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
-
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
   // new TrackModel({
-  //   type: "modbed",
-  //   name: "examplemod",
-  //   url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
+
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
   // }),
   new TrackModel({
-    type: "geneAnnotation",
-    name: "MANE_select_1.0",
-    label: "MANE selection v1.0",
-    genome: "hg38",
+    type: "modbed",
+    name: "examplemod",
+    url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
   }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "MANE_select_1.0",
+  //   label: "MANE selection v1.0",
+  //   genome: "hg38",
+  // }),
 
   // new TrackModel({
   //   type: "refbed",
@@ -163,23 +164,23 @@ const defaultTracks = [
   //   name: "mm10 bed",
   //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
   // }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
   // new TrackModel({
   //   type: "bigwig",

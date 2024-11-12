@@ -9,14 +9,28 @@ import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { FiberDisplayModes } from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
-
+import { Manager, Reference, Popper } from "react-popper";
+import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
+import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
+import { Fiber } from "@/models/Feature";
+import OpenInterval from "@/models/OpenInterval";
+const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
+const ARROW_SIZE = 16;
 export const DEFAULT_OPTIONS = {
-  ...defaultNumericalTrack,
   ...defaultFiberTrack,
 };
 
 DEFAULT_OPTIONS.displayMode = FiberDisplayModes.AUTO;
-
+function getGenePadding(feature: Fiber, xSpan: OpenInterval) {
+  console.log(feature, xSpan);
+  const width = xSpan.end - xSpan.start;
+  const estimatedLabelWidth = feature.getName().length * 9;
+  if (estimatedLabelWidth < 0.5 * width) {
+    return 5;
+  } else {
+    return 9 + estimatedLabelWidth;
+  }
+}
 const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
   trackData,
   updateGlobalTrackConfig,
@@ -46,7 +60,8 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const useFineOrSecondaryParentNav = useRef(false);
   const xPos = useRef(0);
-
+  const [toolTip, setToolTip] = useState<any>();
+  const [toolTipVisible, setToolTipVisible] = useState(false);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
   const [legend, setLegend] = useState<any>();
@@ -56,7 +71,20 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
       setComponents: setCanvasComponents,
     },
   };
+  function getHeight(numRows: number): number {
+    let rowHeight = configOptions.current.rowHeight;
+    let options = configOptions.current;
+    let rowsToDraw = Math.min(numRows, options.maxRows);
 
+    if (options.hideMinimalItems) {
+      rowsToDraw -= 1;
+    }
+    if (rowsToDraw < 1) {
+      rowsToDraw = 1;
+    }
+    // add one to row because the last none bar svg doesn;t count
+    return (rowsToDraw + 1) * rowHeight + 2;
+  }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
@@ -70,9 +98,13 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
         trackState,
         windowWidth,
         configOptions: configOptions.current,
+        renderTooltip,
+        onHideToolTip,
         svgHeight,
         updatedLegend,
         trackModel,
+        getHeight,
+        getGenePadding,
         genomeConfig: getGenomeConfig(parentGenome.current),
         basesByPixel: basePerPixel,
       },
@@ -84,6 +116,155 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
 
     xPos.current = curXPos;
     updateSide.current = side;
+  }
+
+  // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
+  function barTooltip(feature: any, pageX, pageY, onCount, onPct, total) {
+    const contentStyle = Object.assign({
+      marginTop: ARROW_SIZE,
+      pointerEvents: "auto",
+    });
+
+    return ReactDOM.createPortal(
+      <Manager>
+        <Reference>
+          {({ ref }) => (
+            <div
+              ref={ref}
+              style={{ position: "absolute", left: pageX - 8 * 2, top: pageY }}
+            />
+          )}
+        </Reference>
+        <Popper
+          placement="bottom-start"
+          modifiers={[{ name: "flip", enabled: false }]}
+        >
+          {({ ref, style, placement, arrowProps }) => (
+            <div
+              ref={ref}
+              style={{
+                ...style,
+                ...contentStyle,
+                zIndex: 1001,
+              }}
+              className="Tooltip"
+            >
+              <div>
+                {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
+              </div>
+              <div>{feature.getName()}</div>
+              {ReactDOM.createPortal(
+                <div
+                  ref={arrowProps.ref}
+                  style={{
+                    ...arrowProps.style,
+                    width: 0,
+                    height: 0,
+                    position: "absolute",
+                    left: pageX - 8,
+                    top: pageY,
+                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                  }}
+                />,
+                document.body
+              )}
+            </div>
+          )}
+        </Popper>
+      </Manager>,
+      document.body
+    );
+  }
+  function normToolTip(bs: any, pageX, pageY, feature) {
+    const contentStyle = Object.assign({
+      marginTop: ARROW_SIZE,
+      pointerEvents: "auto",
+    });
+
+    return ReactDOM.createPortal(
+      <Manager>
+        <Reference>
+          {({ ref }) => (
+            <div
+              ref={ref}
+              style={{
+                position: "absolute",
+                left: pageX - 8 * 2,
+                top: pageY,
+              }}
+            />
+          )}
+        </Reference>
+        <Popper
+          placement="bottom-start"
+          modifiers={[{ name: "flip", enabled: false }]}
+        >
+          {({ ref, style, placement, arrowProps }) => (
+            <div
+              ref={ref}
+              style={{
+                ...style,
+                ...contentStyle,
+                zIndex: 1001,
+              }}
+              className="Tooltip"
+            >
+              <div>
+                {bs && `position ${bs} in`} {feature.getName()} read
+              </div>
+              {ReactDOM.createPortal(
+                <div
+                  ref={arrowProps.ref}
+                  style={{
+                    ...arrowProps.style,
+                    width: 0,
+                    height: 0,
+                    position: "absolute",
+                    left: pageX - 8,
+                    top: pageY,
+                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                  }}
+                />,
+                document.body
+              )}
+            </div>
+          )}
+        </Popper>
+      </Manager>,
+      document.body
+    );
+  }
+  function onHideToolTip() {
+    setToolTipVisible(false);
+  }
+  function renderTooltip(
+    event,
+    feature,
+    bs,
+    type,
+    onCount = "",
+    onPct = "",
+    total = ""
+  ) {
+    let currtooltip;
+    if ((type = "norm")) {
+      currtooltip = normToolTip(bs, event.pageX, event.pageY, feature);
+    } else {
+      currtooltip = barTooltip(
+        feature,
+        event.pageX,
+        event.pageY,
+        onCount,
+        onPct,
+        total
+      );
+    }
+    setToolTipVisible(true);
+    setToolTip(currtooltip);
   }
 
   useEffect(() => {
@@ -215,6 +396,7 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
       >
         {canvasComponents}
       </div>
+      {toolTipVisible ? toolTip : ""}
       {legend}
     </div>
   );

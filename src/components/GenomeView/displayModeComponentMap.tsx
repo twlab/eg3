@@ -41,6 +41,7 @@ import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComp
 import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
 import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
 import FiberTrackComponent from "./bedComponents/FiberTrackComponent";
+import FiberAnnotation from "./bedComponents/FiberAnnotation";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -58,7 +59,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     getGenePadding,
     getHeight,
-    ROW_HEIGHT
+    ROW_HEIGHT,
+    onHideTooltip = undefined
   ) {
     function createFullVisualizer(
       placements,
@@ -73,7 +75,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         // Compute y
         const rowIndex = Math.min(placedGroup.row, maxRowIndex);
         const y = rowIndex * rowHeight + TOP_PADDING;
-
+        console.log(rowIndex, rowHeight, TOP_PADDING);
         return getAnnotationElementMap[`${trackModel.type}`](
           placedGroup,
           y,
@@ -162,7 +164,30 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
       bigbed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
-
+      modbed: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <FiberAnnotation
+            key={i}
+            placement={placement}
+            y={y}
+            isMinimal={isLastRow}
+            color={configOptions.color}
+            color2={configOptions.color2}
+            rowHeight={configOptions.rowHeight}
+            renderTooltip={renderTooltip}
+            onHideTooltip={onHideTooltip}
+            hiddenPixels={configOptions.hiddenPixels}
+            hideMinimalItems={configOptions.hideMinimalItems}
+            pixelsPadding={configOptions.pixelsPadding}
+          />
+        ));
+      },
       repeatmasker: function getAnnotationElement(
         placedGroup,
         y,
@@ -298,7 +323,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
     //FullDisplayMode part from eg2
-
+    console.log(getGenePadding);
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       useFineOrSecondaryParentNav
@@ -311,7 +336,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     let height;
     height =
-      trackModel.type === "repeatmasker"
+      trackModel.type in { repeatmasker: "" }
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
     let svgDATA = createFullVisualizer(
@@ -445,17 +470,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
+    trackModel,
+    renderTooltip,
+    svgHeight,
+    getGenePadding,
+    getHeight,
+    ROW_HEIGHT,
+    onHideToolTip
   ) {
-    console.log(
-      formattedData,
-      useFineOrSecondaryParentNav,
-      trackState,
-      windowWidth,
-      configOptions,
-      updatedLegend,
-      trackModel
-    );
+    const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
     let currDisplayNav;
     if (!useFineOrSecondaryParentNav) {
       currDisplayNav = new DisplayedRegionModel(
@@ -467,39 +490,59 @@ export const displayModeComponentMap: { [key: string]: any } = {
           (trackState.regionNavCoord._endBase -
             trackState.regionNavCoord._startBase)
       );
+    } else {
+      currDisplayNav = objToInstanceAlign(trackState.visRegion);
     }
 
-    function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
+    if (currDisplayNav.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
+      function getNumLegend(legend: ReactNode) {
+        //this will be trigger when creating canvaselemebt here and the saved canvaselement
+        // is set to canvasComponent state which will update the legend ref without having to update manually
 
-      updatedLegend.current = legend;
-    }
-    let canvasElements = (
-      <FiberTrackComponent
-        data={formattedData}
-        options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
+        updatedLegend.current = legend;
+      }
+      let canvasElements = (
+        <FiberTrackComponent
+          data={formattedData}
+          options={configOptions}
+          viewWindow={
+            new OpenInterval(
+              0,
+              useFineOrSecondaryParentNav
+                ? trackState.visWidth
+                : windowWidth * 3
+            )
+          }
+          visRegion={currDisplayNav}
+          width={
             useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        visRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
-        forceSvg={false}
-        trackModel={trackModel}
-        getNumLegend={getNumLegend}
-        isLoading={false}
-      />
-    );
-    return canvasElements;
+          }
+          forceSvg={false}
+          trackModel={trackModel}
+          getNumLegend={getNumLegend}
+          isLoading={false}
+        />
+      );
+      return canvasElements;
+    } else {
+      console.log("HI", getGenePadding, ROW_HEIGHT);
+      let elements = displayModeComponentMap["full"](
+        formattedData,
+        useFineOrSecondaryParentNav,
+        trackState,
+        windowWidth,
+        configOptions,
+        renderTooltip,
+        svgHeight,
+        updatedLegend,
+        trackModel,
+        getGenePadding,
+        getHeight,
+        ROW_HEIGHT,
+        onHideToolTip
+      );
+      return elements;
+    }
   },
   interaction: function getInteraction(
     formattedData,
@@ -878,20 +921,28 @@ export function getDisplayModeFunction(
 
     let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "auto";
-
-    let canvasElements = displayModeComponentMap["modbed"](
+    console.log(drawData);
+    let elements = displayModeComponentMap["modbed"](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
       drawData.trackState,
       drawData.windowWidth,
-      tmpObj,
+      drawData.configOptions,
       drawData.updatedLegend,
-      drawData.trackModel
+      drawData.trackModel,
+
+      drawData.renderTooltip,
+      drawData.svgHeight,
+
+      drawData.getGenePadding,
+      drawData.getHeight,
+      drawData.configOptions.rowHeight + 2,
+      drawData.onHideToolTip
     );
 
-    displaySetter.density.setComponents(canvasElements);
+    displaySetter.density.setComponents(elements);
     displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
+      canvasData: elements,
       height: tmpObj,
       xPos: curXPos,
     };
