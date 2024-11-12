@@ -229,11 +229,6 @@ body {
   font-family: sans-serif;
 }
 
-a {
-  color: #e93b06 !important;
-  text-decoration: none !important;
-}
-
 .TouchRipple-root {
   top: 0;
   left: 0;

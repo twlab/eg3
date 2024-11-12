@@ -24,9 +24,9 @@ export function createNewTrackState(
 ): TrackState {
   return {
     bundleId: updates.bundleId ?? existingState.bundleId,
-    customTracksPool: updates.customTracksPool ?? [
-      ...existingState.customTracksPool,
-    ],
+    customTracksPool: updates.customTracksPool
+      ? [...existingState.customTracksPool]
+      : [],
     darkTheme: updates.darkTheme ?? existingState.darkTheme,
     genomeName: updates.genomeName ?? existingState.genomeName,
     highlights: updates.highlights

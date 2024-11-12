@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import Feature, { NumericalFeature } from "../../models/Feature";
+import Feature, { Fiber, NumericalFeature } from "../../models/Feature";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../models/FeatureArranger";
@@ -22,7 +22,7 @@ import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
 import { v4 as uuidv4 } from "uuid";
-import { getContrastingColor } from "../../models/util";
+import { getContrastingColor, parseNumberString } from "../../models/util";
 import { scaleLinear } from "d3-scale";
 
 import MethylCRecord from "../../models/MethylCRecord";
@@ -40,6 +40,8 @@ import { GapText } from "./GenomeAlignComponents/MultiAlignmentViewCalculator";
 import MatplotTrackComponent from "./commonComponents/numerical/MatplotTrackComponent";
 import InteractionTrackComponent from "./InteractionComponents/InteractionTrackComponent";
 import { GenomeInteraction } from "../../getRemoteData/GenomeInteraction";
+import FiberTrackComponent from "./bedComponents/FiberTrackComponent";
+import FiberAnnotation from "./bedComponents/FiberAnnotation";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -57,7 +59,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     getGenePadding,
     getHeight,
-    ROW_HEIGHT
+    ROW_HEIGHT,
+    onHideTooltip = undefined
   ) {
     function createFullVisualizer(
       placements,
@@ -72,7 +75,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         // Compute y
         const rowIndex = Math.min(placedGroup.row, maxRowIndex);
         const y = rowIndex * rowHeight + TOP_PADDING;
-
+        console.log(rowIndex, rowHeight, TOP_PADDING);
         return getAnnotationElementMap[`${trackModel.type}`](
           placedGroup,
           y,
@@ -161,7 +164,30 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
       bigbed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
-
+      modbed: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <FiberAnnotation
+            key={i}
+            placement={placement}
+            y={y}
+            isMinimal={isLastRow}
+            color={configOptions.color}
+            color2={configOptions.color2}
+            rowHeight={configOptions.rowHeight}
+            renderTooltip={renderTooltip}
+            onHideTooltip={onHideTooltip}
+            hiddenPixels={configOptions.hiddenPixels}
+            hideMinimalItems={configOptions.hideMinimalItems}
+            pixelsPadding={configOptions.pixelsPadding}
+          />
+        ));
+      },
       repeatmasker: function getAnnotationElement(
         placedGroup,
         y,
@@ -297,7 +323,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
     //FullDisplayMode part from eg2
-
+    console.log(getGenePadding);
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       useFineOrSecondaryParentNav
@@ -310,7 +336,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     let height;
     height =
-      trackModel.type === "repeatmasker"
+      trackModel.type in { repeatmasker: "" }
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
     let svgDATA = createFullVisualizer(
@@ -436,6 +462,87 @@ export const displayModeComponentMap: { [key: string]: any } = {
       />
     );
     return canvasElements;
+  },
+  modbed: function getModbed(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel,
+    renderTooltip,
+    svgHeight,
+    getGenePadding,
+    getHeight,
+    ROW_HEIGHT,
+    onHideToolTip
+  ) {
+    const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    } else {
+      currDisplayNav = objToInstanceAlign(trackState.visRegion);
+    }
+
+    if (currDisplayNav.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
+      function getNumLegend(legend: ReactNode) {
+        //this will be trigger when creating canvaselemebt here and the saved canvaselement
+        // is set to canvasComponent state which will update the legend ref without having to update manually
+
+        updatedLegend.current = legend;
+      }
+      let canvasElements = (
+        <FiberTrackComponent
+          data={formattedData}
+          options={configOptions}
+          viewWindow={
+            new OpenInterval(
+              0,
+              useFineOrSecondaryParentNav
+                ? trackState.visWidth
+                : windowWidth * 3
+            )
+          }
+          visRegion={currDisplayNav}
+          width={
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          }
+          forceSvg={false}
+          trackModel={trackModel}
+          getNumLegend={getNumLegend}
+          isLoading={false}
+        />
+      );
+      return canvasElements;
+    } else {
+      console.log("HI", getGenePadding, ROW_HEIGHT);
+      let elements = displayModeComponentMap["full"](
+        formattedData,
+        useFineOrSecondaryParentNav,
+        trackState,
+        windowWidth,
+        configOptions,
+        renderTooltip,
+        svgHeight,
+        updatedLegend,
+        trackModel,
+        getGenePadding,
+        getHeight,
+        ROW_HEIGHT,
+        onHideToolTip
+      );
+      return elements;
+    }
   },
   interaction: function getInteraction(
     formattedData,
@@ -802,7 +909,44 @@ export function getDisplayModeFunction(
   // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
   //_________________________________
-  else if (
+  else if (drawData.trackModel.type === "modbed") {
+    let formattedData;
+    formattedData = drawData.genesArr.map((record) => {
+      return new Fiber(
+        record[3],
+        new ChromosomeInterval(record.chr, record.start, record.end),
+        record[5]
+      ).withFiber(parseNumberString(record[4]), record[6], record[7]);
+    });
+
+    let tmpObj = { ...drawData.configOptions };
+    tmpObj.displayMode = "auto";
+    console.log(drawData);
+    let elements = displayModeComponentMap["modbed"](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      drawData.configOptions,
+      drawData.updatedLegend,
+      drawData.trackModel,
+
+      drawData.renderTooltip,
+      drawData.svgHeight,
+
+      drawData.getGenePadding,
+      drawData.getHeight,
+      drawData.configOptions.rowHeight + 2,
+      drawData.onHideToolTip
+    );
+
+    displaySetter.density.setComponents(elements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: elements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  } else if (
     drawData.trackModel.type in { hic: "", biginteract: "", longrange: "" }
   ) {
     let formattedData: any = [];

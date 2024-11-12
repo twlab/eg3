@@ -360,7 +360,7 @@ self.onmessage = async (event: MessageEvent) => {
   await Promise.all(
     normDefaultTracks.map(async (item, index) => {
       const trackType = item.type;
-      const genomeName = item.genome;
+      const genomeName = item.genome ? item.genome : event.data.primaryGenName;
       const id = item.id;
       const url = item.url;
 
@@ -414,6 +414,7 @@ self.onmessage = async (event: MessageEvent) => {
 
     if (
       "genome" in trackModel.metadata &&
+      trackModel.metadata.genome !== undefined &&
       trackModel.metadata.genome !== event.data.primaryGenName
     ) {
       curFetchNav =
@@ -429,7 +430,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-
+    console.log(curFetchNav);
     for (let i = 0; i < curFetchNav.length; i++) {
       let curRespond;
       if (trackModel.type === "geneannotation") {

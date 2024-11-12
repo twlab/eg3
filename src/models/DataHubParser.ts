@@ -6,8 +6,8 @@ class HubParser {
   getTracksInHub(
     parsedJson,
     hubName,
-    hubGenome?,
-    oldHubFormat?,
+    hubGenome,
+    oldHubFormat = false,
     tracksStartIndex = 0,
     hubBase = ""
   ) {

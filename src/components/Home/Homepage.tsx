@@ -3,8 +3,8 @@ import React, { ChangeEvent } from "react";
 import UpdateGenome from "./UpdateGenome";
 import GenomePicker from "./GenomePicker";
 import AddGenome from "./AddGenome";
-import SwipeableViews from "react-swipeable-views";
-import { SessionUI } from "./SessionUI";
+
+import SessionUI from "./SessionUI";
 /**
  * The Homepage root component. This is where the tab components Add-Genome, Genome-Picker,
  *  and Update-Genome are gathered and structurally organized to be displayed
@@ -65,23 +65,29 @@ function Homepage(props: any) {
           {/* <Tab label="Update a genome" {...a11yProps(2)} />
           <Tab label="Add a genome" {...a11yProps(3)} /> */}
         </Tabs>
-        <SwipeableViews
-          axis={"x"}
-          index={value}
-          onChangeIndex={handleChangeIndex}
-        >
-          <TabPanel value={value} index={0}>
-            <GenomePicker
-              addToView={props.addToView}
-              allGenome={props.allGenome}
-              treeOfLife={props.treeOfLife}
-              selectedGenome={props.selectedGenome}
-            />
-          </TabPanel>
-          <TabPanel value={value} index={1} dir={"x"}>
-            <SessionUI bundleId={"1234"} withGenomePicker={true} />
-          </TabPanel>
-        </SwipeableViews>
+
+        <TabPanel value={value} index={0}>
+          <GenomePicker
+            addToView={props.addToView}
+            allGenome={props.allGenome}
+            treeOfLife={props.treeOfLife}
+            selectedGenome={props.selectedGenome}
+          />
+        </TabPanel>
+        <TabPanel value={value} index={1} dir={"x"}>
+          <SessionUI
+            bundleId={"1234"}
+            withGenomePicker={true}
+            onRestoreSession={function (session: object): void {
+              throw new Error("Function not implemented.");
+            }}
+            onRetrieveBundle={function (id: string): void {
+              throw new Error("Function not implemented.");
+            }}
+            addSessionState={undefined}
+          />
+        </TabPanel>
+
         {/* <TabPanel value={value} index={2}>
           <UpdateGenome
             allGenome={props.allGenome}

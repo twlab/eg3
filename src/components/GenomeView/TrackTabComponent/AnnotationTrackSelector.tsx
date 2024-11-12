@@ -81,7 +81,7 @@ const AnnotationTrackSelector: React.FC<AnnotationTrackSelectorProps> = ({
     trackModel.label = label;
     trackModel.options = { ...trackModel.options, label };
     trackModel.metadata = { ...trackModel.metadata, genome: genomeName };
-    onTracksAdded(trackModel);
+    onTracksAdded([trackModel]);
   };
 
   const renderLeaf = (trackModel: TrackModel) => {
