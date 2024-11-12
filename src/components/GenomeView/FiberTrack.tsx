@@ -153,23 +153,6 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
                 {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
               </div>
               <div>{feature.getName()}</div>
-              {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
-                document.body
-              )}
             </div>
           )}
         </Popper>
@@ -197,43 +180,18 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
             />
           )}
         </Reference>
-        <Popper
-          placement="bottom-start"
-          modifiers={[{ name: "flip", enabled: false }]}
+
+        <div
+          style={{
+            ...contentStyle,
+            zIndex: 1001,
+          }}
+          className="Tooltip"
         >
-          {({ ref, style, placement, arrowProps }) => (
-            <div
-              ref={ref}
-              style={{
-                ...style,
-                ...contentStyle,
-                zIndex: 1001,
-              }}
-              className="Tooltip"
-            >
-              <div>
-                {bs && `position ${bs} in`} {feature.getName()} read
-              </div>
-              {ReactDOM.createPortal(
-                <div
-                  ref={arrowProps.ref}
-                  style={{
-                    ...arrowProps.style,
-                    width: 0,
-                    height: 0,
-                    position: "absolute",
-                    left: pageX - 8,
-                    top: pageY,
-                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                  }}
-                />,
-                document.body
-              )}
-            </div>
-          )}
-        </Popper>
+          <div>
+            {bs && `position ${bs} in`} {feature.getName()} read
+          </div>
+        </div>
       </Manager>,
       document.body
     );
@@ -251,7 +209,7 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
     total = ""
   ) {
     let currtooltip;
-    if ((type = "norm")) {
+    if (type === "norm") {
       currtooltip = normToolTip(bs, event.pageX, event.pageY, feature);
     } else {
       currtooltip = barTooltip(
