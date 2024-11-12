@@ -24,16 +24,19 @@ import * as firebase from "firebase/app";
 import History from "./ToolsComponents/History";
 import _ from "lodash";
 import { FeatureSegment } from "@/models/FeatureSegment";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// const firebaseConfig = {
+//   apiKey: import.meta.env.VITE_FIREBASE_KEY,
+//   authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
+//   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
+//   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+// };
+// for testing iam going to setup a test server here
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
+  authDomain: "chadeg3-83548.firebaseapp.com",
+  databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
+  storageBucket: "chadeg3-83548.firebasestorage.app",
 };
 
 // Initialize Firebase
