@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import memoizeOne from "memoize-one";
 import _ from "lodash";
 
-import { Sequence } from "../GenomeAlignComponents/Sequence";
+import { Sequence } from "../TrackComponents/GenomeAlignComponents/Sequence";
 
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import LinearDrawingModel from "../../../models/LinearDrawingModel";
@@ -11,7 +11,7 @@ import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import NavigationContext from "../../../models/NavigationContext";
 import { FeaturePlacer } from "../../../models/getXSpan/FeaturePlacer";
 import TwoBitSource from "../../../getRemoteData/TwoBitSource";
-import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
+import { TranslatableG } from "../TrackComponents/geneAnnotationTrackComponents/TranslatableG";
 import { SequenceData } from "../../../models/SequenceData";
 import { GenomeConfig } from "../../../models/genomes/GenomeConfig";
 

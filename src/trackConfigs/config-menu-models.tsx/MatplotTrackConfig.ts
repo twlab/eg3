@@ -1,4 +1,4 @@
-import { DEFAULT_OPTIONS } from "../../components/GenomeView/MatplotTrack";
+import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/MatplotTrack";
 import { TrackConfig } from "./TrackConfig";
 import HeightConfig from "../config-menu-components.tsx/HeightConfig";
 // import YscaleConfig from '../trackContextMenu/YscaleConfig';

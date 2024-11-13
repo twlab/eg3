@@ -1,5 +1,5 @@
 import { TrackConfig } from "./TrackConfig";
-import { DEFAULT_OPTIONS } from "../../components/GenomeView/commonComponents/numerical/NumericalTrack";
+import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/commonComponents/numerical/NumericalTrack";
 import { NumericalDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";
 import {
   PrimaryColorConfig,

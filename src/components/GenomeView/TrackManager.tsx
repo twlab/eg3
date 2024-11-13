@@ -2,14 +2,14 @@ import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 
-import RefGeneTrack from "./RefGeneTrack";
-import BedTrack from "./BedTrack";
-import BigBedTrack from "./BigBedTrack";
-import BigWigTrack from "./BigWigTrack";
-import DynseqTrack from "./DynseqTrack";
-import MethylcTrack from "./MethylcTrack";
-import GenomeAlign from "./GenomeAlign";
-import MatplotTrack from "./MatplotTrack";
+import RefGeneTrack from "./TrackComponents/RefGeneTrack";
+import BedTrack from "./TrackComponents/BedTrack";
+import BigBedTrack from "./TrackComponents/BigBedTrack";
+import BigWigTrack from "./TrackComponents/BigWigTrack";
+import DynseqTrack from "./TrackComponents/DynseqTrack";
+import MethylcTrack from "./TrackComponents/MethylcTrack";
+import GenomeAlign from "./TrackComponents/GenomeAlign";
+import MatplotTrack from "./TrackComponents/MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
@@ -21,24 +21,24 @@ import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
 import { HicSource } from "../../getRemoteData/hicSource";
-import HiCTrack from "./HiCTrack";
-import CategoricalTrack from "./CategoricalTrack";
-import LongrangeTrack from "./LongrangeTrack";
-import BigInteractTrack from "./BigInteractTrack";
-import RepeatMaskerTrack from "./RepeatMaskerTrack";
-import RefBedTrack from "./RefBedTrack";
-import ThreedmolContainer from "../3dmol/ThreedmolContainer";
+import HiCTrack from "./TrackComponents/HiCTrack";
+import CategoricalTrack from "./TrackComponents/CategoricalTrack";
+import LongrangeTrack from "./TrackComponents/LongrangeTrack";
+import BigInteractTrack from "./TrackComponents/BigInteractTrack";
+import RepeatMaskerTrack from "./TrackComponents/RepeatMaskerTrack";
+import RefBedTrack from "./TrackComponents/RefBedTrack";
+import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
-import RulerTrack from "./RulerTrack";
-import FiberTrack from "./FiberTrack";
+import RulerTrack from "./TrackComponents/RulerTrack";
+import FiberTrack from "./TrackComponents/FiberTrack";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
-import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
+import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import {
   createNewTrackState,
   TrackState,
-} from "./CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 
 function sumArray(numbers) {
   let total = 0;
@@ -58,8 +58,8 @@ import {
 } from "firebase/database";
 import _, { create } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import SubToolButtons from "./ToolsComponents/SubToolButtons";
-import HighlightMenu from "./ToolsComponents/HighlightMenu";
+import SubToolButtons from "./ToolComponents/SubToolButtons";
+import HighlightMenu from "./ToolComponents/HighlightMenu";
 
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];

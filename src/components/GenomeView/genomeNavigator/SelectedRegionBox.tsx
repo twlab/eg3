@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
+import { TranslatableG } from "../TrackComponents/geneAnnotationTrackComponents/TranslatableG";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import LinearDrawingModel from "../../../models/LinearDrawingModel";
 

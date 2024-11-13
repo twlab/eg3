@@ -3,7 +3,7 @@ import LabelConfig from "../config-menu-components.tsx/LabelConfig";
 import { InteractionDisplayMode } from "./DisplayModes";
 import { TrackConfig } from "./TrackConfig";
 
-import { DEFAULT_OPTIONS } from "../../components/GenomeView/InteractionComponents/InteractionTrackComponent";
+import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/InteractionComponents/InteractionTrackComponent";
 import {
   PrimaryColorConfig,
   SecondaryColorConfig,

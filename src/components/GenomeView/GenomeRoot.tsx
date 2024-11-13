@@ -3,11 +3,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import TrackManager from "./TrackManager";
-import Drag from "./commonComponents/chr-order/ChrOrder";
+import Drag from "./TrackComponents/commonComponents/chr-order/ChrOrder";
 import { chrType } from "../../localdata/genomename";
 import { SelectDemo } from "./tesShadcn";
 import { v4 as uuidv4 } from "uuid";
-import useResizeObserver from "./commonComponents/Resize";
+import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
@@ -18,10 +18,10 @@ import querySting from "query-string";
 import {
   createNewTrackState,
   TrackState,
-} from "./CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 // Import the functions you need from the SDKs you need
 import * as firebase from "firebase/app";
-import History from "./ToolsComponents/History";
+import History from "./ToolComponents/History";
 import _ from "lodash";
 import { FeatureSegment } from "@/models/FeatureSegment";
 

@@ -1,6 +1,6 @@
 import { InteractionDisplayMode } from "./DisplayModes";
 import { TrackConfig } from "./TrackConfig";
-import { DEFAULT_OPTIONS } from "../../components/GenomeView/InteractionComponents/InteractionTrackComponent";
+import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/InteractionComponents/InteractionTrackComponent";
 
 import { InteractionDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";
 import {
