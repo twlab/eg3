@@ -1101,6 +1101,76 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(1, "right");
     }
   }, [initialStart]);
+  const resetRefsAndState = () => {
+    // Reset useRef variables
+
+    useFineModeNav.current = false;
+    trackManagerId.current = "";
+    leftStartCoord.current = 0;
+    rightStartCoord.current = 0;
+    bpRegionSize.current = 0;
+    pixelPerBase.current = 0;
+
+    bpX.current = 0;
+    maxBp.current = 0;
+    minBp.current = 0;
+    selectedTracks.current = {};
+    mousePositionRef.current = { x: 0, y: 0 };
+    horizontalLineRef.current = 0;
+    verticalLineRef.current = 0;
+    hicStrawObj.current = {};
+    isMouseInsideRef.current = false;
+    globalTrackConfig.current = {};
+    trackManagerState.current = {
+      bundleId: "",
+      customTracksPool: [],
+      darkTheme: false,
+      genomeName: genomeArr ? genomeArr[genomeIdx].genome.getName() : "",
+      highlights: [],
+      isShowingNavigator: true,
+      layout: {
+        global: {},
+        layout: {},
+        borders: [],
+      },
+      metadataTerms: [],
+      regionSetView: null,
+      regionSets: [],
+      viewRegion: new DisplayedRegionModel(
+        genomeArr ? genomeArr[genomeIdx].navContext : null,
+        0,
+        1
+      ),
+      trackLegendWidth: 120,
+      tracks: genomeArr ? genomeArr[genomeIdx].defaultTracks : [],
+    };
+
+    configMenuPos.current = {};
+    lastDragX.current = 0;
+    isThereG3dTrack.current = false;
+    basePerPixel.current = 0;
+    frameID.current = 0;
+    lastX.current = 0;
+    dragX.current = 0;
+    isLoading.current = true;
+    isToolSelected.current = false;
+    side.current = "right";
+    isDragging.current = false;
+    rightSectionSize.current = [windowWidth];
+    leftSectionSize.current = [];
+
+    // Reset useState variables
+
+    setShow3dGene(undefined);
+    setTrackComponents([]);
+    setG3dTrackComponents([]);
+    setSelectedTool({ isSelected: false, title: "none" });
+    setTrackData({});
+    setDataIdx(0);
+    setHighlight([]);
+    setConfigMenu({ configMenus: "" });
+    setApplyTrackConfigChange({});
+  };
 
   useEffect(() => {
     if (trackManagerId.current === "") {
