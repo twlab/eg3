@@ -44,32 +44,32 @@ const genome = new Genome("hg38", [
 // long range chr7:23208969-31218193
 // for renmora
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27207174-27219988");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   // new TrackModel({
   //   type: "ruler",
   //   name: "Ruler",
   // }),
 
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+    options: {
+      color: "blue",
+    },
+  }),
 
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "refGene",
-  //   genome: "hg38",
-  // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV39",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV39",
+    genome: "hg38",
+  }),
   new TrackModel({
     type: "modbed",
     name: "examplemod",

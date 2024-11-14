@@ -81,8 +81,11 @@ const Nav: FC<NavProps> = ({
   const [settingDropdownOpen, setSettingDropdownOpen] = useState(false);
   const [helpDropDownOpen, setHelpDropDownOpen] = useState(false);
   const [share, setShare] = useState(false);
-  const [openModal, setOpenModal] = useState<string | null>(null); // Track the currently open modal
-  console.log(openModal);
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  const [switchNavigatorChecked, setSwitchNavigatorChecked] = useState(true);
+  const [cacheToggleChecked, setCacheToggleChecked] = useState(true);
+  const [legendWidth, setLegendWidth] = useState("120");
+
   const handleGenomeOpenModal = () => setGenomeModal(true);
   const handleGenomeCloseModal = () => setGenomeModal(false);
 
@@ -123,7 +126,25 @@ const Nav: FC<NavProps> = ({
     ...state.tracks.filter((track) => !track.url).map((track) => track.name),
   ]);
   const groupedTrackSets = groupTrackByGenome();
+  const handleCheckboxChange = (event) => {
+    const { id, checked } = event.target;
+    console.log(`${id} is ${checked ? "checked" : "not checked"}`);
 
+    if (id === "switchNavigator") {
+      setSwitchNavigatorChecked(checked);
+    } else if (id === "cacheToggle") {
+      setCacheToggleChecked(checked);
+    }
+    onTabSettingsChange({ type: id, val: checked });
+  };
+
+  const handleChange = (event) => {
+    setLegendWidth(event.target.value);
+    let numVal = Number(event.target.value);
+    if (numVal >= 60) {
+      onTabSettingsChange({ type: event.target.id, val: numVal });
+    }
+  };
   return (
     <div className="Nav-container bg">
       <div className="panel">
@@ -427,7 +448,12 @@ const Nav: FC<NavProps> = ({
                 style={{ display: "flex", flexDirection: "column" }}
               >
                 <label className="dropdown-item" htmlFor="switchNavigator">
-                  <input id="switchNavigator" type="checkbox" />
+                  <input
+                    id="switchNavigator"
+                    type="checkbox"
+                    checked={switchNavigatorChecked}
+                    onChange={handleCheckboxChange}
+                  />
                   <span style={{ marginLeft: "1ch" }}>
                     Show genome-wide navigator
                   </span>
@@ -446,12 +472,19 @@ const Nav: FC<NavProps> = ({
                     </div>
                   </span>
                 </label>
+
                 <label className="dropdown-item" htmlFor="cacheToggle">
-                  <input id="cacheToggle" type="checkbox" />
+                  <input
+                    id="cacheToggle"
+                    type="checkbox"
+                    checked={cacheToggleChecked}
+                    onChange={handleCheckboxChange}
+                  />
                   <span style={{ marginLeft: "1ch" }}>
                     Restore current view after Refresh
                   </span>
                 </label>
+
                 <label className="dropdown-item" htmlFor="setLegendWidth">
                   <input
                     type="number"
@@ -459,6 +492,8 @@ const Nav: FC<NavProps> = ({
                     step="5"
                     min="60"
                     max="200"
+                    value={legendWidth}
+                    onChange={handleChange}
                   />
                   <span style={{ marginLeft: "1ch" }}>
                     Change track legend width
