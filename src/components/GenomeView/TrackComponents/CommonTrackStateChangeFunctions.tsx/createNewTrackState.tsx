@@ -1,6 +1,6 @@
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 import TrackModel from "@/models/TrackModel";
-import { HighlightInterval } from "../ToolsComponents/HighlightMenu";
+import { HighlightInterval } from "../../ToolComponents/HighlightMenu";
 
 export interface TrackState {
   bundleId: string;

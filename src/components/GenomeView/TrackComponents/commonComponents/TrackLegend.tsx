@@ -28,7 +28,7 @@ interface TrackLegendProps {
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
-const AXIS_WIDTH = 32;
+const AXIS_WIDTH = 82;
 
 /**
  * A box displaying labels, axes, and other important track info.
@@ -136,8 +136,11 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
   }
 
   getLabelWidth() {
+    console.log(this.props.trackModel.legendWidth);
     if (this.props.axisScale) {
-      return this.props.width - AXIS_WIDTH;
+      return this.props.trackModel.legendWidth
+        ? this.props.trackModel.legendWidth - AXIS_WIDTH
+        : this.props.width - AXIS_WIDTH;
     } else {
       return undefined;
     }

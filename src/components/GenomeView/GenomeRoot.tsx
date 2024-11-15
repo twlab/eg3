@@ -97,7 +97,6 @@ function GenomeHub(props: any) {
     stateArr.current.push(data);
     presentStateIdx.current = stateArr.current.length - 1;
 
-    console.log(stateArr.current);
     setViewRegion(data.viewRegion);
   }
 
@@ -127,10 +126,13 @@ function GenomeHub(props: any) {
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
+    setLegendWidth(state.trackLegendWidth);
+    setShowGenNav(state.isShowingNavigator);
     if (
       state.viewRegion._startBase === prevState.viewRegion._startBase &&
       state.viewRegion._endBase === prevState.viewRegion._endBase &&
-      arraysHaveSameObjects(prevState.tracks, state.tracks)
+      arraysHaveSameObjects(prevState.tracks, state.tracks) &&
+      prevState.trackLegendWidth === state.trackLegendWidth
     ) {
       return state;
     } else {
@@ -269,9 +271,12 @@ function GenomeHub(props: any) {
         curGenomeConfig.defaultRegion.start,
         curGenomeConfig.defaultRegion.end
       ),
-      trackLegendWidth: legendWidth,
+      trackLegendWidth: 120,
       tracks: curGenomeConfig.defaultTracks,
     };
+
+    setLegendWidth(120);
+    setShowGenNav(true);
     addGlobalState(newTrackState);
 
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
@@ -298,6 +303,8 @@ function GenomeHub(props: any) {
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
+    setLegendWidth(state.trackLegendWidth);
+    setShowGenNav(state.isShowingNavigator);
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
 
@@ -324,7 +331,8 @@ function GenomeHub(props: any) {
       state.viewRegion._endBase!
     );
     addGlobalState(state);
-
+    setLegendWidth(state.trackLegendWidth);
+    setShowGenNav(state.isShowingNavigator);
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
 
     setCurBundle(bundle);
@@ -403,13 +411,32 @@ function GenomeHub(props: any) {
   //Control and manage the state of genomeNavigator, restoreview, and legend Width
   //_________________________________________________________________________________________________________________________
   function onTabSettingsChange(setting: { [key: string]: any }) {
+    let state = createNewTrackState(
+      stateArr.current[presentStateIdx.current],
+      {}
+    );
     if (setting.type === "switchNavigator") {
       setShowGenNav(setting.val);
+      state.isShowingNavigator = setting.val;
+      addGlobalState(state);
     } else if (setting.type === "cacheToggle") {
       setRestoreViewRefresh(setting.val);
     } else if (setting.type === "legendWidth") {
-      console.log("HJGUUHDFDF");
+      state.trackLegendWidth = setting.val;
+
+      addGlobalState(state);
+
+      let curGenomeConfig = getGenomeConfig(state.genomeName);
+      curGenomeConfig.navContext = state["viewRegion"]._navContext;
+
+      curGenomeConfig.defaultTracks = state.tracks;
+      curGenomeConfig.defaultRegion = new OpenInterval(
+        state.viewRegion._startBase!,
+        state.viewRegion._endBase!
+      );
+
       setLegendWidth(setting.val);
+      recreateTrackmanager({ genomeConfig: curGenomeConfig });
     }
   }
   useEffect(() => {
@@ -455,9 +482,10 @@ function GenomeHub(props: any) {
                 >
                   {viewRegion ? (
                     <Nav
+                      isShowingNavigator={showGenNav}
                       selectedRegion={viewRegion}
                       genomeConfig={genomeList[index]}
-                      trackLegendWidth={size.width}
+                      trackLegendWidth={legendWidth}
                       onRegionSelected={genomeNavigatorRegionSelect}
                       onGenomeSelected={onGenomeSelected}
                       state={stateArr.current[presentStateIdx.current]}
@@ -492,6 +520,7 @@ function GenomeHub(props: any) {
 
                   <TrackManager
                     key={item.genomeID}
+                    legendWidth={legendWidth}
                     genomeIdx={index}
                     recreateTrackmanager={recreateTrackmanager}
                     genomeArr={genomeList}

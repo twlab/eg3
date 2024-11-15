@@ -31,7 +31,7 @@ interface NavProps {
   onTracksAdded?: (tracks: TrackModel[]) => void;
   onTrackRemoved?: any;
   trackLegendWidth: number;
-  isShowingNavigator?: boolean;
+  isShowingNavigator: boolean;
   darkTheme?: boolean;
   onGenomeSelected: (name: string) => void;
   onToggleNavigator?: () => void;
@@ -74,6 +74,8 @@ const Nav: FC<NavProps> = ({
   sets,
   selectedSet,
   onTabSettingsChange,
+  trackLegendWidth,
+  isShowingNavigator,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
@@ -102,6 +104,13 @@ const Nav: FC<NavProps> = ({
 
   const toggleSettingDropdown = () =>
     setSettingDropdownOpen(!settingDropdownOpen);
+
+  useEffect(() => {
+    setLegendWidth(`${trackLegendWidth}`);
+  }, [trackLegendWidth]);
+  useEffect(() => {
+    setSwitchNavigatorChecked(isShowingNavigator);
+  }, [isShowingNavigator]);
 
   function groupTrackByGenome() {
     const grouped = {};

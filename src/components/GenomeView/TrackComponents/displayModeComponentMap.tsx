@@ -75,7 +75,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         // Compute y
         const rowIndex = Math.min(placedGroup.row, maxRowIndex);
         const y = rowIndex * rowHeight + TOP_PADDING;
-        console.log(rowIndex, rowHeight, TOP_PADDING);
+
         return getAnnotationElementMap[`${trackModel.type}`](
           placedGroup,
           y,
@@ -323,7 +323,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
     }
     //FullDisplayMode part from eg2
-    console.log(getGenePadding);
+
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       useFineOrSecondaryParentNav
@@ -525,7 +525,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
       return canvasElements;
     } else {
-      console.log("HI", getGenePadding, ROW_HEIGHT);
       let elements = displayModeComponentMap["full"](
         formattedData,
         useFineOrSecondaryParentNav,
@@ -921,7 +920,7 @@ export function getDisplayModeFunction(
 
     let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "auto";
-    console.log(drawData);
+
     let elements = displayModeComponentMap["modbed"](
       formattedData,
       drawData.useFineOrSecondaryParentNav,

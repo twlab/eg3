@@ -129,6 +129,7 @@ interface TrackManagerProps {
   jumpToState: any;
   stateArr: Array<any>;
   presentStateIdx: number;
+  legendWidth: number;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
@@ -140,6 +141,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   jumpToState,
   stateArr,
   presentStateIdx,
+  legendWidth,
 }) {
   //useRef to store data between states without re render the component
 
@@ -182,7 +184,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     regionSetView: null,
     regionSets: [],
     viewRegion: new DisplayedRegionModel(genomeArr[genomeIdx].navContext, 0, 1),
-    trackLegendWidth: 120,
+    trackLegendWidth: legendWidth,
     tracks: genomeArr[genomeIdx].defaultTracks,
   });
   const database = getDatabase();
@@ -898,7 +900,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let highlightWidth = Math.abs(startHighlight + endHighlight);
 
       let curXPos = highlightSide === "right" ? startHighlight : endHighlight;
-      // 120 is the width of the legend
+      // legendWidth is the width of the legend
       let tmpObj = {
         xPos: curXPos,
         width: highlightWidth,
@@ -988,7 +990,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         0,
         1
       ),
-      trackLegendWidth: 120,
+      trackLegendWidth: legendWidth,
       tracks: genomeArr ? genomeArr[genomeIdx].defaultTracks : [],
     };
     initialConfig.current = true;
@@ -1071,7 +1073,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const newPosRef = createRef();
         const newLegendRef = createRef();
         const uniqueKey = uuidv4();
-
+        trackManagerState.current.tracks[i]["legendWidth"] = legendWidth;
         newTrackComponents.push({
           trackIdx: trackIdx,
           id: uniqueKey,
@@ -1305,7 +1307,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 // full windowwidth will make canvas only loop 0-windowidth
                 // the last value will have no data.
                 // so we have to subtract from the size of the canvas
-                width: `${windowWidth + 120}px`,
+                width: `${windowWidth + legendWidth}px`,
                 // width: `${fullWindowWidth / 2}px`,
                 // height: "2000px",
                 overflowX: "hidden",
@@ -1335,18 +1337,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       style={{
                         display: "flex",
                         WebkitBackfaceVisibility: "hidden",
-                        WebkitPerspective: `${windowWidth + 120}px`,
+                        WebkitPerspective: `${windowWidth + legendWidth}px`,
                         backfaceVisibility: "hidden",
-                        perspective: `${windowWidth + 120}px`,
+                        perspective: `${windowWidth + legendWidth}px`,
                         backgroundColor: "#F2F2F2",
-                        width: `${windowWidth + 120}px`,
+                        width: `${windowWidth + legendWidth}px`,
                         outline: "1px solid Dodgerblue",
                       }}
                     >
                       <div
                         style={{
                           zIndex: 10, // Ensure the legend is on top
-                          width: "120px",
+                          width: legendWidth,
                           backgroundColor: "white",
                           position: "relative", // Ensure zIndex works with relative positioning
                         }}
@@ -1433,14 +1435,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   style={{
                     display: "flex",
                     position: "absolute",
-                    width: `${windowWidth + 120}px`,
+                    width: `${windowWidth + legendWidth}px`,
                     zIndex: 10,
                   }}
                 >
                   {selectedTool.isSelected ? (
                     <SelectableGenomeArea
                       selectableRegion={trackManagerState.current.viewRegion}
-                      dragLimits={new OpenInterval(120, windowWidth + 120)}
+                      dragLimits={
+                        new OpenInterval(legendWidth, windowWidth + legendWidth)
+                      }
                       onRegionSelected={onRegionSelected}
                     >
                       <div
@@ -1449,7 +1453,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                             ? block.current?.getBoundingClientRect().height
                             : 0,
                           zIndex: 3,
-                          width: `${windowWidth + 120}px`,
+                          width: `${windowWidth + legendWidth}px`,
                         }}
                       ></div>
                     </SelectableGenomeArea>

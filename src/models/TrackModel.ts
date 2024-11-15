@@ -48,6 +48,7 @@ interface ITrackModel {
   isSelected?: any;
   tracks?: any;
   datahub?: any;
+  legendWidth?: any;
 }
 
 /**
@@ -82,7 +83,7 @@ export class TrackModel {
   textConfig?: any;
   apiConfig?: any;
   queryEndpoint?: QueryEndpoint;
-
+  legendWidth?: any;
   constructor(plainObject: ITrackModel) {
     Object.assign(this, plainObject);
     this.name = this.name || "";
