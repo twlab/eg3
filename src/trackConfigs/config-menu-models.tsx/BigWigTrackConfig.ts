@@ -1,6 +1,6 @@
 import { TrackConfig } from "./TrackConfig";
 import { NumericalTrackConfig } from "./NumericalTrackConfig";
-import { DEFAULT_OPTIONS } from "../../components/GenomeView/commonComponents/numerical/NumericalTrack";
+import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/commonComponents/numerical/NumericalTrack";
 import TrackModel from "../../models/TrackModel";
 
 export class BigWigTrackConfig extends TrackConfig {

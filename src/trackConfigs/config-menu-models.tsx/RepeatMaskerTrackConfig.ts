@@ -1,6 +1,6 @@
 import { TrackConfig } from "./TrackConfig";
 
-import { DEFAULT_OPTIONS } from "../../components/GenomeView/RepeatMaskerTrack";
+import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/RepeatMaskerTrack";
 
 import { BackgroundColorConfig } from "../config-menu-components.tsx/ColorConfig";
 import { AnnotationDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";

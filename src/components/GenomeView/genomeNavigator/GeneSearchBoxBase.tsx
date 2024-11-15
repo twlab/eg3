@@ -3,7 +3,7 @@ import Autosuggest from "react-autosuggest";
 import { Manager, Popper } from "react-popper";
 // import SpeechRecognition from "react-speech-recognition";
 import IsoformSelection from "./IsoformSelection";
-import OutsideClickDetector from "../commonComponents/OutsideClickDetector";
+import OutsideClickDetector from "../TrackComponents/commonComponents/OutsideClickDetector";
 import { Genome } from "@/models/Genome";
 import Gene from "@/models/Gene";
 import _ from "lodash";

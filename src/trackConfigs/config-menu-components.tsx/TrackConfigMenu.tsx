@@ -3,7 +3,7 @@ import { Manager, Reference, Popper } from "react-popper";
 import { MenuTitle, RemoveOption } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 
-import OutsideClickDetector from "../../components/GenomeView/commonComponents/OutsideClickDetector";
+import OutsideClickDetector from "../../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 
 function ConfigMenuComponent(props) {
   let menuData = props.menuData;

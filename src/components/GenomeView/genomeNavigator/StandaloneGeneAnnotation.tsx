@@ -1,4 +1,4 @@
-import GeneAnnotation from "../geneAnnotationTrackComponents/GeneAnnotation";
+import GeneAnnotation from "../TrackComponents/geneAnnotationTrackComponents/GeneAnnotation";
 import Gene from "@/models/Gene";
 import { PlacedFeature } from "@/models/getXSpan/FeaturePlacer";
 import OpenInterval from "@/models/OpenInterval";

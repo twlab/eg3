@@ -4,23 +4,23 @@ import { treeOfLife } from "@/models/genomes/allGenomes";
 import { Button } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
-import AnnotationTrackUI from "../TrackTabComponent/AnnotationTrackUI";
+import AnnotationTrackUI from "../TabComponents/AnnotationTrackUI";
 import _ from "lodash";
 import { getSpeciesInfo } from "@/models/genomes/allGenomes";
 import TrackRegionController from "./TrackRegionController";
 import TrackModel from "@/models/TrackModel";
 import GenomePicker from "@/components/Home/GenomePicker";
-import CustomTrackAdder from "../TrackTabComponent/CustomTrackAdder";
+import CustomTrackAdder from "../TabComponents/CustomTrackAdder";
 import SessionUI from "@/components/Home/SessionUI";
 import "./Nav.css";
-import { TrackState } from "../CommonTrackStateChangeFunctions.tsx/createNewTrackState";
-import HubPane from "../TrackTabComponent/HubPane";
-import FacetTableUI from "../TrackTabComponent/FacetTableUI";
-import RegionSetSelector from "../TrackTabComponent/RegionSetSelector/RegionSetSelector";
-import Geneplot from "../TrackTabComponent/Geneplot/Geneplot";
-import ScatterPlot from "../TrackTabComponent/Geneplot/ScatterPlot";
-import ShareUI from "../TrackTabComponent/ShareUI";
-import { HotKeyInfo } from "../TrackTabComponent/HotKeyInfo";
+import { TrackState } from "../TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import HubPane from "../TabComponents/HubPane";
+import FacetTableUI from "../TabComponents/FacetTableUI";
+import RegionSetSelector from "../TabComponents/RegionSetSelector/RegionSetSelector";
+import Geneplot from "../TabComponents/Geneplot/Geneplot";
+import ScatterPlot from "../TabComponents/Geneplot/ScatterPlot";
+import ShareUI from "../TabComponents/ShareUI";
+import { HotKeyInfo } from "../TabComponents/HotKeyInfo";
 
 interface NavProps {
   selectedRegion: any;
@@ -31,7 +31,7 @@ interface NavProps {
   onTracksAdded?: (tracks: TrackModel[]) => void;
   onTrackRemoved?: any;
   trackLegendWidth: number;
-  isShowingNavigator?: boolean;
+  isShowingNavigator: boolean;
   darkTheme?: boolean;
   onGenomeSelected: (name: string) => void;
   onToggleNavigator?: () => void;
@@ -74,6 +74,8 @@ const Nav: FC<NavProps> = ({
   sets,
   selectedSet,
   onTabSettingsChange,
+  trackLegendWidth,
+  isShowingNavigator,
 }) => {
   const [genomeModal, setGenomeModal] = useState(false);
   const [trackDropdownOpen, setTrackDropdownOpen] = useState(false);
@@ -81,8 +83,11 @@ const Nav: FC<NavProps> = ({
   const [settingDropdownOpen, setSettingDropdownOpen] = useState(false);
   const [helpDropDownOpen, setHelpDropDownOpen] = useState(false);
   const [share, setShare] = useState(false);
-  const [openModal, setOpenModal] = useState<string | null>(null); // Track the currently open modal
-  console.log(openModal);
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  const [switchNavigatorChecked, setSwitchNavigatorChecked] = useState(true);
+  const [cacheToggleChecked, setCacheToggleChecked] = useState(true);
+  const [legendWidth, setLegendWidth] = useState("120");
+
   const handleGenomeOpenModal = () => setGenomeModal(true);
   const handleGenomeCloseModal = () => setGenomeModal(false);
 
@@ -99,6 +104,13 @@ const Nav: FC<NavProps> = ({
 
   const toggleSettingDropdown = () =>
     setSettingDropdownOpen(!settingDropdownOpen);
+
+  useEffect(() => {
+    setLegendWidth(`${trackLegendWidth}`);
+  }, [trackLegendWidth]);
+  useEffect(() => {
+    setSwitchNavigatorChecked(isShowingNavigator);
+  }, [isShowingNavigator]);
 
   function groupTrackByGenome() {
     const grouped = {};
@@ -123,7 +135,25 @@ const Nav: FC<NavProps> = ({
     ...state.tracks.filter((track) => !track.url).map((track) => track.name),
   ]);
   const groupedTrackSets = groupTrackByGenome();
+  const handleCheckboxChange = (event) => {
+    const { id, checked } = event.target;
+    console.log(`${id} is ${checked ? "checked" : "not checked"}`);
 
+    if (id === "switchNavigator") {
+      setSwitchNavigatorChecked(checked);
+    } else if (id === "cacheToggle") {
+      setCacheToggleChecked(checked);
+    }
+    onTabSettingsChange({ type: id, val: checked });
+  };
+
+  const handleChange = (event) => {
+    setLegendWidth(event.target.value);
+    let numVal = Number(event.target.value);
+    if (numVal >= 60) {
+      onTabSettingsChange({ type: event.target.id, val: numVal });
+    }
+  };
   return (
     <div className="Nav-container bg">
       <div className="panel">
@@ -427,7 +457,12 @@ const Nav: FC<NavProps> = ({
                 style={{ display: "flex", flexDirection: "column" }}
               >
                 <label className="dropdown-item" htmlFor="switchNavigator">
-                  <input id="switchNavigator" type="checkbox" />
+                  <input
+                    id="switchNavigator"
+                    type="checkbox"
+                    checked={switchNavigatorChecked}
+                    onChange={handleCheckboxChange}
+                  />
                   <span style={{ marginLeft: "1ch" }}>
                     Show genome-wide navigator
                   </span>
@@ -446,12 +481,19 @@ const Nav: FC<NavProps> = ({
                     </div>
                   </span>
                 </label>
+
                 <label className="dropdown-item" htmlFor="cacheToggle">
-                  <input id="cacheToggle" type="checkbox" />
+                  <input
+                    id="cacheToggle"
+                    type="checkbox"
+                    checked={cacheToggleChecked}
+                    onChange={handleCheckboxChange}
+                  />
                   <span style={{ marginLeft: "1ch" }}>
                     Restore current view after Refresh
                   </span>
                 </label>
+
                 <label className="dropdown-item" htmlFor="setLegendWidth">
                   <input
                     type="number"
@@ -459,6 +501,8 @@ const Nav: FC<NavProps> = ({
                     step="5"
                     min="60"
                     max="200"
+                    value={legendWidth}
+                    onChange={handleChange}
                   />
                   <span style={{ marginLeft: "1ch" }}>
                     Change track legend width

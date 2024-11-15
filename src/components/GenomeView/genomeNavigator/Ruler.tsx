@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
-import RulerDesigner from "../commonComponents/art/RulerDesigner";
+import { TranslatableG } from "../TrackComponents/geneAnnotationTrackComponents/TranslatableG";
+import RulerDesigner from "../TrackComponents/commonComponents/art/RulerDesigner";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 
 const RULER_DESIGNER = new RulerDesigner();

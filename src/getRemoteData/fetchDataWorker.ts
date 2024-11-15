@@ -10,7 +10,7 @@ import NavigationContext from "../models/NavigationContext";
 import Feature from "../models/Feature";
 import { ViewExpansion } from "../models/RegionExpander";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
-import { MultiAlignmentViewCalculator } from "../components/GenomeView/GenomeAlignComponents/MultiAlignmentViewCalculator";
+import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
 import { niceBpCount } from "../models/util";
 

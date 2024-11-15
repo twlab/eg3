@@ -3,11 +3,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import TrackManager from "./TrackManager";
-import Drag from "./commonComponents/chr-order/ChrOrder";
+import Drag from "./TrackComponents/commonComponents/chr-order/ChrOrder";
 import { chrType } from "../../localdata/genomename";
 import { SelectDemo } from "./tesShadcn";
 import { v4 as uuidv4 } from "uuid";
-import useResizeObserver from "./commonComponents/Resize";
+import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
@@ -18,10 +18,10 @@ import querySting from "query-string";
 import {
   createNewTrackState,
   TrackState,
-} from "./CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 // Import the functions you need from the SDKs you need
 import * as firebase from "firebase/app";
-import History from "./ToolsComponents/History";
+import History from "./ToolComponents/History";
 import _ from "lodash";
 import { FeatureSegment } from "@/models/FeatureSegment";
 
@@ -83,6 +83,10 @@ function GenomeHub(props: any) {
   const [customTracksPool, setCustomTracksPool] = useState<Array<any>>([]);
   const [selectedSet, setSelectedSet] = useState<any>();
   const [regionSets, setRegionSets] = useState<Array<any>>([]);
+
+  const [showGenNav, setShowGenNav] = useState<boolean>(true);
+  const [restoreViewRefresh, setRestoreViewRefresh] = useState<boolean>(true);
+  const [legendWidth, setLegendWidth] = useState<number>(120);
   function addGlobalState(data: any) {
     if (presentStateIdx.current !== stateArr.current.length - 1) {
       stateArr.current.splice(presentStateIdx.current + 1);
@@ -93,13 +97,12 @@ function GenomeHub(props: any) {
     stateArr.current.push(data);
     presentStateIdx.current = stateArr.current.length - 1;
 
-    console.log(stateArr.current);
     setViewRegion(data.viewRegion);
   }
 
   function recreateTrackmanager(trackConfig: { [key: string]: any }) {
     let curGenomeConfig = trackConfig.genomeConfig;
-    curGenomeConfig["genomeID"] = uuidv4();
+    // curGenomeConfig["genomeID"] = uuidv4();
     curGenomeConfig["isInitial"] = isInitial.current;
     curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
     setGenomeList(new Array<any>(curGenomeConfig));
@@ -123,10 +126,13 @@ function GenomeHub(props: any) {
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
+    setLegendWidth(state.trackLegendWidth);
+    setShowGenNav(state.isShowingNavigator);
     if (
       state.viewRegion._startBase === prevState.viewRegion._startBase &&
       state.viewRegion._endBase === prevState.viewRegion._endBase &&
-      arraysHaveSameObjects(prevState.tracks, state.tracks)
+      arraysHaveSameObjects(prevState.tracks, state.tracks) &&
+      prevState.trackLegendWidth === state.trackLegendWidth
     ) {
       return state;
     } else {
@@ -244,6 +250,7 @@ function GenomeHub(props: any) {
       item.id = trackModelId.current;
       trackModelId.current++;
     });
+    curGenomeConfig["genomeID"] = genomeList[0]["genomeID"];
     let newTrackState = {
       bundleId: "",
       customTracksPool: [],
@@ -267,6 +274,9 @@ function GenomeHub(props: any) {
       trackLegendWidth: 120,
       tracks: curGenomeConfig.defaultTracks,
     };
+
+    setLegendWidth(120);
+    setShowGenNav(true);
     addGlobalState(newTrackState);
 
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
@@ -293,6 +303,8 @@ function GenomeHub(props: any) {
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
+    setLegendWidth(state.trackLegendWidth);
+    setShowGenNav(state.isShowingNavigator);
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
 
@@ -319,7 +331,8 @@ function GenomeHub(props: any) {
       state.viewRegion._endBase!
     );
     addGlobalState(state);
-
+    setLegendWidth(state.trackLegendWidth);
+    setShowGenNav(state.isShowingNavigator);
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
 
     setCurBundle(bundle);
@@ -397,19 +410,47 @@ function GenomeHub(props: any) {
   }
   //Control and manage the state of genomeNavigator, restoreview, and legend Width
   //_________________________________________________________________________________________________________________________
-  function onTabSettingsChange() {}
+  function onTabSettingsChange(setting: { [key: string]: any }) {
+    let state = createNewTrackState(
+      stateArr.current[presentStateIdx.current],
+      {}
+    );
+    if (setting.type === "switchNavigator") {
+      setShowGenNav(setting.val);
+      state.isShowingNavigator = setting.val;
+      addGlobalState(state);
+    } else if (setting.type === "cacheToggle") {
+      setRestoreViewRefresh(setting.val);
+    } else if (setting.type === "legendWidth") {
+      state.trackLegendWidth = setting.val;
+
+      addGlobalState(state);
+
+      let curGenomeConfig = getGenomeConfig(state.genomeName);
+      curGenomeConfig.navContext = state["viewRegion"]._navContext;
+
+      curGenomeConfig.defaultTracks = state.tracks;
+      curGenomeConfig.defaultRegion = new OpenInterval(
+        state.viewRegion._startBase!,
+        state.viewRegion._endBase!
+      );
+
+      setLegendWidth(setting.val);
+      recreateTrackmanager({ genomeConfig: curGenomeConfig });
+    }
+  }
   useEffect(() => {
-    if (size.width !== 0) {
+    if (size.width > 0) {
       let curGenome = getGenomeConfig("hg38");
-      curGenome["genomeID"] = uuidv4();
+
       curGenome["windowWidth"] = size.width;
       curGenome["isInitial"] = isInitial.current;
       if (!isInitial.current) {
         curGenome["curState"] = stateArr.current[presentStateIdx.current];
-      }
-      if (isInitial.current) {
+      } else {
+        curGenome["genomeID"] = uuidv4();
         const { query } = querySting.parseUrl(window.location.href);
-        console.log(query);
+
         let bundleId = uuidv4();
 
         setCurBundle({
@@ -430,7 +471,7 @@ function GenomeHub(props: any) {
     }
   }, [size.width]);
   return (
-    <div style={{}}>
+    <div style={{ paddingLeft: "1%", paddingRight: "1%" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         {size.width > 0
           ? genomeList.map((item, index) => {
@@ -441,9 +482,10 @@ function GenomeHub(props: any) {
                 >
                   {viewRegion ? (
                     <Nav
+                      isShowingNavigator={showGenNav}
                       selectedRegion={viewRegion}
                       genomeConfig={genomeList[index]}
-                      trackLegendWidth={size.width}
+                      trackLegendWidth={legendWidth}
                       onRegionSelected={genomeNavigatorRegionSelect}
                       onGenomeSelected={onGenomeSelected}
                       state={stateArr.current[presentStateIdx.current]}
@@ -463,9 +505,9 @@ function GenomeHub(props: any) {
                       selectedSet={selectedSet}
                     />
                   ) : (
-                    <div>hii2</div>
+                    ""
                   )}
-                  {viewRegion ? (
+                  {viewRegion && showGenNav ? (
                     <GenomeNavigator
                       selectedRegion={viewRegion}
                       genomeConfig={genomeList[index]}
@@ -473,30 +515,21 @@ function GenomeHub(props: any) {
                       onRegionSelected={genomeNavigatorRegionSelect}
                     />
                   ) : (
-                    <div>hii</div>
+                    ""
                   )}
-                  <History
-                    state={{
-                      past: stateArr.current.slice(
-                        0,
-                        presentStateIdx.current + 1
-                      ),
-                      future: stateArr.current.slice(
-                        presentStateIdx.current + 1
-                      ),
-                    }}
-                    jumpToPast={jumpToState}
-                    jumpToFuture={jumpToState}
-                    clearHistory={jumpToState}
-                  />
+
                   <TrackManager
                     key={item.genomeID}
+                    legendWidth={legendWidth}
                     genomeIdx={index}
                     recreateTrackmanager={recreateTrackmanager}
                     genomeArr={genomeList}
-                    windowWidth={size.width - 120}
+                    windowWidth={size.width - legendWidth}
                     addGlobalState={addGlobalState}
                     undoRedo={undoRedo}
+                    jumpToState={jumpToState}
+                    stateArr={stateArr.current}
+                    presentStateIdx={presentStateIdx.current}
                   />
                 </div>
               );
