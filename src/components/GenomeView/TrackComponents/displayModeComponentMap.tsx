@@ -42,6 +42,7 @@ import InteractionTrackComponent from "./InteractionComponents/InteractionTrackC
 import { GenomeInteraction } from "../../../getRemoteData/GenomeInteraction";
 import FiberTrackComponent from "./bedComponents/FiberTrackComponent";
 import FiberAnnotation from "./bedComponents/FiberAnnotation";
+import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotTrackComponent";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -459,6 +460,58 @@ export const displayModeComponentMap: { [key: string]: any } = {
         forceSvg={false}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
+      />
+    );
+    return canvasElements;
+  },
+
+  dynamic: function dynamic(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+    let canvasElements = (
+      <DynamicplotTrackComponent
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
       />
     );
     return canvasElements;
@@ -1031,7 +1084,7 @@ export function getDisplayModeFunction(
       height: drawData.configOptions.height,
       xPos: curXPos,
     };
-  } else if (drawData.trackModel.type === "matplot") {
+  } else if (drawData.trackModel.type in { matplot: "", dynamic: "" }) {
     let formattedData: Array<any> = [];
     for (let i = 0; i < drawData.genesArr.length; i++) {
       formattedData.push(
@@ -1048,7 +1101,7 @@ export function getDisplayModeFunction(
     let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "auto";
 
-    let canvasElements = displayModeComponentMap["matplot"](
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
       drawData.trackState,

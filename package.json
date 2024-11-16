@@ -59,6 +59,7 @@
     "pako": "^2.1.0",
     "parse-color": "^1.0.0",
     "percentile": "^1.6.0",
+    "pixi.js": "^8.5.2",
     "plotly.js": "^2.35.2",
     "point-in-polygon": "^1.1.0",
     "qrcode.react": "^4.1.0",

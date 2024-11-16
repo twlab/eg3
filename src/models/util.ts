@@ -316,7 +316,7 @@ export function variableIsObject(obj: any) {
 //     return mesh;
 // }
 
-export function colorString2number(color: string): number {
+export function colorString2number(color: string) {
   const [r, g, b] = rgba(color); //alpha not spreaded
   return (r << 16) + (g << 8) + b;
 }

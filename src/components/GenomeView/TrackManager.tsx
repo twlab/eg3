@@ -61,6 +61,7 @@ import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/T
 import SubToolButtons from "./ToolComponents/SubToolButtons";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
 import History from "./ToolComponents/History";
+import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -103,6 +104,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   matplot: MatplotTrack,
   ruler: RulerTrack,
   modbed: FiberTrack,
+  dynamic: DynamicplotTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
