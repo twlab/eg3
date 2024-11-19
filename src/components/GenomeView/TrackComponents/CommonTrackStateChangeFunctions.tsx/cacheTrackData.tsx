@@ -59,7 +59,7 @@ export function cacheTrackData(
         startWindow: primaryVisData.viewWindow.start,
         visWidth: primaryVisData.visWidth,
       });
-      console.log(trackData![`${id}`]);
+
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
           trackModel.type === "dynamichic"

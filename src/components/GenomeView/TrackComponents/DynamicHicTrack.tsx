@@ -119,7 +119,6 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
             );
           })
         );
-        console.log(trackData![`${id}`]["result"]);
         cacheTrackData(
           useFineOrSecondaryParentNav.current,
           id,

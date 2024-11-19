@@ -1297,7 +1297,7 @@ export function getDisplayModeFunction(
     let formattedData = drawData.genesArr;
     let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "heatmap";
-    console.log(drawData);
+
     let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
       formattedData,
       drawData.useFineOrSecondaryParentNav,

@@ -431,7 +431,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-    console.log(curFetchNav);
+    console.log(curFetchNav, "individial genomic fetch interval");
     for (let i = 0; i < curFetchNav.length; i++) {
       let curRespond;
       if (trackModel.type === "geneannotation") {

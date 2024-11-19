@@ -22,7 +22,6 @@ export const DEFAULT_OPTIONS = {
 
 DEFAULT_OPTIONS.displayMode = FiberDisplayModes.AUTO;
 function getGenePadding(feature: Fiber, xSpan: OpenInterval) {
-  console.log(feature, xSpan);
   const width = xSpan.end - xSpan.start;
   const estimatedLabelWidth = feature.getName().length * 9;
   if (estimatedLabelWidth < 0.5 * width) {

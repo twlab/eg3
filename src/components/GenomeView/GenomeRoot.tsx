@@ -441,7 +441,6 @@ function GenomeHub(props: any) {
   }
   useEffect(() => {
     if (size.width > 0) {
-      console.log(props);
       let curGenome;
       if (props.selectedGenome.length > 0) {
         curGenome = getGenomeConfig(props.name);

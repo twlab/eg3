@@ -23,8 +23,6 @@ export class AppStateSaver {
    * @return {Object} plain object representing app state
    */
   toObject(appState: any): object {
-    console.log("ASDASDASDASD");
-    console.log(appState);
     const regionSetViewIndex = appState.regionSets.findIndex(
       (set) => set === appState.regionSetView
     );
@@ -64,7 +62,6 @@ export class AppStateLoader {
    * @return {Object} app state tree parsed from JSON
    */
   fromJSON(blob: string) {
-    console.log("ASDASDASDASD");
     return this.fromObject(JSON.parse(blob));
   }
 
@@ -74,7 +71,6 @@ export class AppStateLoader {
    * @throws {Error} on deserialization errors
    */
   fromObject(object: any) {
-    console.log("ASDASDASDASD");
     const regionSets = object.regionSets
       ? object.regionSets.map(RegionSet.deserialize)
       : [];
@@ -107,7 +103,6 @@ export class AppStateLoader {
    * @return {DisplayedRegionModel} - inferred view region
    */
   _restoreViewRegion(object: any, regionSetView: RegionSet) {
-    console.log("ASDASDASDASD");
     const genomeConfig = getGenomeConfig(object.genomeName);
     if (!genomeConfig) {
       return null;

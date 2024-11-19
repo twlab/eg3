@@ -83,7 +83,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (trackData!.initial === 1) {
-        console.log(trackData![`${id}`].result);
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,

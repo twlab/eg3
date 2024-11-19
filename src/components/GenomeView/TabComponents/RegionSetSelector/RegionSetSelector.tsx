@@ -21,7 +21,6 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
   onSetsChanged = () => undefined,
   onSetSelected = () => undefined,
 }) => {
-  console.log(sets, selectedSet);
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
 
   const setConfigured = (newSet: RegionSet) => {

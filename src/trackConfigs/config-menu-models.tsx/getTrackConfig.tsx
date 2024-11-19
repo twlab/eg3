@@ -54,8 +54,7 @@ export const DYNAMIC_TYPES = [
 const TYPE_NAME_TO_CONFIG = {
   // bam: BamTrackConfig,  text track/
   bed: BedTrackConfig,
-  // dynamicbed: DynamicBedTrackConfig, !
-
+  // dynamicbed: DynamicBedTrackConfig,
   categorical: CategoricalTrackConfig,
   bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,
@@ -63,7 +62,6 @@ const TYPE_NAME_TO_CONFIG = {
   longrange: LongRangeTrackConfig,
   // longrangecolor: LongRangeColorTrackConfig,
   biginteract: BigInteractTrackConfig,
-
   geneannotation: GeneAnnotationTrackConfig,
   refbed: RefBedTrackConfig,
   methylc: MethylCTrackConfig,
@@ -77,8 +75,7 @@ const TYPE_NAME_TO_CONFIG = {
   // snv: PairwiseSegmentTrackConfig, ! text track/
   // snv2: SnvSegmentTrackConfig, text track/
   // protein: ProteinTrackConfig,
-  // d: DynamicBedGraphTrackConfig, !
-  // dynamichic: DynamicHicTrackConfig,
+  // dbedgraph: DynamicBedGraphTrackConfig,!
   // dynamiclongrange: DynamicLongrangeTrackConfig,
   // omeroidr: OmeroidrTrackConfig,
   // omero4dn: Omero4dnTrackConfig,
@@ -90,6 +87,7 @@ const TYPE_NAME_TO_CONFIG = {
   // bigchain: GenomeAlignTrackConfig,
   // brgfa: BrgfaTrackConfig,
 
+  // dynamichic: DynamicHicTrackConfig,
   // jaspar: JasparTrackConfig,  !
   // boxplot: BoxplotTrackConfig, !
   // g3d: G3dTrackConfig, !
