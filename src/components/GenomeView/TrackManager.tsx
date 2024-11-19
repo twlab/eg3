@@ -62,6 +62,9 @@ import SubToolButtons from "./ToolComponents/SubToolButtons";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
 import History from "./ToolComponents/History";
 import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
+import BedgraphTrack from "./TrackComponents/BedgraphTrack";
+import QBedTrack from "./TrackComponents/QBedTrack";
+import BoxplotTrack from "./TrackComponents/BoxplotTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -105,6 +108,9 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   ruler: RulerTrack,
   modbed: FiberTrack,
   dynamic: DynamicplotTrack,
+  bedgraph: BedgraphTrack,
+  qbed: QBedTrack,
+  boxplot: BoxplotTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];

@@ -22,6 +22,28 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
+  bedgraph: async function bedgraphFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+
+  qbed: async function qbedFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  boxplot: async function boxplotFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   modbed: async function bedFetch(regionData: any) {
     return getTabixData(
       regionData.nav,
@@ -51,7 +73,6 @@ const trackFetchFunction: { [key: string]: any } = {
     );
   },
   bigwig: async function bigwigFetch(regionData: any) {
-    console.log(regionData);
     return getBigData(
       regionData.nav,
       regionData.trackModel.options,

@@ -52,12 +52,11 @@ export const DYNAMIC_TYPES = [
 ];
 
 const TYPE_NAME_TO_CONFIG = {
-  // bam: BamTrackConfig,
+  // bam: BamTrackConfig,  text track/
   bed: BedTrackConfig,
   // dynamicbed: DynamicBedTrackConfig, !
-  // qbed: QBedTrackConfig, !
+
   categorical: CategoricalTrackConfig,
-  // bedgraph: BedGraphTrackConfig, !
   bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,
   hic: HicTrackConfig,
@@ -75,10 +74,10 @@ const TYPE_NAME_TO_CONFIG = {
   matplot: MatplotTrackConfig,
 
   // hammock: HammockTrackConfig,
-  // g3d: G3dTrackConfig, !
+
   // pairwise: PairwiseSegmentTrackConfig,
-  // snv: PairwiseSegmentTrackConfig, !
-  // snv2: SnvSegmentTrackConfig,
+  // snv: PairwiseSegmentTrackConfig, ! text track/
+  // snv2: SnvSegmentTrackConfig, text track/
   // protein: ProteinTrackConfig,
   // d: DynamicBedGraphTrackConfig, !
   // dynamichic: DynamicHicTrackConfig,
@@ -88,13 +87,17 @@ const TYPE_NAME_TO_CONFIG = {
   dynseq: DynseqTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
   // vcf: VcfTrackConfig,
-  // boxplot: BoxplotTrackConfig, !
+
   // bedcolor: BedcolorTrackConfig,
   // rmskv2: Rmskv2TrackConfig, !
   // bigchain: GenomeAlignTrackConfig,
   // jaspar: JasparTrackConfig,  !
   // brgfa: BrgfaTrackConfig,
 
+  // boxplot: BoxplotTrackConfig, !
+  // g3d: G3dTrackConfig, !
+  // qbed: QBedTrackConfig, !
+  // bedgraph: BedGraphTrackConfig, !
   // dynamic: DynamicplotTrackConfig,
   // modbed: FiberTrackConfig, // fiber track was renamed to modbed meaning read modification data
 };

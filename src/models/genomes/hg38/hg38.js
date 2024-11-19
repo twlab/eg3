@@ -70,39 +70,53 @@ const defaultTracks = [
     name: "gencodeV39",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "modbed",
-    name: "examplemod",
-    url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
-  }),
+    new TrackModel(      {
+    "name": "vertebratephastCons46way",
+    "label": "Vertebrate PhastCons 46-way",
+    "filetype": "bedgraph",
+    "url": "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
+    "height": 50,
+    "options": { "color": "#006385" }
+    }),
+      new TrackModel({
+    type: "boxplot",
+    name: "example boxplot",
+    url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
 
-    new TrackModel(  {
-    "type": "dynamic",
-    "name": "dynamic plot example",
-    "showOnHubLoad": true,
-    "tracks": [
-      {
-        "type": "bigwig",
-        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
-        "name": "CH12 H3K4me1"
-      },
-      {
-        "type": "bigwig",
-        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
-        "name": "CH12 H3K27ac"
-      },
-      {
-        "type": "bigwig",
-        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
-        "name": "CH12 H3K4me3"
-      },
-      {
-        "type": "bigwig",
-        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
-        "name": "CH12 H3K36me3"
-      }
-    ]
-  })
+  }),
+  // new TrackModel({
+  //   type: "modbed",
+  //   name: "examplemod",
+  //   url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
+  // }),
+
+  //   new TrackModel(  {
+  //   "type": "dynamic",
+  //   "name": "dynamic plot example",
+  //   "showOnHubLoad": true,
+  //   "tracks": [
+  //     {
+  //       "type": "bigwig",
+  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
+  //       "name": "CH12 H3K4me1"
+  //     },
+  //     {
+  //       "type": "bigwig",
+  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
+  //       "name": "CH12 H3K27ac"
+  //     },
+  //     {
+  //       "type": "bigwig",
+  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
+  //       "name": "CH12 H3K4me3"
+  //     },
+  //     {
+  //       "type": "bigwig",
+  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
+  //       "name": "CH12 H3K36me3"
+  //     }
+  //   ]
+  // })
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "MANE_select_1.0",
