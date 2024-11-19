@@ -9,7 +9,9 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 
-const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
+const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
+  props
+) {
   const {
     basePerPixel,
     side,
@@ -107,12 +109,17 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
                 trackData![`${id}`].metadata.genome
               ].queryRegion
             : primaryVisData.visRegion;
-        trackData![`${id}`]["result"] = await trackData![`${id}`].straw.getData(
-          objToInstanceAlign(visRegion),
-          basePerPixel,
-          configOptions.current
-        );
 
+        trackData![`${id}`]["result"] = await Promise.all(
+          trackData![`${id}`].straw.map((straw, index) => {
+            return straw.getData(
+              objToInstanceAlign(visRegion),
+              basePerPixel,
+              configOptions.current
+            );
+          })
+        );
+        console.log(trackData![`${id}`]["result"]);
         cacheTrackData(
           useFineOrSecondaryParentNav.current,
           id,
@@ -220,4 +227,4 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
   );
 });
 
-export default memo(HiCTrack);
+export default memo(DynamicHicTrack);

@@ -59,10 +59,13 @@ export function cacheTrackData(
         startWindow: primaryVisData.viewWindow.start,
         visWidth: primaryVisData.visWidth,
       });
-
+      console.log(trackData![`${id}`]);
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
-          trackModel !== "" && trackModel.type in { matplot: "", dynamic: "" }
+          trackModel.type === "dynamichic"
+            ? trackData![`${id}`].result
+            : trackModel !== "" &&
+              trackModel.type in { matplot: "", dynamic: "" }
             ? trackData![`${id}`].result.flat(1)
             : trackData![`${id}`].result[0],
         trackState: createTrackState(1, "right"),

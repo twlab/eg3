@@ -206,9 +206,9 @@ class DynamicplotTrackComponent extends React.PureComponent<
   }
 
   render() {
-    console.log("YTEETPLOT", this.props);
     const { data, viewRegion, width, trackModel, unit, options, viewWindow } =
       this.props;
+
     const {
       height,
       aggregateMethod,

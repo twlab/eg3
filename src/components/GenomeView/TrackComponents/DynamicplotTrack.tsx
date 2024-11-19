@@ -104,7 +104,7 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
       ) {
         useFineOrSecondaryParentNav.current = true;
       }
-
+      console.log(trackData);
       cacheTrackData(
         useFineModeNav,
         id,

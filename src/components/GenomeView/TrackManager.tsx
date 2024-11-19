@@ -65,6 +65,8 @@ import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
 import BedgraphTrack from "./TrackComponents/BedgraphTrack";
 import QBedTrack from "./TrackComponents/QBedTrack";
 import BoxplotTrack from "./TrackComponents/BoxplotTrack";
+import JasparTrack from "./TrackComponents/JasparTrack";
+import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -111,6 +113,8 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   bedgraph: BedgraphTrack,
   qbed: QBedTrack,
   boxplot: BoxplotTrack,
+  jaspar: JasparTrack,
+  dynamichic: DynamicHicTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -784,6 +788,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
           if (item.name === "hic") {
             tempObj[item.id]["straw"] = hicStrawObj.current[`${item.id}`];
+          } else if (item.name === "dynamichic") {
+            tempObj[item.id]["straw"] = item.trackModel.tracks.map(
+              (hicTrack, index) => {
+                return hicStrawObj.current[`${item.id}` + `${index}`];
+              }
+            );
           }
         });
 
@@ -1101,6 +1111,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (trackManagerState.current.tracks[i].type === "hic") {
           hicStrawObj.current[`${trackManagerState.current.tracks[i].id}`] =
             new HicSource(trackManagerState.current.tracks[i].url);
+        }
+        if (trackManagerState.current.tracks[i].type === "dynamichic") {
+          trackManagerState.current.tracks[i].tracks?.map((item, index) => {
+            hicStrawObj.current[
+              `${trackManagerState.current.tracks[i].id}` + `${index}`
+            ] = new HicSource(
+              trackManagerState.current.tracks[i].tracks![index].url
+            );
+          });
         }
         trackIdx++;
       } else {

@@ -51,6 +51,14 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
+
+  jaspar: async function jasparFetch(regionData: any) {
+    return getBigData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   bigbed: async function bigbedFetch(regionData: any) {
     return getBigData(
       regionData.nav,

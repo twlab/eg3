@@ -30,12 +30,13 @@ const genome = new Genome("mm10", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:52149465-52164219");
+// jaspar chr6:52160767-52161357
+const defaultRegion = navContext.parse("chr6:52160767-52161357");
 const defaultTracks = [
-    new TrackModel({
-        type: "ruler",
-        name: "Ruler",
-    }),
+    // new TrackModel({
+    //     type: "ruler",
+    //     name: "Ruler",
+    // }),
 
     // new TrackModel({
     //     type: "geneAnnotation",
@@ -47,6 +48,11 @@ const defaultTracks = [
         name: "gencodeCompVM25",
         genome: "mm10",
     }),
+    new TrackModel(      {
+            "name": "JASPAR Transcription Factors 2022",
+            "type": "jaspar",
+            "url": "https://hgdownload.soe.ucsc.edu/gbdb/mm10/jaspar/JASPAR2022.bb"
+        }),
     // new TrackModel({
     //     type: "longrange",
     //     name: "ES-E14 ChIA-PET",

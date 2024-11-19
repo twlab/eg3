@@ -1,7 +1,11 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import Feature, { Fiber, NumericalFeature } from "../../../models/Feature";
+import Feature, {
+  Fiber,
+  JasparFeature,
+  NumericalFeature,
+} from "../../../models/Feature";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../../models/FeatureArranger";
@@ -46,6 +50,8 @@ import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotT
 import QBed from "@/models/QBed";
 import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
+import DynamicInteractionTrack from "./InteractionComponents/DynamicInteractionTrackComponents";
+import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -158,6 +164,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         />
       ));
     }
+
     const getAnnotationElementMap: { [key: string]: any } = {
       geneannotation: (placedGroup, y, isLastRow, index) =>
         getAnnotationElement(placedGroup, y, isLastRow, index),
@@ -166,6 +173,34 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getAnnotationElement(placedGroup, y, isLastRow, index),
       bed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
+      jaspar: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        let scoreScale = scaleLinear()
+          .domain([0, 1000])
+          .range([0, 1])
+          .clamp(true);
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <BedAnnotation
+            key={i}
+            feature={placement.feature}
+            xSpan={placement.xSpan}
+            y={y}
+            isMinimal={isLastRow}
+            color={configOptions.color}
+            reverseStrandColor={configOptions.color2}
+            isInvertArrowDirection={placement.isReverse}
+            onClick={renderTooltip}
+            alwaysDrawLabel={configOptions.alwaysDrawLabel}
+            hiddenPixels={configOptions.hiddenPixels}
+            opacity={scoreScale((placement.feature as any).score)}
+          />
+        ));
+      },
       bigbed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
       modbed: function getAnnotationElement(
@@ -577,7 +612,57 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+  dynamichic: function getDynamichic(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
 
+    // function getNumLegend(legend: ReactNode) {
+    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
+    //   // is set to canvasComponent state which will update the legend ref without having to update manually
+
+    //   updatedLegend.current = legend;
+    // }
+    let canvasElements = (
+      <DynamicInteractionTrackComponents
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        visRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
+      />
+    );
+    return canvasElements;
+  },
   dynamic: function dynamic(
     formattedData,
     useFineOrSecondaryParentNav,
@@ -875,7 +960,7 @@ export function getDisplayModeFunction(
   cacheIdx,
   curXPos
 ) {
-  console.log(drawData);
+  console.log(drawData, "drawData");
   if (
     drawData.configOptions.displayMode === "full" &&
     drawData.trackModel.type !== "genomealign"
@@ -966,7 +1051,17 @@ export function getDisplayModeFunction(
       formattedData = rawDataArr.map(
         (feature) => new RepeatMaskerFeature(feature)
       );
+    } else if (drawData.trackModel.type === "jaspar") {
+      formattedData = drawData.genesArr.map((record) => {
+        const rest = record.rest.split("\t");
+        return new JasparFeature(
+          rest[3],
+          new ChromosomeInterval(record.chr, record.start, record.end),
+          rest[2]
+        ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
+      });
     }
+
     let svgDATA = displayModeComponentMap["full"](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
@@ -1196,6 +1291,27 @@ export function getDisplayModeFunction(
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
       height: drawData.configOptions.height,
+      xPos: curXPos,
+    };
+  } else if (drawData.trackModel.type === "dynamichic") {
+    let formattedData = drawData.genesArr;
+    let tmpObj = { ...drawData.configOptions };
+    tmpObj.displayMode = "heatmap";
+    console.log(drawData);
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
       xPos: curXPos,
     };
   } else if (drawData.trackModel.type in { matplot: "", dynamic: "" }) {

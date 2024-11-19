@@ -83,6 +83,29 @@ const defaultTracks = [
     name: "example boxplot",
     url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
 
+      }),
+      
+        new TrackModel(  {
+    "name": "dynamic hic",
+    "type": "dynamichic",
+    "options": {
+           
+                "dynamicColors": ["red", "blue"],
+                "useDynamicColors": true
+            },
+    "tracks": [
+      {
+        "name": "olfactory receptor cell in situ Hi-C [4DNFIT4I5C6Z]",
+        "type": "hic",
+        "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic"
+      },
+      {
+        "name": "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+        "type": "hic",
+        "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic"
+      }
+    ],
+    "showOnHubLoad": true
   }),
   // new TrackModel({
   //   type: "modbed",
@@ -90,33 +113,33 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
   // }),
 
-  //   new TrackModel(  {
-  //   "type": "dynamic",
-  //   "name": "dynamic plot example",
-  //   "showOnHubLoad": true,
-  //   "tracks": [
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
-  //       "name": "CH12 H3K4me1"
-  //     },
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
-  //       "name": "CH12 H3K27ac"
-  //     },
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
-  //       "name": "CH12 H3K4me3"
-  //     },
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
-  //       "name": "CH12 H3K36me3"
-  //     }
-  //   ]
-  // })
+    new TrackModel(  {
+    "type": "dynamic",
+    "name": "dynamic plot example",
+    "showOnHubLoad": true,
+    "tracks": [
+      {
+        "type": "bigwig",
+        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
+        "name": "CH12 H3K4me1"
+      },
+      {
+        "type": "bigwig",
+        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
+        "name": "CH12 H3K27ac"
+      },
+      {
+        "type": "bigwig",
+        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
+        "name": "CH12 H3K4me3"
+      },
+      {
+        "type": "bigwig",
+        "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
+        "name": "CH12 H3K36me3"
+      }
+    ]
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "MANE_select_1.0",
@@ -138,38 +161,38 @@ const defaultTracks = [
   //     },
   //   },
   // }),
-  // new TrackModel({
-  //   type: "matplot",
-  //   name: "matplot wrap",
-  //   tracks: [
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  //       name: "MeDIP",
-  //       options: {
-  //         color: "red",
-  //         backgroundColor: "#FFE7AB",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MeDIP",
-  //       },
-  //     },
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-  //       name: "MRE",
-  //       options: {
-  //         color: "blue",
-  //         backgroundColor: "#C0E3CC",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MRE",
-  //       },
-  //     },
-  //   ],
-  // }),
+  new TrackModel({
+    type: "matplot",
+    name: "matplot wrap",
+    tracks: [
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+        name: "MeDIP",
+        options: {
+          color: "red",
+          backgroundColor: "#FFE7AB",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MeDIP",
+        },
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+        name: "MRE",
+        options: {
+          color: "blue",
+          backgroundColor: "#C0E3CC",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MRE",
+        },
+      },
+    ],
+  }),
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",

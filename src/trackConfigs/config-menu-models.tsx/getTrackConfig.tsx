@@ -72,9 +72,7 @@ const TYPE_NAME_TO_CONFIG = {
   // snp: SnpTrackConfig,
   ruler: RulerTrackConfig,
   matplot: MatplotTrackConfig,
-
   // hammock: HammockTrackConfig,
-
   // pairwise: PairwiseSegmentTrackConfig,
   // snv: PairwiseSegmentTrackConfig, ! text track/
   // snv2: SnvSegmentTrackConfig, text track/
@@ -87,13 +85,12 @@ const TYPE_NAME_TO_CONFIG = {
   dynseq: DynseqTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
   // vcf: VcfTrackConfig,
-
   // bedcolor: BedcolorTrackConfig,
   // rmskv2: Rmskv2TrackConfig, !
   // bigchain: GenomeAlignTrackConfig,
-  // jaspar: JasparTrackConfig,  !
   // brgfa: BrgfaTrackConfig,
 
+  // jaspar: JasparTrackConfig,  !
   // boxplot: BoxplotTrackConfig, !
   // g3d: G3dTrackConfig, !
   // qbed: QBedTrackConfig, !
