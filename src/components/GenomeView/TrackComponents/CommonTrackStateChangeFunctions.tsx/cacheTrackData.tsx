@@ -62,10 +62,10 @@ export function cacheTrackData(
 
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
-          trackModel.type === "dynamichic"
+          trackModel.type in { dynamichic: "" }
             ? trackData![`${id}`].result
             : trackModel !== "" &&
-              trackModel.type in { matplot: "", dynamic: "" }
+              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ? trackData![`${id}`].result.flat(1)
             : trackData![`${id}`].result[0],
         trackState: createTrackState(1, "right"),
@@ -179,7 +179,8 @@ export function cacheTrackData(
 
       fetchedDataCache.current[leftIdx.current] = {
         dataCache:
-          trackModel !== "" && trackModel.type in { matplot: "", dynamic: "" }
+          trackModel !== "" &&
+          trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ? trackData![`${id}`].result.map((item, index) => {
                 return item[0];
               })
@@ -190,7 +191,8 @@ export function cacheTrackData(
 
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
-          trackModel !== "" && trackModel.type in { matplot: "", dynamic: "" }
+          trackModel !== "" &&
+          trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ? trackData![`${id}`].result.map((item, index) => {
                 return item[1];
               })
@@ -200,7 +202,8 @@ export function cacheTrackData(
       rightIdx.current--;
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
-          trackModel !== "" && trackModel.type in { matplot: "", dynamic: "" }
+          trackModel !== "" &&
+          trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ? trackData![`${id}`].result.map((item, index) => {
                 return item[2];
               })
@@ -216,7 +219,7 @@ export function cacheTrackData(
       ];
 
       let viewData;
-      if (trackModel.type in { matplot: "", dynamic: "" }) {
+      if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
         viewData = getDeDupeArrMatPlot(testData);
       } else {
         let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
@@ -252,7 +255,7 @@ export function cacheTrackData(
         }
 
         let viewData;
-        if (trackModel.type in { matplot: "", dynamic: "" }) {
+        if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
           viewData = getDeDupeArrMatPlot(testData);
         } else {
           let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
@@ -283,7 +286,7 @@ export function cacheTrackData(
         }
 
         let viewData;
-        if (trackModel.type in { matplot: "", dynamic: "" }) {
+        if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
           viewData = getDeDupeArrMatPlot(testData);
         } else {
           let dataCacheArray = testData.map((item) => item.dataCache).flat(1);

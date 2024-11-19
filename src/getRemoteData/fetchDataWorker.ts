@@ -382,7 +382,7 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
         });
-      } else if (trackType in { matplot: "", dynamic: "" }) {
+      } else if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
         let tmpReponse = await Promise.all(
           item.tracks.map(async (trackItem, index) => {
             return event.data.initial !== 1

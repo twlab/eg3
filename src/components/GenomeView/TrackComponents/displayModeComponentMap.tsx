@@ -52,6 +52,8 @@ import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
 import DynamicInteractionTrack from "./InteractionComponents/DynamicInteractionTrackComponents";
 import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
+import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
+import { format } from "path";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -642,6 +644,63 @@ export const displayModeComponentMap: { [key: string]: any } = {
     // }
     let canvasElements = (
       <DynamicInteractionTrackComponents
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        visRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
+      />
+    );
+    return canvasElements;
+  },
+
+  dynamicbed: function getdynamicbed(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    renderTooltip,
+    svgHeight,
+    updatedLegend,
+    trackModel,
+    getGenePadding,
+    getHeight,
+    ROW_HEIGHT
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+    console.log(formattedData);
+    // function getNumLegend(legend: ReactNode) {
+    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
+    //   // is set to canvasComponent state which will update the legend ref without having to update manually
+
+    //   updatedLegend.current = legend;
+    // }
+    let canvasElements = (
+      <DynamicBedTrackComponents
         data={formattedData}
         options={configOptions}
         viewWindow={
@@ -1314,31 +1373,51 @@ export function getDisplayModeFunction(
       height: tmpObj,
       xPos: curXPos,
     };
-  } else if (drawData.trackModel.type in { matplot: "", dynamic: "" }) {
+  } else if (
+    drawData.trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+  ) {
     let formattedData: Array<any> = [];
-    for (let i = 0; i < drawData.genesArr.length; i++) {
-      formattedData.push(
-        drawData.genesArr[i].map((record) => {
-          let newChrInt = new ChromosomeInterval(
-            record.chr,
-            record.start,
-            record.end
-          );
-          return new NumericalFeature("", newChrInt).withValue(record.score);
-        })
-      );
+    if (drawData.trackModel.type !== "dynamicbed") {
+      for (let i = 0; i < drawData.genesArr.length; i++) {
+        formattedData.push(
+          drawData.genesArr[i].map((record) => {
+            let newChrInt = new ChromosomeInterval(
+              record.chr,
+              record.start,
+              record.end
+            );
+            return new NumericalFeature("", newChrInt).withValue(record.score);
+          })
+        );
+      }
+    } else {
+      for (let i = 0; i < drawData.genesArr.length; i++) {
+        formattedData.push(
+          drawData.genesArr[i].map((record) => {
+            return new Feature(
+              record[3],
+              new ChromosomeInterval(record.chr, record.start, record.end)
+            );
+          })
+        );
+      }
     }
     let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "auto";
-
+    console.log(drawData.trackModel);
     let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
       drawData.trackState,
       drawData.windowWidth,
-      tmpObj,
+      drawData.configOptions,
+      drawData.renderTooltip,
+      drawData.svgHeight,
       drawData.updatedLegend,
-      drawData.trackModel
+      drawData.trackModel,
+      drawData.getGenePadding,
+      drawData.getHeight,
+      drawData.ROW_HEIGHT
     );
 
     displaySetter.density.setComponents(canvasElements);

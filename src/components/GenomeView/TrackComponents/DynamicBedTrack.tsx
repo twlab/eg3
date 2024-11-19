@@ -1,23 +1,33 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
-import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
-import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/DynamicplotTrackComponent";
+import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 
 import ReactDOM from "react-dom";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import _ from "lodash";
+
+export const TOP_PADDING = 2;
+export const ROW_VERTICAL_PADDING = 2;
 
 export const DEFAULT_OPTIONS = {
-  ...defaultNumericalTrack,
-  ...defaultDynamic,
+  ...defaultAnnotationTrack,
+  color: "blue",
+  color2: "red",
+  rowHeight: 10,
+  maxRows: 5,
+  hiddenPixels: 0.5,
+  speed: [5],
+  playing: true,
+  dynamicColors: [],
+  useDynamicColors: false,
+  backgroundColor: "white",
 };
-DEFAULT_OPTIONS.aggregateMethod = "MEAN";
 DEFAULT_OPTIONS.displayMode = "density";
-
-const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
+const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   trackData,
   updateGlobalTrackConfig,
   side,
@@ -43,7 +53,7 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
 
-  const [canvasComponents, setCanvasComponents] = useState<any>(null);
+  const [canvasComponent, setCanvasComponents] = useState<any>(null);
 
   const [legend, setLegend] = useState<any>();
   const displaySetter = {
@@ -57,6 +67,19 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
       windowWidth,
       useFineOrSecondaryParentNav.current
     );
+    const getBedPadding = (bed) =>
+      bed.getName().length * configOptions.current.rowHeight + 2;
+    const getHeight = (results) => {
+      const maxRow: any = _.max(results.map((r) => r.numRowsAssigned));
+      let rowsToDraw = Math.min(maxRow, configOptions.current.maxRows);
+      if (rowsToDraw < 1) {
+        rowsToDraw = 1;
+      }
+      return (
+        rowsToDraw * (configOptions.current.rowHeight + ROW_VERTICAL_PADDING) +
+        TOP_PADDING
+      );
+    };
 
     getDisplayModeFunction(
       {
@@ -65,9 +88,13 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
         trackState,
         windowWidth,
         configOptions: configOptions.current,
+        renderTooltip: () => {},
         svgHeight,
         updatedLegend,
         trackModel,
+        getBedPadding,
+        getHeight,
+        ROW_HEIGHT: configOptions.current.rowHeight,
       },
       displaySetter,
       displayCache,
@@ -144,10 +171,10 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)
     );
-  }, [canvasComponents]);
+  }, [canvasComponent]);
 
   useEffect(() => {
-    if (canvasComponents !== null) {
+    if (canvasComponent !== null) {
       if (id in applyTrackConfigChange) {
         if ("type" in applyTrackConfigChange) {
           configOptions.current = {
@@ -205,11 +232,11 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
           right: updateSide.current === "left" ? `${xPos.current}px` : "",
         }}
       >
-        {canvasComponents}
+        {canvasComponent}
       </div>
       {legend}
     </div>
   );
 });
 
-export default memo(DynamicplotTrack);
+export default memo(DynamicBedTrack);
