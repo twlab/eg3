@@ -50,7 +50,6 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
-  const [configChanged, setConfigChanged] = useState(false);
   const [legend, setLegend] = useState<any>();
 
   const displaySetter = {

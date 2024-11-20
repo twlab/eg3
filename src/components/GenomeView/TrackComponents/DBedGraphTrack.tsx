@@ -26,8 +26,9 @@ export const DEFAULT_OPTIONS = {
   useDynamicColors: false,
   backgroundColor: "white",
 };
+DEFAULT_OPTIONS["arrayAggregateMethod"] = "MEAN";
 DEFAULT_OPTIONS.displayMode = "density";
-const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
+const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
   trackData,
   updateGlobalTrackConfig,
   side,
@@ -67,19 +68,6 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
       windowWidth,
       useFineOrSecondaryParentNav.current
     );
-    const getBedPadding = (bed) =>
-      bed.getName().length * configOptions.current.rowHeight + 2;
-    const getHeight = (results) => {
-      const maxRow: any = _.max(results.map((r) => r.numRowsAssigned));
-      let rowsToDraw = Math.min(maxRow, configOptions.current.maxRows);
-      if (rowsToDraw < 1) {
-        rowsToDraw = 1;
-      }
-      return (
-        rowsToDraw * (configOptions.current.rowHeight + ROW_VERTICAL_PADDING) +
-        TOP_PADDING
-      );
-    };
 
     getDisplayModeFunction(
       {
@@ -88,13 +76,9 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
         trackState,
         windowWidth,
         configOptions: configOptions.current,
-        renderTooltip: () => {},
         svgHeight,
         updatedLegend,
         trackModel,
-        getBedPadding,
-        getHeight,
-        ROW_HEIGHT: configOptions.current.rowHeight,
       },
       displaySetter,
       displayCache,
@@ -239,4 +223,4 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   );
 });
 
-export default memo(DynamicBedTrack);
+export default memo(DBedgraphTrack);

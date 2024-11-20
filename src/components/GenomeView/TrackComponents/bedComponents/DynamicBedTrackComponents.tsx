@@ -66,7 +66,7 @@ const DynamicBedTrackComponents: React.FC<DynamicBedTrackProps> = ({
   );
 
   const height = getHeight(arrangeResults, options.rowHeight, options.maxRows);
-  console.log(data, visRegion, viewWindow, width, options, trackModel);
+
   return (
     <PixiAnnotation
       arrangeResults={arrangeResults}

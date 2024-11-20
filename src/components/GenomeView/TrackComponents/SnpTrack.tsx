@@ -7,42 +7,37 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
-
+import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import BedAnnotation from "./bedComponents/BedAnnotation";
-import { JasparFeature } from "@/models/Feature";
-import OpenInterval from "@/models/OpenInterval";
-import JasparDetail from "./commonComponents/annotation/JasparDetail";
+
+import SnpDetail from "./SnpComponents/SnpDetail";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
 export const DEFAULT_OPTIONS = {
   ...defaultAnnotationTrack,
-
+  ...defaultNumericalTrack,
+  options: { maxRows: 20 },
+  height: 40,
   hiddenPixels: 0.5,
-  alwaysDrawLabel: true,
+  alwaysDrawLabel: false,
+  hideMinimalItems: true,
   backgroundColor: "var(--bg-color)",
+  displayMode: "density",
+  aggregateMethod: "COUNT",
 };
-
+const HEIGHT = 9;
 const ROW_VERTICAL_PADDING = 2;
-const ROW_HEIGHT = BedAnnotation.HEIGHT + ROW_VERTICAL_PADDING;
-const getGenePadding = (feature: JasparFeature, xSpan: OpenInterval) => {
-  const width = xSpan.end - xSpan.start;
-  const estimatedLabelWidth = feature.getName().length * 9;
-  if (estimatedLabelWidth < 0.5 * width) {
-    return 5;
-  } else {
-    return 9 + estimatedLabelWidth;
-  }
-};
+const ROW_HEIGHT = HEIGHT + ROW_VERTICAL_PADDING;
+
 const TOP_PADDING = 2;
 
-const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
+const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
   trackData,
   updateGlobalTrackConfig,
 
@@ -86,26 +81,28 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
     full: {
       setComponents: setSvgComponents,
     },
+    density: {
+      setComponents: setCanvasComponents,
+    },
   };
 
-  function getHeight(numRows: number): number {
-    let rowHeight = ROW_HEIGHT;
-    let options = configOptions.current;
-    let rowsToDraw = Math.min(numRows, options.maxRows);
-    if (options.hideMinimalItems) {
-      rowsToDraw -= 1;
-    }
-    if (rowsToDraw < 1) {
-      rowsToDraw = 1;
-    }
-    return rowsToDraw * rowHeight + TOP_PADDING;
-  }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(
       trackState,
       windowWidth,
       useFineOrSecondaryParentNav.current
     );
+
+    function getHeight(numRows: number): number {
+      let rowsToDraw = Math.min(numRows, configOptions.current.maxRows);
+      if (configOptions.current.hideMinimalItems) {
+        rowsToDraw -= 1;
+      }
+      if (rowsToDraw < 1) {
+        rowsToDraw = 1;
+      }
+      return rowsToDraw * ROW_HEIGHT + TOP_PADDING;
+    }
     getDisplayModeFunction(
       {
         genesArr,
@@ -117,7 +114,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
         svgHeight,
         updatedLegend,
         trackModel,
-        getGenePadding,
+        getGenePadding: 5,
         getHeight,
         ROW_HEIGHT,
       },
@@ -134,7 +131,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
   //________________________________________________________________________________________________________________________________________________________
 
   // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
-  function JasparClickTooltip(feature: any, pageX, pageY, onClose) {
+  function SnpClickToolTip(snp: any, pageX, pageY, onClose) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
       pointerEvents: "auto",
@@ -165,7 +162,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
               className="Tooltip"
             >
               <OutsideClickDetector onOutsideClick={onClose}>
-                <JasparDetail feature={feature} />
+                <SnpDetail snp={snp} />
               </OutsideClickDetector>
               {ReactDOM.createPortal(
                 <div
@@ -192,13 +189,8 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
     );
   }
 
-  function renderTooltip(event, gene) {
-    const currtooltip = JasparClickTooltip(
-      gene,
-      event.pageX,
-      event.pageY,
-      onClose
-    );
+  function renderTooltip(event, snp) {
+    const currtooltip = SnpClickToolTip(snp, event.pageX, event.pageY, onClose);
     setToolTipVisible(true);
     setToolTip(currtooltip);
   }
@@ -321,22 +313,34 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
         position: "relative",
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          lineHeight: 0,
-          right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          left: updateSide.current === "right" ? `${xPos.current}px` : "",
-          backgroundColor: configOptions.current.backgroundColor,
-        }}
-      >
-        {svgComponents}
-      </div>
-
+      {configOptions.current.displayMode === "full" ? (
+        <div
+          style={{
+            position: "absolute",
+            lineHeight: 0,
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            backgroundColor: configOptions.current.backgroundColor,
+          }}
+        >
+          {svgComponents}
+        </div>
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            backgroundColor: configOptions.current.backgroundColor,
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+          }}
+        >
+          {canvasComponents}
+        </div>
+      )}
       {toolTipVisible ? toolTip : ""}
       {legend}
     </div>
   );
 });
 
-export default memo(JasparTrack);
+export default memo(SnpTrack);

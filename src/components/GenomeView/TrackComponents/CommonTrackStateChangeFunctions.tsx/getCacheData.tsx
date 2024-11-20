@@ -47,6 +47,7 @@ export function getCacheData(
       longrange: "",
       modbed: "",
       dynamichic: "",
+      dynamiclongrange: "",
     }
   ) {
     displayType = "density";

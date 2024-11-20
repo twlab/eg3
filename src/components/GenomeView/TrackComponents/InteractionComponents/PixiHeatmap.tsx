@@ -323,10 +323,13 @@ export class PixiHeatmap extends PureComponent<
           });
         }
       });
-
+      console.log(trackModel);
       const label = trackModel?.tracks[index]?.label || "";
       if (label) {
-        const t = new PIXI.Text(label, style);
+        const t = new PIXI.Text({
+          text: label,
+          style: style,
+        });
         t.position.set(viewWindow.start + 5, height - 21);
         this.subs[index].addChild(t);
       }

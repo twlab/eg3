@@ -52,41 +52,44 @@ export const DYNAMIC_TYPES = [
 ];
 
 const TYPE_NAME_TO_CONFIG = {
-  // bam: BamTrackConfig,  text track/
   bed: BedTrackConfig,
-  // dynamicbed: DynamicBedTrackConfig,
   categorical: CategoricalTrackConfig,
   bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,
   hic: HicTrackConfig,
   longrange: LongRangeTrackConfig,
-  // longrangecolor: LongRangeColorTrackConfig,
+
   biginteract: BigInteractTrackConfig,
   geneannotation: GeneAnnotationTrackConfig,
   refbed: RefBedTrackConfig,
   methylc: MethylCTrackConfig,
   repeatmasker: RepeatMaskerTrackConfig,
   genomealign: GenomeAlignTrackConfig,
-  // snp: SnpTrackConfig,
+
   ruler: RulerTrackConfig,
   matplot: MatplotTrackConfig,
   // hammock: HammockTrackConfig,
   // pairwise: PairwiseSegmentTrackConfig,
-  // snv: PairwiseSegmentTrackConfig, ! text track/
-  // snv2: SnvSegmentTrackConfig, text track/
+  // snv: PairwiseSegmentTrackConfig,
+  // snv2: SnvSegmentTrackConfig,
   // protein: ProteinTrackConfig,
-  // dbedgraph: DynamicBedGraphTrackConfig,!
-  // dynamiclongrange: DynamicLongrangeTrackConfig,
-  // omeroidr: OmeroidrTrackConfig,
-  // omero4dn: Omero4dnTrackConfig,
-  dynseq: DynseqTrackConfig,
+  // longrangecolor: LongRangeColorTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
   // vcf: VcfTrackConfig,
   // bedcolor: BedcolorTrackConfig,
   // rmskv2: Rmskv2TrackConfig, !
   // bigchain: GenomeAlignTrackConfig,
   // brgfa: BrgfaTrackConfig,
+  dynseq: DynseqTrackConfig,
 
+  // omeroidr: OmeroidrTrackConfig,
+  // omero4dn: Omero4dnTrackConfig,
+  // bam: BamTrackConfig,
+
+  // snp: SnpTrackConfig,
+  // dynamiclongrange: DynamicLongrangeTrackConfig,
+  // dynamicbed: DynamicBedTrackConfig,
+  // dbedgraph: DynamicBedGraphTrackConfig,!
   // dynamichic: DynamicHicTrackConfig,
   // jaspar: JasparTrackConfig,  !
   // boxplot: BoxplotTrackConfig, !

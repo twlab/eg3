@@ -382,7 +382,10 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
         });
-      } else if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
+      } else if (
+        trackType in
+        { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+      ) {
         let tmpReponse = await Promise.all(
           item.tracks.map(async (trackItem, index) => {
             return event.data.initial !== 1
@@ -390,7 +393,9 @@ self.onmessage = async (event: MessageEvent) => {
               : fetchData(trackItem, genomeName, id);
           })
         );
-
+        if (event.data.initial === 1 && trackType === "dynamiclongrange") {
+          tmpReponse = tmpReponse.flat(1);
+        }
         fetchResults.push({
           name: trackType,
           result: tmpReponse,
@@ -434,7 +439,7 @@ self.onmessage = async (event: MessageEvent) => {
     console.log(curFetchNav, "individial genomic fetch interval");
     for (let i = 0; i < curFetchNav.length; i++) {
       let curRespond;
-      if (trackModel.type === "geneannotation") {
+      if (trackModel.type in { geneannotation: "", snp: "" }) {
         curRespond = await Promise.all(
           await curFetchNav[i].map((nav, index) => {
             return trackFetchFunction[trackModel.type]({

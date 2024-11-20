@@ -43,8 +43,9 @@ const genome = new Genome("hg38", [
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
 // for renmora
+// snp chr7:27212300-27214862
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27212300-27214862");
 const defaultTracks = [
   // new TrackModel({
   //   type: "ruler",
@@ -59,7 +60,11 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-
+  new TrackModel({
+    type: "snp",
+    name: "snp",
+    genome: "hg38",
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",
@@ -83,23 +88,41 @@ const defaultTracks = [
   //   name: "example boxplot",
   //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
   // }),
-  new TrackModel({
-    type: "dynamicbed",
-    name: "dynamic bed",
-    showOnHubLoad: true,
-    tracks: [
-      {
-        type: "bed",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-        name: "peak1",
-      },
-      {
-        type: "bed",
-        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
-        name: "peak2",
-      },
-    ],
-  }),
+  // new TrackModel({
+  //   type: "dynamicbed",
+  //   name: "dynamic bed",
+  //   showOnHubLoad: true,
+  //   tracks: [
+  //     {
+  //       type: "bed",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+  //       name: "peak1",
+  //     },
+  //     {
+  //       type: "bed",
+  //       url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
+  //       name: "peak2",
+  //     },
+  //   ],
+  // }),
+
+  // new TrackModel({
+  //   type: "dynamiclongrange",
+  //   name: "dynamic plot example",
+  //   showOnHubLoad: true,
+  //   tracks: [
+  //     {
+  //       type: "longrange",
+  //       name: "ES-E14 ChIA-PET",
+  //       url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+  //     },
+  //     {
+  //       type: "longrange",
+  //       name: "ES-E14 ChIA-PET",
+  //       url: "https://egg.wustl.edu/d/mm9/GSE28247_st3ab.gz",
+  //     },
+  //   ],
+  // }),
   // new TrackModel({
   //   name: "dynamic hic",
   //   type: "dynamichic",

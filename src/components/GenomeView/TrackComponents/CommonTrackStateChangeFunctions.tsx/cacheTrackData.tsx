@@ -62,10 +62,16 @@ export function cacheTrackData(
 
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
-          trackModel.type in { dynamichic: "" }
+          trackModel.type in { dynamichic: "", dynamiclongrange: "" }
             ? trackData![`${id}`].result
             : trackModel !== "" &&
-              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+              trackModel.type in
+                {
+                  matplot: "",
+                  dynamic: "",
+                  dynamicbed: "",
+                  dynamiclongrange: "",
+                }
             ? trackData![`${id}`].result.flat(1)
             : trackData![`${id}`].result[0],
         trackState: createTrackState(1, "right"),

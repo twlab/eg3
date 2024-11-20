@@ -33,7 +33,7 @@ const navContext = genome.makeNavContext();
 // jaspar chr6:52160767-52161357
 
 // dbedgraph : "chr6:52424900-52425400"
-const defaultRegion = navContext.parse("chr6:52160767-52161357");
+const defaultRegion = navContext.parse("chr6:52424900-52425400");
 const defaultTracks = [
   // new TrackModel({
   //     type: "ruler",
@@ -56,27 +56,27 @@ const defaultTracks = [
     url: "https://hgdownload.soe.ucsc.edu/gbdb/mm10/jaspar/JASPAR2022.bb",
   }),
 
-  //   new TrackModel({
-  //     type: "dbedgraph",
-  //     url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
-  //     options: {
-  //       dynamicLabels: [
-  //         "stage1",
-  //         "stage2",
-  //         "stage3",
-  //         "stage4",
-  //         "stage5",
-  //         "stage6",
-  //         "stage7",
-  //         "stage8",
-  //         "stage9",
-  //         "stage10",
-  //       ],
-  //       dynamicColors: ["red", "blue", "#00FF00", 0x000000],
-  //       useDynamicColors: true,
-  //     },
-  //     showOnHubLoad: true,
-  //   }),
+  new TrackModel({
+    type: "dbedgraph",
+    url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
+    options: {
+      dynamicLabels: [
+        "stage1",
+        "stage2",
+        "stage3",
+        "stage4",
+        "stage5",
+        "stage6",
+        "stage7",
+        "stage8",
+        "stage9",
+        "stage10",
+      ],
+      dynamicColors: ["red", "blue", "#00FF00", 0x000000],
+      useDynamicColors: true,
+    },
+    showOnHubLoad: true,
+  }),
   // new TrackModel({
   //     type: "longrange",
   //     name: "ES-E14 ChIA-PET",
@@ -92,11 +92,7 @@ const defaultTracks = [
     name: "RepeatMasker",
     url: "https://vizhub.wustl.edu/public/mm10/rmsk16.bb",
   }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "mm10",
-  }),
+
   // new TrackModel({
   //     type: 'refbed',
   //     name: 'refGene in refbed',

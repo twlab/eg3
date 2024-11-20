@@ -4,6 +4,7 @@ import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import Feature, {
   Fiber,
   JasparFeature,
+  NumericalArrayFeature,
   NumericalFeature,
 } from "../../../models/Feature";
 import FeatureArranger, {
@@ -50,10 +51,13 @@ import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotT
 import QBed from "@/models/QBed";
 import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
-import DynamicInteractionTrack from "./InteractionComponents/DynamicInteractionTrackComponents";
+
 import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
 import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
 import { format } from "path";
+import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
+import Snp from "@/models/Snp";
+import SnpAnnotation from "./SnpComponents/SnpAnnotation";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -346,11 +350,35 @@ export const displayModeComponentMap: { [key: string]: any } = {
           );
         });
       },
+
+      snp: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <SnpAnnotation
+            key={i}
+            snp={placement.feature}
+            xSpan={placement.xSpan}
+            y={y}
+            isMinimal={isLastRow}
+            color={configOptions.color}
+            reverseStrandColor={configOptions.color2}
+            isInvertArrowDirection={placement.isReverse}
+            onClick={renderTooltip}
+            alwaysDrawLabel={configOptions.alwaysDrawLabel}
+            hiddenPixels={configOptions.hiddenPixels}
+          />
+        ));
+      },
     };
 
     let featureArrange = new FeatureArranger();
 
-    let sortType = SortItemsOptions.NOSORT;
+    let sortType = SortItemsOptions.NONE;
     let currDisplayNav;
     if (!useFineOrSecondaryParentNav) {
       currDisplayNav = new DisplayedRegionModel(
@@ -375,6 +403,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       configOptions.hiddenPixels,
       sortType
     );
+
     let height;
     height =
       trackModel.type in { repeatmasker: "" }
@@ -692,7 +721,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             trackState.regionNavCoord._startBase)
       );
     }
-    console.log(formattedData);
+
     // function getNumLegend(legend: ReactNode) {
     //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
     //   // is set to canvasComponent state which will update the legend ref without having to update manually
@@ -710,6 +739,58 @@ export const displayModeComponentMap: { [key: string]: any } = {
           )
         }
         visRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
+      />
+    );
+    return canvasElements;
+  },
+
+  dbedgraph: function getdbedgraph(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    // function getNumLegend(legend: ReactNode) {
+    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
+    //   // is set to canvasComponent state which will update the legend ref without having to update manually
+
+    //   updatedLegend.current = legend;
+    // }
+    let canvasElements = (
+      <DynamicNumericalTrack
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
           useFineOrSecondaryParentNav
             ? objToInstanceAlign(trackState.visRegion)
             : currDisplayNav
@@ -1079,6 +1160,8 @@ export function getDisplayModeFunction(
           strand
         );
       });
+    } else if (drawData.trackModel.type === "snp") {
+      formattedData = drawData.genesArr.map((record) => new Snp(record));
     } else if (drawData.trackModel.type === "repeatmasker") {
       let rawDataArr: Array<RepeatDASFeature> = [];
       drawData.genesArr.map((record) => {
@@ -1374,10 +1457,54 @@ export function getDisplayModeFunction(
       xPos: curXPos,
     };
   } else if (
-    drawData.trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+    drawData.trackModel.type in
+    { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
   ) {
     let formattedData: Array<any> = [];
-    if (drawData.trackModel.type !== "dynamicbed") {
+    if (drawData.trackModel.type === "dynamicbed") {
+      for (let i = 0; i < drawData.genesArr.length; i++) {
+        formattedData.push(
+          drawData.genesArr[i].map((record) => {
+            return new Feature(
+              record[3],
+              new ChromosomeInterval(record.chr, record.start, record.end)
+            );
+          })
+        );
+      }
+    } else if (drawData.trackModel.type === "dynamiclongrange") {
+      for (let i = 0; i < drawData.genesArr.length; i++) {
+        let tmpLongrangeData: Array<any> = [];
+
+        drawData.genesArr[i].map((record) => {
+          const regexMatch = record[3].match(
+            /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
+          );
+
+          if (regexMatch) {
+            const chr = regexMatch[1];
+            const start = Number.parseInt(regexMatch[2], 10);
+            const end = Number.parseInt(regexMatch[3], 10);
+            // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
+            const score = Number.parseFloat(record[3].split(",")[1]);
+            const recordLocus1 = new ChromosomeInterval(
+              record.chr,
+              record.start,
+              record.end
+            );
+            const recordLocus2 = new ChromosomeInterval(chr, start, end);
+            tmpLongrangeData.push(
+              new GenomeInteraction(recordLocus1, recordLocus2, score)
+            );
+          } else {
+            console.error(
+              `${record[3]} not formated correctly in longrange track`
+            );
+          }
+        });
+        formattedData.push(tmpLongrangeData);
+      }
+    } else {
       for (let i = 0; i < drawData.genesArr.length; i++) {
         formattedData.push(
           drawData.genesArr[i].map((record) => {
@@ -1390,29 +1517,23 @@ export function getDisplayModeFunction(
           })
         );
       }
-    } else {
-      for (let i = 0; i < drawData.genesArr.length; i++) {
-        formattedData.push(
-          drawData.genesArr[i].map((record) => {
-            return new Feature(
-              record[3],
-              new ChromosomeInterval(record.chr, record.start, record.end)
-            );
-          })
-        );
-      }
     }
+
     let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "auto";
-    console.log(drawData.trackModel);
-    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+
+    let canvasElements = displayModeComponentMap[
+      `${
+        drawData.trackModel.type === "dynamiclongrange"
+          ? "dynamichic"
+          : drawData.trackModel.type
+      }`
+    ](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
       drawData.trackState,
       drawData.windowWidth,
       drawData.configOptions,
-      drawData.renderTooltip,
-      drawData.svgHeight,
       drawData.updatedLegend,
       drawData.trackModel,
       drawData.getGenePadding,
@@ -1489,6 +1610,41 @@ export function getDisplayModeFunction(
       height: tmpObj,
       xPos: curXPos,
     };
+  } else if (drawData.trackModel.type === "dbedgraph") {
+    const VALUE_COLUMN_INDEX = 3;
+    let formattedData = drawData.genesArr.map((record) => {
+      const locus = new ChromosomeInterval(
+        record.chr,
+        record.start,
+        record.end
+      );
+      let parsedValue;
+      try {
+        parsedValue = JSON.parse(record[VALUE_COLUMN_INDEX]);
+      } catch (e) {
+        console.error(e);
+        parsedValue = [0];
+      }
+      return new NumericalArrayFeature("", locus).withValues(parsedValue);
+    });
+    let tmpObj = { ...drawData.configOptions };
+
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
   } else if (drawData.trackModel.type === "boxplot") {
     let formattedData = drawData.genesArr.map((record) => {
       let newChrInt = new ChromosomeInterval(
@@ -1520,6 +1676,7 @@ export function getDisplayModeFunction(
     drawData.trackModel.type in { bigwig: "", qbed: "" } ||
     drawData.configOptions.displayMode === "density"
   ) {
+    let tmpObj = { ...drawData.configOptions };
     let formattedData;
     if (drawData.trackModel.type === "geneannotation") {
       formattedData = drawData.genesArr.map((record) => {
@@ -1561,6 +1718,8 @@ export function getDisplayModeFunction(
         const value = Number.isFinite(unsafeValue) ? unsafeValue : 0;
         return new NumericalFeature("", newChrInt).withValue(value);
       });
+    } else if (drawData.trackModel.type === "snp") {
+      formattedData = drawData.genesArr.map((record) => new Snp(record));
     } else {
       formattedData = drawData.genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(
@@ -1571,7 +1730,7 @@ export function getDisplayModeFunction(
         return new NumericalFeature("", newChrInt).withValue(record.score);
       });
     }
-    let tmpObj = { ...drawData.configOptions };
+
     if (drawData.trackModel.type !== "bigwig") {
       tmpObj.displayMode = "auto";
     }

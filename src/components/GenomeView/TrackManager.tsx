@@ -68,6 +68,9 @@ import BoxplotTrack from "./TrackComponents/BoxplotTrack";
 import JasparTrack from "./TrackComponents/JasparTrack";
 import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
 import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
+import DBedgraphTrack from "./TrackComponents/DBedgraphTrack";
+import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
+import SnpTrack from "./TrackComponents/SnpTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -117,6 +120,9 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   jaspar: JasparTrack,
   dynamichic: DynamicHicTrack,
   dynamicbed: DynamicBedTrack,
+  dbedgraph: DBedgraphTrack,
+  dynamiclongrange: DynamicLongrangeTrack,
+  snp: SnpTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];

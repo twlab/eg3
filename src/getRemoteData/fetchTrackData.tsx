@@ -14,7 +14,45 @@ const trackFetchFunction: { [key: string]: any } = {
 
     return await genRefResponse.json();
   },
+  snp: async function snpFetch(regionData: any) {
+    const SNP_REGION_API = {
+      hg19: "https://grch37.rest.ensembl.org/overlap/region/human",
+      hg38: "https://rest.ensembl.org/overlap/region/human",
+    };
 
+    const api =
+      regionData.genomeName in SNP_REGION_API
+        ? SNP_REGION_API[`${regionData.genomeName}`]
+        : null;
+
+    if (!api) {
+      return [];
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (regionData.end - regionData.start <= 30000) {
+      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
+        regionData.end + "?content-type=application%2Fjson&feature=variation"
+      }`;
+      console.log(url);
+      return fetch(url, { headers })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error);
+          return { data: [] };
+        });
+    } else {
+      return [];
+    }
+  },
   bed: async function bedFetch(regionData: any) {
     return getTabixData(
       regionData.nav,
@@ -31,6 +69,13 @@ const trackFetchFunction: { [key: string]: any } = {
   },
 
   qbed: async function qbedFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
+  dbedgraph: async function dbedgraphFetch(regionData: any) {
     return getTabixData(
       regionData.nav,
       regionData.trackModel.options,

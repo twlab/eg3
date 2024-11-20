@@ -78,7 +78,7 @@ export class PixiAnnotation extends React.PureComponent<
   async componentDidMount() {
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
-    console.log(backgroundColor);
+
     const bgColor = colorString2number(backgroundColor || "white");
 
     this.app = new PIXI.Application();
