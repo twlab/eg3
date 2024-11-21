@@ -3,6 +3,7 @@ import getTabixData from "./tabixSource";
 import getBigData from "./bigSource";
 import getCoolSource from "./CoolSource";
 import getRepeatSource from "./RepeatSource";
+import { BamAlignment } from "@/models/BamAlignment";
 const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const trackFetchFunction: { [key: string]: any } = {
@@ -82,6 +83,7 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
+
   boxplot: async function boxplotFetch(regionData: any) {
     return getBigData(
       regionData.nav,

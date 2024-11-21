@@ -79,13 +79,14 @@ const TYPE_NAME_TO_CONFIG = {
   // bedcolor: BedcolorTrackConfig,
   // rmskv2: Rmskv2TrackConfig, !
   // bigchain: GenomeAlignTrackConfig,
-  // brgfa: BrgfaTrackConfig,
+
   dynseq: DynseqTrackConfig,
 
   // omeroidr: OmeroidrTrackConfig,
   // omero4dn: Omero4dnTrackConfig,
-  // bam: BamTrackConfig,
 
+  // bam: BamTrackConfig,
+  // brgfa: BrgfaTrackConfig,
   // snp: SnpTrackConfig,
   // dynamiclongrange: DynamicLongrangeTrackConfig,
   // dynamicbed: DynamicBedTrackConfig,

@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // snp chr7:27212300-27214862
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27212300-27214862");
+const defaultRegion = navContext.parse("chr7:27207174-27219988");
 const defaultTracks = [
   // new TrackModel({
   //   type: "ruler",
@@ -60,10 +60,16 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
+  // new TrackModel({
+  //   type: "snp",
+  //   name: "snp",
+  //   genome: "hg38",
+  // }),
+
   new TrackModel({
-    type: "snp",
-    name: "snp",
-    genome: "hg38",
+    type: "bam",
+    name: "Test bam",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
   }),
   // new TrackModel({
   //   type: "geneAnnotation",

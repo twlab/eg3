@@ -71,6 +71,8 @@ import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
 import DBedgraphTrack from "./TrackComponents/DBedgraphTrack";
 import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
 import SnpTrack from "./TrackComponents/SnpTrack";
+import BamTrack from "./TrackComponents/BamTrack";
+import BamSource from "@/getRemoteData/BamSource";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -123,6 +125,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   dbedgraph: DBedgraphTrack,
   dynamiclongrange: DynamicLongrangeTrack,
   snp: SnpTrack,
+  bam: BamTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -799,6 +802,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 return hicStrawObj.current[`${item.id}` + `${index}`];
               }
             );
+          } else if (item.name === "bam") {
+            tempObj[item.id]["fetchInstance"] =
+              hicStrawObj.current[`${item.id}`];
+            tempObj[item.id]["curFetchNav"] = item.curFetchNav;
           }
         });
 
@@ -1116,8 +1123,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (trackManagerState.current.tracks[i].type === "hic") {
           hicStrawObj.current[`${trackManagerState.current.tracks[i].id}`] =
             new HicSource(trackManagerState.current.tracks[i].url);
-        }
-        if (trackManagerState.current.tracks[i].type === "dynamichic") {
+        } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
           trackManagerState.current.tracks[i].tracks?.map((item, index) => {
             hicStrawObj.current[
               `${trackManagerState.current.tracks[i].id}` + `${index}`
@@ -1125,6 +1131,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               trackManagerState.current.tracks[i].tracks![index].url
             );
           });
+        } else if (trackManagerState.current.tracks[i].type === "bam") {
+          hicStrawObj.current[`${trackManagerState.current.tracks[i].id}`] =
+            new BamSource(trackManagerState.current.tracks[i].url);
         }
         trackIdx++;
       } else {

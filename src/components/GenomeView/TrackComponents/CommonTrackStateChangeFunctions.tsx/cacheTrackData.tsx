@@ -223,7 +223,7 @@ export function cacheTrackData(
         fetchedDataCache.current[0],
         fetchedDataCache.current[-1],
       ];
-
+      console.log(testData, trackData![`${id}`].result);
       let viewData;
       if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
         viewData = getDeDupeArrMatPlot(testData);
@@ -259,12 +259,13 @@ export function cacheTrackData(
           testData.push(fetchedDataCache.current[currIdx]);
           currIdx--;
         }
-
+        console.log(testData);
         let viewData;
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
           viewData = getDeDupeArrMatPlot(testData);
         } else {
           let dataCacheArray = testData.map((item) => item.dataCache).flat(1);
+          console.log(dataCacheArray, fetchedDataCache.current);
           viewData =
             keyDupe !== "none"
               ? removeDuplicates(dataCacheArray, keyDupe)

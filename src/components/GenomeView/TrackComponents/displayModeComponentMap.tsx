@@ -58,6 +58,8 @@ import { format } from "path";
 import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
 import Snp from "@/models/Snp";
 import SnpAnnotation from "./SnpComponents/SnpAnnotation";
+import { BamAlignment } from "@/models/BamAlignment";
+import { BamAnnotation } from "./BamComponents/BamAnnotation";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -374,11 +376,30 @@ export const displayModeComponentMap: { [key: string]: any } = {
           />
         ));
       },
+
+      bam: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        console.log(placedGroup);
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <BamAnnotation
+            key={i}
+            placedRecord={placement}
+            y={y}
+            onClick={renderTooltip}
+            options={configOptions}
+          />
+        ));
+      },
     };
 
     let featureArrange = new FeatureArranger();
 
-    let sortType = SortItemsOptions.NONE;
+    let sortType = SortItemsOptions.NOSORT;
     let currDisplayNav;
     if (!useFineOrSecondaryParentNav) {
       currDisplayNav = new DisplayedRegionModel(
@@ -1146,6 +1167,8 @@ export function getDisplayModeFunction(
             new ChromosomeInterval(record.chr, record.start, record.end)
           )
       );
+    } else if (drawData.trackModel.type === "bam") {
+      formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
     } else if (drawData.trackModel.type === "bigbed") {
       formattedData = drawData.genesArr.map((record) => {
         const fields = record["rest"].split("\t");
@@ -1720,6 +1743,8 @@ export function getDisplayModeFunction(
       });
     } else if (drawData.trackModel.type === "snp") {
       formattedData = drawData.genesArr.map((record) => new Snp(record));
+    } else if (drawData.trackModel.type === "bam") {
+      formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
     } else {
       formattedData = drawData.genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(

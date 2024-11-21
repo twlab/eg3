@@ -13,6 +13,7 @@ import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
 import { niceBpCount } from "../models/util";
+import BamSource from "./BamSource";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -66,7 +67,7 @@ export interface Alignment {
 export interface MultiAlignment {
   [genome: string]: Alignment;
 }
-
+let fetchInstanceCache: { [key: string]: any } = {};
 //TO_DOOOOOOOOO have a way to get option from trackManager for each track and set it here if custom options are defined while getting the fetched data
 self.onmessage = async (event: MessageEvent) => {
   let primaryGenName = event.data.primaryGenName;
@@ -382,9 +383,43 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
         });
+      } else if (trackType === "bam") {
+        let curFetchNav;
+
+        if (
+          "genome" in item.metadata &&
+          item.metadata.genome !== undefined &&
+          item.metadata.genome !== event.data.primaryGenName
+        ) {
+          curFetchNav =
+            genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord;
+        } else if (
+          useFineModeNav ||
+          item.type === "longrange" ||
+          item.type === "biginteract"
+        ) {
+          curFetchNav = new Array(expandGenomicLoci);
+        } else if (event.data.initial === 1) {
+          curFetchNav = initGenomicLoci;
+        } else {
+          curFetchNav = new Array(genomicLoci);
+        }
+        fetchResults.push({
+          name: trackType,
+          id: id,
+          metadata: item.metadata,
+          trackModel: item,
+          curFetchNav,
+        });
+        console.log(fetchResults);
       } else if (
         trackType in
-        { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+        {
+          matplot: "",
+          dynamic: "",
+          dynamicbed: "",
+          dynamiclongrange: "",
+        }
       ) {
         let tmpReponse = await Promise.all(
           item.tracks.map(async (trackItem, index) => {
@@ -437,6 +472,7 @@ self.onmessage = async (event: MessageEvent) => {
       curFetchNav = new Array(genomicLoci);
     }
     console.log(curFetchNav, "individial genomic fetch interval");
+
     for (let i = 0; i < curFetchNav.length; i++) {
       let curRespond;
       if (trackModel.type in { geneannotation: "", snp: "" }) {
@@ -463,6 +499,7 @@ self.onmessage = async (event: MessageEvent) => {
             nav: curFetchNav[i],
             trackModel,
             trackType: trackModel.type,
+            fetchInstance: fetchInstanceCache[`${id}`],
           })
         );
       }
