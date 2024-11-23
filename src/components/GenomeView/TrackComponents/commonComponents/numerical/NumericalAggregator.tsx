@@ -20,6 +20,7 @@ export class NumericalAggregator {
   aggregateFeatures(data, viewRegion, width, aggregatorId) {
     const aggregator = new FeatureAggregator();
     const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
+    console.log(xToFeatures);
     return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
   }
 

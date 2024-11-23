@@ -10,7 +10,6 @@ function getBigData(loci, options, url) {
   });
   async function getData(loci, options) {
     const promises = loci.map((locus) => {
-      console.log(locus);
       let chrom = options.ensemblStyle
         ? locus.chr.replace("chr", "")
         : locus.chr;

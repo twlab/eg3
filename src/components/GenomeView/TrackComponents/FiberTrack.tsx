@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS as defaultFiberTrack } from "./bedComponents/FiberTrackComponent";
-import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
+
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
@@ -10,8 +10,6 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { FiberDisplayModes } from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
 import { Manager, Reference, Popper } from "react-popper";
-import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import { Fiber } from "@/models/Feature";
 import OpenInterval from "@/models/OpenInterval";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
@@ -22,7 +20,6 @@ export const DEFAULT_OPTIONS = {
 
 DEFAULT_OPTIONS.displayMode = FiberDisplayModes.AUTO;
 function getGenePadding(feature: Fiber, xSpan: OpenInterval) {
-  console.log(feature, xSpan);
   const width = xSpan.end - xSpan.start;
   const estimatedLabelWidth = feature.getName().length * 9;
   if (estimatedLabelWidth < 0.5 * width) {

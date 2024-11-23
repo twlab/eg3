@@ -19,7 +19,7 @@ import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
-  data?: Feature[]; // Replace 'Feature' with the actual type of your data
+  data?: Array<any>;
   unit?: string;
   options?: any;
   isLoading?: boolean;
@@ -76,7 +76,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     () => aggregator.xToValueMaker(data, viewRegion, width, options),
     [data, viewRegion, width, options]
   );
-
+  console.log(xvalues);
   const [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
@@ -213,11 +213,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     />
   );
 
-  useEffect(() => {
-    if (getNumLegend) {
-      getNumLegend(legend);
-    }
-  }, [getNumLegend, legend]);
+  if (getNumLegend) {
+    getNumLegend(legend);
+  }
 
   const visualizer = hasReverse ? (
     <React.Fragment>

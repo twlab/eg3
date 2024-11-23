@@ -37,7 +37,7 @@ interface BoxplotTrackProps {
   forceSvg: boolean;
   viewWindow: any;
 }
-class BoxplotTrack extends React.PureComponent<BoxplotTrackProps> {
+class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
   /**
    */
   static propTypes = Object.assign(
@@ -328,4 +328,4 @@ export class Boxplot extends React.PureComponent<BoxplotProps> {
   }
 }
 
-export default BoxplotTrack;
+export default BoxplotTrackComponents;

@@ -136,7 +136,6 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
   }
 
   getLabelWidth() {
-    console.log(this.props.trackModel.legendWidth);
     if (this.props.axisScale) {
       return this.props.trackModel.legendWidth
         ? this.props.trackModel.legendWidth - AXIS_WIDTH

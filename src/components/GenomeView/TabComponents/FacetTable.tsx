@@ -47,7 +47,6 @@ const FacetTable: React.FC<FacetTableProps> = ({
 
   const initializeTracks = useCallback(
     (allTracks: TrackModel[]) => {
-      console.log(allTracks);
       const allKeys = allTracks.map((track) => Object.keys(track.metadata));
       const metaKeys = _.union(...allKeys);
       addTermToMetaSets(metaKeys);
@@ -164,7 +163,6 @@ const FacetTable: React.FC<FacetTableProps> = ({
   }, [tracks]);
 
   const handleOpenModal = (id: string) => {
-    console.log(id);
     setState((prevState) => ({ ...prevState, showModalId: id }));
   };
 
@@ -335,7 +333,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
 
   const countTracks = (row: any, col: any) => {
     const { tracks, rowHeader, columnHeader, showModalId } = state;
-    console.log(tracks, rowHeader, columnHeader, showModalId);
+
     let found: Array<any> = [];
     for (let track of tracks) {
       if (!track.metadata[rowHeader]) continue;

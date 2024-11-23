@@ -441,7 +441,12 @@ function GenomeHub(props: any) {
   }
   useEffect(() => {
     if (size.width > 0) {
-      let curGenome = getGenomeConfig("hg38");
+      let curGenome;
+      if (props.selectedGenome.length > 0) {
+        curGenome = getGenomeConfig(props.name);
+      } else {
+        curGenome = getGenomeConfig("hg38");
+      }
 
       curGenome["windowWidth"] = size.width;
       curGenome["isInitial"] = isInitial.current;

@@ -1,7 +1,12 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import Feature, { Fiber, NumericalFeature } from "../../../models/Feature";
+import Feature, {
+  Fiber,
+  JasparFeature,
+  NumericalArrayFeature,
+  NumericalFeature,
+} from "../../../models/Feature";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../../models/FeatureArranger";
@@ -42,6 +47,23 @@ import InteractionTrackComponent from "./InteractionComponents/InteractionTrackC
 import { GenomeInteraction } from "../../../getRemoteData/GenomeInteraction";
 import FiberTrackComponent from "./bedComponents/FiberTrackComponent";
 import FiberAnnotation from "./bedComponents/FiberAnnotation";
+import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotTrackComponent";
+import QBed from "@/models/QBed";
+import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
+import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
+import { Model } from "flexlayout-react";
+import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
+import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
+
+import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
+import Snp from "@/models/Snp";
+import SnpAnnotation from "./SnpComponents/SnpAnnotation";
+import { BamAlignment } from "@/models/BamAlignment";
+import { BamAnnotation } from "./BamComponents/BamAnnotation";
+import ImageRecord from "@/models/ImageRecord";
+
+import OmeroTrackComponents from "./imageTrackComponents/OmeroTrackComponents";
+import { initialLayout } from "@/models/layoutUtils";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -154,6 +176,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         />
       ));
     }
+
     const getAnnotationElementMap: { [key: string]: any } = {
       geneannotation: (placedGroup, y, isLastRow, index) =>
         getAnnotationElement(placedGroup, y, isLastRow, index),
@@ -162,6 +185,34 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getAnnotationElement(placedGroup, y, isLastRow, index),
       bed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
+      jaspar: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        let scoreScale = scaleLinear()
+          .domain([0, 1000])
+          .range([0, 1])
+          .clamp(true);
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <BedAnnotation
+            key={i}
+            feature={placement.feature}
+            xSpan={placement.xSpan}
+            y={y}
+            isMinimal={isLastRow}
+            color={configOptions.color}
+            reverseStrandColor={configOptions.color2}
+            isInvertArrowDirection={placement.isReverse}
+            onClick={renderTooltip}
+            alwaysDrawLabel={configOptions.alwaysDrawLabel}
+            hiddenPixels={configOptions.hiddenPixels}
+            opacity={scoreScale((placement.feature as any).score)}
+          />
+        ));
+      },
       bigbed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
       modbed: function getAnnotationElement(
@@ -305,8 +356,71 @@ export const displayModeComponentMap: { [key: string]: any } = {
           );
         });
       },
+
+      snp: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <SnpAnnotation
+            key={i}
+            snp={placement.feature}
+            xSpan={placement.xSpan}
+            y={y}
+            isMinimal={isLastRow}
+            color={configOptions.color}
+            reverseStrandColor={configOptions.color2}
+            isInvertArrowDirection={placement.isReverse}
+            onClick={renderTooltip}
+            alwaysDrawLabel={configOptions.alwaysDrawLabel}
+            hiddenPixels={configOptions.hiddenPixels}
+          />
+        ));
+      },
+
+      bam: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        console.log(placedGroup);
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <BamAnnotation
+            key={i}
+            placedRecord={placement}
+            y={y}
+            onClick={renderTooltip}
+            options={configOptions}
+          />
+        ));
+      },
     };
 
+    if (trackModel.type === "omeroidr") {
+      return (
+        <OmeroTrackComponents
+          data={formattedData}
+          options={configOptions}
+          viewWindow={{
+            start: 0,
+            end: useFineOrSecondaryParentNav
+              ? trackState.visWidth
+              : windowWidth * 3,
+          }}
+          trackModel={trackModel}
+          forceSvg={false}
+          width={0}
+          layoutModel={Model.fromJson(initialLayout)}
+          isThereG3dTrack={false}
+          onSetImageInfo={() => {}}
+        />
+      );
+    }
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
@@ -322,6 +436,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             trackState.regionNavCoord._startBase)
       );
     }
+
     //FullDisplayMode part from eg2
 
     let placeFeatureData = featureArrange.arrange(
@@ -334,6 +449,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       configOptions.hiddenPixels,
       sortType
     );
+
     let height;
     height =
       trackModel.type in { repeatmasker: "" }
@@ -410,6 +526,116 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+  qbed: function getqbed(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+    let canvasElements = (
+      <QBedTrackComponents
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        forceSvg={false}
+        trackModel={trackModel}
+        isLoading={false}
+        error={undefined}
+      />
+    );
+    return canvasElements;
+  },
+
+  boxplot: function getboxplot(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+    let canvasElements = (
+      <BoxplotTrackComponents
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        forceSvg={false}
+        trackModel={trackModel}
+        isLoading={false}
+        error={undefined}
+        unit={""}
+      />
+    );
+    return canvasElements;
+  },
   matplot: function getMatplot(
     formattedData,
     useFineOrSecondaryParentNav,
@@ -459,6 +685,217 @@ export const displayModeComponentMap: { [key: string]: any } = {
         forceSvg={false}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
+      />
+    );
+    return canvasElements;
+  },
+  dynamichic: function getDynamichic(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    // function getNumLegend(legend: ReactNode) {
+    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
+    //   // is set to canvasComponent state which will update the legend ref without having to update manually
+
+    //   updatedLegend.current = legend;
+    // }
+    let canvasElements = (
+      <DynamicInteractionTrackComponents
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        visRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
+      />
+    );
+    return canvasElements;
+  },
+
+  dynamicbed: function getdynamicbed(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    renderTooltip,
+    svgHeight,
+    updatedLegend,
+    trackModel,
+    getGenePadding,
+    getHeight,
+    ROW_HEIGHT
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    // function getNumLegend(legend: ReactNode) {
+    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
+    //   // is set to canvasComponent state which will update the legend ref without having to update manually
+
+    //   updatedLegend.current = legend;
+    // }
+    let canvasElements = (
+      <DynamicBedTrackComponents
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        visRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
+      />
+    );
+    return canvasElements;
+  },
+
+  dbedgraph: function getdbedgraph(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    // function getNumLegend(legend: ReactNode) {
+    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
+    //   // is set to canvasComponent state which will update the legend ref without having to update manually
+
+    //   updatedLegend.current = legend;
+    // }
+    let canvasElements = (
+      <DynamicNumericalTrack
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
+      />
+    );
+    return canvasElements;
+  },
+  dynamic: function dynamic(
+    formattedData,
+    useFineOrSecondaryParentNav,
+    trackState,
+    windowWidth,
+    configOptions,
+    updatedLegend,
+    trackModel
+  ) {
+    let currDisplayNav;
+    if (!useFineOrSecondaryParentNav) {
+      currDisplayNav = new DisplayedRegionModel(
+        trackState.regionNavCoord._navContext,
+        trackState.regionNavCoord._startBase -
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase),
+        trackState.regionNavCoord._endBase +
+          (trackState.regionNavCoord._endBase -
+            trackState.regionNavCoord._startBase)
+      );
+    }
+
+    function getNumLegend(legend: ReactNode) {
+      //this will be trigger when creating canvaselemebt here and the saved canvaselement
+      // is set to canvasComponent state which will update the legend ref without having to update manually
+
+      updatedLegend.current = legend;
+    }
+    let canvasElements = (
+      <DynamicplotTrackComponent
+        data={formattedData}
+        options={configOptions}
+        viewWindow={
+          new OpenInterval(
+            0,
+            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+          )
+        }
+        viewRegion={
+          useFineOrSecondaryParentNav
+            ? objToInstanceAlign(trackState.visRegion)
+            : currDisplayNav
+        }
+        width={
+          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
+        }
+        trackModel={trackModel}
       />
     );
     return canvasElements;
@@ -709,6 +1146,7 @@ export function getDisplayModeFunction(
   cacheIdx,
   curXPos
 ) {
+  console.log(drawData, "drawData");
   if (
     drawData.configOptions.displayMode === "full" &&
     drawData.trackModel.type !== "genomealign"
@@ -754,6 +1192,12 @@ export function getDisplayModeFunction(
             new ChromosomeInterval(record.chr, record.start, record.end)
           )
       );
+    } else if (drawData.trackModel.type === "bam") {
+      formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
+    } else if (drawData.trackModel.type === "omeroidr") {
+      formattedData = drawData.genesArr.map(
+        (record) => new ImageRecord(record)
+      );
     } else if (drawData.trackModel.type === "bigbed") {
       formattedData = drawData.genesArr.map((record) => {
         const fields = record["rest"].split("\t");
@@ -768,6 +1212,8 @@ export function getDisplayModeFunction(
           strand
         );
       });
+    } else if (drawData.trackModel.type === "snp") {
+      formattedData = drawData.genesArr.map((record) => new Snp(record));
     } else if (drawData.trackModel.type === "repeatmasker") {
       let rawDataArr: Array<RepeatDASFeature> = [];
       drawData.genesArr.map((record) => {
@@ -799,7 +1245,17 @@ export function getDisplayModeFunction(
       formattedData = rawDataArr.map(
         (feature) => new RepeatMaskerFeature(feature)
       );
+    } else if (drawData.trackModel.type === "jaspar") {
+      formattedData = drawData.genesArr.map((record) => {
+        const rest = record.rest.split("\t");
+        return new JasparFeature(
+          rest[3],
+          new ChromosomeInterval(record.chr, record.start, record.end),
+          rest[2]
+        ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
+      });
     }
+
     let svgDATA = displayModeComponentMap["full"](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
@@ -1031,24 +1487,12 @@ export function getDisplayModeFunction(
       height: drawData.configOptions.height,
       xPos: curXPos,
     };
-  } else if (drawData.trackModel.type === "matplot") {
-    let formattedData: Array<any> = [];
-    for (let i = 0; i < drawData.genesArr.length; i++) {
-      formattedData.push(
-        drawData.genesArr[i].map((record) => {
-          let newChrInt = new ChromosomeInterval(
-            record.chr,
-            record.start,
-            record.end
-          );
-          return new NumericalFeature("", newChrInt).withValue(record.score);
-        })
-      );
-    }
+  } else if (drawData.trackModel.type === "dynamichic") {
+    let formattedData = drawData.genesArr;
     let tmpObj = { ...drawData.configOptions };
-    tmpObj.displayMode = "auto";
+    tmpObj.displayMode = "heatmap";
 
-    let canvasElements = displayModeComponentMap["matplot"](
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
       formattedData,
       drawData.useFineOrSecondaryParentNav,
       drawData.trackState,
@@ -1056,6 +1500,97 @@ export function getDisplayModeFunction(
       tmpObj,
       drawData.updatedLegend,
       drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  } else if (
+    drawData.trackModel.type in
+    { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+  ) {
+    let formattedData: Array<any> = [];
+    if (drawData.trackModel.type === "dynamicbed") {
+      for (let i = 0; i < drawData.genesArr.length; i++) {
+        formattedData.push(
+          drawData.genesArr[i].map((record) => {
+            return new Feature(
+              record[3],
+              new ChromosomeInterval(record.chr, record.start, record.end)
+            );
+          })
+        );
+      }
+    } else if (drawData.trackModel.type === "dynamiclongrange") {
+      for (let i = 0; i < drawData.genesArr.length; i++) {
+        let tmpLongrangeData: Array<any> = [];
+
+        drawData.genesArr[i].map((record) => {
+          const regexMatch = record[3].match(
+            /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
+          );
+
+          if (regexMatch) {
+            const chr = regexMatch[1];
+            const start = Number.parseInt(regexMatch[2], 10);
+            const end = Number.parseInt(regexMatch[3], 10);
+            // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
+            const score = Number.parseFloat(record[3].split(",")[1]);
+            const recordLocus1 = new ChromosomeInterval(
+              record.chr,
+              record.start,
+              record.end
+            );
+            const recordLocus2 = new ChromosomeInterval(chr, start, end);
+            tmpLongrangeData.push(
+              new GenomeInteraction(recordLocus1, recordLocus2, score)
+            );
+          } else {
+            console.error(
+              `${record[3]} not formated correctly in longrange track`
+            );
+          }
+        });
+        formattedData.push(tmpLongrangeData);
+      }
+    } else {
+      for (let i = 0; i < drawData.genesArr.length; i++) {
+        formattedData.push(
+          drawData.genesArr[i].map((record) => {
+            let newChrInt = new ChromosomeInterval(
+              record.chr,
+              record.start,
+              record.end
+            );
+            return new NumericalFeature("", newChrInt).withValue(record.score);
+          })
+        );
+      }
+    }
+
+    let tmpObj = { ...drawData.configOptions };
+    tmpObj.displayMode = "auto";
+
+    let canvasElements = displayModeComponentMap[
+      `${
+        drawData.trackModel.type === "dynamiclongrange"
+          ? "dynamichic"
+          : drawData.trackModel.type
+      }`
+    ](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      drawData.configOptions,
+      drawData.updatedLegend,
+      drawData.trackModel,
+      drawData.getGenePadding,
+      drawData.getHeight,
+      drawData.ROW_HEIGHT
     );
 
     displaySetter.density.setComponents(canvasElements);
@@ -1107,10 +1642,93 @@ export function getDisplayModeFunction(
   // this part for numerical track____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________________
-  else if (
-    drawData.trackModel.type === "bigwig" ||
+  else if (drawData.trackModel.type === "qbed") {
+    let formattedData = drawData.genesArr.map((record) => new QBed(record));
+    let tmpObj = { ...drawData.configOptions };
+
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  } else if (drawData.trackModel.type === "dbedgraph") {
+    const VALUE_COLUMN_INDEX = 3;
+    let formattedData = drawData.genesArr.map((record) => {
+      const locus = new ChromosomeInterval(
+        record.chr,
+        record.start,
+        record.end
+      );
+      let parsedValue;
+      try {
+        parsedValue = JSON.parse(record[VALUE_COLUMN_INDEX]);
+      } catch (e) {
+        console.error(e);
+        parsedValue = [0];
+      }
+      return new NumericalArrayFeature("", locus).withValues(parsedValue);
+    });
+    let tmpObj = { ...drawData.configOptions };
+
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  } else if (drawData.trackModel.type === "boxplot") {
+    let formattedData = drawData.genesArr.map((record) => {
+      let newChrInt = new ChromosomeInterval(
+        record.chr,
+        record.start,
+        record.end
+      );
+      return new NumericalFeature("", newChrInt).withValue(record.score);
+    });
+    let tmpObj = { ...drawData.configOptions };
+
+    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+      formattedData,
+      drawData.useFineOrSecondaryParentNav,
+      drawData.trackState,
+      drawData.windowWidth,
+      tmpObj,
+      drawData.updatedLegend,
+      drawData.trackModel
+    );
+
+    displaySetter.density.setComponents(canvasElements);
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+  } else if (
+    drawData.trackModel.type in { bigwig: "", qbed: "" } ||
     drawData.configOptions.displayMode === "density"
   ) {
+    let tmpObj = { ...drawData.configOptions };
     let formattedData;
     if (drawData.trackModel.type === "geneannotation") {
       formattedData = drawData.genesArr.map((record) => {
@@ -1137,6 +1755,25 @@ export function getDisplayModeFunction(
           record.score
         );
       });
+    } else if (
+      drawData.trackModel.type === "bedgraph" ||
+      drawData.trackModel.filetype === "bedgraph"
+    ) {
+      let VALUE_COLUMN_INDEX = 3;
+      formattedData = drawData.genesArr.map((record) => {
+        let newChrInt = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        const unsafeValue = Number(record[VALUE_COLUMN_INDEX]);
+        const value = Number.isFinite(unsafeValue) ? unsafeValue : 0;
+        return new NumericalFeature("", newChrInt).withValue(value);
+      });
+    } else if (drawData.trackModel.type === "snp") {
+      formattedData = drawData.genesArr.map((record) => new Snp(record));
+    } else if (drawData.trackModel.type === "bam") {
+      formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
     } else {
       formattedData = drawData.genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(
@@ -1147,7 +1784,7 @@ export function getDisplayModeFunction(
         return new NumericalFeature("", newChrInt).withValue(record.score);
       });
     }
-    let tmpObj = { ...drawData.configOptions };
+
     if (drawData.trackModel.type !== "bigwig") {
       tmpObj.displayMode = "auto";
     }

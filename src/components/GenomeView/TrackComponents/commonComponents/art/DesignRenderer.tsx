@@ -99,6 +99,7 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
       element.forEach((e) => this.drawOneElement(context, e));
       return;
     }
+
     const props = element.props;
     switch (element.type) {
       case "rect":

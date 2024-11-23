@@ -151,7 +151,6 @@ const Geneplot: React.FC<GeneplotProps> = ({
     );
 
     let data = rawData.map((item, index) => {
-      console.log(item);
       return item.map((record) => {
         let newChrInt = new ChromosomeInterval(
           record.chr,

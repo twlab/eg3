@@ -13,7 +13,6 @@ import { HicTrackConfig } from "./HicTrackConfig";
 import { LongRangeTrackConfig } from "./LongRangeTrackConfig";
 // import { LongRangeColorTrackConfig } from "./LongRangeColorTrackConfig";
 import { BigInteractTrackConfig } from "./BigInteractTrackConfig";
-// import { CoolTrackConfig } from "./CoolTrackConfig";
 import { MethylCTrackConfig } from "./MethylCTrackConfig";
 import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
 import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
@@ -53,48 +52,52 @@ export const DYNAMIC_TYPES = [
 ];
 
 const TYPE_NAME_TO_CONFIG = {
-  // bam: BamTrackConfig,
   bed: BedTrackConfig,
-  // dynamicbed: DynamicBedTrackConfig,
-  // qbed: QBedTrackConfig,
   categorical: CategoricalTrackConfig,
-  // bedgraph: BedGraphTrackConfig,
   bigbed: BigBedTrackConfig,
   bigwig: BigWigTrackConfig,
   hic: HicTrackConfig,
   longrange: LongRangeTrackConfig,
-  // longrangecolor: LongRangeColorTrackConfig,
+
   biginteract: BigInteractTrackConfig,
-  // cool: CoolTrackConfig,
   geneannotation: GeneAnnotationTrackConfig,
   refbed: RefBedTrackConfig,
   methylc: MethylCTrackConfig,
   repeatmasker: RepeatMaskerTrackConfig,
   genomealign: GenomeAlignTrackConfig,
-  // snp: SnpTrackConfig,
+
   ruler: RulerTrackConfig,
   matplot: MatplotTrackConfig,
-  // dynamic: DynamicplotTrackConfig,
   // hammock: HammockTrackConfig,
-  // g3d: G3dTrackConfig,
   // pairwise: PairwiseSegmentTrackConfig,
   // snv: PairwiseSegmentTrackConfig,
   // snv2: SnvSegmentTrackConfig,
   // protein: ProteinTrackConfig,
-  // dbedgraph: DynamicBedGraphTrackConfig,
-  // dynamichic: DynamicHicTrackConfig,
-  // dynamiclongrange: DynamicLongrangeTrackConfig,
-  // omeroidr: OmeroidrTrackConfig,
-  // omero4dn: Omero4dnTrackConfig,
-  dynseq: DynseqTrackConfig,
+  // longrangecolor: LongRangeColorTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
   // vcf: VcfTrackConfig,
-  // boxplot: BoxplotTrackConfig,
   // bedcolor: BedcolorTrackConfig,
-  // rmskv2: Rmskv2TrackConfig,
+  // rmskv2: Rmskv2TrackConfig, !
   // bigchain: GenomeAlignTrackConfig,
-  // jaspar: JasparTrackConfig,
+
+  dynseq: DynseqTrackConfig,
+
+  // omeroidr: OmeroidrTrackConfig,
+  // omero4dn: Omero4dnTrackConfig,
+
+  // bam: BamTrackConfig,
   // brgfa: BrgfaTrackConfig,
+  // snp: SnpTrackConfig,
+  // dynamiclongrange: DynamicLongrangeTrackConfig,
+  // dynamicbed: DynamicBedTrackConfig,
+  // dbedgraph: DynamicBedGraphTrackConfig,!
+  // dynamichic: DynamicHicTrackConfig,
+  // jaspar: JasparTrackConfig,  !
+  // boxplot: BoxplotTrackConfig, !
+  // g3d: G3dTrackConfig, !
+  // qbed: QBedTrackConfig, !
+  // bedgraph: BedGraphTrackConfig, !
+  // dynamic: DynamicplotTrackConfig,
   // modbed: FiberTrackConfig, // fiber track was renamed to modbed meaning read modification data
 };
 

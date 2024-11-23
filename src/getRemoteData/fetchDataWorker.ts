@@ -13,6 +13,7 @@ import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
 import { niceBpCount } from "../models/util";
+import BamSource from "./BamSource";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -66,7 +67,7 @@ export interface Alignment {
 export interface MultiAlignment {
   [genome: string]: Alignment;
 }
-
+let fetchInstanceCache: { [key: string]: any } = {};
 //TO_DOOOOOOOOO have a way to get option from trackManager for each track and set it here if custom options are defined while getting the fetched data
 self.onmessage = async (event: MessageEvent) => {
   let primaryGenName = event.data.primaryGenName;
@@ -359,16 +360,17 @@ self.onmessage = async (event: MessageEvent) => {
 
   await Promise.all(
     normDefaultTracks.map(async (item, index) => {
-      const trackType = item.type;
+      const trackType = item?.type || item?.metadata["Track type"];
       const genomeName = item.genome ? item.genome : event.data.primaryGenName;
       const id = item.id;
       const url = item.url;
 
-      if (trackType === "hic" || trackType === "ruler") {
+      if (trackType in { hic: "", ruler: "", dynamichic: "" }) {
         fetchResults.push({
           name: trackType,
-          id,
+          id: id,
           metadata: item.metadata,
+          trackModel: item,
         });
       } else if (trackType === "geneannotation") {
         let genRefResponses: Array<any> = await fetchData(item, genomeName, id);
@@ -381,7 +383,44 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
         });
-      } else if (trackType === "matplot") {
+      } else if (trackType === "bam") {
+        let curFetchNav;
+
+        if (
+          "genome" in item.metadata &&
+          item.metadata.genome !== undefined &&
+          item.metadata.genome !== event.data.primaryGenName
+        ) {
+          curFetchNav =
+            genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord;
+        } else if (
+          useFineModeNav ||
+          item.type === "longrange" ||
+          item.type === "biginteract"
+        ) {
+          curFetchNav = new Array(expandGenomicLoci);
+        } else if (event.data.initial === 1) {
+          curFetchNav = initGenomicLoci;
+        } else {
+          curFetchNav = new Array(genomicLoci);
+        }
+        fetchResults.push({
+          name: trackType,
+          id: id,
+          metadata: item.metadata,
+          trackModel: item,
+          curFetchNav,
+        });
+        console.log(fetchResults);
+      } else if (
+        trackType in
+        {
+          matplot: "",
+          dynamic: "",
+          dynamicbed: "",
+          dynamiclongrange: "",
+        }
+      ) {
         let tmpReponse = await Promise.all(
           item.tracks.map(async (trackItem, index) => {
             return event.data.initial !== 1
@@ -389,7 +428,9 @@ self.onmessage = async (event: MessageEvent) => {
               : fetchData(trackItem, genomeName, id);
           })
         );
-
+        if (event.data.initial === 1 && trackType === "dynamiclongrange") {
+          tmpReponse = tmpReponse.flat(1);
+        }
         fetchResults.push({
           name: trackType,
           result: tmpReponse,
@@ -430,10 +471,11 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-    console.log(curFetchNav);
+    console.log(curFetchNav, "individial genomic fetch interval");
+
     for (let i = 0; i < curFetchNav.length; i++) {
       let curRespond;
-      if (trackModel.type === "geneannotation") {
+      if (trackModel.type in { geneannotation: "", snp: "" }) {
         curRespond = await Promise.all(
           await curFetchNav[i].map((nav, index) => {
             return trackFetchFunction[trackModel.type]({
@@ -457,6 +499,7 @@ self.onmessage = async (event: MessageEvent) => {
             nav: curFetchNav[i],
             trackModel,
             trackType: trackModel.type,
+            fetchInstance: fetchInstanceCache[`${id}`],
           })
         );
       }

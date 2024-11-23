@@ -107,20 +107,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
                 trackData![`${id}`].metadata.genome
               ].queryRegion
             : primaryVisData.visRegion;
-        trackData![`${id}`]["result"] =
-          trackData!.initial === 1
-            ? [
-                await trackData![`${id}`].straw.getData(
-                  objToInstanceAlign(visRegion),
-                  basePerPixel,
-                  configOptions.current
-                ),
-              ]
-            : await trackData![`${id}`].straw.getData(
-                objToInstanceAlign(visRegion),
-                basePerPixel,
-                configOptions.current
-              );
+        trackData![`${id}`]["result"] = await trackData![`${id}`].straw.getData(
+          objToInstanceAlign(visRegion),
+          basePerPixel,
+          configOptions.current
+        );
 
         cacheTrackData(
           useFineOrSecondaryParentNav.current,

@@ -61,6 +61,19 @@ import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/T
 import SubToolButtons from "./ToolComponents/SubToolButtons";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
 import History from "./ToolComponents/History";
+import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
+import BedgraphTrack from "./TrackComponents/BedgraphTrack";
+import QBedTrack from "./TrackComponents/QBedTrack";
+import BoxplotTrack from "./TrackComponents/BoxplotTrack";
+import JasparTrack from "./TrackComponents/JasparTrack";
+import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
+import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
+import DBedgraphTrack from "./TrackComponents/DBedGraphTrack";
+import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
+import SnpTrack from "./TrackComponents/SnpTrack";
+import BamTrack from "./TrackComponents/BamTrack";
+import BamSource from "@/getRemoteData/BamSource";
+import OmeroTrack from "./TrackComponents/OmeroTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -103,6 +116,18 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   matplot: MatplotTrack,
   ruler: RulerTrack,
   modbed: FiberTrack,
+  dynamic: DynamicplotTrack,
+  bedgraph: BedgraphTrack,
+  qbed: QBedTrack,
+  boxplot: BoxplotTrack,
+  jaspar: JasparTrack,
+  dynamichic: DynamicHicTrack,
+  dynamicbed: DynamicBedTrack,
+  dbedgraph: DBedgraphTrack,
+  dynamiclongrange: DynamicLongrangeTrack,
+  snp: SnpTrack,
+  bam: BamTrack,
+  omeroidr: OmeroTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -616,7 +641,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let newVisData;
       let expandedGenomeCoordLocus;
       if (initial === 1) {
-        console.log(maxBp.current);
         initNavLoci.push({
           start: minBp.current - bpRegionSize.current,
           end: minBp.current,
@@ -660,7 +684,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         minBp.current = minBp.current - bpRegionSize.current;
         maxBp.current = maxBp.current + bpRegionSize.current * 2;
       } else {
-        console.log(maxBp.current);
         if (trackSide === "right") {
           curFetchRegionNav = new DisplayedRegionModel(
             genomeArr[genomeIdx].navContext,
@@ -677,7 +700,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genomicLoci = genomeFeatureSegment.map((item, index) =>
             item.getLocus()
           );
-          console.log(genomicLoci);
+
           newVisData = {
             visWidth: windowWidth * 3,
             visRegion: new DisplayedRegionModel(
@@ -699,7 +722,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
             (item, index) => item.getLocus()
           );
-          console.log(expandedGenomeCoordLocus);
           maxBp.current = maxBp.current + bpRegionSize.current;
         } else {
           curFetchRegionNav = new DisplayedRegionModel(
@@ -717,7 +739,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genomicLoci = genomeFeatureSegment.map((item, index) =>
             item.getLocus()
           );
-          console.log(genomicLoci);
+
           newVisData = {
             visWidth: windowWidth * 3,
             visRegion: new DisplayedRegionModel(
@@ -743,7 +765,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           minBp.current = minBp.current - bpRegionSize.current;
         }
       }
-      console.log(genomicLoci);
+
       try {
         infiniteScrollWorker.current!.postMessage({
           primaryGenName: genomeArr[genomeIdx].genome.getName(),
@@ -776,6 +798,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           };
           if (item.name === "hic") {
             tempObj[item.id]["straw"] = hicStrawObj.current[`${item.id}`];
+          } else if (item.name === "dynamichic") {
+            tempObj[item.id]["straw"] = item.trackModel.tracks.map(
+              (hicTrack, index) => {
+                return hicStrawObj.current[`${item.id}` + `${index}`];
+              }
+            );
+          } else if (item.name === "bam") {
+            tempObj[item.id]["fetchInstance"] =
+              hicStrawObj.current[`${item.id}`];
+            tempObj[item.id]["curFetchNav"] = item.curFetchNav;
           }
         });
 
@@ -1093,6 +1125,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (trackManagerState.current.tracks[i].type === "hic") {
           hicStrawObj.current[`${trackManagerState.current.tracks[i].id}`] =
             new HicSource(trackManagerState.current.tracks[i].url);
+        } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
+          trackManagerState.current.tracks[i].tracks?.map((item, index) => {
+            hicStrawObj.current[
+              `${trackManagerState.current.tracks[i].id}` + `${index}`
+            ] = new HicSource(
+              trackManagerState.current.tracks[i].tracks![index].url
+            );
+          });
+        } else if (trackManagerState.current.tracks[i].type === "bam") {
+          hicStrawObj.current[`${trackManagerState.current.tracks[i].id}`] =
+            new BamSource(trackManagerState.current.tracks[i].url);
         }
         trackIdx++;
       } else {
