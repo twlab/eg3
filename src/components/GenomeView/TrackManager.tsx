@@ -68,11 +68,12 @@ import BoxplotTrack from "./TrackComponents/BoxplotTrack";
 import JasparTrack from "./TrackComponents/JasparTrack";
 import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
 import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
-import DBedgraphTrack from "./TrackComponents/DBedgraphTrack";
+import DBedgraphTrack from "./TrackComponents/DBedGraphTrack";
 import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
 import SnpTrack from "./TrackComponents/SnpTrack";
 import BamTrack from "./TrackComponents/BamTrack";
 import BamSource from "@/getRemoteData/BamSource";
+import OmeroTrack from "./TrackComponents/OmeroTrack";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -126,6 +127,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   dynamiclongrange: DynamicLongrangeTrack,
   snp: SnpTrack,
   bam: BamTrack,
+  omeroidr: OmeroTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];

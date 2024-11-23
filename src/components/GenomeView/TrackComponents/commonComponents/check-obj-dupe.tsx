@@ -21,7 +21,7 @@ interface DataObject {
 }
 export function removeDuplicatesWithoutId(arr: DataObject[]): DataObject[] {
   const uniqueObjects = new Map<string, DataObject>();
-  console.log(arr);
+
   arr.map((item: any, index) => {
     let locus;
     if ("start" in item) {
@@ -29,7 +29,7 @@ export function removeDuplicatesWithoutId(arr: DataObject[]): DataObject[] {
     } else {
       locus = item.data;
     }
-    console.log(item);
+
     const key = `${locus.start}-${locus.end}`;
     if (!uniqueObjects.has(key)) {
       uniqueObjects.set(key, item);

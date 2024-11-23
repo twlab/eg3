@@ -61,6 +61,14 @@ const trackFetchFunction: { [key: string]: any } = {
       regionData.trackModel.url
     );
   },
+
+  omeroidr: async function bedFetch(regionData: any) {
+    return getTabixData(
+      regionData.nav,
+      regionData.trackModel.options,
+      regionData.trackModel.url
+    );
+  },
   bedgraph: async function bedgraphFetch(regionData: any) {
     return getTabixData(
       regionData.nav,

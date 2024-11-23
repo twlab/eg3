@@ -51,15 +51,19 @@ import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotT
 import QBed from "@/models/QBed";
 import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
-
+import { Model } from "flexlayout-react";
 import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
 import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
-import { format } from "path";
+
 import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
 import Snp from "@/models/Snp";
 import SnpAnnotation from "./SnpComponents/SnpAnnotation";
 import { BamAlignment } from "@/models/BamAlignment";
 import { BamAnnotation } from "./BamComponents/BamAnnotation";
+import ImageRecord from "@/models/ImageRecord";
+
+import OmeroTrackComponents from "./imageTrackComponents/OmeroTrackComponents";
+import { initialLayout } from "@/models/layoutUtils";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -397,6 +401,26 @@ export const displayModeComponentMap: { [key: string]: any } = {
       },
     };
 
+    if (trackModel.type === "omeroidr") {
+      return (
+        <OmeroTrackComponents
+          data={formattedData}
+          options={configOptions}
+          viewWindow={{
+            start: 0,
+            end: useFineOrSecondaryParentNav
+              ? trackState.visWidth
+              : windowWidth * 3,
+          }}
+          trackModel={trackModel}
+          forceSvg={false}
+          width={0}
+          layoutModel={Model.fromJson(initialLayout)}
+          isThereG3dTrack={false}
+          onSetImageInfo={() => {}}
+        />
+      );
+    }
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
@@ -412,6 +436,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             trackState.regionNavCoord._startBase)
       );
     }
+
     //FullDisplayMode part from eg2
 
     let placeFeatureData = featureArrange.arrange(
@@ -1169,6 +1194,10 @@ export function getDisplayModeFunction(
       );
     } else if (drawData.trackModel.type === "bam") {
       formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
+    } else if (drawData.trackModel.type === "omeroidr") {
+      formattedData = drawData.genesArr.map(
+        (record) => new ImageRecord(record)
+      );
     } else if (drawData.trackModel.type === "bigbed") {
       formattedData = drawData.genesArr.map((record) => {
         const fields = record["rest"].split("\t");

@@ -19,7 +19,7 @@ import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
-  data?: Feature[]; // Replace 'Feature' with the actual type of your data
+  data?: Array<any>;
   unit?: string;
   options?: any;
   isLoading?: boolean;
