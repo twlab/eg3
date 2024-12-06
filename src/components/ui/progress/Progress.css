@@ -1,0 +1,99 @@
+:root {
+  --duration: 1500ms;
+}
+
+.spinner {
+  position: relative;
+  transform: scale(0.7);
+}
+
+.spinner-container {
+  display: flex;
+}
+
+.spinner-container.center {
+  justify-content: center;
+}
+
+.spinner .segment {
+  position: absolute;
+  left: 45%;
+  height: 29%;
+  width: 8%;
+  background-color: rgba(234, 234, 234, 0.3);
+  border-radius: 10px;
+  -webkit-transform-origin-y: 170%;
+  animation-duration: var(--duration);
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-name: throbber;
+}
+
+.spinner .segment:nth-child(1) {
+  transform: rotate(0deg);
+  animation-delay: 0ms;
+}
+
+.spinner .segment:nth-child(2) {
+  transform: rotate(30deg);
+  animation-delay: 125ms;
+}
+
+.spinner .segment:nth-child(3) {
+  transform: rotate(60deg);
+  animation-delay: 250ms;
+}
+
+.spinner .segment:nth-child(4) {
+  transform: rotate(90deg);
+  animation-delay: 375ms;
+}
+
+.spinner .segment:nth-child(5) {
+  transform: rotate(120deg);
+  animation-delay: 500ms;
+}
+
+.spinner .segment:nth-child(6) {
+  transform: rotate(150deg);
+  animation-delay: 625ms;
+}
+
+.spinner .segment:nth-child(7) {
+  transform: rotate(180deg);
+  animation-delay: 750ms;
+}
+
+.spinner .segment:nth-child(8) {
+  transform: rotate(210deg);
+  animation-delay: 875ms;
+}
+
+.spinner .segment:nth-child(9) {
+  transform: rotate(240deg);
+  animation-delay: 1000ms;
+}
+
+.spinner .segment:nth-child(10) {
+  transform: rotate(270deg);
+  animation-delay: 1125ms;
+}
+
+.spinner .segment:nth-child(11) {
+  transform: rotate(300deg);
+  animation-delay: 1250ms;
+}
+
+.spinner .segment:nth-child(12) {
+  transform: rotate(330deg);
+  animation-delay: 1375ms;
+}
+
+@keyframes throbber {
+  0% {
+    background-color: #808080;
+  }
+  100% {
+    background-color: white;
+  }
+}

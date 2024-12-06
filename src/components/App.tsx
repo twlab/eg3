@@ -1,14 +1,47 @@
+import ReduxProvider from "@/lib/redux/provider";
+import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+import { MotionConfig } from "framer-motion";
 import { useEffect, useState } from "react";
-import Homepage from "./Home/Homepage";
-import { BrowserRouter, Link, Switch, Route } from "react-router-dom";
-import GenomeView from "./GenomeView/GenomeRoot";
-import { treeOfLifeObj } from "../localdata/treeoflife";
+import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
+
 import mainLogo from "../assets/images/icon.png";
-
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { genName, genKeyName, chrType } from "../localdata/genomename";
-
+import { chrType, genKeyName, genName } from "../localdata/genomename";
+import { treeOfLifeObj } from "../localdata/treeoflife";
 import { genomeNameToConfig } from "../models/genomes/allGenomes";
+import GenomeView from "./GenomeView/GenomeRoot";
+import Homepage from "./Home/Homepage";
+import RootLayout from "./root-layout/RootLayout";
+import { GenomeProvider } from "@/lib/contexts/GenomeContext";
+import * as firebase from "firebase/app";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
+  authDomain: "chadeg3-83548.firebaseapp.com",
+  databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
+  storageBucket: "chadeg3-83548.firebasestorage.app",
+};
+
+firebase.initializeApp(firebaseConfig);
+
+export default function App() {
+  return (
+    <MotionConfig transition={snappyTransition}>
+      <ReduxProvider>
+        <GenomeProvider>
+          <RootLayout />
+        </GenomeProvider>
+      </ReduxProvider>
+    </MotionConfig>
+  )
+}
+
+const snappyTransition = {
+  type: 'spring',
+  damping: 30,
+  stiffness: 400,
+  mass: 0.8
+}
+
 // this section needs to be moved to a backend if we want to access
 // aws backend because it need access key and secret key
 // if you  are trying to pull data from aws bucket then create an access token and input them here
@@ -24,7 +57,7 @@ var s3Config = new S3Client({
 
 const isLocal = 1;
 
-function App() {
+function _App() {
   // Used to display the home screen and GenomeView
   // if a user add or update a new genome to aws bucket the homeView will be updated with a new state and render the newly added genome
   // if a user select or delete from their selected genomes of choice then the genomeView will update our GenomeView
@@ -180,7 +213,6 @@ function App() {
 
   //This useeffect triggers when selectedGenome data is updated
   //This tells us that the GenomeView component needs to update because a user added or delete a genome from their list
-
   return (
     <div>
       <BrowserRouter>
@@ -228,5 +260,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
