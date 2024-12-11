@@ -11,9 +11,13 @@ export interface NavigationPathElement {
 
 export type NavigationPath = NavigationPathElement[];
 
+export interface NavigationComponentProps {
+    params?: Record<string, string>;
+}
+
 export interface NavigationDestination {
     path: string;
-    component: React.ComponentType;
+    component: React.ComponentType<NavigationComponentProps>;
     options?: NavigationDestinationOptions;
 }
 
@@ -104,7 +108,7 @@ export default function NavigationStack({
                         {children}
                     </motion.div>
                     <AnimatePresence mode="popLayout">
-                        {path.map((element) => {
+                        {path.map((element, idx) => {
                             const destination = destinationMap[element.path] ?? notFoundDestination;
 
                             return (
@@ -112,11 +116,11 @@ export default function NavigationStack({
                                     key={element.path}
                                     className="px-4 pb-4 absolute overflow-y-scroll bg-white"
                                     initial={{ x: "100%" }}
-                                    animate={{ x: 0 }}
+                                    animate={{ x: idx === path.length - 1 ? 0 : "-33%" }}
                                     exit={{ x: "100%" }}
                                     style={{ width, height }}
                                 >
-                                    <destination.component />
+                                    <destination.component params={element.params} />
                                 </motion.div>
                             );
                         })}

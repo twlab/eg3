@@ -1,29 +1,26 @@
+import DisplayedRegionModel from "@/models/DisplayedRegionModel";
+import { FeatureSegment } from "@/models/FeatureSegment";
+import _ from "lodash";
+import querySting from "query-string";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from "react";
-import TrackManager from "./TrackManager";
-import Drag from "./TrackComponents/commonComponents/chr-order/ChrOrder";
-import { chrType } from "../../localdata/genomename";
-import { SelectDemo } from "./tesShadcn";
 import { v4 as uuidv4 } from "uuid";
-import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 
+import { useGenome } from "../../lib/contexts/GenomeContext";
+import { chrType } from "../../localdata/genomename";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 import Nav from "./genomeNavigator/Nav";
-import querySting from "query-string";
-import {
-  createNewTrackState,
-  TrackState,
-} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import { SelectDemo } from "./tesShadcn";
 // Import the functions you need from the SDKs you need
 import History from "./ToolComponents/History";
-import _ from "lodash";
-import { FeatureSegment } from "@/models/FeatureSegment";
-import { useGenome } from "../../lib/contexts/GenomeContext";
+import Drag from "./TrackComponents/commonComponents/chr-order/ChrOrder";
+import useResizeObserver from "./TrackComponents/commonComponents/Resize";
+import { createNewTrackState, TrackState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import TrackManager from "./TrackManager";
 
 // const firebaseConfig = {
 //   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -468,6 +465,7 @@ function GenomeHub() {
       isInitial.current = false;
     }
   }, [size.width]);
+
   return (
     <div style={{ paddingLeft: "1%", paddingRight: "1%" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>

@@ -1,11 +1,15 @@
-import { createContext, useContext, ReactNode, useEffect } from 'react';
+import { createNewTrackState, TrackState } from '@/components/GenomeView/TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState';
+import OpenInterval from '@/models/OpenInterval';
+import { getSecondaryGenomes } from '@/models/util';
 import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+import _ from "lodash";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useRef, useState } from "react";
+
 import { chrType } from "../../localdata/genomename";
 import { treeOfLifeObj } from "../../localdata/treeoflife";
-import { genomeNameToConfig } from "../../models/genomes/allGenomes";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import _ from "lodash";
+import { genomeNameToConfig, getGenomeConfig } from "../../models/genomes/allGenomes";
 
 function useGenomeState(isLocal = 1) {
     const [selectedGenome, setSelectedGenome] = useState<Array<any>>([]);
@@ -140,6 +144,176 @@ function useGenomeState(isLocal = 1) {
         setGenomeList(new Array<any>(curGenomeConfig));
     }
 
+    // MARK: - Computed
+
+    const state = stateArr.current[presentStateIdx.current];
+
+    const genomeConfig = useMemo(() => genomeList[0], [genomeList]);
+
+    const secondaryGenomes = useMemo(() => {
+        if (!state || !genomeConfig || !state.tracks) return [];
+
+        const secondaryGenomes = getSecondaryGenomes(
+            genomeConfig.genome.getName(),
+            state.tracks
+        );
+        return secondaryGenomes.map((g) => getGenomeConfig(g));
+    }, [state && state.tracks, genomeConfig]);
+
+    // MARK: - Actions
+
+    function onTracksAdded(trackModels: any) {
+        let newStateObj = createNewTrackState(
+            stateArr.current[presentStateIdx.current],
+            {}
+        );
+
+        for (let trackModel of trackModels) {
+            trackModel.genomeName =
+                stateArr.current[presentStateIdx.current].genomeName;
+            trackModel.id = trackModelId.current;
+            trackModelId.current++;
+            newStateObj.tracks.push(trackModel);
+        }
+
+        addGlobalState(newStateObj);
+        let state = stateArr.current[presentStateIdx.current];
+        let curGenomeConfig = getGenomeConfig(state.genomeName);
+        curGenomeConfig.navContext = state["viewRegion"]._navContext;
+        curGenomeConfig.defaultTracks = state.tracks;
+        curGenomeConfig.defaultRegion = new OpenInterval(
+            state.viewRegion._startBase,
+            state.viewRegion._endBase
+        );
+        recreateTrackmanager({ genomeConfig: curGenomeConfig });
+    }
+
+    const addTermToMetaSets = useCallback((term: string) => {
+        setSuggestedMetaSets((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(term);
+            return newSet;
+        });
+    }, []);
+
+    const onHubUpdated = useCallback((hubs: any[], publicTracks: any[], type: string) => {
+        if (type === "public") {
+            setPublicTracksPool(publicTracks);
+        } else {
+            setCustomTracksPool(publicTracks);
+        }
+    }, []);
+
+    function onSetsChanged(sets) {
+        let state = createNewTrackState(
+            stateArr.current[presentStateIdx.current],
+            {}
+        );
+        state["regionSetView"] = selectedSet;
+        state["regionSet"] = sets;
+        state["viewRegion"] = new DisplayedRegionModel(sets[0].makeNavContext());
+
+        addGlobalState(state);
+        setRegionSets([...regionSets, ...sets]);
+    }
+
+    function onSetsSelected(sets) {
+        setSelectedSet(sets);
+
+        let state = createNewTrackState(
+            stateArr.current[presentStateIdx.current],
+            {}
+        );
+        state["regionSetView"] = selectedSet;
+        state["regionSet"] = sets;
+        state["viewRegion"] = new DisplayedRegionModel(sets.makeNavContext());
+
+        addGlobalState(state);
+
+        let curGenomeConfig = getGenomeConfig(state.genomeName);
+        curGenomeConfig.navContext = state["viewRegion"]._navContext;
+
+        curGenomeConfig.defaultTracks = state.tracks;
+        curGenomeConfig.defaultRegion = new OpenInterval(
+            state.viewRegion._startBase!,
+            state.viewRegion._endBase!
+        );
+        curGenomeConfig["regionSetView"] = [sets];
+
+        recreateTrackmanager({ genomeConfig: curGenomeConfig });
+    }
+
+    function onTabSettingsChange(setting: { [key: string]: any }) {
+        let state = createNewTrackState(
+            stateArr.current[presentStateIdx.current],
+            {}
+        );
+        if (setting.type === "switchNavigator") {
+            setShowGenNav(setting.val);
+            state.isShowingNavigator = setting.val;
+            addGlobalState(state);
+        } else if (setting.type === "cacheToggle") {
+            setRestoreViewRefresh(setting.val);
+        } else if (setting.type === "legendWidth") {
+            state.trackLegendWidth = setting.val;
+
+            addGlobalState(state);
+
+            let curGenomeConfig = getGenomeConfig(state.genomeName);
+            curGenomeConfig.navContext = state["viewRegion"]._navContext;
+
+            curGenomeConfig.defaultTracks = state.tracks;
+            curGenomeConfig.defaultRegion = new OpenInterval(
+                state.viewRegion._startBase!,
+                state.viewRegion._endBase!
+            );
+
+            setLegendWidth(setting.val);
+            recreateTrackmanager({ genomeConfig: curGenomeConfig });
+        }
+    }
+
+    function addSessionState(bundle) {
+        setCurBundle(bundle);
+    }
+    function onRestoreSession(bundle) {
+        let state: TrackState = createNewTrackState(
+            bundle.sessionsInBundle[`${bundle.currentId}`].state,
+            {}
+        );
+        state.tracks.map((trackModel) => {
+            trackModel.id = trackModelId.current;
+            trackModelId.current++;
+        });
+        let curGenomeConfig = getGenomeConfig(state.genomeName);
+
+        curGenomeConfig.navContext = state["viewRegion"]._navContext;
+        curGenomeConfig.defaultTracks = state.tracks;
+        curGenomeConfig.defaultRegion = new OpenInterval(
+            state.viewRegion._startBase!,
+            state.viewRegion._endBase!
+        );
+        addGlobalState(state);
+        setLegendWidth(state.trackLegendWidth);
+        setShowGenNav(state.isShowingNavigator);
+        recreateTrackmanager({ genomeConfig: curGenomeConfig });
+
+        setCurBundle(bundle);
+    }
+
+    function onRetrieveBundle(bundle) {
+        bundle.currentId = "none";
+        setCurBundle(bundle);
+        let newState = createNewTrackState(
+            stateArr.current[presentStateIdx.current],
+            {}
+        );
+        newState.bundleId = bundle.bundleId;
+        addGlobalState(newState);
+    }
+
+    // MARK: - Return 
+
     return {
         selectedGenome,
         allGenome,
@@ -175,7 +349,20 @@ function useGenomeState(isLocal = 1) {
         stateArr,
         presentStateIdx,
         trackModelId,
-        isInitial
+        isInitial,
+
+        state,
+        genomeConfig,
+        secondaryGenomes,
+        onTracksAdded,
+        addTermToMetaSets,
+        onHubUpdated,
+        onSetsChanged,
+        onSetsSelected,
+        onTabSettingsChange,
+        onRestoreSession,
+        onRetrieveBundle,
+        addSessionState,
     };
 }
 
@@ -183,7 +370,7 @@ const GenomeContext = createContext<ReturnType<typeof useGenomeState> | undefine
 
 export function GenomeProvider({ children, isLocal = 1 }: { children: ReactNode, isLocal?: number }) {
     const genomeState = useGenomeState(isLocal);
-    
+
     return (
         <GenomeContext.Provider value={genomeState}>
             {children}

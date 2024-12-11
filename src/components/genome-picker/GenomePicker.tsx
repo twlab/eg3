@@ -1,9 +1,10 @@
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+
 import placeholder from "../../assets/images/placeholder.png";
-import Progress from '../ui/progress/Progress';
 import { useGenome } from '../../lib/contexts/GenomeContext';
+import Progress from '../ui/progress/Progress';
 
 export default function GenomePicker() {
     const { treeOfLife, allGenome, addGenomeView } = useGenome();
@@ -19,6 +20,7 @@ export default function GenomePicker() {
         let timeout: any;
 
         if (selectedPath !== null) {
+            // TODO: instead of a fixed timeout duration, wait for the first page of data to load into the browser
             timeout = setTimeout(() => {
                 const genomeName = selectedPath[1];
                 const genomeData = allGenome[genomeName];

@@ -4,10 +4,10 @@ import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
 import { selectNavigationTab, setNavigationTab } from "../../lib/redux/slices/navigationSlice";
 import GenomePicker from "../genome-picker/GenomePicker";
-import AppsTab from './tabs/AppsTab';
-import HelpTab from './tabs/HelpTab';
-import SettingsTab from './tabs/SettingsTab';
-import ShareTab from './tabs/ShareTab';
+import AppsTab from './tabs/apps/AppsTab';
+import HelpTab from './tabs/help/HelpTab';
+import SettingsTab from './tabs/settings/SettingsTab';
+import ShareTab from './tabs/share/ShareTab';
 import TracksTab from './tabs/tracks/TracksTab';
 import Toolbar from "./toolbar/Toolbar";
 import GenomeRoot from "../GenomeView/GenomeRoot";
@@ -134,7 +134,7 @@ export default function RootLayout() {
                         exit={{ y: '100%' }}
                     >
                         <div className="flex flex-col h-full">
-                            {navigationTab === 'tracks' && <TracksTab />} 
+                            {navigationTab === 'tracks' && <TracksTab />}
                             {navigationTab === 'apps' && <AppsTab />}
                             {navigationTab === 'help' && <HelpTab />}
                             {navigationTab === 'share' && <ShareTab />}
