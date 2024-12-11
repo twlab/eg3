@@ -67,7 +67,7 @@ interface HubPaneProps {
   addedTrackSets: Set<string>;
   publicTrackSets?: Set<string>;
   publicHubs: any[];
-  onHubUpdated?: () => void;
+  onHubUpdated: (hubs: any[], publicTracks: any[], type: string) => void;
   contentColorSetup?: object;
   genomeConfig: any;
 }
