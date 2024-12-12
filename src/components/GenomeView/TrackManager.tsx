@@ -929,12 +929,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           let newSelectedTool = {};
           newSelectedTool["title"] = "none";
           newSelectedTool["isSelected"] = false;
+          isToolSelected.current = false;
           return newSelectedTool;
         } else {
           let newSelectedTool = {};
           newSelectedTool["title"] = tool.title;
           newSelectedTool["isSelected"] = true;
-
+          isToolSelected.current = true;
           return newSelectedTool;
         }
       });
@@ -1392,7 +1393,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // it gets the trackComponents at creation so when trackComponent updates we need to
     // add the listener so it can get the most updated trackCom
     // this also include other state changes values such windowWidth
-    console.log(dataIdx);
+
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("keydown", handleKeyDown);
