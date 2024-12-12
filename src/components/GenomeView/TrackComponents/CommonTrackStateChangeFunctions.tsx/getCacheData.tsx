@@ -15,11 +15,13 @@ interface GetCacheDataParams {
   createSVGOrCanvas: (
     trackState: any,
     viewData: any[],
-    dataIdx: number
+    dataIdx: number,
+    signal: any
   ) => void;
   side: string;
   updateSide: { current: string };
   usePrimaryNav: boolean;
+  signal?: any;
 }
 
 export function getCacheData({
@@ -38,6 +40,7 @@ export function getCacheData({
   side,
   updateSide,
   usePrimaryNav,
+  signal,
 }: GetCacheDataParams) {
   let dataValid = false;
   if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
@@ -121,7 +124,7 @@ export function getCacheData({
       }
       let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
       newIntanceTrackState["recreate"] = true;
-      createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx);
+      createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx, signal);
     }
   }
 }

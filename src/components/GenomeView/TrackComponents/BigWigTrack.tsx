@@ -77,38 +77,42 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
 
-    let res = getDisplayModeFunction(
-      {
-        usePrimaryNav: usePrimaryNav.current,
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
-    );
+    function step() {
+      let res = getDisplayModeFunction(
+        {
+          usePrimaryNav: usePrimaryNav.current,
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      );
 
-    if (
-      ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
-        usePrimaryNav.current) ||
-      ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
-        !usePrimaryNav.current) ||
-      trackState.initial ||
-      trackState.recreate
-    ) {
-      xPos.current = curXPos;
-      updateSide.current = side;
+      if (
+        ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
+          usePrimaryNav.current) ||
+        ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
+          !usePrimaryNav.current) ||
+        trackState.initial ||
+        trackState.recreate
+      ) {
+        xPos.current = curXPos;
+        updateSide.current = side;
 
-      setCanvasComponents(res);
+        setCanvasComponents(res);
+      }
     }
-  }
 
+    // Start the first step
+    requestAnimationFrame(step);
+  }
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (trackData!.trackState.initial === 1) {

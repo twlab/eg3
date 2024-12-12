@@ -1,17 +1,13 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
-
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
-
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
-
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
@@ -34,9 +30,7 @@ const TOP_PADDING = 2;
 
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackData,
-
   updateGlobalTrackConfig,
-
   side,
   windowWidth = 0,
   genomeArr,
@@ -113,10 +107,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, cacheIdx, signal) {
+    if (signal.aborted) return; // Check if the signal is already aborted at the start
+
     let curXPos = getTrackXOffset(trackState, windowWidth);
 
-    let res = getDisplayModeFunction(
+    const result = await getDisplayModeFunction(
       {
         genesArr,
         trackState,
@@ -129,12 +125,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         getGenePadding,
         getHeight,
         ROW_HEIGHT,
+        signal, // Pass the signal to the long-running function,
       },
       displaySetter,
       displayCache,
       cacheIdx,
       curXPos
     );
+
+    if (signal.aborted) return; // Check again before proceeding
 
     if (
       ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
@@ -146,15 +145,13 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     ) {
       xPos.current = curXPos;
       updateSide.current = side;
+      if (signal.aborted) return; // Final check before modifying state
       configOptions.current.displayMode === "full"
-        ? setSvgComponents(res)
-        : setCanvasComponents(res);
+        ? setSvgComponents(result)
+        : setCanvasComponents(result);
     }
   }
-
-  //________________________________________________________________________________________________________________________________________________________
-
-  // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
+  // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
   function refGeneClickTooltip(gene: any, pageX, pageY, name, onClose) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
@@ -199,10 +196,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                     >
                       Show in 3D
                     </button>
-                    {/* {" "}
-                    <button className="btn btn-sm btn-secondary" onClick={this.clearGene3d}>
-                        Clear in 3D
-                    </button> */}
                   </div>
                 ) : (
                   ""
@@ -252,6 +245,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     if (trackData![`${id}`]) {
+      const abortController = new AbortController();
+      const signal = abortController.signal;
+
       if (trackData!.trackState.initial === 1) {
         if (
           "genome" in trackData![`${id}`].metadata &&
@@ -312,15 +308,19 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           leftIdx,
           createSVGOrCanvas,
           trackModel,
+          signal,
         });
       }
+
+      return () => {
+        abortController.abort(); // Cleanup function to abort ongoing operations if dependencies change
+      };
     }
   }, [trackData]);
 
   useEffect(() => {
-    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
-    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
-    // otherwise when there is new data cuz the user is at the end of the track
+    const abortController = new AbortController();
+    const signal = abortController.signal;
 
     getCacheData({
       usePrimaryNav: usePrimaryNav.current,
@@ -338,17 +338,23 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       createSVGOrCanvas,
       side,
       updateSide,
+      signal,
     });
+
+    return () => {
+      abortController.abort(); // Cleanup function to abort ongoing operations if dependencies change
+    };
   }, [dataIdx]);
+
   useEffect(() => {
     if (!genomeArr![genomeIdx!].isInitial) {
       checkTrackPreload(id);
-
       setLegend(
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)
       );
     }
   }, [svgComponents, canvasComponents]);
+
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {
@@ -385,13 +391,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   }, [applyTrackConfigChange]);
 
   return (
-    //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
-
     <div
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
             ? svgHeight.current + 2

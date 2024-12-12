@@ -6,10 +6,12 @@ interface GetConfigChangeDataParams {
   createSVGOrCanvas: (
     trackState: any,
     viewData: any[],
-    dataIdx: number
+    dataIdx: number,
+    signal: any
   ) => void;
   trackType: string;
   usePrimaryNav: boolean;
+  signal?: any;
 }
 
 export function getConfigChangeData({
@@ -18,6 +20,7 @@ export function getConfigChangeData({
   createSVGOrCanvas,
   trackType,
   usePrimaryNav,
+  signal,
 }: GetConfigChangeDataParams) {
   // unlike getting cached data for the SVG that was created for eg2, the return svgDATA is not a react component but instead an SVG
   // so when props change like how the density component are created it doesn't trigger a rebuild, only when it gets taken out of view,
@@ -40,5 +43,5 @@ export function getConfigChangeData({
   }
   let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
   newIntanceTrackState["recreate"] = true;
-  createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx);
+  createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx, signal);
 }

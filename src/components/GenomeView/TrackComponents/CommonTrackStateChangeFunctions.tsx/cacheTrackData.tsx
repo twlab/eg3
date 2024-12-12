@@ -34,10 +34,12 @@ interface CacheTrackDataParams {
   createSVGOrCanvas: (
     trackState: any,
     dataCacheArray: any[],
-    currentIndex: number
+    currentIndex: number,
+    signal: any
   ) => void;
   trackModel: any;
   usePrimaryNav: boolean;
+  signal?: any;
 }
 export const trackUsingExpandedLoci = {
   biginteract: "",
@@ -56,6 +58,7 @@ export function cacheTrackData({
   createSVGOrCanvas,
   trackModel = "",
   usePrimaryNav,
+  signal = null,
 }: CacheTrackDataParams) {
   // Passing rawData to the correct tracks and saving it to cache to be displayed
   const primaryVisData =
@@ -101,7 +104,12 @@ export function cacheTrackData({
       rightIdx.current--;
 
       const curDataArr = fetchedDataCache.current[0].dataCache;
-      createSVGOrCanvas(newTrackState, curDataArr, rightIdx.current + 1);
+      createSVGOrCanvas(
+        newTrackState,
+        curDataArr,
+        rightIdx.current + 1,
+        signal
+      );
     }
     // tracks that dont use expanded nav loci_____________________________________________________________________________________________________________________________________________________________________
     //__________________________________________________________________________________________________________________________________________________________
@@ -177,7 +185,7 @@ export function cacheTrackData({
         viewData = testData.map((item) => item.dataCache).flat(1);
       }
 
-      createSVGOrCanvas(trackState1, viewData, rightIdx.current + 2);
+      createSVGOrCanvas(trackState1, viewData, rightIdx.current + 2, signal);
     }
   }
 
@@ -222,7 +230,8 @@ export function cacheTrackData({
         createSVGOrCanvas(
           newTrackState,
           fetchedDataCache.current[rightIdx.current + 1].dataCache,
-          rightIdx.current + 1
+          rightIdx.current + 1,
+          signal
         );
       } else if (trackData!.trackState.side === "left") {
         trackData!.trackState.index = leftIdx.current;
@@ -239,7 +248,8 @@ export function cacheTrackData({
         createSVGOrCanvas(
           newTrackState,
           fetchedDataCache.current[leftIdx.current - 1].dataCache,
-          leftIdx.current - 1
+          leftIdx.current - 1,
+          signal
         );
       }
     }
@@ -275,7 +285,8 @@ export function cacheTrackData({
         createSVGOrCanvas(
           fetchedDataCache.current[rightIdx.current + 2].trackState,
           viewData,
-          rightIdx.current + 2
+          rightIdx.current + 2,
+          signal
         );
       } else if (trackData!.trackState.side === "left") {
         trackData!.trackState.index = leftIdx.current;
@@ -301,7 +312,8 @@ export function cacheTrackData({
         createSVGOrCanvas(
           fetchedDataCache.current[leftIdx.current - 2].trackState,
           viewData,
-          leftIdx.current - 2
+          leftIdx.current - 2,
+          signal
         );
       }
     }
