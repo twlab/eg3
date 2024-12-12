@@ -65,6 +65,7 @@ function GenomeHub() {
     setRegionSets,
     curBundle,
     setCurBundle,
+    onTracksLoaded,
     items,
     setItems,
     stateArr,
@@ -98,7 +99,7 @@ function GenomeHub() {
     let curGenomeConfig = trackConfig.genomeConfig;
     // curGenomeConfig["genomeID"] = uuidv4();
     curGenomeConfig["isInitial"] = isInitial.current;
-    curGenomeConfig["sizeChange"] = false;
+
     curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
     setGenomeList(new Array<any>(curGenomeConfig));
   }
@@ -177,32 +178,6 @@ function GenomeHub() {
       sessionStorage.setItem("myArray", serializedArray);
       setGenomeList(tempGeneArr);
     }
-  }
-
-  function onTracksAdded(trackModels: any) {
-    let newStateObj = createNewTrackState(
-      stateArr.current[presentStateIdx.current],
-      {}
-    );
-
-    for (let trackModel of trackModels) {
-      trackModel.genomeName =
-        stateArr.current[presentStateIdx.current].genomeName;
-      trackModel.id = trackModelId.current;
-      trackModelId.current++;
-      newStateObj.tracks.push(trackModel);
-    }
-
-    addGlobalState(newStateObj);
-    let state = stateArr.current[presentStateIdx.current];
-    let curGenomeConfig = getGenomeConfig(state.genomeName);
-    curGenomeConfig.navContext = state["viewRegion"]._navContext;
-    curGenomeConfig.defaultTracks = state.tracks;
-    curGenomeConfig.defaultRegion = new OpenInterval(
-      state.viewRegion._startBase,
-      state.viewRegion._endBase
-    );
-    recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
 
   function genomeNavigatorRegionSelect(startbase, endbase, isHighlight) {
@@ -435,9 +410,6 @@ function GenomeHub() {
     }
   }
 
-  function onTracksLoaded() {
-    setLoading(false);
-  }
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;

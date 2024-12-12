@@ -120,7 +120,8 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         }
         if (
           !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange
+          genomeArr![genomeIdx!].sizeChange &&
+          Object.keys(fetchedDataCache.current).length > 0
         ) {
           if (
             "genome" in trackData![`${id}`].metadata &&
@@ -151,17 +152,18 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           legendRef: legendRef,
         });
       }
-
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if ("result" in trackData![`${id}`]) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 

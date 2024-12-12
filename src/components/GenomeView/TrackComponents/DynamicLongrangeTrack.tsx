@@ -65,7 +65,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
       let curXPos = getTrackXOffset(trackState, windowWidth);
       let tmpObj = { ...configOptions.current };
-      console.log(windowWidth);
+
       tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
 
       let res = getDisplayModeFunction(
@@ -110,7 +110,8 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
             }
             if (
               !genomeArr![genomeIdx!].isInitial &&
-              genomeArr![genomeIdx!].sizeChange
+              genomeArr![genomeIdx!].sizeChange &&
+              Object.keys(fetchedDataCache.current).length > 0
             ) {
               trackData![`${id}`].result =
                 fetchedDataCache.current[dataIdx!].dataCache;
@@ -130,7 +131,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
             });
             configOptions.current["trackManagerRef"] = trackManagerRef;
           }
-          console.log(trackData![`${id}`].result);
+
           cacheTrackData({
             usePrimaryNav: usePrimaryNav.current,
             id,

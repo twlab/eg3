@@ -456,7 +456,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let currDisplayNav;
 
     //FullDisplayMode part from eg2
-    console.log(trackState);
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       objToInstanceAlign(trackState.visRegion),
@@ -605,14 +604,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
   }) {
-    console.log({
-      formattedData,
-      trackState,
-      windowWidth,
-      configOptions,
-      updatedLegend,
-      trackModel,
-    });
     let canvasElements = (
       <DynamicInteractionTrackComponents
         data={formattedData}
@@ -852,7 +843,6 @@ export function getDisplayModeFunction(
   cacheIdx,
   curXPos
 ) {
-  console.log(drawData.genesArr);
   if (
     drawData.configOptions.displayMode === "full" &&
     drawData.trackModel.type !== "genomealign"
@@ -985,12 +975,6 @@ export function getDisplayModeFunction(
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
-
-    displayCache.current.full[cacheIdx] = {
-      svgDATA,
-      height: drawData.svgHeight.current,
-      xPos: curXPos,
-    };
 
     return svgDATA;
   } else if (drawData.trackModel.type === "genomealign") {
@@ -1293,7 +1277,6 @@ export function getDisplayModeFunction(
         });
         return tempLongrangeData;
       });
-      console.log(formattedData);
     } else {
       formattedData = drawData.genesArr.map((geneArr: any) =>
         geneArr.map((record) =>
@@ -1511,11 +1494,6 @@ export function getDisplayModeFunction(
       trackModel: drawData.trackModel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return canvasElements;
   }
 }

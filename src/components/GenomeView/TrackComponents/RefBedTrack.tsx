@@ -247,7 +247,8 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
       if (trackData!.trackState.initial === 1) {
         if (
           !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange
+          genomeArr![genomeIdx!].sizeChange &&
+          Object.keys(fetchedDataCache.current).length > 0
         ) {
           if (
             "genome" in trackData![`${id}`].metadata &&

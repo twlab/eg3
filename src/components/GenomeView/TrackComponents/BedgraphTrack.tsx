@@ -121,7 +121,8 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
         }
         if (
           !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange
+          genomeArr![genomeIdx!].sizeChange &&
+          Object.keys(fetchedDataCache.current).length > 0
         ) {
           if (
             "genome" in trackData![`${id}`].metadata &&

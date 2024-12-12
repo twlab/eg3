@@ -69,7 +69,7 @@ export function cacheTrackData({
           trackData![`${id}`].metadata.genome
         ].queryRegion
       : primaryVisData.visRegion;
-    console.log(visRegion, trackData!);
+
     if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
       let newTrackState = {
         ...trackData.trackState,
@@ -255,8 +255,8 @@ export function cacheTrackData({
           dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
-
-        fetchedDataCache.current[rightIdx.current + 1].trackState =
+        console.log(fetchedDataCache);
+        fetchedDataCache.current[rightIdx.current + 1]["trackState"] =
           newTrackState;
 
         let currIdx = rightIdx.current + 2;
@@ -283,7 +283,7 @@ export function cacheTrackData({
           dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
-        fetchedDataCache.current[leftIdx.current - 1].trackState =
+        fetchedDataCache.current[leftIdx.current - 1]["trackState"] =
           newTrackState;
         let currIdx = leftIdx.current;
         for (let i = 0; i < 3; i++) {

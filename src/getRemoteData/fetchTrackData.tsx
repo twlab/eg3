@@ -34,7 +34,7 @@ const trackFetchFunction: { [key: string]: any } = {
     const headers = {
       "Content-Type": "application/json",
     };
-    console.log(regionData);
+
     if (regionData.end - regionData.start <= 30000) {
       const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
         regionData.end + "?content-type=application%2Fjson&feature=variation"
@@ -110,7 +110,6 @@ const trackFetchFunction: { [key: string]: any } = {
     return getRemoteData(regionData, "repeat");
   },
   biginteract: async function biginteractFetch(regionData: any) {
-    console.log(regionData);
     return getRemoteData(regionData, "big");
   },
   methylc: async function methylcFetch(regionData: any) {

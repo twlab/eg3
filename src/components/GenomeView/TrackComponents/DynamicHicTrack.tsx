@@ -114,7 +114,8 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
           }
           if (
             !genomeArr![genomeIdx!].isInitial &&
-            genomeArr![genomeIdx!].sizeChange
+            genomeArr![genomeIdx!].sizeChange &&
+            Object.keys(fetchedDataCache.current).length > 0
           ) {
             trackData![`${id}`].result =
               fetchedDataCache.current[dataIdx!].dataCache;
@@ -158,7 +159,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
             })
           );
         }
-        console.log(trackData![`${id}`].result);
+
         cacheTrackData({
           usePrimaryNav: usePrimaryNav.current,
           id,

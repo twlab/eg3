@@ -260,7 +260,7 @@ export class PixiHeatmap extends PureComponent<
 
     const t = this.app!.renderer.generateTexture(g);
     let colorEach;
-    console.log(this.props);
+
     placedInteractionsArray.forEach((placedInteractions: any, index) => {
       if (useDynamicColors && dynamicColors!.length) {
         const colorIndex =

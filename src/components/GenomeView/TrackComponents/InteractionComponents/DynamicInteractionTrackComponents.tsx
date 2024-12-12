@@ -151,7 +151,7 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       viewer3dNumFrames,
     };
     let visualizer;
-    console.log(this.props);
+
     if (options.displayMode === DynamicInteractionDisplayMode.ARC) {
       visualizer = <PixiArc {...visualizerProps} />;
     } else {

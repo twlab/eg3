@@ -80,6 +80,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       setComponents: setCanvasComponents,
     },
   };
+
   function resetState() {
     configOptions.current = { ...DEFAULT_OPTIONS };
     svgHeight.current = 0;
@@ -98,6 +99,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     setToolTipVisible(false);
     setLegend(undefined);
   }
+
   function getHeight(numRows: number): number {
     let rowHeight = ROW_HEIGHT;
     let options = configOptions.current;
@@ -110,6 +112,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
+
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
 
@@ -158,7 +161,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       pointerEvents: "auto",
     });
 
-    return ReactDOM.createPortal(
+    const tooltipElement = (
       <Manager>
         <Reference>
           {({ ref }) => (
@@ -225,9 +228,10 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
             </div>
           )}
         </Popper>
-      </Manager>,
-      document.body
+      </Manager>
     );
+
+    return tooltipElement;
   }
 
   function renderTooltip(event, gene) {
@@ -239,8 +243,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       onClose
     );
     setToolTipVisible(true);
-    setToolTip(currtooltip);
+    setToolTip(ReactDOM.createPortal(currtooltip, document.body));
   }
+
   function onClose() {
     setToolTipVisible(false);
   }
@@ -290,17 +295,19 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           usePrimaryNav: usePrimaryNav.current,
         });
       }
-      console.log(trackData!);
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+
+      if ("result" in trackData![`${id}`]) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
@@ -327,13 +334,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       updateSide,
     });
   }, [dataIdx]);
-
   useEffect(() => {
-    checkTrackPreload(id);
+    if (svgComponents || canvasComponents) {
+      checkTrackPreload(id);
 
-    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
+      setLegend(
+        ReactDOM.createPortal(updatedLegend.current, legendRef.current)
+      );
+    }
   }, [svgComponents, canvasComponents]);
-
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {

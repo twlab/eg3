@@ -158,6 +158,7 @@ function useGenomeState(isLocal = 1) {
   function recreateTrackmanager(trackConfig: { [key: string]: any }) {
     let curGenomeConfig = trackConfig.genomeConfig;
     curGenomeConfig["isInitial"] = isInitial.current;
+    curGenomeConfig["sizeChange"] = false;
     curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
     setGenomeList(new Array<any>(curGenomeConfig));
   }
@@ -181,7 +182,6 @@ function useGenomeState(isLocal = 1) {
   // MARK: - Actions
 
   function onTracksAdded(trackModels: any) {
-    console.log(trackModels);
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {}
@@ -334,6 +334,10 @@ function useGenomeState(isLocal = 1) {
     addGlobalState(newState);
   }
 
+  function onTracksLoaded(isLoading: boolean) {
+    console.log(isLoading);
+    setLoading(isLoading);
+  }
   // MARK: - Return
 
   return {
@@ -351,7 +355,7 @@ function useGenomeState(isLocal = 1) {
     regionSets,
     curBundle,
     items,
-
+    onTracksLoaded,
     fetchGenomeData,
     addGenomeView,
     addGlobalState,
