@@ -38,7 +38,7 @@ const genome = new Genome("hg38", [
 
 //chr7:26805572-26825594
 // biginteract chr3:63836292-64336395
-// https://target.wustl.edu/dli/tmp/test2.g3d 
+// https://target.wustl.edu/dli/tmp/test2.g3d
 // chr7:74083652-74084068 dynseq cromorsome
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
@@ -47,7 +47,6 @@ const genome = new Genome("hg38", [
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
-
   // new TrackModel({
   //   type: "ruler",
   //   name: "Ruler",
@@ -113,10 +112,6 @@ const defaultTracks = [
   //   label: "MANE selection v1.0",
   //   genome: "hg38",
   // }),
-
-
-
-
 
   // new TrackModel({
   //   type: "bigwig",
@@ -228,50 +223,47 @@ const defaultTracks = [
   //   },
   // }),
 
+  // new TrackModel(      {
+  // "name": "vertebratephastCons46way",
+  // "label": "Vertebrate PhastCons 46-way",
+  // "filetype": "bedgraph",
+  // "url": "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
+  // "height": 50,
+  // "options": { "color": "#006385" }
+  // }),
+  //   new TrackModel({
+  // type: "boxplot",
+  // name: "example boxplot",
+  // url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
 
-    // new TrackModel(      {
-    // "name": "vertebratephastCons46way",
-    // "label": "Vertebrate PhastCons 46-way",
-    // "filetype": "bedgraph",
-    // "url": "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
-    // "height": 50,
-    // "options": { "color": "#006385" }
-    // }),
-    //   new TrackModel({
-    // type: "boxplot",
-    // name: "example boxplot",
-    // url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //   }),
 
-    //   }),
-
-  
-  
-    // new TrackModel({
+  // new TrackModel({
   //   type: "biginteract",
   //   name: "test bigInteract",
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-    //     new TrackModel(  {
-    // "name": "dynamic hic",
-    // "type": "dynamichic",
-    // "options": {
+  //     new TrackModel(  {
+  // "name": "dynamic hic",
+  // "type": "dynamichic",
+  // "options": {
 
-    //             "dynamicColors": ["red", "blue"],
-    //             "useDynamicColors": true
-    //         },
-    // "tracks": [
-    //   {
-    //     "type": "hic",
-    //     "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic"
-    //   },
-    //   {
-    //     "name": "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
-    //     "type": "hic",
-    //     "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic"
-    //   }
-    // ],
-    // "showOnHubLoad": true
-    //     }),
+  //             "dynamicColors": ["red", "blue"],
+  //             "useDynamicColors": true
+  //         },
+  // "tracks": [
+  //   {
+  //     "type": "hic",
+  //     "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic"
+  //   },
+  //   {
+  //     "name": "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+  //     "type": "hic",
+  //     "url": "https://epgg-test.wustl.edu/dli/long-range-test/test.hic"
+  //   }
+  // ],
+  // "showOnHubLoad": true
+  //     }),
 
   //   new TrackModel({
   //       "type": "dynamicbed",
@@ -293,7 +285,7 @@ const defaultTracks = [
   //   new TrackModel(  {
   //   "type": "dynamic",
   //   "name": "dynamic plot example",
-  //   "showOnHubLoad": true, 
+  //   "showOnHubLoad": true,
   //   "tracks": [
   //     {
   //       "type": "bigwig",
@@ -317,8 +309,6 @@ const defaultTracks = [
   //     }
   //   ]
   // }),
-
-
 
   // new TrackModel({
   //   type: "hic",
@@ -346,9 +336,6 @@ const defaultTracks = [
   //   name: "gencodeV39",
   //   genome: "hg38",
   // }),
-
-
-
 
   // new TrackModel({
   //   name: "hg38tomm10",
@@ -414,7 +401,6 @@ const defaultTracks = [
   //   name: "test bigInteract",
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-
 ];
 
 const publicHubData = {

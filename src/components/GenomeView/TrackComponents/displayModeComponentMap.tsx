@@ -1007,11 +1007,6 @@ export function getDisplayModeFunction(
         trackState: drawData.trackState,
       };
 
-      displayCache.current.full[cacheIdx] = {
-        svgDATA: tempObj,
-        height: drawData.svgHeight.current,
-        xPos: curXPos,
-      };
       return tempObj;
     } else {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
@@ -1063,11 +1058,6 @@ export function getDisplayModeFunction(
         trackState: drawData.trackState,
       };
 
-      displayCache.current.full[cacheIdx] = {
-        svgDATA: tempObj,
-        height: drawData.svgHeight.current,
-        xPos: curXPos,
-      };
       return tempObj;
     }
   } else if (drawData.trackModel.type === "matplot") {
@@ -1096,11 +1086,6 @@ export function getDisplayModeFunction(
       trackModel: drawData.trackModel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: tmpObj,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (drawData.trackModel.type === "modbed") {
     let formattedData;
@@ -1127,11 +1112,6 @@ export function getDisplayModeFunction(
       onHideToolTip: drawData.onHideToolTip,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: elements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return elements;
   } else if (
     drawData.trackModel.type in { hic: "", biginteract: "", longrange: "" }
@@ -1210,11 +1190,6 @@ export function getDisplayModeFunction(
       trackModel: drawData.trackModel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions.height,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {
     let formattedData = drawData.genesArr;
@@ -1227,11 +1202,6 @@ export function getDisplayModeFunction(
       trackModel: drawData.trackModel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (
     drawData.trackModel.type in
@@ -1304,11 +1274,6 @@ export function getDisplayModeFunction(
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
     let formattedData = drawData.genesArr.map((record) => {
@@ -1335,11 +1300,6 @@ export function getDisplayModeFunction(
       basesByPixel: drawData.basesByPixel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (drawData.trackModel.type === "qbed") {
     let formattedData = drawData.genesArr.map((record) => new QBed(record));
@@ -1353,11 +1313,6 @@ export function getDisplayModeFunction(
       trackModel: drawData.trackModel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (drawData.trackModel.type === "dbedgraph") {
     const VALUE_COLUMN_INDEX = 3;
@@ -1386,11 +1341,6 @@ export function getDisplayModeFunction(
       trackModel: drawData.trackModel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (drawData.trackModel.type === "boxplot") {
     let formattedData = drawData.genesArr.map((record) => {
@@ -1411,11 +1361,6 @@ export function getDisplayModeFunction(
       trackModel: drawData.trackModel,
     });
 
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
     return canvasElements;
   } else if (
     drawData.trackModel.type in { bigwig: "", qbed: "", bedgraph: "" } ||

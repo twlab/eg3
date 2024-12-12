@@ -158,7 +158,7 @@ function useGenomeState(isLocal = 1) {
   function recreateTrackmanager(trackConfig: { [key: string]: any }) {
     let curGenomeConfig = trackConfig.genomeConfig;
     curGenomeConfig["isInitial"] = isInitial.current;
-    curGenomeConfig["sizeChange"] = false;
+    curGenomeConfig["sizeChange"] = true;
     curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
     setGenomeList(new Array<any>(curGenomeConfig));
   }

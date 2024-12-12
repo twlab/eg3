@@ -545,7 +545,7 @@ self.onmessage = async (event: MessageEvent) => {
     side: event.data.trackSide,
     xDist: event.data.xDist,
     initial: event.data.initial,
-
+    trackDataIdx: event.data.trackDataIdx,
     genomicFetchCoord,
     bpX: event.data.bpX,
     useFineModeNav,

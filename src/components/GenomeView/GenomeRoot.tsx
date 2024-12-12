@@ -40,7 +40,12 @@ import TrackManager from "./TrackManager";
 //     "657765675756675657": "JSON2",
 //   });
 //
-
+interface GenomeViewProps {
+  selectedGenome: Array<any>;
+  allGenome: Array<any>;
+  addToView: any;
+  name: string;
+}
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub() {
@@ -99,7 +104,7 @@ function GenomeHub() {
     let curGenomeConfig = trackConfig.genomeConfig;
     // curGenomeConfig["genomeID"] = uuidv4();
     curGenomeConfig["isInitial"] = isInitial.current;
-
+    curGenomeConfig["sizeChange"] = false;
     curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
     setGenomeList(new Array<any>(curGenomeConfig));
   }

@@ -271,12 +271,18 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
               genomeArr![genomeIdx!].genome.getName()
           ) {
             trackData![`${id}`].result =
-              fetchedDataCache.current[dataIdx!].dataCache;
+              fetchedDataCache.current[
+                trackData![`${id}`].trackDataIdx
+              ].dataCache;
           } else {
+            console.log(trackData, fetchedDataCache.current);
             trackData![`${id}`].result = [
-              fetchedDataCache.current[dataIdx! + 1].dataCache,
-              fetchedDataCache.current[dataIdx!].dataCache,
-              fetchedDataCache.current[dataIdx! - 1].dataCache,
+              fetchedDataCache.current[trackData![`${id}`].trackDataIdx + 1]
+                .dataCache,
+              fetchedDataCache.current[trackData![`${id}`].trackDataIdx]
+                .dataCache,
+              fetchedDataCache.current[trackData![`${id}`].trackDataIdx - 1]
+                .dataCache,
             ];
           }
         }
@@ -335,7 +341,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     });
   }, [dataIdx]);
   useEffect(() => {
-    if (svgComponents || canvasComponents) {
+    if (!genomeArr![genomeIdx!].isInitial) {
       checkTrackPreload(id);
 
       setLegend(

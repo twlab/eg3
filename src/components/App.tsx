@@ -32,15 +32,15 @@ export default function App() {
         </GenomeProvider>
       </ReduxProvider>
     </MotionConfig>
-  )
+  );
 }
 
 const snappyTransition = {
-  type: 'spring',
+  type: "spring",
   damping: 30,
   stiffness: 400,
-  mass: 0.8
-}
+  mass: 0.8,
+};
 
 // this section needs to be moved to a backend if we want to access
 // aws backend because it need access key and secret key
@@ -246,14 +246,7 @@ function _App() {
             />
           </Route>
           <Route path="/genome">
-            <GenomeView
-              selectedGenome={selectedGenome}
-              allGenome={allGenome}
-              addToView={addGenomeView}
-              name={
-                selectedGenome.length > 0 ? selectedGenome[0].genome._name : ""
-              }
-            />
+            <GenomeView />
           </Route>
         </Switch>
       </BrowserRouter>
