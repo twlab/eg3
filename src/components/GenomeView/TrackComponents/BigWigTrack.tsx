@@ -9,6 +9,7 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -215,23 +216,15 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           trackIdx: trackIdx,
           legendRef: legendRef,
         });
-        if (dataIdx! in displayCache.current.density) {
-          let tmpNewConfig = { ...configOptions.current };
 
-          for (let key in displayCache.current.density) {
-            let curCacheComponent =
-              displayCache.current.density[`${key}`].canvasData;
-            let newComponent = React.cloneElement(curCacheComponent, {
-              options: tmpNewConfig,
-            });
-            displayCache.current.density[`${key}`].canvasData = newComponent;
-          }
-          configOptions.current = tmpNewConfig;
-
-          setCanvasComponents(
-            displayCache.current.density[`${dataIdx}`].canvasData
-          );
-        }
+        displayCache.current[`${configOptions.current.displayMode}`] = {};
+        getConfigChangeData({
+          fetchedDataCache: fetchedDataCache.current,
+          dataIdx,
+          usePrimaryNav: usePrimaryNav.current,
+          createSVGOrCanvas,
+          trackType: trackModel.type,
+        });
       }
     }
   }, [applyTrackConfigChange]);

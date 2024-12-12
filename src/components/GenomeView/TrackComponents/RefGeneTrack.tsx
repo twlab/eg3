@@ -335,7 +335,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     });
   }, [dataIdx]);
   useEffect(() => {
-    if (svgComponents || canvasComponents) {
+    if (!genomeArr![genomeIdx!].isInitial) {
       checkTrackPreload(id);
 
       setLegend(
