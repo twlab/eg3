@@ -64,13 +64,12 @@ export function cacheTrackData({
     ].primaryVisData;
 
   if (trackData!.trackState.initial === 1) {
-    let visRegion =
-      "genome" in trackData![`${id}`].metadata
-        ? trackData!.trackState.genomicFetchCoord[
-            trackData![`${id}`].metadata.genome
-          ].queryRegion
-        : primaryVisData.visRegion;
-
+    let visRegion = !usePrimaryNav
+      ? trackData!.trackState.genomicFetchCoord[
+          trackData![`${id}`].metadata.genome
+        ].queryRegion
+      : primaryVisData.visRegion;
+    console.log(visRegion, trackData!);
     if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
       let newTrackState = {
         ...trackData.trackState,
@@ -189,7 +188,7 @@ export function cacheTrackData({
   //__________________________________________________________________________________________________________@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   else {
     let visRegion;
-    if ("genome" in trackData![`${id}`].metadata) {
+    if (!usePrimaryNav) {
       visRegion =
         trackData!.trackState.genomicFetchCoord[
           `${trackData![`${id}`].metadata.genome}`

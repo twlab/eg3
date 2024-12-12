@@ -456,7 +456,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let currDisplayNav;
 
     //FullDisplayMode part from eg2
-
+    console.log(trackState);
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       objToInstanceAlign(trackState.visRegion),

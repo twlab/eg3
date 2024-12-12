@@ -73,17 +73,17 @@ const defaultTracks = [
   //     },
   //   },
   // }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
-    new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
+  //   new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
 
-  }),
+  // }),
   new TrackModel({
     type: "geneAnnotation",
     name: "gencodeV39",
