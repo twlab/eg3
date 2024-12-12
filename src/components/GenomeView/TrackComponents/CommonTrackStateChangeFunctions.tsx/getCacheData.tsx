@@ -1,11 +1,28 @@
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "../commonComponents/check-obj-dupe";
 import TrackLegend from "../commonComponents/TrackLegend";
+import { trackUsingExpandedLoci } from "./cacheTrackData";
+interface GetCacheDataParams {
+  rightIdx: number;
+  leftIdx: number;
+  dataIdx: number;
+  displayCache: any;
+  fetchedDataCache: any;
+  displayType: string;
+  displaySetter: any;
+  svgHeight?: { current: number };
+  xPos: { current: number };
+  updatedLegend: { current: any };
+  trackModel: any;
+  createSVGOrCanvas: (
+    trackState: any,
+    viewData: any[],
+    dataIdx: number
+  ) => void;
+  side: string;
+  updateSide: { current: string };
+  usePrimaryNav: boolean;
+}
 
-export function getCacheData(
-  useFineOrSecondaryParentNav,
+export function getCacheData({
   rightIdx,
   leftIdx,
   dataIdx,
@@ -17,13 +34,13 @@ export function getCacheData(
   xPos,
   updatedLegend,
   trackModel,
-  createViewElement,
+  createSVGOrCanvas,
   side,
   updateSide,
-  keyDupe = "none"
-) {
+  usePrimaryNav,
+}: GetCacheDataParams) {
   let dataValid = false;
-  if (useFineOrSecondaryParentNav) {
+  if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
     if (dataIdx! > rightIdx && dataIdx! <= 0) {
       dataValid = true;
     } else if (dataIdx! < leftIdx && dataIdx! > 0) {
@@ -48,10 +65,13 @@ export function getCacheData(
       modbed: "",
       dynamichic: "",
       dynamiclongrange: "",
+      dynseq: "",
+      bedgraph: "",
     }
   ) {
     displayType = "density";
   }
+
   if (dataValid) {
     if (dataIdx! in displayCache[`${displayType}`]) {
       updatedLegend.current = (
@@ -64,20 +84,23 @@ export function getCacheData(
       xPos.current = displayCache[`${displayType}`][dataIdx!].xPos;
       updateSide.current = side;
       if (displayType === "full") {
-        displaySetter.full.setComponents(
-          displayCache[`${displayType}`][dataIdx!].svgDATA
-        );
-        svgHeight.current = displayCache[`${displayType}`][dataIdx!].height;
+        displaySetter.full.setComponents({
+          ...displayCache[`${displayType}`][dataIdx!].svgDATA,
+        });
+        if (trackModel.type === "genomealign") {
+          // handle specific logic for genomealign type if needed
+        }
+        svgHeight!.current = displayCache[`${displayType}`][dataIdx!].height;
       } else {
         displaySetter.density.setComponents(
           displayCache[`${displayType}`][dataIdx!].canvasData
         );
       }
     } else {
-      let viewData: Array<any> = [];
+      let viewData: any[] = [];
 
-      if (useFineOrSecondaryParentNav) {
-        // CHANGE LEFT  NOT SUBTREACT BY 1 ANMORE
+      if (trackModel.type === "genomealign") {
+        // CHANGE LEFT NOT SUBTRACT BY 1 ANYMORE
         if (dataIdx! > rightIdx && dataIdx! <= 0) {
           viewData = fetchedDataCache[dataIdx!].dataCache;
         } else if (dataIdx! < leftIdx && dataIdx! > 0) {
@@ -93,21 +116,12 @@ export function getCacheData(
             fetchedDataCache[dataIdx!],
             fetchedDataCache[dataIdx! - 1],
           ];
-          let dataCacheArray = viewData.map((item) => item.dataCache).flat(1);
-
-          viewData =
-            keyDupe !== "none"
-              ? removeDuplicates(dataCacheArray, keyDupe)
-              : removeDuplicatesWithoutId(dataCacheArray);
+          viewData = viewData.map((item) => item.dataCache).flat(1);
         }
       }
-
-      createViewElement(
-        fetchedDataCache[dataIdx!].trackState,
-        viewData,
-
-        dataIdx
-      );
+      let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
+      newIntanceTrackState["recreate"] = true;
+      createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx);
     }
   }
 }

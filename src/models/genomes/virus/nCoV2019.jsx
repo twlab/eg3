@@ -9,10 +9,10 @@ const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("NC_045512.2:0-29903");
 
 const defaultTracks = [
-    new TrackModel({
-        type: "ruler",
-        name: "Ruler",
-    }),
+    // new TrackModel({
+    //     type: "ruler",
+    //     name: "Ruler",
+    // }),
     new TrackModel({
         type: "geneAnnotation",
         name: "ncbiGene",
@@ -61,15 +61,15 @@ const defaultTracks = [
             height: 50,
         },
     }),
-    // new TrackModel({
-    //     type: "qbed",
-    //     name: "Mutation Alert",
-    //     url: "https://wangftp.wustl.edu/~cfan/gisaid/latest/diversity/ncov_alert.bed.sort.gz",
-    //     options: {
-    //         height: 60,
-    //         color: "darkgreen",
-    //     },
-    // }),
+    new TrackModel({
+        type: "qbed",
+        name: "Mutation Alert",
+        url: "https://wangftp.wustl.edu/~cfan/gisaid/latest/diversity/ncov_alert.bed.sort.gz",
+        options: {
+            height: 60,
+            color: "darkgreen",
+        },
+    }),
     new TrackModel({
         name: "Viral RNA expression (nanopore)",
         type: "bigwig",

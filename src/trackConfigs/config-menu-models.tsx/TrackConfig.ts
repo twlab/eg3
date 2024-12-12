@@ -20,7 +20,7 @@ export class TrackConfig {
   setDefaultOptions(defaults: TrackOptions): TrackOptions {
     return Object.assign(this.defaultOptions, defaults);
   }
-  getMenuComponents(basesPerPixel?: number) {
+  getMenuComponents(): any {
     return [LabelConfig];
   }
 }

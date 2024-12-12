@@ -40,7 +40,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   genomeIdx,
   trackModel,
   dataIdx,
-
+  checkTrackPreload,
   trackIdx,
   id,
   useFineModeNav,
@@ -60,15 +60,15 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     full: {},
     density: {},
   });
-  const useFineOrSecondaryParentNav = useRef(useFineModeNav);
 
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const configMenuPos = useRef<{ [key: string]: any }>({});
+
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-  const [configChanged, setConfigChanged] = useState(false);
+
   const [legend, setLegend] = useState<any>();
 
   const displaySetter = {
@@ -92,18 +92,31 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
     }
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+    svgHeight.current = 0;
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      full: {},
+      density: {},
+    };
 
+    xPos.current = 0;
+
+    setToolTip(undefined);
+    setToolTipVisible(false);
+    setLegend(undefined);
+  }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(
-      trackState,
-      windowWidth,
-      useFineOrSecondaryParentNav.current
-    );
+    let curXPos = getTrackXOffset(trackState, windowWidth);
 
-    getDisplayModeFunction(
+    let res = getDisplayModeFunction(
       {
         genesArr,
-        useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
         trackState,
         windowWidth,
         configOptions: configOptions.current,
@@ -121,10 +134,21 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       curXPos
     );
 
-    xPos.current = curXPos;
-    updateSide.current = side;
+    if (
+      ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
+        usePrimaryNav.current) ||
+      ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
+        !usePrimaryNav.current) ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
+      configOptions.current.displayMode === "full"
+        ? setSvgComponents(res)
+        : setCanvasComponents(res);
+    }
   }
-
   function bedClickTooltip(feature: any, pageX, pageY, name, onClose) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
@@ -201,7 +225,35 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
 
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
+        if (
+          "genome" in trackData![`${id}`].metadata &&
+          trackData![`${id}`].metadata.genome !==
+            genomeArr![genomeIdx!].genome.getName()
+        ) {
+          usePrimaryNav.current = false;
+        }
+        if (
+          !genomeArr![genomeIdx!].isInitial &&
+          genomeArr![genomeIdx!].sizeChange &&
+          Object.keys(fetchedDataCache.current).length > 0
+        ) {
+          if (
+            "genome" in trackData![`${id}`].metadata &&
+            trackData![`${id}`].metadata.genome !==
+              genomeArr![genomeIdx!].genome.getName()
+          ) {
+            trackData![`${id}`].result =
+              fetchedDataCache.current[dataIdx!].dataCache;
+          } else {
+            trackData![`${id}`].result = [
+              fetchedDataCache.current[dataIdx! + 1].dataCache,
+              fetchedDataCache.current[dataIdx!].dataCache,
+              fetchedDataCache.current[dataIdx! - 1].dataCache,
+            ];
+          }
+        }
+        resetState();
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,
@@ -213,31 +265,32 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           id: id,
           trackIdx: trackIdx,
           legendRef: legendRef,
+          usePrimaryNav: usePrimaryNav.current,
         });
       }
-      cacheTrackData(
-        useFineOrSecondaryParentNav.current,
+
+      cacheTrackData({
+        usePrimaryNav: usePrimaryNav.current,
         id,
         trackData,
         fetchedDataCache,
         rightIdx,
         leftIdx,
         createSVGOrCanvas,
-        genomeArr![genomeIdx!],
-        "none"
-      );
+        trackModel,
+      });
     }
   }, [trackData]);
 
   useEffect(() => {
-    getCacheData(
-      useFineOrSecondaryParentNav.current,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
       xPos,
@@ -246,11 +299,12 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
 
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
   useEffect(() => {
@@ -275,13 +329,13 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
           trackIdx: trackIdx,
           legendRef: legendRef,
         });
-        getConfigChangeData(
-          useFineOrSecondaryParentNav.current,
-          fetchedDataCache.current,
+        getConfigChangeData({
+          fetchedDataCache: fetchedDataCache.current,
           dataIdx,
+          usePrimaryNav: usePrimaryNav.current,
           createSVGOrCanvas,
-          "none"
-        );
+          trackType: trackModel.type,
+        });
       }
     }
   }, [applyTrackConfigChange]);

@@ -32,56 +32,13 @@ interface OmeroTrackProps {
   layoutModel: any;
   isThereG3dTrack: boolean;
   onSetImageInfo: any;
+  heightObj: any;
 }
 
-interface OmeroTrackState {
-  trackHeight: number;
-  numHidden: number;
-}
-
-class OmeroTrackComponents extends React.PureComponent<
-  OmeroTrackProps,
-  OmeroTrackState
-> {
+class OmeroTrackComponents extends React.PureComponent<OmeroTrackProps> {
   constructor(props: OmeroTrackProps) {
     super(props);
-    this.state = {
-      trackHeight: 100,
-      numHidden: 0,
-    };
   }
-
-  componentDidMount() {
-    this.calcTrackHeight();
-  }
-
-  componentDidUpdate(prevProps: OmeroTrackProps) {
-    if (
-      prevProps.data !== this.props.data ||
-      prevProps.options.imageHeight !== this.props.options.imageHeight
-    ) {
-      this.calcTrackHeight();
-    }
-  }
-
-  calcTrackHeight = () => {
-    const { data, viewWindow, options } = this.props;
-    const totalImgCount = _.sum(data.map((item) => item.images.length));
-    const imgCount = Math.min(totalImgCount, MAX_NUMBER_THUMBNAILS);
-    const totalImageWidth = Math.max(
-      (options.imageHeight[0] * options.imageAspectRatio + THUMBNAIL_PADDING) *
-        imgCount -
-        THUMBNAIL_PADDING,
-      0
-    );
-    const screenWidth = viewWindow.end - viewWindow.start;
-    const rowsNeed = Math.floor(totalImageWidth / screenWidth) + 1;
-    const trackHeight =
-      rowsNeed * (options.imageHeight[0] + THUMBNAIL_PADDING) -
-      THUMBNAIL_PADDING;
-
-    this.setState({ trackHeight, numHidden: totalImgCount - imgCount });
-  };
 
   render() {
     const {
@@ -94,8 +51,8 @@ class OmeroTrackComponents extends React.PureComponent<
       layoutModel,
       isThereG3dTrack,
       onSetImageInfo,
+      heightObj,
     } = this.props;
-    const { trackHeight, numHidden } = this.state;
 
     const visualizer = forceSvg ? (
       <OmeroSvgVisualizer
@@ -103,7 +60,7 @@ class OmeroTrackComponents extends React.PureComponent<
         viewWindow={new OpenInterval(viewWindow.start, viewWindow.end)}
         width={width}
         thumbnailHeight={options.imageHeight[0]}
-        height={trackHeight}
+        height={heightObj.trackHeight}
         trackModel={trackModel}
         imageAspectRatio={options.imageAspectRatio}
       />
@@ -112,7 +69,7 @@ class OmeroTrackComponents extends React.PureComponent<
         data={data}
         viewWindow={new OpenInterval(viewWindow.start, viewWindow.end)}
         thumbnailHeight={options.imageHeight[0]}
-        height={trackHeight}
+        height={heightObj.trackHeight}
         trackModel={trackModel}
         imageAspectRatio={options.imageAspectRatio}
         layoutModel={layoutModel}

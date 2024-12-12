@@ -18,7 +18,7 @@ export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
 const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   trackData,
   updateGlobalTrackConfig,
-
+  checkTrackPreload,
   side,
   windowWidth = 0,
   genomeArr,
@@ -39,6 +39,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
   const curRegionData = useRef<{ [key: string]: any }>({});
   const parentGenome = useRef("");
@@ -49,7 +50,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
   const newTrackWidth = useRef(windowWidth);
-  const [configChanged, setConfigChanged] = useState(false);
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
@@ -140,7 +140,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     {
       configOptions.current[`${key}`] = value;
     }
-    setConfigChanged(true);
   }
   function renderConfigMenu(event) {
     event.preventDefault();
@@ -234,7 +233,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,
@@ -358,7 +357,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
             `${trackData!.trackState.primaryGenName}`
           ];
 
-        if (trackData!.initial === 1) {
+        if (trackData!.trackState.initial === 1) {
           if ("genome" in trackData![`${id}`].metadata) {
             parentGenome.current = trackData![`${id}`].metadata.genome;
           } else {
@@ -464,34 +463,34 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     }
   }, [trackData]);
 
-  useEffect(() => {
-    if (configChanged === true) {
-      if (
-        !useFineModeNav &&
-        genomeArr![genomeIdx!].genome._name === parentGenome.current
-      ) {
-        createCanvas(
-          curRegionData.current.trackState,
-          curRegionData.current.deDupcacheDataArr,
-          false
-        );
-      } else {
-        createCanvas(
-          curRegionData.current.trackState,
-          curRegionData.current.deDupcacheDataArr,
-          true
-        );
-      }
-      updateGlobalTrackConfig({
-        configOptions: configOptions.current,
-        trackModel: trackModel,
-        id: id,
-        trackIdx: trackIdx,
-        legendRef: legendRef,
-      });
-    }
-    setConfigChanged(false);
-  }, [configChanged]);
+  // useEffect(() => {
+  //   if (configChanged === true) {
+  //     if (
+  //       !useFineModeNav &&
+  //       genomeArr![genomeIdx!].genome._name === parentGenome.current
+  //     ) {
+  //       createCanvas(
+  //         curRegionData.current.trackState,
+  //         curRegionData.current.deDupcacheDataArr,
+  //         false
+  //       );
+  //     } else {
+  //       createCanvas(
+  //         curRegionData.current.trackState,
+  //         curRegionData.current.deDupcacheDataArr,
+  //         true
+  //       );
+  //     }
+  //     updateGlobalTrackConfig({
+  //       configOptions: configOptions.current,
+  //       trackModel: trackModel,
+  //       id: id,
+  //       trackIdx: trackIdx,
+  //       legendRef: legendRef,
+  //     });
+  //   }
+  //   setConfigChanged(false);
+  // }, [configChanged]);
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
@@ -499,6 +498,8 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     getCacheData();
   }, [dataIdx]);
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(updatedLegend.current);
   }, [canvasComponents]);
 

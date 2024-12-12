@@ -11,6 +11,7 @@ import {
 // import ScoreConfig from '../trackContextMenu/ScoreConfig';
 import HeightConfig from "../config-menu-components.tsx/HeightConfig";
 import LineWidthConfig from "../config-menu-components.tsx/LineWidthConfig";
+import ScoreConfig from "../config-menu-components.tsx/ScoreConfig";
 /*
 Example record from the data source
 DASFeature {
@@ -54,6 +55,7 @@ export class BigInteractTrackConfig extends TrackConfig {
     const items = [
       InteractionDisplayModeConfig,
       HeightConfig,
+      ScoreConfig,
       PrimaryColorConfig,
       SecondaryColorConfig,
       BackgroundColorConfig,

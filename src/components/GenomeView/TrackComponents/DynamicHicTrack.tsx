@@ -18,10 +18,11 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
     trackData,
     updateGlobalTrackConfig,
     trackIdx,
-
+    checkTrackPreload,
     windowWidth,
     dataIdx,
-
+    genomeArr,
+    genomeIdx,
     trackModel,
     id,
 
@@ -37,33 +38,45 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
   const updatedLegend = useRef<any>();
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const displayCache = useRef<{ [key: string]: any }>({
-    full: {},
     density: {},
   });
-  const useFineOrSecondaryParentNav = useRef(false);
+
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
-  const [configChanged, setConfigChanged] = useState(false);
+
   const [legend, setLegend] = useState<any>();
 
   const displaySetter = {
     density: { setComponents: setCanvasComponents },
   };
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      density: {},
+    };
+
+    xPos.current = 0;
+
+    setLegend(undefined);
+  }
 
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(
-      trackState,
-      windowWidth,
-      useFineOrSecondaryParentNav.current
-    );
+    let curXPos = getTrackXOffset(trackState, windowWidth);
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
-
-    getDisplayModeFunction(
+    console.log(windowWidth);
+    let res = getDisplayModeFunction(
       {
         genesArr,
-        useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
+
         trackState,
         windowWidth,
         configOptions: tmpObj,
@@ -76,18 +89,43 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
       curXPos
     );
 
-    xPos.current = curXPos;
-    updateSide.current = side;
-  }
+    if (
+      rightIdx.current + 1 >= dataIdx ||
+      leftIdx.current - 1 <= dataIdx ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
 
+      setCanvasComponents(res);
+    }
+  }
   useEffect(() => {
     async function handle() {
       if (trackData![`${id}`]) {
-        if (trackData!.initial === 1) {
+        if (trackData!.trackState.initial === 1) {
+          if (
+            "genome" in trackData![`${id}`].metadata &&
+            trackData![`${id}`].metadata.genome !==
+              genomeArr![genomeIdx!].genome.getName()
+          ) {
+            usePrimaryNav.current = false;
+          }
+          if (
+            !genomeArr![genomeIdx!].isInitial &&
+            genomeArr![genomeIdx!].sizeChange &&
+            Object.keys(fetchedDataCache.current).length > 0
+          ) {
+            trackData![`${id}`].result =
+              fetchedDataCache.current[dataIdx!].dataCache;
+          }
+          resetState();
           configOptions.current = {
             ...configOptions.current,
             ...trackModel.options,
           };
+
           updateGlobalTrackConfig({
             configOptions: configOptions.current,
             trackModel: trackModel,
@@ -95,8 +133,8 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
             trackIdx: trackIdx,
             legendRef: legendRef,
           });
+          configOptions.current["trackManagerRef"] = trackManagerRef;
         }
-        useFineOrSecondaryParentNav.current = true;
 
         const primaryVisData =
           trackData!.trackState.genomicFetchCoord[
@@ -110,54 +148,56 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
               ].queryRegion
             : primaryVisData.visRegion;
 
-        trackData![`${id}`]["result"] = await Promise.all(
-          trackData![`${id}`].straw.map((straw, index) => {
-            return straw.getData(
-              objToInstanceAlign(visRegion),
-              basePerPixel,
-              configOptions.current
-            );
-          })
-        );
-        cacheTrackData(
-          useFineOrSecondaryParentNav.current,
+        if (trackData![`${id}`].result === undefined) {
+          trackData![`${id}`]["result"] = await Promise.all(
+            trackData![`${id}`].straw.map((straw, index) => {
+              return straw.getData(
+                objToInstanceAlign(visRegion),
+                basePerPixel,
+                configOptions.current
+              );
+            })
+          );
+        }
+
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
           id,
           trackData,
           fetchedDataCache,
           rightIdx,
           leftIdx,
           createSVGOrCanvas,
-          trackData!.trackState.primaryGenName,
-          "none",
-          trackModel
-        );
+          trackModel,
+        });
       }
     }
     handle();
   }, [trackData]);
 
   useEffect(() => {
-    getCacheData(
-      true,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
-      "",
+
       xPos,
       updatedLegend,
       trackModel,
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
 
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 

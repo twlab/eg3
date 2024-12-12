@@ -33,11 +33,13 @@ const SelectConfig: React.FC<SelectConfigProps> = ({
     if (inputValue === UNKNOWN_VALUE) {
       optionElements.push(<option key={UNKNOWN_VALUE} value={UNKNOWN_VALUE} />);
     }
+
     for (let choiceName in choices) {
       const choiceValue = choices[choiceName];
+
       optionElements.push(
         <option key={choiceName} value={choiceValue}>
-          {choiceName}
+          {optionName === "normalization" ? choiceValue : choiceName}
         </option>
       );
     }

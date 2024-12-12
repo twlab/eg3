@@ -1,6 +1,5 @@
-import TrackRegionController from "../../genomeNavigator/TrackRegionController";
 import ButtonGroup from "./ButtonGroup";
-import { HighlightMenu } from "./HighlightMenu";
+
 import MetadataHeader from "./MetadataHeader";
 import ReorderMany from "./ReorderMany";
 import { ToolButtons, Tools } from "./Tools";
@@ -14,7 +13,7 @@ function SubToolButtons(props) {
       title="Pan left
 (Alt+Z)"
       style={{ fontFamily: "monospace" }}
-      // onClick={() => this.panLeftOrRight(true)}
+      onClick={() => props.onToolClicked({ title: "Pan left (Alt+Z)" })}
     >
       ◀
     </button>
@@ -25,7 +24,7 @@ function SubToolButtons(props) {
       title="Pan right
 (Alt+X)"
       style={{ fontFamily: "monospace" }}
-      // onClick={() => this.panLeftOrRight(false)}
+      onClick={() => props.onToolClicked({ title: "Pan right (Alt+X)" })}
     >
       ▶
     </button>
@@ -54,7 +53,7 @@ function SubToolButtons(props) {
         </div>
 
         <ButtonGroup buttons={panLeftButton} />
-        <ZoomButtons />
+        <ZoomButtons onToolClicked={props.onToolClicked} />
         <ButtonGroup buttons={panRightButton} />
 
         <div

@@ -15,14 +15,14 @@ import {
 // import GenomicCoordinates from "../commonComponents/GenomicCoordinates";
 // import configOptionMerging from "../commonComponents/configOptionMerging";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
-import { getGenomeConfig } from "../../../../models/genomes/allGenomes";
+
 // import TrackLegend from "../commonComponents/TrackLegend";
 import NumericalTrack from "../commonComponents/numerical/NumericalTrack";
 import TrackLegend from "../commonComponents/TrackLegend";
 import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 import Chromosomes from "../../genomeNavigator/Chromosomes";
 import React from "react";
-import DynseqTrack from "../DynseqTrack";
+
 const CHROMOSOMES_Y = 60;
 const TOP_PADDING = 2;
 export const MAX_PIXELS_PER_BASE_NUMERIC = 0.5;

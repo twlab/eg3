@@ -13,10 +13,10 @@ const defaultTracks = [
         label: "NCBI genes",
         genome: "Ebola",
     }),
-    new TrackModel({
-        type: "ruler",
-        name: "Ruler",
-    }),
+    // new TrackModel({
+    //     type: "ruler",
+    //     name: "Ruler",
+    // }),
     new TrackModel({
         type: "bedgraph",
         name: "GC Percentage",

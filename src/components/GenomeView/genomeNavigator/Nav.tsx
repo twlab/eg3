@@ -21,6 +21,7 @@ import Geneplot from "../TabComponents/Geneplot/Geneplot";
 import ScatterPlot from "../TabComponents/Geneplot/ScatterPlot";
 import ShareUI from "../TabComponents/ShareUI";
 import { HotKeyInfo } from "../TabComponents/HotKeyInfo";
+import { TrackUpload } from "../TabComponents/TrackUpload";
 
 interface NavProps {
   selectedRegion: any;
@@ -318,6 +319,16 @@ const Nav: FC<NavProps> = ({
                     background: modalbg,
                   }}
                 />
+              </ModalMenuItem>
+
+              <ModalMenuItem
+                itemLabel="Local Tracks"
+                isOpen={openModal === "Local Tracks"}
+                onOpen={() => setOpenModal("Local Tracks")}
+                onClose={() => setOpenModal(null)}
+                style={{ content: { color: modalfg, background: modalbg } }}
+              >
+                <TrackUpload onTracksAdded={onTracksAdded} />
               </ModalMenuItem>
             </div>
           </div>

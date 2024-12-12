@@ -76,7 +76,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     () => aggregator.xToValueMaker(data, viewRegion, width, options),
     [data, viewRegion, width, options]
   );
-  console.log(xvalues);
+
   const [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
@@ -237,6 +237,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           viewRegion={viewRegion}
           unit={unit}
           hasReverse={true}
+          options={options}
         />
       </div>
       <ValuePlot
@@ -280,6 +281,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           viewRegion={viewRegion}
           unit={unit}
           hasReverse={false}
+          options={options}
         />
       </div>
       <ValuePlot

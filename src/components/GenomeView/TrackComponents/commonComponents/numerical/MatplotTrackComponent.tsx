@@ -141,6 +141,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
         ? value.toFixed(2)
         : "(no data)";
     });
+
     const divs = stringValues.map((value, i) => {
       const color = trackModel.tracks[i].options.color || "blue";
       return (
@@ -249,6 +250,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
   renderLine(values, trackIndex) {
     const { scales, trackModel, lineWidth } = this.props;
     // eslint-disable-next-line array-callback-return
+
     const points = values
       .map((value, x) => {
         if (value && !Number.isNaN(value)) {
@@ -271,6 +273,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
 
   render() {
     const { xToValue, height, width } = this.props;
+
     return xToValue.length === 0 ? (
       <div
         style={{

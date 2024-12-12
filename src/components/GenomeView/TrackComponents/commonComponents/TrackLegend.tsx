@@ -28,7 +28,7 @@ interface TrackLegendProps {
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
-const AXIS_WIDTH = 82;
+const AXIS_WIDTH = 42;
 
 /**
  * A box displaying labels, axes, and other important track info.
@@ -250,7 +250,10 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
     return (
       <div style={divStyle} title={label}>
         <div className="TrackLegend-wrap">
-          <p className="TrackLegend-label" style={pStyle}>
+          <p
+            className="TrackLegend-label"
+            style={{ ...pStyle, wordWrap: "break-word", whiteSpace: "normal" }}
+          >
             {label}
           </p>
           <div

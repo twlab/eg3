@@ -91,15 +91,20 @@ export class HicSource {
    * @param {DisplayedRegionModel} region - the region
    * @returns {number} the index of the recommended bin size for the region
    */
-  getAutoBinSize(region) {
+  getAutoBinSize(region, options) {
     const SORTED_BIN_SIZES = this.metadata.resolutions;
-    const regionLength = region.getWidth();
+    let regionLength = region.getWidth();
+
+    if (options.fetchViewWindowOnly === true) {
+      regionLength = regionLength / 3;
+    }
     for (const binSize of SORTED_BIN_SIZES) {
       // SORTED_BIN_SIZES must be sorted from largest to smallest!
       if (MIN_BINS_PER_REGION * binSize < regionLength) {
         return binSize;
       }
     }
+
     return SORTED_BIN_SIZES[SORTED_BIN_SIZES.length - 1];
   }
 
@@ -112,8 +117,9 @@ export class HicSource {
    */
   getBinSize(options, region) {
     const numberBinSize = Number(options.binSize) || 0;
+
     return numberBinSize <= 0
-      ? this.getAutoBinSize(region)
+      ? this.getAutoBinSize(region, options)
       : findClosestNumber(this.metadata.resolutions, numberBinSize);
   }
 
@@ -132,22 +138,24 @@ export class HicSource {
     binSize,
     normalization = NormalizationMode.NONE
   ) {
-    // if (normalization !== NormalizationMode.NONE) {
-    //     await this.fetchNormalizationData();
-    // }
-    // console.log(this.normOptions)
     if (!this.normOptions.includes(normalization)) {
       return [];
     }
-    // console.log(normalization, queryLocus1, queryLocus2, "BP", binSize)
-    const records = await this.straw.getContactRecords(
-      normalization,
-      queryLocus1,
-      queryLocus2,
-      "BP",
-      binSize
-    );
-    // console.log(records)
+
+    let records;
+    try {
+      records = await this.straw.getContactRecords(
+        normalization,
+        queryLocus1,
+        queryLocus2,
+        "BP",
+        binSize
+      );
+    } catch (error) {
+      console.error("Failed to fetch contact records:", error);
+      return []; // Return an empty array or handle the error as needed
+    }
+
     const interactions: Array<any> = [];
     for (const record of records) {
       const recordLocus1 = new ChromosomeInterval(
@@ -164,6 +172,7 @@ export class HicSource {
         new GenomeInteraction(recordLocus1, recordLocus2, record.counts)
       );
     }
+
     return interactions;
   }
 
@@ -180,9 +189,11 @@ export class HicSource {
     this.normOptions = await this.straw.getNormalizationOptions();
     // console.log(this.metadata, this.normOptions);
     const binSize = this.getBinSize(options, region);
+
     this.currentBinSize = binSize;
     const promises: Array<any> = [];
     const loci = region.getGenomeIntervals();
+
     for (let i = 0; i < loci.length; i++) {
       for (let j = i; j < loci.length; j++) {
         promises.push(
@@ -196,6 +207,7 @@ export class HicSource {
       }
     }
     const dataForEachSegment = await Promise.all(promises);
+
     return _.flatMap(dataForEachSegment);
     // return ensureMaxListLength(_.flatMap(dataForEachSegment), 5000);
   }

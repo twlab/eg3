@@ -127,7 +127,7 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       viewer3dNumFrames,
     } = this.props;
     this.scales = this.computeScale();
-    console.log(data);
+
     const visualizerProps = {
       placedInteractionsArray: data.map((d: any) =>
         this.featurePlacer.placeInteractions(d, visRegion, width)
@@ -151,6 +151,7 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       viewer3dNumFrames,
     };
     let visualizer;
+
     if (options.displayMode === DynamicInteractionDisplayMode.ARC) {
       visualizer = <PixiArc {...visualizerProps} />;
     } else {

@@ -1,17 +1,18 @@
-export function removeDuplicates(arr: Array<any>, idKey: string) {
-  const idSet = new Set<number>();
-  const uniqueObjects: Array<any> = [];
+export function removeDuplicates(
+  arr: Array<any>,
+  idKey: any,
+  idKey2: any = ""
+) {
+  const uniqueObjectsMap = new Map<string, any>();
 
   for (const obj of arr) {
-    if (!idSet.has(obj[`${idKey}`])) {
-      // This is a unique ID; add it to the set and the result array
-      idSet.add(obj[`${idKey}`]);
-      uniqueObjects.push(obj);
-    }
-    // Otherwise, skip this object (it's a duplicate)
+    const combinedKey = idKey2
+      ? obj[`${idKey}`] + "|" + obj[`${idKey2}`]
+      : obj[`${idKey}`];
+    uniqueObjectsMap.set(combinedKey, obj);
   }
 
-  return uniqueObjects;
+  return Array.from(uniqueObjectsMap.values());
 }
 
 interface DataObject {

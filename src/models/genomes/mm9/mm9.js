@@ -30,21 +30,36 @@ const genome = new Genome("mm9", [
 ]);
 
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:52115672-52119450");
+const defaultRegion = navContext.parse("chr6:52424911-52425311");
 const defaultTracks = [
     new TrackModel({
         type: "geneAnnotation",
         name: "refGene",
         genome: "mm9",
     }),
-    new TrackModel({
-        type: "ruler",
-        name: "Ruler",
-    }),
+    // new TrackModel({
+    //     type: "ruler",
+    //     name: "Ruler",
+    // }),
     new TrackModel({
         type: 'repeatmasker',
         name: 'RepeatMasker',
         url: 'https://vizhub.wustl.edu/public/mm9/rmsk16.bb',
+    }),
+
+        new TrackModel({
+        
+            
+                "type": "dbedgraph",
+                "url": "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
+                "options": {
+                    "dynamicLabels": ["stage1","stage2","stage3","stage4","stage5","stage6","stage7","stage8","stage9","stage10"],
+                    "dynamicColors": ["red", "blue", "#00FF00", 0x000000],
+                    "useDynamicColors": true
+                },
+                "showOnHubLoad": true
+                
+            
     }),
 ];
 

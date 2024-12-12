@@ -14,6 +14,30 @@ interface ObjectAsTableProps {
   title?: string;
   content: any;
 }
+interface Hub {
+  name: string;
+  genome: string;
+  collection: string;
+  url: string;
+  numTracks: number;
+  oldHubFormat?: boolean;
+  isLoading?: boolean;
+  isLoaded?: boolean;
+  error?: any;
+  description?: any;
+}
+
+interface HubTableProps {
+  onHubLoaded?: (
+    tracks: TrackModel[],
+    visible: boolean,
+    hubUrl: string
+  ) => void;
+  onHubUpdated?: (hubs: Hub[], publicTracks: Array<any>, type: string) => void;
+  publicHubs: Hub[];
+  onTracksAdded?: (tracks: TrackModel[]) => void;
+  genomeConfig?: any;
+}
 
 const ObjectAsTable: React.FC<ObjectAsTableProps> = ({ title, content }) => {
   if (typeof content === "string") {
@@ -76,7 +100,7 @@ const HubTable: React.FC<HubTableProps> = ({
   const loadHub = useCallback(
     async (index: number) => {
       const hub = publicHubs[index];
-      const newHubs = _cloneHubsAndModifyOne(index, { isLoading: true });
+      // const newHubs = _cloneHubsAndModifyOne(index, { isLoading: true });
 
       try {
         const json = await new Json5Fetcher().get(hub.url);
@@ -182,7 +206,7 @@ const HubTable: React.FC<HubTableProps> = ({
     usePagination
   );
 
-  const { publicHubData } = genomeConfig;
+  // const { publicHubData } = genomeConfig;
 
   return (
     <div>
@@ -276,30 +300,3 @@ const HubTable: React.FC<HubTableProps> = ({
 };
 
 export default HubTable;
-
-// TypeScript interface for Hub
-interface Hub {
-  name: string;
-  genome: string;
-  collection: string;
-  url: string;
-  numTracks: number;
-  oldHubFormat?: boolean;
-  isLoading?: boolean;
-  isLoaded?: boolean;
-  error?: any;
-  description?: any;
-}
-
-// Define TypeScript interfaces for Props
-interface HubTableProps {
-  onHubLoaded?: (
-    tracks: TrackModel[],
-    visible: boolean,
-    hubUrl: string
-  ) => void;
-  onHubUpdated?: (hubs: Hub[], publicTracks: Array<any>, type: string) => void;
-  publicHubs: Hub[];
-  onTracksAdded?: (tracks: TrackModel[]) => void;
-  genomeConfig?: any;
-}

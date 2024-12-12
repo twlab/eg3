@@ -33,7 +33,7 @@ const navContext = genome.makeNavContext();
 // jaspar chr6:52160767-52161357
 
 // dbedgraph : "chr6:52424900-52425400"
-const defaultRegion = navContext.parse("chr6:52424900-52425400");
+const defaultRegion = navContext.parse("chr6:52160767-52161357");
 const defaultTracks = [
   // new TrackModel({
   //     type: "ruler",
@@ -87,11 +87,11 @@ const defaultTracks = [
   //     name: "test bigInteract",
   //     url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-  new TrackModel({
-    type: "repeatmasker",
-    name: "RepeatMasker",
-    url: "https://vizhub.wustl.edu/public/mm10/rmsk16.bb",
-  }),
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "RepeatMasker",
+  //   url: "https://vizhub.wustl.edu/public/mm10/rmsk16.bb",
+  // }),
 
   // new TrackModel({
   //     type: 'refbed',
@@ -103,6 +103,25 @@ const defaultTracks = [
   //     name: 'Cool Track',
   //     url: 'CQMd6V_cRw6iCI_-Unl3PQ'
   // }),
+
+    new TrackModel({
+        "type": "dynamicbed",
+        "name": "dynamic bed",
+        "showOnHubLoad": true,
+        "tracks": [
+        {
+            "type": "bed",
+            "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+            "name": "peak1"
+        },
+        {
+            "type": "bed",
+            "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
+            "name": "peak2"
+        }
+        ]
+    })
+        
 ];
 
 const publicHubData = {

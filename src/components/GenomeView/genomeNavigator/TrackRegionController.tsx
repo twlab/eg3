@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, FC, KeyboardEvent } from "react";
 import ReactModal from "react-modal";
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 import GeneSearchBox from "./GeneSearchBox";
-import { HighlightInterval } from "../TrackComponents/ToolsComponents/HighlightMenu";
+import { HighlightInterval } from "../ToolComponents/HighlightMenu";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import Genome from "@/models/Genome";
 const MODAL_STYLE = {

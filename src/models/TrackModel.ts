@@ -38,10 +38,10 @@ interface ITrackModel {
   type?: string;
   filetype?: string;
   options?: TrackOptions;
-  url?: string;
+  url?: any;
   indexUrl?: string;
   metadata?: ITrackModelMetadata;
-  fileObj?: Blob;
+  fileObj?: any;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
   genome?: string;
@@ -49,6 +49,8 @@ interface ITrackModel {
   tracks?: any;
   datahub?: any;
   legendWidth?: any;
+  label?: any;
+  files?: any;
 }
 
 /**
@@ -69,10 +71,10 @@ export class TrackModel {
   label!: string;
   filetype?: string;
   options!: TrackOptions;
-  url!: string;
+  url?: any;
   indexUrl?: string;
   metadata!: ITrackModelMetadata;
-  id!: number;
+  id!: number | string;
   isSelected!: boolean;
   showOnHubLoad?: boolean;
   fileObj?: any;
@@ -84,6 +86,7 @@ export class TrackModel {
   apiConfig?: any;
   queryEndpoint?: QueryEndpoint;
   legendWidth?: any;
+
   constructor(plainObject: ITrackModel) {
     Object.assign(this, plainObject);
     this.name = this.name || "";
@@ -139,7 +142,7 @@ export class TrackModel {
    *
    * @return {number} this object's id
    */
-  getId(): number {
+  getId() {
     return this.id;
   }
 

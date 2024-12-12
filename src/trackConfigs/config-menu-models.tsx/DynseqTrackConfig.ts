@@ -9,6 +9,7 @@ import {
   MAX_PIXELS_PER_BASE_NUMERIC,
 } from "../../components/GenomeView/TrackComponents/DynseqComponents/DynseqTrackComponents";
 import { BackgroundColorConfig } from "../config-menu-components.tsx/ColorConfig";
+import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
 
 export class DynseqTrackConfig extends TrackConfig {
   private bigWigTrackConfig: BigWigTrackConfig;
@@ -20,8 +21,7 @@ export class DynseqTrackConfig extends TrackConfig {
 
   getMenuComponents(basesPerPixel: number = 1) {
     if (basesPerPixel <= MAX_PIXELS_PER_BASE_NUMERIC) {
-      // YscaleConfig;
-      return [LabelConfig, HeightConfig, BackgroundColorConfig];
+      return [LabelConfig, HeightConfig, YscaleConfig, BackgroundColorConfig];
     } else {
       return this.bigWigTrackConfig.getMenuComponents();
     }

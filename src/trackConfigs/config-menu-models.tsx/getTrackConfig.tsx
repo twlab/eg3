@@ -1,11 +1,11 @@
 import { TrackConfig } from "./TrackConfig";
-// import { BamTrackConfig } from "./BamTrackConfig";
+import { BamTrackConfig } from "./BamTrackConfig";
 import { BedTrackConfig } from "./BedTrackConfig";
-// import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
-// import { QBedTrackConfig } from "./QBedTrackConfig";
+import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
+import { QBedTrackConfig } from "./QBedTrackConfig";
 import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
 import { BigBedTrackConfig } from "./BigBedTrackConfig";
-// import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
+import { BedGraphTrackConfig } from "./BedGraphTrackConfig";
 import { BigWigTrackConfig } from "./BigWigTrackConfig";
 import { GeneAnnotationTrackConfig } from "./GeneAnnotationTrackConfig";
 import TrackModel from "../../models/TrackModel";
@@ -18,28 +18,29 @@ import { RepeatMaskerTrackConfig } from "./RepeatMaskerTrackConfig";
 import { GenomeAlignTrackConfig } from "./GenomeAlignTrackConfig";
 import { RulerTrackConfig } from "./RulerTrackConfig";
 import { RefBedTrackConfig } from "./RefBedTrackConfig";
-// import { SnpTrackConfig } from "./SnpTrackConfig";
+import { SnpTrackConfig } from "./SnpTrackConfig";
 import { MatplotTrackConfig } from "./MatplotTrackConfig";
-// import { DynamicplotTrackConfig } from "./DynamicplotTrackConfig";
+import { DynamicplotTrackConfig } from "./DynamicplotTrackConfig";
 // import { HammockTrackConfig } from "./HammockTrackConfig";
 // import { PairwiseSegmentTrackConfig } from "./PairwiseSegmentTrackConfig";
 // import { SnvSegmentTrackConfig } from "./SnvSegmentTrackConfig";
 // import { G3dTrackConfig } from "./G3dTrackConfig";
 // import { ProteinTrackConfig } from "./ProteinTrackConfig";
-// import { DynamicBedGraphTrackConfig } from "./DynamicBedGraphTrackConfig";
-// import { DynamicHicTrackConfig } from "./DynamicHicTrackConfig";
-// import { DynamicLongrangeTrackConfig } from "./DynamicLongrangeTrackConfig";
-// import { OmeroidrTrackConfig } from "./OmeroidrTrackConfig";
+import { DynamicBedGraphTrackConfig } from "./DynamicBedGraphTrackConfig";
+import { DynamicHicTrackConfig } from "./DynamicHicTrackConfig";
+import { DynamicLongrangeTrackConfig } from "./DynamicLongrangeTrackConfig";
+import { OmeroidrTrackConfig } from "./OmeroidrTrackConfig";
 // import { Omero4dnTrackConfig } from "./Omero4dnTrackConfig";
 import { DynseqTrackConfig } from "./DynseqTrackConfig";
+
 // import { RgbpeakTrackConfig } from "./RgbpeakTrackConfig";
 // import { VcfTrackConfig } from "./VcfTrackConfig";
-// import { BoxplotTrackConfig } from "./BoxplotTrackConfig";
+import { BoxplotTrackConfig } from "./BoxplotTrackConfig";
 // import { BedcolorTrackConfig } from "./BedcolorTrackConfig";
 // import { Rmskv2TrackConfig } from "./Rmskv2TrackConfig";
-// import { JasparTrackConfig } from "./JasparTrackConfig";
+import { JasparTrackConfig } from "./JasparTrackConfig";
 // import { BrgfaTrackConfig } from "./BrgfaTrackConfig";
-// import { FiberTrackConfig } from "./FiberTrackConfig";
+import { FiberTrackConfig } from "./FiberTrackConfig";
 
 export const INTERACTION_TYPES = ["hic", "longrange", "biginteract"];
 export const ALIGNMENT_TYPES = ["genomealign"];
@@ -82,23 +83,23 @@ const TYPE_NAME_TO_CONFIG = {
 
   dynseq: DynseqTrackConfig,
 
-  // omeroidr: OmeroidrTrackConfig,
+  omeroidr: OmeroidrTrackConfig,
   // omero4dn: Omero4dnTrackConfig,
 
-  // bam: BamTrackConfig,
+  bam: BamTrackConfig,
   // brgfa: BrgfaTrackConfig,
-  // snp: SnpTrackConfig,
-  // dynamiclongrange: DynamicLongrangeTrackConfig,
-  // dynamicbed: DynamicBedTrackConfig,
-  // dbedgraph: DynamicBedGraphTrackConfig,!
-  // dynamichic: DynamicHicTrackConfig,
-  // jaspar: JasparTrackConfig,  !
-  // boxplot: BoxplotTrackConfig, !
+  snp: SnpTrackConfig,
+  dynamiclongrange: DynamicLongrangeTrackConfig,
+  dynamicbed: DynamicBedTrackConfig,
+  dbedgraph: DynamicBedGraphTrackConfig,
+  dynamichic: DynamicHicTrackConfig,
+  jaspar: JasparTrackConfig,
+  boxplot: BoxplotTrackConfig,
   // g3d: G3dTrackConfig, !
-  // qbed: QBedTrackConfig, !
-  // bedgraph: BedGraphTrackConfig, !
-  // dynamic: DynamicplotTrackConfig,
-  // modbed: FiberTrackConfig, // fiber track was renamed to modbed meaning read modification data
+  qbed: QBedTrackConfig,
+  bedgraph: BedGraphTrackConfig,
+  dynamic: DynamicplotTrackConfig,
+  modbed: FiberTrackConfig,
 };
 
 const DefaultConfig = TrackConfig;

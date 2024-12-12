@@ -5,6 +5,7 @@ import { BackgroundColorConfig } from "../config-menu-components.tsx/ColorConfig
 import HiddenPixelsConfig from "../config-menu-components.tsx/HiddenPixelsConfig";
 import MaxRowsConfig from "../config-menu-components.tsx/MaxRowsConfig";
 import TrackModel from "../../models/TrackModel";
+import CategoryColorConfig from "../config-menu-components.tsx/CategoryColorConfig";
 export const DEFAULT_OPTIONS = {
   height: 20,
   color: "blue",
@@ -28,7 +29,7 @@ export class CategoricalTrackConfig extends TrackConfig {
     return [
       ...super.getMenuComponents(),
       HeightConfig,
-      // CategoryColorConfig,
+      CategoryColorConfig,
       BackgroundColorConfig,
       MaxRowsConfig,
       HiddenPixelsConfig,

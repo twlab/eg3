@@ -1,11 +1,11 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-
+import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultOmeroTrack } from "./imageTrackComponents/OmeroTrackComponents";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
@@ -14,12 +14,16 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 
 import SnpDetail from "./SnpComponents/SnpDetail";
+import { DefaultAggregators } from "@/models/FeatureAggregator";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
 export const DEFAULT_OPTIONS = {
   ...defaultOmeroTrack,
+  ...defaultNumericalTrack,
+  aggregateMethod: DefaultAggregators.types.IMAGECOUNT,
+  displayMode: "density",
 };
 const HEIGHT = 9;
 const ROW_VERTICAL_PADDING = 2;
@@ -35,7 +39,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
   genomeIdx,
   trackModel,
   dataIdx,
-
+  checkTrackPreload,
   trackIdx,
   id,
   useFineModeNav,
@@ -56,8 +60,8 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
     full: {},
     density: {},
   });
-  const useFineOrSecondaryParentNav = useRef(false);
 
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
@@ -73,30 +77,29 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
       setComponents: setCanvasComponents,
     },
   };
-  useEffect(() => {
-    console.log(svgComponents);
-  }, [svgComponents]);
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+    svgHeight.current = 0;
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      full: {},
+      density: {},
+    };
+
+    xPos.current = 0;
+
+    setLegend(undefined);
+  }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(
-      trackState,
-      windowWidth,
-      useFineOrSecondaryParentNav.current
-    );
-    console.log(genesArr);
-    function getHeight(numRows: number) {
-      // let rowsToDraw = Math.min(numRows, configOptions.current.maxRows);
-      // if (configOptions.current.hideMinimalItems) {
-      //   rowsToDraw -= 1;
-      // }
-      // if (rowsToDraw < 1) {
-      //   rowsToDraw = 1;
-      // }
-      // return rowsToDraw * ROW_HEIGHT + TOP_PADDING;
-    }
-    getDisplayModeFunction(
+    let curXPos = getTrackXOffset(trackState, windowWidth);
+
+    let res = getDisplayModeFunction(
       {
         genesArr,
-        useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
         trackState,
         windowWidth,
         configOptions: configOptions.current,
@@ -105,7 +108,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
         updatedLegend,
         trackModel,
         getGenePadding: 5,
-        getHeight,
+
         ROW_HEIGHT,
       },
       displaySetter,
@@ -114,8 +117,20 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
       curXPos
     );
 
-    xPos.current = curXPos;
-    updateSide.current = side;
+    if (
+      ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
+        usePrimaryNav.current) ||
+      ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
+        !usePrimaryNav.current) ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
+      configOptions.current.displayMode === "full"
+        ? setSvgComponents(res)
+        : setCanvasComponents(res);
+    }
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -194,7 +209,28 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
 
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
+        if (
+          !genomeArr![genomeIdx!].isInitial &&
+          genomeArr![genomeIdx!].sizeChange &&
+          Object.keys(fetchedDataCache.current).length > 0
+        ) {
+          if (
+            "genome" in trackData![`${id}`].metadata &&
+            trackData![`${id}`].metadata.genome !==
+              genomeArr![genomeIdx!].genome.getName()
+          ) {
+            trackData![`${id}`].result =
+              fetchedDataCache.current[dataIdx!].dataCache;
+          } else {
+            trackData![`${id}`].result = [
+              fetchedDataCache.current[dataIdx! + 1].dataCache,
+              fetchedDataCache.current[dataIdx!].dataCache,
+              fetchedDataCache.current[dataIdx! - 1].dataCache,
+            ];
+          }
+        }
+        resetState();
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,
@@ -208,26 +244,17 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
           legendRef: legendRef,
         });
       }
-      if (
-        useFineModeNav ||
-        (trackData![`${id}`].metadata.genome !== undefined &&
-          genomeArr![genomeIdx!].genome.getName() !==
-            trackData![`${id}`].metadata.genome)
-      ) {
-        useFineOrSecondaryParentNav.current = true;
-      }
 
-      cacheTrackData(
-        useFineOrSecondaryParentNav.current,
+      cacheTrackData({
+        usePrimaryNav: usePrimaryNav.current,
         id,
         trackData,
         fetchedDataCache,
         rightIdx,
         leftIdx,
         createSVGOrCanvas,
-        genomeArr![genomeIdx!],
-        "none"
-      );
+        trackModel,
+      });
     }
   }, [trackData]);
 
@@ -236,14 +263,14 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
 
-    getCacheData(
-      useFineOrSecondaryParentNav.current,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
       xPos,
@@ -252,10 +279,11 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
 
@@ -281,13 +309,13 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
           trackIdx: trackIdx,
           legendRef: legendRef,
         });
-        getConfigChangeData(
-          useFineOrSecondaryParentNav.current,
-          fetchedDataCache.current,
+        getConfigChangeData({
+          fetchedDataCache: fetchedDataCache.current,
           dataIdx,
+          usePrimaryNav: usePrimaryNav.current,
           createSVGOrCanvas,
-          "none"
-        );
+          trackType: trackModel.type,
+        });
       }
     }
   }, [applyTrackConfigChange]);
@@ -300,7 +328,10 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
         display: "flex",
         // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
         // other elements will overlapp
-        height: 748,
+        height:
+          configOptions.current.displayMode === "full"
+            ? svgHeight.current + 2
+            : configOptions.current.height + 2,
         position: "relative",
       }}
     >
