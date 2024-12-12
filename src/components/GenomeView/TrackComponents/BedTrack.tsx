@@ -244,12 +244,17 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
               genomeArr![genomeIdx!].genome.getName()
           ) {
             trackData![`${id}`].result =
-              fetchedDataCache.current[dataIdx!].dataCache;
+              fetchedDataCache.current[
+                trackData![`${id}`].trackDataIdx
+              ].dataCache;
           } else {
             trackData![`${id}`].result = [
-              fetchedDataCache.current[dataIdx! + 1].dataCache,
-              fetchedDataCache.current[dataIdx!].dataCache,
-              fetchedDataCache.current[dataIdx! - 1].dataCache,
+              fetchedDataCache.current[trackData![`${id}`].trackDataIdx + 1]
+                .dataCache,
+              fetchedDataCache.current[trackData![`${id}`].trackDataIdx]
+                .dataCache,
+              fetchedDataCache.current[trackData![`${id}`].trackDataIdx - 1]
+                .dataCache,
             ];
           }
         }

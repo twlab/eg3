@@ -128,7 +128,9 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
             Object.keys(fetchedDataCache.current).length > 0
           ) {
             trackData![`${id}`].result =
-              fetchedDataCache.current[dataIdx!].dataCache;
+              fetchedDataCache.current[
+                trackData![`${id}`].trackDataIdx
+              ].dataCache;
           }
           resetState();
           configOptions.current = {

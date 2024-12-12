@@ -138,7 +138,9 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
               genomeArr![genomeIdx!].genome.getName()
           ) {
             trackData![`${id}`].result =
-              fetchedDataCache.current[dataIdx!].dataCache;
+              fetchedDataCache.current[
+                trackData![`${id}`].trackDataIdx
+              ].dataCache;
           } else {
             const dataCacheCurrentNext =
               fetchedDataCache.current[dataIdx! + 1]?.dataCache ?? [];

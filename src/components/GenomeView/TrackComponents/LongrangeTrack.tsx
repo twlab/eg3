@@ -129,9 +129,10 @@ const LongrangeTrack: React.FC<TrackProps> = memo(function LongrangeTrack(
             genomeArr![genomeIdx!].sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
-            trackData![`${id}`].result = [
-              fetchedDataCache.current[dataIdx!].dataCache,
-            ];
+            trackData![`${id}`].result =
+              fetchedDataCache.current[
+                trackData![`${id}`].trackDataIdx
+              ].dataCache;
           }
           resetState();
           configOptions.current = {

@@ -182,7 +182,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const horizontalLineRef = useRef<any>(0);
   const verticalLineRef = useRef<any>(0);
-
+  const prevDataIdx = useRef<number>(0);
   const hicStrawObj = useRef<{ [key: string]: any }>({});
   const isMouseInsideRef = useRef(false);
   const globalTrackConfig = useRef<{ [key: string]: any }>({});
@@ -264,10 +264,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const isWorkerBusy = useRef(false);
 
   const enqueueMessage = (message) => {
+    console.log(dataIdx, message);
     messageQueue.current.push(message);
     processQueue();
   };
-
+  // when a new track is added, for any track currently in the manager
+  // on message for the new track fetch data, added track will pass the current dataidx
+  // to the components thru enqueuemessage, since we dont't need to fetch for track track already in manager
+  // we just pass the dataidx
+  // and creates the new initial data, if dataidx is -7 those track will get
+  // -6 -7 -8
+  // if multiple track are added in succession
+  // first: it would pass the current dataidx to the tracks already in the manager and
+  // create new initial so -6 -7 -8  =>  -1 0 1
+  // second: every added track after will now just start with dataidx 0 and it would be
+  // correct for the data already in the component because its alter in the first track add.
   const processQueue = () => {
     if (isWorkerBusy.current || messageQueue.current.length === 0) {
       return;
@@ -406,7 +417,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       isLoading.current = true;
       rightSectionSize.current.push(windowWidth);
       console.log("trigger right");
-      fetchGenomeData(0, "right");
+      fetchGenomeData(0, "right", dataIdx);
     } else if (
       dragX.current >= sumArray(leftSectionSize.current) &&
       dragX.current > 0 &&
@@ -415,7 +426,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       isLoading.current = true;
       console.log("trigger left");
       leftSectionSize.current.push(windowWidth);
-      fetchGenomeData(0, "left");
+      fetchGenomeData(0, "left", dataIdx);
     }
   }
 
@@ -648,8 +659,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
-  async function fetchGenomeData(initial: number = 0, trackSide) {
+  async function fetchGenomeData(initial: number = 0, trackSide, dataIdx) {
     // console.log(window.performance);
+
     let tempObj = {};
     let curFetchRegionNav;
 
@@ -809,6 +821,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         xDist: dragX.current,
         initial,
         bpRegionSize: bpRegionSize.current,
+        trackDataIdx: dataIdx,
       });
 
       if (initial === 1) {
@@ -856,9 +869,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       for (let trackModel of trackManagerState.current.tracks) {
         if (!(trackModel.id in tempObj)) {
-          tempObj[`${trackModel.id}`] = { metadata: trackModel.metadata };
+          tempObj[`${trackModel.id}`] = {
+            metadata: trackModel.metadata,
+          };
         }
+        tempObj[`${trackModel.id}`]["trackDataIdx"] = event.data.trackDataIdx;
       }
+      console.log(dataIdx, event.data.trackDataIdx, event.data);
       isWorkerBusy.current = false;
       isLoading.current = false;
       setTrackData({ ...tempObj });
@@ -1117,6 +1134,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setG3dTrackComponents([]);
     setSelectedTool({ isSelected: false, title: "none" });
     setTrackData({});
+
     if (!genomeArr[genomeIdx].sizeChange) {
       setDataIdx(0);
     }
@@ -1317,7 +1335,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setTrackComponents(newTrackComponents);
     }
 
-    fetchGenomeData(1, "right");
+    fetchGenomeData(1, "right", dataIdx);
   }
   function checkTrackPreload(trackId) {
     if (preload.current || genomeArr[genomeIdx].isInitial) {
@@ -1333,9 +1351,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
         });
         preload.current = false;
-        if (genomeArr[genomeIdx].sizeChange) {
-          setDataIdx(0);
-        }
 
         if (genomeArr[genomeIdx].isInitial) {
           onTracksLoaded(false);
@@ -1377,7 +1392,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // it gets the trackComponents at creation so when trackComponent updates we need to
     // add the listener so it can get the most updated trackCom
     // this also include other state changes values such windowWidth
-
+    console.log(dataIdx);
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("keydown", handleKeyDown);
@@ -1428,7 +1443,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackManagerId.current = genome.id;
       } else {
         preload.current = true;
-
+        prevDataIdx.current = dataIdx;
         refreshState();
         trackManagerState.current = createNewTrackState(
           genomeArr[genomeIdx].curState,
