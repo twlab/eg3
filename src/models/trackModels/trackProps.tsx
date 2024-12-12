@@ -1,3 +1,4 @@
+import DisplayedRegionModel from "../DisplayedRegionModel";
 import { ViewExpansion } from "../RegionExpander";
 
 export interface TrackProps {
@@ -10,7 +11,7 @@ export interface TrackProps {
   handleDelete: (trackIndex: number) => void;
   trackData?: { [key: string]: any }; // Replace with the actual type
 
-  dragXDist?: number;
+  dragX?: number;
 
   genomeName?: string;
   visData?: ViewExpansion;
@@ -19,17 +20,19 @@ export interface TrackProps {
   genomeArr?: Array<any>;
   genomeIdx?: number;
   trackModel?: any;
-  dataIdx?: number;
+  dataIdx: number;
   getConfigMenu: any;
   onCloseConfigMenu: () => void;
   useFineModeNav: boolean;
   trackManagerRef: any;
   setShow3dGene: any;
   isThereG3dTrack: boolean;
-
+  checkTrackPreload?: any;
   legendRef: any;
 
   updateGlobalTrackConfig: any;
 
-  applyTrackConfigChange;
+  applyTrackConfigChange: any;
+  containerRef: any;
+  viewWindow?: DisplayedRegionModel;
 }

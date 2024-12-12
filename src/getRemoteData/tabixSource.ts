@@ -3,29 +3,43 @@ import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
 import fetch from "isomorphic-fetch";
 
-function getTabixData(loci, options, url) {
-  let dataLimit = 100000;
+import { ensureMaxListLength } from "@/models/util";
+// import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
 
-  let tabix = new TabixIndexedFile({
-    filehandle: new RemoteFile(url, { fetch }),
-    tbiFilehandle: new RemoteFile(url + ".tbi", {
-      fetch,
-    }),
-  });
-  function ensureMaxListLength<T>(list: T[], limit: number): T[] {
-    if (list.length <= limit) {
-      return list;
-    }
-
-    const selectedItems: T[] = [];
-    for (let i = 0; i < limit; i++) {
-      const fractionIterated = i / limit;
-      const selectedIndex = Math.ceil(fractionIterated * list.length);
-      selectedItems.push(list[selectedIndex]);
-    }
-    return selectedItems;
+/**
+ * A DataSource that gets BedRecords from remote bed files.  Designed to run in webworker context.  Only indexed bed
+ * files supported.
+ *
+ * @author Daofeng Li based on Silas's version
+ */
+class TabixSource {
+  url: any;
+  indexUrl?: any;
+  dataLimit: number;
+  tabix: TabixIndexedFile;
+  /**
+   * Prepares to fetch data from a bed file located at the input url.  Assumes the index is located at the same url,
+   * plus a file extension of ".tbi".  This method will request and store the tabix index from this url immediately.
+   *
+   * @param {string} url - the url of the bed-like file to fetch.
+   */
+  constructor(url, indexUrl = null, dataLimit = 100000) {
+    this.url = url;
+    this.indexUrl = indexUrl ? indexUrl : url + ".tbi";
+    this.dataLimit = dataLimit;
+    this.tabix = new TabixIndexedFile({
+      filehandle: new RemoteFile(url, { fetch }),
+      tbiFilehandle: new RemoteFile(this.indexUrl, { fetch }),
+    });
   }
-  async function getData(loci, options) {
+
+  /**
+   * Gets data for a list of chromosome intervals.
+   *
+   * @param {ChromosomeInterval[]} loci - locations for which to fetch data
+   * @return {Promise<BedRecord[]>} Promise for the data
+   */
+  getData = async (loci, basesPerPixel, options) => {
     // let promises = loci.map(this.getDataForLocus);
     const promises = loci.map((locus) => {
       // graph container uses this source directly w/o initial track, so options is null
@@ -36,16 +50,16 @@ function getTabixData(loci, options, url) {
       if (chrom === "M") {
         chrom = "MT";
       }
-      return getDataForLocus(chrom, locus.start, locus.end);
+      return this.getDataForLocus(chrom, locus.start, locus.end);
     });
     const dataForEachLocus = await Promise.all(promises);
-    // if (options && options.ensemblStyle) {
-    //   loci.forEach((locus, index) => {
-    //     dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-    //   });
-    // }
+    if (options && options.ensemblStyle) {
+      loci.forEach((locus, index) => {
+        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+      });
+    }
     return _.flatten(dataForEachLocus);
-  }
+  };
 
   /**
    * Gets data for a single chromosome interval.
@@ -55,24 +69,23 @@ function getTabixData(loci, options, url) {
    * @param {stnumberring} end - genome coordinates
    * @return {Promise<BedRecord[]>} Promise for the data
    */
-  async function getDataForLocus(chr, start, end) {
+  getDataForLocus = async (chr, start, end) => {
     // const { chr, start, end } = locus;
     const rawlines: Array<any> = [];
-    await tabix.getLines(chr, start, end, (line) => rawlines.push(line));
+    await this.tabix.getLines(chr, start, end, (line) => rawlines.push(line));
     let lines;
-    if (rawlines.length > dataLimit) {
-      lines = ensureMaxListLength(rawlines, dataLimit);
+    if (rawlines.length > this.dataLimit) {
+      lines = ensureMaxListLength(rawlines, this.dataLimit);
     } else {
       lines = rawlines;
     }
-
-    return lines.map(_parseLine);
-  }
+    return lines.map(this._parseLine);
+  };
 
   /**
    * @param {string} line - raw string the bed-like file
    */
-  function _parseLine(line) {
+  _parseLine = (line) => {
     const columns = line.split("\t");
     if (columns.length < 3) {
       return;
@@ -88,8 +101,7 @@ function getTabixData(loci, options, url) {
       feature[i] = columns[i];
     }
     return feature;
-  }
-  return getData(loci, options);
+  };
 }
 
-export default getTabixData;
+export default TabixSource;

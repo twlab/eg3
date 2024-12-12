@@ -38,17 +38,18 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   dataIdx,
   trackIdx,
   id,
+  checkTrackPreload,
   useFineModeNav,
   legendRef,
   applyTrackConfigChange,
 }) {
-  const useFineOrSecondaryParentNav = useRef(false);
   const svgHeight = useRef(0);
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -61,12 +62,26 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
       setComponents: setCanvasComponents,
     },
   };
+
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+    svgHeight.current = 0;
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      full: {},
+      density: {},
+    };
+
+    xPos.current = 0;
+
+    setLegend(undefined);
+  }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(
-      trackState,
-      windowWidth,
-      useFineOrSecondaryParentNav.current
-    );
+    let curXPos = getTrackXOffset(trackState, windowWidth);
     const getBedPadding = (bed) =>
       bed.getName().length * configOptions.current.rowHeight + 2;
     const getHeight = (results) => {
@@ -80,11 +95,10 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
         TOP_PADDING
       );
     };
-
-    getDisplayModeFunction(
+    let res = getDisplayModeFunction(
       {
         genesArr,
-        useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
+        usePrimaryNav: usePrimaryNav.current,
         trackState,
         windowWidth,
         configOptions: configOptions.current,
@@ -102,13 +116,72 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
       curXPos
     );
 
-    xPos.current = curXPos;
-    updateSide.current = side;
+    if (
+      ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
+        usePrimaryNav.current) ||
+      ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
+        !usePrimaryNav.current) ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
+
+      setCanvasComponents(res);
+    }
   }
 
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
+        if (
+          "genome" in trackData![`${id}`].metadata &&
+          trackData![`${id}`].metadata.genome !==
+            genomeArr![genomeIdx!].genome.getName()
+        ) {
+          usePrimaryNav.current = false;
+        }
+        if (
+          !genomeArr![genomeIdx!].isInitial &&
+          genomeArr![genomeIdx!].sizeChange
+        ) {
+          if (
+            "genome" in trackData![`${id}`].metadata &&
+            trackData![`${id}`].metadata.genome !==
+              genomeArr![genomeIdx!].genome.getName()
+          ) {
+            trackData![`${id}`].result =
+              fetchedDataCache.current[dataIdx!].dataCache;
+          } else {
+            const dataCacheCurrentNext =
+              fetchedDataCache.current[dataIdx! + 1]?.dataCache ?? [];
+            const dataCacheCurrent =
+              fetchedDataCache.current[dataIdx!]?.dataCache ?? [];
+            const dataCacheCurrentPrev =
+              fetchedDataCache.current[dataIdx! - 1]?.dataCache ?? [];
+
+            // Get the highest length among the three dataCache arrays
+            const maxLength = Math.max(
+              dataCacheCurrentNext.length,
+              dataCacheCurrent.length,
+              dataCacheCurrentPrev.length
+            );
+
+            let combined: Array<any> = [];
+
+            // Use the highest length as the loop boundary
+            for (let i = 0; i < maxLength; i++) {
+              combined.push([
+                dataCacheCurrentNext[i] ?? [], // Add additional safety check for out-of-bound access
+                dataCacheCurrent[i] ?? [], // This access is expected to be always within bounds
+                dataCacheCurrentPrev[i] ?? [], // Add additional safety check for out-of-bound access
+              ]);
+            }
+
+            trackData![`${id}`].result = combined;
+          }
+        }
+        resetState();
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,
@@ -117,43 +190,35 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
         updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
-          id,
-          trackIdx,
-          legendRef,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+          usePrimaryNav: usePrimaryNav.current,
         });
       }
-      if (
-        useFineModeNav ||
-        (trackData![`${id}`].metadata.genome !== undefined &&
-          genomeArr![genomeIdx!].genome.getName() !==
-            trackData![`${id}`].metadata.genome)
-      ) {
-        useFineOrSecondaryParentNav.current = true;
-      }
-      cacheTrackData(
-        useFineModeNav,
+
+      cacheTrackData({
+        usePrimaryNav: usePrimaryNav.current,
         id,
         trackData,
         fetchedDataCache,
         rightIdx,
         leftIdx,
         createSVGOrCanvas,
-        genomeArr![genomeIdx!],
-        "none",
-        trackModel
-      );
+        trackModel,
+      });
     }
   }, [trackData]);
 
   useEffect(() => {
-    getCacheData(
-      useFineOrSecondaryParentNav.current,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
       xPos,
@@ -162,11 +227,12 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
 
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)

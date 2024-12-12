@@ -196,6 +196,7 @@ class InteractionTrackComponent extends React.PureComponent<
       isThereG3dTrack,
       getNumLegend,
     } = this.props;
+
     const filteredData = this.filterData(data);
     this.scales = this.computeScale();
     let interactionData = this.featurePlacer.placeInteractions(
@@ -224,6 +225,7 @@ class InteractionTrackComponent extends React.PureComponent<
       clampHeight: options.clampHeight,
     };
     let visualizer;
+
     switch (options.displayMode) {
       case InteractionDisplayMode.HEATMAP:
         visualizer = <Heatmap {...visualizerProps} getBeamRefs={getBeamRefs} />;

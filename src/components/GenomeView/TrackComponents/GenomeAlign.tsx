@@ -16,12 +16,11 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   trackData,
   updateGlobalTrackConfig,
   trackIdx,
-
+  checkTrackPreload,
   windowWidth,
   dataIdx,
   trackModel,
-  genomeArr,
-  genomeIdx,
+
   id,
   useFineModeNav,
   legendRef,
@@ -36,29 +35,40 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   });
   const updatedLegend = useRef<any>();
   const svgHeight = useRef(0);
-  const useFineOrSecondaryParentNav = useRef(useFineModeNav);
-
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
   const updateSide = useRef("right");
-  const newTrackWidth = useRef(windowWidth);
-  const configMenuPos = useRef<{ [key: string]: any }>({});
   const [svgComponents, setSvgComponents] = useState<{ [key: string]: any }>(
     {}
   );
-  const [configChanged, setConfigChanged] = useState(false);
+
   const [legend, setLegend] = useState<any>();
 
   const displaySetter = {
     full: { setComponents: setSvgComponents },
   };
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+    svgHeight.current = 0;
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      full: {},
+    };
+
+    xPos.current = 0;
+    setLegend(undefined);
+  }
 
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(trackState, windowWidth, true);
+    let curXPos = getTrackXOffset(trackState, windowWidth);
 
-    getDisplayModeFunction(
+    let res = getDisplayModeFunction(
       {
         genesArr,
-        useFineOrSecondaryParentNav: true,
         trackState,
         windowWidth,
         configOptions: configOptions.current,
@@ -72,14 +82,23 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       cacheIdx,
       curXPos
     );
-    newTrackWidth.current = trackState.visWidth;
-    xPos.current = curXPos;
-    updateSide.current = side;
-  }
 
+    if (
+      rightIdx.current + 1 >= dataIdx ||
+      leftIdx.current - 1 <= dataIdx ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
+
+      setSvgComponents(res);
+    }
+  }
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
+        resetState();
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,
@@ -94,29 +113,28 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         });
       }
 
-      cacheTrackData(
-        true,
+      cacheTrackData({
+        usePrimaryNav: usePrimaryNav.current,
         id,
         trackData,
         fetchedDataCache,
         rightIdx,
         leftIdx,
         createSVGOrCanvas,
-        genomeArr![genomeIdx!],
-        "none"
-      );
+        trackModel,
+      });
     }
   }, [trackData]);
 
   useEffect(() => {
-    getCacheData(
-      true,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
       xPos,
@@ -125,11 +143,12 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
 
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents]);
 
@@ -155,13 +174,13 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           trackIdx: trackIdx,
           legendRef: legendRef,
         });
-        getConfigChangeData(
-          true,
-          fetchedDataCache.current,
+        getConfigChangeData({
+          fetchedDataCache: fetchedDataCache.current,
           dataIdx,
+          usePrimaryNav: usePrimaryNav.current,
           createSVGOrCanvas,
-          "none"
-        );
+          trackType: trackModel.type,
+        });
       }
     }
   }, [applyTrackConfigChange]);
@@ -170,21 +189,20 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       style={{
         display: "flex",
         position: "relative",
-        height: `${configOptions.current.height + 2}px`,
+        height: configOptions.current.height + 2,
       }}
     >
-      <svg
-        width={`${newTrackWidth.current}px`}
+      <div
         style={{
-          display: "block",
           position: "absolute",
-          height: `${configOptions.current.height}px`,
+          lineHeight: 0,
           right: updateSide.current === "left" ? `${xPos.current}px` : "",
           left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          backgroundColor: configOptions.current.backgroundColor,
         }}
       >
         {svgComponents.svgElements}
-      </svg>
+      </div>
       {svgComponents.svgElements && (
         <div
           style={{

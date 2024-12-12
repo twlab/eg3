@@ -1,4 +1,4 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 
@@ -28,7 +28,7 @@ export const DEFAULT_OPTIONS = {
   alwaysDrawLabel: false,
   hideMinimalItems: true,
   backgroundColor: "var(--bg-color)",
-  displayMode: "density",
+  displayMode: "full",
   aggregateMethod: "COUNT",
 };
 const HEIGHT = 9;
@@ -55,6 +55,8 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+
+  checkTrackPreload,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -68,8 +70,8 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
     full: {},
     density: {},
   });
-  const useFineOrSecondaryParentNav = useRef(false);
 
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
@@ -85,14 +87,25 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
       setComponents: setCanvasComponents,
     },
   };
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+    svgHeight.current = 0;
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      full: {},
+      density: {},
+    };
+
+    xPos.current = 0;
+
+    setLegend(undefined);
+  }
 
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(
-      trackState,
-      windowWidth,
-      useFineOrSecondaryParentNav.current
-    );
-
     function getHeight(numRows: number): number {
       let rowsToDraw = Math.min(numRows, configOptions.current.maxRows);
       if (configOptions.current.hideMinimalItems) {
@@ -103,10 +116,11 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
       }
       return rowsToDraw * ROW_HEIGHT + TOP_PADDING;
     }
-    getDisplayModeFunction(
+    let curXPos = getTrackXOffset(trackState, windowWidth);
+
+    let res = getDisplayModeFunction(
       {
         genesArr,
-        useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
         trackState,
         windowWidth,
         configOptions: configOptions.current,
@@ -124,10 +138,21 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
       curXPos
     );
 
-    xPos.current = curXPos;
-    updateSide.current = side;
+    if (
+      ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
+        usePrimaryNav.current) ||
+      ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
+        !usePrimaryNav.current) ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
+      configOptions.current.displayMode === "full"
+        ? setSvgComponents(res)
+        : setCanvasComponents(res);
+    }
   }
-
   //________________________________________________________________________________________________________________________________________________________
 
   // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
@@ -200,7 +225,27 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
 
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
+        if (
+          !genomeArr![genomeIdx!].isInitial &&
+          genomeArr![genomeIdx!].sizeChange
+        ) {
+          if (
+            "genome" in trackData![`${id}`].metadata &&
+            trackData![`${id}`].metadata.genome !==
+              genomeArr![genomeIdx!].genome.getName()
+          ) {
+            trackData![`${id}`].result =
+              fetchedDataCache.current[dataIdx!].dataCache;
+          } else {
+            trackData![`${id}`].result = [
+              fetchedDataCache.current[dataIdx! + 1].dataCache,
+              fetchedDataCache.current[dataIdx!].dataCache,
+              fetchedDataCache.current[dataIdx! - 1].dataCache,
+            ];
+          }
+        }
+        resetState();
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,
@@ -214,26 +259,17 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
           legendRef: legendRef,
         });
       }
-      if (
-        useFineModeNav ||
-        (trackData![`${id}`].metadata.genome !== undefined &&
-          genomeArr![genomeIdx!].genome.getName() !==
-            trackData![`${id}`].metadata.genome)
-      ) {
-        useFineOrSecondaryParentNav.current = true;
-      }
 
-      cacheTrackData(
-        useFineOrSecondaryParentNav.current,
+      cacheTrackData({
+        usePrimaryNav: usePrimaryNav.current,
         id,
         trackData,
         fetchedDataCache,
         rightIdx,
         leftIdx,
         createSVGOrCanvas,
-        genomeArr![genomeIdx!],
-        "none"
-      );
+        trackModel,
+      });
     }
   }, [trackData]);
 
@@ -242,14 +278,14 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
 
-    getCacheData(
-      useFineOrSecondaryParentNav.current,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
       xPos,
@@ -258,10 +294,11 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
 
@@ -287,13 +324,13 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
           trackIdx: trackIdx,
           legendRef: legendRef,
         });
-        getConfigChangeData(
-          useFineOrSecondaryParentNav.current,
-          fetchedDataCache.current,
+        getConfigChangeData({
+          fetchedDataCache: fetchedDataCache.current,
           dataIdx,
+          usePrimaryNav: usePrimaryNav.current,
           createSVGOrCanvas,
-          "none"
-        );
+          trackType: trackModel.type,
+        });
       }
     }
   }, [applyTrackConfigChange]);

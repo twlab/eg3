@@ -82,7 +82,7 @@ export class PixiHeatmap extends PureComponent<
   async componentDidMount() {
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
-    const bgColor = colorString2number(backgroundColor || "0x000000");
+    const bgColor = colorString2number("white");
     this.app = new PIXI.Application();
     await this.app.init({
       width,
@@ -130,7 +130,7 @@ export class PixiHeatmap extends PureComponent<
 
     if (prevProps.useDynamicColors !== this.props.useDynamicColors) {
       if (!this.props.useDynamicColors) {
-        const color = colorString2number(this.props.color || "blue");
+        const color = colorString2number(this.props.color || "green");
         this.subs.forEach((c) =>
           c.children.forEach((s: any) => (s.tint = color))
         );
@@ -260,7 +260,7 @@ export class PixiHeatmap extends PureComponent<
 
     const t = this.app!.renderer.generateTexture(g);
     let colorEach;
-
+    console.log(this.props);
     placedInteractionsArray.forEach((placedInteractions: any, index) => {
       if (useDynamicColors && dynamicColors!.length) {
         const colorIndex =
@@ -323,7 +323,7 @@ export class PixiHeatmap extends PureComponent<
           });
         }
       });
-      console.log(trackModel);
+
       const label = trackModel?.tracks[index]?.label || "";
       if (label) {
         const t = new PIXI.Text({
@@ -382,6 +382,6 @@ export class PixiHeatmap extends PureComponent<
   render() {
     const { height, width } = this.props;
     const style = { width: `${width}px`, height: `${height}px` };
-    return <div style={style} ref={this.myRef}></div>;
+    return <div ref={this.myRef}></div>;
   }
 }

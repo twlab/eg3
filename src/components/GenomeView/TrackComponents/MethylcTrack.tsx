@@ -3,9 +3,6 @@ import { TrackProps } from "../../../models/trackModels/trackProps";
 
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultMethylc } from "./MethylcComponents/MethylCTrackComputation";
-import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-
-import { MethylCTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/MethylCTrackConfig";
 
 import ReactDOM from "react-dom";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
@@ -29,10 +26,9 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   genomeIdx,
   trackModel,
   dataIdx,
-
+  checkTrackPreload,
   trackIdx,
   id,
-  useFineModeNav,
   legendRef,
 
   applyTrackConfigChange,
@@ -46,11 +42,12 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
 
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
-  const useFineOrSecondaryParentNav = useRef(false);
+
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const configMenuPos = useRef<{ [key: string]: any }>({});
+
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
-  const [configChanged, setConfigChanged] = useState(false);
+
   const [legend, setLegend] = useState<any>();
 
   const displaySetter = {
@@ -58,18 +55,29 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       setComponents: setCanvasComponents,
     },
   };
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+    svgHeight.current = 0;
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      density: {},
+    };
 
+    xPos.current = 0;
+
+    setLegend(undefined);
+  }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(
-      trackState,
-      windowWidth,
-      useFineOrSecondaryParentNav.current
-    );
+    let curXPos = getTrackXOffset(trackState, windowWidth);
 
-    getDisplayModeFunction(
+    let res = getDisplayModeFunction(
       {
+        usePrimaryNav: usePrimaryNav.current,
         genesArr,
-        useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
         trackState,
         windowWidth,
         configOptions: configOptions.current,
@@ -83,13 +91,51 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       curXPos
     );
 
-    xPos.current = curXPos;
-    updateSide.current = side;
+    if (
+      ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
+        usePrimaryNav.current) ||
+      ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
+        !usePrimaryNav.current) ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
+
+      setCanvasComponents(res);
+    }
   }
 
   useEffect(() => {
     if (trackData![`${id}`]) {
-      if (trackData!.initial === 1) {
+      if (trackData!.trackState.initial === 1) {
+        if (
+          "genome" in trackData![`${id}`].metadata &&
+          trackData![`${id}`].metadata.genome !==
+            genomeArr![genomeIdx!].genome.getName()
+        ) {
+          usePrimaryNav.current = false;
+        }
+        if (
+          !genomeArr![genomeIdx!].isInitial &&
+          genomeArr![genomeIdx!].sizeChange
+        ) {
+          if (
+            "genome" in trackData![`${id}`].metadata &&
+            trackData![`${id}`].metadata.genome !==
+              genomeArr![genomeIdx!].genome.getName()
+          ) {
+            trackData![`${id}`].result =
+              fetchedDataCache.current[dataIdx!].dataCache;
+          } else {
+            trackData![`${id}`].result = [
+              fetchedDataCache.current[dataIdx! + 1].dataCache,
+              fetchedDataCache.current[dataIdx!].dataCache,
+              fetchedDataCache.current[dataIdx! - 1].dataCache,
+            ];
+          }
+        }
+        resetState();
         configOptions.current = {
           ...configOptions.current,
           ...trackModel.options,
@@ -103,38 +149,29 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           legendRef: legendRef,
         });
       }
-      if (
-        useFineModeNav ||
-        (trackData![`${id}`].metadata.genome !== undefined &&
-          genomeArr![genomeIdx!].genome.getName() !==
-            trackData![`${id}`].metadata.genome)
-      ) {
-        useFineOrSecondaryParentNav.current = true;
-      }
 
-      cacheTrackData(
-        useFineOrSecondaryParentNav.current,
+      cacheTrackData({
+        usePrimaryNav: usePrimaryNav.current,
         id,
         trackData,
         fetchedDataCache,
         rightIdx,
         leftIdx,
         createSVGOrCanvas,
-        genomeArr![genomeIdx!],
-        "none"
-      );
+        trackModel,
+      });
     }
   }, [trackData]);
 
   useEffect(() => {
-    getCacheData(
-      useFineOrSecondaryParentNav.current,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
       xPos,
@@ -143,11 +180,12 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
 
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 

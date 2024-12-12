@@ -3,6 +3,9 @@ import { AnnotationDisplayModes } from "./DisplayModes";
 import { AnnotationTrackConfig } from "./AnnotationTrackConfig";
 
 import HiddenPixelsConfig from "../config-menu-components.tsx/HiddenPixelsConfig";
+import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
+import Feature from "@/models/Feature";
+import AlwaysDrawLabelConfig from "../config-menu-components.tsx/AlwaysDrawLabelConfig";
 // import AlwaysDrawLabelConfig from "components/trackContextMenu/AlwaysDrawLabelConfig";
 
 enum BedColumnIndex {
@@ -20,11 +23,14 @@ export class BedTrackConfig extends AnnotationTrackConfig {
    */
 
   getMenuComponents() {
-    //, AlwaysDrawLabelConfig
-    const items = [...super.getMenuComponents(), HiddenPixelsConfig];
-    // if (this.getOptions().displayMode === AnnotationDisplayModes.DENSITY) {
-    //     items.push(YscaleConfig);
-    // }
+    const items = [
+      ...super.getMenuComponents(),
+      HiddenPixelsConfig,
+      AlwaysDrawLabelConfig,
+    ];
+    if (this.getOptions().displayMode === AnnotationDisplayModes.DENSITY) {
+      items.push(YscaleConfig);
+    }
     return items;
   }
 }

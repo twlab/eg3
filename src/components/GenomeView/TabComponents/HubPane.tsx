@@ -1,5 +1,5 @@
 import React from "react";
-import PropTypes from "prop-types";
+
 import HubTable from "./HubTable";
 import TrackModel from "@/models/TrackModel";
 import FacetTable from "./FacetTable";

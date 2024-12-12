@@ -1,6 +1,9 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+import {
+  removeDuplicates,
+  removeDuplicatesWithoutId,
+} from "./commonComponents/check-obj-dupe";
 import Feature, {
   Fiber,
   JasparFeature,
@@ -62,16 +65,19 @@ import { BamAlignment } from "@/models/BamAlignment";
 import { BamAnnotation } from "./BamComponents/BamAnnotation";
 import ImageRecord from "@/models/ImageRecord";
 
-import OmeroTrackComponents from "./imageTrackComponents/OmeroTrackComponents";
+import OmeroTrackComponents, {
+  MAX_NUMBER_THUMBNAILS,
+  THUMBNAIL_PADDING,
+} from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "@/models/layoutUtils";
+import _ from "lodash";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
 const TOP_PADDING = 2;
 export const displayModeComponentMap: { [key: string]: any } = {
-  full: function getFull(
+  full: function getFull({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
@@ -82,8 +88,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     getGenePadding,
     getHeight,
     ROW_HEIGHT,
-    onHideTooltip = undefined
-  ) {
+    onHideTooltip = undefined,
+  }) {
     function createFullVisualizer(
       placements,
       width,
@@ -118,7 +124,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
             stroke="black"
             strokeWidth={1}
           />
-
           <line
             x1={(2 * width) / 3}
             y1={0}
@@ -130,15 +135,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
         </svg>
       );
     }
-    // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
 
+    // the function to create individual feature element from the GeneAnnotation track which is passed down to full visualizer
     function getAnnotationElement(placedGroup, y, isLastRow, index) {
       const gene = placedGroup.feature;
-      let uniquekey = uuidv4();
 
       return (
         <GeneAnnotationScaffold
-          key={index + uniquekey + "scafford"}
+          key={index}
           gene={gene}
           xSpan={placedGroup.xSpan}
           viewWindow={new OpenInterval(0, windowWidth * 3)}
@@ -149,8 +153,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
-              key={i + uniquekey + "GeneAnno"}
-              id={i + uniquekey + "GeneAnno"}
+              key={i}
               placedGene={placedGene}
               y={y}
               options={configOptions}
@@ -159,6 +162,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         </GeneAnnotationScaffold>
       );
     }
+
     function getBedAnnotationElement(placedGroup, y, isLastRow, index) {
       return placedGroup.placedFeatures.map((placement, i) => (
         <BedAnnotation
@@ -180,7 +184,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     const getAnnotationElementMap: { [key: string]: any } = {
       geneannotation: (placedGroup, y, isLastRow, index) =>
         getAnnotationElement(placedGroup, y, isLastRow, index),
-
       refbed: (placedGroup, y, isLastRow, index) =>
         getAnnotationElement(placedGroup, y, isLastRow, index),
       bed: (placedGroup, y, isLastRow, index) =>
@@ -209,7 +212,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             onClick={renderTooltip}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
-            opacity={scoreScale((placement.feature as any).score)}
+            opacity={scoreScale(placement.feature.score)}
           />
         ));
       },
@@ -388,7 +391,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         index,
         height
       ) {
-        console.log(placedGroup);
         return placedGroup.placedFeatures.map((placement, i) => (
           <BamAnnotation
             key={i}
@@ -402,15 +404,41 @@ export const displayModeComponentMap: { [key: string]: any } = {
     };
 
     if (trackModel.type === "omeroidr") {
+      const calcTrackHeight = () => {
+        let viewWindow = {
+          start: 0,
+          end: trackState.visWidth,
+        };
+        const totalImgCount = _.sum(
+          formattedData.map((item) => item.images.length)
+        );
+        const imgCount = Math.min(totalImgCount, MAX_NUMBER_THUMBNAILS);
+        const totalImageWidth = Math.max(
+          (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
+            THUMBNAIL_PADDING) *
+            imgCount -
+            THUMBNAIL_PADDING,
+          0
+        );
+        const screenWidth = viewWindow.end - viewWindow.start;
+        const rowsNeed = Math.floor(totalImageWidth / screenWidth) + 1;
+        const trackHeight =
+          rowsNeed * (configOptions.imageHeight[0] + THUMBNAIL_PADDING) -
+          THUMBNAIL_PADDING;
+        return { trackHeight, numHidden: totalImgCount - imgCount };
+      };
+      let heightObj = calcTrackHeight();
+      svgHeight.current = heightObj.trackHeight;
+      updatedLegend.current = (
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      );
       return (
         <OmeroTrackComponents
           data={formattedData}
           options={configOptions}
           viewWindow={{
             start: 0,
-            end: useFineOrSecondaryParentNav
-              ? trackState.visWidth
-              : windowWidth * 3,
+            end: trackState.visWidth,
           }}
           trackModel={trackModel}
           forceSvg={false}
@@ -418,6 +446,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
           onSetImageInfo={() => {}}
+          heightObj={heightObj}
         />
       );
     }
@@ -425,39 +454,27 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     let sortType = SortItemsOptions.NOSORT;
     let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
 
     //FullDisplayMode part from eg2
 
     let placeFeatureData = featureArrange.arrange(
       formattedData,
-      useFineOrSecondaryParentNav
-        ? objToInstanceAlign(trackState.visRegion)
-        : currDisplayNav,
-      useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3,
+      objToInstanceAlign(trackState.visRegion),
+      trackState.visWidth,
       getGenePadding,
       configOptions.hiddenPixels,
       sortType
     );
 
     let height;
+
     height =
       trackModel.type in { repeatmasker: "" }
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
     let svgDATA = createFullVisualizer(
       placeFeatureData.placements,
-      useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3,
+      trackState.visWidth,
       height,
       ROW_HEIGHT,
       configOptions.maxRows
@@ -470,55 +487,26 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return svgDATA;
   },
-  // this part for numerical track____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  density: function getDensity(
+
+  density: function getDensity({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    trackModel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
+
     let canvasElements = (
       <NumericalTrack
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         forceSvg={false}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
@@ -526,52 +514,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
-  qbed: function getqbed(
+
+  qbed: function getqbed({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    trackModel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
     let canvasElements = (
       <QBedTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         forceSvg={false}
         trackModel={trackModel}
         isLoading={false}
@@ -581,52 +542,24 @@ export const displayModeComponentMap: { [key: string]: any } = {
     return canvasElements;
   },
 
-  boxplot: function getboxplot(
+  boxplot: function getboxplot({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    trackModel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
     let canvasElements = (
       <BoxplotTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         forceSvg={false}
         trackModel={trackModel}
         isLoading={false}
@@ -636,52 +569,26 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
-  matplot: function getMatplot(
+
+  matplot: function getMatplot({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    trackModel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
+
     let canvasElements = (
       <MatplotTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         forceSvg={false}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
@@ -689,220 +596,111 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
-  dynamichic: function getDynamichic(
+
+  dynamichic: function getDynamichic({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
-    // function getNumLegend(legend: ReactNode) {
-    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
-    //   // is set to canvasComponent state which will update the legend ref without having to update manually
-
-    //   updatedLegend.current = legend;
-    // }
+    trackModel,
+  }) {
+    console.log({
+      formattedData,
+      trackState,
+      windowWidth,
+      configOptions,
+      updatedLegend,
+      trackModel,
+    });
     let canvasElements = (
       <DynamicInteractionTrackComponents
         data={formattedData}
         options={configOptions}
         viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
+          new OpenInterval(trackState.startWindow, trackState.startWindow * 2)
         }
-        visRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        visRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         trackModel={trackModel}
       />
     );
     return canvasElements;
   },
 
-  dynamicbed: function getdynamicbed(
+  dynamicbed: function getdynamicbed({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     renderTooltip,
+    trackModel,
     svgHeight,
     updatedLegend,
-    trackModel,
     getGenePadding,
     getHeight,
-    ROW_HEIGHT
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
-    // function getNumLegend(legend: ReactNode) {
-    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
-    //   // is set to canvasComponent state which will update the legend ref without having to update manually
-
-    //   updatedLegend.current = legend;
-    // }
+    ROW_HEIGHT,
+  }) {
     let canvasElements = (
       <DynamicBedTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        visRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        visRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         trackModel={trackModel}
       />
     );
     return canvasElements;
   },
 
-  dbedgraph: function getdbedgraph(
+  dbedgraph: function getdbedgraph({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
-    // function getNumLegend(legend: ReactNode) {
-    //   //this will be trigger when creating canvaselemebt here and the saved canvaselement
-    //   // is set to canvasComponent state which will update the legend ref without having to update manually
-
-    //   updatedLegend.current = legend;
-    // }
+    trackModel,
+  }) {
     let canvasElements = (
       <DynamicNumericalTrack
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         trackModel={trackModel}
       />
     );
     return canvasElements;
   },
-  dynamic: function dynamic(
+
+  dynamic: function dynamic({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    trackModel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
     let canvasElements = (
       <DynamicplotTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         trackModel={trackModel}
       />
     );
     return canvasElements;
   },
-  modbed: function getModbed(
+
+  modbed: function getModbed({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
@@ -913,47 +711,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
     getGenePadding,
     getHeight,
     ROW_HEIGHT,
-    onHideToolTip
-  ) {
+    onHideToolTip,
+  }) {
     const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
     let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    } else {
-      currDisplayNav = objToInstanceAlign(trackState.visRegion);
-    }
 
-    if (currDisplayNav.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
+    if (
+      objToInstanceAlign(trackState.visRegion).getWidth() >
+      FIBER_DENSITY_CUTOFF_LENGTH
+    ) {
       function getNumLegend(legend: ReactNode) {
-        //this will be trigger when creating canvaselemebt here and the saved canvaselement
-        // is set to canvasComponent state which will update the legend ref without having to update manually
-
         updatedLegend.current = legend;
       }
       let canvasElements = (
         <FiberTrackComponent
           data={formattedData}
           options={configOptions}
-          viewWindow={
-            new OpenInterval(
-              0,
-              useFineOrSecondaryParentNav
-                ? trackState.visWidth
-                : windowWidth * 3
-            )
-          }
-          visRegion={currDisplayNav}
-          width={
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          }
+          viewWindow={new OpenInterval(0, trackState.visWidth)}
+          visRegion={objToInstanceAlign(trackState.visRegion)}
+          width={trackState.visWidth}
           forceSvg={false}
           trackModel={trackModel}
           getNumLegend={getNumLegend}
@@ -962,11 +738,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
       return canvasElements;
     } else {
-      let elements = displayModeComponentMap["full"](
+      let elements = displayModeComponentMap["full"]({
         formattedData,
-        useFineOrSecondaryParentNav,
         trackState,
         windowWidth,
+
         configOptions,
         renderTooltip,
         svgHeight,
@@ -975,37 +751,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getGenePadding,
         getHeight,
         ROW_HEIGHT,
-        onHideToolTip
-      );
+        onHideToolTip,
+      });
       return elements;
     }
   },
-  interaction: function getInteraction(
+
+  interaction: function getInteraction({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    trackModel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
 
@@ -1013,7 +773,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <InteractionTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         visRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={false}
@@ -1024,52 +784,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     return canvasElements;
   },
-  methylc: function getMethylc(
+
+  methylc: function getMethylc({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
-    trackModel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    trackModel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
     let canvasElements = (
       <MethylCTrackComputation
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         forceSvg={false}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
@@ -1078,34 +811,18 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
     return canvasElements;
   },
-  dynseq: function getDynseq(
+
+  dynseq: function getDynseq({
     formattedData,
-    useFineOrSecondaryParentNav,
     trackState,
     windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
     genomeConfig,
-    basesByPixel
-  ) {
-    let currDisplayNav;
-    if (!useFineOrSecondaryParentNav) {
-      currDisplayNav = new DisplayedRegionModel(
-        trackState.regionNavCoord._navContext,
-        trackState.regionNavCoord._startBase -
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase),
-        trackState.regionNavCoord._endBase +
-          (trackState.regionNavCoord._endBase -
-            trackState.regionNavCoord._startBase)
-      );
-    }
-
+    basesByPixel,
+  }) {
     function getNumLegend(legend: ReactNode) {
-      //this will be trigger when creating canvaselemebt here and the saved canvaselement
-      // is set to canvasComponent state which will update the legend ref without having to update manually
-
       updatedLegend.current = legend;
     }
 
@@ -1113,20 +830,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <DynseqTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={
-          new OpenInterval(
-            0,
-            useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-          )
-        }
-        viewRegion={
-          useFineOrSecondaryParentNav
-            ? objToInstanceAlign(trackState.visRegion)
-            : currDisplayNav
-        }
-        width={
-          useFineOrSecondaryParentNav ? trackState.visWidth : windowWidth * 3
-        }
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
         forceSvg={false}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
@@ -1146,16 +852,19 @@ export function getDisplayModeFunction(
   cacheIdx,
   curXPos
 ) {
-  console.log(drawData, "drawData");
+  console.log(drawData.genesArr);
   if (
     drawData.configOptions.displayMode === "full" &&
     drawData.trackModel.type !== "genomealign"
   ) {
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
-      formattedData = drawData.genesArr.map((record) => new Gene(record));
+      const filteredArray = removeDuplicates(drawData.genesArr, "id");
+      formattedData = filteredArray.map((record) => new Gene(record));
     } else if (drawData.trackModel.type === "refbed") {
-      formattedData = drawData.genesArr.map((record) => {
+      const filteredArray = removeDuplicates(drawData.genesArr, 7);
+
+      formattedData = filteredArray.map((record) => {
         const refBedRecord = {} as IdbRecord;
         refBedRecord.chrom = record.chr;
         refBedRecord.txStart = record.start;
@@ -1172,7 +881,8 @@ export function getDisplayModeFunction(
         return new Gene(refBedRecord);
       });
     } else if (drawData.trackModel.type === "bed") {
-      formattedData = drawData.genesArr.map((record) => {
+      const filteredArray = removeDuplicates(drawData.genesArr, "start", "end");
+      formattedData = filteredArray.map((record) => {
         let newChrInt = new ChromosomeInterval(
           record.chr,
           record.start,
@@ -1185,7 +895,8 @@ export function getDisplayModeFunction(
         );
       });
     } else if (drawData.trackModel.type === "categorical") {
-      formattedData = drawData.genesArr.map(
+      const filteredArray = removeDuplicates(drawData.genesArr, "start", "end");
+      formattedData = filteredArray.map(
         (record) =>
           new Feature(
             record[BedColumnIndex.CATEGORY],
@@ -1193,14 +904,16 @@ export function getDisplayModeFunction(
           )
       );
     } else if (drawData.trackModel.type === "bam") {
-      formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
+      const filteredArray = removeDuplicates(drawData.genesArr, "_id");
+      formattedData = BamAlignment.makeBamAlignments(filteredArray);
     } else if (drawData.trackModel.type === "omeroidr") {
       formattedData = drawData.genesArr.map(
         (record) => new ImageRecord(record)
       );
     } else if (drawData.trackModel.type === "bigbed") {
-      formattedData = drawData.genesArr.map((record) => {
-        const fields = record["rest"].split("\t");
+      const filteredArray = removeDuplicates(drawData.genesArr, "rest");
+      formattedData = filteredArray.map((record) => {
+        const fields = record.rest.split("\t");
 
         const name = fields[0];
         const numVal = fields[1];
@@ -1213,11 +926,12 @@ export function getDisplayModeFunction(
         );
       });
     } else if (drawData.trackModel.type === "snp") {
-      formattedData = drawData.genesArr.map((record) => new Snp(record));
+      const filteredArray = removeDuplicates(drawData.genesArr, "id");
+      formattedData = filteredArray.map((record) => new Snp(record));
     } else if (drawData.trackModel.type === "repeatmasker") {
       let rawDataArr: Array<RepeatDASFeature> = [];
       drawData.genesArr.map((record) => {
-        const restValues = record["rest"].split("\t");
+        const restValues = record.rest.split("\t");
         const output: RepeatDASFeature = {
           genoLeft: restValues[7],
           label: restValues[0],
@@ -1246,7 +960,9 @@ export function getDisplayModeFunction(
         (feature) => new RepeatMaskerFeature(feature)
       );
     } else if (drawData.trackModel.type === "jaspar") {
-      formattedData = drawData.genesArr.map((record) => {
+      const filteredArray = removeDuplicates(drawData.genesArr, "uniqueId");
+
+      formattedData = filteredArray.map((record) => {
         const rest = record.rest.split("\t");
         return new JasparFeature(
           rest[3],
@@ -1256,32 +972,28 @@ export function getDisplayModeFunction(
       });
     }
 
-    let svgDATA = displayModeComponentMap["full"](
+    let svgDATA = displayModeComponentMap.full({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      drawData.configOptions,
-      drawData.renderTooltip,
-      drawData.svgHeight,
-      drawData.updatedLegend,
-      drawData.trackModel,
-      drawData.getGenePadding,
-      drawData.getHeight,
-      drawData.ROW_HEIGHT
-    );
-    displaySetter.full.setComponents(svgDATA);
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      renderTooltip: drawData.renderTooltip,
+      svgHeight: drawData.svgHeight,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+      getGenePadding: drawData.getGenePadding,
+      getHeight: drawData.getHeight,
+      ROW_HEIGHT: drawData.ROW_HEIGHT,
+    });
+
     displayCache.current.full[cacheIdx] = {
       svgDATA,
       height: drawData.svgHeight.current,
       xPos: curXPos,
     };
-  }
 
-  // this are genomealign track____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  else if (drawData.trackModel.type === "genomealign") {
+    return svgDATA;
+  } else if (drawData.trackModel.type === "genomealign") {
     let result = drawData.genesArr;
     let svgElements;
     if (drawData.basesByPixel <= 10) {
@@ -1299,19 +1011,32 @@ export function getDisplayModeFunction(
 
       let tempObj = {
         alignment: drawData.genesArr,
-        svgElements,
+        svgElements: (
+          <svg
+            width={drawData.trackState.visWidth}
+            height={drawData.configOptions.height}
+            display={"block"}
+          >
+            {svgElements}
+          </svg>
+        ),
         trackState: drawData.trackState,
       };
 
-      displaySetter.full.setComponents(tempObj);
       displayCache.current.full[cacheIdx] = {
         svgDATA: tempObj,
         height: drawData.svgHeight.current,
         xPos: curXPos,
       };
+      return tempObj;
     } else {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
-
+      drawData.updatedLegend.current = (
+        <TrackLegend
+          height={drawData.configOptions.height}
+          trackModel={drawData.trackModel}
+        />
+      );
       const strand = result.plotStrand;
       const targetGenome = result.primaryGenome;
       const queryGenome = result.queryGenome;
@@ -1331,7 +1056,6 @@ export function getDisplayModeFunction(
         false
       );
       svgElements.push(arrows);
-      // const primaryViewWindow = result.primaryVisData.viewWindow;
 
       const primaryArrows = renderRoughStrand(
         strand,
@@ -1342,29 +1066,59 @@ export function getDisplayModeFunction(
       svgElements.push(primaryArrows);
 
       let tempObj = {
-        alignment: result,
-        svgElements,
+        alignment: drawData.genesArr,
+        svgElements: (
+          <svg
+            width={drawData.trackState.visWidth}
+            height={drawData.configOptions.height}
+            display={"block"}
+          >
+            {svgElements}
+          </svg>
+        ),
         trackState: drawData.trackState,
       };
-      displaySetter.full.setComponents(tempObj);
+
       displayCache.current.full[cacheIdx] = {
         svgDATA: tempObj,
         height: drawData.svgHeight.current,
         xPos: curXPos,
       };
+      return tempObj;
     }
-    drawData.updatedLegend.current = (
-      <TrackLegend
-        height={drawData.configOptions.height}
-        trackModel={drawData.trackModel}
-      />
-    );
-  }
+  } else if (drawData.trackModel.type === "matplot") {
+    let formattedData: Array<any> = [];
+    for (let i = 0; i < drawData.genesArr.length; i++) {
+      formattedData.push(
+        drawData.genesArr[i].map((record) => {
+          let newChrInt = new ChromosomeInterval(
+            record.chr,
+            record.start,
+            record.end
+          );
+          return new NumericalFeature("", newChrInt).withValue(record.score);
+        })
+      );
+    }
+    let tmpObj = { ...drawData.configOptions };
+    tmpObj.displayMode = "auto";
 
-  // this part unique numerical track____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  //_________________________________
-  else if (drawData.trackModel.type === "modbed") {
+    let canvasElements = displayModeComponentMap["matplot"]({
+      formattedData,
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: tmpObj,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+    });
+
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
+    return canvasElements;
+  } else if (drawData.trackModel.type === "modbed") {
     let formattedData;
     formattedData = drawData.genesArr.map((record) => {
       return new Fiber(
@@ -1374,48 +1128,41 @@ export function getDisplayModeFunction(
       ).withFiber(parseNumberString(record[4]), record[6], record[7]);
     });
 
-    let tmpObj = { ...drawData.configOptions };
-    tmpObj.displayMode = "auto";
-
-    let elements = displayModeComponentMap["modbed"](
+    let elements = displayModeComponentMap.modbed({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      drawData.configOptions,
-      drawData.updatedLegend,
-      drawData.trackModel,
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+      renderTooltip: drawData.renderTooltip,
+      svgHeight: drawData.svgHeight,
+      getGenePadding: drawData.getGenePadding,
+      getHeight: drawData.getHeight,
+      ROW_HEIGHT: drawData.configOptions.rowHeight + 2,
+      onHideToolTip: drawData.onHideToolTip,
+    });
 
-      drawData.renderTooltip,
-      drawData.svgHeight,
-
-      drawData.getGenePadding,
-      drawData.getHeight,
-      drawData.configOptions.rowHeight + 2,
-      drawData.onHideToolTip
-    );
-
-    displaySetter.density.setComponents(elements);
     displayCache.current.density[cacheIdx] = {
       canvasData: elements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
+    return elements;
   } else if (
     drawData.trackModel.type in { hic: "", biginteract: "", longrange: "" }
   ) {
     let formattedData: any = [];
     if (drawData.trackModel.type === "biginteract") {
       drawData.genesArr.map((record) => {
-        const regexMatch = record["rest"].match(
+        const regexMatch = record.rest.match(
           /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
         );
 
         if (regexMatch) {
-          const fields = record["rest"].split("\t");
+          const fields = record.rest.split("\t");
 
           const score = parseInt(fields[1]);
-          const value = fields[2];
           const region1Chrom = fields[5];
           const region1Start = parseInt(fields[6]);
           const region1End = parseInt(fields[7]);
@@ -1450,7 +1197,6 @@ export function getDisplayModeFunction(
           const chr = regexMatch[1];
           const start = Number.parseInt(regexMatch[2], 10);
           const end = Number.parseInt(regexMatch[3], 10);
-          // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
           const score = Number.parseFloat(record[3].split(",")[1]);
           const recordLocus1 = new ChromosomeInterval(
             record.chr,
@@ -1463,7 +1209,7 @@ export function getDisplayModeFunction(
           );
         } else {
           console.error(
-            `${record[3]} not formated correctly in longrange track`
+            `${record[3]} not formatted correctly in longrange track`
           );
         }
       });
@@ -1471,73 +1217,64 @@ export function getDisplayModeFunction(
       formattedData = drawData.genesArr;
     }
 
-    let canvasElements = displayModeComponentMap["interaction"](
+    let canvasElements = displayModeComponentMap.interaction({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      drawData.configOptions,
-      drawData.updatedLegend,
-      drawData.trackModel
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
       height: drawData.configOptions.height,
       xPos: curXPos,
     };
+    return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {
     let formattedData = drawData.genesArr;
-    let tmpObj = { ...drawData.configOptions };
-    tmpObj.displayMode = "heatmap";
-
-    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+    let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      tmpObj,
-      drawData.updatedLegend,
-      drawData.trackModel
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: { ...drawData.configOptions, displayMode: "heatmap" },
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
+    return canvasElements;
   } else if (
     drawData.trackModel.type in
-    { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+    { dynamic: "", dynamicbed: "", dynamiclongrange: "" }
   ) {
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "dynamicbed") {
-      for (let i = 0; i < drawData.genesArr.length; i++) {
-        formattedData.push(
-          drawData.genesArr[i].map((record) => {
-            return new Feature(
+      formattedData = drawData.genesArr.map((geneArr: any) =>
+        geneArr.map(
+          (record) =>
+            new Feature(
               record[3],
               new ChromosomeInterval(record.chr, record.start, record.end)
-            );
-          })
-        );
-      }
+            )
+        )
+      );
     } else if (drawData.trackModel.type === "dynamiclongrange") {
-      for (let i = 0; i < drawData.genesArr.length; i++) {
-        let tmpLongrangeData: Array<any> = [];
-
-        drawData.genesArr[i].map((record) => {
+      formattedData = drawData.genesArr.map((geneArr: any) => {
+        let tempLongrangeData: any[] = [];
+        geneArr.map((record) => {
           const regexMatch = record[3].match(
             /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
           );
-
           if (regexMatch) {
             const chr = regexMatch[1];
             const start = Number.parseInt(regexMatch[2], 10);
             const end = Number.parseInt(regexMatch[3], 10);
-            // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
             const score = Number.parseFloat(record[3].split(",")[1]);
             const recordLocus1 = new ChromosomeInterval(
               record.chr,
@@ -1545,123 +1282,100 @@ export function getDisplayModeFunction(
               record.end
             );
             const recordLocus2 = new ChromosomeInterval(chr, start, end);
-            tmpLongrangeData.push(
+            tempLongrangeData.push(
               new GenomeInteraction(recordLocus1, recordLocus2, score)
             );
           } else {
             console.error(
-              `${record[3]} not formated correctly in longrange track`
+              `${record[3]} not formatted correctly in longrange track`
             );
           }
         });
-        formattedData.push(tmpLongrangeData);
-      }
+        return tempLongrangeData;
+      });
+      console.log(formattedData);
     } else {
-      for (let i = 0; i < drawData.genesArr.length; i++) {
-        formattedData.push(
-          drawData.genesArr[i].map((record) => {
-            let newChrInt = new ChromosomeInterval(
-              record.chr,
-              record.start,
-              record.end
-            );
-            return new NumericalFeature("", newChrInt).withValue(record.score);
-          })
-        );
-      }
+      formattedData = drawData.genesArr.map((geneArr: any) =>
+        geneArr.map((record) =>
+          new NumericalFeature(
+            "",
+            new ChromosomeInterval(record.chr, record.start, record.end)
+          ).withValue(record.score)
+        )
+      );
     }
 
-    let tmpObj = { ...drawData.configOptions };
-    tmpObj.displayMode = "auto";
-
     let canvasElements = displayModeComponentMap[
-      `${
-        drawData.trackModel.type === "dynamiclongrange"
-          ? "dynamichic"
-          : drawData.trackModel.type
-      }`
-    ](
+      drawData.trackModel.type === "dynamiclongrange"
+        ? "dynamichic"
+        : drawData.trackModel.type
+    ]({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      drawData.configOptions,
-      drawData.updatedLegend,
-      drawData.trackModel,
-      drawData.getGenePadding,
-      drawData.getHeight,
-      drawData.ROW_HEIGHT
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+      getGenePadding: drawData.getGenePadding,
+      getHeight: drawData.getHeight,
+      ROW_HEIGHT: drawData.ROW_HEIGHT,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
+    return canvasElements;
   } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
-    let formattedData;
-    if (drawData.trackModel.type === "methylc") {
-      formattedData = drawData.genesArr.map((record) => {
+    let formattedData = drawData.genesArr.map((record) => {
+      if (drawData.trackModel.type === "methylc") {
         return new MethylCRecord(record);
-      });
-    } else if (drawData.trackModel.type === "dynseq") {
-      formattedData = drawData.genesArr.map((record) => {
+      } else {
         let newChrInt = new ChromosomeInterval(
           record.chr,
           record.start,
           record.end
         );
         return new NumericalFeature("", newChrInt).withValue(record.score);
-      });
-    }
-    let tmpObj = { ...drawData.configOptions };
+      }
+    });
 
-    tmpObj.displayMode = "auto";
-
-    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+    let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      tmpObj,
-      drawData.updatedLegend,
-      drawData.trackModel,
-      drawData.genomeConfig,
-      drawData.basesByPixel
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+      genomeConfig: drawData.genomeConfig,
+      basesByPixel: drawData.basesByPixel,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
-  }
-
-  // this part for numerical track____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  //____________________________________________________________________________________________________________________________________________________________________________
-  else if (drawData.trackModel.type === "qbed") {
+    return canvasElements;
+  } else if (drawData.trackModel.type === "qbed") {
     let formattedData = drawData.genesArr.map((record) => new QBed(record));
-    let tmpObj = { ...drawData.configOptions };
 
-    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+    let canvasElements = displayModeComponentMap.qbed({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      tmpObj,
-      drawData.updatedLegend,
-      drawData.trackModel
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
+    return canvasElements;
   } else if (drawData.trackModel.type === "dbedgraph") {
     const VALUE_COLUMN_INDEX = 3;
     let formattedData = drawData.genesArr.map((record) => {
@@ -1679,24 +1393,22 @@ export function getDisplayModeFunction(
       }
       return new NumericalArrayFeature("", locus).withValues(parsedValue);
     });
-    let tmpObj = { ...drawData.configOptions };
 
-    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+    let canvasElements = displayModeComponentMap.dbedgraph({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      tmpObj,
-      drawData.updatedLegend,
-      drawData.trackModel
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
+    return canvasElements;
   } else if (drawData.trackModel.type === "boxplot") {
     let formattedData = drawData.genesArr.map((record) => {
       let newChrInt = new ChromosomeInterval(
@@ -1706,32 +1418,30 @@ export function getDisplayModeFunction(
       );
       return new NumericalFeature("", newChrInt).withValue(record.score);
     });
-    let tmpObj = { ...drawData.configOptions };
 
-    let canvasElements = displayModeComponentMap[`${drawData.trackModel.type}`](
+    let canvasElements = displayModeComponentMap.boxplot({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      tmpObj,
-      drawData.updatedLegend,
-      drawData.trackModel
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
+    return canvasElements;
   } else if (
-    drawData.trackModel.type in { bigwig: "", qbed: "" } ||
+    drawData.trackModel.type in { bigwig: "", qbed: "", bedgraph: "" } ||
     drawData.configOptions.displayMode === "density"
   ) {
-    let tmpObj = { ...drawData.configOptions };
     let formattedData;
     if (drawData.trackModel.type === "geneannotation") {
-      formattedData = drawData.genesArr.map((record) => {
+      const filteredArray = removeDuplicates(drawData.genesArr, "id");
+      formattedData = filteredArray.map((record) => {
         let newChrInt = new ChromosomeInterval(
           record.chrom,
           record.txStart,
@@ -1741,7 +1451,7 @@ export function getDisplayModeFunction(
       });
     } else if (drawData.trackModel.type === "bigbed") {
       formattedData = drawData.genesArr.map((record) => {
-        const fields = record["rest"].split("\t");
+        const fields = record.rest.split("\t");
 
         const name = fields[0];
         const numVal = fields[1];
@@ -1759,7 +1469,7 @@ export function getDisplayModeFunction(
       drawData.trackModel.type === "bedgraph" ||
       drawData.trackModel.filetype === "bedgraph"
     ) {
-      let VALUE_COLUMN_INDEX = 3;
+      const VALUE_COLUMN_INDEX = 3;
       formattedData = drawData.genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(
           record.chr,
@@ -1774,6 +1484,10 @@ export function getDisplayModeFunction(
       formattedData = drawData.genesArr.map((record) => new Snp(record));
     } else if (drawData.trackModel.type === "bam") {
       formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
+    } else if (drawData.trackModel.type === "omeroidr") {
+      formattedData = drawData.genesArr.map(
+        (record) => new ImageRecord(record)
+      );
     } else {
       formattedData = drawData.genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(
@@ -1784,26 +1498,24 @@ export function getDisplayModeFunction(
         return new NumericalFeature("", newChrInt).withValue(record.score);
       });
     }
-
+    let newConfigOptions = { ...drawData.configOptions };
     if (drawData.trackModel.type !== "bigwig") {
-      tmpObj.displayMode = "auto";
+      newConfigOptions.displayMode = "auto";
     }
-
-    let canvasElements = displayModeComponentMap["density"](
+    let canvasElements = displayModeComponentMap.density({
       formattedData,
-      drawData.useFineOrSecondaryParentNav,
-      drawData.trackState,
-      drawData.windowWidth,
-      tmpObj,
-      drawData.updatedLegend,
-      drawData.trackModel
-    );
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: newConfigOptions,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+    });
 
-    displaySetter.density.setComponents(canvasElements);
     displayCache.current.density[cacheIdx] = {
       canvasData: canvasElements,
-      height: tmpObj,
+      height: drawData.configOptions,
       xPos: curXPos,
     };
+    return canvasElements;
   }
 }

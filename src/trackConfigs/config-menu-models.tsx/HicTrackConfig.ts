@@ -26,6 +26,13 @@ import { InteractionDisplayMode } from "./DisplayModes";
 import TrackModel from "../../models/TrackModel";
 import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/InteractionComponents/InteractionTrackComponent";
 import { BinSize, NormalizationMode } from "../../getRemoteData/HicDataModes";
+import ScoreConfig from "../config-menu-components.tsx/ScoreConfig";
+import MaxValueFilterConfig from "../config-menu-components.tsx/MaxValueFilterConfig";
+import MinValueFilterConfig from "../config-menu-components.tsx/MinValueFilterConfig";
+import BothAnchorsInViewConfig from "../config-menu-components.tsx/BothAnchorsInViewConfig";
+import FetchViewWindowConfig from "../config-menu-components.tsx/FetchViewWindowConfig";
+import ScalePercentileConfig from "../config-menu-components.tsx/ScalePercentileConfig";
+import ClampHeightConfig from "../config-menu-components.tsx/ClampHeightConfig";
 
 export class HicTrackConfig extends TrackConfig {
   constructor(trackModel: TrackModel) {
@@ -39,22 +46,21 @@ export class HicTrackConfig extends TrackConfig {
   getMenuComponents() {
     const items = [
       LabelConfig,
-      // HicNormalizationConfig,
+
       InteractionDisplayModeConfig,
       HeightConfig,
-      // ScoreConfig,
-      // BinSizeConfig,
+      ScoreConfig,
       PrimaryColorConfig,
       SecondaryColorConfig,
       BackgroundColorConfig,
-      // MaxValueFilterConfig,
-      // MinValueFilterConfig,
-      // FetchViewWindowConfig,
-      // BothAnchorsInViewConfig,
+      MaxValueFilterConfig,
+      MinValueFilterConfig,
+      FetchViewWindowConfig,
+      BothAnchorsInViewConfig,
     ];
-    // if (this.getOptions().scoreScale === ScaleChoices.AUTO) {
-    //     items.splice(4, 0, ScalePercentileConfig);
-    // }
+    if (this.getOptions().scoreScale === ScaleChoices.AUTO) {
+      items.splice(4, 0, ScalePercentileConfig);
+    }
     if (this.getOptions().displayMode !== InteractionDisplayMode.HEATMAP) {
       items.splice(1, 0, LineWidthConfig);
     }
@@ -63,12 +69,12 @@ export class HicTrackConfig extends TrackConfig {
       items.splice(1, 0, HicNormalizationConfig);
     }
 
-    // if (
-    //     this.getOptions().displayMode === InteractionDisplayMode.HEATMAP ||
-    //     this.getOptions().displayMode === InteractionDisplayMode.ARC
-    // ) {
-    //     items.push(ClampHeightConfig);
-    // }
+    if (
+      this.getOptions().displayMode === InteractionDisplayMode.HEATMAP ||
+      this.getOptions().displayMode === InteractionDisplayMode.ARC
+    ) {
+      items.push(ClampHeightConfig);
+    }
     return items;
   }
 }

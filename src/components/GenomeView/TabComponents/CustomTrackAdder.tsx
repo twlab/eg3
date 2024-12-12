@@ -1,14 +1,18 @@
-import { useState, useCallback, ChangeEvent, FormEvent } from "react";
+import {
+  useState,
+  useCallback,
+  ChangeEvent,
+  FormEvent,
+  CSSProperties,
+} from "react";
 
 import JSON5 from "json5";
 import TrackModel from "@/models/TrackModel";
 import { getSecondaryGenomes } from "@/models/util";
 import CustomHubAdder from "./CustomHubAdder";
-// import FacetTable from "./FacetTable";
 import { HELP_LINKS } from "@/models/util";
 import TrackOptionsUI from "./TrackOptionsUI";
 import { getTrackConfig } from "@/trackConfigs/config-menu-models.tsx/getTrackConfig";
-import { Tabs, Tab } from "./CustomTabs";
 import FacetTable from "./FacetTable";
 
 export const TRACK_TYPES = {
@@ -120,11 +124,15 @@ const CustomTrackAdder = ({
     urlError: "",
     metadata: { genome: genomeConfig.genome.getName() },
     trackAdded: false,
-    selectedTabIndex: 0,
+    selectedTab: "add-remote-track",
     querygenome: "",
     options: null,
     indexUrl: undefined,
   });
+
+  const handleSelect = (key: string) => {
+    setState((prevState) => ({ ...prevState, selectedTab: key }));
+  };
 
   const handleSubmitClick = useCallback(
     (e: FormEvent) => {
@@ -161,7 +169,7 @@ const CustomTrackAdder = ({
         }));
       }
     },
-    [state]
+    [state, onTracksAdded, onHubUpdated]
   );
 
   const getOptions = (value: string) => {
@@ -170,6 +178,7 @@ const CustomTrackAdder = ({
       options = JSON5.parse(value);
     } catch (error) {
       // notify.show('Option syntax is not correct, ignored', 'error', 3000);
+      console.error(error);
     }
     setState((prevState) => ({ ...prevState, options }));
   };
@@ -346,34 +355,91 @@ const CustomTrackAdder = ({
   };
 
   const renderCustomHubAdder = () => (
-    <CustomHubAdder onTracksAdded={(tracks) => onTracksAdded!(tracks)} />
+    <CustomHubAdder
+      onTracksAdded={(tracks) => onTracksAdded!(tracks)}
+      onHubUpdated={onHubUpdated}
+    />
   );
+
+  // Inline styles
+  const styles = {
+    tabs: {
+      margin: "20px",
+      borderRadius: "4px",
+    } as CSSProperties,
+    tabList: {
+      display: "flex",
+      borderBottom: "2px solid #ccc",
+    } as CSSProperties,
+    tab: {
+      padding: "10px 20px",
+      cursor: "pointer",
+      border: "1px solid transparent",
+      borderRadius: "4px 4px 0 0",
+      marginRight: "2px",
+      transition: "background-color 0.2s ease, color 0.2s ease",
+    } as CSSProperties,
+    tabHover: {
+      backgroundColor: "#e9ecef",
+    } as CSSProperties,
+    tabActive: {
+      border: "1px solid #ccc",
+      borderBottom: "2px solid white",
+      backgroundColor: "white",
+      fontWeight: "bold",
+      color: "blue",
+    } as CSSProperties,
+    tabContent: {
+      border: "1px solid #ccc",
+      padding: "20px",
+      borderRadius: "0 4px 4px 4px",
+      backgroundColor: "white",
+    } as CSSProperties,
+  };
 
   return (
     <div id="CustomTrackAdder">
-      <div>
-        <Tabs
-          onSelect={(index: number, label: string) =>
-            setState({ ...state, selectedTabIndex: index })
-          }
-          selected={state.selectedTabIndex}
-          headerStyle={{ fontWeight: "bold" }}
-          activeHeaderStyle={{ color: "blue" }}
-        >
-          <Tab label="Add Remote Track">{renderCustomTrackAdder()}</Tab>
-          <Tab label="Add Remote Data Hub">{renderCustomHubAdder()}</Tab>
-        </Tabs>
+      <div style={styles.tabs}>
+        <div style={styles.tabList}>
+          <div
+            style={
+              state.selectedTab === "add-remote-track"
+                ? { ...styles.tab, ...styles.tabActive }
+                : styles.tab
+            }
+            onClick={() => handleSelect("add-remote-track")}
+          >
+            Add Remote Track
+          </div>
+          <div
+            style={
+              state.selectedTab === "add-remote-data-hub"
+                ? { ...styles.tab, ...styles.tabActive }
+                : styles.tab
+            }
+            onClick={() => handleSelect("add-remote-data-hub")}
+          >
+            Add Remote Data Hub
+          </div>
+        </div>
+
+        <div style={styles.tabContent}>
+          {state.selectedTab === "add-remote-track" && renderCustomTrackAdder()}
+          {state.selectedTab === "add-remote-data-hub" &&
+            renderCustomHubAdder()}
+        </div>
+
+        {customTracksPool!.length > 0 && (
+          <FacetTable
+            tracks={customTracksPool}
+            addedTracks={addedTracks}
+            onTracksAdded={onTracksAdded}
+            addedTrackSets={addedTrackSets}
+            addTermToMetaSets={addTermToMetaSets}
+            contentColorSetup={contentColorSetup}
+          />
+        )}
       </div>
-      {customTracksPool!.length > 0 && (
-        <FacetTable
-          tracks={customTracksPool}
-          addedTracks={addedTracks}
-          onTracksAdded={onTracksAdded}
-          addedTrackSets={addedTrackSets}
-          addTermToMetaSets={addTermToMetaSets}
-          contentColorSetup={contentColorSetup}
-        />
-      )}
     </div>
   );
 };

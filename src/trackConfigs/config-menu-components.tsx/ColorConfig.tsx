@@ -1,5 +1,5 @@
 import React from "react";
-import PropTypes from "prop-types";
+
 import SingleInputConfig from "./SingleInputConfig";
 import ColorPicker from "./ColorPicker";
 
@@ -14,7 +14,7 @@ const DEFAULT_COLOR = "#FFFFFF"; // White
  */
 
 interface ColorConfigProps {
-  color: any;
+  color?: any;
   label: string;
   optionName: string;
 }

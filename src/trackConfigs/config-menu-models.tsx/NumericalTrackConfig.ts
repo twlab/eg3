@@ -7,11 +7,11 @@ import {
   BackgroundColorConfig,
 } from "../config-menu-components.tsx/ColorConfig";
 import HeightConfig from "../config-menu-components.tsx/HeightConfig";
-// import YscaleConfig from "../trackContextMenu/YscaleConfig";
+import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
 import TrackModel from "../../models/TrackModel";
-// import AggregateConfig from "../trackContextMenu/AggregateConfig";
-// import SmoothConfig from "../trackContextMenu/SmoothConfig";
-// import EnsemblStyleConfig from "components/trackContextMenu/EnsemblStyleConfig";
+import AggregateConfig from "./AggregateConfig";
+import SmoothConfig from "../config-menu-components.tsx/SmoothConfig";
+import EnsemblStyleConfig from "../config-menu-components.tsx/EnsemblStyleConfig";
 
 export class NumericalTrackConfig extends TrackConfig {
   constructor(trackModel: TrackModel) {
@@ -24,13 +24,13 @@ export class NumericalTrackConfig extends TrackConfig {
       ...super.getMenuComponents(),
       NumericalDisplayModeConfig,
       HeightConfig,
-      // YscaleConfig,
-      // AggregateConfig,
-      // SmoothConfig,
+      YscaleConfig,
+      AggregateConfig,
+      SmoothConfig,
       PrimaryColorConfig,
       SecondaryColorConfig,
       BackgroundColorConfig,
-      // EnsemblStyleConfig,
+      EnsemblStyleConfig,
     ];
   }
 }

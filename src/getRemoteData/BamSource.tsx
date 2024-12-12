@@ -59,7 +59,7 @@ class BamSource {
     const alignments = flattened.map((r) =>
       Object.assign(r, { ref: this.bam.indexToChr[r.get("seq_id")].refName })
     );
-    console.log(alignments);
+
     return alignments;
   }
 }

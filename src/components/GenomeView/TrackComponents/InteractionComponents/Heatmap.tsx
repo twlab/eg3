@@ -41,8 +41,14 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
   clampScale: ScaleLinear<number, number> | undefined;
 
   renderRect = (placedInteraction: PlacedInteraction, index: number) => {
-    const { opacityScale, viewWindow, height, bothAnchorsInView, clampHeight } =
-      this.props;
+    const {
+      opacityScale,
+      viewWindow,
+      height,
+      bothAnchorsInView,
+      fetchViewWindowOnly,
+      clampHeight,
+    } = this.props;
     let { color, color2 } = this.props;
     if (placedInteraction.interaction.color) {
       color = placedInteraction.interaction.color;
@@ -57,7 +63,18 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       return null;
     }
     if (bothAnchorsInView) {
-      if (xSpan1.start < viewWindow.start || xSpan2.end > viewWindow.end) {
+      if (
+        xSpan1.start < viewWindow.start + this.props.width / 3 ||
+        xSpan2.end > viewWindow.end - this.props.width / 3
+      ) {
+        return null;
+      }
+    }
+    if (fetchViewWindowOnly) {
+      if (
+        xSpan1.end < viewWindow.start + this.props.width / 3 ||
+        xSpan2.start > viewWindow.end - this.props.width / 3
+      ) {
         return null;
       }
     }
@@ -145,8 +162,9 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
-        ? 0.5 * viewWindow.getLength()
+        ? 0.5 * (width / 3)
         : 0.5 * width;
+
     this.clampScale = scaleLinear()
       .domain([0, heightStandard])
       .range([0, height])

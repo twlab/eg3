@@ -1,4 +1,4 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 
@@ -49,10 +49,10 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
   genomeIdx,
   trackModel,
   dataIdx,
-
+  checkTrackPreload,
   trackIdx,
   id,
-  useFineModeNav,
+
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
@@ -70,8 +70,27 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
     full: {},
     density: {},
   });
-  const useFineOrSecondaryParentNav = useRef(false);
 
+  function resetState() {
+    configOptions.current = { ...DEFAULT_OPTIONS };
+    svgHeight.current = 0;
+    rightIdx.current = 0;
+    leftIdx.current = 1;
+    updateSide.current = "right";
+    updatedLegend.current = undefined;
+    fetchedDataCache.current = {};
+    displayCache.current = {
+      full: {},
+      density: {},
+    };
+
+    xPos.current = 0;
+
+    setToolTip(undefined);
+    setToolTipVisible(false);
+    setLegend(undefined);
+  }
+  const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
@@ -88,13 +107,8 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
       setComponents: setCanvasComponents,
     },
   };
-
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    let curXPos = getTrackXOffset(
-      trackState,
-      windowWidth,
-      useFineOrSecondaryParentNav.current
-    );
+    let curXPos = getTrackXOffset(trackState, windowWidth);
     function getHeight(numRows: number): number {
       let options = configOptions.current;
       let rowsToDraw = Math.min(numRows, options.maxRows);
@@ -106,10 +120,9 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
       }
       return rowsToDraw * configOptions.current.rowHeight + TOP_PADDING;
     }
-    getDisplayModeFunction(
+    let res = getDisplayModeFunction(
       {
         genesArr,
-        useFineOrSecondaryParentNav: useFineOrSecondaryParentNav.current,
         trackState,
         windowWidth,
         configOptions: configOptions.current,
@@ -119,7 +132,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
         trackModel,
         getGenePadding: 5,
         getHeight,
-        ROW_HEIGHT: configOptions.current.rowHeight,
+        ROW_HEIGHT,
       },
       displaySetter,
       displayCache,
@@ -127,8 +140,20 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
       curXPos
     );
 
-    xPos.current = curXPos;
-    updateSide.current = side;
+    if (
+      ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
+        usePrimaryNav.current) ||
+      ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
+        !usePrimaryNav.current) ||
+      trackState.initial ||
+      trackState.recreate
+    ) {
+      xPos.current = curXPos;
+      updateSide.current = side;
+      configOptions.current.displayMode === "full"
+        ? setSvgComponents(res)
+        : setCanvasComponents(res);
+    }
   }
 
   //________________________________________________________________________________________________________________________________________________________
@@ -215,7 +240,34 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
   useEffect(() => {
     async function handle() {
       if (trackData![`${id}`]) {
-        if (trackData!.initial === 1) {
+        if (trackData!.trackState.initial === 1) {
+          if (
+            "genome" in trackData![`${id}`].metadata &&
+            trackData![`${id}`].metadata.genome !==
+              genomeArr![genomeIdx!].genome.getName()
+          ) {
+            usePrimaryNav.current = false;
+          }
+          if (
+            !genomeArr![genomeIdx!].isInitial &&
+            genomeArr![genomeIdx!].sizeChange
+          ) {
+            if (
+              "genome" in trackData![`${id}`].metadata &&
+              trackData![`${id}`].metadata.genome !==
+                genomeArr![genomeIdx!].genome.getName()
+            ) {
+              trackData![`${id}`].result =
+                fetchedDataCache.current[dataIdx!].dataCache;
+            } else {
+              trackData![`${id}`].result = [
+                fetchedDataCache.current[dataIdx! + 1].dataCache,
+                fetchedDataCache.current[dataIdx!].dataCache,
+                fetchedDataCache.current[dataIdx! - 1].dataCache,
+              ];
+            }
+          }
+          resetState();
           configOptions.current = {
             ...configOptions.current,
             ...trackModel.options,
@@ -227,16 +279,10 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
             id: id,
             trackIdx: trackIdx,
             legendRef: legendRef,
+            usePrimaryNav: usePrimaryNav.current,
           });
         }
-        if (
-          useFineModeNav ||
-          (trackData![`${id}`].metadata.genome !== undefined &&
-            genomeArr![genomeIdx!].genome.getName() !==
-              trackData![`${id}`].metadata.genome)
-        ) {
-          useFineOrSecondaryParentNav.current = true;
-        }
+
         let tmpRawData: Array<Promise<any>> = [];
 
         trackData![`${id}`].curFetchNav.forEach((locuses) => {
@@ -247,18 +293,16 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
         if (!trackData!.initial) {
           trackData![`${id}`]["result"] = trackData![`${id}`]["result"].flat();
         }
-        cacheTrackData(
-          useFineOrSecondaryParentNav.current,
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
           id,
           trackData,
           fetchedDataCache,
           rightIdx,
           leftIdx,
           createSVGOrCanvas,
-          genomeArr![genomeIdx!],
-          "none",
-          trackModel
-        );
+          trackModel,
+        });
       }
     }
     handle();
@@ -269,14 +313,14 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
     // otherwise when there is new data cuz the user is at the end of the track
 
-    getCacheData(
-      useFineOrSecondaryParentNav.current,
-      rightIdx.current,
-      leftIdx.current,
+    getCacheData({
+      usePrimaryNav: usePrimaryNav.current,
+      rightIdx: rightIdx.current,
+      leftIdx: leftIdx.current,
       dataIdx,
-      displayCache.current,
-      fetchedDataCache.current,
-      configOptions.current.displayMode,
+      displayCache: displayCache.current,
+      fetchedDataCache: fetchedDataCache.current,
+      displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
       xPos,
@@ -285,10 +329,11 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
       createSVGOrCanvas,
       side,
       updateSide,
-      "none"
-    );
+    });
   }, [dataIdx]);
   useEffect(() => {
+    checkTrackPreload(id);
+
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
 
@@ -314,13 +359,13 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
           trackIdx: trackIdx,
           legendRef: legendRef,
         });
-        getConfigChangeData(
-          useFineOrSecondaryParentNav.current,
-          fetchedDataCache.current,
+        getConfigChangeData({
+          fetchedDataCache: fetchedDataCache.current,
           dataIdx,
+          usePrimaryNav: usePrimaryNav.current,
           createSVGOrCanvas,
-          "none"
-        );
+          trackType: trackModel.type,
+        });
       }
     }
   }, [applyTrackConfigChange]);
