@@ -201,155 +201,123 @@ const CustomTrackAdder = ({
       </option>
     ));
 
-  const renderButtons = () => {
-    if (state.trackAdded) {
-      return (
-        <>
-          <button className="btn btn-success" disabled={true}>
-            Success
-          </button>
-          <button
-            className="btn btn-link"
-            onClick={() =>
-              setState((prevState) => ({ ...prevState, trackAdded: false }))
-            }
-          >
-            Add another track
-          </button>
-        </>
-      );
-    } else {
-      return (
-        <button className="btn btn-primary" onClick={handleSubmitClick}>
-          Submit
-        </button>
-      );
-    }
-  };
-
   const renderCustomTrackAdder = () => {
     const { type, url, name, metadata, urlError, querygenome, indexUrl } =
       state;
     const primaryGenome = genomeConfig.genome.getName();
     var allGenomes = getSecondaryGenomes(primaryGenome, addedTracks);
     allGenomes.unshift(primaryGenome);
+    
     return (
-      <form>
-        <h1>Add remote track</h1>
-        <div className="form-group">
-          <label>Track type</label>
-          <span style={{ marginLeft: "10px", fontStyle: "italic" }}>
-            <a
-              href={HELP_LINKS.tracks}
-              target="_blank"
-              rel="noopener noreferrer"
+      <form className="space-y-6">
+        <div className="space-y-4">
+          <div>
+            <label className="flex items-center gap-2">
+              <span className="text-gray-700 font-medium">Track type</span>
+              <a 
+                href={HELP_LINKS.tracks}
+                className="text-blue-600 italic hover:underline text-sm"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                track format documentation
+              </a>
+            </label>
+            <select
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={type}
+              onChange={(e) => setState(prev => ({ ...prev, type: e.target.value }))}
             >
-              track format documentation
-            </a>
-          </span>
-          <select
-            className="form-control"
-            value={type}
-            onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-              setState((prevState) => ({
-                ...prevState,
-                type: event.target.value,
-              }))
-            }
-          >
-            {renderTypeOptions()}
-          </select>
+              {renderTypeOptions()}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium">
+              Track file URL
+            </label>
+            <input
+              type="text"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={url}
+              onChange={(e) => setState(prev => ({ ...prev, url: e.target.value.trim() }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium">
+              Track label
+            </label>
+            <input
+              type="text" 
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={name}
+              onChange={(e) => setState(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
+
+          {TYPES_NEED_INDEX.includes(type.toLowerCase()) && (
+            <div>
+              <label className="block text-gray-700 font-medium">
+                Track index URL <span className="text-gray-500 font-normal">(optional, only need if data and index files are not in same folder)</span>
+              </label>
+              <input
+                type="text"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={indexUrl}
+                onChange={(e) => setState(prev => ({ ...prev, indexUrl: e.target.value.trim() }))}
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-gray-700 font-medium">
+              Genome
+            </label>
+            <select
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={metadata.genome}
+              onChange={(e) => setState(prev => ({ 
+                ...prev, 
+                metadata: { genome: e.target.value }
+              }))}
+            >
+              {renderGenomeOptions(allGenomes)}
+            </select>
+          </div>
+
+          {urlError && (
+            <p className="text-red-500 text-sm">{urlError}</p>
+          )}
+
+          <TrackOptionsUI onGetOptions={getOptions} />
         </div>
-        <div className="form-group">
-          <label>Track file URL</label>
-          <input
-            type="text"
-            className="form-control"
-            value={url}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              setState((prevState) => ({
-                ...prevState,
-                url: event.target.value.trim(),
-              }))
-            }
-          />
+
+        <div className="flex gap-4">
+          {state.trackAdded ? (
+            <>
+              <button 
+                disabled
+                className="px-4 py-2 bg-green-500 text-white rounded-md opacity-50 cursor-not-allowed"
+              >
+                Success
+              </button>
+              <button
+                className="text-blue-600 hover:underline"
+                onClick={() => setState(prev => ({ ...prev, trackAdded: false }))}
+              >
+                Add another track
+              </button>
+            </>
+          ) : (
+            <button
+              className="px-4 py-2 bg-tint text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onClick={handleSubmitClick}
+            >
+              Submit
+            </button>
+          )}
         </div>
-        <div className="form-group">
-          <label>Track label</label>
-          <input
-            type="text"
-            className="form-control"
-            value={name}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              setState((prevState) => ({
-                ...prevState,
-                name: event.target.value,
-              }))
-            }
-          />
-        </div>
-        <div
-          className="form-group"
-          style={{
-            display: TYPES_NEED_INDEX.includes(type.toLowerCase())
-              ? "block"
-              : "none",
-          }}
-        >
-          <label>
-            Track index URL (optional, only need if data and index files are not
-            in same folder)
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            value={indexUrl}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              setState((prevState) => ({
-                ...prevState,
-                indexUrl: event.target.value.trim(),
-              }))
-            }
-          />
-        </div>
-        <div
-          className="form-group"
-          style={{
-            display:
-              type === "bigchain" || type === "genomealign" ? "block" : "none",
-          }}
-        >
-          <label>Query genome</label>
-          <input
-            type="text"
-            className="form-control"
-            value={querygenome}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              setState((prevState) => ({
-                ...prevState,
-                querygenome: event.target.value.trim(),
-              }))
-            }
-          />
-        </div>
-        <div className="form-group">
-          <label>Genome</label>
-          <select
-            className="form-control"
-            value={metadata.genome}
-            onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-              setState((prevState) => ({
-                ...prevState,
-                metadata: { genome: event.target.value },
-              }))
-            }
-          >
-            {renderGenomeOptions(allGenomes)}
-          </select>
-        </div>
-        <span style={{ color: "red" }}>{urlError}</span>
-        <TrackOptionsUI onGetOptions={(value) => getOptions(value)} />
-        {renderButtons()}
       </form>
     );
   };
@@ -361,85 +329,37 @@ const CustomTrackAdder = ({
     />
   );
 
-  // Inline styles
-  const styles = {
-    tabs: {
-      margin: "20px",
-      borderRadius: "4px",
-    } as CSSProperties,
-    tabList: {
-      display: "flex",
-      borderBottom: "2px solid #ccc",
-    } as CSSProperties,
-    tab: {
-      padding: "10px 20px",
-      cursor: "pointer",
-      border: "1px solid transparent",
-      borderRadius: "4px 4px 0 0",
-      marginRight: "2px",
-      transition: "background-color 0.2s ease, color 0.2s ease",
-    } as CSSProperties,
-    tabHover: {
-      backgroundColor: "#e9ecef",
-    } as CSSProperties,
-    tabActive: {
-      border: "1px solid #ccc",
-      borderBottom: "2px solid white",
-      backgroundColor: "white",
-      fontWeight: "bold",
-      color: "blue",
-    } as CSSProperties,
-    tabContent: {
-      border: "1px solid #ccc",
-      padding: "20px",
-      borderRadius: "0 4px 4px 4px",
-      backgroundColor: "white",
-    } as CSSProperties,
-  };
-
   return (
-    <div id="CustomTrackAdder">
-      <div style={styles.tabs}>
-        <div style={styles.tabList}>
-          <div
-            style={
-              state.selectedTab === "add-remote-track"
-                ? { ...styles.tab, ...styles.tabActive }
-                : styles.tab
-            }
-            onClick={() => handleSelect("add-remote-track")}
-          >
-            Add Remote Track
-          </div>
-          <div
-            style={
-              state.selectedTab === "add-remote-data-hub"
-                ? { ...styles.tab, ...styles.tabActive }
-                : styles.tab
-            }
-            onClick={() => handleSelect("add-remote-data-hub")}
-          >
-            Add Remote Data Hub
-          </div>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-xl font-medium mb-4 bg-white py-2">Add Remote Track</h2>
+        <div className="bg-white rounded-lg pb-6">
+          {renderCustomTrackAdder()}
         </div>
-
-        <div style={styles.tabContent}>
-          {state.selectedTab === "add-remote-track" && renderCustomTrackAdder()}
-          {state.selectedTab === "add-remote-data-hub" &&
-            renderCustomHubAdder()}
-        </div>
-
-        {customTracksPool!.length > 0 && (
-          <FacetTable
-            tracks={customTracksPool}
-            addedTracks={addedTracks}
-            onTracksAdded={onTracksAdded}
-            addedTrackSets={addedTrackSets}
-            addTermToMetaSets={addTermToMetaSets}
-            contentColorSetup={contentColorSetup}
-          />
-        )}
       </div>
+
+      <div>
+        <h2 className="text-xl font-medium mb-4 bg-white py-2">Add Remote Data Hub</h2>
+        <div className="bg-white rounded-lg pb-6">
+          {renderCustomHubAdder()}
+        </div>
+      </div>
+
+      {customTracksPool.length > 0 && (
+        <div>
+          <h2 className="text-xl font-medium mb-4 bg-white py-2">Added Custom Tracks</h2>
+          <div className="bg-white rounded-lg shadow-sm">
+            <FacetTable
+              tracks={customTracksPool}
+              addedTracks={addedTracks}
+              onTracksAdded={onTracksAdded}
+              addedTrackSets={addedTrackSets}
+              addTermToMetaSets={addTermToMetaSets}
+              contentColorSetup={contentColorSetup}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, CSSProperties } from "react";
+import React from "react";
 import FacetTable from "./FacetTable";
 import TrackModel from "@/models/TrackModel";
 
@@ -21,111 +21,43 @@ const FacetTableUI: React.FC<FacetTableUIProps> = ({
   addTermToMetaSets,
   contentColorSetup,
 }) => {
-  const [selectedTab, setSelectedTab] = useState<string>("public-tracks");
-
-  const handleSelect = (key: string) => {
-    setSelectedTab(key);
-  };
-
-  // Inline styles
-  const styles = {
-    tabs: {
-      margin: "20px",
-      borderRadius: "4px",
-    } as CSSProperties,
-    tabList: {
-      display: "flex",
-      borderBottom: "2px solid #ccc",
-    } as CSSProperties,
-    tab: {
-      padding: "10px 20px",
-      cursor: "pointer",
-      border: "1px solid transparent",
-      borderRadius: "4px 4px 0 0",
-      marginRight: "2px",
-      transition: "background-color 0.2s ease, color 0.2s ease",
-    } as CSSProperties,
-    tabHover: {
-      backgroundColor: "#e9ecef",
-    } as CSSProperties,
-    tabActive: {
-      border: "1px solid #ccc",
-      borderBottom: "2px solid white",
-      backgroundColor: "white",
-      fontWeight: "bold",
-      color: "blue",
-    } as CSSProperties,
-    tabContent: {
-      border: "1px solid #ccc",
-      padding: "20px",
-      borderRadius: "0 4px 4px 4px",
-      backgroundColor: "white",
-    } as CSSProperties,
-  };
-
   return (
-    <div style={styles.tabs}>
-      <div style={styles.tabList}>
-        <div
-          style={
-            selectedTab === "public-tracks"
-              ? { ...styles.tab, ...styles.tabActive }
-              : styles.tab
-          }
-          onClick={() => handleSelect("public-tracks")}
-        >
-          Public tracks facet table
-        </div>
-        <div
-          style={
-            selectedTab === "custom-tracks"
-              ? { ...styles.tab, ...styles.tabActive }
-              : styles.tab
-          }
-          onClick={() => handleSelect("custom-tracks")}
-        >
-          Custom tracks facet table
-        </div>
+    <div>
+      <div className="mb-8">
+        <h2 className="text-xl font-medium mb-1 bg-white py-2">
+          Public hubs
+        </h2>
+        {publicTracksPool.length > 0 ? (
+          <FacetTable
+            tracks={publicTracksPool}
+            addedTracks={addedTracks}
+            onTracksAdded={onTracksAdded}
+            addedTrackSets={addedTrackSets}
+            contentColorSetup={contentColorSetup}
+            addTermToMetaSets={addTermToMetaSets}
+          />
+        ) : (
+          <p>No public tracks from data hubs yet. Load a hub first.</p>
+        )}
       </div>
 
-      <div style={styles.tabContent}>
-        {selectedTab === "public-tracks" && (
-          <div>
-            <h1>Tracks from public hubs</h1>
-            {publicTracksPool.length > 0 ? (
-              <FacetTable
-                tracks={publicTracksPool}
-                addedTracks={addedTracks}
-                onTracksAdded={onTracksAdded}
-                addedTrackSets={addedTrackSets}
-                contentColorSetup={contentColorSetup}
-                addTermToMetaSets={addTermToMetaSets}
-              />
-            ) : (
-              <p>No public tracks from data hubs yet. Load a hub first.</p>
-            )}
-          </div>
-        )}
+      <hr className="border-gray-200 my-8" />
 
-        {selectedTab === "custom-tracks" && (
-          <div>
-            <h1>Tracks from custom track or hubs</h1>
-            {customTracksPool.length > 0 ? (
-              <FacetTable
-                tracks={customTracksPool}
-                addedTracks={addedTracks}
-                onTracksAdded={onTracksAdded}
-                addedTrackSets={addedTrackSets}
-                contentColorSetup={contentColorSetup}
-                addTermToMetaSets={addTermToMetaSets}
-              />
-            ) : (
-              <p>
-                No custom tracks yet. Submit custom tracks or load custom data
-                hub.
-              </p>
-            )}
-          </div>
+      <div className="mb-8">
+        <h2 className="text-xl font-medium mb-1 bg-white py-2">
+          Custom tracks or hubs
+        </h2>
+        {customTracksPool.length > 0 ? (
+          <FacetTable
+            tracks={customTracksPool}
+            addedTracks={addedTracks}
+            onTracksAdded={onTracksAdded}
+            addedTrackSets={addedTrackSets}
+            contentColorSetup={contentColorSetup}
+            addTermToMetaSets={addTermToMetaSets}
+          />
+        ) : (
+          <p>No custom tracks yet. Submit custom tracks or load custom data hub.</p>
         )}
       </div>
     </div>

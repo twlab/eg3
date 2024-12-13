@@ -1,28 +1,15 @@
-import {
-  createNewTrackState,
-  TrackState,
-} from "@/components/GenomeView/TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import { createNewTrackState, TrackState } from "@/components/GenomeView/TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import OpenInterval from "@/models/OpenInterval";
 import { getSecondaryGenomes } from "@/models/util";
 import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import _ from "lodash";
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import { useRef, useState } from "react";
 
 import { chrType } from "../../localdata/genomename";
 import { treeOfLifeObj } from "../../localdata/treeoflife";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import {
-  genomeNameToConfig,
-  getGenomeConfig,
-} from "../../models/genomes/allGenomes";
+import { genomeNameToConfig, getGenomeConfig } from "../../models/genomes/allGenomes";
 
 function useGenomeState(isLocal = 1) {
   const [selectedGenome, setSelectedGenome] = useState<Array<any>>([]);
@@ -338,6 +325,31 @@ function useGenomeState(isLocal = 1) {
     console.log(isLoading);
     setLoading(isLoading);
   }
+
+  function onTrackRemoved(trackId: number) {
+    let newStateObj = createNewTrackState(
+      stateArr.current[presentStateIdx.current],
+      {}
+    );
+
+    newStateObj.tracks = newStateObj.tracks.filter(
+      (track: any) => track.id !== trackId
+    );
+
+    addGlobalState(newStateObj);
+    
+    let state = stateArr.current[presentStateIdx.current];
+    let curGenomeConfig = getGenomeConfig(state.genomeName);
+    curGenomeConfig.navContext = state["viewRegion"]._navContext;
+    curGenomeConfig.defaultTracks = state.tracks;
+    curGenomeConfig.defaultRegion = new OpenInterval(
+      state.viewRegion._startBase,
+      state.viewRegion._endBase
+    );
+    
+    recreateTrackmanager({ genomeConfig: curGenomeConfig });
+  }
+
   // MARK: - Return
 
   return {
@@ -376,6 +388,7 @@ function useGenomeState(isLocal = 1) {
     presentStateIdx,
     trackModelId,
     isInitial,
+    loading,
 
     state,
     genomeConfig,
@@ -389,6 +402,7 @@ function useGenomeState(isLocal = 1) {
     onRestoreSession,
     onRetrieveBundle,
     addSessionState,
+    onTrackRemoved,
   };
 }
 

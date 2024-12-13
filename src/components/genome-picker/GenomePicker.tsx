@@ -34,7 +34,7 @@ export default function GenomePicker() {
         if (genomeData) {
           addGenomeView(genomeData);
         }
-      }, 0);
+      }, 1000);
     }
 
     return () => clearTimeout(timeout);
