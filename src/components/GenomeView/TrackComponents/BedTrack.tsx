@@ -47,6 +47,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   legendRef,
 
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

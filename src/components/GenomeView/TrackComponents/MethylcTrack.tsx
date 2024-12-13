@@ -32,6 +32,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   legendRef,
 
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -223,6 +224,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
           for (let key in displayCache.current.density) {
             let curCacheComponent =
               displayCache.current.density[`${key}`].canvasData;
+            console.log(displayCache.current.density[`${key}`].canvasData);
             let newComponent = React.cloneElement(curCacheComponent, {
               options: tmpNewConfig,
             });

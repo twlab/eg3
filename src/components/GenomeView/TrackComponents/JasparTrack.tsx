@@ -61,6 +61,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

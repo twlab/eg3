@@ -25,6 +25,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     trackManagerRef,
     legendRef,
     applyTrackConfigChange,
+    sentScreenshotData,
   }) {
     const svgHeight = useRef(0);
     const displayCache = useRef<{ [key: string]: any }>({ density: {} });

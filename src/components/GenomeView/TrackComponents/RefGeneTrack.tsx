@@ -13,6 +13,7 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -44,7 +45,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
+  const { screenshotOpen } = useGenome();
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
@@ -112,26 +115,20 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
     let curXPos = getTrackXOffset(trackState, windowWidth);
 
-    const result = await getDisplayModeFunction(
-      {
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        renderTooltip,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        getGenePadding,
-        getHeight,
-        ROW_HEIGHT,
-        signal, // Pass the signal to the long-running function,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
-    );
+    const result = await getDisplayModeFunction({
+      genesArr,
+      trackState,
+      windowWidth,
+      configOptions: configOptions.current,
+      renderTooltip,
+      svgHeight,
+      updatedLegend,
+      trackModel,
+      getGenePadding,
+      getHeight,
+      ROW_HEIGHT,
+      signal, // Pass the signal to the long-running function,
+    });
 
     if (signal.aborted) return; // Check again before proceeding
 
@@ -390,6 +387,28 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
   }, [applyTrackConfigChange]);
 
+  useEffect(() => {
+    if (screenshotOpen) {
+      let viewData = [
+        fetchedDataCache.current[dataIdx! + 1],
+        fetchedDataCache.current[dataIdx!],
+        fetchedDataCache.current[dataIdx! - 1],
+      ];
+      viewData = viewData.map((item) => item.dataCache).flat(1);
+      sentScreenshotData({
+        data: {
+          dataCache: viewData,
+          trackState: fetchedDataCache.current[dataIdx!].trackState,
+        },
+        trackId: id,
+        getGenePadding,
+        ROW_HEIGHT,
+        getHeight,
+        configOptions: configOptions.current,
+        svgHeight,
+      });
+    }
+  }, [screenshotOpen]);
   return (
     <div
       style={{

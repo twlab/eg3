@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:23208969-31218193");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   // new TrackModel({
   //   type: "ruler",
@@ -77,12 +77,11 @@ const defaultTracks = [
   //   name: "mm10 bed",
   //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
   // }),
-  //   new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "refGene",
-  //   genome: "hg38",
-
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
   new TrackModel({
     type: "geneAnnotation",
     name: "gencodeV39",
@@ -106,12 +105,12 @@ const defaultTracks = [
   //   name: "snp",
   //   genome: "hg38",
   // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "MANE_select_1.0",
-  //   label: "MANE selection v1.0",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "MANE_select_1.0",
+    label: "MANE selection v1.0",
+    genome: "hg38",
+  }),
 
   // new TrackModel({
   //   type: "bigwig",
@@ -176,14 +175,14 @@ const defaultTracks = [
   //     },
   //   ],
   // }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
   // new TrackModel({
   //   type: "dynseq",

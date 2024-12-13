@@ -32,6 +32,7 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
 
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 

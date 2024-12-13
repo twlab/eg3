@@ -29,6 +29,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
     legendRef,
     trackManagerRef,
     applyTrackConfigChange,
+    sentScreenshotData,
 
     // viewWindow,
   } = props;

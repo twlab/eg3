@@ -57,6 +57,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

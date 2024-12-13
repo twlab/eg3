@@ -35,6 +35,11 @@ function useGenomeState(isLocal = 1) {
   const [viewRegion, setViewRegion] = useState<DisplayedRegionModel | null>(
     null
   );
+
+  const [screenshotData, setScreenshotData] = useState<{ [key: string]: any }>(
+    {}
+  );
+  const [screenshotOpen, setScreenshotOpen] = useState<boolean>(false);
   const [showGenNav, setShowGenNav] = useState<boolean>(true);
   const [legendWidth, setLegendWidth] = useState<number>(120);
   const [restoreViewRefresh, setRestoreViewRefresh] = useState<boolean>(true);
@@ -339,9 +344,11 @@ function useGenomeState(isLocal = 1) {
     console.log(isLoading);
     setLoading(isLoading);
   }
+
   // MARK: - Return
 
   return {
+    screenshotOpen,
     selectedGenome,
     allGenome,
     treeOfLife,
@@ -390,6 +397,9 @@ function useGenomeState(isLocal = 1) {
     onRestoreSession,
     onRetrieveBundle,
     addSessionState,
+    setScreenshotOpen,
+    setScreenshotData,
+    screenshotData,
   };
 }
 

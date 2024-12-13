@@ -34,6 +34,7 @@ const BoxplotTrack: React.FC<TrackProps> = memo(function BoxplotTrack({
   useFineModeNav,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

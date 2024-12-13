@@ -29,6 +29,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
     legendRef,
     trackManagerRef,
     applyTrackConfigChange,
+    sentScreenshotData,
   } = props;
 
   const configOptions = useRef({ ...DEFAULT_OPTIONS });

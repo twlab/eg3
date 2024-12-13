@@ -60,6 +60,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   legendRef,
 
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

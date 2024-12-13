@@ -45,6 +45,7 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
   legendRef,
 
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

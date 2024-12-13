@@ -30,6 +30,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   id,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

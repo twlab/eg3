@@ -89,6 +89,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     getHeight,
     ROW_HEIGHT,
     onHideTooltip = undefined,
+    forceSvg = false,
   }) {
     function createFullVisualizer(
       placements,
@@ -428,10 +429,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
         return { trackHeight, numHidden: totalImgCount - imgCount };
       };
       let heightObj = calcTrackHeight();
-      svgHeight.current = heightObj.trackHeight;
-      updatedLegend.current = (
-        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
-      );
+      if (svgHeight) {
+        svgHeight.current = heightObj.trackHeight;
+      }
+
+      if (updatedLegend) {
+        updatedLegend.current = (
+          <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+        );
+      }
+
       return (
         <OmeroTrackComponents
           data={formattedData}
@@ -478,12 +485,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
       ROW_HEIGHT,
       configOptions.maxRows
     );
+    if (svgHeight) {
+      svgHeight.current = height;
+    }
+    if (updatedLegend) {
+      updatedLegend.current = (
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      );
+    }
 
-    svgHeight.current = height;
-
-    updatedLegend.current = (
-      <TrackLegend height={svgHeight.current} trackModel={trackModel} />
-    );
     return svgDATA;
   },
 
@@ -838,10 +848,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
 export function getDisplayModeFunction(
   drawData: { [key: string]: any },
-  displaySetter,
-  displayCache,
-  cacheIdx,
-  curXPos
+  displaySetter = null,
+  displayCache = null,
+  cacheIdx = null,
+  curXPos = null
 ) {
   if (
     drawData.configOptions.displayMode === "full" &&
@@ -1289,7 +1299,7 @@ export function getDisplayModeFunction(
         return new NumericalFeature("", newChrInt).withValue(record.score);
       }
     });
-
+    let tmpObj = { ...drawData.configOptions };
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,
       trackState: drawData.trackState,
@@ -1300,7 +1310,11 @@ export function getDisplayModeFunction(
       genomeConfig: drawData.genomeConfig,
       basesByPixel: drawData.basesByPixel,
     });
-
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: tmpObj,
+      xPos: curXPos,
+    };
     return canvasElements;
   } else if (drawData.trackModel.type === "qbed") {
     let formattedData = drawData.genesArr.map((record) => new QBed(record));

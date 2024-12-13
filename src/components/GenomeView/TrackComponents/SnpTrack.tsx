@@ -55,6 +55,7 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 
   checkTrackPreload,
 }) {

@@ -46,6 +46,7 @@ const RefBedTrack: React.FC<TrackProps> = memo(function RefBedTrack({
   legendRef,
 
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

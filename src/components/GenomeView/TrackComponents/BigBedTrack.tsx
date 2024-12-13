@@ -48,6 +48,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

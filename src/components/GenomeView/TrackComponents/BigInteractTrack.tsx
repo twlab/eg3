@@ -28,6 +28,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
     legendRef,
     trackManagerRef,
     applyTrackConfigChange,
+    sentScreenshotData,
     dragX,
     basePerPixel,
   } = props;

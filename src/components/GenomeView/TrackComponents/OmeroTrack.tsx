@@ -47,6 +47,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

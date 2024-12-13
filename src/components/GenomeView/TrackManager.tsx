@@ -67,6 +67,8 @@ import SnpTrack from "./TrackComponents/SnpTrack";
 import BamTrack from "./TrackComponents/BamTrack";
 import BamSource from "@/getRemoteData/BamSource";
 import OmeroTrack from "./TrackComponents/OmeroTrack";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import { m } from "framer-motion";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -164,7 +166,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   onTracksLoaded,
 }) {
   //useRef to store data between states without re render the component
-
+  const { setScreenshotData } = useGenome();
   const infiniteScrollWorker = useRef<Worker>();
   const useFineModeNav = useRef(false);
 
@@ -225,7 +227,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
   const leftSectionSize = useRef<Array<any>>([]);
   const preloadedTracks = useRef<{ [key: string]: any }>({});
-
+  const screenshotDataObj = useRef<{ [key: string]: any }>({});
   const preload = useRef<boolean>(false);
   // These states are used to update the tracks with new fetch(data);
   const containerRef = useRef(null);
@@ -1359,6 +1361,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
   }
+  function sentScreenshotData(trackDataObj) {
+    screenshotDataObj.current[`${trackDataObj.trackId}`] = {
+      data: trackDataObj.data,
+      alignment: null,
+      error: null,
+      fileInfo: {},
+      meta: {},
+      visRegion: trackDataObj.data.trackState.visRegion,
+      otherData: trackDataObj,
+    };
+    if (
+      Object.keys(screenshotDataObj.current).length === trackComponents.length
+    ) {
+      let curFetchRegionNav = new DisplayedRegionModel(
+        genomeArr[genomeIdx].navContext,
+        minBp.current,
+        maxBp.current
+      );
+
+      let newVisData = {
+        visWidth: windowWidth * 3,
+        visRegion: new DisplayedRegionModel(
+          genomeArr[genomeIdx].navContext,
+          minBp.current - bpRegionSize.current,
+          maxBp.current + bpRegionSize.current
+        ),
+        viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+        viewWindowRegion: curFetchRegionNav,
+      };
+      setScreenshotData({
+        tracks: trackManagerState.current.tracks,
+        data: { ...screenshotDataObj.current },
+        viewRegion: curFetchRegionNav,
+        metadataTerms: [],
+        primaryView: newVisData,
+        highlights: highlight,
+      });
+      screenshotDataObj.current = {};
+    }
+  }
   // USEEFFECTS
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -1410,6 +1452,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initializeTracks();
     }
   }, [initialStart]);
+  useEffect(() => {
+    for (let i = 0; i < trackComponents.length; i++) {
+      console.log(trackComponents[i].component);
+    }
+  }, [trackData]);
 
   useEffect(() => {
     if (windowWidth > 0) {
@@ -1628,6 +1675,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           applyTrackConfigChange={applyTrackConfigChange}
                           dragX={dragX.current}
                           checkTrackPreload={checkTrackPreload}
+                          sentScreenshotData={sentScreenshotData}
                           // viewWindow={trackManagerState.current.viewRegion}
                         />
 

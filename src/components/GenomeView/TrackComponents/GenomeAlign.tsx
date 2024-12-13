@@ -25,6 +25,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   useFineModeNav,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef<any>({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);

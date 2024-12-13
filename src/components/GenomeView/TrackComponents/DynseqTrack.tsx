@@ -33,6 +33,7 @@ const DynseqTrack: React.FC<TrackProps> = memo(function DynseqTrack({
   legendRef,
 
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);

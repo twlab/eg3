@@ -29,6 +29,7 @@ const LongrangeTrack: React.FC<TrackProps> = memo(function LongrangeTrack(
     legendRef,
     trackManagerRef,
     applyTrackConfigChange,
+    sentScreenshotData,
     genomeArr,
     genomeIdx,
     dragX,

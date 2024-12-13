@@ -43,6 +43,7 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
 
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const svgHeight = useRef(0);
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });

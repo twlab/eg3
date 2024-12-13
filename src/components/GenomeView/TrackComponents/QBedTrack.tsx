@@ -34,6 +34,7 @@ const QBedTrack: React.FC<TrackProps> = memo(function QBedTrack({
 
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
