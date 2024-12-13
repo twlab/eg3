@@ -182,6 +182,7 @@ function useGenomeState(isLocal = 1) {
   // MARK: - Actions
 
   function onTracksAdded(trackModels: any) {
+    console.log(trackModels);
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {}

@@ -31,9 +31,11 @@ const genome = new Genome("mm10", [
 
 const navContext = genome.makeNavContext();
 // jaspar chr6:52160767-52161357
-
+// text track bed chr1:731189-812737
+// text track longrange chr6:521000000-53000000
 // dbedgraph : "chr6:52424900-52425400"
-const defaultRegion = navContext.parse("chr6:52160767-52161357");
+
+const defaultRegion = navContext.parse("chr6:52155153-52156081");
 const defaultTracks = [
   // new TrackModel({
   //     type: "ruler",
@@ -45,38 +47,38 @@ const defaultTracks = [
   //     name: "gencodeM19",
   //     genome: "mm10",
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeCompVM25",
-    genome: "mm10",
-  }),
-  new TrackModel({
-    name: "JASPAR Transcription Factors 2022",
-    type: "jaspar",
-    url: "https://hgdownload.soe.ucsc.edu/gbdb/mm10/jaspar/JASPAR2022.bb",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeCompVM25",
+  //   genome: "mm10",
+  // }),
+  // new TrackModel({
+  //   name: "JASPAR Transcription Factors 2022",
+  //   type: "jaspar",
+  //   url: "https://hgdownload.soe.ucsc.edu/gbdb/mm10/jaspar/JASPAR2022.bb",
+  // }),
 
-  new TrackModel({
-    type: "dbedgraph",
-    url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
-    options: {
-      dynamicLabels: [
-        "stage1",
-        "stage2",
-        "stage3",
-        "stage4",
-        "stage5",
-        "stage6",
-        "stage7",
-        "stage8",
-        "stage9",
-        "stage10",
-      ],
-      dynamicColors: ["red", "blue", "#00FF00", 0x000000],
-      useDynamicColors: true,
-    },
-    showOnHubLoad: true,
-  }),
+  // new TrackModel({
+  //   type: "dbedgraph",
+  //   url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
+  //   options: {
+  //     dynamicLabels: [
+  //       "stage1",
+  //       "stage2",
+  //       "stage3",
+  //       "stage4",
+  //       "stage5",
+  //       "stage6",
+  //       "stage7",
+  //       "stage8",
+  //       "stage9",
+  //       "stage10",
+  //     ],
+  //     dynamicColors: ["red", "blue", "#00FF00", 0x000000],
+  //     useDynamicColors: true,
+  //   },
+  //   showOnHubLoad: true,
+  // }),
   // new TrackModel({
   //     type: "longrange",
   //     name: "ES-E14 ChIA-PET",
@@ -104,23 +106,23 @@ const defaultTracks = [
   //     url: 'CQMd6V_cRw6iCI_-Unl3PQ'
   // }),
 
-    new TrackModel({
-        "type": "dynamicbed",
-        "name": "dynamic bed",
-        "showOnHubLoad": true,
-        "tracks": [
-        {
-            "type": "bed",
-            "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-            "name": "peak1"
-        },
-        {
-            "type": "bed",
-            "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
-            "name": "peak2"
-        }
-        ]
-    })
+    // new TrackModel({
+    //     "type": "dynamicbed",
+    //     "name": "dynamic bed",
+    //     "showOnHubLoad": true,
+    //     "tracks": [
+    //     {
+    //         "type": "bed",
+    //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+    //         "name": "peak1"
+    //     },
+    //     {
+    //         "type": "bed",
+    //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
+    //         "name": "peak2"
+    //     }
+    //     ]
+    // })
         
 ];
 

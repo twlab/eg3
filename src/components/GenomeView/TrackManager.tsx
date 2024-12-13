@@ -860,12 +860,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         genomicFetchCoord: event.data.genomicFetchCoord,
         useFineModeNav: event.data.useFineModeNav,
       };
-      // console.log(
-      //   tempObj,
-      //   event.data.genomicLoci,
-      //   event.data.expandGenomicLoci,
-      //   "fetched data for all tracks with their id"
-      // );
+      console.log(
+        tempObj,
+        event.data.genomicLoci,
+        event.data.expandGenomicLoci,
+        "fetched data for all tracks with their id"
+      );
 
       for (let trackModel of trackManagerState.current.tracks) {
         if (!(trackModel.id in tempObj)) {

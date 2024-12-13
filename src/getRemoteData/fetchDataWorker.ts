@@ -12,7 +12,10 @@ import { ViewExpansion } from "../models/RegionExpander";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
-import localTrackFetchFunction from "@/getLocalData/localFetchData";
+import {
+  localTrackFetchFunction,
+  textFetchFunction,
+} from "@/getLocalData/localFetchData";
 import { niceBpCount } from "../models/util";
 
 export interface PlacedAlignment {
@@ -469,22 +472,23 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-    // if (trackModel.type !== "genomealign" && event.data.initial) {
-    //   curFetchNav = initGenomicLoci;
-    // } else if (trackModel.type !== "genomealign" && !event.data.initial) {
-    //   curFetchNav = new Array(genomicLoci);
-    // }
 
     if (trackModel.fileObj !== "" && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
 
         curRespond = await Promise.all(
-          await localTrackFetchFunction[trackModel.type]({
-            basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-            nav: curFetchNav[i],
-            trackModel,
-          })
+          trackModel.isText
+            ? await textFetchFunction[trackModel.type]({
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
+            : await localTrackFetchFunction[trackModel.type]({
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
         );
 
         responses.push(_.flatten(curRespond));

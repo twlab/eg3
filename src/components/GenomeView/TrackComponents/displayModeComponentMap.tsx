@@ -881,7 +881,7 @@ export function getDisplayModeFunction(
         return new Feature(
           newChrInt.toStringWithOther(newChrInt),
           newChrInt,
-          ""
+          drawData.trackModel.isText ? record[5] : ""
         );
       });
     } else if (drawData.trackModel.type === "categorical") {
@@ -1154,6 +1154,7 @@ export function getDisplayModeFunction(
         }
       });
     } else if (drawData.trackModel.type === "longrange") {
+      console.log(drawData.genesArr);
       drawData.genesArr.map((record) => {
         const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 
