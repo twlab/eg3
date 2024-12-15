@@ -38,17 +38,14 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   };
 
   const prepareSvg = () => {
-    //... (keeping the logic same as the original code with fixed `props` and `params` type defined)
-    // Full implementation goes here...
-
     const { highlights, needClip, legendWidth, primaryView, darkTheme } = props;
-    // Note: Square brackets have been added to make array
+
     const tracks: any = Array.from(
       document
         .querySelector("#screenshotContainer")
         ?.querySelectorAll(".Track") ?? []
     );
-
+    console.log(tracks);
     const boxHeight = tracks.reduce(
       (acc, cur) => acc + cur.clientHeight,
       11 * tracks.length
@@ -56,12 +53,16 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const boxWidth = tracks[0].clientWidth;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
+    // svgElem.setAttributeNS(
+    //   null,
+    //   "viewBox",
+    //   "0 0 " + boxWidth + " " + boxHeight
+    // );
     svgElem.setAttributeNS(
       null,
-      "viewBox",
-      "0 0 " + boxWidth + " " + boxHeight
+      "width",
+      props.trackData[`${0}`].trackState.visWidth / 3 + ""
     );
-    svgElem.setAttributeNS(null, "width", boxWidth + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
     svgElem.style.display = "block";
@@ -98,11 +99,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     let x = 0,
       y = 5;
     tracks.forEach((ele, idx) => {
-      const legendWidth = ele.children[0].clientWidth + 1;
-      const trackHeight = ele.children[1].clientHeight + 3;
+      const legendWidth = 120;
+      const trackHeight = ele.children[0].clientHeight + 3;
       const yoffset = trackHeight > 20 ? 24 : 14;
-      const trackLabelText =
-        ele.children[0].querySelector(".TrackLegend-label").textContent;
+      const trackLabelText = null;
+      //   ele.children[0].querySelector(".TrackLegend-label").textContent;
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
         labelSvg.setAttributeNS(null, "x", x + 4 + "");
@@ -113,9 +114,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         labelSvg.appendChild(textNode);
         svgElemg.appendChild(labelSvg);
       }
-      const chrLabelText = ele.children[0].querySelector(
-        ".TrackLegend-chrLabel"
-      ).textContent;
+      const chrLabelText = null;
+      //   ele.children[0].querySelector(
+      //   ".TrackLegend-chrLabel"
+      // ).textContent;
       if (chrLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
         labelSvg.setAttributeNS(null, "x", x + 15 + "");
@@ -126,22 +128,23 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         labelSvg.appendChild(textNode);
         svgElemg.appendChild(labelSvg);
       }
-      const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
-      if (trackLegendAxisSvgs.length > 0) {
-        const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
-        trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
-          trackLegendAxisSvg.setAttribute("id", "legendAxis" + idx + idx3);
-          trackLegendAxisSvg.setAttribute("x", x2 + "");
-          trackLegendAxisSvg.setAttribute(
-            "y",
-            idx3 * trackLegendAxisSvg.clientHeight + y + ""
-          );
-          svgElemg.appendChild(trackLegendAxisSvg);
-        });
-      }
+      // const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
+      // if (trackLegendAxisSvgs.length > 0) {
+      //   const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
+      //   trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
+      //     trackLegendAxisSvg.setAttribute("id", "legendAxis" + idx + idx3);
+      //     trackLegendAxisSvg.setAttribute("x", x2 + "");
+      //     trackLegendAxisSvg.setAttribute(
+      //       "y",
+      //       idx3 * trackLegendAxisSvg.clientHeight + y + ""
+      //     );
+      //     svgElemg.appendChild(trackLegendAxisSvg);
+      //   });
+      // }
       // deal with track contents
       const options = props.tracks[idx].options;
-      const eleSvgs = ele.children[1].querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
+      const eleSvgs = ele.querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
+      console.log(eleSvgs, ele);
       const trackG = document.createElementNS(xmlns, "g");
       if (eleSvgs.length > 0) {
         x += legendWidth;
@@ -295,7 +298,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       .map((trackModel, index) => {
         const id = trackModel.id;
 
-        return trackData[`${id}`].component;
+        return (
+          <div key={index} className="Track">
+            {trackData[`${id}`].component}
+          </div>
+        );
       });
 
     return trackSvgElements;
