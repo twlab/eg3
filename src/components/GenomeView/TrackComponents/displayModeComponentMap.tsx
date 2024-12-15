@@ -71,6 +71,7 @@ import OmeroTrackComponents, {
 } from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "@/models/layoutUtils";
 import _ from "lodash";
+import { config } from "process";
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -89,7 +90,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     getHeight,
     ROW_HEIGHT,
     onHideTooltip = undefined,
-    forceSvg = false,
   }) {
     function createFullVisualizer(
       placements,
@@ -114,6 +114,39 @@ export const displayModeComponentMap: { [key: string]: any } = {
         );
       }
       let svgKey = uuidv4();
+      if (configOptions.forceSvg) {
+        let start = trackState.viewWindow.start + trackState.visWidth / 3;
+
+        let end = trackState.viewWindow.end - trackState.visWidth / 3;
+        return (
+          <svg
+            key={svgKey}
+            width={width / 3}
+            viewBox={`${start} 0 ${end} ${height}`}
+            height={height}
+            display={"block"}
+          >
+            {placements.map(renderAnnotation)}
+            <line
+              x1={width / 3}
+              y1={0}
+              x2={width / 3}
+              y2={height}
+              stroke="black"
+              strokeWidth={1}
+            />
+            <line
+              x1={(2 * width) / 3}
+              y1={0}
+              x2={(2 * width) / 3}
+              y2={height}
+              stroke="black"
+              strokeWidth={1}
+            />
+          </svg>
+        );
+      }
+
       return (
         <svg key={svgKey} width={width} height={height} display={"block"}>
           {placements.map(renderAnnotation)}
@@ -472,6 +505,20 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType
     );
 
+    if (configOptions.forceSvg) {
+      placeFeatureData.placements = placeFeatureData.placements.filter(
+        (feature) => {
+          const curXSpan = feature.xSpan;
+
+          return !(
+            curXSpan.end <
+              trackState.viewWindow.start + trackState.visWidth / 3 ||
+            curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
+          );
+        }
+      );
+      console.log(placeFeatureData.placements);
+    }
     let height;
 
     height =
@@ -493,7 +540,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         <TrackLegend height={svgHeight.current} trackModel={trackModel} />
       );
     }
-
+    console.log(svgDATA);
     return svgDATA;
   },
 
@@ -848,10 +895,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
 export function getDisplayModeFunction(
   drawData: { [key: string]: any },
-  displaySetter = null,
-  displayCache = null,
-  cacheIdx = null,
-  curXPos = null
+  displaySetter?: any,
+  displayCache?: any,
+  cacheIdx?: any,
+  curXPos?: any
 ) {
   if (
     drawData.configOptions.displayMode === "full" &&

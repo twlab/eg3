@@ -77,14 +77,16 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
 
     trackState["viewWindow"] =
-      trackState.side === "right"
+      updateSide.current === "right"
         ? new OpenInterval(
-            0,
-            windowWidth * 3 + -(dragX! + (curXPos + windowWidth))
+            -(dragX! + (xPos.current + windowWidth)),
+            windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
           )
         : new OpenInterval(
-            -(dragX! - (curXPos + windowWidth)) + windowWidth,
-            windowWidth * 3 - (dragX! - (curXPos + windowWidth)) + windowWidth
+            -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+            windowWidth * 3 -
+              (dragX! - (xPos.current + windowWidth)) +
+              windowWidth
           );
 
     let res = getDisplayModeFunction(

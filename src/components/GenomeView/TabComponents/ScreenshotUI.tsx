@@ -284,20 +284,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     document.documentElement.style.setProperty("--bg-color", "white");
     document.documentElement.style.setProperty("--font-color", "#222");
 
-    const groupScale = new GroupedTrackManager().getGroupScale(
-      tracks,
-      trackData,
-      primaryView ? primaryView.visWidth : 100,
-      primaryView ? primaryView.viewRegion : 100
-    );
-    console.log(
-      tracks,
-      trackData,
-      primaryView,
-      metadataTerms,
-      viewRegion,
-      darkTheme
-    );
     const trackSvgElements = tracks
       .filter(
         (track) =>
@@ -308,34 +294,14 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       )
       .map((trackModel, index) => {
         const id = trackModel.id;
-        const data = { ...trackData[id] };
-        console.log(data);
 
-        return primaryView
-          ? getDisplayModeFunction({
-              genesArr: data.data.dataCache,
-              trackState: data.data.trackState,
-              windowWidth: primaryView.visWidth,
-              configOptions: data.otherData.configOptions,
-              renderTooltip: () => {},
-              svgHeight: null,
-              updatedLegend: null,
-              trackModel,
-              getGenePadding: data.otherData.getGenePadding,
-              getHeight: data.otherData.getHeight,
-              ROW_HEIGHT: data.otherData.ROW_HEIGHT,
-            })
-          : null;
+        return trackData[`${id}`].component;
       });
 
     return trackSvgElements;
   };
 
   const { viewRegion, primaryView, highlights } = props;
-
-  if (!primaryView) {
-    return <div>Loading...</div>;
-  }
 
   const trackContents = makeSvgTrackElements();
   console.log(trackContents);

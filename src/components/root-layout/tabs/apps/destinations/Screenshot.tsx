@@ -24,7 +24,7 @@ export default function Screenshot({ params }: NavigationComponentProps) {
       primaryView={screenshotData.primaryView}
       darkTheme={false}
       tracks={screenshotData.tracks}
-      trackData={screenshotData.data}
+      trackData={screenshotData.componentData}
       metadataTerms={[]}
       viewRegion={screenshotData.viewRegion}
     />

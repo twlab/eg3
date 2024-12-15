@@ -1362,40 +1362,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
   function sentScreenshotData(trackDataObj) {
-    screenshotDataObj.current[`${trackDataObj.trackId}`] = {
-      data: trackDataObj.data,
-      alignment: null,
-      error: null,
-      fileInfo: {},
-      meta: {},
-      visRegion: trackDataObj.data.trackState.visRegion,
-      otherData: trackDataObj,
-    };
+    screenshotDataObj.current[`${trackDataObj.trackId}`] = trackDataObj;
     if (
       Object.keys(screenshotDataObj.current).length === trackComponents.length
     ) {
-      let curFetchRegionNav = new DisplayedRegionModel(
-        genomeArr[genomeIdx].navContext,
-        minBp.current,
-        maxBp.current
-      );
-
-      let newVisData = {
-        visWidth: windowWidth * 3,
-        visRegion: new DisplayedRegionModel(
-          genomeArr[genomeIdx].navContext,
-          minBp.current - bpRegionSize.current,
-          maxBp.current + bpRegionSize.current
-        ),
-        viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-        viewWindowRegion: curFetchRegionNav,
-      };
+      console.log(screenshotDataObj.current);
       setScreenshotData({
         tracks: trackManagerState.current.tracks,
-        data: { ...screenshotDataObj.current },
-        viewRegion: curFetchRegionNav,
-        metadataTerms: [],
-        primaryView: newVisData,
+        componentData: screenshotDataObj.current,
         highlights: highlight,
       });
       screenshotDataObj.current = {};

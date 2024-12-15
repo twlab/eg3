@@ -14,6 +14,7 @@ import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDa
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { useGenome } from "@/lib/contexts/GenomeContext";
+import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -46,6 +47,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   legendRef,
   applyTrackConfigChange,
   sentScreenshotData,
+  dragX,
 }) {
   const { screenshotOpen } = useGenome();
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
@@ -63,6 +65,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   const xPos = useRef(0);
   const [svgComponents, setSvgComponents] = useState<any>(null);
+  const [test, settest] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
@@ -389,24 +392,55 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     if (screenshotOpen) {
-      let viewData = [
-        fetchedDataCache.current[dataIdx! + 1],
-        fetchedDataCache.current[dataIdx!],
-        fetchedDataCache.current[dataIdx! - 1],
-      ];
-      viewData = viewData.map((item) => item.dataCache).flat(1);
-      sentScreenshotData({
-        data: {
-          dataCache: viewData,
-          trackState: fetchedDataCache.current[dataIdx!].trackState,
-        },
-        trackId: id,
-        getGenePadding,
-        ROW_HEIGHT,
-        getHeight,
-        configOptions: configOptions.current,
-        svgHeight,
-      });
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
+
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding,
+          getHeight,
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+        });
+      }
+
+      handle();
     }
   }, [screenshotOpen]);
   return (
@@ -431,6 +465,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           }}
         >
           {svgComponents}
+          {test}
         </div>
       ) : (
         <div
