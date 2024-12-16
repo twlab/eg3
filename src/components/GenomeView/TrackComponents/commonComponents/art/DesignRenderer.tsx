@@ -14,6 +14,8 @@ interface DesignRendererProps {
   style: any;
   width: any;
   height: number;
+  viewWindow?: any;
+  forceSvg?: boolean;
 }
 interface CanvasRendererProps {
   children: any;
@@ -40,12 +42,40 @@ export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
 
   render() {
     const { type, style, ...otherProps } = this.props;
+    console.log(this.props);
     const mergedStyle = Object.assign({}, DEFAULT_STYLE, style);
     switch (type) {
       case RenderTypes.CANVAS:
-        return <CanvasDesignRenderer {...otherProps} style={mergedStyle} />;
+        return (
+          <CanvasDesignRenderer
+            width={this.props.width}
+            height={this.props.height}
+            children={this.props.children}
+            style={mergedStyle}
+          />
+        );
       case RenderTypes.SVG:
-        return <svg {...otherProps} style={mergedStyle} />;
+        if (this.props.forceSvg) {
+          let start = this.props.viewWindow.start + this.props.width / 3;
+
+          let end = this.props.viewWindow.end - this.props.width / 3;
+
+          let svgWidth = end - start;
+          console.log(this.props.width / 3);
+          return (
+            <svg
+              children={this.props.children}
+              style={mergedStyle}
+              width={this.props.width / 3}
+              viewBox={`${start} 0 ${svgWidth} ${this.props.height}`}
+              height={this.props.height}
+              display={"block"}
+            />
+          );
+        } else {
+          return <svg {...otherProps} style={mergedStyle} />;
+        }
+
       default:
         return null;
     }
@@ -213,6 +243,7 @@ class CanvasDesignRenderer extends React.PureComponent<CanvasRendererProps> {
 
   render() {
     const { children, ...otherProps } = this.props;
+
     return <canvas ref={(node) => (this.canvasNode = node)} {...otherProps} />;
   }
 }

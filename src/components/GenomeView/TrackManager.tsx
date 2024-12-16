@@ -1366,7 +1366,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       Object.keys(screenshotDataObj.current).length === trackComponents.length
     ) {
-      console.log(screenshotDataObj.current);
       setScreenshotData({
         tracks: trackManagerState.current.tracks,
         componentData: screenshotDataObj.current,

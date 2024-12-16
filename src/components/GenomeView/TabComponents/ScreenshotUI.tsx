@@ -58,10 +58,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     //   "viewBox",
     //   "0 0 " + boxWidth + " " + boxHeight
     // );
+    //add the width of the track and tracklegend to to correctly view all the svg
     svgElem.setAttributeNS(
       null,
       "width",
-      props.trackData[`${0}`].trackState.visWidth / 3 + ""
+      props.trackData[`${0}`].trackState.visWidth / 3 + 120 + ""
     );
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
@@ -100,10 +101,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       y = 5;
     tracks.forEach((ele, idx) => {
       const legendWidth = 120;
-      const trackHeight = ele.children[0].clientHeight + 3;
+      const trackHeight = ele.children[1].clientHeight + 3;
       const yoffset = trackHeight > 20 ? 24 : 14;
-      const trackLabelText = null;
-      //   ele.children[0].querySelector(".TrackLegend-label").textContent;
+
+      const trackLabelText =
+        ele.children[0].querySelector(".TrackLegend-label").textContent;
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
         labelSvg.setAttributeNS(null, "x", x + 4 + "");
@@ -114,10 +116,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         labelSvg.appendChild(textNode);
         svgElemg.appendChild(labelSvg);
       }
-      const chrLabelText = null;
-      //   ele.children[0].querySelector(
-      //   ".TrackLegend-chrLabel"
-      // ).textContent;
+
+      const chrLabelText = ele.children[0].querySelector(
+        ".TrackLegend-chrLabel"
+      ).textContent;
       if (chrLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
         labelSvg.setAttributeNS(null, "x", x + 15 + "");
@@ -128,23 +130,23 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         labelSvg.appendChild(textNode);
         svgElemg.appendChild(labelSvg);
       }
-      // const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
-      // if (trackLegendAxisSvgs.length > 0) {
-      //   const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
-      //   trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
-      //     trackLegendAxisSvg.setAttribute("id", "legendAxis" + idx + idx3);
-      //     trackLegendAxisSvg.setAttribute("x", x2 + "");
-      //     trackLegendAxisSvg.setAttribute(
-      //       "y",
-      //       idx3 * trackLegendAxisSvg.clientHeight + y + ""
-      //     );
-      //     svgElemg.appendChild(trackLegendAxisSvg);
-      //   });
-      // }
+      const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
+      if (trackLegendAxisSvgs.length > 0) {
+        const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
+        trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
+          trackLegendAxisSvg.setAttribute("id", "legendAxis" + idx + idx3);
+          trackLegendAxisSvg.setAttribute("x", x2 + "");
+          trackLegendAxisSvg.setAttribute(
+            "y",
+            idx3 * trackLegendAxisSvg.clientHeight + y + ""
+          );
+          svgElemg.appendChild(trackLegendAxisSvg);
+        });
+      }
       // deal with track contents
       const options = props.tracks[idx].options;
       const eleSvgs = ele.querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
-      console.log(eleSvgs, ele);
+
       const trackG = document.createElementNS(xmlns, "g");
       if (eleSvgs.length > 0) {
         x += legendWidth;
@@ -256,7 +258,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       (acc, cur) => acc + cur.clientHeight,
       11 * tracks.length
     );
-    const boxWidth = tracks[0].clientWidth;
+    const boxWidth = tracks[1].clientWidth;
     // create a new jsPDF instance
     const pdf = new (window as any).jsPDF("l", "px", [boxWidth, boxHeight]);
     const pdfContainer = document.getElementById("pdfContainer");
@@ -276,17 +278,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   };
 
   const makeSvgTrackElements = () => {
-    const {
-      tracks,
-      trackData,
-      primaryView,
-      metadataTerms,
-      viewRegion,
-      darkTheme,
-    } = props;
+    const { tracks, trackData } = props;
     document.documentElement.style.setProperty("--bg-color", "white");
     document.documentElement.style.setProperty("--font-color", "#222");
-
+    console.log(trackData);
     const trackSvgElements = tracks
       .filter(
         (track) =>
@@ -297,18 +292,18 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       )
       .map((trackModel, index) => {
         const id = trackModel.id;
-
+        console.log(trackData[`${id}`].trackLegend);
+        const trackLegendHtml = trackData[`${id}`].trackLegend;
         return (
-          <div key={index} className="Track">
-            {trackData[`${id}`].component}
+          <div key={index} className="Track" style={{ display: "flex" }}>
+            <div>{trackData[`${id}`].trackLegend}</div>
+            <div>{trackData[`${id}`].component}</div>
           </div>
         );
       });
 
     return trackSvgElements;
   };
-
-  const { viewRegion, primaryView, highlights } = props;
 
   const trackContents = makeSvgTrackElements();
   console.log(trackContents);

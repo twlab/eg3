@@ -113,11 +113,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  async function createSVGOrCanvas(trackState, genesArr, cacheIdx, signal) {
-    if (signal.aborted) return; // Check if the signal is already aborted at the start
-
+  async function createSVGOrCanvas(trackState, genesArr) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     const result = await getDisplayModeFunction({
       genesArr,
       trackState,
@@ -130,10 +128,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       getGenePadding,
       getHeight,
       ROW_HEIGHT,
-      signal, // Pass the signal to the long-running function,
     });
-
-    if (signal.aborted) return; // Check again before proceeding
 
     if (
       ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
@@ -145,7 +140,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     ) {
       xPos.current = curXPos;
       updateSide.current = side;
-      if (signal.aborted) return; // Final check before modifying state
+
       configOptions.current.displayMode === "full"
         ? setSvgComponents(result)
         : setCanvasComponents(result);
@@ -245,9 +240,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     if (trackData![`${id}`]) {
-      const abortController = new AbortController();
-      const signal = abortController.signal;
-
       if (trackData!.trackState.initial === 1) {
         if (
           "genome" in trackData![`${id}`].metadata &&
@@ -271,7 +263,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                 trackData![`${id}`].trackDataIdx
               ].dataCache;
           } else {
-            console.log(trackData, fetchedDataCache.current);
             trackData![`${id}`].result = [
               fetchedDataCache.current[trackData![`${id}`].trackDataIdx + 1]
                 .dataCache,
@@ -308,20 +299,12 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           leftIdx,
           createSVGOrCanvas,
           trackModel,
-          signal,
         });
       }
-
-      return () => {
-        abortController.abort(); // Cleanup function to abort ongoing operations if dependencies change
-      };
     }
   }, [trackData]);
 
   useEffect(() => {
-    const abortController = new AbortController();
-    const signal = abortController.signal;
-
     getCacheData({
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
@@ -338,21 +321,14 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       createSVGOrCanvas,
       side,
       updateSide,
-      signal,
     });
-
-    return () => {
-      abortController.abort(); // Cleanup function to abort ongoing operations if dependencies change
-    };
   }, [dataIdx]);
 
   useEffect(() => {
     if (!genomeArr![genomeIdx!].isInitial) {
       checkTrackPreload(id);
-      setLegend(
-        ReactDOM.createPortal(updatedLegend.current, legendRef.current)
-      );
     }
+    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
 
   useEffect(() => {
@@ -437,6 +413,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           component: result,
           trackId: id,
           trackState: trackState,
+          trackLegend: updatedLegend.current,
         });
       }
 

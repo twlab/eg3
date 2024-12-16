@@ -118,11 +118,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
         let start = trackState.viewWindow.start + trackState.visWidth / 3;
 
         let end = trackState.viewWindow.end - trackState.visWidth / 3;
+        let svgWidth = end - start;
         return (
           <svg
             key={svgKey}
             width={width / 3}
-            viewBox={`${start} 0 ${end} ${height}`}
+            viewBox={`${start} 0 ${svgWidth} ${height}`}
             height={height}
             display={"block"}
           >
@@ -505,20 +506,19 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType
     );
 
-    if (configOptions.forceSvg) {
-      placeFeatureData.placements = placeFeatureData.placements.filter(
-        (feature) => {
-          const curXSpan = feature.xSpan;
+    // if (configOptions.forceSvg) {
+    //   placeFeatureData.placements = placeFeatureData.placements.filter(
+    //     (feature) => {
+    //       const curXSpan = feature.xSpan;
 
-          return !(
-            curXSpan.end <
-              trackState.viewWindow.start + trackState.visWidth / 3 ||
-            curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
-          );
-        }
-      );
-      console.log(placeFeatureData.placements);
-    }
+    //       return !(
+    //         curXSpan.end <
+    //           trackState.viewWindow.start + trackState.visWidth / 3 ||
+    //         curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
+    //       );
+    //     }
+    //   );
+    // }
     let height;
 
     height =
@@ -536,11 +536,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
       svgHeight.current = height;
     }
     if (updatedLegend) {
+      console.log("SDAASDASD");
       updatedLegend.current = (
         <TrackLegend height={svgHeight.current} trackModel={trackModel} />
       );
     }
-    console.log(svgDATA);
+
     return svgDATA;
   },
 
@@ -560,10 +561,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <NumericalTrack
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
