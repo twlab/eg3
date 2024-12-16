@@ -1,9 +1,6 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "./commonComponents/check-obj-dupe";
+import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import Feature, {
   Fiber,
   JasparFeature,
@@ -71,7 +68,7 @@ import OmeroTrackComponents, {
 } from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "@/models/layoutUtils";
 import _ from "lodash";
-import { config } from "process";
+
 enum BedColumnIndex {
   CATEGORY = 3,
 }
