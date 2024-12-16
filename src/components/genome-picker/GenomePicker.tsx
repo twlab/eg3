@@ -5,8 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import placeholder from "../../assets/images/icon.png";
 import { useGenome } from "../../lib/contexts/GenomeContext";
 import Progress from "../ui/progress/Progress";
+import useSmallScreen from "@/lib/hooks/useSmallScreen";
 
 export default function GenomePicker() {
+  const isSmallScreen = useSmallScreen();
   const { treeOfLife, allGenome, addGenomeView } = useGenome();
   const [selectedPath, setSelectedPath] = useState<[string, string] | null>(
     null
@@ -44,9 +46,9 @@ export default function GenomePicker() {
     <div className="max-w-2xl mx-auto pt-4 h-full">
       <h2 className="text-3xl text-tint mb-4">Select a Genome</h2>
       <div
-        className={`grid grid-cols-3 gap-4 ${
-          selectedPath !== null ? "items-center" : ""
-        }`}
+        className={`grid ${isSmallScreen ? 'grid-cols-1' : 'grid-cols-3'
+          } gap-4 ${selectedPath !== null ? "items-center" : ""
+          }`}
       >
         {(selectedPath === null
           ? genomeList
@@ -54,9 +56,8 @@ export default function GenomePicker() {
         ).map((genome) => (
           <motion.div
             key={genome.name}
-            className={`rounded-2xl shadow-md ${
-              selectedPath !== null ? "col-start-2" : ""
-            }`}
+            className={`rounded-2xl shadow-md ${selectedPath !== null && !isSmallScreen ? "col-start-2" : ""
+              }`}
             layout
             initial={{ opacity: 0 }}
             animate={{
@@ -101,9 +102,8 @@ export default function GenomePicker() {
                     <ChevronRightIcon className="w-4 h-4" />
                   )}
                   <motion.p
-                    className={`${
-                      selectedPath !== null ? "text-center text-xl w-full" : ""
-                    }`}
+                    className={`${selectedPath !== null ? "text-center text-xl w-full" : ""
+                      }`}
                   >
                     {version}
                   </motion.p>

@@ -384,6 +384,7 @@ function useGenomeState(isLocal = 1) {
     setItems,
     setViewRegion,
     setLoading,
+    setSelectedGenome,
     stateArr,
     presentStateIdx,
     trackModelId,

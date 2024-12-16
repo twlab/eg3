@@ -48,20 +48,17 @@ export function ToolButtons(props: ToolButtonsProps) {
   let buttons: Array<any> = [];
   for (let toolName in Tools) {
     const tool = Tools[toolName];
-    const className =
-      tool === props.selectedTool ? "btn btn-primary" : "btn btn-light";
     buttons.push(
       <button
         key={toolName}
-        className={className}
         title={tool.title}
         onClick={() => props.onToolClicked(tool)}
-        style={{ margin: "0 10px", border: "1px solid black", padding: "5px" }}
+        className={`border border-gray-500 rounded-md p-2 mx-2 ${tool.isSelected ? "bg-gray-500" : ""}`}
       >
         {tool.buttonContent}
       </button>
     );
   }
 
-  return <ButtonGroup label="Tools:" buttons={buttons} />;
+  return <ButtonGroup buttons={buttons} />;
 }

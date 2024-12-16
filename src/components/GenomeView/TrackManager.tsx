@@ -1471,7 +1471,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           whiteSpace: "nowrap",
         }}
       >
-        <div>
+        {/* <div>
           {" "}
           {Math.round(bpX.current) +
             "-" +
@@ -1514,28 +1514,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ) : (
             <div style={{ height: 20 }}>DATA READY LETS GO</div>
           )}
-        </div>
+        </div> */}
 
-        <div>1pixel to {basePerPixel.current}bp</div>
+        {/* <div>1pixel to {basePerPixel.current}bp</div> */}
         {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-          <HighlightMenu
-            highlights={trackManagerState.current.highlights}
-            viewRegion={trackManagerState.current.viewRegion}
-            showHighlightMenuModal={true}
-            onNewRegion={highlightJump}
-            onSetHighlights={getHighlightState}
-          />
-          <History
-            state={{
-              past: stateArr.slice(0, presentStateIdx + 1),
-              future: stateArr.slice(presentStateIdx + 1),
-            }}
-            jumpToPast={jumpToState}
-            jumpToFuture={jumpToState}
-            clearHistory={jumpToState}
-          />
-          <SubToolButtons onToolClicked={onToolClicked} />
+          <div className="flex flex-row py-4 items-center">
+            <HighlightMenu
+              highlights={trackManagerState.current.highlights}
+              viewRegion={trackManagerState.current.viewRegion}
+              showHighlightMenuModal={true}
+              onNewRegion={highlightJump}
+              onSetHighlights={getHighlightState}
+            />
+            <History
+              state={{
+                past: stateArr.slice(0, presentStateIdx + 1),
+                future: stateArr.slice(presentStateIdx + 1),
+              }}
+              jumpToPast={jumpToState}
+              jumpToFuture={jumpToState}
+              clearHistory={jumpToState}
+            />
+            <SubToolButtons onToolClicked={onToolClicked} />
+            <div className="flex flex-row gap-4">
+              <p className="text-sm font-mono">
+                {trackManagerState.current.viewRegion._navContext._features[0].locus.chr}:
+                {Math.round(bpX.current)}-
+                {Math.round(bpX.current + bpRegionSize.current)}
+              </p>
+              <p className="text-sm font-mono">
+                1px: {basePerPixel.current.toFixed(2)}bp
+              </p>
+            </div>
+          </div>
           <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
               style={{

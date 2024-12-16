@@ -12,10 +12,12 @@ import TracksTab from './tabs/tracks/TracksTab';
 import Toolbar from "./toolbar/Toolbar";
 import GenomeRoot from "../GenomeView/GenomeRoot";
 import { useGenome } from "../../lib/contexts/GenomeContext";
+import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 
 const CURL_RADIUS = 15;
 
 export default function RootLayout() {
+    const { ref: toolbarRef, height: toolbarHeight } = useElementGeometry();
     const isSmallScreen = useSmallScreen();
     const { selectedGenome } = useGenome();
 
@@ -37,10 +39,13 @@ export default function RootLayout() {
                     borderRadius: showModal ? 15 : 0
                 }}
             >
-                <Toolbar showMenuButtons={selectedGenome.length > 0} />
-                <div className="flex flex-row h-full">
+                <div ref={toolbarRef}>
+                    <Toolbar showMenuButtons={selectedGenome.length > 0} />
+                </div>
+                <div className="flex flex-row" style={{ height: `calc(100vh - ${toolbarHeight}px)` }}>
                     <motion.div
-                        className="h-full border-r bg-white overflow-hidden"
+                        className="border-r bg-white overflow-hidden"
+                        style={{ height: `calc(100vh - ${toolbarHeight}px)` }}
                         initial={{
                             width: '100vw'
                         }}
@@ -58,6 +63,7 @@ export default function RootLayout() {
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: 0.3 }}
+                                    className="h-full overflow-auto"
                                 >
                                     <GenomeRoot />
                                 </motion.div>
@@ -78,7 +84,8 @@ export default function RootLayout() {
                     <AnimatePresence mode="wait">
                         {showRightTab && (
                             <motion.div
-                                className="h-full bg-white overflow-hidden"
+                                className="bg-white overflow-hidden"
+                                style={{ height: `calc(100vh - ${toolbarHeight}px)` }}
                                 key="navigation-tabs"
                                 initial={{
                                     width: 0,
