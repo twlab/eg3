@@ -9,6 +9,8 @@ import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackCompone
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import OpenInterval from "@/models/OpenInterval";
@@ -48,6 +50,7 @@ const LongrangeTrack: React.FC<TrackProps> = memo(function LongrangeTrack(
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
   const [legend, setLegend] = useState<any>();

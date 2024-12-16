@@ -9,6 +9,8 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import OpenInterval from "@/models/OpenInterval";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -30,7 +32,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   trackIdx,
   id,
   legendRef,
-
+  dragX,
   applyTrackConfigChange,
   sentScreenshotData,
 }) {
@@ -46,6 +48,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
@@ -189,7 +192,57 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
       updateSide,
     });
   }, [dataIdx]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          usePrimaryNav: usePrimaryNav.current,
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     checkTrackPreload(id);
 

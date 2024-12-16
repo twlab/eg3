@@ -9,7 +9,10 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
+import OpenInterval from "@/models/OpenInterval";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -31,7 +34,9 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   legendRef,
   applyTrackConfigChange,
   sentScreenshotData,
+  dragX,
 }) {
+  const { screenshotOpen } = useGenome();
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
@@ -66,7 +71,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     updatedLegend.current = undefined;
     fetchedDataCache.current = {};
     displayCache.current = {
-      full: {},
       density: {},
     };
 
@@ -77,7 +81,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
 
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     function step() {
       let res = getDisplayModeFunction(
         {
@@ -203,7 +207,57 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
 
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          usePrimaryNav: usePrimaryNav.current,
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     if (canvasComponents !== null) {
       if (id in applyTrackConfigChange) {

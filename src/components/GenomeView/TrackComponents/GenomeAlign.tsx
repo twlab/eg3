@@ -9,6 +9,9 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
+import OpenInterval from "@/models/OpenInterval";
 DEFAULT_OPTIONS["displayMode"] = "full";
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   basePerPixel,
@@ -20,13 +23,14 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   windowWidth,
   dataIdx,
   trackModel,
-
+  dragX,
   id,
   useFineModeNav,
   legendRef,
   applyTrackConfigChange,
   sentScreenshotData,
 }) {
+  const { screenshotOpen } = useGenome();
   const configOptions = useRef<any>({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
@@ -153,6 +157,53 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents]);
 
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = fetchedDataCache.current[dataIdx!].dataCache;
+
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
+
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          basesByPixel: basePerPixel,
+        });
+        console.log(result);
+        sentScreenshotData({
+          component: result.svgElements,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     if (svgComponents !== null) {
       if (id in applyTrackConfigChange) {

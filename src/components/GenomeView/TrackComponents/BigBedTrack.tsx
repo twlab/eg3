@@ -9,14 +9,15 @@ import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { DEFAULT_OPTIONS as defaultBigBedTrack } from "./bedComponents/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
-import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 
-import { BigBedTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/BigBedTrackConfig";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import OpenInterval from "@/models/OpenInterval";
+
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -46,6 +47,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   useFineModeNav,
   setShow3dGene,
   isThereG3dTrack,
+  dragX,
   legendRef,
   applyTrackConfigChange,
   sentScreenshotData,
@@ -65,6 +67,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
@@ -339,7 +342,60 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
       }
     }
   }, [applyTrackConfigChange]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding,
+          getHeight,
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   return (
     <div
       style={{

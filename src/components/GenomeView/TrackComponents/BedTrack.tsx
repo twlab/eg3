@@ -15,6 +15,9 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
+import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -64,6 +67,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
@@ -114,7 +118,7 @@ const BedTrack: React.FC<TrackProps> = memo(function BedTrack({
   }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     let res = getDisplayModeFunction(
       {
         genesArr,

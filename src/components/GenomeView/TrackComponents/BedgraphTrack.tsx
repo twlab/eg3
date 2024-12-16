@@ -9,6 +9,8 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import OpenInterval from "@/models/OpenInterval";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -29,7 +31,7 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
 
   trackIdx,
   id,
-
+  dragX,
   legendRef,
   applyTrackConfigChange,
   sentScreenshotData,
@@ -48,6 +50,7 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
@@ -192,7 +195,57 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
       updateSide,
     });
   }, [dataIdx]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+
+          updatedLegend,
+          trackModel,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     checkTrackPreload(id);
 

@@ -8,6 +8,7 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
   props
@@ -44,6 +45,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 

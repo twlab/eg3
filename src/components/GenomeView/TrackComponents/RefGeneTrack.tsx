@@ -14,6 +14,7 @@ import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDa
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
@@ -49,7 +50,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   sentScreenshotData,
   dragX,
 }) {
-  const { screenshotOpen } = useGenome();
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
@@ -64,6 +64,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   });
 
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [test, settest] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);

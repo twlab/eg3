@@ -121,6 +121,7 @@ export function cacheTrackData({
         index: 1,
       };
       let trackState1 = {
+        ...trackData.trackState,
         initial: 1,
         side: "right",
         xDist: 0,

@@ -553,12 +553,23 @@ export const displayModeComponentMap: { [key: string]: any } = {
     function getNumLegend(legend: ReactNode) {
       updatedLegend.current = legend;
     }
-
+    console.log(
+      formattedData,
+      trackState,
+      windowWidth,
+      configOptions,
+      updatedLegend,
+      trackModel
+    );
     let canvasElements = (
       <NumericalTrack
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
@@ -1035,9 +1046,15 @@ export function getDisplayModeFunction(
   } else if (drawData.trackModel.type === "genomealign") {
     let result = drawData.genesArr;
     let svgElements;
+
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
-
+      drawData.updatedLegend.current = (
+        <TrackLegend
+          height={drawData.configOptions.height}
+          trackModel={drawData.trackModel}
+        />
+      );
       svgElements = drawDatas.map((item, index) =>
         renderFineAlignment(item, index, drawData.configOptions)
       );
@@ -1047,10 +1064,27 @@ export function getDisplayModeFunction(
           renderGapText(item, index, drawData.configOptions)
         )
       );
+      let element;
+      if (drawData.configOptions.forceSvg) {
+        let start =
+          drawData.trackState.viewWindow.start +
+          drawData.trackState.visWidth / 3;
 
-      let tempObj = {
-        alignment: drawData.genesArr,
-        svgElements: (
+        let end =
+          drawData.trackState.viewWindow.end - drawData.trackState.visWidth / 3;
+        let svgWidth = end - start;
+        element = (
+          <svg
+            width={drawData.trackState.visWidth / 3}
+            viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
+            height={drawData.configOptions.height}
+            display={"block"}
+          >
+            {svgElements}
+          </svg>
+        );
+      } else {
+        element = (
           <svg
             width={drawData.trackState.visWidth}
             height={drawData.configOptions.height}
@@ -1058,7 +1092,11 @@ export function getDisplayModeFunction(
           >
             {svgElements}
           </svg>
-        ),
+        );
+      }
+      let tempObj = {
+        alignment: drawData.genesArr,
+        svgElements: element,
         trackState: drawData.trackState,
       };
 
@@ -1098,10 +1136,27 @@ export function getDisplayModeFunction(
         true
       );
       svgElements.push(primaryArrows);
+      let element;
+      if (drawData.configOptions.forceSvg) {
+        let start =
+          drawData.trackState.viewWindow.start +
+          drawData.trackState.visWidth / 3;
 
-      let tempObj = {
-        alignment: drawData.genesArr,
-        svgElements: (
+        let end =
+          drawData.trackState.viewWindow.end - drawData.trackState.visWidth / 3;
+        let svgWidth = end - start;
+        element = (
+          <svg
+            width={drawData.trackState.visWidth / 3}
+            viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
+            height={drawData.configOptions.height}
+            display={"block"}
+          >
+            {svgElements}
+          </svg>
+        );
+      } else {
+        element = (
           <svg
             width={drawData.trackState.visWidth}
             height={drawData.configOptions.height}
@@ -1109,7 +1164,12 @@ export function getDisplayModeFunction(
           >
             {svgElements}
           </svg>
-        ),
+        );
+      }
+      let tempObj = {
+        alignment: drawData.genesArr,
+        svgElements: element,
+
         trackState: drawData.trackState,
       };
 
@@ -1355,11 +1415,7 @@ export function getDisplayModeFunction(
       genomeConfig: drawData.genomeConfig,
       basesByPixel: drawData.basesByPixel,
     });
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: tmpObj,
-      xPos: curXPos,
-    };
+
     return canvasElements;
   } else if (drawData.trackModel.type === "qbed") {
     let formattedData = drawData.genesArr.map((record) => new QBed(record));

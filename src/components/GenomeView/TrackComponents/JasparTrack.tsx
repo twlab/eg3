@@ -13,6 +13,8 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import BedAnnotation from "./bedComponents/BedAnnotation";
 import { JasparFeature } from "@/models/Feature";
 import OpenInterval from "@/models/OpenInterval";
@@ -78,6 +80,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);

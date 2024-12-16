@@ -14,6 +14,8 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
 const ARROW_SIZE = 16;
@@ -76,10 +78,11 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     checkTrackPreload,
     trackIdx,
     id,
-    useFineModeNav,
+
     legendRef,
     applyTrackConfigChange,
     sentScreenshotData,
+    dragX,
   }) {
     const configOptions = useRef({ ...DEFAULT_OPTIONS });
     const svgHeight = useRef(0);
@@ -95,6 +98,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
 
     const usePrimaryNav = useRef<boolean>(true);
     const xPos = useRef(0);
+    const { screenshotOpen } = useGenome();
     const [svgComponents, setSvgComponents] = useState<any>(null);
     const [canvasComponents, setCanvasComponents] = useState<any>(null);
     const [toolTip, setToolTip] = useState<any>();
@@ -361,7 +365,60 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
         updateSide,
       });
     }, [dataIdx]);
+    useEffect(() => {
+      if (screenshotOpen) {
+        async function handle() {
+          let genesArr = [
+            fetchedDataCache.current[dataIdx! + 1],
+            fetchedDataCache.current[dataIdx!],
+            fetchedDataCache.current[dataIdx! - 1],
+          ];
+          let trackState = {
+            ...fetchedDataCache.current[dataIdx!].trackState,
+          };
 
+          trackState["viewWindow"] =
+            updateSide.current === "right"
+              ? new OpenInterval(
+                  -(dragX! + (xPos.current + windowWidth)),
+                  windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+                )
+              : new OpenInterval(
+                  -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                  windowWidth * 3 -
+                    (dragX! - (xPos.current + windowWidth)) +
+                    windowWidth
+                );
+
+          genesArr = genesArr.map((item) => item.dataCache).flat(1);
+          let drawOptions = { ...configOptions.current };
+          drawOptions["forceSvg"] = true;
+
+          let result = await getDisplayModeFunction({
+            genesArr,
+            trackState,
+            windowWidth,
+            configOptions: drawOptions,
+            renderTooltip,
+            svgHeight,
+            updatedLegend,
+            trackModel,
+            getGenePadding,
+            getHeight,
+            ROW_HEIGHT,
+          });
+
+          sentScreenshotData({
+            component: result,
+            trackId: id,
+            trackState: trackState,
+            trackLegend: updatedLegend.current,
+          });
+        }
+
+        handle();
+      }
+    }, [screenshotOpen]);
     useEffect(() => {
       checkTrackPreload(id);
 

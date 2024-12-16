@@ -8,6 +8,7 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
   function DynamicLongrangeTrack({
@@ -35,6 +36,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     const fetchedDataCache = useRef<{ [key: string]: any }>({});
     const usePrimaryNav = useRef<boolean>(true);
     const xPos = useRef(0);
+    const { screenshotOpen } = useGenome();
     const updateSide = useRef("right");
     const updatedLegend = useRef<any>();
 

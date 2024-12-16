@@ -16,6 +16,8 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -52,7 +54,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
   checkTrackPreload,
   trackIdx,
   id,
-
+  dragX,
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
@@ -93,6 +95,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
   }
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
@@ -108,19 +111,20 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
       setComponents: setCanvasComponents,
     },
   };
+  function getHeight(numRows: number): number {
+    let options = configOptions.current;
+    let rowsToDraw = Math.min(numRows, options.maxRows);
+    if (options.hideMinimalItems) {
+      rowsToDraw -= 1;
+    }
+    if (rowsToDraw < 1) {
+      rowsToDraw = 1;
+    }
+    return rowsToDraw * configOptions.current.rowHeight + TOP_PADDING;
+  }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-    function getHeight(numRows: number): number {
-      let options = configOptions.current;
-      let rowsToDraw = Math.min(numRows, options.maxRows);
-      if (options.hideMinimalItems) {
-        rowsToDraw -= 1;
-      }
-      if (rowsToDraw < 1) {
-        rowsToDraw = 1;
-      }
-      return rowsToDraw * configOptions.current.rowHeight + TOP_PADDING;
-    }
+
     let res = getDisplayModeFunction(
       {
         genesArr,
@@ -376,7 +380,60 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
       }
     }
   }, [applyTrackConfigChange]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding: 5,
+          getHeight,
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 

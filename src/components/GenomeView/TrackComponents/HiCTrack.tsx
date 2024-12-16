@@ -8,6 +8,8 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import OpenInterval from "@/models/OpenInterval";
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 
@@ -46,6 +48,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 

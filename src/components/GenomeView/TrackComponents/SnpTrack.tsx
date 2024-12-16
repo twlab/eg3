@@ -13,6 +13,7 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import SnpDetail from "./SnpComponents/SnpDetail";
 
@@ -74,6 +75,7 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();

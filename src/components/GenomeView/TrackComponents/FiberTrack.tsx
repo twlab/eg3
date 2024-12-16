@@ -6,6 +6,8 @@ import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { FiberDisplayModes } from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
@@ -59,6 +61,7 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);

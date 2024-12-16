@@ -4,10 +4,10 @@ interface GetCacheDataParams {
   rightIdx: number;
   leftIdx: number;
   dataIdx: number;
-  displayCache: any;
+  displayCache?: any;
   fetchedDataCache: any;
-  displayType: string;
-  displaySetter: any;
+  displayType?: string;
+  displaySetter?: any;
   svgHeight?: { current: number };
   xPos: { current: number };
   updatedLegend: { current: any };
@@ -76,7 +76,7 @@ export function getCacheData({
   }
 
   if (dataValid) {
-    if (dataIdx! in displayCache[`${displayType}`]) {
+    if (displayCache && dataIdx! in displayCache[`${displayType}`]) {
       updatedLegend.current = (
         <TrackLegend
           height={displayCache[`${displayType}`][dataIdx!].height}

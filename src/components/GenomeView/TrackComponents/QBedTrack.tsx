@@ -10,6 +10,7 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -50,6 +51,7 @@ const QBedTrack: React.FC<TrackProps> = memo(function QBedTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 

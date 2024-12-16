@@ -12,9 +12,11 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import SnpDetail from "./SnpComponents/SnpDetail";
 import { DefaultAggregators } from "@/models/FeatureAggregator";
+import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -42,7 +44,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
   checkTrackPreload,
   trackIdx,
   id,
-  useFineModeNav,
+  dragX,
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
@@ -64,6 +66,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
@@ -292,7 +295,60 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
 
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding: 5,
+
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {

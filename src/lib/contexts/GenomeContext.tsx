@@ -341,7 +341,6 @@ function useGenomeState(isLocal = 1) {
   }
 
   function onTracksLoaded(isLoading: boolean) {
-    console.log(isLoading);
     setLoading(isLoading);
   }
 

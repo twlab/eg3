@@ -8,6 +8,8 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import _ from "lodash";
 
 export const TOP_PADDING = 2;
@@ -52,6 +54,7 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
 

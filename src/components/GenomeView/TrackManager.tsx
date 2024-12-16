@@ -849,6 +849,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           );
         } else if (item.name === "bam") {
+          console.log("jhere");
           tempObj[item.id]["fetchInstance"] = hicStrawObj.current[`${item.id}`];
           tempObj[item.id]["curFetchNav"] = item.curFetchNav;
         }
@@ -1253,7 +1254,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             trackComponent.trackModel.id ===
               trackManagerState.current.tracks[i].id &&
-            trackComponent.hasData
+            trackComponent.hasData &&
+            trackManagerState.current.tracks[i].type !== "bam"
           ) {
             trackComponent.trackModel.options =
               trackManagerState.current.tracks[i].options;
