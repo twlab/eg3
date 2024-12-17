@@ -70,8 +70,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
   function createSVGOrCanvas(trackState, genesArr) {
@@ -104,6 +102,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -204,8 +203,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)

@@ -302,7 +302,7 @@ export function cacheTrackData({
           testData.push(fetchedDataCache.current[currIdx]);
           currIdx--;
         }
-
+        console.log(fetchedDataCache.current);
         let viewData;
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
           viewData = getDeDupeArrMatPlot(testData);

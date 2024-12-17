@@ -64,7 +64,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       full: {},
     };
 
-    xPos.current = 0;
     setLegend(undefined);
   }
 
@@ -95,6 +94,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setSvgComponents(res);
@@ -152,8 +152,6 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents]);
 

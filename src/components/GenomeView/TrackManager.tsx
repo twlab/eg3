@@ -1348,9 +1348,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         Object.keys(preloadedTracks.current).length === trackComponents.length
       ) {
         preloadedTracks.current = {};
-
+        cancelAnimationFrame(frameID.current);
         trackComponents.map((component, i) => {
-          requestAnimationFrame(() => {
+          frameID.current = requestAnimationFrame(() => {
             component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
           });
         });

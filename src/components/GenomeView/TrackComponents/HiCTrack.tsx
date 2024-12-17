@@ -69,8 +69,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
@@ -114,6 +112,7 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -135,10 +134,11 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
             genomeArr![genomeIdx!].sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
+            const trackIndex = trackData![`${id}`].trackDataIdx;
+            const cache = fetchedDataCache.current;
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           }
           resetState();
           configOptions.current = {
@@ -214,8 +214,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 

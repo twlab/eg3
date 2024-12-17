@@ -553,14 +553,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     function getNumLegend(legend: ReactNode) {
       updatedLegend.current = legend;
     }
-    console.log(
-      formattedData,
-      trackState,
-      windowWidth,
-      configOptions,
-      updatedLegend,
-      trackModel
-    );
+
     let canvasElements = (
       <NumericalTrack
         data={formattedData}
@@ -595,13 +588,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <QBedTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        viewWindow={trackState.viewWindow}
         trackModel={trackModel}
         isLoading={false}
         error={undefined}
+        forceSvg={configOptions.forceSvg}
       />
     );
     return canvasElements;
@@ -622,10 +615,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <BoxplotTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         isLoading={false}
         error={undefined}
@@ -784,10 +777,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
         <FiberTrackComponent
           data={formattedData}
           options={configOptions}
-          viewWindow={new OpenInterval(0, trackState.visWidth)}
-          visRegion={objToInstanceAlign(trackState.visRegion)}
+          viewWindow={trackState.viewWindow}
           width={trackState.visWidth}
-          forceSvg={false}
+          forceSvg={configOptions.forceSvg}
+          visRegion={objToInstanceAlign(trackState.visRegion)}
           trackModel={trackModel}
           getNumLegend={getNumLegend}
           isLoading={false}

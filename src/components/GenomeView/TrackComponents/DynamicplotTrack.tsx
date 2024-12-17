@@ -69,8 +69,6 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
@@ -104,6 +102,7 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -213,8 +212,6 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)

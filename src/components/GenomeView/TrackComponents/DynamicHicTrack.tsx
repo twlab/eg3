@@ -66,8 +66,6 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
@@ -99,6 +97,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -120,10 +119,11 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
             genomeArr![genomeIdx!].sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
+            const trackIndex = trackData![`${id}`].trackDataIdx;
+            const cache = fetchedDataCache.current;
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           }
           resetState();
           configOptions.current = {
@@ -201,8 +201,6 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 

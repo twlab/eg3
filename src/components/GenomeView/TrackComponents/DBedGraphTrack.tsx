@@ -81,8 +81,6 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
@@ -115,6 +113,7 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -212,8 +211,6 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)

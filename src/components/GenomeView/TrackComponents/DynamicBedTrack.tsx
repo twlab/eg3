@@ -80,8 +80,6 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
@@ -129,6 +127,7 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -238,8 +237,6 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)

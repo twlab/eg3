@@ -61,8 +61,6 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
         density: {},
       };
 
-      xPos.current = 0;
-
       setLegend(undefined);
     }
     function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
@@ -94,6 +92,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
         trackState.recreate
       ) {
         xPos.current = curXPos;
+        checkTrackPreload(id);
         updateSide.current = side;
 
         setCanvasComponents(res);
@@ -116,10 +115,11 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
               genomeArr![genomeIdx!].sizeChange &&
               Object.keys(fetchedDataCache.current).length > 0
             ) {
+              const trackIndex = trackData![`${id}`].trackDataIdx;
+              const cache = fetchedDataCache.current;
+              let idx = trackIndex in cache ? trackIndex : 0;
               trackData![`${id}`].result =
-                fetchedDataCache.current[
-                  trackData![`${id}`].trackDataIdx
-                ].dataCache;
+                fetchedDataCache.current[idx].dataCache;
             }
             resetState();
             configOptions.current = {
@@ -173,8 +173,6 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     }, [dataIdx]);
 
     useEffect(() => {
-      checkTrackPreload(id);
-
       setLegend(
         updatedLegend.current &&
           ReactDOM.createPortal(updatedLegend.current, legendRef.current)
