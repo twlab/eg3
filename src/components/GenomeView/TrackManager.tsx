@@ -35,6 +35,7 @@ import DBedGraphTrack from "./TrackComponents/DBedGraphTrack";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
+import ErrorTrack from "./TrackComponents/ErrorTrack";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import {
   createNewTrackState,
@@ -123,6 +124,7 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   snp: SnpTrack,
   bam: BamTrack,
   omeroidr: OmeroTrack,
+  error: ErrorTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
   let genRes: Array<any> = [];
@@ -1273,15 +1275,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           newTrackComponents.push({
             trackIdx: i,
             id: uniqueKey,
-            component: componentMap[trackManagerState.current.tracks[i].type],
+            component:
+              trackManagerState.current.tracks[i].type in componentMap
+                ? componentMap[trackManagerState.current.tracks[i].type]
+                : componentMap.error,
             posRef: newPosRef,
             legendRef: newLegendRef,
             trackModel: trackManagerState.current.tracks[i],
             hasData: false,
           });
-          initialPreloadTrackFetch.current.push(
-            trackManagerState.current.tracks[i]
-          );
+          console.log(componentMap.error);
+          if (trackManagerState.current.tracks[i].type in componentMap) {
+            initialPreloadTrackFetch.current.push(
+              trackManagerState.current.tracks[i]
+            );
+          }
         }
         continue;
       }
@@ -1297,7 +1305,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           newTrackComponents.push({
             trackIdx: i,
             id: uniqueKey,
-            component: componentMap[trackManagerState.current.tracks[i].type],
+            component:
+              trackManagerState.current.tracks[i].type in componentMap
+                ? componentMap[trackManagerState.current.tracks[i].type]
+                : componentMap.error,
             posRef: newPosRef,
             legendRef: newLegendRef,
             trackModel: trackManagerState.current.tracks[i],

@@ -78,6 +78,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   }
 
   function createSVGOrCanvas(trackState, genesArr) {
+    console.log(genesArr);
     let curXPos = getTrackXOffset(trackState, windowWidth);
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     function step() {

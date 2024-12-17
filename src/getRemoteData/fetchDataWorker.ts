@@ -36,7 +36,38 @@ interface QueryGenomePiece {
   queryFeature: Feature;
   queryXSpan: OpenInterval;
 }
+const componentMap: { [key: string]: any } = {
+  geneannotation: "",
+  bed: "",
+  bigwig: "",
+  dynseq: "",
+  methylc: "",
+  hic: "",
+  genomealign: "",
 
+  categorical: "",
+  longrange: "",
+  biginteract: "",
+  repeatmasker: "",
+  bigbed: "",
+  refbed: "",
+  matplot: "",
+  ruler: "",
+  modbed: "",
+  dynamic: "",
+  bedgraph: "",
+  qbed: "",
+  boxplot: "",
+  jaspar: "",
+  dynamichic: "",
+  dynamicbed: "",
+  dbedgraph: "",
+  dynamiclongrange: "",
+  snp: "",
+  bam: "",
+  omeroidr: "",
+  error: "",
+};
 export interface PlacedMergedAlignment extends QueryGenomePiece {
   segments: PlacedAlignment[];
   targetXSpan: OpenInterval;
@@ -368,7 +399,14 @@ self.onmessage = async (event: MessageEvent) => {
       const id = item.id;
       const url = item.url;
 
-      if (trackType in { hic: "", ruler: "", dynamichic: "" }) {
+      if (!(item.type in componentMap)) {
+        fetchResults.push({
+          name: trackType,
+          id: id,
+          metadata: item.metadata,
+          trackModel: item,
+        });
+      } else if (trackType in { hic: "", ruler: "", dynamichic: "" }) {
         fetchResults.push({
           name: trackType,
           id: id,
@@ -472,7 +510,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-
+    console.log(curFetchNav);
     if (trackModel.fileObj !== "" && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
@@ -496,35 +534,43 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
-        if (trackModel.type in { geneannotation: "", snp: "" }) {
-          curRespond = await Promise.all(
-            await curFetchNav[i].map((nav, index) => {
-              return trackFetchFunction[trackModel.type]({
-                genomeName:
-                  "genome" in trackModel.metadata
-                    ? trackModel.metadata.genome
-                    : primaryGenName,
-                name: trackModel.name,
-                chr: nav.chr,
-                start: nav.start,
-                end: nav.end,
-                nav,
+        try {
+          if (trackModel.type in { geneannotation: "", snp: "" }) {
+            curRespond = await Promise.all(
+              curFetchNav[i].map(async (nav, index) => {
+                return await trackFetchFunction[trackModel.type]({
+                  genomeName:
+                    "genome" in trackModel.metadata
+                      ? trackModel.metadata.genome
+                      : primaryGenName,
+                  name: trackModel.name,
+                  chr: nav.chr,
+                  start: nav.start,
+                  end: nav.end,
+                  nav,
+                  trackModel,
+                  trackType: trackModel.type,
+                });
+              })
+            );
+          } else {
+            curRespond = await Promise.all([
+              trackFetchFunction[trackModel.type]({
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
                 trackModel,
-                trackType: trackModel.type,
-              });
-            })
-          );
-        } else {
-          curRespond = await Promise.all(
-            await trackFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
-          );
-        }
+              }),
+            ]);
+          }
 
-        responses.push(_.flatten(curRespond));
+          responses.push(_.flatten(curRespond));
+        } catch (error) {
+          console.error(
+            `Error fetching data for track model type ${trackModel.type}:`,
+            error
+          );
+          responses.push({ error: `Error fetching data: ${"ERERER"}` });
+        }
       }
     }
     return responses;

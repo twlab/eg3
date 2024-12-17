@@ -49,6 +49,8 @@ export const trackUsingExpandedLoci = {
   longrange: "",
   genomealign: "",
 };
+
+function checkFetchError(trackData) {}
 export function cacheTrackData({
   id,
   trackData,
@@ -225,13 +227,6 @@ export function cacheTrackData({
     if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
       if (trackData!.trackState.side === "right") {
         newTrackState.index = rightIdx.current;
-        fetchedDataCache.current[rightIdx.current] = {
-          dataCache:
-            trackData![`${id}`].metadata["track type"] === "genomealign"
-              ? trackData![`${id}`].result[0]
-              : trackData![`${id}`].result,
-          trackState: newTrackState,
-        };
 
         rightIdx.current--;
         createSVGOrCanvas(
