@@ -56,6 +56,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
+  const fetchError = useRef<boolean>(false);
   const usePrimaryNav = useRef<boolean>(true);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const displayCache = useRef<{ [key: string]: any }>({
@@ -113,22 +114,43 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  async function createSVGOrCanvas(trackState, genesArr) {
+  async function createSVGOrCanvas(trackState, genesArr, isError) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
-    const result = await getDisplayModeFunction({
-      genesArr,
-      trackState,
-      windowWidth,
-      configOptions: configOptions.current,
-      renderTooltip,
-      svgHeight,
-      updatedLegend,
-      trackModel,
-      getGenePadding,
-      getHeight,
-      ROW_HEIGHT,
-    });
+    if (isError) {
+      fetchError.current = true;
+    }
+
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction({
+        genesArr,
+        trackState,
+        windowWidth,
+        configOptions: configOptions.current,
+        renderTooltip,
+        svgHeight,
+        updatedLegend,
+        trackModel,
+        getGenePadding,
+        getHeight,
+        ROW_HEIGHT,
+      })
+    );
 
     if (
       ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
@@ -143,8 +165,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       updateSide.current = side;
 
       configOptions.current.displayMode === "full"
-        ? setSvgComponents(result)
-        : setCanvasComponents(result);
+        ? setSvgComponents(res)
+        : setCanvasComponents(res);
     }
   }
   // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
@@ -321,6 +343,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -438,7 +461,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         display: "flex",
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 2
+            ? !fetchError.current
+              ? svgHeight.current + 2
+              : 40 + 2
             : configOptions.current.height + 2,
         position: "relative",
       }}

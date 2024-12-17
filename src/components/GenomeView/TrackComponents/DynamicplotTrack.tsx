@@ -42,6 +42,7 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
@@ -75,25 +76,42 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
 
-    let res = getDisplayModeFunction(
-      {
-        usePrimaryNav: usePrimaryNav.current,
-        genesArr,
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          usePrimaryNav: usePrimaryNav.current,
+          genesArr,
 
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -201,6 +219,7 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

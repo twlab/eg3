@@ -39,6 +39,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -73,24 +74,42 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
 
     setLegend(undefined);
   }
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
-    let res = getDisplayModeFunction(
-      {
-        usePrimaryNav: usePrimaryNav.current,
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          usePrimaryNav: usePrimaryNav.current,
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -188,6 +207,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

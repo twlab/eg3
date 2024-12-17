@@ -52,11 +52,11 @@ const defaultTracks = [
   //   name: "Ruler",
   // }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
-  // new TrackModel({
-  //   type: "hi",
-  //   url: "",
-  //   name: "NOTSUPPORTEDTRACEXAMPLE",
-  // }),
+  new TrackModel({
+    type: "hi",
+    url: "",
+    name: "NOTSUPPORTEDTRACEXAMPLE",
+  }),
 
   //   new TrackModel({
   //   type: "refbed",
@@ -72,11 +72,11 @@ const defaultTracks = [
   //     },
   //   },
   // }),
-  // new TrackModel({
-  //   type: "bed",
-  //   name: "mm10 bed",
-  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  // }),
+  new TrackModel({
+    type: "bed",
+    name: "mm10 bed",
+    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",
@@ -100,11 +100,11 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
   // }),
 
-  //   new TrackModel({
-  //   type: "snp",
-  //   name: "snp",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "snp",
+    name: "snp",
+    genome: "hg38",
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "MANE_select_1.0",
@@ -112,14 +112,14 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
   new TrackModel({
     type: "bigwig",
     name: "example bigwig",
@@ -137,11 +137,10 @@ const defaultTracks = [
       color: "blue",
     },
   }),
-  //   new TrackModel({
-  //   type: "modbed",
-  //   name: "examplemod",
-  //   url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
-  // }),
+  new TrackModel({
+    type: "modbed",
+    name: "examplemod",
+  }),
 
   // new TrackModel({
   //   type: "matplot",
@@ -193,49 +192,48 @@ const defaultTracks = [
   //     height: 100,
   //   },
   // }),
+  new TrackModel({
+    type: "methylc",
+    name: "H1",
+    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+    options: {
+      label: "Methylation",
+      colorsForContext: {
+        CG: { color: "#648bd8", background: "#d9d9d9" },
+        CHG: { color: "#ff944d", background: "#ffe0cc" },
+        CHH: { color: "#ff00ff", background: "#ffe5ff" },
+      },
+      depthColor: "#01E9FE",
+    },
+  }),
+  new TrackModel({
+    type: "methylc",
+    name: "H1",
+    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+    options: {
+      label: "Methylation",
+      colorsForContext: {
+        CG: { color: "#648bd8", background: "#d9d9d9" },
+        CHG: { color: "#ff944d", background: "#ffe0cc" },
+        CHH: { color: "#ff00ff", background: "#ffe5ff" },
+      },
+      depthColor: "#01E9FE",
+    },
+  }),
+
   // new TrackModel({
-  //   type: "methylc",
-  //   name: "H1",
-  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-  //   options: {
-  //     label: "Methylation",
-  //     colorsForContext: {
-  //       CG: { color: "#648bd8", background: "#d9d9d9" },
-  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
-  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
-  //     },
-  //     depthColor: "#01E9FE",
-  //   },
+  //   name: "vertebratephastCons46way",
+  //   label: "Vertebrate PhastCons 46-way",
+  //   filetype: "bedgraph",
+  //   url: "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
+  //   height: 50,
+  //   options: { color: "#006385" },
   // }),
-  //         new TrackModel({
-  //   type: "methylc",
-  //   name: "H1",
-  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-  //   options: {
-  //     label: "Methylation",
-  //     colorsForContext: {
-  //       CG: { color: "#648bd8", background: "#d9d9d9" },
-  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
-  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
-  //     },
-  //     depthColor: "#01E9FE",
-  //   },
+  // new TrackModel({
+  //   type: "boxplot",
+  //   name: "example boxplot",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
   // }),
-
-  // new TrackModel(      {
-  // "name": "vertebratephastCons46way",
-  // "label": "Vertebrate PhastCons 46-way",
-  // "filetype": "bedgraph",
-  // "url": "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
-  // "height": 50,
-  // "options": { "color": "#006385" }
-  // }),
-  //   new TrackModel({
-  // type: "boxplot",
-  // name: "example boxplot",
-  // url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-
-  //   }),
 
   // new TrackModel({
   //   type: "biginteract",
@@ -330,30 +328,29 @@ const defaultTracks = [
   //   genome: "hg38",
   //   metadata: { genome: "mm10" },
   // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV39",
+    genome: "hg38",
+  }),
+
   // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV39",
-  //   genome: "hg38",
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   // }),
 
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  }),
-
-
-    new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "",
-  }),
+  //   new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "",
+  // }),
   // new TrackModel({
   //   type: "categorical",
   //   name: "ChromHMM",

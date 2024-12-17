@@ -16,6 +16,7 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { useGenome } from "@/lib/contexts/GenomeContext";
 import OpenInterval from "@/models/OpenInterval";
+import { isError } from "lodash";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -45,6 +46,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
@@ -76,25 +78,42 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
 
     setLegend(undefined);
   }
-  function createSVGOrCanvas(trackState, genesArr) {
+  async function createSVGOrCanvas(trackState, genesArr, isError) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
 
-    let res = getDisplayModeFunction(
-      {
-        usePrimaryNav: usePrimaryNav.current,
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      0,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          usePrimaryNav: usePrimaryNav.current,
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        0,
+        curXPos
+      )
     );
 
     if (
@@ -193,6 +212,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   }, [trackData]);
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -263,7 +283,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   useEffect(() => {
     if (screenshotOpen) {
       async function handle() {
-        let genesArr = [
+        let genesArr: any = [
           fetchedDataCache.current[dataIdx! + 1],
           fetchedDataCache.current[dataIdx!],
           fetchedDataCache.current[dataIdx! - 1],
@@ -271,7 +291,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         let trackState = {
           ...fetchedDataCache.current[dataIdx!].trackState,
         };
-        genesArr = getDeDupeArrMatPlot(genesArr);
+        genesArr = getDeDupeArrMatPlot(genesArr, fetchError.current);
         trackState["viewWindow"] =
           updateSide.current === "right"
             ? new OpenInterval(

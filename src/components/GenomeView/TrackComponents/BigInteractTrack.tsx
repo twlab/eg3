@@ -40,6 +40,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
 
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -75,8 +76,11 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
 
@@ -91,19 +95,34 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
             windowWidth * 3 - (dragX! - (curXPos + windowWidth)) + windowWidth
           );
     console.log(trackState);
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: tmpObj,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: tmpObj,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -176,6 +195,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

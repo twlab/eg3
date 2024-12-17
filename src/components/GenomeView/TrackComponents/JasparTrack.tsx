@@ -68,6 +68,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -119,28 +120,45 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
 
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        usePrimaryNav: usePrimaryNav.current,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        renderTooltip,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        getGenePadding,
-        getHeight,
-        ROW_HEIGHT,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding,
+          getHeight,
+          ROW_HEIGHT,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -315,6 +333,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
     // otherwise when there is new data cuz the user is at the end of the track
 
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -434,7 +453,9 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 2
+            ? !fetchError.current
+              ? svgHeight.current + 2
+              : 40 + 2
             : configOptions.current.height + 2,
         position: "relative",
       }}

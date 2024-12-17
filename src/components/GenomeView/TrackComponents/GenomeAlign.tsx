@@ -68,8 +68,11 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     let res;
     console.log(isError);
     if (isError || fetchError.current) {
@@ -154,6 +157,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

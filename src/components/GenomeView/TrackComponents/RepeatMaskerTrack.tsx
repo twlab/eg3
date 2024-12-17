@@ -87,6 +87,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
     const configOptions = useRef({ ...DEFAULT_OPTIONS });
     const svgHeight = useRef(0);
     const rightIdx = useRef(0);
+    const fetchError = useRef<boolean>(false);
     const leftIdx = useRef(1);
     const updateSide = useRef("right");
     const updatedLegend = useRef<any>();
@@ -142,27 +143,44 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
       return rowsToDraw * rowHeight + TOP_PADDING;
     }
 
-    function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+    async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
       let curXPos = getTrackXOffset(trackState, windowWidth);
+      if (isError) {
+        fetchError.current = true;
+      }
 
-      let res = getDisplayModeFunction(
-        {
-          genesArr,
-          trackState,
-          windowWidth,
-          configOptions: configOptions.current,
-          renderTooltip,
-          svgHeight,
-          updatedLegend,
-          trackModel,
-          getGenePadding,
-          getHeight,
-          ROW_HEIGHT,
-        },
-        displaySetter,
-        displayCache,
-        cacheIdx,
-        curXPos
+      let res = fetchError.current ? (
+        <div
+          style={{
+            width: trackState.visWidth,
+            height: 40,
+            backgroundColor: "orange",
+            textAlign: "center",
+            lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+          }}
+        >
+          Error remotely getting track data
+        </div>
+      ) : (
+        await getDisplayModeFunction(
+          {
+            genesArr,
+            trackState,
+            windowWidth,
+            configOptions: configOptions.current,
+            renderTooltip,
+            svgHeight,
+            updatedLegend,
+            trackModel,
+            getGenePadding,
+            getHeight,
+            ROW_HEIGHT,
+          },
+          displaySetter,
+          displayCache,
+          cacheIdx,
+          curXPos
+        )
       );
 
       if (
@@ -173,6 +191,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
         trackState.initial ||
         trackState.recreate
       ) {
+        console.log(res);
         xPos.current = curXPos;
         checkTrackPreload(id);
         updateSide.current = side;
@@ -361,6 +380,7 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
 
     useEffect(() => {
       getCacheData({
+        isError: fetchError.current,
         usePrimaryNav: usePrimaryNav.current,
         rightIdx: rightIdx.current,
         leftIdx: leftIdx.current,
@@ -468,7 +488,9 @@ const RepeatMaskerTrack: React.FC<TrackProps> = memo(
           display: "flex",
           height:
             configOptions.current.displayMode === "full"
-              ? svgHeight.current + 2
+              ? !fetchError.current
+                ? svgHeight.current + 2
+                : 40 + 2
               : configOptions.current.height + 2,
           position: "relative",
         }}

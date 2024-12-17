@@ -41,6 +41,7 @@ const BoxplotTrack: React.FC<TrackProps> = memo(function BoxplotTrack({
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -80,25 +81,42 @@ const BoxplotTrack: React.FC<TrackProps> = memo(function BoxplotTrack({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr) {
+  async function createSVGOrCanvas(trackState, genesArr, isError) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
 
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        usePrimaryNav: usePrimaryNav.current,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      0,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        0,
+        curXPos
+      )
     );
 
     if (
@@ -195,6 +213,7 @@ const BoxplotTrack: React.FC<TrackProps> = memo(function BoxplotTrack({
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

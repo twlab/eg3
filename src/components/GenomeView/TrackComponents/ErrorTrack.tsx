@@ -32,6 +32,7 @@ const ErrorTrack: React.FC<TrackProps> = memo(function ErrorTrack({
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);

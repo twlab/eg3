@@ -103,7 +103,7 @@ export function getCacheData({
     //     );
     //   }
     // } else {
-    let viewData: any[] = [];
+    let viewData: any = [];
 
     if (trackModel.type in trackUsingExpandedLoci) {
       // CHANGE LEFT NOT SUBTRACT BY 1 ANYMORE
@@ -124,7 +124,7 @@ export function getCacheData({
         ];
 
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-          viewData = getDeDupeArrMatPlot(viewData);
+          viewData = getDeDupeArrMatPlot(viewData, isError!);
         } else {
           viewData = viewData.map((item) => item.dataCache).flat(1);
         }

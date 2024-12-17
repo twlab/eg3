@@ -118,7 +118,7 @@ self.onmessage = async (event: MessageEvent) => {
     expandGenomicLoci,
     initGenomicLoci,
   };
-
+  genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData;
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
@@ -131,32 +131,28 @@ self.onmessage = async (event: MessageEvent) => {
     event.data.visData.visRegion;
 
     // step 2: fetch genome align data and put them into an array
-
+    //group all the genomealign track and fetch once in getGenomealign
+    //return all the genomealign in an array
     (
       await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks)
     ).map((item) => {
-      console.log(item);
-      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = !(
-        "error" in item.result
-      )
-        ? item.result.primaryVisData
-        : "";
-      //save the genomic location so that track that has query as parent can use that data to get data
-      genomicFetchCoord[`${item.queryName}`] = !("error" in item.result)
-        ? {
-            queryGenomicCoord: new Array(item.queryGenomicCoord),
-            id: item.id,
-            queryRegion: item.result.queryRegion,
-          }
-        : "";
+      // if there is a genomealigntrack and its in fine mode then
+      // we change the primaryVisdata because other tracks relies on the visdata
+      if (!("error" in item.result)) {
+        genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
+          item.result.primaryVisData;
+
+        //save the genomic location so that track that has query as parent can use that data to get data
+        genomicFetchCoord[`${item.queryName}`] = {
+          queryGenomicCoord: new Array(item.queryGenomicCoord),
+          id: item.id,
+          queryRegion: item.result.queryRegion,
+        };
+      }
       item["metadata"] = { "track type": "genomealign" };
       item["result"] = [item.result];
       fetchResults.push(item);
     });
-  }
-  if (genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] === "") {
-    genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
-      event.data.visData;
   }
 
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
@@ -267,7 +263,7 @@ self.onmessage = async (event: MessageEvent) => {
           } catch (error) {
             return {
               query: item.querygenome,
-
+              name: item.querygenome,
               isBigChain: false,
               id: item.id,
               result: {
@@ -289,14 +285,19 @@ self.onmessage = async (event: MessageEvent) => {
       // Handle the situation where the entire Promise.all fails, if necessary
     }
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
-    console.log(oldRecordsArray);
-    if ("error" in oldRecordsArray[0]) {
-      return oldRecordsArray;
+
+    let successFetch: Array<any> = [];
+    for (let curGenomeAlign of oldRecordsArray) {
+      if (!("error" in curGenomeAlign)) {
+        successFetch.push(curGenomeAlign);
+      } else {
+        result.push(curGenomeAlign);
+      }
     }
     let multiCalInstance = new MultiAlignmentViewCalculator(
       event.data.primaryGenName
     );
-    let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
+    let alignment = multiCalInstance.multiAlign(visData, successFetch);
 
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.

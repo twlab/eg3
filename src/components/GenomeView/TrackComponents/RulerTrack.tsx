@@ -35,6 +35,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
@@ -51,8 +52,11 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
-  async function createSVGOrCanvas(trackState, genesArr) {
+  async function createSVGOrCanvas(trackState, genesArr, isError) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     const result = await getDisplayModeFunction({
       genesArr,
@@ -222,6 +226,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   }, [screenshotOpen]);
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

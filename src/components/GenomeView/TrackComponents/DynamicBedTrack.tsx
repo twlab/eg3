@@ -53,6 +53,7 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
@@ -85,8 +86,11 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
 
     setLegend(undefined);
   }
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     const getBedPadding = (bed) =>
       bed.getName().length * configOptions.current.rowHeight + 2;
     const getHeight = (results) => {
@@ -100,25 +104,40 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
         TOP_PADDING
       );
     };
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        usePrimaryNav: usePrimaryNav.current,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        renderTooltip: () => {},
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        getBedPadding,
-        getHeight,
-        ROW_HEIGHT: configOptions.current.rowHeight,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip: () => {},
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getBedPadding,
+          getHeight,
+          ROW_HEIGHT: configOptions.current.rowHeight,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -226,6 +245,7 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

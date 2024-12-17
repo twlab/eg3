@@ -77,8 +77,11 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, isError) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     function step() {
       let res;

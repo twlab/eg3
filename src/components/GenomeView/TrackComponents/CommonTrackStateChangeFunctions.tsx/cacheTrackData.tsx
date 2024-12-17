@@ -4,7 +4,10 @@ import {
   removeDuplicates,
   removeDuplicatesWithoutId,
 } from "../commonComponents/check-obj-dupe";
-export function getDeDupeArrMatPlot(data: Array<any>) {
+export function getDeDupeArrMatPlot(data: Array<any>, isError) {
+  if (isError) {
+    return;
+  }
   let tempMap = new Map<number, any[]>();
 
   data.forEach((data) => {
@@ -52,11 +55,16 @@ export const trackUsingExpandedLoci = {
 };
 
 function checkFetchError(trackData, id) {
-  console.log(trackData[`${id}`].result);
   let detectError = false;
   if (Array.isArray(trackData[`${id}`].result)) {
     trackData[`${id}`].result.map((item) => {
-      if ("error" in item) {
+      if (Array.isArray(item)) {
+        item.map((innerItem) => {
+          if ("error" in innerItem) {
+            detectError = true;
+          }
+        });
+      } else if ("error" in item) {
         detectError = true;
       }
     });
@@ -65,7 +73,7 @@ function checkFetchError(trackData, id) {
       detectError = true;
     }
   }
-  console.log(detectError);
+
   return detectError;
 }
 export function cacheTrackData({
@@ -209,7 +217,7 @@ export function cacheTrackData({
 
       let viewData;
       if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-        viewData = getDeDupeArrMatPlot(testData);
+        viewData = getDeDupeArrMatPlot(testData, isError);
       } else {
         viewData = testData.map((item) => item.dataCache).flat(1);
       }
@@ -313,7 +321,7 @@ export function cacheTrackData({
 
         let viewData;
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-          viewData = getDeDupeArrMatPlot(testData);
+          viewData = getDeDupeArrMatPlot(testData, isError);
         } else {
           viewData = testData.map((item) => item.dataCache).flat(1);
         }
@@ -341,7 +349,7 @@ export function cacheTrackData({
         console.log(fetchedDataCache.current);
         let viewData;
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-          viewData = getDeDupeArrMatPlot(testData);
+          viewData = getDeDupeArrMatPlot(testData, isError);
         } else {
           viewData = testData.map((item) => item.dataCache).flat(1);
         }
