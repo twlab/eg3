@@ -43,7 +43,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
-
+  const fetchError = useRef<boolean>(false);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const displayCache = useRef<{ [key: string]: any }>({
     full: {},
@@ -77,27 +77,44 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr) {
-    console.log(genesArr);
+  function createSVGOrCanvas(trackState, genesArr, isError) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     function step() {
-      let res = getDisplayModeFunction(
-        {
-          usePrimaryNav: usePrimaryNav.current,
-          genesArr,
-          trackState,
-          windowWidth,
-          configOptions: configOptions.current,
-          svgHeight,
-          updatedLegend,
-          trackModel,
-        },
-        displaySetter,
-        displayCache,
-        0,
-        curXPos
-      );
+      let res;
+      if (isError || fetchError.current) {
+        fetchError.current = true;
+        res = (
+          <div
+            style={{
+              width: trackState.visWidth,
+              height: 60,
+              backgroundColor: "orange",
+              textAlign: "center",
+              lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+            }}
+          >
+            Error remotely getting track data
+          </div>
+        );
+      } else {
+        res = getDisplayModeFunction(
+          {
+            usePrimaryNav: usePrimaryNav.current,
+            genesArr,
+            trackState,
+            windowWidth,
+            configOptions: configOptions.current,
+            svgHeight,
+            updatedLegend,
+            trackModel,
+          },
+          displaySetter,
+          displayCache,
+          0,
+          curXPos
+        );
+      }
 
       if (
         ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
@@ -198,8 +215,8 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   }, [trackData]);
 
   useEffect(() => {
-    console.log(fetchedDataCache.current);
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,

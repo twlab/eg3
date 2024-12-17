@@ -35,6 +35,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const fetchError = useRef<boolean>(false);
   const displayCache = useRef<{ [key: string]: any }>({
     full: {},
   });
@@ -67,25 +68,45 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        basesByPixel: basePerPixel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
-    );
+    let res;
+    console.log(isError);
+    if (isError || fetchError.current) {
+      fetchError.current = true;
+      res = {
+        svgElements: (
+          <div
+            style={{
+              width: trackState.visWidth,
+              height: 60,
+              backgroundColor: "orange",
+              textAlign: "center",
+              lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+            }}
+          >
+            Error remotely getting track data
+          </div>
+        ),
+      };
+    } else {
+      res = getDisplayModeFunction(
+        {
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          basesByPixel: basePerPixel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      );
+    }
 
     if (
       rightIdx.current + 1 >= dataIdx ||
@@ -96,7 +117,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       xPos.current = curXPos;
       checkTrackPreload(id);
       updateSide.current = side;
-
+      console.log(res);
       setSvgComponents(res);
     }
   }
@@ -253,7 +274,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       >
         {svgComponents.svgElements}
       </div>
-      {svgComponents.svgElements && (
+      {svgComponents.svgElements && !fetchError.current && (
         <div
           style={{
             position: "absolute",

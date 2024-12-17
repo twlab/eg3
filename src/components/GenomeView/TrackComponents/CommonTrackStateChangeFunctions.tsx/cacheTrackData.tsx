@@ -34,8 +34,9 @@ interface CacheTrackDataParams {
   createSVGOrCanvas: (
     trackState: any,
     dataCacheArray: any[],
-    currentIndex: number,
-    signal: any
+    isError: boolean,
+    currentIndex?: number,
+    signal?: any
   ) => void;
   trackModel: any;
   usePrimaryNav: boolean;
@@ -50,11 +51,28 @@ export const trackUsingExpandedLoci = {
   genomealign: "",
 };
 
-function checkFetchError(trackData) {}
+function checkFetchError(trackData, id) {
+  console.log(trackData[`${id}`].result);
+  let detectError = false;
+  if (Array.isArray(trackData[`${id}`].result)) {
+    trackData[`${id}`].result.map((item) => {
+      if ("error" in item) {
+        detectError = true;
+      }
+    });
+  } else {
+    if ("error" in trackData[`${id}`].result) {
+      detectError = true;
+    }
+  }
+  console.log(detectError);
+  return detectError;
+}
 export function cacheTrackData({
   id,
   trackData,
   fetchedDataCache,
+
   rightIdx,
   leftIdx,
   createSVGOrCanvas,
@@ -63,6 +81,7 @@ export function cacheTrackData({
   signal = null,
 }: CacheTrackDataParams) {
   // Passing rawData to the correct tracks and saving it to cache to be displayed
+  let isError = checkFetchError(trackData, id);
   const primaryVisData =
     trackData!.trackState.genomicFetchCoord[
       trackData!.trackState.primaryGenName
@@ -115,6 +134,7 @@ export function cacheTrackData({
       createSVGOrCanvas(
         newTrackState,
         curDataArr,
+        isError,
         rightIdx.current + 1,
         signal
       );
@@ -194,7 +214,13 @@ export function cacheTrackData({
         viewData = testData.map((item) => item.dataCache).flat(1);
       }
 
-      createSVGOrCanvas(trackState1, viewData, rightIdx.current + 2, signal);
+      createSVGOrCanvas(
+        trackState1,
+        viewData,
+        isError,
+        rightIdx.current + 2,
+        signal
+      );
     }
   }
 
@@ -227,11 +253,18 @@ export function cacheTrackData({
     if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
       if (trackData!.trackState.side === "right") {
         newTrackState.index = rightIdx.current;
-
+        fetchedDataCache.current[rightIdx.current] = {
+          dataCache:
+            trackData![`${id}`].metadata["track type"] === "genomealign"
+              ? trackData![`${id}`].result[0]
+              : trackData![`${id}`].result,
+          trackState: newTrackState,
+        };
         rightIdx.current--;
         createSVGOrCanvas(
           newTrackState,
           fetchedDataCache.current[rightIdx.current + 1].dataCache,
+          isError,
           rightIdx.current + 1,
           signal
         );
@@ -250,6 +283,7 @@ export function cacheTrackData({
         createSVGOrCanvas(
           newTrackState,
           fetchedDataCache.current[leftIdx.current - 1].dataCache,
+          isError,
           leftIdx.current - 1,
           signal
         );
@@ -287,6 +321,7 @@ export function cacheTrackData({
         createSVGOrCanvas(
           fetchedDataCache.current[rightIdx.current + 2].trackState,
           viewData,
+          isError,
           rightIdx.current + 2,
           signal
         );
@@ -314,6 +349,7 @@ export function cacheTrackData({
         createSVGOrCanvas(
           fetchedDataCache.current[leftIdx.current - 2].trackState,
           viewData,
+          isError,
           leftIdx.current - 2,
           signal
         );

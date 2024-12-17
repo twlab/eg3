@@ -1,4 +1,3 @@
-import TrackLegend from "../commonComponents/TrackLegend";
 import { getDeDupeArrMatPlot, trackUsingExpandedLoci } from "./cacheTrackData";
 interface GetCacheDataParams {
   rightIdx: number;
@@ -15,6 +14,7 @@ interface GetCacheDataParams {
   createSVGOrCanvas: (
     trackState: any,
     viewData: any[],
+    isError: boolean,
     dataIdx: number,
     signal: any
   ) => void;
@@ -22,6 +22,7 @@ interface GetCacheDataParams {
   updateSide: { current: string };
   usePrimaryNav: boolean;
   signal?: any;
+  isError?: boolean;
 }
 
 export function getCacheData({
@@ -41,6 +42,7 @@ export function getCacheData({
   updateSide,
   usePrimaryNav,
   signal,
+  isError,
 }: GetCacheDataParams) {
   let dataValid = false;
   if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
@@ -131,7 +133,13 @@ export function getCacheData({
 
     let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
     newIntanceTrackState["recreate"] = true;
-    createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx, signal);
+    createSVGOrCanvas(
+      newIntanceTrackState,
+      viewData,
+      isError!,
+      dataIdx,
+      signal
+    );
   }
   // }
 }
