@@ -11,6 +11,7 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { useGenome } from "@/lib/contexts/GenomeContext";
+import OpenInterval from "@/models/OpenInterval";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -32,7 +33,7 @@ const QBedTrack: React.FC<TrackProps> = memo(function QBedTrack({
   checkTrackPreload,
   trackIdx,
   id,
-
+  dragX,
   legendRef,
   applyTrackConfigChange,
   sentScreenshotData,
@@ -79,9 +80,9 @@ const QBedTrack: React.FC<TrackProps> = memo(function QBedTrack({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  function createSVGOrCanvas(trackState, genesArr) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     let res = getDisplayModeFunction(
       {
         genesArr,
@@ -95,7 +96,7 @@ const QBedTrack: React.FC<TrackProps> = memo(function QBedTrack({
       },
       displaySetter,
       displayCache,
-      cacheIdx,
+      0,
       curXPos
     );
 
@@ -245,6 +246,57 @@ const QBedTrack: React.FC<TrackProps> = memo(function QBedTrack({
       }
     }
   }, [applyTrackConfigChange]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
+
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
 
   return (
     <div

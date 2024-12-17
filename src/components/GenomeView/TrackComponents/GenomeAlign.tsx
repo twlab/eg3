@@ -192,7 +192,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
           trackModel,
           basesByPixel: basePerPixel,
         });
-        console.log(result);
+
         sentScreenshotData({
           component: result.svgElements,
           trackId: id,

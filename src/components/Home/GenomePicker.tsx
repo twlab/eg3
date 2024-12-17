@@ -29,7 +29,7 @@ function GenomePicker(props: any) {
   // Map the genomes to a list of cards. Genome search engine filters by both the species and the different assemblies.
   // It is not case sensitive.
   const [selectedIndex, setSelectedIndex] = useState(1);
-  console.log(props);
+
   return (
     <Container maxWidth="md">
       <Grid container spacing={4}>

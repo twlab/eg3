@@ -48,6 +48,7 @@ interface DynseqTrackProps {
     yMin?: number;
     yMax?: number;
     displayMode: string;
+    forceSvg: boolean;
   };
   isLoading?: boolean;
   error?: any;
@@ -253,6 +254,9 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
         />
       );
 
+      if (this.props.getNumLegend) {
+        this.props.getNumLegend(legend);
+      }
       const visualizer = (
         <React.Fragment>
           <div

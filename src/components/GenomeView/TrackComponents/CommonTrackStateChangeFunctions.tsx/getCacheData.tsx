@@ -1,5 +1,5 @@
 import TrackLegend from "../commonComponents/TrackLegend";
-import { trackUsingExpandedLoci } from "./cacheTrackData";
+import { getDeDupeArrMatPlot, trackUsingExpandedLoci } from "./cacheTrackData";
 interface GetCacheDataParams {
   rightIdx: number;
   leftIdx: number;
@@ -76,55 +76,62 @@ export function getCacheData({
   }
 
   if (dataValid) {
-    if (displayCache && dataIdx! in displayCache[`${displayType}`]) {
-      updatedLegend.current = (
-        <TrackLegend
-          height={displayCache[`${displayType}`][dataIdx!].height}
-          trackModel={trackModel}
-        />
-      );
+    // take too much memory to save displaycache also
+    // if (displayCache && dataIdx! in displayCache[`${displayType}`]) {
+    //   updatedLegend.current = (
+    //     <TrackLegend
+    //       height={displayCache[`${displayType}`][dataIdx!].height}
+    //       trackModel={trackModel}
+    //     />
+    //   );
 
-      xPos.current = displayCache[`${displayType}`][dataIdx!].xPos;
-      updateSide.current = side;
-      if (displayType === "full") {
-        displaySetter.full.setComponents({
-          ...displayCache[`${displayType}`][dataIdx!].svgDATA,
-        });
-        if (trackModel.type === "genomealign") {
-          // handle specific logic for genomealign type if needed
-        }
-        svgHeight!.current = displayCache[`${displayType}`][dataIdx!].height;
-      } else {
-        displaySetter.density.setComponents(
-          displayCache[`${displayType}`][dataIdx!].canvasData
-        );
+    //   xPos.current = displayCache[`${displayType}`][dataIdx!].xPos;
+    //   updateSide.current = side;
+    //   if (displayType === "full") {
+    //     displaySetter.full.setComponents({
+    //       ...displayCache[`${displayType}`][dataIdx!].svgDATA,
+    //     });
+    //     if (trackModel.type === "genomealign") {
+    //       // handle specific logic for genomealign type if needed
+    //     }
+    //     svgHeight!.current = displayCache[`${displayType}`][dataIdx!].height;
+    //   } else {
+    //     displaySetter.density.setComponents(
+    //       displayCache[`${displayType}`][dataIdx!].canvasData
+    //     );
+    //   }
+    // } else {
+    let viewData: any[] = [];
+
+    if (trackModel.type in trackUsingExpandedLoci) {
+      // CHANGE LEFT NOT SUBTRACT BY 1 ANYMORE
+      if (dataIdx! > rightIdx && dataIdx! <= 0) {
+        viewData = fetchedDataCache[dataIdx!].dataCache;
+      } else if (dataIdx! < leftIdx && dataIdx! > 0) {
+        viewData = fetchedDataCache[dataIdx!].dataCache;
       }
     } else {
-      let viewData: any[] = [];
+      if (
+        (dataIdx! > rightIdx + 1 && dataIdx! <= 0) ||
+        (dataIdx! < leftIdx - 1 && dataIdx! > 0)
+      ) {
+        viewData = [
+          fetchedDataCache[dataIdx! + 1],
+          fetchedDataCache[dataIdx!],
+          fetchedDataCache[dataIdx! - 1],
+        ];
 
-      if (trackModel.type === "genomealign") {
-        // CHANGE LEFT NOT SUBTRACT BY 1 ANYMORE
-        if (dataIdx! > rightIdx && dataIdx! <= 0) {
-          viewData = fetchedDataCache[dataIdx!].dataCache;
-        } else if (dataIdx! < leftIdx && dataIdx! > 0) {
-          viewData = fetchedDataCache[dataIdx!].dataCache;
-        }
-      } else {
-        if (
-          (dataIdx! > rightIdx + 1 && dataIdx! <= 0) ||
-          (dataIdx! < leftIdx - 1 && dataIdx! > 0)
-        ) {
-          viewData = [
-            fetchedDataCache[dataIdx! + 1],
-            fetchedDataCache[dataIdx!],
-            fetchedDataCache[dataIdx! - 1],
-          ];
+        if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+          viewData = getDeDupeArrMatPlot(viewData);
+        } else {
           viewData = viewData.map((item) => item.dataCache).flat(1);
         }
       }
-      let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
-      newIntanceTrackState["recreate"] = true;
-      createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx, signal);
     }
+
+    let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
+    newIntanceTrackState["recreate"] = true;
+    createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx, signal);
   }
+  // }
 }

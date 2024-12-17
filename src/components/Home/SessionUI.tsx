@@ -236,7 +236,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
     setNewSessionLabel(getFunName());
   };
   function _restoreViewRegion(object: any, regionSetView: RegionSet) {
-    console.log("ASDASDASDASD");
     const genomeConfig = getGenomeConfig(object.genomeName);
     if (!genomeConfig) {
       return null;

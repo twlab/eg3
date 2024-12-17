@@ -428,7 +428,7 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
   render() {
     // console.log("render in valueplot");
     const { xToValue, height, forceSvg, width, viewWindow } = this.props;
-    console.log(this.props);
+
     return xToValue.length === 0 ? (
       <div
         style={{

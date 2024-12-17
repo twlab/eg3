@@ -77,7 +77,7 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
   }
   function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
     let res = getDisplayModeFunction(
       {
         usePrimaryNav: usePrimaryNav.current,

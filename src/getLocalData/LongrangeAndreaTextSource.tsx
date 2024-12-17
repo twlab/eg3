@@ -10,7 +10,6 @@ interface BedRecord {
 
 class LongrangeAndreaTextSource extends BedTextSource {
   convertToBedRecord(item: any): BedRecord {
-    console.log(item);
     // Note: Ensure the base expects this type
     //"chr20:49368733-49369493<->chr20:50528173-50533850"	FALSE	FALSE	1161898.5	309	79.7857303792859
 

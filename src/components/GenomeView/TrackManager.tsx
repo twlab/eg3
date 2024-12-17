@@ -849,7 +849,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           );
         } else if (item.name === "bam") {
-          console.log("jhere");
           tempObj[item.id]["fetchInstance"] = hicStrawObj.current[`${item.id}`];
           tempObj[item.id]["curFetchNav"] = item.curFetchNav;
         }
@@ -878,7 +877,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
         tempObj[`${trackModel.id}`]["trackDataIdx"] = event.data.trackDataIdx;
       }
-      console.log(dataIdx, event.data.trackDataIdx, event.data);
+
       isWorkerBusy.current = false;
       isLoading.current = false;
       setTrackData({ ...tempObj });
@@ -1427,11 +1426,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initializeTracks();
     }
   }, [initialStart]);
-  useEffect(() => {
-    for (let i = 0; i < trackComponents.length; i++) {
-      console.log(trackComponents[i].component);
-    }
-  }, [trackData]);
 
   useEffect(() => {
     if (windowWidth > 0) {

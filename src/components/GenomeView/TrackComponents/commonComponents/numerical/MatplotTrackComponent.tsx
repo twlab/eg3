@@ -259,6 +259,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
         }
       })
       .filter((value) => value); // removes null from original
+
     const color = trackModel.tracks![trackIndex].options.color || "blue";
     return (
       <polyline

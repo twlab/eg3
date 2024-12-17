@@ -60,7 +60,6 @@ export const textFetchFunction: { [key: string]: any } = {
     return getTextData(regionData);
   },
   longrange: async function coolFetch(regionData: any) {
-    console.log(regionData);
     return getTextData(regionData);
   },
 };
@@ -68,7 +67,6 @@ export const textFetchFunction: { [key: string]: any } = {
 function getTextData(regionData: any) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
     if (regionData.trackModel.type === "longrange") {
-      console.log("ASDASDASD");
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LongrangeAndreaTextSource({
           blob: regionData.trackModel.fileObj,
@@ -86,7 +84,7 @@ function getTextData(regionData: any) {
   }
 
   let fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
-  console.log(fetchInstance.getData(regionData.nav));
+
   return fetchInstance.getData(regionData.nav);
 }
 

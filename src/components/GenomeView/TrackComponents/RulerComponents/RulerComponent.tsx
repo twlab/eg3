@@ -29,6 +29,8 @@ interface RulerVisualizerProps {
   x?: number; // Optional x coordinate
   y?: number; // Optional y coordinate'
   genomeConfig?: any;
+  options: any;
+  viewWindow: any;
 }
 class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
   constructor(props) {
@@ -46,6 +48,32 @@ class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
   render() {
     const { viewRegion, width } = this.props;
     const genomeConfig = this.props.genomeConfig;
+
+    if (this.props.options && this.props.options.forceSvg) {
+      let start = this.props.viewWindow.start + this.props.width / 3;
+
+      let end = this.props.viewWindow.end - this.props.width / 3;
+
+      let svgWidth = end - start;
+
+      return (
+        <svg
+          width={this.props.width / 3}
+          viewBox={`${start} 0 ${svgWidth} ${HEIGHT}`}
+          height={HEIGHT}
+          display={"block"}
+        >
+          <Chromosomes
+            genomeConfig={genomeConfig}
+            viewRegion={viewRegion}
+            width={width}
+            labelOffset={CHROMOSOMES_Y}
+            hideChromName={true}
+          />
+          <Ruler viewRegion={viewRegion} width={width} y={RULER_Y} />
+        </svg>
+      );
+    }
     return (
       <svg width={width} height={HEIGHT} style={{ display: "block" }}>
         <Chromosomes
@@ -74,6 +102,8 @@ interface RulerComponentProps {
   trackModel: TrackModel;
   selectedRegion: DisplayedRegionModel;
   getNumLegend: any;
+  options: any;
+  viewWindow: any;
 }
 class RulerComponent extends React.Component<RulerComponentProps> {
   render() {
@@ -93,7 +123,9 @@ class RulerComponent extends React.Component<RulerComponentProps> {
       <RulerVisualizer
         genomeConfig={this.props.genomeConfig}
         viewRegion={this.props.viewRegion}
+        viewWindow={this.props.viewWindow}
         width={this.props.width}
+        options={this.props.options}
       />
     );
   }

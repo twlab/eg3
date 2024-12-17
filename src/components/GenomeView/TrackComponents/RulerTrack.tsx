@@ -2,13 +2,6 @@ import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import { objToInstanceAlign } from "../TrackManager";
-
-import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-
-import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-
-import { RulerTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/RulerTrackConfig";
-
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import RulerComponent from "./RulerComponents/RulerComponent";
@@ -17,6 +10,7 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import OpenInterval from "@/models/OpenInterval";
+import { getDisplayModeFunction } from "./displayModeComponentMap";
 
 export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
 
@@ -30,14 +24,13 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   genomeIdx,
   trackModel,
   dataIdx,
-  getConfigMenu,
-  onCloseConfigMenu,
-  handleDelete,
+
   trackIdx,
   id,
-  useFineModeNav,
-  trackManagerRef,
+  dragX,
+
   legendRef,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
@@ -47,41 +40,29 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
   const { screenshotOpen } = useGenome();
-  const curRegionData = useRef<{ [key: string]: any }>({});
-  const parentGenome = useRef("");
-  const configMenuPos = useRef<{ [key: string]: any }>({});
+
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
 
   const [legend, setLegend] = useState<any>();
   const [canvasComponents, setCanvasComponents] = useState<any>();
-  const newTrackWidth = useRef(windowWidth);
 
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
 
-  function createSVGOrCanvas(trackState, genesArr) {
-    console.log(trackState);
+  async function createSVGOrCanvas(trackState, genesArr) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-    function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = ReactDOM.createPortal(legend, legendRef.current);
-    }
-
-    let canvasElements = (
-      <RulerComponent
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
-        width={trackState.visWidth}
-        trackModel={trackModel}
-        selectedRegion={objToInstanceAlign(
-          trackState.genomicFetchCoord[
-            `${genomeArr![genomeIdx!].genome.getName()}`
-          ].primaryVisData.viewWindowRegion
-        )}
-        getNumLegend={getNumLegend}
-        genomeConfig={getGenomeConfig(genomeArr![genomeIdx!].genome.getName())}
-      />
-    );
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
+    const result = await getDisplayModeFunction({
+      genesArr,
+      trackState,
+      windowWidth,
+      configOptions: configOptions.current,
+      genomeName: genomeArr![genomeIdx!].genome.getName(),
+      updatedLegend,
+      trackModel,
+    });
 
     if (
       ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
@@ -94,45 +75,12 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       xPos.current = curXPos;
       updateSide.current = side;
 
-      setCanvasComponents(canvasElements);
+      setCanvasComponents(result);
     }
     updateSide.current = side;
   }
 
   //________________________________________________________________________________________________________________________________________________________
-
-  function onConfigChange(key, value) {
-    if (value === configOptions.current[`${key}`]) {
-      return;
-    }
-    {
-      configOptions.current[`${key}`] = value;
-    }
-  }
-  function renderConfigMenu(event) {
-    event.preventDefault();
-
-    const renderer = new RulerTrackConfig(trackModel);
-
-    // create object that has key as displayMode and the configmenu component as the value
-    const items = renderer.getMenuComponents();
-    let menu = trackConfigMenu[`${trackModel.type}`]({
-      blockRef: trackManagerRef,
-      trackIdx,
-      handleDelete,
-      id,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      onCloseConfigMenu,
-      trackModel,
-      configOptions: configOptions.current,
-      items,
-      onConfigChange,
-    });
-
-    getConfigMenu(menu, "singleSelect");
-    configMenuPos.current = { left: event.pageX, top: event.pageY };
-  }
 
   function resetState() {
     configOptions.current = { ...DEFAULT_OPTIONS };
@@ -215,42 +163,9 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
     }
   }, [trackData]);
 
-  // useEffect(() => {
-  //   if (configChanged === true) {
-  //     if (
-  //       !useFineModeNav &&
-  //       genomeArr![genomeIdx!].genome._name === parentGenome.current
-  //     ) {
-  //       createCanvas(
-  //         curRegionData.current.trackState,
-  //         curRegionData.current.deDupcacheDataArr,
-  //         false
-  //       );
-  //     } else {
-  //       createCanvas(
-  //         curRegionData.current.trackState,
-  //         curRegionData.current.deDupcacheDataArr,
-  //         true
-  //       );
-  //     }
-  //     updateGlobalTrackConfig({
-  //       configOptions: configOptions.current,
-  //       trackModel: trackModel,
-  //       id: id,
-  //       trackIdx: trackIdx,
-  //       legendRef: legendRef,
-  //     });
-  //   }
-  //   setConfigChanged(false);
-  // }, [configChanged]);
   useEffect(() => {
     if (screenshotOpen) {
       async function handle() {
-        let genesArr = [
-          fetchedDataCache.current[dataIdx! + 1],
-          fetchedDataCache.current[dataIdx!],
-          fetchedDataCache.current[dataIdx! - 1],
-        ];
         let trackState = {
           ...fetchedDataCache.current[dataIdx!].trackState,
         };
@@ -268,17 +183,15 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
                   windowWidth
               );
 
-        genesArr = genesArr.map((item) => item.dataCache).flat(1);
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 
-        let result = await getDisplayModeFunction({
-          usePrimaryNav: usePrimaryNav.current,
-          genesArr,
+        const result = await getDisplayModeFunction({
+          geneArr: [],
           trackState,
           windowWidth,
           configOptions: drawOptions,
-          svgHeight,
+          genomeName: genomeArr![genomeIdx!].genome.getName(),
           updatedLegend,
           trackModel,
         });
@@ -311,16 +224,16 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
-    setLegend(updatedLegend.current);
+    if (!genomeArr![genomeIdx!].isInitial) {
+      checkTrackPreload(id);
+    }
+    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
 
     <div
-      onContextMenu={renderConfigMenu}
       style={{
         display: "flex",
         position: "relative",

@@ -42,7 +42,7 @@ export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
 
   render() {
     const { type, style, ...otherProps } = this.props;
-    console.log(this.props);
+
     const mergedStyle = Object.assign({}, DEFAULT_STYLE, style);
     switch (type) {
       case RenderTypes.CANVAS:
@@ -61,7 +61,7 @@ export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
           let end = this.props.viewWindow.end - this.props.width / 3;
 
           let svgWidth = end - start;
-          console.log(this.props.width / 3);
+
           return (
             <svg
               children={this.props.children}

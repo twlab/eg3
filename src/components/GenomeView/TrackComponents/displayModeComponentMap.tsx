@@ -68,6 +68,8 @@ import OmeroTrackComponents, {
 } from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "@/models/layoutUtils";
 import _ from "lodash";
+import RulerComponent from "./RulerComponents/RulerComponent";
+import { getGenomeConfig } from "@/models/genomes/allGenomes";
 
 enum BedColumnIndex {
   CATEGORY = 3,
@@ -491,7 +493,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
-    let currDisplayNav;
 
     //FullDisplayMode part from eg2
     let placeFeatureData = featureArrange.arrange(
@@ -533,7 +534,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
       svgHeight.current = height;
     }
     if (updatedLegend) {
-      console.log("SDAASDASD");
       updatedLegend.current = (
         <TrackLegend height={svgHeight.current} trackModel={trackModel} />
       );
@@ -651,10 +651,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <MatplotTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
@@ -853,14 +853,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
     function getNumLegend(legend: ReactNode) {
       updatedLegend.current = legend;
     }
+
     let canvasElements = (
       <MethylCTrackComputation
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
@@ -887,10 +888,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <DynseqTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
         basesByPixel={basesByPixel}
@@ -909,7 +910,29 @@ export function getDisplayModeFunction(
   cacheIdx?: any,
   curXPos?: any
 ) {
-  if (
+  if (drawData.trackModel.type === "ruler") {
+    function getNumLegend(legend: ReactNode) {
+      drawData.updatedLegend.current = legend;
+    }
+
+    let canvasElements = (
+      <RulerComponent
+        viewRegion={objToInstanceAlign(drawData.trackState.visRegion)}
+        width={drawData.trackState.visWidth}
+        trackModel={drawData.trackModel}
+        selectedRegion={objToInstanceAlign(
+          drawData.trackState.genomicFetchCoord[`${drawData.genomeName}`]
+            .primaryVisData.viewWindowRegion
+        )}
+        viewWindow={drawData.trackState.viewWindow}
+        getNumLegend={getNumLegend}
+        genomeConfig={getGenomeConfig(drawData.genomeName)}
+        options={drawData.configOptions}
+      />
+    );
+
+    return canvasElements;
+  } else if (
     drawData.configOptions.displayMode === "full" &&
     drawData.trackModel.type !== "genomealign"
   ) {
@@ -1269,7 +1292,6 @@ export function getDisplayModeFunction(
         }
       });
     } else if (drawData.trackModel.type === "longrange") {
-      console.log(drawData.genesArr);
       drawData.genesArr.map((record) => {
         const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 

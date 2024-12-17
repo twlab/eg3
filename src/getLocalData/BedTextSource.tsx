@@ -20,13 +20,12 @@ class BedTextSource {
   }
 
   convertToBedRecord(item) {
-    console.log(item);
     const record = {
       chr: item[0],
       start: Number.parseInt(item[1], 10),
       end: Number.parseInt(item[2], 10),
     };
-    console.log(record);
+
     for (let i = 3; i < item.length; i++) {
       record[i] = item[i];
     }

@@ -75,7 +75,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
     let curXPos = getTrackXOffset(trackState, windowWidth);
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
-    console.log(windowWidth);
+
     let res = getDisplayModeFunction(
       {
         genesArr,

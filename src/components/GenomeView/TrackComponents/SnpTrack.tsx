@@ -16,6 +16,7 @@ import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import SnpDetail from "./SnpComponents/SnpDetail";
+import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -51,7 +52,7 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
 
   trackIdx,
   id,
-  useFineModeNav,
+  dragX,
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
@@ -108,17 +109,17 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
-    function getHeight(numRows: number): number {
-      let rowsToDraw = Math.min(numRows, configOptions.current.maxRows);
-      if (configOptions.current.hideMinimalItems) {
-        rowsToDraw -= 1;
-      }
-      if (rowsToDraw < 1) {
-        rowsToDraw = 1;
-      }
-      return rowsToDraw * ROW_HEIGHT + TOP_PADDING;
+  function getHeight(numRows: number): number {
+    let rowsToDraw = Math.min(numRows, configOptions.current.maxRows);
+    if (configOptions.current.hideMinimalItems) {
+      rowsToDraw -= 1;
     }
+    if (rowsToDraw < 1) {
+      rowsToDraw = 1;
+    }
+    return rowsToDraw * ROW_HEIGHT + TOP_PADDING;
+  }
+  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
 
     let res = getDisplayModeFunction(
@@ -281,7 +282,60 @@ const SnpTrack: React.FC<TrackProps> = memo(function SnpTrack({
       });
     }
   }, [trackData]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding: 5,
+          getHeight,
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
     //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE

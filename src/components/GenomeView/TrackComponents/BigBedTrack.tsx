@@ -44,7 +44,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   dataIdx,
   trackIdx,
   id,
-  useFineModeNav,
+
   setShow3dGene,
   isThereG3dTrack,
   dragX,

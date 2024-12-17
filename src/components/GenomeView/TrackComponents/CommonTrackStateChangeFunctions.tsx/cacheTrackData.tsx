@@ -4,7 +4,7 @@ import {
   removeDuplicates,
   removeDuplicatesWithoutId,
 } from "../commonComponents/check-obj-dupe";
-function getDeDupeArrMatPlot(data: Array<any>) {
+export function getDeDupeArrMatPlot(data: Array<any>) {
   let tempMap = new Map<number, any[]>();
 
   data.forEach((data) => {
