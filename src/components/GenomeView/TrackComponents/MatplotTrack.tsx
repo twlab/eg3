@@ -6,7 +6,11 @@ import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/num
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import trackConfigMenu from "../../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import ReactDOM from "react-dom";
-import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
+import {
+  cacheTrackData,
+  getDeDupeArrMatPlot,
+  transformArray,
+} from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
@@ -117,42 +121,47 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
-            const dataCacheCurrentNext =
-              fetchedDataCache.current[dataIdx! + 1]?.dataCache ?? [];
-            const dataCacheCurrent =
-              fetchedDataCache.current[dataIdx!]?.dataCache ?? [];
-            const dataCacheCurrentPrev =
-              fetchedDataCache.current[dataIdx! - 1]?.dataCache ?? [];
+            let left, mid, right;
 
-            // Get the highest length among the three dataCache arrays
-            const maxLength = Math.max(
-              dataCacheCurrentNext.length,
-              dataCacheCurrent.length,
-              dataCacheCurrentPrev.length
-            );
-
-            let combined: Array<any> = [];
-
-            // Use the highest length as the loop boundary
-            for (let i = 0; i < maxLength; i++) {
-              combined.push([
-                dataCacheCurrentNext[i] ?? [], // Add additional safety check for out-of-bound access
-                dataCacheCurrent[i] ?? [], // This access is expected to be always within bounds
-                dataCacheCurrentPrev[i] ?? [], // Add additional safety check for out-of-bound access
-              ]);
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
             }
 
-            trackData![`${id}`].result = combined;
+            const dataCacheCurrentNext =
+              fetchedDataCache.current[left]?.dataCache ?? [];
+            const dataCacheCurrent =
+              fetchedDataCache.current[mid]?.dataCache ?? [];
+            const dataCacheCurrentPrev =
+              fetchedDataCache.current[right]?.dataCache ?? [];
+
+            let combined: Array<any> = [
+              dataCacheCurrentNext,
+              dataCacheCurrent,
+              dataCacheCurrentPrev,
+            ];
+
+            trackData![`${id}`].result = transformArray(combined);
           }
         }
         resetState();
@@ -169,7 +178,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           legendRef: legendRef,
         });
       }
-
+      console.log(trackData![`${id}`].result);
       cacheTrackData({
         usePrimaryNav: usePrimaryNav.current,
         id,
@@ -262,7 +271,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
         let trackState = {
           ...fetchedDataCache.current[dataIdx!].trackState,
         };
-
+        genesArr = getDeDupeArrMatPlot(genesArr);
         trackState["viewWindow"] =
           updateSide.current === "right"
             ? new OpenInterval(
@@ -276,7 +285,6 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
                   windowWidth
               );
 
-        genesArr = genesArr.map((item) => item.dataCache).flat(1);
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 

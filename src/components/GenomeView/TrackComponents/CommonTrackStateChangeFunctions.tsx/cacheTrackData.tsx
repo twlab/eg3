@@ -86,7 +86,12 @@ export function cacheTrackData({
 
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
-          trackModel.type in { dynamichic: "", dynamiclongrange: "", hic: "" }
+          trackModel.type in
+          {
+            dynamichic: "",
+            dynamiclongrange: "",
+            hic: "",
+          }
             ? trackData![`${id}`].result
             : trackModel !== "" &&
               trackModel.type in
@@ -95,6 +100,7 @@ export function cacheTrackData({
                   dynamic: "",
                   dynamicbed: "",
                   dynamiclongrange: "",
+                  longrange: "",
                   biginteract: "",
                 }
             ? trackData![`${id}`].result.flat(1)
@@ -266,7 +272,7 @@ export function cacheTrackData({
           dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
-        console.log(fetchedDataCache);
+
         fetchedDataCache.current[rightIdx.current + 1]["trackState"] =
           newTrackState;
 
@@ -319,4 +325,23 @@ export function cacheTrackData({
       }
     }
   }
+}
+
+export function transformArray(arr: any[][][]) {
+  // Determine the number of subarrays in each inner array (assuming all inner arrays have the same structure)
+  const numberOfSubArrays = arr[0].length;
+
+  // Initialize the result array with empty arrays for each subarray
+  const result: any[][][] = new Array(numberOfSubArrays)
+    .fill(null)
+    .map(() => []);
+
+  // Iterate over the input array
+  arr.forEach((innerArray) => {
+    innerArray.forEach((subArray, index) => {
+      result[index].push(subArray);
+    });
+  });
+
+  return result;
 }

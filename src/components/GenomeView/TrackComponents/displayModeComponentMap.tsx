@@ -826,7 +826,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewWindow={trackState.viewWindow}
         visRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
@@ -1193,6 +1193,7 @@ export function getDisplayModeFunction(
     }
   } else if (drawData.trackModel.type === "matplot") {
     let formattedData: Array<any> = [];
+
     for (let i = 0; i < drawData.genesArr.length; i++) {
       formattedData.push(
         drawData.genesArr[i].map((record) => {
@@ -1285,6 +1286,7 @@ export function getDisplayModeFunction(
         }
       });
     } else if (drawData.trackModel.type === "longrange") {
+      console.log(drawData.genesArr);
       drawData.genesArr.map((record) => {
         const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 
@@ -1320,6 +1322,13 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
     });
+    if (displayCache) {
+      displayCache.current.density[cacheIdx] = {
+        canvasData: canvasElements,
+        height: drawData.configOptions.height,
+        xPos: curXPos,
+      };
+    }
 
     return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {
@@ -1332,7 +1341,11 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
     });
-
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: drawData.configOptions,
+      xPos: curXPos,
+    };
     return canvasElements;
   } else if (
     drawData.trackModel.type in
@@ -1404,7 +1417,11 @@ export function getDisplayModeFunction(
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
-
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: drawData.configOptions,
+      xPos: curXPos,
+    };
     return canvasElements;
   } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
     let formattedData = drawData.genesArr.map((record) => {

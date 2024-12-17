@@ -4,7 +4,10 @@ import { TrackProps } from "../../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 
 import ReactDOM from "react-dom";
-import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
+import {
+  cacheTrackData,
+  transformArray,
+} from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
@@ -135,22 +138,39 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
+            let left, mid, right;
+
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
+            }
+
             const dataCacheCurrentNext =
-              fetchedDataCache.current[dataIdx! + 1]?.dataCache ?? [];
+              fetchedDataCache.current[left]?.dataCache ?? [];
             const dataCacheCurrent =
-              fetchedDataCache.current[dataIdx!]?.dataCache ?? [];
+              fetchedDataCache.current[mid]?.dataCache ?? [];
             const dataCacheCurrentPrev =
-              fetchedDataCache.current[dataIdx! - 1]?.dataCache ?? [];
+              fetchedDataCache.current[right]?.dataCache ?? [];
 
             let combined: Array<any> = [
               dataCacheCurrentNext,
@@ -158,7 +178,7 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
               dataCacheCurrentPrev,
             ];
 
-            trackData![`${id}`].result = combined;
+            trackData![`${id}`].result = transformArray(combined);
           }
         }
         resetState();

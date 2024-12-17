@@ -178,6 +178,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       options,
       forceSvg,
       getNumLegend,
+      viewWindow,
     } = this.props;
 
     const { height, aggregateMethod, smooth, lineWidth } = options;
@@ -211,6 +212,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
         forceSvg={forceSvg}
         lineWidth={lineWidth}
         width={width}
+        viewWindow={viewWindow}
       />
     );
     // </HoverTooltipContext>
@@ -224,6 +226,8 @@ interface LinePlotTrackProps {
   lineWidth: any;
   xToValue: any;
   trackModel: TrackModel;
+  forceSvg: any;
+  viewWindow: any;
 }
 class LinePlot extends React.PureComponent<LinePlotTrackProps> {
   static propTypes = {
@@ -273,8 +277,8 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
   }
 
   render() {
-    const { xToValue, height, width } = this.props;
-
+    const { xToValue, height, width, forceSvg, viewWindow } = this.props;
+    console.log(xToValue);
     return xToValue.length === 0 ? (
       <div
         style={{
@@ -287,6 +291,8 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
         type={1 ? RenderTypes.SVG : RenderTypes.CANVAS}
         width={width}
         height={height}
+        forceSvg={forceSvg}
+        viewWindow={viewWindow}
       >
         {xToValue.map(this.renderLine)}
       </DesignRenderer>
