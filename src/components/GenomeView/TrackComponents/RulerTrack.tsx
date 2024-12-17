@@ -166,16 +166,18 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
         trackData![`${id}`].result = [];
       }
       if ("result" in trackData![`${id}`]) {
-        cacheTrackData({
-          usePrimaryNav: usePrimaryNav.current,
-          id,
-          trackData,
-          fetchedDataCache,
-          rightIdx,
-          leftIdx,
-          createSVGOrCanvas,
-          trackModel,
-        });
+        if (trackData![`${id}`].result) {
+          cacheTrackData({
+            usePrimaryNav: usePrimaryNav.current,
+            id,
+            trackData,
+            fetchedDataCache,
+            rightIdx,
+            leftIdx,
+            createSVGOrCanvas,
+            trackModel,
+          });
+        }
       }
     }
   }, [trackData]);

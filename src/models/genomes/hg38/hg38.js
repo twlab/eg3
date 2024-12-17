@@ -52,11 +52,11 @@ const defaultTracks = [
   //   name: "Ruler",
   // }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
-  new TrackModel({
-    type: "hi",
-    url: "",
-    name: "NOTSUPPORTEDTRACEXAMPLE",
-  }),
+  // new TrackModel({
+  //   type: "hi",
+  //   url: "",
+  //   name: "NOTSUPPORTEDTRACEXAMPLE",
+  // }),
 
   //   new TrackModel({
   //   type: "refbed",
@@ -72,11 +72,11 @@ const defaultTracks = [
   //     },
   //   },
   // }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "refGene",
@@ -140,6 +140,7 @@ const defaultTracks = [
   new TrackModel({
     type: "modbed",
     name: "examplemod",
+    url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
   }),
 
   // new TrackModel({

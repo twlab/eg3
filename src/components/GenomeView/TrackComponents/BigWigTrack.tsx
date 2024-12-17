@@ -203,16 +203,18 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         });
       }
       if ("result" in trackData![`${id}`]) {
-        cacheTrackData({
-          usePrimaryNav: usePrimaryNav.current,
-          id,
-          trackData,
-          fetchedDataCache,
-          rightIdx,
-          leftIdx,
-          createSVGOrCanvas,
-          trackModel,
-        });
+        if (trackData![`${id}`].result) {
+          cacheTrackData({
+            usePrimaryNav: usePrimaryNav.current,
+            id,
+            trackData,
+            fetchedDataCache,
+            rightIdx,
+            leftIdx,
+            createSVGOrCanvas,
+            trackModel,
+          });
+        }
       }
     }
   }, [trackData]);

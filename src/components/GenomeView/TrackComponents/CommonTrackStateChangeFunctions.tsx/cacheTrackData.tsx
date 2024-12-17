@@ -27,6 +27,9 @@ export function getDeDupeArrMatPlot(data: Array<any>, isError) {
 
   return deDupcacheDataArr;
 }
+function isObject(variable) {
+  return variable !== null && typeof variable === "object";
+}
 
 interface CacheTrackDataParams {
   id: string;
@@ -69,7 +72,10 @@ function checkFetchError(trackData, id) {
       }
     });
   } else {
-    if ("error" in trackData[`${id}`].result) {
+    if (
+      isObject(trackData[`${id}`].result) &&
+      "error" in trackData[`${id}`].result
+    ) {
       detectError = true;
     }
   }

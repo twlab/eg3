@@ -335,16 +335,18 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
         if (!trackData!.trackState.initial) {
           trackData![`${id}`]["result"] = trackData![`${id}`]["result"].flat();
         }
-        cacheTrackData({
-          usePrimaryNav: usePrimaryNav.current,
-          id,
-          trackData,
-          fetchedDataCache,
-          rightIdx,
-          leftIdx,
-          createSVGOrCanvas,
-          trackModel,
-        });
+        if (trackData![`${id}`].result) {
+          cacheTrackData({
+            usePrimaryNav: usePrimaryNav.current,
+            id,
+            trackData,
+            fetchedDataCache,
+            rightIdx,
+            leftIdx,
+            createSVGOrCanvas,
+            trackModel,
+          });
+        }
       }
     }
     handle();

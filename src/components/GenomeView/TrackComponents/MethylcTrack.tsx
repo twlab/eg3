@@ -192,16 +192,18 @@ const MethylcTrack: React.FC<TrackProps> = memo(function MethylcTrack({
         });
       }
 
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 

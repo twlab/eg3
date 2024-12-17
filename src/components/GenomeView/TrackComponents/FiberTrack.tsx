@@ -338,16 +338,18 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
           usePrimaryNav: usePrimaryNav.current,
         });
       }
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 

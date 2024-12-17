@@ -178,16 +178,18 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
           configOptions.current["trackManagerRef"] = trackManagerRef;
         }
 
-        cacheTrackData({
-          usePrimaryNav: usePrimaryNav.current,
-          id,
-          trackData,
-          fetchedDataCache,
-          rightIdx,
-          leftIdx,
-          createSVGOrCanvas,
-          trackModel,
-        });
+        if (trackData![`${id}`].result) {
+          cacheTrackData({
+            usePrimaryNav: usePrimaryNav.current,
+            id,
+            trackData,
+            fetchedDataCache,
+            rightIdx,
+            leftIdx,
+            createSVGOrCanvas,
+            trackModel,
+          });
+        }
       }
     }
     handle();

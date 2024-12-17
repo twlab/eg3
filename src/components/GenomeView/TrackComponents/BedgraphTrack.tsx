@@ -198,17 +198,18 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
           legendRef: legendRef,
         });
       }
-
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 

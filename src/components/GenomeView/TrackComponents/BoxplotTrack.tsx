@@ -198,16 +198,18 @@ const BoxplotTrack: React.FC<TrackProps> = memo(function BoxplotTrack({
         });
       }
 
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
