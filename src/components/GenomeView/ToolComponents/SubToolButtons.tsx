@@ -9,7 +9,7 @@ import "./TrackContainer.css";
 function SubToolButtons(props) {
   const panLeftButton = (
     <button
-      className="border border-gray-500 rounded-md p-2 py-2.5 mx-2"
+      className="border border-gray-300 rounded-md p-2 py-2.5 mx-2"
       title="Pan left
 (Alt+Z)"
       style={{ fontFamily: "monospace" }}
@@ -20,7 +20,7 @@ function SubToolButtons(props) {
   );
   const panRightButton = (
     <button
-      className="border border-gray-500 rounded-md p-2 py-2.5 mx-2"
+      className="border border-gray-300 rounded-md p-2 py-2.5 mx-2"
       title="Pan right
 (Alt+X)"
       style={{ fontFamily: "monospace" }}
@@ -52,7 +52,7 @@ function SubToolButtons(props) {
       </div>
 
       <ButtonGroup buttons={panLeftButton} />
-      <ZoomButtons onToolClicked={props.onToolClicked} />
+      {/* <ZoomButtons onToolClicked={props.onToolClicked} /> */}
       <ButtonGroup buttons={panRightButton} />
 
       <div

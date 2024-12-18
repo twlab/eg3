@@ -40,6 +40,8 @@ import {
   createNewTrackState,
   TrackState,
 } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import ZoomControls from "./ToolComponents/ZoomControls";
+import TrackRegionController from "./genomeNavigator/TrackRegionController";
 
 function sumArray(numbers) {
   let total = 0;
@@ -67,6 +69,8 @@ import SnpTrack from "./TrackComponents/SnpTrack";
 import BamTrack from "./TrackComponents/BamTrack";
 import BamSource from "@/getRemoteData/BamSource";
 import OmeroTrack from "./TrackComponents/OmeroTrack";
+
+
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -149,6 +153,7 @@ interface TrackManagerProps {
   presentStateIdx: number;
   legendWidth: number;
   onTracksLoaded?: any;
+  selectedRegion: any;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
@@ -162,6 +167,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   presentStateIdx,
   legendWidth,
   onTracksLoaded,
+  selectedRegion,
 }) {
   //useRef to store data between states without re render the component
 
@@ -302,14 +308,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (isMouseInsideRef.current) {
       const parentRect = block.current!.getBoundingClientRect();
       if (horizontalLineRef.current) {
-        horizontalLineRef.current.style.top = `${
-          mousePositionRef.current.y - parentRect.top
-        }px`;
+        horizontalLineRef.current.style.top = `${mousePositionRef.current.y - parentRect.top
+          }px`;
       }
       if (verticalLineRef.current) {
-        verticalLineRef.current.style.left = `${
-          mousePositionRef.current.x - parentRect.left
-        }px`;
+        verticalLineRef.current.style.left = `${mousePositionRef.current.x - parentRect.left
+          }px`;
       }
     }
   }
@@ -441,7 +445,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     globalTrackConfig.current[`${config.trackModel.id}`] = _.cloneDeep(config);
     if (
       Object.keys(globalTrackConfig.current).length ===
-        trackManagerState.current.tracks.length &&
+      trackManagerState.current.tracks.length &&
       initialConfig.current
     ) {
       trackManagerState.current.tracks.map((trackModel) => {
@@ -807,8 +811,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         primaryGenName: genomeArr[genomeIdx].genome.getName(),
         trackModelArr:
           !genomeArr[genomeIdx].isInitial &&
-          initial === 1 &&
-          genomeArr[genomeIdx].sizeChange
+            initial === 1 &&
+            genomeArr[genomeIdx].sizeChange
             ? initialPreloadTrackFetch.current
             : trackManagerState.current.tracks,
         visData: newVisData,
@@ -828,7 +832,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
         minBp.current = minBp.current - bpRegionSize.current;
       }
-    } catch {}
+    } catch { }
     infiniteScrollWorker.current!.onmessage = (event) => {
       event.data.fetchResults.map((item, index) => {
         trackComponents;
@@ -950,16 +954,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       selectedTool.title === `Zoom-in tool (Alt+M)` ||
       toolTitle in
-        {
-          "Zoom in 5-fold": "",
-          "Zoom in 1-fold (Alt+I)": "",
-          "Zoom in 1/3-fold": "",
-          "Zoom out 1/3-fold": "",
-          "Zoom out 1-fold (Alt+O)": "",
-          "Zoom out 5-fold": "",
-          "Pan right (Alt+X)": "",
-          "Pan left (Alt+Z)": "",
-        }
+      {
+        "Zoom in 5-fold": "",
+        "Zoom in 1-fold (Alt+I)": "",
+        "Zoom in 1/3-fold": "",
+        "Zoom out 1/3-fold": "",
+        "Zoom out 1-fold (Alt+O)": "",
+        "Zoom out 5-fold": "",
+        "Pan right (Alt+X)": "",
+        "Pan left (Alt+Z)": "",
+      }
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
@@ -1224,8 +1228,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackManagerState.current.tracks[i].tracks?.map((item, index) => {
           hicStrawObj.current[
             `${trackManagerState.current.tracks[i].id}` +
-              "subtrack" +
-              `${index}`
+            "subtrack" +
+            `${index}`
           ] = new HicSource(
             trackManagerState.current.tracks[i].tracks![index].url
           );
@@ -1250,7 +1254,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         for (let trackComponent of trackComponents) {
           if (
             trackComponent.trackModel.id ===
-              trackManagerState.current.tracks[i].id &&
+            trackManagerState.current.tracks[i].id &&
             trackComponent.hasData
           ) {
             trackComponent.trackModel.options =
@@ -1519,7 +1523,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         {/* <div>1pixel to {basePerPixel.current}bp</div> */}
         {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-          <div className="flex flex-row py-4 items-center">
+          <div className="flex flex-row py-10 items-center">
             <HighlightMenu
               highlights={trackManagerState.current.highlights}
               viewRegion={trackManagerState.current.viewRegion}
@@ -1537,16 +1541,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               clearHistory={jumpToState}
             />
             <SubToolButtons onToolClicked={onToolClicked} />
-            <div className="flex flex-row gap-4">
-              <p className="text-sm font-mono">
-                {trackManagerState.current.viewRegion._navContext._features[0].locus.chr}:
-                {Math.round(bpX.current)}-
-                {Math.round(bpX.current + bpRegionSize.current)}
-              </p>
-              <p className="text-sm font-mono">
-                1px: {basePerPixel.current.toFixed(2)}bp
-              </p>
-            </div>
+            <ZoomControls onToolClicked={onToolClicked} />
+            {selectedRegion && (
+              <TrackRegionController
+                selectedRegion={selectedRegion}
+                onRegionSelected={(start: number, end: number) => onRegionSelected(start, end, "Zoom in 5-fold")}
+                contentColorSetup={{ background: "white", color: "#222" }}
+                genomeConfig={genomeArr[genomeIdx]}
+                genomeArr={genomeArr}
+                genomeIdx={genomeIdx}
+                addGlobalState={addGlobalState}
+                trackManagerState={trackManagerState}
+              />
+            )}
+            <p className="text-sm font-mono pl-2">
+              1px: {basePerPixel.current.toFixed(2)}bp
+            </p>
           </div>
           <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
@@ -1640,52 +1650,52 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           applyTrackConfigChange={applyTrackConfigChange}
                           dragX={dragX.current}
                           checkTrackPreload={checkTrackPreload}
-                          // viewWindow={trackManagerState.current.viewRegion}
+                        // viewWindow={trackManagerState.current.viewRegion}
                         />
 
                         {highlight.length > 0
                           ? highlight.map((item, index) => {
-                              if (item.display) {
-                                return (
+                            if (item.display) {
+                              return (
+                                <div
+                                  key={index}
+                                  style={{
+                                    display: "flex",
+                                    height: "100%",
+                                  }}
+                                >
                                   <div
-                                    key={index}
                                     style={{
                                       display: "flex",
+                                      position: "relative",
                                       height: "100%",
                                     }}
                                   >
                                     <div
+                                      key={index}
                                       style={{
-                                        display: "flex",
-                                        position: "relative",
-                                        height: "100%",
-                                      }}
-                                    >
-                                      <div
-                                        key={index}
-                                        style={{
-                                          position: "absolute",
-                                          backgroundColor: item.color,
+                                        position: "absolute",
+                                        backgroundColor: item.color,
 
-                                          top: "0",
-                                          height: "100%",
-                                          left:
-                                            item.side === "right"
-                                              ? `${item.xPos}px`
-                                              : "",
-                                          right:
-                                            item.side === "left"
-                                              ? `${item.xPos}px`
-                                              : "",
-                                          width: item.width,
-                                          pointerEvents: "none", // This makes the highlighted area non-interactive
-                                        }}
-                                      ></div>
-                                    </div>
+                                        top: "0",
+                                        height: "100%",
+                                        left:
+                                          item.side === "right"
+                                            ? `${item.xPos}px`
+                                            : "",
+                                        right:
+                                          item.side === "left"
+                                            ? `${item.xPos}px`
+                                            : "",
+                                        width: item.width,
+                                        pointerEvents: "none", // This makes the highlighted area non-interactive
+                                      }}
+                                    ></div>
                                   </div>
-                                );
-                              }
-                            })
+                                </div>
+                              );
+                            }
+                          })
                           : ""}
                       </div>
                     </div>

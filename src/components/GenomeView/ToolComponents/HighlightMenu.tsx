@@ -101,7 +101,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
       <button
         onClick={handleOpenModal}
         title="Highlight Menu {Alt+U)"
-        className="border border-gray-500 rounded-md p-2 mx-2"
+        className="border border-gray-300 rounded-md p-2 mx-2"
       >
         <span role="img" aria-label="highlights">
           ⚡

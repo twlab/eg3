@@ -53,7 +53,7 @@ export function ToolButtons(props: ToolButtonsProps) {
         key={toolName}
         title={tool.title}
         onClick={() => props.onToolClicked(tool)}
-        className={`border border-gray-500 rounded-md p-2 mx-2 ${tool.isSelected ? "bg-gray-500" : ""}`}
+        className={`border border-gray-300 rounded-md p-2 mx-2 ${tool.isSelected ? "bg-gray-500" : ""}`}
       >
         {tool.buttonContent}
       </button>

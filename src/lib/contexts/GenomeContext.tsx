@@ -337,7 +337,7 @@ function useGenomeState(isLocal = 1) {
     );
 
     addGlobalState(newStateObj);
-    
+
     let state = stateArr.current[presentStateIdx.current];
     let curGenomeConfig = getGenomeConfig(state.genomeName);
     curGenomeConfig.navContext = state["viewRegion"]._navContext;
@@ -346,7 +346,7 @@ function useGenomeState(isLocal = 1) {
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
-    
+
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
   }
 

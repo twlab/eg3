@@ -84,7 +84,7 @@ const History: React.FC<Props> = ({
       <button
         onClick={handleOpenModal}
         title="Operation history"
-        className="border border-gray-500 rounded-md p-2 mx-2"
+        className="border border-gray-300 rounded-md p-2 mx-2"
         style={{ width: "50px" }}
       >
         <span role="img" aria-label="History">
