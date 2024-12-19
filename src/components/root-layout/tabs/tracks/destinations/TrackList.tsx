@@ -6,6 +6,7 @@ export default function TrackList({ params }: NavigationComponentProps) {
     const {
         state,
         onTracksAdded,
+        onTrackRemoved,
         genomeConfig,
         secondaryGenomes,
     } = useGenome();
@@ -35,6 +36,20 @@ export default function TrackList({ params }: NavigationComponentProps) {
                             <span className="font-medium">{key}:</span> {String(value)}
                         </div>
                     ))}
+                    <button
+                        onClick={() => onTrackRemoved(track.id)}
+                        style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            border: 'none',
+                            background: '#ff4444',
+                            color: 'white',
+                            cursor: 'pointer',
+                            marginTop: '10px',
+                        }}
+                    >
+                        Remove
+                    </button>
                 </div>
             ))}
         </div>

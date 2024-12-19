@@ -24,6 +24,7 @@ import {
   TrackState,
 } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import TrackManager from "./TrackManager";
+import TrackRegionController from "./genomeNavigator/TrackRegionController";
 
 // const firebaseConfig = {
 //   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -81,6 +82,7 @@ function GenomeHub() {
     allGenome,
     addGenomeView,
     setLoading,
+    onTracksAdded
   } = useGenome();
 
   const scrollYPos = useRef(0);
@@ -196,14 +198,14 @@ function GenomeHub() {
         ),
         highlights: isHighlight
           ? [
-              {
-                start: startbase,
-                end: endbase,
-                display: true,
-                color: "rgba(0, 123, 255, 0.15)",
-                tag: "",
-              },
-            ]
+            {
+              start: startbase,
+              end: endbase,
+              display: true,
+              color: "rgba(0, 123, 255, 0.15)",
+              tag: "",
+            },
+          ]
           : undefined,
       }
     );
@@ -462,67 +464,39 @@ function GenomeHub() {
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         {size.width > 0
           ? genomeList.map((item, index) => {
-              return (
-                <div
-                  key={index}
-                  style={{ display: "flex", flexDirection: "column" }}
-                >
-                  {/* {viewRegion ? (
-                  <Nav
-                    isShowingNavigator={showGenNav}
+            return (
+              <div
+                key={index}
+                style={{ display: "flex", flexDirection: "column" }}
+              >
+                {viewRegion && showGenNav ? (
+                  <GenomeNavigator
                     selectedRegion={viewRegion}
                     genomeConfig={genomeList[index]}
-                    trackLegendWidth={legendWidth}
+                    windowWidth={size.width}
                     onRegionSelected={genomeNavigatorRegionSelect}
-                    onGenomeSelected={onGenomeSelected}
-                    state={stateArr.current[presentStateIdx.current]}
-                    onTracksAdded={onTracksAdded}
-                    addSessionState={addSessionState}
-                    onRetrieveBundle={onRetrieveBundle}
-                    onRestoreSession={onRestoreSession}
-                    curBundle={curBundle}
-                    onHubUpdated={onHubUpdated}
-                    publicTracksPool={publicTracksPool}
-                    customTracksPool={customTracksPool}
-                    addTermToMetaSets={addTermToMetaSets}
-                    onSetsChanged={onSetsChanged}
-                    onSetSelected={onSetsSelected}
-                    onTabSettingsChange={onTabSettingsChange}
-                    sets={regionSets}
-                    selectedSet={selectedSet}
                   />
-                ) : (
-                  ""
-                )} */}
-                  {viewRegion && showGenNav ? (
-                    <GenomeNavigator
-                      selectedRegion={viewRegion}
-                      genomeConfig={genomeList[index]}
-                      windowWidth={size.width}
-                      onRegionSelected={genomeNavigatorRegionSelect}
-                    />
-                  ) : (
-                    ""
-                  )}
+                ) : null}
 
-                  <TrackManager
-                    key={item.genomeID}
-                    legendWidth={legendWidth}
-                    genomeIdx={index}
-                    recreateTrackmanager={recreateTrackmanager}
-                    genomeArr={genomeList}
-                    windowWidth={size.width - legendWidth}
-                    addGlobalState={addGlobalState}
-                    undoRedo={undoRedo}
-                    jumpToState={jumpToState}
-                    stateArr={stateArr.current}
-                    presentStateIdx={presentStateIdx.current}
-                    onTracksLoaded={onTracksLoaded}
-                  />
-                </div>
-              );
-            })
-          : ""}
+                <TrackManager
+                  key={item.genomeID}
+                  legendWidth={legendWidth}
+                  genomeIdx={index}
+                  recreateTrackmanager={recreateTrackmanager}
+                  genomeArr={genomeList}
+                  windowWidth={size.width - legendWidth}
+                  addGlobalState={addGlobalState}
+                  undoRedo={undoRedo}
+                  jumpToState={jumpToState}
+                  stateArr={stateArr.current}
+                  presentStateIdx={presentStateIdx.current}
+                  onTracksLoaded={onTracksLoaded}
+                  selectedRegion={viewRegion}
+                />
+              </div>
+            );
+          })
+          : null}
       </div>
     </div>
   );

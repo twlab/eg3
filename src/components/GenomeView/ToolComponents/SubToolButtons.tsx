@@ -9,7 +9,7 @@ import "./TrackContainer.css";
 function SubToolButtons(props) {
   const panLeftButton = (
     <button
-      className="btn btn-outline-secondary"
+      className="border border-gray-300 rounded-md p-2 py-2.5 mx-2"
       title="Pan left
 (Alt+Z)"
       style={{ fontFamily: "monospace" }}
@@ -20,7 +20,7 @@ function SubToolButtons(props) {
   );
   const panRightButton = (
     <button
-      className="btn btn-outline-secondary"
+      className="border border-gray-300 rounded-md p-2 py-2.5 mx-2"
       title="Pan right
 (Alt+X)"
       style={{ fontFamily: "monospace" }}
@@ -30,10 +30,9 @@ function SubToolButtons(props) {
     </button>
   );
   return (
-    <div className="tool-container">
-      <div className="tool-panel">
-        <ToolButtons allTools={Tools} onToolClicked={props.onToolClicked} />
-        {/* {this.props.embeddingMode && (
+    <>
+      <ToolButtons allTools={Tools} onToolClicked={props.onToolClicked} />
+      {/* {this.props.embeddingMode && (
           <TrackRegionController
             selectedRegion={viewRegion}
             onRegionSelected={onNewRegion}
@@ -41,34 +40,34 @@ function SubToolButtons(props) {
             onNewHighlight={onNewHighlight}
           />
         )} */}
-        <div
-          className="tool-element"
-          style={{ display: "flex", alignItems: "center" }}
-        >
-          {/* <ReorderMany
+      <div
+        className="tool-element"
+        style={{ display: "flex", alignItems: "center" }}
+      >
+        {/* <ReorderMany
             onOpenReorderManyModal={this.openReorderManyModal}
             onCloseReorderManyModal={this.closeReorderManyModal}
             showReorderManyModal={this.state.showReorderManyModal}
           /> */}
-        </div>
+      </div>
 
-        <ButtonGroup buttons={panLeftButton} />
-        <ZoomButtons onToolClicked={props.onToolClicked} />
-        <ButtonGroup buttons={panRightButton} />
+      <ButtonGroup buttons={panLeftButton} />
+      {/* <ZoomButtons onToolClicked={props.onToolClicked} /> */}
+      <ButtonGroup buttons={panRightButton} />
 
-        <div
-          className="tool-element"
-          style={{ display: "flex", alignItems: "center" }}
-        >
-          {/* <UndoRedo /> */}
-        </div>
-        <div
-          className="tool-element"
-          style={{ display: "flex", alignItems: "center" }}
-        >
-          {/* <History /> */}
-        </div>
-        {/* <div
+      <div
+        className="tool-element"
+        style={{ display: "flex", alignItems: "center" }}
+      >
+        {/* <UndoRedo /> */}
+      </div>
+      <div
+        className="tool-element"
+        style={{ display: "flex", alignItems: "center" }}
+      >
+        {/* <History /> */}
+      </div>
+      {/* <div
           className="tool-element"
           style={{ display: "flex", alignItems: "center" }}
         >
@@ -97,8 +96,7 @@ function SubToolButtons(props) {
           onNewTerms={onMetadataTermsChanged}
           suggestedMetaSets={suggestedMetaSets}
         /> */}
-      </div>
-    </div>
+    </>
   );
 }
 

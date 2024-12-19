@@ -40,4 +40,4 @@ export default function RemoteTracks({ params }: NavigationComponentProps) {
             onHubUpdated={onHubUpdated}
         />
     );
-} 
+}

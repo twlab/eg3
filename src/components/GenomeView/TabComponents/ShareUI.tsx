@@ -48,7 +48,6 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const ShareUI: React.FC<ShareUIProps> = ({ color, background, browser }) => {
-  const [value, setValue] = useState(0);
   const [link, setLink] = useState("");
   const { url } = queryString.parseUrl(window.location.href);
   const url2 = url.replace(/\/$/, "");
@@ -57,10 +56,6 @@ const ShareUI: React.FC<ShareUIProps> = ({ color, background, browser }) => {
   const full = `${url2}/?blob=${compressed}`;
   const emailLink = `mailto:?subject=browser%20view&body=${link}`;
   const iframeContent = `<iframe src="${link}" width="100%" height="1200" frameborder="0" style="border:0" allowfullscreen></iframe>`;
-
-  const handleChange = (index: number) => {
-    setValue(index);
-  };
 
   useEffect(() => {
     fetch(`https://api.tinyurl.com/create`, {
@@ -93,29 +88,12 @@ const ShareUI: React.FC<ShareUIProps> = ({ color, background, browser }) => {
   }, [full]);
 
   return (
-    <div
-      style={{ backgroundColor: background, color: color, width: 800 }}
-      id="shareUI"
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-around",
-          cursor: "pointer",
-        }}
-      >
-        <div onClick={() => handleChange(0)} aria-controls="tabpanel-0">
-          Email
-        </div>
-        <div onClick={() => handleChange(1)} aria-controls="tabpanel-1">
-          Embed
-        </div>
-        <div onClick={() => handleChange(2)} aria-controls="tabpanel-2">
-          QR code
-        </div>
-      </div>
+    <div style={{ backgroundColor: background, color: color }}>
       <div>
-        <TabPanel value={value} index={0}>
+        <h2 className="text-xl font-medium mb-1 bg-white py-2">
+          Email Share
+        </h2>
+        <div className="bg-white p-4">
           <p>
             Click{" "}
             <a href={emailLink} target="_blank" rel="noopener noreferrer">
@@ -127,27 +105,43 @@ const ShareUI: React.FC<ShareUIProps> = ({ color, background, browser }) => {
             Or <CopyToClip value={link} /> current link and send it via chat
             software.
           </p>
-        </TabPanel>
-        <TabPanel value={value} index={1}>
+        </div>
+      </div>
+
+      <hr className="border-gray-200 my-8" />
+
+      <div>
+        <h2 className="text-xl font-medium mb-1 bg-white py-2">
+          Embed
+        </h2>
+        <div className="bg-white p-4">
           <div>
             <textarea
               style={{ color, backgroundColor: background }}
               defaultValue={iframeContent}
-              cols={90}
+              className="w-full p-2 border rounded"
               rows={10}
             />
           </div>
-          <div>
+          <div className="mt-2">
             <CopyToClip value={iframeContent} />
           </div>
-        </TabPanel>
-        <TabPanel value={value} index={2}>
+        </div>
+      </div>
+
+      <hr className="border-gray-200 my-8" />
+
+      <div>
+        <h2 className="text-xl font-medium mb-1 bg-white py-2">
+          QR Code
+        </h2>
+        <div className="bg-white p-4">
           <QRCodeSVG
             value={link}
-            style={{ display: "block", margin: "auto" }}
+            className="mx-auto"
             size={256}
           />
-        </TabPanel>
+        </div>
       </div>
     </div>
   );

@@ -223,167 +223,100 @@ export class TrackUpload extends Component<TrackUploadProps, TrackUploadState> {
     }
   };
 
-  renderTrackUpload = () => (
-    <div>
-      <label>
-        <h3>1. Choose track file type:</h3>
-        <select value={this.state.fileType} onChange={this.handleTypeChange}>
-          <optgroup label="select only the track file (can select many of same type)">
-            <option value="bigWig">bigWig - {TYPES_DESC.bigWig}</option>
-            <option value="bigBed">bigBed - {TYPES_DESC.bigBed}</option>
-            <option value="rgbpeak">RgbPeak - {TYPES_DESC.rgbpeak}</option>
-            <option value="hic">HiC - {TYPES_DESC.hic}</option>
-            <option value="bigInteract">
-              bigInteract - {TYPES_DESC.bigInteract}
-            </option>
-            <option value="dynseq">dynseq - {TYPES_DESC.dynseq}</option>
-            <option value="g3d">G3D - {TYPES_DESC.g3d}</option>
-          </optgroup>
-          <optgroup label="select both the track file and index file (only select 1 pair)">
-            <option value="bedGraph">bedGraph - {TYPES_DESC.bedGraph}</option>
-            <option value="methylC">methylC - {TYPES_DESC.methylC}</option>
-            <option value="modbed">modbed - {TYPES_DESC.modbed}</option>
-            <option value="categorical">
-              categorical - {TYPES_DESC.categorical}
-            </option>
-            <option value="bed">bed - {TYPES_DESC.bed}</option>
-            <option value="vcf">vcf - {TYPES_DESC.vcf}</option>
-            <option value="refBed">refBed - {TYPES_DESC.refBed}</option>
-            <option value="longrange">
-              longrange - {TYPES_DESC.longrange}
-            </option>
-            <option value="longrangecolor">
-              longrange - {TYPES_DESC.longrangecolor}
-            </option>
-            <option value="qbed">qBED - {TYPES_DESC.qBED}</option>
-            <option value="bam">BAM - {TYPES_DESC.bam}</option>
-          </optgroup>
-        </select>
-      </label>
-      <br />
-      <TrackOptionsUI onGetOptions={this.getOptions} />
-      <label htmlFor="Assembly">
-        <h3>2. Choose assembly:</h3>
-        <input
-          value={this.state.assembly}
-          onChange={this.handleAssemblyChange}
-        />
-      </label>
-      <br />
-      <label htmlFor="trackFile">
-        <h3>3. Choose track file:</h3>
-        <input
-          type="file"
-          id="trackFile"
-          multiple
-          onChange={this.handleFileUpload}
-        />
-      </label>
-    </div>
-  );
-
-  renderHubUpload = () => (
-    <div>
-      <label htmlFor="hubFile">
-        <p>
-          <strong>Choose a folder</strong> that contains a file named{" "}
-          <strong>hub.config.json</strong>: (
-          <span>
-            <a
-              href={HELP_LINKS.localhub}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              local hub documentation
-            </a>
-          </span>
-          )
-        </p>
-        <input type="file" id="hubFile" onChange={this.handleHubUpload} />
-      </label>
-      <br />
-      <p className="lead">Or:</p>
-      <label htmlFor="hubFile2">
-        <p>
-          <strong>Choose multiple files</strong> (including{" "}
-          <strong>hub.config.json</strong>):
-        </p>
-        <input
-          type="file"
-          id="hubFile2"
-          multiple
-          onChange={this.handleHubUpload}
-        />
-      </label>
-    </div>
-  );
-
   render() {
-    const { selectedTab } = this.state;
-
-    const styles = {
-      tabs: {
-        margin: "20px",
-        borderRadius: "4px",
-      } as CSSProperties,
-      tabList: {
-        display: "flex",
-        borderBottom: "2px solid #ccc",
-      } as CSSProperties,
-      tab: {
-        padding: "10px 20px",
-        cursor: "pointer",
-        border: "1px solid transparent",
-        borderRadius: "4px 4px 0 0",
-        marginRight: "2px",
-        transition: "background-color 0.2s ease, color 0.2s ease",
-      } as CSSProperties,
-      tabHover: {
-        backgroundColor: "#e9ecef",
-      } as CSSProperties,
-      tabActive: {
-        border: "1px solid #ccc",
-        borderBottom: "2px solid white",
-        backgroundColor: "white",
-        fontWeight: "bold",
-        color: "blue",
-      } as CSSProperties,
-      tabContent: {
-        border: "1px solid #ccc",
-        padding: "20px",
-        borderRadius: "0 4px 4px 4px",
-        backgroundColor: "white",
-      } as CSSProperties,
-    };
-
     return (
       <div>
-        <div style={styles.tabList}>
-          <div
-            style={
-              selectedTab === "add-local-track"
-                ? { ...styles.tab, ...styles.tabActive }
-                : styles.tab
-            }
-            onClick={() => this.setState({ selectedTab: "add-local-track" })}
-          >
+        <div className="mb-8">
+          <h2 className="text-xl font-medium mb-1 bg-white py-2">
             Add Local Track
+          </h2>
+          <div>
+            <label>
+              <h3>1. Choose track file type:</h3>
+              <select value={this.state.fileType} onChange={this.handleTypeChange}>
+                <optgroup label="select only the track file (can select many of same type)">
+                  <option value="bigWig">bigWig - {TYPES_DESC.bigWig}</option>
+                  <option value="bigBed">bigBed - {TYPES_DESC.bigBed}</option>
+                  <option value="rgbpeak">RgbPeak - {TYPES_DESC.rgbpeak}</option>
+                  <option value="hic">HiC - {TYPES_DESC.hic}</option>
+                  <option value="bigInteract">bigInteract - {TYPES_DESC.bigInteract}</option>
+                  <option value="dynseq">dynseq - {TYPES_DESC.dynseq}</option>
+                  <option value="g3d">G3D - {TYPES_DESC.g3d}</option>
+                </optgroup>
+                <optgroup label="select both the track file and index file (only select 1 pair)">
+                  <option value="bedGraph">bedGraph - {TYPES_DESC.bedGraph}</option>
+                  <option value="methylC">methylC - {TYPES_DESC.methylC}</option>
+                  <option value="modbed">modbed - {TYPES_DESC.modbed}</option>
+                  <option value="categorical">categorical - {TYPES_DESC.categorical}</option>
+                  <option value="bed">bed - {TYPES_DESC.bed}</option>
+                  <option value="vcf">vcf - {TYPES_DESC.vcf}</option>
+                  <option value="refBed">refBed - {TYPES_DESC.refBed}</option>
+                  <option value="longrange">longrange - {TYPES_DESC.longrange}</option>
+                  <option value="longrangecolor">longrange - {TYPES_DESC.longrangecolor}</option>
+                  <option value="qbed">qBED - {TYPES_DESC.qBED}</option>
+                  <option value="bam">BAM - {TYPES_DESC.bam}</option>
+                </optgroup>
+              </select>
+            </label>
+            <br />
+            <TrackOptionsUI onGetOptions={this.getOptions} />
+            <label htmlFor="Assembly">
+              <h3>2. Choose assembly:</h3>
+              <input
+                value={this.state.assembly}
+                onChange={this.handleAssemblyChange}
+              />
+            </label>
+            <br />
+            <label htmlFor="trackFile">
+              <h3>3. Choose track file:</h3>
+              <input
+                type="file"
+                id="trackFile"
+                multiple
+                onChange={this.handleFileUpload}
+              />
+            </label>
           </div>
-          <div
-            style={
-              selectedTab === "add-local-hub"
-                ? { ...styles.tab, ...styles.tabActive }
-                : styles.tab
-            }
-            onClick={() => this.setState({ selectedTab: "add-local-hub" })}
-          >
+        </div>
+
+        <hr className="border-gray-200 my-8" />
+
+        <div className="mb-8">
+          <h2 className="text-xl font-medium mb-1 bg-white py-2">
             Add Local Hub
+          </h2>
+          <div>
+            <label htmlFor="hubFile">
+              <p>
+                <strong>Choose a folder</strong> that contains a file named{" "}
+                <strong>hub.config.json</strong>: (
+                <span>
+                  <a href={HELP_LINKS.localhub} target="_blank" rel="noopener noreferrer">
+                    local hub documentation
+                  </a>
+                </span>
+                )
+              </p>
+              <input type="file" id="hubFile" onChange={this.handleHubUpload} />
+            </label>
+            <br />
+            <p className="lead">Or:</p>
+            <label htmlFor="hubFile2">
+              <p>
+                <strong>Choose multiple files</strong> (including{" "}
+                <strong>hub.config.json</strong>):
+              </p>
+              <input
+                type="file"
+                id="hubFile2"
+                multiple
+                onChange={this.handleHubUpload}
+              />
+            </label>
           </div>
         </div>
-        <div style={styles.tabContent}>
-          {selectedTab === "add-local-track" && this.renderTrackUpload()}
-          {selectedTab === "add-local-hub" && this.renderHubUpload()}
-        </div>
+        
         <div className="text-danger font-italic">{this.state.msg}</div>
       </div>
     );

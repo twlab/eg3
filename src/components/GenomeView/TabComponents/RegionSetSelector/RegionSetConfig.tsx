@@ -87,7 +87,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           if (locus) {
             return new Feature(symbol, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) {}
+        } catch (error) { }
         return getSymbolRegions(genomeName, symbol);
       })
     );
@@ -101,10 +101,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                  gene.name,
-                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                  gene.strand
-                )
+                gene.name,
+                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                gene.strand
+              )
               : null
           )
           .filter((hit) => hit);
@@ -264,35 +264,29 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
       {!regionSet && (
         <div>
-          <h4>Enter a list of regions</h4>
-          <p>
-            Enter a list of gene names or coordinates to make a gene set one
-            item per line. Gene names and coordinates can be mixed for input.
-            Coordinate string must be in the form of "chr1:345-678" fields can
-            be joined by space/tab/comma/colon/hyphen.
-          </p>
           <form onSubmit={handleAddList}>
-            <label>
-              <textarea
-                value={regionList}
-                onChange={handleListChange}
-                rows={10}
-                cols={40}
-              />
-            </label>
-            <div>
-              <input
-                className="btn btn-sm btn-primary"
+            <textarea
+              value={regionList}
+              onChange={handleListChange}
+              rows={10}
+              className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter regions, one per line..."
+            />
+            <div className="mt-2 space-x-2">
+              <button
+                className="px-4 py-2 text-sm text-white bg-tint rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 type="submit"
-                value="Add"
-              />{" "}
-              <input
-                className="btn btn-sm btn-secondary"
+              >
+                Add
+              </button>
+              <button
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                 type="reset"
-                value="Clear"
                 onClick={resetList}
-              />{" "}
-              <span style={{ fontStyle: "italic", color: "red" }}>
+              >
+                Clear
+              </button>
+              <span className="text-sm italic text-red-500">
                 {loadingMsg}
               </span>
             </div>
@@ -302,38 +296,48 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
       {regionSet && regionSet.features.length > 0 && (
         <React.Fragment>
-          <label style={{ marginTop: "1ch" }}>
-            1. Rename this set:{" "}
+          <div className="mt-4 mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              1. Rename this set:
+            </label>
             <input
               type="text"
               placeholder="Set name"
               value={regionSet ? regionSet.name : "New set"}
               onChange={changeSetName}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-          </label>
+          </div>
 
-          <div>
-            <h6>2. Add one region or delete region(s) from the table below</h6>
-            <label>
-              New region name:{" "}
+          <div className="mb-4">
+            <h6 className="text-sm font-medium text-gray-700 mb-2">
+              2. Add one region or delete region(s) from the table below
+            </h6>
+            <div className="flex gap-2 mb-2">
               <input
                 type="text"
+                placeholder="Region name"
                 value={newRegionName}
                 onChange={(event) => setNewRegionName(event.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </label>{" "}
-            <label>
-              New region locus:{" "}
               <input
                 type="text"
+                placeholder="Region locus"
                 value={newRegionLocus}
                 onChange={(event) => setNewRegionLocus(event.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </label>{" "}
-            <button className="btn btn-sm btn-success" onClick={addRegion}>
-              Add new region
-            </button>
-            {newRegionError ? newRegionError.message : null}
+              <button
+                className="px-4 py-2 text-sm text-white bg-green-500 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                onClick={addRegion}
+              >
+                Add new region
+              </button>
+            </div>
+            {newRegionError && (
+              <p className="text-sm text-red-500 mt-1">{newRegionError.message}</p>
+            )}
           </div>
 
           <table
@@ -382,27 +386,31 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
             onNewStrategy={changeSetStrategy}
           />
 
-          <div>
-            <label htmlFor="flip">
-              No flip for regions on <span className="font-weight-bold">-</span>{" "}
-              strand:
+          <div className="mt-4">
+            <label className="flex items-center space-x-2 mb-4">
+              <span className="text-sm text-gray-700">
+                No flip for regions on <span className="font-medium">-</span> strand:
+              </span>
               <input
                 type="checkbox"
                 name="flip"
                 id="flip"
                 onChange={handleFlipChange}
+                className="rounded border-gray-300 text-blue-500 focus:ring-blue-500"
               />
             </label>
           </div>
-          <div>
+
+          <div className="flex space-x-2 mt-4">
             <button
-              className="btn btn-sm btn-success"
+              className="px-4 py-2 text-sm text-white bg-green-500 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               onClick={() => onSetConfigured(regionSet)}
+              disabled={isSaveButtonDisabled()}
             >
               Add set & Save changes
-            </button>{" "}
+            </button>
             <button
-              className="btn btn-sm btn-secondary"
+              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               onClick={cancelPressed}
             >
               Cancel

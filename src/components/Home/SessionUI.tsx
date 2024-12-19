@@ -318,89 +318,114 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   return (
-    <div
-      style={{
-        margin: "20px",
-        display: withGenomePicker ? "flex" : "block",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      <div>
-        <label htmlFor="retrieveId">
+    <div className={`p-5 ${withGenomePicker ? 'flex flex-col items-center' : 'block'}`}>
+      <div className="mb-4">
+        <label className="flex gap-2 items-center">
           <input
             type="text"
-            size={50}
+            className="px-3 py-2 border rounded-md w-[400px] text-gray-600 placeholder-gray-400"
             placeholder="Session bundle Id"
             value={retrieveId}
             onChange={(e) => setRetrieveId(e.target.value.trim())}
           />
+          <button 
+            className="bg-[#5BA4CF] text-white px-6 py-2 rounded-md hover:bg-[#4A93BE]"
+            onClick={retrieveSession}
+          >
+            Retrieve
+          </button>
         </label>
-        <button className="SessionUI btn btn-info" onClick={retrieveSession}>
-          Retrieve
-        </button>
 
-        <div className="SessionUI-upload-btn-wrapper">
-          Or use a session file:
-          <button className="SessionUI btn btn-success">Upload</button>
-          <input type="file" name="sessionfile" onChange={uploadSession} />
+        <div className="mt-4 flex items-center gap-2">
+          <span>Or use a session file:</span>
+          <div className="relative">
+            <button className="bg-[#5CB85C] text-white px-6 py-2 rounded-md hover:bg-[#4CA84C]">
+              Upload
+            </button>
+            <input 
+              type="file" 
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              onChange={uploadSession}
+            />
+          </div>
         </div>
       </div>
+
       {!withGenomePicker && (
         <>
-          <div>
-            <p>
-              Session bundle Id: {curBundle.bundleId}{" "}
+          <div className="mb-4">
+            <p className="flex items-center gap-2 mb-4">
+              Session bundle Id: {curBundle.bundleId}
               <CopyToClip value={curBundle.bundleId} />
             </p>
-            <label htmlFor="sessionLabel">
+            
+            <label className="flex flex-col items-start gap-2">
               Name your session:
               <input
                 type="text"
                 value={newSessionLabel}
-                size={40}
+                className="px-3 py-2 border rounded-md flex-1"
                 onChange={(e) => setNewSessionLabel(e.target.value.trim())}
               />
-              or use a{" "}
+              <span>or use a</span>
               <button
                 type="button"
-                className="SessionUI btn btn-warning btn-sm"
+                className="bg-[#F0AD4E] text-white px-4 py-2 rounded-md hover:bg-[#EC971F]"
                 onClick={() => setNewSessionLabel(getFunName())}
               >
                 Random name
               </button>
             </label>
           </div>
-          <button className="SessionUI btn btn-primary" onClick={saveSession}>
-            Save session
-          </button>{" "}
-          <button
-            className="SessionUI btn btn-success"
-            onClick={downloadAsSession}
-          >
-            Download current session
-          </button>{" "}
-          <button className="SessionUI btn btn-info" onClick={downloadAsHub}>
-            Download as datahub
-          </button>{" "}
-          <button
-            className="SessionUI btn btn-warning"
-            onClick={downloadWholeBundle}
-          >
-            Download whole bundle
-          </button>
+
+          <div className="flex flex-col gap-2">
+            <button 
+              className="bg-[#4285F4] text-white px-6 py-2 rounded-md hover:bg-[#3367D6]"
+              onClick={saveSession}
+            >
+              Save session
+            </button>
+            
+            <button
+              className="bg-[#5CB85C] text-white px-6 py-2 rounded-md hover:bg-[#4CA84C]"
+              onClick={downloadAsSession}
+            >
+              Download current session
+            </button>
+            
+            <button 
+              className="bg-[#5BA4CF] text-white px-6 py-2 rounded-md hover:bg-[#4A93BE]"
+              onClick={downloadAsHub}
+            >
+              Download as datahub
+            </button>
+            
+            <button
+              className="bg-[#F0AD4E] text-white px-6 py-2 rounded-md hover:bg-[#EC971F]"
+              onClick={downloadWholeBundle}
+            >
+              Download whole bundle
+            </button>
+          </div>
         </>
       )}
+
       {renderSavedSessions()}
-      <div className="font-italic" style={{ maxWidth: "600px" }}>
+
+      <div className="mt-4 max-w-[600px] italic">
         Disclaimer: please use{" "}
-        <span className="font-weight-bold">sessionFile</span> or{" "}
-        <span className="font-weight-bold">hub</span> URL for publishing using
+        <span className="font-bold">sessionFile</span> or{" "}
+        <span className="font-bold">hub</span> URL for publishing using
         the Browser. Session id is supposed to be shared with trusted people
         only. Please check our docs for{" "}
-        <a href={HELP_LINKS.publish} target="_blank" rel="noopener noreferrer">
+        <a 
+          href={HELP_LINKS.publish} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-700"
+        >
           Publish with the browser
-        </a>{" "}
+        </a>
         . Thank you!
       </div>
     </div>

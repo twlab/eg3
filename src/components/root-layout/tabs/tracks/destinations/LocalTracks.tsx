@@ -2,6 +2,7 @@ import { NavigationComponentProps } from "@/components/core-navigation/Navigatio
 import { useGenome } from "@/lib/contexts/GenomeContext";
 import CustomTrackAdder from "@/components/GenomeView/TabComponents/CustomTrackAdder";
 import { useMemo } from "react";
+import { TrackUpload } from "@/components/GenomeView/TabComponents/TrackUpload";
 
 export default function LocalTracks({ params }: NavigationComponentProps) {
     const {
@@ -29,15 +30,6 @@ export default function LocalTracks({ params }: NavigationComponentProps) {
     }, [secondaryGenomes, selectedGenomeName, genomeConfig]);
 
     return (
-        <CustomTrackAdder
-            addedTracks={state.tracks}
-            onTracksAdded={onTracksAdded}
-            customTracksPool={customTracksPool}
-            addedTrackSets={tracksUrlSets}
-            genomeConfig={selectedGenomeConfig}
-            contentColorSetup={{ color: "#222", background: "white" }}
-            addTermToMetaSets={addTermToMetaSets}
-            onHubUpdated={onHubUpdated}
-        />
+        <TrackUpload onTracksAdded={onTracksAdded} />
     );
 } 
