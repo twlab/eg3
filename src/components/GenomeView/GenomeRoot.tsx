@@ -55,9 +55,10 @@ function GenomeHub() {
     trackModelId,
     isInitial,
     selectedGenome,
+    genomeConfigInHub,
   } = useGenome();
   const debounceTimeout = useRef<any>(null);
-  const genomeConfigInHub = useRef<any>(null);
+
   const [resizeRef, size] = useResizeObserver();
   const [restoreViewRefresh, setRestoreViewRefresh] = useState<boolean>(true);
 
@@ -99,8 +100,8 @@ function GenomeHub() {
 
     if (state.genomeName !== genomeConfigInHub.current.genome._name) {
       curGenomeConfig = getGenomeConfig(state.genomeName);
-      curGenomeConfig["genomeID"] = uuidv4();
-      isInitial.current = true;
+      curGenomeConfig["genomeID"] = genomeConfigInHub.current.genomeID;
+      genomeConfigInHub.current = curGenomeConfig;
     } else {
       curGenomeConfig = genomeConfigInHub.current;
     }
@@ -248,7 +249,6 @@ function GenomeHub() {
           curGenome["sizeChange"] = true;
         } else {
           curGenome["genomeID"] = uuidv4();
-
           let bundleId = uuidv4();
 
           setCurBundle({

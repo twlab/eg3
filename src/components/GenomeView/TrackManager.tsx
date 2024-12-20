@@ -1610,7 +1610,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 onRegionSelected={(start: number, end: number) =>
                   onRegionSelected(start, end, "Zoom in 5-fold")
                 }
-                contentColorSetup={{ background: "white", color: "#222" }}
+                contentColorSetup={{ background: "blue", color: "#222" }}
                 genomeConfig={genomeArr[genomeIdx]}
                 genomeArr={genomeArr}
                 genomeIdx={genomeIdx}

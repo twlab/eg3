@@ -57,10 +57,13 @@ function useGenomeState(isLocal = 1) {
   const [curBundle, setCurBundle] = useState<{ [key: string]: any } | null>();
 
   const isInitial = useRef<boolean>(true);
+
   const stateArr = useRef<Array<any>>([]);
   const presentStateIdx = useRef(0);
   const trackModelId = useRef(0);
+  const genomeConfigInHub = useRef<any>(null);
   const resetStatesToDefault = () => {
+    genomeConfigInHub.current = null;
     sessionStorage.clear();
     setSelectedGenome([]);
 
@@ -160,15 +163,13 @@ function useGenomeState(isLocal = 1) {
   }
 
   function addGenomeView(obj: any) {
-    isInitial.current = true;
-    console.log(obj);
     if (selectedGenome.length < 1) {
       setSelectedGenome((prevList: any) => [...prevList, obj]);
     }
   }
   async function asyncInitUrlParamState(query) {
     let sessionGenomeConfig = getGenomeConfig(query.genome as string);
-    isInitial.current = true;
+
     if (query.position) {
       const interval = sessionGenomeConfig.navContext.parse(
         query.position as string
@@ -248,6 +249,7 @@ function useGenomeState(isLocal = 1) {
   }
   useEffect(() => {
     fetchGenomeData();
+
     const storedBrowserSession = sessionStorage.getItem(
       "browserSessionGenomeConfig"
     );
@@ -259,17 +261,18 @@ function useGenomeState(isLocal = 1) {
       console.log(genomeConfigObj);
       let sessionGenomeConfig = getGenomeConfig(genomeConfigObj.genomeName);
 
-      let initTrackModel = sessionGenomeConfig.defaultTracks.map((trackObj) => {
+      let initTrackModel = genomeConfigObj.defaultTracks.map((trackObj) => {
         return new TrackModel({
           ...trackObj,
         });
       });
+      console.log(initTrackModel);
       sessionGenomeConfig.defaultTracks = initTrackModel;
       sessionGenomeConfig.defaultRegion = new OpenInterval(
         genomeConfigObj.defaultRegion.start,
         genomeConfigObj.defaultRegion.end
       );
-      isInitial.current = true;
+
       console.log(sessionGenomeConfig);
       setSelectedGenome((prevList: any) => [...prevList, sessionGenomeConfig]);
     }
@@ -286,14 +289,18 @@ function useGenomeState(isLocal = 1) {
     presentStateIdx.current = stateArr.current.length - 1;
     let state = stateArr.current[presentStateIdx.current];
 
-    let curGenomeConfig = getGenomeConfig(state.genomeName);
+    let curGenomeConfig = genomeConfigInHub.current;
     curGenomeConfig.navContext = state["viewRegion"]._navContext;
     curGenomeConfig.defaultTracks = state.tracks;
     curGenomeConfig.defaultRegion = new OpenInterval(
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
-
+    console.log({
+      defaultTracks: curGenomeConfig.defaultTracks,
+      defaultRegion: curGenomeConfig.defaultRegion,
+      genomeName: curGenomeConfig.genome.getName(),
+    });
     const serializedGenomeConfig = JSON.stringify({
       defaultTracks: curGenomeConfig.defaultTracks,
       defaultRegion: curGenomeConfig.defaultRegion,
@@ -304,13 +311,14 @@ function useGenomeState(isLocal = 1) {
       "browserSessionGenomeConfig",
       serializedGenomeConfig
     );
-    console.log(stateArr.current);
+
     setViewRegion(data.viewRegion);
   }
 
   function recreateTrackmanager(trackConfig: { [key: string]: any }) {
     let curGenomeConfig = trackConfig.genomeConfig;
     curGenomeConfig["isInitial"] = isInitial.current;
+    console.log(curGenomeConfig);
     curGenomeConfig["sizeChange"] = true;
     curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
     setGenomeList(new Array<any>(curGenomeConfig));
@@ -359,7 +367,7 @@ function useGenomeState(isLocal = 1) {
 
   function processTracks() {
     let state = stateArr.current[presentStateIdx.current];
-    let curGenomeConfig = state.genome;
+    let curGenomeConfig = genomeConfigInHub.current;
     curGenomeConfig.navContext = state["viewRegion"]._navContext;
     curGenomeConfig.defaultTracks = state.tracks;
     curGenomeConfig.defaultRegion = new OpenInterval(
@@ -572,7 +580,7 @@ function useGenomeState(isLocal = 1) {
     trackModelId,
     isInitial,
     loading,
-
+    genomeConfigInHub,
     state,
     genomeConfig,
     secondaryGenomes,
