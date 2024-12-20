@@ -32,25 +32,6 @@ import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./TrackComponents/RulerTrack";
 import FiberTrack from "./TrackComponents/FiberTrack";
 import DBedGraphTrack from "./TrackComponents/DBedGraphTrack";
-import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
-import React from "react";
-import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
-import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
-import {
-  createNewTrackState,
-  TrackState,
-} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
-import ZoomControls from "./ToolComponents/ZoomControls";
-import TrackRegionController from "./genomeNavigator/TrackRegionController";
-
-function sumArray(numbers) {
-  let total = 0;
-  for (let i = 0; i < numbers.length; i++) {
-    total += numbers[i];
-  }
-  return total;
-}
-
 import _ from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import SubToolButtons from "./ToolComponents/SubToolButtons";
@@ -69,6 +50,27 @@ import SnpTrack from "./TrackComponents/SnpTrack";
 import BamTrack from "./TrackComponents/BamTrack";
 import BamSource from "@/getRemoteData/BamSource";
 import OmeroTrack from "./TrackComponents/OmeroTrack";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import { m } from "framer-motion";
+import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
+import React from "react";
+import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
+import ErrorTrack from "./TrackComponents/ErrorTrack";
+import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
+import {
+  createNewTrackState,
+  TrackState,
+} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import TrackRegionController from "./genomeNavigator/TrackRegionController";
+import ZoomControls from "./ToolComponents/ZoomControls";
+
+function sumArray(numbers) {
+  let total = 0;
+  for (let i = 0; i < numbers.length; i++) {
+    total += numbers[i];
+  }
+  return total;
+}
 
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
@@ -153,7 +155,7 @@ interface TrackManagerProps {
   presentStateIdx: number;
   legendWidth: number;
   onTracksLoaded?: any;
-  selectedRegion: any;
+  selectedRegion?: any;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
@@ -1292,7 +1294,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             trackComponent.trackModel.id ===
               trackManagerState.current.tracks[i].id &&
-            trackComponent.hasData
+            trackComponent.hasData &&
+            trackManagerState.current.tracks[i].type !== "bam"
           ) {
             trackComponent.trackModel.options =
               trackManagerState.current.tracks[i].options;
@@ -1711,6 +1714,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           applyTrackConfigChange={applyTrackConfigChange}
                           dragX={dragX.current}
                           checkTrackPreload={checkTrackPreload}
+                          sentScreenshotData={sentScreenshotData}
                           // viewWindow={trackManagerState.current.viewRegion}
                         />
 

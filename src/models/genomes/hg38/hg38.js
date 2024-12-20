@@ -323,12 +323,12 @@ const defaultTracks = [
   //   genome: "mm10",
   //   metadata: { genome: "mm10" },
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
-    metadata: { genome: "mm10" },
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
+  //   metadata: { genome: "mm10" },
+  // }),
   new TrackModel({
     type: "geneAnnotation",
     name: "gencodeV39",

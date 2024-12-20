@@ -34,7 +34,7 @@ function useGenomeState(isLocal = 1) {
   const [selectedGenome, setSelectedGenome] = useState<Array<any>>([]);
   const [allGenome, setAllGenome] = useState<{ [key: string]: any }>({});
   const [treeOfLife, setTreeOfLife] = useState<{ [key: string]: any }>({});
-  const [currSelectGenome, setCurrSelectGenome] = useState({});
+
   const [loading, setLoading] = useState<boolean>(true);
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [items, setItems] = useState(chrType);
@@ -60,7 +60,32 @@ function useGenomeState(isLocal = 1) {
   const stateArr = useRef<Array<any>>([]);
   const presentStateIdx = useRef(0);
   const trackModelId = useRef(0);
+  const resetStatesToDefault = () => {
+    sessionStorage.clear();
+    setSelectedGenome([]);
 
+    setLoading(true);
+    setGenomeList([]);
+    setItems(chrType);
+    setViewRegion(null);
+
+    setScreenshotData({});
+    setScreenshotOpen(false);
+    setShowGenNav(true);
+    setLegendWidth(120);
+    setRestoreViewRefresh(true);
+    setPublicTracksPool([]);
+    setCustomTracksPool([]);
+    setSuggestedMetaSets(new Set());
+    setSelectedSet(undefined);
+    setRegionSets([]);
+    setCurBundle(null);
+
+    isInitial.current = true;
+    stateArr.current = [];
+    presentStateIdx.current = 0;
+    trackModelId.current = 0;
+  };
   async function fetchGenomeData(s3Config?: S3Client) {
     let tempTree: { [key: string]: any } = {};
     let tempObj: { [key: string]: any } = {};
@@ -135,22 +160,15 @@ function useGenomeState(isLocal = 1) {
   }
 
   function addGenomeView(obj: any) {
-    sessionStorage.clear();
-
-    if (
-      !currSelectGenome[obj.genome.getName() as keyof typeof currSelectGenome]
-    ) {
-      if (selectedGenome.length < 1) {
-        setSelectedGenome((prevList: any) => [...prevList, obj]);
-      }
-      let newObj: { [key: string]: any } = currSelectGenome;
-      newObj[obj.name as keyof typeof newObj] = " ";
-      setCurrSelectGenome(newObj);
+    isInitial.current = true;
+    console.log(obj);
+    if (selectedGenome.length < 1) {
+      setSelectedGenome((prevList: any) => [...prevList, obj]);
     }
   }
   async function asyncInitUrlParamState(query) {
     let sessionGenomeConfig = getGenomeConfig(query.genome as string);
-    sessionGenomeConfig["isInitial"] = true;
+    isInitial.current = true;
     if (query.position) {
       const interval = sessionGenomeConfig.navContext.parse(
         query.position as string
@@ -226,39 +244,34 @@ function useGenomeState(isLocal = 1) {
       }
     }
 
-    sessionStorage.clear();
-    console.log(sessionGenomeConfig);
     setSelectedGenome((prevList: any) => [...prevList, sessionGenomeConfig]);
   }
   useEffect(() => {
+    fetchGenomeData();
     const storedBrowserSession = sessionStorage.getItem(
       "browserSessionGenomeConfig"
     );
     const { query } = queryString.parseUrl(window.location.href);
     if (!_.isEmpty(query)) {
       asyncInitUrlParamState(query);
-    }
-    // else if (storedBrowserSession !== null) {
-    //   const genomeConfigObj = JSON.parse(storedBrowserSession);
+    } else if (storedBrowserSession !== null) {
+      const genomeConfigObj = JSON.parse(storedBrowserSession);
+      console.log(genomeConfigObj);
+      let sessionGenomeConfig = getGenomeConfig(genomeConfigObj.genomeName);
 
-    //   let sessionGenomeConfig = getGenomeConfig(genomeConfigObj.genome._name);
-
-    //   let initTrackModel = sessionGenomeConfig.defaultTracks.map((trackObj) => {
-    //     return new TrackModel({
-    //       ...trackObj,
-    //     });
-    //   });
-    //   sessionGenomeConfig.defaultTracks = initTrackModel;
-    //   sessionGenomeConfig.defaultRegion = new OpenInterval(
-    //     genomeConfigObj.defaultRegion.start,
-    //     genomeConfigObj.defaultRegion.end
-    //   );
-    //   sessionGenomeConfig["isInitial"] = true;
-
-    //   setSelectedGenome((prevList: any) => [...prevList, sessionGenomeConfig]);
-    // }
-    else {
-      fetchGenomeData();
+      let initTrackModel = sessionGenomeConfig.defaultTracks.map((trackObj) => {
+        return new TrackModel({
+          ...trackObj,
+        });
+      });
+      sessionGenomeConfig.defaultTracks = initTrackModel;
+      sessionGenomeConfig.defaultRegion = new OpenInterval(
+        genomeConfigObj.defaultRegion.start,
+        genomeConfigObj.defaultRegion.end
+      );
+      isInitial.current = true;
+      console.log(sessionGenomeConfig);
+      setSelectedGenome((prevList: any) => [...prevList, sessionGenomeConfig]);
     }
   }, []);
 
@@ -271,7 +284,27 @@ function useGenomeState(isLocal = 1) {
 
     stateArr.current.push(data);
     presentStateIdx.current = stateArr.current.length - 1;
+    let state = stateArr.current[presentStateIdx.current];
 
+    let curGenomeConfig = getGenomeConfig(state.genomeName);
+    curGenomeConfig.navContext = state["viewRegion"]._navContext;
+    curGenomeConfig.defaultTracks = state.tracks;
+    curGenomeConfig.defaultRegion = new OpenInterval(
+      state.viewRegion._startBase,
+      state.viewRegion._endBase
+    );
+
+    const serializedGenomeConfig = JSON.stringify({
+      defaultTracks: curGenomeConfig.defaultTracks,
+      defaultRegion: curGenomeConfig.defaultRegion,
+      genomeName: curGenomeConfig.genome.getName(),
+    });
+
+    sessionStorage.setItem(
+      "browserSessionGenomeConfig",
+      serializedGenomeConfig
+    );
+    console.log(stateArr.current);
     setViewRegion(data.viewRegion);
   }
 
@@ -326,7 +359,7 @@ function useGenomeState(isLocal = 1) {
 
   function processTracks() {
     let state = stateArr.current[presentStateIdx.current];
-    let curGenomeConfig = getGenomeConfig(state.genomeName);
+    let curGenomeConfig = state.genome;
     curGenomeConfig.navContext = state["viewRegion"]._navContext;
     curGenomeConfig.defaultTracks = state.tracks;
     curGenomeConfig.defaultRegion = new OpenInterval(
@@ -543,6 +576,7 @@ function useGenomeState(isLocal = 1) {
     state,
     genomeConfig,
     secondaryGenomes,
+    resetStatesToDefault,
     onTracksAdded,
     addTermToMetaSets,
     onHubUpdated,
