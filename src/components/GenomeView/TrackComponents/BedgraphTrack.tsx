@@ -9,6 +9,8 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import OpenInterval from "@/models/OpenInterval";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -29,13 +31,15 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
 
   trackIdx,
   id,
-
+  dragX,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
 
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -47,6 +51,7 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
@@ -70,29 +75,49 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
 
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        usePrimaryNav: usePrimaryNav.current,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
+    if (isError) {
+      fetchError.current = true;
+    }
 
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        0,
+        curXPos
+      )
     );
 
     if (
@@ -104,6 +129,7 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -124,23 +150,37 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
+            let left, mid, right;
+
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
+            }
+
             trackData![`${id}`].result = [
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx + 1]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx - 1]
-                .dataCache,
+              cache[left].dataCache,
+              cache[mid].dataCache,
+              cache[right].dataCache,
             ];
           }
         }
@@ -158,22 +198,24 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
           legendRef: legendRef,
         });
       }
-
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -191,10 +233,58 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
       updateSide,
     });
   }, [dataIdx]);
-
   useEffect(() => {
-    checkTrackPreload(id);
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+
+          updatedLegend,
+          trackModel,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
+  useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 
@@ -240,6 +330,57 @@ const BedgraphTrack: React.FC<TrackProps> = memo(function BedgraphTrack({
       }
     }
   }, [applyTrackConfigChange]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
+
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+
+          updatedLegend,
+          trackModel,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
 
   return (
     <div

@@ -16,11 +16,6 @@ import PixelsPaddingConfig from "../config-menu-components.tsx/PixelsPaddingConf
 import SortItemsConfig from "../config-menu-components.tsx/SortItemsConfig";
 
 export class FiberTrackConfig extends TrackConfig {
-  constructor(trackModel: TrackModel) {
-    super(trackModel);
-    this.setDefaultOptions(DEFAULT_OPTIONS);
-  }
-
   getMenuComponents() {
     const items = [
       ...super.getMenuComponents(),

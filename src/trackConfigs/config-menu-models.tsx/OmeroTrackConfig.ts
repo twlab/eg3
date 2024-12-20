@@ -11,11 +11,6 @@ import OmeroImageHeightConfig from "../config-menu-components.tsx/OmeroImageHeig
 import HeightConfig from "../config-menu-components.tsx/HeightConfig";
 
 export class OmeroTrackConfig extends TrackConfig {
-  constructor(trackModel: TrackModel) {
-    super(trackModel);
-    this.setDefaultOptions(DEFAULT_OPTIONS);
-  }
-
   getMenuComponents() {
     const items = [LabelConfig, AnnotationDisplayModeConfig];
     if (this.getOptions().displayMode === AnnotationDisplayModes.DENSITY) {

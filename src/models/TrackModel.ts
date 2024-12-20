@@ -37,7 +37,7 @@ interface ITrackModel {
   name: string;
   type?: string;
   filetype?: string;
-  options?: TrackOptions;
+  options?: any;
   url?: any;
   indexUrl?: string;
   metadata?: ITrackModelMetadata;
@@ -51,6 +51,8 @@ interface ITrackModel {
   legendWidth?: any;
   label?: any;
   files?: any;
+  isText?: boolean;
+  textConfig?: { [key: string]: any };
 }
 
 /**
@@ -70,7 +72,7 @@ export class TrackModel {
   type!: string;
   label!: string;
   filetype?: string;
-  options!: TrackOptions;
+  options!: any;
   url?: any;
   indexUrl?: string;
   metadata!: ITrackModelMetadata;
@@ -241,7 +243,7 @@ export class TrackModel {
 export default TrackModel;
 
 // modified from juicebox
-export function mapUrl(url: string) {
+export function mapUrl(url: any) {
   if (!url) {
     return undefined;
   }

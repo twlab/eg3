@@ -9,6 +9,9 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
+import OpenInterval from "@/models/OpenInterval";
 DEFAULT_OPTIONS["displayMode"] = "full";
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   basePerPixel,
@@ -20,16 +23,19 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   windowWidth,
   dataIdx,
   trackModel,
-
+  dragX,
   id,
   useFineModeNav,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
+  const { screenshotOpen } = useGenome();
   const configOptions = useRef<any>({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
+  const fetchError = useRef<boolean>(false);
   const displayCache = useRef<{ [key: string]: any }>({
     full: {},
   });
@@ -59,29 +65,51 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       full: {},
     };
 
-    xPos.current = 0;
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
-
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        basesByPixel: basePerPixel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
-    );
+    if (isError) {
+      fetchError.current = true;
+    }
+    let res;
+    console.log(isError);
+    if (isError || fetchError.current) {
+      fetchError.current = true;
+      res = {
+        svgElements: (
+          <div
+            style={{
+              width: trackState.visWidth,
+              height: 60,
+              backgroundColor: "orange",
+              textAlign: "center",
+              lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+            }}
+          >
+            Error remotely getting track data
+          </div>
+        ),
+      };
+    } else {
+      res = getDisplayModeFunction(
+        {
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          basesByPixel: basePerPixel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      );
+    }
 
     if (
       rightIdx.current + 1 >= dataIdx ||
@@ -90,6 +118,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setSvgComponents(res);
@@ -113,21 +142,24 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
         });
       }
 
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -147,11 +179,56 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents]);
 
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = fetchedDataCache.current[dataIdx!].dataCache;
+
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
+
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          basesByPixel: basePerPixel,
+        });
+
+        sentScreenshotData({
+          component: result.svgElements,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     if (svgComponents !== null) {
       if (id in applyTrackConfigChange) {
@@ -203,7 +280,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       >
         {svgComponents.svgElements}
       </div>
-      {svgComponents.svgElements && (
+      {svgComponents.svgElements && !fetchError.current && (
         <div
           style={{
             position: "absolute",

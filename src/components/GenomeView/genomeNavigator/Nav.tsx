@@ -22,7 +22,7 @@ import ScatterPlot from "../TabComponents/Geneplot/ScatterPlot";
 import ShareUI from "../TabComponents/ShareUI";
 import { HotKeyInfo } from "../TabComponents/HotKeyInfo";
 import { TrackUpload } from "../TabComponents/TrackUpload";
-
+import TextTrack from "../TabComponents/TextTrack";
 interface NavProps {
   selectedRegion: any;
   onRegionSelected: any;
@@ -216,6 +216,10 @@ const Nav: FC<NavProps> = ({
             onRegionSelected={onRegionSelected}
             contentColorSetup={{ background: "white", color: "#222" }}
             genomeConfig={genomeConfig}
+            genomeArr={[]}
+            genomeIdx={0}
+            addGlobalState={undefined}
+            trackManagerState={undefined}
           />
         </div>
         <div
@@ -329,6 +333,16 @@ const Nav: FC<NavProps> = ({
                 style={{ content: { color: modalfg, background: modalbg } }}
               >
                 <TrackUpload onTracksAdded={onTracksAdded} />
+              </ModalMenuItem>
+
+              <ModalMenuItem
+                itemLabel="Text Tracks"
+                isOpen={openModal === "Text Tracks"}
+                onOpen={() => setOpenModal("Text Tracks")}
+                onClose={() => setOpenModal(null)}
+                style={{ content: { color: modalfg, background: modalbg } }}
+              >
+                <TextTrack onTracksAdded={onTracksAdded} />
               </ModalMenuItem>
             </div>
           </div>

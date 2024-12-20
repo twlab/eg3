@@ -8,6 +8,7 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
   props
@@ -29,10 +30,12 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
     legendRef,
     trackManagerRef,
     applyTrackConfigChange,
+    sentScreenshotData,
   } = props;
 
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -43,6 +46,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
@@ -63,30 +67,45 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
-    console.log(windowWidth);
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
 
-        trackState,
-        windowWidth,
-        configOptions: tmpObj,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+
+          trackState,
+          windowWidth,
+          configOptions: tmpObj,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -96,6 +115,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -117,10 +137,11 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
             genomeArr![genomeIdx!].sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
+            const trackIndex = trackData![`${id}`].trackDataIdx;
+            const cache = fetchedDataCache.current;
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           }
           resetState();
           configOptions.current = {
@@ -162,16 +183,18 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
           );
         }
 
-        cacheTrackData({
-          usePrimaryNav: usePrimaryNav.current,
-          id,
-          trackData,
-          fetchedDataCache,
-          rightIdx,
-          leftIdx,
-          createSVGOrCanvas,
-          trackModel,
-        });
+        if (trackData![`${id}`].result) {
+          cacheTrackData({
+            usePrimaryNav: usePrimaryNav.current,
+            id,
+            trackData,
+            fetchedDataCache,
+            rightIdx,
+            leftIdx,
+            createSVGOrCanvas,
+            trackModel,
+          });
+        }
       }
     }
     handle();
@@ -179,6 +202,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -198,8 +222,6 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 

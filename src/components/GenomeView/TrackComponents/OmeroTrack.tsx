@@ -12,9 +12,11 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import SnpDetail from "./SnpComponents/SnpDetail";
 import { DefaultAggregators } from "@/models/FeatureAggregator";
+import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -42,15 +44,17 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
   checkTrackPreload,
   trackIdx,
   id,
-  useFineModeNav,
+  dragX,
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -63,6 +67,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
@@ -90,31 +95,50 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
 
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        renderTooltip,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        getGenePadding: 5,
+    if (isError) {
+      fetchError.current = true;
+    }
 
-        ROW_HEIGHT,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding: 5,
+
+          ROW_HEIGHT,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -126,6 +150,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
       configOptions.current.displayMode === "full"
         ? setSvgComponents(res)
@@ -215,23 +240,37 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
+            let left, mid, right;
+
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
+            }
+
             trackData![`${id}`].result = [
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx + 1]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx - 1]
-                .dataCache,
+              cache[left].dataCache,
+              cache[mid].dataCache,
+              cache[right].dataCache,
             ];
           }
         }
@@ -250,16 +289,18 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
         });
       }
 
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
@@ -269,6 +310,7 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
     // otherwise when there is new data cuz the user is at the end of the track
 
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -287,11 +329,62 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
     });
   }, [dataIdx]);
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding: 5,
+
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {
@@ -335,7 +428,9 @@ const OmeroTrack: React.FC<TrackProps> = memo(function OmeroTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 2
+            ? !fetchError.current
+              ? svgHeight.current + 2
+              : 40 + 2
             : configOptions.current.height + 2,
         position: "relative",
       }}

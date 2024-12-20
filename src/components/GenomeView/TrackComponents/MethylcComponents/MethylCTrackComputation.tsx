@@ -64,6 +64,7 @@ interface MethylCTrackProps {
     colorsForContext: any;
     depthFilter: any;
     maxMethyl: any;
+    forceSvg: boolean;
   };
   isLoading?: boolean;
   error?: any;
@@ -144,6 +145,8 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       colorsForContext,
       depthColor,
       depthFilter,
+      forceSvg: options.forceSvg,
+      viewWindow: this.props.viewWindow,
     };
     let strandRenderers, tooltipY;
     if (isCombineStrands) {
@@ -240,6 +243,8 @@ interface StrandVisualizerProps {
   depthColor: string;
   htmlType: any;
   depthFilter: number;
+  forceSvg: boolean;
+  viewWindow: any;
 }
 
 class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
@@ -336,7 +341,8 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
   }
 
   render() {
-    const { data, strand, width, height, htmlType } = this.props;
+    const { data, strand, width, height, htmlType, forceSvg, viewWindow } =
+      this.props;
     let style =
       strand === PLOT_DOWNWARDS_STRAND
         ? { transform: "scale(1, -1)", borderBottom: "1px solid lightgrey" }
@@ -363,6 +369,8 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
         width={width}
         height={height}
         style={style}
+        forceSvg={forceSvg}
+        viewWindow={viewWindow}
       >
         {bars}
         {this.renderDepthPlot()}

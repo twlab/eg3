@@ -5,10 +5,14 @@ import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/num
 import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/DynamicplotTrackComponent";
 
 import ReactDOM from "react-dom";
-import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
+import {
+  cacheTrackData,
+  transformArray,
+} from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -32,15 +36,18 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
 
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const svgHeight = useRef(0);
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
 
@@ -66,30 +73,45 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
 
-    let res = getDisplayModeFunction(
-      {
-        usePrimaryNav: usePrimaryNav.current,
-        genesArr,
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          usePrimaryNav: usePrimaryNav.current,
+          genesArr,
 
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -101,6 +123,7 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -122,42 +145,47 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
-            const dataCacheCurrentNext =
-              fetchedDataCache.current[dataIdx! + 1]?.dataCache ?? [];
-            const dataCacheCurrent =
-              fetchedDataCache.current[dataIdx!]?.dataCache ?? [];
-            const dataCacheCurrentPrev =
-              fetchedDataCache.current[dataIdx! - 1]?.dataCache ?? [];
+            let left, mid, right;
 
-            // Get the highest length among the three dataCache arrays
-            const maxLength = Math.max(
-              dataCacheCurrentNext.length,
-              dataCacheCurrent.length,
-              dataCacheCurrentPrev.length
-            );
-
-            let combined: Array<any> = [];
-
-            // Use the highest length as the loop boundary
-            for (let i = 0; i < maxLength; i++) {
-              combined.push([
-                dataCacheCurrentNext[i] ?? [], // Add additional safety check for out-of-bound access
-                dataCacheCurrent[i] ?? [], // This access is expected to be always within bounds
-                dataCacheCurrentPrev[i] ?? [], // Add additional safety check for out-of-bound access
-              ]);
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
             }
 
-            trackData![`${id}`].result = combined;
+            const dataCacheCurrentNext =
+              fetchedDataCache.current[left]?.dataCache ?? [];
+            const dataCacheCurrent =
+              fetchedDataCache.current[mid]?.dataCache ?? [];
+            const dataCacheCurrentPrev =
+              fetchedDataCache.current[right]?.dataCache ?? [];
+
+            let combined: Array<any> = [
+              dataCacheCurrentNext,
+              dataCacheCurrent,
+              dataCacheCurrentPrev,
+            ];
+
+            trackData![`${id}`].result = transformArray(combined);
           }
         }
         resetState();
@@ -176,21 +204,24 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
         });
       }
 
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -210,8 +241,6 @@ const DynamicplotTrack: React.FC<TrackProps> = memo(function DynamicplotTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)

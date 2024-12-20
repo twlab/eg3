@@ -1,22 +1,21 @@
 import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
-
 import ReactDOM from "react-dom";
 import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
-
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
-
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
+import OpenInterval from "@/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -34,9 +33,7 @@ const TOP_PADDING = 2;
 
 const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   trackData,
-
   updateGlobalTrackConfig,
-
   side,
   windowWidth = 0,
   genomeArr,
@@ -50,6 +47,8 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
+  dragX,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
@@ -57,6 +56,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
+  const fetchError = useRef<boolean>(false);
   const usePrimaryNav = useRef<boolean>(true);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const displayCache = useRef<{ [key: string]: any }>({
@@ -65,7 +65,9 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
   });
 
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
+  const [test, settest] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
@@ -93,7 +95,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       full: {},
       density: {},
     };
-    xPos.current = 0;
 
     setToolTip(undefined);
     setToolTipVisible(false);
@@ -113,11 +114,30 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
+    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
 
-    let res = getDisplayModeFunction(
-      {
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction({
         genesArr,
         trackState,
         windowWidth,
@@ -129,11 +149,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
         getGenePadding,
         getHeight,
         ROW_HEIGHT,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+      })
     );
 
     if (
@@ -145,16 +161,15 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
+
       configOptions.current.displayMode === "full"
         ? setSvgComponents(res)
         : setCanvasComponents(res);
     }
   }
-
-  //________________________________________________________________________________________________________________________________________________________
-
-  // the function to create individial feature element from the GeneAnnotation track which is passed down to fullvisualizer
+  // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
   function refGeneClickTooltip(gene: any, pageX, pageY, name, onClose) {
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
@@ -199,10 +214,6 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
                     >
                       Show in 3D
                     </button>
-                    {/* {" "}
-                    <button className="btn btn-sm btn-secondary" onClick={this.clearGene3d}>
-                        Clear in 3D
-                    </button> */}
                   </div>
                 ) : (
                   ""
@@ -265,24 +276,37 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
-            console.log(trackData, fetchedDataCache.current);
+            let left, mid, right;
+
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
+            }
+
             trackData![`${id}`].result = [
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx + 1]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx - 1]
-                .dataCache,
+              cache[left].dataCache,
+              cache[mid].dataCache,
+              cache[right].dataCache,
             ];
           }
         }
@@ -303,26 +327,25 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       }
 
       if ("result" in trackData![`${id}`]) {
-        cacheTrackData({
-          usePrimaryNav: usePrimaryNav.current,
-          id,
-          trackData,
-          fetchedDataCache,
-          rightIdx,
-          leftIdx,
-          createSVGOrCanvas,
-          trackModel,
-        });
+        if (trackData![`${id}`].result) {
+          cacheTrackData({
+            usePrimaryNav: usePrimaryNav.current,
+            id,
+            trackData,
+            fetchedDataCache,
+            rightIdx,
+            leftIdx,
+            createSVGOrCanvas,
+            trackModel,
+          });
+        }
       }
     }
   }, [trackData]);
 
   useEffect(() => {
-    //when dataIDx and rightRawData.current equals we have a new data since rightRawdata.current didn't have a chance to push new data yet
-    //so this is for when there atleast 3 raw data length, and doesn't equal rightRawData.current length, we would just use the lastest three newest vaLUE
-    // otherwise when there is new data cuz the user is at the end of the track
-
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -340,15 +363,11 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
       updateSide,
     });
   }, [dataIdx]);
-  useEffect(() => {
-    if (!genomeArr![genomeIdx!].isInitial) {
-      checkTrackPreload(id);
 
-      setLegend(
-        ReactDOM.createPortal(updatedLegend.current, legendRef.current)
-      );
-    }
+  useEffect(() => {
+    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
+
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {
@@ -384,17 +403,69 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
     }
   }, [applyTrackConfigChange]);
 
-  return (
-    //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
 
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: drawOptions,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding,
+          getHeight,
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
+  return (
     <div
       style={{
         display: "flex",
-        // we add two pixel for the borders, because using absolute for child we have to set the height to match with the parent relative else
-        // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 2
+            ? !fetchError.current
+              ? svgHeight.current + 2
+              : 40 + 2
             : configOptions.current.height + 2,
         position: "relative",
       }}
@@ -410,6 +481,7 @@ const RefGeneTrack: React.FC<TrackProps> = memo(function RefGeneTrack({
           }}
         >
           {svgComponents}
+          {test}
         </div>
       ) : (
         <div

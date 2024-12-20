@@ -103,6 +103,11 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           props.viewWindow.start,
           props.viewWindow.end
         );
+        // TO- DO implement when dragX changes then the legend also changings with viewWindow values
+        // const visibleValues = xToValue.slice(
+        //   props.viewWindow.start + props.width / 3,
+        //   props.viewWindow.end - props.width / 3
+        // );
         max = _.max(visibleValues) || 1;
         xValues2 = xToValue2.filter((x) => x);
         min =
@@ -227,18 +232,22 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           zIndex: 3,
         }}
       >
-        <HoverToolTip
-          data={xToValue}
-          data2={xToValue2}
-          windowWidth={width}
-          trackType={"numerical"}
-          trackModel={trackModel}
-          height={height}
-          viewRegion={viewRegion}
-          unit={unit}
-          hasReverse={true}
-          options={options}
-        />
+        {!forceSvg ? (
+          <HoverToolTip
+            data={xToValue}
+            data2={xToValue2}
+            windowWidth={width}
+            trackType={"numerical"}
+            trackModel={trackModel}
+            height={height}
+            viewRegion={viewRegion}
+            unit={unit}
+            hasReverse={true}
+            options={options}
+          />
+        ) : (
+          ""
+        )}
       </div>
       <ValuePlot
         xToValue={xToValue}
@@ -249,6 +258,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         isDrawingBars={isDrawingBars}
         forceSvg={forceSvg}
         width={width}
+        viewWindow={props.viewWindow}
       />
       <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
       <ValuePlot
@@ -260,6 +270,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         isDrawingBars={isDrawingBars}
         forceSvg={forceSvg}
         width={width}
+        viewWindow={props.viewWindow}
       />
     </React.Fragment>
   ) : (
@@ -272,17 +283,22 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           zIndex: 3,
         }}
       >
-        <HoverToolTip
-          data={xToValue}
-          windowWidth={width}
-          trackType={"numerical"}
-          trackModel={trackModel}
-          height={DEFAULT_OPTIONS.height}
-          viewRegion={viewRegion}
-          unit={unit}
-          hasReverse={false}
-          options={options}
-        />
+        {!forceSvg ? (
+          <HoverToolTip
+            data={xToValue}
+            data2={xToValue2}
+            windowWidth={width}
+            trackType={"numerical"}
+            trackModel={trackModel}
+            height={height}
+            viewRegion={viewRegion}
+            unit={unit}
+            hasReverse={true}
+            options={options}
+          />
+        ) : (
+          ""
+        )}
       </div>
       <ValuePlot
         xToValue={xToValue}
@@ -293,6 +309,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         isDrawingBars={isDrawingBars}
         forceSvg={forceSvg}
         width={width}
+        viewWindow={props.viewWindow}
       />
     </React.Fragment>
   );
@@ -308,6 +325,7 @@ interface ValueTrackProps {
   colorOut?: any;
   forceSvg?: any;
   width: any;
+  viewWindow: any;
 }
 export class ValuePlot extends React.PureComponent<ValueTrackProps> {
   static propTypes = {
@@ -409,7 +427,7 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
 
   render() {
     // console.log("render in valueplot");
-    const { xToValue, height, forceSvg, width } = this.props;
+    const { xToValue, height, forceSvg, width, viewWindow } = this.props;
 
     return xToValue.length === 0 ? (
       <div
@@ -423,6 +441,8 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
         type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
         width={xToValue.length}
         height={height}
+        forceSvg={forceSvg}
+        viewWindow={viewWindow}
       >
         {this.props.xToValue.map(this.renderPixel)}
       </DesignRenderer>

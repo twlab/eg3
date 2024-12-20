@@ -13,6 +13,8 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import BedAnnotation from "./bedComponents/BedAnnotation";
 import { JasparFeature } from "@/models/Feature";
 import OpenInterval from "@/models/OpenInterval";
@@ -56,15 +58,17 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
   checkTrackPreload,
   trackIdx,
   id,
-
+  dragX,
   setShow3dGene,
   isThereG3dTrack,
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -77,6 +81,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
@@ -100,8 +105,6 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
   function getHeight(numRows: number): number {
@@ -117,28 +120,45 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
     return rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
 
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        usePrimaryNav: usePrimaryNav.current,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        renderTooltip,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        getGenePadding,
-        getHeight,
-        ROW_HEIGHT,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding,
+          getHeight,
+          ROW_HEIGHT,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -150,6 +170,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
       setSvgComponents(res);
     }
@@ -244,23 +265,37 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
+            let left, mid, right;
+
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
+            }
+
             trackData![`${id}`].result = [
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx + 1]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx]
-                .dataCache,
-              fetchedDataCache.current[trackData![`${id}`].trackDataIdx - 1]
-                .dataCache,
+              cache[left].dataCache,
+              cache[mid].dataCache,
+              cache[right].dataCache,
             ];
           }
         }
@@ -279,16 +314,18 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
         });
       }
 
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
@@ -298,6 +335,7 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
     // otherwise when there is new data cuz the user is at the end of the track
 
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -316,8 +354,6 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
     });
   }, [dataIdx]);
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents]);
 
@@ -353,6 +389,61 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
       }
     }
   }, [applyTrackConfigChange]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let genesArr = [
+          fetchedDataCache.current[dataIdx! + 1],
+          fetchedDataCache.current[dataIdx!],
+          fetchedDataCache.current[dataIdx! - 1],
+        ];
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
+
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        genesArr = genesArr.map((item) => item.dataCache).flat(1);
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction({
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          renderTooltip,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+          getGenePadding,
+          getHeight,
+          ROW_HEIGHT,
+        });
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
 
   return (
     //svg allows overflow to be visible x and y but the div only allows x overflow, so we need to set the svg to overflow x and y and then limit it in div its container.
@@ -364,7 +455,9 @@ const JasparTrack: React.FC<TrackProps> = memo(function JasparTrack({
         // other elements will overlapp
         height:
           configOptions.current.displayMode === "full"
-            ? svgHeight.current + 2
+            ? !fetchError.current
+              ? svgHeight.current + 2
+              : 40 + 2
             : configOptions.current.height + 2,
         position: "relative",
       }}

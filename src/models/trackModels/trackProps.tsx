@@ -31,7 +31,7 @@ export interface TrackProps {
   legendRef: any;
 
   updateGlobalTrackConfig: any;
-
+  sentScreenshotData: any;
   applyTrackConfigChange: any;
   containerRef: any;
   viewWindow?: DisplayedRegionModel;

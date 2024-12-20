@@ -8,6 +8,7 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
   function DynamicLongrangeTrack({
@@ -25,15 +26,18 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     trackManagerRef,
     legendRef,
     applyTrackConfigChange,
+    sentScreenshotData,
   }) {
     const svgHeight = useRef(0);
     const displayCache = useRef<{ [key: string]: any }>({ density: {} });
     const configOptions = useRef({ ...DEFAULT_OPTIONS });
     const rightIdx = useRef(0);
+    const fetchError = useRef<boolean>(false);
     const leftIdx = useRef(1);
     const fetchedDataCache = useRef<{ [key: string]: any }>({});
     const usePrimaryNav = useRef<boolean>(true);
     const xPos = useRef(0);
+    const { screenshotOpen } = useGenome();
     const updateSide = useRef("right");
     const updatedLegend = useRef<any>();
 
@@ -58,31 +62,48 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
         density: {},
       };
 
-      xPos.current = 0;
-
       setLegend(undefined);
     }
-    function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+    async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
       let curXPos = getTrackXOffset(trackState, windowWidth);
+      if (isError) {
+        fetchError.current = true;
+      }
       let tmpObj = { ...configOptions.current };
 
       tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
 
-      let res = getDisplayModeFunction(
-        {
-          genesArr,
+      let res = fetchError.current
+        ? {
+            svgElements: (
+              <div
+                style={{
+                  width: trackState.visWidth,
+                  height: 60,
+                  backgroundColor: "orange",
+                  textAlign: "center",
+                  lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+                }}
+              >
+                Error remotely getting track data
+              </div>
+            ),
+          }
+        : await getDisplayModeFunction(
+            {
+              genesArr,
 
-          trackState,
-          windowWidth,
-          configOptions: tmpObj,
-          updatedLegend,
-          trackModel,
-        },
-        displaySetter,
-        displayCache,
-        cacheIdx,
-        curXPos
-      );
+              trackState,
+              windowWidth,
+              configOptions: tmpObj,
+              updatedLegend,
+              trackModel,
+            },
+            displaySetter,
+            displayCache,
+            cacheIdx,
+            curXPos
+          );
 
       if (
         rightIdx.current + 1 >= dataIdx ||
@@ -91,6 +112,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
         trackState.recreate
       ) {
         xPos.current = curXPos;
+        checkTrackPreload(id);
         updateSide.current = side;
 
         setCanvasComponents(res);
@@ -113,10 +135,11 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
               genomeArr![genomeIdx!].sizeChange &&
               Object.keys(fetchedDataCache.current).length > 0
             ) {
+              const trackIndex = trackData![`${id}`].trackDataIdx;
+              const cache = fetchedDataCache.current;
+              let idx = trackIndex in cache ? trackIndex : 0;
               trackData![`${id}`].result =
-                fetchedDataCache.current[
-                  trackData![`${id}`].trackDataIdx
-                ].dataCache;
+                fetchedDataCache.current[idx].dataCache;
             }
             resetState();
             configOptions.current = {
@@ -151,6 +174,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
 
     useEffect(() => {
       getCacheData({
+        isError: fetchError.current,
         usePrimaryNav: usePrimaryNav.current,
         rightIdx: rightIdx.current,
         leftIdx: leftIdx.current,
@@ -170,8 +194,6 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     }, [dataIdx]);
 
     useEffect(() => {
-      checkTrackPreload(id);
-
       setLegend(
         updatedLegend.current &&
           ReactDOM.createPortal(updatedLegend.current, legendRef.current)

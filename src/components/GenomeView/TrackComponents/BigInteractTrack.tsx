@@ -1,12 +1,15 @@
 import React, { memo, useEffect, useRef, useState } from "react";
-import ReactDOM from "react-dom";
+
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS } from "./InteractionComponents/InteractionTrackComponent";
 
+import { objToInstanceAlign } from "../TrackManager";
+import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
-import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import OpenInterval from "@/models/OpenInterval";
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 
@@ -14,41 +17,50 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
   props
 ) {
   const {
+    basePerPixel,
     side,
     trackData,
     updateGlobalTrackConfig,
     trackIdx,
     checkTrackPreload,
-    windowWidth,
+    windowWidth = 0,
     dataIdx,
     genomeArr,
     genomeIdx,
     trackModel,
     id,
+    dragX,
     legendRef,
     trackManagerRef,
     applyTrackConfigChange,
-    dragX,
-    basePerPixel,
+    sentScreenshotData,
+
+    // viewWindow,
   } = props;
 
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
+
   const displayCache = useRef<{ [key: string]: any }>({
-    full: {},
     density: {},
   });
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
   const [legend, setLegend] = useState<any>();
+
+  const displaySetter = {
+    density: { setComponents: setCanvasComponents },
+  };
   function resetState() {
     configOptions.current = { ...DEFAULT_OPTIONS };
 
@@ -58,45 +70,59 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
     updatedLegend.current = undefined;
     fetchedDataCache.current = {};
     displayCache.current = {
-      full: {},
       density: {},
     };
-    xPos.current = 0;
 
     setLegend(undefined);
   }
-  const displaySetter = {
-    density: { setComponents: setCanvasComponents },
-  };
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
     let tmpObj = { ...configOptions.current };
     tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
 
     trackState["viewWindow"] =
-      trackState.side === "right"
+      updateSide.current === "right"
         ? new OpenInterval(
-            0,
+            -(dragX! + (curXPos + windowWidth)),
             windowWidth * 3 + -(dragX! + (curXPos + windowWidth))
           )
         : new OpenInterval(
             -(dragX! - (curXPos + windowWidth)) + windowWidth,
             windowWidth * 3 - (dragX! - (curXPos + windowWidth)) + windowWidth
           );
+    console.log(trackState);
 
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        trackState,
-        windowWidth,
-        configOptions: tmpObj,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          trackState,
+          windowWidth,
+          configOptions: tmpObj,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -106,6 +132,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -127,10 +154,13 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
             genomeArr![genomeIdx!].sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
+            const trackIndex = trackData![`${id}`].trackDataIdx;
+            const cache = fetchedDataCache.current;
+
+            let idx = trackIndex in cache ? trackIndex : 0;
+
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           }
           resetState();
           configOptions.current = {
@@ -148,16 +178,18 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
           configOptions.current["trackManagerRef"] = trackManagerRef;
         }
 
-        cacheTrackData({
-          usePrimaryNav: usePrimaryNav.current,
-          id,
-          trackData,
-          fetchedDataCache,
-          rightIdx,
-          leftIdx,
-          createSVGOrCanvas,
-          trackModel,
-        });
+        if (trackData![`${id}`].result) {
+          cacheTrackData({
+            usePrimaryNav: usePrimaryNav.current,
+            id,
+            trackData,
+            fetchedDataCache,
+            rightIdx,
+            leftIdx,
+            createSVGOrCanvas,
+            trackModel,
+          });
+        }
       }
     }
     handle();
@@ -165,6 +197,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -173,6 +206,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
       fetchedDataCache: fetchedDataCache.current,
       displayType: configOptions.current.displayMode,
       displaySetter,
+
       xPos,
       updatedLegend,
       trackModel,
@@ -182,12 +216,42 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
     });
   }, [dataIdx]);
 
-  useEffect(() => {
-    checkTrackPreload(id);
+  // useEffect(() => {
+  //   setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
+  // }, [canvasComponents]);
+  // useEffect(() => {
+  //   if (canvasComponents !== null) {
+  //     if (id in applyTrackConfigChange) {
+  //       if ("type" in applyTrackConfigChange) {
+  //         configOptions.current = {
+  //           ...DEFAULT_OPTIONS,
+  //           ...applyTrackConfigChange[`${id}`],
+  //         };
+  //       } else {
+  //         configOptions.current = {
+  //           ...configOptions.current,
+  //           ...applyTrackConfigChange[`${id}`],
+  //         };
+  //       }
 
-    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
-  }, [canvasComponents]);
+  //       updateGlobalTrackConfig({
+  //         configOptions: configOptions.current,
+  //         trackModel: trackModel,
+  //         id: id,
+  //         trackIdx: trackIdx,
+  //         legendRef: legendRef,
+  //       });
 
+  //       getConfigChangeData({
+  //         fetchedDataCache: fetchedDataCache.current,
+  //         dataIdx,
+  //         usePrimaryNav: usePrimaryNav.current,
+  //         createSVGOrCanvas,
+  //         trackType: trackModel.type,
+  //       });
+  //     }
+  //   }
+  // }, [applyTrackConfigChange]);
   useEffect(() => {
     async function handle() {
       if (canvasComponents !== null) {
@@ -257,6 +321,159 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
     }
     handle();
   }, [applyTrackConfigChange]);
+  useEffect(() => {
+    if (screenshotOpen) {
+      async function handle() {
+        let trackState = {
+          ...fetchedDataCache.current[dataIdx!].trackState,
+        };
+
+        let genesArr = fetchedDataCache.current[dataIdx!].dataCache;
+
+        trackState["viewWindow"] =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+
+        let drawOptions = { ...configOptions.current };
+        drawOptions["forceSvg"] = true;
+
+        let result = await getDisplayModeFunction(
+          {
+            genesArr,
+            trackState,
+            windowWidth,
+            configOptions: drawOptions,
+            updatedLegend,
+            trackModel,
+          },
+          null,
+          null,
+          dataIdx,
+          0
+        );
+
+        sentScreenshotData({
+          component: result,
+          trackId: id,
+          trackState: trackState,
+          trackLegend: updatedLegend.current,
+        });
+      }
+
+      handle();
+    }
+  }, [screenshotOpen]);
+
+  // useEffect(() => {
+  //   async function handle() {
+  //     if (
+  //       canvasComponents !== null &&
+  //       (configOptions.current.bothAnchorsInView ||
+  //         configOptions.current.fetchViewWindowOnly)
+  //     ) {
+  //       let trackState = {
+  //         ...fetchedDataCache.current[dataIdx!].trackState,
+  //       };
+
+  //       trackState["viewWindow"] =
+  //         updateSide.current === "right"
+  //           ? new OpenInterval(
+  //               -(dragX! + (xPos.current + windowWidth)),
+  //               windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+  //             )
+  //           : new OpenInterval(
+  //               -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+  //               windowWidth * 3 -
+  //                 (dragX! - (xPos.current + windowWidth)) +
+  //                 windowWidth
+  //             );
+  //       let drawOptions = { ...configOptions.current };
+  //       let genesArr = await trackData![`${id}`].straw.getData(
+  //         objToInstanceAlign(trackState.visRegion),
+  //         basePerPixel,
+  //         drawOptions
+  //       );
+
+  //       let result = await getDisplayModeFunction({
+  //         genesArr,
+  //         trackState,
+  //         windowWidth,
+  //         configOptions: drawOptions,
+
+  //         updatedLegend,
+  //         trackModel,
+  //       });
+  //       setCanvasComponents(result);
+  //     }
+  //   }
+  //   handle();
+  // }, [dragX]);
+
+  useEffect(() => {
+    async function handle() {
+      if (
+        canvasComponents !== null &&
+        (dataIdx > rightIdx.current || dataIdx < leftIdx.current) &&
+        (configOptions.current.bothAnchorsInView ||
+          configOptions.current.fetchViewWindowOnly)
+      ) {
+        if (dataIdx! in displayCache.current.density) {
+          let tmpNewConfig = { ...configOptions.current };
+
+          for (let key in displayCache.current.density) {
+            let curCacheComponent =
+              displayCache.current.density[`${key}`].canvasData;
+            let newComponentChanges = {};
+            let newVisRegion = curCacheComponent.props.visRegion;
+
+            // if (tmpNewConfig.fetchViewWindowOnly) {
+            //   newVisRegion = viewWindow;
+            // } else {
+            newVisRegion = new DisplayedRegionModel(
+              newVisRegion._navContext,
+              newVisRegion._startBase,
+              newVisRegion._endBase
+            );
+            // }
+
+            newComponentChanges["viewWindow"] =
+              updateSide.current === "right"
+                ? new OpenInterval(
+                    -(dragX! + (xPos.current + windowWidth)),
+                    windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+                  )
+                : new OpenInterval(
+                    -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                    windowWidth * 3 -
+                      (dragX! - (xPos.current + windowWidth)) +
+                      windowWidth
+                  );
+            newComponentChanges["options"] = tmpNewConfig;
+
+            let newComponent = React.cloneElement(
+              curCacheComponent,
+              newComponentChanges
+            );
+            displayCache.current.density[`${key}`].canvasData = newComponent;
+          }
+
+          setCanvasComponents(
+            displayCache.current.density[`${dataIdx}`].canvasData
+          );
+        }
+      }
+    }
+    handle();
+  }, [dragX]);
   return (
     <div
       style={{

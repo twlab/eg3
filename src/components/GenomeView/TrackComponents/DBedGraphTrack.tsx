@@ -4,10 +4,15 @@ import { TrackProps } from "../../../models/trackModels/trackProps";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 
 import ReactDOM from "react-dom";
-import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
+import {
+  cacheTrackData,
+  transformArray,
+} from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import _ from "lodash";
 
 export const TOP_PADDING = 2;
@@ -43,15 +48,18 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
 
   legendRef,
   applyTrackConfigChange,
+  sentScreenshotData,
 }) {
   const svgHeight = useRef(0);
   const displayCache = useRef<{ [key: string]: any }>({ density: {} });
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
+  const fetchError = useRef<boolean>(false);
   const leftIdx = useRef(1);
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
+  const { screenshotOpen } = useGenome();
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
 
@@ -77,29 +85,44 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
       density: {},
     };
 
-    xPos.current = 0;
-
     setLegend(undefined);
   }
 
-  function createSVGOrCanvas(trackState, genesArr, cacheIdx) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, cacheIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
+    if (isError) {
+      fetchError.current = true;
+    }
 
-    let res = getDisplayModeFunction(
-      {
-        genesArr,
-        usePrimaryNav: usePrimaryNav.current,
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-      },
-      displaySetter,
-      displayCache,
-      cacheIdx,
-      curXPos
+    let res = fetchError.current ? (
+      <div
+        style={{
+          width: trackState.visWidth,
+          height: 60,
+          backgroundColor: "orange",
+          textAlign: "center",
+          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+        }}
+      >
+        Error remotely getting track data
+      </div>
+    ) : (
+      await getDisplayModeFunction(
+        {
+          genesArr,
+          usePrimaryNav: usePrimaryNav.current,
+          trackState,
+          windowWidth,
+          configOptions: configOptions.current,
+          svgHeight,
+          updatedLegend,
+          trackModel,
+        },
+        displaySetter,
+        displayCache,
+        cacheIdx,
+        curXPos
+      )
     );
 
     if (
@@ -111,6 +134,7 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
       trackState.recreate
     ) {
       xPos.current = curXPos;
+      checkTrackPreload(id);
       updateSide.current = side;
 
       setCanvasComponents(res);
@@ -132,22 +156,39 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
           genomeArr![genomeIdx!].sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
+          const trackIndex = trackData![`${id}`].trackDataIdx;
+          const cache = fetchedDataCache.current;
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
               genomeArr![genomeIdx!].genome.getName()
           ) {
+            let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
-              fetchedDataCache.current[
-                trackData![`${id}`].trackDataIdx
-              ].dataCache;
+              fetchedDataCache.current[idx].dataCache;
           } else {
+            let left, mid, right;
+
+            if (
+              trackIndex in cache &&
+              trackIndex + 1 in cache &&
+              trackIndex - 1 in cache
+            ) {
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
+            } else {
+              left = 1;
+              mid = 0;
+              right = -1;
+            }
+
             const dataCacheCurrentNext =
-              fetchedDataCache.current[dataIdx! + 1]?.dataCache ?? [];
+              fetchedDataCache.current[left]?.dataCache ?? [];
             const dataCacheCurrent =
-              fetchedDataCache.current[dataIdx!]?.dataCache ?? [];
+              fetchedDataCache.current[mid]?.dataCache ?? [];
             const dataCacheCurrentPrev =
-              fetchedDataCache.current[dataIdx! - 1]?.dataCache ?? [];
+              fetchedDataCache.current[right]?.dataCache ?? [];
 
             let combined: Array<any> = [
               dataCacheCurrentNext,
@@ -155,7 +196,7 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
               dataCacheCurrentPrev,
             ];
 
-            trackData![`${id}`].result = combined;
+            trackData![`${id}`].result = transformArray(combined);
           }
         }
         resetState();
@@ -174,21 +215,24 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
         });
       }
 
-      cacheTrackData({
-        usePrimaryNav: usePrimaryNav.current,
-        id,
-        trackData,
-        fetchedDataCache,
-        rightIdx,
-        leftIdx,
-        createSVGOrCanvas,
-        trackModel,
-      });
+      if (trackData![`${id}`].result) {
+        cacheTrackData({
+          usePrimaryNav: usePrimaryNav.current,
+          id,
+          trackData,
+          fetchedDataCache,
+          rightIdx,
+          leftIdx,
+          createSVGOrCanvas,
+          trackModel,
+        });
+      }
     }
   }, [trackData]);
 
   useEffect(() => {
     getCacheData({
+      isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
       rightIdx: rightIdx.current,
       leftIdx: leftIdx.current,
@@ -208,8 +252,6 @@ const DBedgraphTrack: React.FC<TrackProps> = memo(function DBedgraphTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    checkTrackPreload(id);
-
     setLegend(
       updatedLegend.current &&
         ReactDOM.createPortal(updatedLegend.current, legendRef.current)

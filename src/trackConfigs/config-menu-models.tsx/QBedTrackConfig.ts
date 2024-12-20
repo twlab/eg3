@@ -7,7 +7,7 @@ import {
 } from "../config-menu-components.tsx/ColorConfig";
 import HeightConfig from "../config-menu-components.tsx/HeightConfig";
 import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
-import { DEFAULT_OPTIONS } from "@/components/GenomeView/TrackComponents/QBedTrack";
+
 import { TrackConfig } from "./TrackConfig";
 import LogScaleConfig from "../config-menu-components.tsx/LogScaleConfig";
 import HorizontalLineValueConfig from "../config-menu-components.tsx/HorizontalLineValueConfig";
@@ -16,11 +16,6 @@ import OpacitySliderConfig from "../config-menu-components.tsx/OpacitySilderConf
 import ShowHorizontalLineConfig from "../config-menu-components.tsx/ShowHorizontalLineConfig";
 
 export class QBedTrackConfig extends TrackConfig {
-  constructor(trackModel: TrackModel) {
-    super(trackModel);
-    this.setDefaultOptions(DEFAULT_OPTIONS);
-  }
-
   getMenuComponents() {
     const items = [
       ...super.getMenuComponents(),

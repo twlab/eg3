@@ -4,7 +4,10 @@ import {
   removeDuplicates,
   removeDuplicatesWithoutId,
 } from "../commonComponents/check-obj-dupe";
-function getDeDupeArrMatPlot(data: Array<any>) {
+export function getDeDupeArrMatPlot(data: Array<any>, isError) {
+  if (isError) {
+    return;
+  }
   let tempMap = new Map<number, any[]>();
 
   data.forEach((data) => {
@@ -24,6 +27,9 @@ function getDeDupeArrMatPlot(data: Array<any>) {
 
   return deDupcacheDataArr;
 }
+function isObject(variable) {
+  return variable !== null && typeof variable === "object";
+}
 
 interface CacheTrackDataParams {
   id: string;
@@ -34,10 +40,13 @@ interface CacheTrackDataParams {
   createSVGOrCanvas: (
     trackState: any,
     dataCacheArray: any[],
-    currentIndex: number
+    isError: boolean,
+    currentIndex?: number,
+    signal?: any
   ) => void;
   trackModel: any;
   usePrimaryNav: boolean;
+  signal?: any;
 }
 export const trackUsingExpandedLoci = {
   biginteract: "",
@@ -47,17 +56,46 @@ export const trackUsingExpandedLoci = {
   longrange: "",
   genomealign: "",
 };
+
+function checkFetchError(trackData, id) {
+  let detectError = false;
+  if (Array.isArray(trackData[`${id}`].result)) {
+    trackData[`${id}`].result.map((item) => {
+      if (Array.isArray(item)) {
+        item.map((innerItem) => {
+          if ("error" in innerItem) {
+            detectError = true;
+          }
+        });
+      } else if ("error" in item) {
+        detectError = true;
+      }
+    });
+  } else {
+    if (
+      isObject(trackData[`${id}`].result) &&
+      "error" in trackData[`${id}`].result
+    ) {
+      detectError = true;
+    }
+  }
+
+  return detectError;
+}
 export function cacheTrackData({
   id,
   trackData,
   fetchedDataCache,
+
   rightIdx,
   leftIdx,
   createSVGOrCanvas,
   trackModel = "",
   usePrimaryNav,
+  signal = null,
 }: CacheTrackDataParams) {
   // Passing rawData to the correct tracks and saving it to cache to be displayed
+  let isError = checkFetchError(trackData, id);
   const primaryVisData =
     trackData!.trackState.genomicFetchCoord[
       trackData!.trackState.primaryGenName
@@ -83,25 +121,28 @@ export function cacheTrackData({
 
       fetchedDataCache.current[rightIdx.current] = {
         dataCache:
-          trackModel.type in { dynamichic: "", dynamiclongrange: "", hic: "" }
+          trackModel.type in
+          {
+            dynamichic: "",
+            dynamiclongrange: "",
+            hic: "",
+          }
             ? trackData![`${id}`].result
-            : trackModel !== "" &&
-              trackModel.type in
-                {
-                  matplot: "",
-                  dynamic: "",
-                  dynamicbed: "",
-                  dynamiclongrange: "",
-                  biginteract: "",
-                }
-            ? trackData![`${id}`].result.flat(1)
-            : trackData![`${id}`].result[0],
+            : trackModel !== "" && trackModel.type === "genomealign"
+            ? trackData![`${id}`].result[0]
+            : trackData![`${id}`].result.flat(1),
         trackState: newTrackState,
       };
       rightIdx.current--;
 
       const curDataArr = fetchedDataCache.current[0].dataCache;
-      createSVGOrCanvas(newTrackState, curDataArr, rightIdx.current + 1);
+      createSVGOrCanvas(
+        newTrackState,
+        curDataArr,
+        isError,
+        rightIdx.current + 1,
+        signal
+      );
     }
     // tracks that dont use expanded nav loci_____________________________________________________________________________________________________________________________________________________________________
     //__________________________________________________________________________________________________________________________________________________________
@@ -113,6 +154,7 @@ export function cacheTrackData({
         index: 1,
       };
       let trackState1 = {
+        ...trackData.trackState,
         initial: 1,
         side: "right",
         xDist: 0,
@@ -172,12 +214,18 @@ export function cacheTrackData({
 
       let viewData;
       if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-        viewData = getDeDupeArrMatPlot(testData);
+        viewData = getDeDupeArrMatPlot(testData, isError);
       } else {
         viewData = testData.map((item) => item.dataCache).flat(1);
       }
 
-      createSVGOrCanvas(trackState1, viewData, rightIdx.current + 2);
+      createSVGOrCanvas(
+        trackState1,
+        viewData,
+        isError,
+        rightIdx.current + 2,
+        signal
+      );
     }
   }
 
@@ -217,12 +265,13 @@ export function cacheTrackData({
               : trackData![`${id}`].result,
           trackState: newTrackState,
         };
-
         rightIdx.current--;
         createSVGOrCanvas(
           newTrackState,
           fetchedDataCache.current[rightIdx.current + 1].dataCache,
-          rightIdx.current + 1
+          isError,
+          rightIdx.current + 1,
+          signal
         );
       } else if (trackData!.trackState.side === "left") {
         trackData!.trackState.index = leftIdx.current;
@@ -239,7 +288,9 @@ export function cacheTrackData({
         createSVGOrCanvas(
           newTrackState,
           fetchedDataCache.current[leftIdx.current - 1].dataCache,
-          leftIdx.current - 1
+          isError,
+          leftIdx.current - 1,
+          signal
         );
       }
     }
@@ -255,7 +306,7 @@ export function cacheTrackData({
           dataCache: trackData![`${id}`].result,
           trackState: newTrackState,
         };
-        console.log(fetchedDataCache);
+
         fetchedDataCache.current[rightIdx.current + 1]["trackState"] =
           newTrackState;
 
@@ -267,7 +318,7 @@ export function cacheTrackData({
 
         let viewData;
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-          viewData = getDeDupeArrMatPlot(testData);
+          viewData = getDeDupeArrMatPlot(testData, isError);
         } else {
           viewData = testData.map((item) => item.dataCache).flat(1);
         }
@@ -275,7 +326,9 @@ export function cacheTrackData({
         createSVGOrCanvas(
           fetchedDataCache.current[rightIdx.current + 2].trackState,
           viewData,
-          rightIdx.current + 2
+          isError,
+          rightIdx.current + 2,
+          signal
         );
       } else if (trackData!.trackState.side === "left") {
         trackData!.trackState.index = leftIdx.current;
@@ -290,10 +343,10 @@ export function cacheTrackData({
           testData.push(fetchedDataCache.current[currIdx]);
           currIdx--;
         }
-
+        console.log(fetchedDataCache.current);
         let viewData;
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-          viewData = getDeDupeArrMatPlot(testData);
+          viewData = getDeDupeArrMatPlot(testData, isError);
         } else {
           viewData = testData.map((item) => item.dataCache).flat(1);
         }
@@ -301,9 +354,30 @@ export function cacheTrackData({
         createSVGOrCanvas(
           fetchedDataCache.current[leftIdx.current - 2].trackState,
           viewData,
-          leftIdx.current - 2
+          isError,
+          leftIdx.current - 2,
+          signal
         );
       }
     }
   }
+}
+
+export function transformArray(arr: any[][][]) {
+  // Determine the number of subarrays in each inner array (assuming all inner arrays have the same structure)
+  const numberOfSubArrays = arr[0].length;
+
+  // Initialize the result array with empty arrays for each subarray
+  const result: any[][][] = new Array(numberOfSubArrays)
+    .fill(null)
+    .map(() => []);
+
+  // Iterate over the input array
+  arr.forEach((innerArray) => {
+    innerArray.forEach((subArray, index) => {
+      result[index].push(subArray);
+    });
+  });
+
+  return result;
 }

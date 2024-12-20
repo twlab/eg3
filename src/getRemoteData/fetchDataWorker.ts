@@ -12,7 +12,10 @@ import { ViewExpansion } from "../models/RegionExpander";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
-import localTrackFetchFunction from "@/getLocalData/localFetchData";
+import {
+  localTrackFetchFunction,
+  textFetchFunction,
+} from "@/getLocalData/localFetchData";
 import { niceBpCount } from "../models/util";
 
 export interface PlacedAlignment {
@@ -33,7 +36,38 @@ interface QueryGenomePiece {
   queryFeature: Feature;
   queryXSpan: OpenInterval;
 }
+const componentMap: { [key: string]: any } = {
+  geneannotation: "",
+  bed: "",
+  bigwig: "",
+  dynseq: "",
+  methylc: "",
+  hic: "",
+  genomealign: "",
 
+  categorical: "",
+  longrange: "",
+  biginteract: "",
+  repeatmasker: "",
+  bigbed: "",
+  refbed: "",
+  matplot: "",
+  ruler: "",
+  modbed: "",
+  dynamic: "",
+  bedgraph: "",
+  qbed: "",
+  boxplot: "",
+  jaspar: "",
+  dynamichic: "",
+  dynamicbed: "",
+  dbedgraph: "",
+  dynamiclongrange: "",
+  snp: "",
+  bam: "",
+  omeroidr: "",
+  error: "",
+};
 export interface PlacedMergedAlignment extends QueryGenomePiece {
   segments: PlacedAlignment[];
   targetXSpan: OpenInterval;
@@ -84,7 +118,7 @@ self.onmessage = async (event: MessageEvent) => {
     expandGenomicLoci,
     initGenomicLoci,
   };
-
+  genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData;
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
   //____________________________________________________________________________________________________________________________________________________________________
@@ -92,31 +126,43 @@ self.onmessage = async (event: MessageEvent) => {
   let genomeAlignTracks = trackDefaults.filter((items, index) => {
     return items.type === "genomealign";
   });
-
+  const tmpQueryGenObj: { [key: string]: any } = {};
+  tmpQueryGenObj[`${primaryGenName}`] = "";
+  genomeAlignTracks.map((items, index) => {
+    if (items.querygenome) {
+      tmpQueryGenObj[`${items.querygenome}`] = "";
+    } else if (items.metadata && items.metadata.genome) {
+      tmpQueryGenObj[`${items.metadata.genome}`] = "";
+    }
+  });
+  console.log(tmpQueryGenObj);
   if (genomeAlignTracks.length > 0) {
     event.data.visData.visRegion;
-    genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = [];
 
     // step 2: fetch genome align data and put them into an array
-
+    //group all the genomealign track and fetch once in getGenomealign
+    //return all the genomealign in an array
     (
       await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks)
     ).map((item) => {
-      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
-        item.result.primaryVisData;
-      //save the genomic location so that track that has query as parent can use that data to get data
-      genomicFetchCoord[`${item.queryName}`] = {
-        queryGenomicCoord: new Array(item.queryGenomicCoord),
-        id: item.id,
-        queryRegion: item.result.queryRegion,
-      };
+      // if there is a genomealigntrack and its in fine mode then
+      // we change the primaryVisdata because other tracks relies on the visdata
+      if (!("error" in item.result)) {
+        genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
+          item.result.primaryVisData;
+
+        //save the genomic location so that track that has query as parent can use that data to get data\
+        console.log(item);
+        genomicFetchCoord[`${item.queryName}`] = {
+          queryGenomicCoord: new Array(item.queryGenomicCoord),
+          id: item.id,
+          queryRegion: item.result.queryRegion,
+        };
+      }
       item["metadata"] = { "track type": "genomealign" };
       item["result"] = [item.result];
       fetchResults.push(item);
     });
-  } else {
-    genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
-      event.data.visData;
   }
 
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
@@ -176,61 +222,93 @@ self.onmessage = async (event: MessageEvent) => {
 
       viewWindowRegion,
     };
-
-    const oldRecordsArray = await Promise.all(
-      genomeAlignTracks.map(async (item, index) => {
-        let curGenomeAlignRespond = await trackFetchFunction.genomealign({
-          nav: expandGenomicLoci,
-          options: {
-            height: 40,
-            isCombineStrands: false,
-            colorsForContext: {
-              CG: {
-                color: "rgb(100,139,216)",
-                background: "#d9d9d9",
+    let oldRecordsArray;
+    try {
+      oldRecordsArray = await Promise.all(
+        genomeAlignTracks.map(async (item, index) => {
+          try {
+            let curGenomeAlignRespond = await trackFetchFunction.genomealign({
+              nav: expandGenomicLoci,
+              options: {
+                height: 40,
+                isCombineStrands: false,
+                colorsForContext: {
+                  CG: {
+                    color: "rgb(100,139,216)",
+                    background: "#d9d9d9",
+                  },
+                  CHG: {
+                    color: "rgb(255,148,77)",
+                    background: "#ffe0cc",
+                  },
+                  CHH: {
+                    color: "rgb(255,0,255)",
+                    background: "#ffe5ff",
+                  },
+                },
+                depthColor: "#525252",
+                depthFilter: 0,
+                maxMethyl: 1,
+                label: "",
               },
-              CHG: {
-                color: "rgb(255,148,77)",
-                background: "#ffe0cc",
+              url: item.url,
+              trackModel: item,
+            });
+
+            let records: AlignmentRecord[] = [];
+            let recordArr: any = curGenomeAlignRespond;
+
+            for (const record of recordArr) {
+              let data = JSON5.parse("{" + record[3] + "}");
+              record[3] = data;
+              records.push(new AlignmentRecord(record));
+            }
+            // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
+            console.log(item);
+            return {
+              query: item.querygenome,
+              records: records,
+              isBigChain: false,
+              id: item.id,
+            };
+          } catch (error) {
+            return {
+              query: item.querygenome,
+              name: item.querygenome,
+              isBigChain: false,
+              id: item.id,
+              result: {
+                error: `Error processing genome align track with id ${
+                  item.id
+                }: ${"ASDASD"}`,
               },
-              CHH: {
-                color: "rgb(255,0,255)",
-                background: "#ffe5ff",
-              },
-            },
-            depthColor: "#525252",
-            depthFilter: 0,
-            maxMethyl: 1,
-            label: "",
-          },
-          url: item.url,
-          trackModel: item,
-        });
+              error: `Error processing genome align track with id ${
+                item.id
+              }: ${"ASDASD"}`,
+            };
+          }
+        })
+      );
 
-        let records: AlignmentRecord[] = [];
-        let recordArr: any = curGenomeAlignRespond;
-
-        for (const record of recordArr) {
-          let data = JSON5.parse("{" + record[3] + "}");
-          record[3] = data;
-          records.push(new AlignmentRecord(record));
-        }
-        // added trackId genomeAlign tracks so we can put the correct data to the correct track after we sent the data back
-        return {
-          query: item.querygenome,
-          records: records,
-          isBigChain: false,
-          id: item.id,
-        };
-      })
-    );
-
+      // Handle the oldRecordsArray as needed
+    } catch (error) {
+      console.error("Error fetching genome align tracks:", error);
+      // Handle the situation where the entire Promise.all fails, if necessary
+    }
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
+    let successFetch: Array<any> = [];
+    for (let curGenomeAlign of oldRecordsArray) {
+      if (!("error" in curGenomeAlign)) {
+        successFetch.push(curGenomeAlign);
+      } else {
+        result.push(curGenomeAlign);
+      }
+    }
     let multiCalInstance = new MultiAlignmentViewCalculator(
       event.data.primaryGenName
     );
-    let alignment = multiCalInstance.multiAlign(visData, oldRecordsArray);
+    let alignment = multiCalInstance.multiAlign(visData, successFetch);
 
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
@@ -364,8 +442,21 @@ self.onmessage = async (event: MessageEvent) => {
       const genomeName = item.genome ? item.genome : event.data.primaryGenName;
       const id = item.id;
       const url = item.url;
-
-      if (trackType in { hic: "", ruler: "", dynamichic: "" }) {
+      let foundInvalidTrack = false;
+      if (
+        (item.metadata.genome && !(item.metadata.genome in tmpQueryGenObj)) ||
+        !(item.type in componentMap)
+      ) {
+        foundInvalidTrack = true;
+      }
+      if (foundInvalidTrack) {
+        fetchResults.push({
+          name: trackType,
+          id: id,
+          metadata: item.metadata,
+          trackModel: item,
+        });
+      } else if (trackType in { hic: "", ruler: "", dynamichic: "" }) {
         fetchResults.push({
           name: trackType,
           id: id,
@@ -457,6 +548,7 @@ self.onmessage = async (event: MessageEvent) => {
       trackModel.metadata.genome !== undefined &&
       trackModel.metadata.genome !== event.data.primaryGenName
     ) {
+      console.log(trackModel, genomicFetchCoord);
       curFetchNav =
         genomicFetchCoord[`${trackModel.metadata.genome}`].queryGenomicCoord;
     } else if (
@@ -469,22 +561,23 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-    // if (trackModel.type !== "genomealign" && event.data.initial) {
-    //   curFetchNav = initGenomicLoci;
-    // } else if (trackModel.type !== "genomealign" && !event.data.initial) {
-    //   curFetchNav = new Array(genomicLoci);
-    // }
-
+    console.log(curFetchNav);
     if (trackModel.fileObj !== "" && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
 
         curRespond = await Promise.all(
-          await localTrackFetchFunction[trackModel.type]({
-            basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-            nav: curFetchNav[i],
-            trackModel,
-          })
+          trackModel.isText
+            ? await textFetchFunction[trackModel.type]({
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
+            : await localTrackFetchFunction[trackModel.type]({
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
         );
 
         responses.push(_.flatten(curRespond));
@@ -492,35 +585,43 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
-        if (trackModel.type in { geneannotation: "", snp: "" }) {
-          curRespond = await Promise.all(
-            await curFetchNav[i].map((nav, index) => {
-              return trackFetchFunction[trackModel.type]({
-                genomeName:
-                  "genome" in trackModel.metadata
-                    ? trackModel.metadata.genome
-                    : primaryGenName,
-                name: trackModel.name,
-                chr: nav.chr,
-                start: nav.start,
-                end: nav.end,
-                nav,
+        try {
+          if (trackModel.type in { geneannotation: "", snp: "" }) {
+            curRespond = await Promise.all(
+              curFetchNav[i].map(async (nav, index) => {
+                return await trackFetchFunction[trackModel.type]({
+                  genomeName:
+                    "genome" in trackModel.metadata
+                      ? trackModel.metadata.genome
+                      : primaryGenName,
+                  name: trackModel.name,
+                  chr: nav.chr,
+                  start: nav.start,
+                  end: nav.end,
+                  nav,
+                  trackModel,
+                  trackType: trackModel.type,
+                });
+              })
+            );
+          } else {
+            curRespond = await Promise.all([
+              trackFetchFunction[trackModel.type]({
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
                 trackModel,
-                trackType: trackModel.type,
-              });
-            })
-          );
-        } else {
-          curRespond = await Promise.all(
-            await trackFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
-          );
-        }
+              }),
+            ]);
+          }
 
-        responses.push(_.flatten(curRespond));
+          responses.push(_.flatten(curRespond));
+        } catch (error) {
+          console.error(
+            `Error fetching data for track model type ${trackModel.type}:`,
+            error
+          );
+          responses.push({ error: `Error fetching data: ${"ERERER"}` });
+        }
       }
     }
     return responses;

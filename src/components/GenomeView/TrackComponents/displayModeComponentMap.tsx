@@ -1,9 +1,6 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "./commonComponents/check-obj-dupe";
+import { removeDuplicates } from "./commonComponents/check-obj-dupe";
 import Feature, {
   Fiber,
   JasparFeature,
@@ -71,6 +68,9 @@ import OmeroTrackComponents, {
 } from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "@/models/layoutUtils";
 import _ from "lodash";
+import RulerComponent from "./RulerComponents/RulerComponent";
+import { getGenomeConfig } from "@/models/genomes/allGenomes";
+
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -113,6 +113,40 @@ export const displayModeComponentMap: { [key: string]: any } = {
         );
       }
       let svgKey = uuidv4();
+      if (configOptions.forceSvg) {
+        let start = trackState.viewWindow.start + trackState.visWidth / 3;
+
+        let end = trackState.viewWindow.end - trackState.visWidth / 3;
+        let svgWidth = end - start;
+        return (
+          <svg
+            key={svgKey}
+            width={width / 3}
+            viewBox={`${start} 0 ${svgWidth} ${height}`}
+            height={height}
+            display={"block"}
+          >
+            {placements.map(renderAnnotation)}
+            <line
+              x1={width / 3}
+              y1={0}
+              x2={width / 3}
+              y2={height}
+              stroke="black"
+              strokeWidth={1}
+            />
+            <line
+              x1={(2 * width) / 3}
+              y1={0}
+              x2={(2 * width) / 3}
+              y2={height}
+              stroke="black"
+              strokeWidth={1}
+            />
+          </svg>
+        );
+      }
+
       return (
         <svg key={svgKey} width={width} height={height} display={"block"}>
           {placements.map(renderAnnotation)}
@@ -428,10 +462,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
         return { trackHeight, numHidden: totalImgCount - imgCount };
       };
       let heightObj = calcTrackHeight();
-      svgHeight.current = heightObj.trackHeight;
-      updatedLegend.current = (
-        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
-      );
+      if (svgHeight) {
+        svgHeight.current = heightObj.trackHeight;
+      }
+
+      if (updatedLegend) {
+        updatedLegend.current = (
+          <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+        );
+      }
+
       return (
         <OmeroTrackComponents
           data={formattedData}
@@ -453,7 +493,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
-    let currDisplayNav;
 
     //FullDisplayMode part from eg2
     let placeFeatureData = featureArrange.arrange(
@@ -465,6 +504,19 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType
     );
 
+    // if (configOptions.forceSvg) {
+    //   placeFeatureData.placements = placeFeatureData.placements.filter(
+    //     (feature) => {
+    //       const curXSpan = feature.xSpan;
+
+    //       return !(
+    //         curXSpan.end <
+    //           trackState.viewWindow.start + trackState.visWidth / 3 ||
+    //         curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
+    //       );
+    //     }
+    //   );
+    // }
     let height;
 
     height =
@@ -478,12 +530,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
       ROW_HEIGHT,
       configOptions.maxRows
     );
+    if (svgHeight) {
+      svgHeight.current = height;
+    }
+    if (updatedLegend) {
+      updatedLegend.current = (
+        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+      );
+    }
 
-    svgHeight.current = height;
-
-    updatedLegend.current = (
-      <TrackLegend height={svgHeight.current} trackModel={trackModel} />
-    );
     return svgDATA;
   },
 
@@ -503,10 +558,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <NumericalTrack
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
@@ -529,13 +588,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <QBedTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        viewWindow={trackState.viewWindow}
         trackModel={trackModel}
         isLoading={false}
         error={undefined}
+        forceSvg={configOptions.forceSvg}
       />
     );
     return canvasElements;
@@ -556,10 +615,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <BoxplotTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         isLoading={false}
         error={undefined}
@@ -585,10 +644,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <MatplotTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
@@ -718,10 +777,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
         <FiberTrackComponent
           data={formattedData}
           options={configOptions}
-          viewWindow={new OpenInterval(0, trackState.visWidth)}
-          visRegion={objToInstanceAlign(trackState.visRegion)}
+          viewWindow={trackState.viewWindow}
           width={trackState.visWidth}
-          forceSvg={false}
+          forceSvg={configOptions.forceSvg}
+          visRegion={objToInstanceAlign(trackState.visRegion)}
           trackModel={trackModel}
           getNumLegend={getNumLegend}
           isLoading={false}
@@ -767,7 +826,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewWindow={trackState.viewWindow}
         visRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
@@ -787,14 +846,15 @@ export const displayModeComponentMap: { [key: string]: any } = {
     function getNumLegend(legend: ReactNode) {
       updatedLegend.current = legend;
     }
+
     let canvasElements = (
       <MethylCTrackComputation
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
       />
@@ -821,10 +881,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <DynseqTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        viewWindow={trackState.viewWindow}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        forceSvg={false}
+        forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
         basesByPixel={basesByPixel}
@@ -838,12 +898,34 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
 export function getDisplayModeFunction(
   drawData: { [key: string]: any },
-  displaySetter,
-  displayCache,
-  cacheIdx,
-  curXPos
+  displaySetter?: any,
+  displayCache?: any,
+  cacheIdx?: any,
+  curXPos?: any
 ) {
-  if (
+  if (drawData.trackModel.type === "ruler") {
+    function getNumLegend(legend: ReactNode) {
+      drawData.updatedLegend.current = legend;
+    }
+
+    let canvasElements = (
+      <RulerComponent
+        viewRegion={objToInstanceAlign(drawData.trackState.visRegion)}
+        width={drawData.trackState.visWidth}
+        trackModel={drawData.trackModel}
+        selectedRegion={objToInstanceAlign(
+          drawData.trackState.genomicFetchCoord[`${drawData.genomeName}`]
+            .primaryVisData.viewWindowRegion
+        )}
+        viewWindow={drawData.trackState.viewWindow}
+        getNumLegend={getNumLegend}
+        genomeConfig={getGenomeConfig(drawData.genomeName)}
+        options={drawData.configOptions}
+      />
+    );
+
+    return canvasElements;
+  } else if (
     drawData.configOptions.displayMode === "full" &&
     drawData.trackModel.type !== "genomealign"
   ) {
@@ -881,7 +963,7 @@ export function getDisplayModeFunction(
         return new Feature(
           newChrInt.toStringWithOther(newChrInt),
           newChrInt,
-          ""
+          drawData.trackModel.isText ? record[5] : ""
         );
       });
     } else if (drawData.trackModel.type === "categorical") {
@@ -980,9 +1062,15 @@ export function getDisplayModeFunction(
   } else if (drawData.trackModel.type === "genomealign") {
     let result = drawData.genesArr;
     let svgElements;
+
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
-
+      drawData.updatedLegend.current = (
+        <TrackLegend
+          height={drawData.configOptions.height}
+          trackModel={drawData.trackModel}
+        />
+      );
       svgElements = drawDatas.map((item, index) =>
         renderFineAlignment(item, index, drawData.configOptions)
       );
@@ -992,10 +1080,27 @@ export function getDisplayModeFunction(
           renderGapText(item, index, drawData.configOptions)
         )
       );
+      let element;
+      if (drawData.configOptions.forceSvg) {
+        let start =
+          drawData.trackState.viewWindow.start +
+          drawData.trackState.visWidth / 3;
 
-      let tempObj = {
-        alignment: drawData.genesArr,
-        svgElements: (
+        let end =
+          drawData.trackState.viewWindow.end - drawData.trackState.visWidth / 3;
+        let svgWidth = end - start;
+        element = (
+          <svg
+            width={drawData.trackState.visWidth / 3}
+            viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
+            height={drawData.configOptions.height}
+            display={"block"}
+          >
+            {svgElements}
+          </svg>
+        );
+      } else {
+        element = (
           <svg
             width={drawData.trackState.visWidth}
             height={drawData.configOptions.height}
@@ -1003,7 +1108,11 @@ export function getDisplayModeFunction(
           >
             {svgElements}
           </svg>
-        ),
+        );
+      }
+      let tempObj = {
+        alignment: drawData.genesArr,
+        svgElements: element,
         trackState: drawData.trackState,
       };
 
@@ -1043,10 +1152,27 @@ export function getDisplayModeFunction(
         true
       );
       svgElements.push(primaryArrows);
+      let element;
+      if (drawData.configOptions.forceSvg) {
+        let start =
+          drawData.trackState.viewWindow.start +
+          drawData.trackState.visWidth / 3;
 
-      let tempObj = {
-        alignment: drawData.genesArr,
-        svgElements: (
+        let end =
+          drawData.trackState.viewWindow.end - drawData.trackState.visWidth / 3;
+        let svgWidth = end - start;
+        element = (
+          <svg
+            width={drawData.trackState.visWidth / 3}
+            viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
+            height={drawData.configOptions.height}
+            display={"block"}
+          >
+            {svgElements}
+          </svg>
+        );
+      } else {
+        element = (
           <svg
             width={drawData.trackState.visWidth}
             height={drawData.configOptions.height}
@@ -1054,7 +1180,12 @@ export function getDisplayModeFunction(
           >
             {svgElements}
           </svg>
-        ),
+        );
+      }
+      let tempObj = {
+        alignment: drawData.genesArr,
+        svgElements: element,
+
         trackState: drawData.trackState,
       };
 
@@ -1062,6 +1193,7 @@ export function getDisplayModeFunction(
     }
   } else if (drawData.trackModel.type === "matplot") {
     let formattedData: Array<any> = [];
+
     for (let i = 0; i < drawData.genesArr.length; i++) {
       formattedData.push(
         drawData.genesArr[i].map((record) => {
@@ -1154,6 +1286,7 @@ export function getDisplayModeFunction(
         }
       });
     } else if (drawData.trackModel.type === "longrange") {
+      console.log(drawData.genesArr);
       drawData.genesArr.map((record) => {
         const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 
@@ -1189,6 +1322,13 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
     });
+    if (displayCache) {
+      displayCache.current.density[cacheIdx] = {
+        canvasData: canvasElements,
+        height: drawData.configOptions.height,
+        xPos: curXPos,
+      };
+    }
 
     return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {
@@ -1201,7 +1341,11 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
     });
-
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: drawData.configOptions,
+      xPos: curXPos,
+    };
     return canvasElements;
   } else if (
     drawData.trackModel.type in
@@ -1273,7 +1417,11 @@ export function getDisplayModeFunction(
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
-
+    displayCache.current.density[cacheIdx] = {
+      canvasData: canvasElements,
+      height: drawData.configOptions,
+      xPos: curXPos,
+    };
     return canvasElements;
   } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
     let formattedData = drawData.genesArr.map((record) => {
@@ -1288,7 +1436,7 @@ export function getDisplayModeFunction(
         return new NumericalFeature("", newChrInt).withValue(record.score);
       }
     });
-
+    let tmpObj = { ...drawData.configOptions };
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,
       trackState: drawData.trackState,

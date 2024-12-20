@@ -15,7 +15,7 @@ const useResizeObserver = () => {
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
         if (
           initialWidth.current ||
-          Math.abs(width - prevSize.current.width) > 100
+          Math.abs(width - prevSize.current.width) > 200
         ) {
           setSize({ width, height: prevSize.current.height });
           prevSize.current = { width, height: prevSize.current.height };
