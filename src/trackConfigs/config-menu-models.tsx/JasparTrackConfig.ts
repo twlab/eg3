@@ -7,11 +7,6 @@ import AlwaysDrawLabelConfig from "../config-menu-components.tsx/AlwaysDrawLabel
 import { AnnotationDisplayModes } from "./DisplayModes";
 import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
 export class JasparTrackConfig extends AnnotationTrackConfig {
-  constructor(trackModel: TrackModel) {
-    super(trackModel);
-    this.setDefaultOptions(DEFAULT_OPTIONS);
-  }
-
   getMenuComponents() {
     const items = [
       ...super.getMenuComponents(),

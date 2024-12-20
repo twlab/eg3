@@ -14,11 +14,6 @@ import SmoothConfig from "../config-menu-components.tsx/SmoothConfig";
 import EnsemblStyleConfig from "../config-menu-components.tsx/EnsemblStyleConfig";
 
 export class NumericalTrackConfig extends TrackConfig {
-  constructor(trackModel: TrackModel) {
-    super(trackModel);
-    this.setDefaultOptions(DEFAULT_OPTIONS);
-  }
-
   getMenuComponents() {
     return [
       ...super.getMenuComponents(),

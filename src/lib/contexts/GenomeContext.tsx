@@ -14,6 +14,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
+import queryString from "query-string";
 import { useRef, useState } from "react";
 
 import { chrType } from "../../localdata/genomename";
@@ -23,8 +24,13 @@ import {
   genomeNameToConfig,
   getGenomeConfig,
 } from "../../models/genomes/allGenomes";
+import TrackModel, { mapUrl } from "@/models/TrackModel";
+import Json5Fetcher from "@/models/Json5Fetcher";
+import DataHubParser from "@/models/DataHubParser";
 
 function useGenomeState(isLocal = 1) {
+  const debounceTimeout = useRef<any>(null);
+
   const [selectedGenome, setSelectedGenome] = useState<Array<any>>([]);
   const [allGenome, setAllGenome] = useState<{ [key: string]: any }>({});
   const [treeOfLife, setTreeOfLife] = useState<{ [key: string]: any }>({});
@@ -142,9 +148,118 @@ function useGenomeState(isLocal = 1) {
       setCurrSelectGenome(newObj);
     }
   }
+  async function asyncInitUrlParamState(query) {
+    let sessionGenomeConfig = getGenomeConfig(query.genome as string);
+    sessionGenomeConfig["isInitial"] = true;
+    if (query.position) {
+      const interval = sessionGenomeConfig.navContext.parse(
+        query.position as string
+      );
+      sessionGenomeConfig.defaultRegion = interval;
+    }
 
+    // if (query.highlightPosition) {
+    //   newState = getNextState(newState as AppState, {
+    //     type: ActionType.SET_HIGHLIGHTS,
+    //     highlights: [new HighlightInterval(interval.start, interval.end)],
+    //   });
+    // }
+
+    if (query.hub) {
+      const withDefaultTracks =
+        !query.noDefaultTracks || (query.noDefaultTracks ? false : true);
+      const customTracksPool = await getTracksFromHubURL(
+        mapUrl(query.hub as string)
+      );
+      if (customTracksPool) {
+        const customTracks = customTracksPool.filter(
+          (track: any) => track.showOnHubLoad
+        );
+        if (customTracks.length > 0) {
+          sessionGenomeConfig.defaultTracks = withDefaultTracks
+            ? [...sessionGenomeConfig.defaultTracks, ...customTracks]
+            : [...customTracks];
+        } else {
+          setCustomTracksPool(customTracksPool);
+        }
+      }
+    }
+    // if (query.sessionFile) {
+    //   const json = await new Json5Fetcher().get(mapUrl(query.sessionFile));
+    //   if (json) {
+    //     AppState.dispatch(ActionCreators.restoreSession(json));
+    //     // when position in URL with sessionFile, see issue #245
+    //     if (query.position) {
+    //       const state = new AppStateLoader().fromObject(json);
+    //       const interval = state.viewRegion
+    //         .getNavigationContext()
+    //         .parse(query.position as string);
+    //       AppState.dispatch(
+    //         ActionCreators.setViewRegion(interval.start, interval.end)
+    //       );
+    //     }
+    //   }
+
+    //   setSelectedGenome((prevList: any) => [
+    //     ...prevList,
+    //     sessionGenomeConfig,
+    //   ]);
+    // }
+    if (query.hubSessionStorage) {
+      // reads data from both session storage and hubSessionStorage URL which is a josn hub, need check if genome changed or not
+      const customTracksPool = await getTracksFromHubURL(
+        mapUrl(query.hubSessionStorage as string)
+      );
+      if (customTracksPool) {
+        const tracksInHub = customTracksPool.filter(
+          (track: any) => track.showOnHubLoad
+        );
+
+        if (tracksInHub.length > 0) {
+          sessionGenomeConfig.defaultTracks = [
+            ...sessionGenomeConfig.defaultTracks,
+            ...tracksInHub,
+          ];
+        } else {
+          setCustomTracksPool(customTracksPool);
+        }
+      }
+    }
+
+    sessionStorage.clear();
+    console.log(sessionGenomeConfig);
+    setSelectedGenome((prevList: any) => [...prevList, sessionGenomeConfig]);
+  }
   useEffect(() => {
-    fetchGenomeData();
+    const storedBrowserSession = sessionStorage.getItem(
+      "browserSessionGenomeConfig"
+    );
+    const { query } = queryString.parseUrl(window.location.href);
+    if (!_.isEmpty(query)) {
+      asyncInitUrlParamState(query);
+    }
+    // else if (storedBrowserSession !== null) {
+    //   const genomeConfigObj = JSON.parse(storedBrowserSession);
+
+    //   let sessionGenomeConfig = getGenomeConfig(genomeConfigObj.genome._name);
+
+    //   let initTrackModel = sessionGenomeConfig.defaultTracks.map((trackObj) => {
+    //     return new TrackModel({
+    //       ...trackObj,
+    //     });
+    //   });
+    //   sessionGenomeConfig.defaultTracks = initTrackModel;
+    //   sessionGenomeConfig.defaultRegion = new OpenInterval(
+    //     genomeConfigObj.defaultRegion.start,
+    //     genomeConfigObj.defaultRegion.end
+    //   );
+    //   sessionGenomeConfig["isInitial"] = true;
+
+    //   setSelectedGenome((prevList: any) => [...prevList, sessionGenomeConfig]);
+    // }
+    else {
+      fetchGenomeData();
+    }
   }, []);
 
   function addGlobalState(data: any) {
@@ -186,8 +301,7 @@ function useGenomeState(isLocal = 1) {
 
   // MARK: - Actions
 
-  function onTracksAdded(trackModels: any) {
-    console.log(trackModels);
+  function onTracksAdded(trackModels) {
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {}
@@ -202,6 +316,15 @@ function useGenomeState(isLocal = 1) {
     }
 
     addGlobalState(newStateObj);
+    // when users add too many single tracks, it will cause too much state changes,
+    // so we delay each click by 1 sec until the user stop then process the added tracks
+    clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      processTracks();
+    }, 1000);
+  }
+
+  function processTracks() {
     let state = stateArr.current[presentStateIdx.current];
     let curGenomeConfig = getGenomeConfig(state.genomeName);
     curGenomeConfig.navContext = state["viewRegion"]._navContext;
@@ -210,7 +333,14 @@ function useGenomeState(isLocal = 1) {
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
+
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
+  }
+
+  async function getTracksFromHubURL(url: any): Promise<any> {
+    const json = await new Json5Fetcher().get(url);
+    const hubParser = new DataHubParser();
+    return await hubParser.getTracksInHub(json, "URL hub", "", false, 0);
   }
 
   const addTermToMetaSets = useCallback((term: string) => {

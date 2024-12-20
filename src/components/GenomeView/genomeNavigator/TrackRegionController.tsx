@@ -3,6 +3,7 @@ import ReactModal from "react-modal";
 import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 import GeneSearchBox from "./GeneSearchBox";
 import { HighlightInterval } from "../ToolComponents/HighlightMenu";
+import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import Genome from "@/models/Genome";
 const MODAL_STYLE = {
@@ -140,15 +141,15 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
         {!virusBrowserMode && (
           <>
             <h6 style={{ marginTop: "5px" }}>SNP search</h6>
-            {/* <SnpSearchBox
+            <SnpSearchBox
               navContext={selectedRegion.getNavigationContext()}
               onRegionSelected={onRegionSelected}
               handleCloseModal={handleCloseModal}
-              onNewHighlight={onNewHighlight}
               color={color}
               background={background}
               doHighlight={doHighlight}
-            /> */}
+              genomeConfig={genomeConfig}
+            />
           </>
         )}
         <h6>

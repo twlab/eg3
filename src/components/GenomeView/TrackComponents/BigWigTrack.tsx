@@ -143,6 +143,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
       if (trackData!.trackState.initial === 1) {
         if (
           "genome" in trackData![`${id}`].metadata &&
+          trackData![`${id}`].metadata.genome &&
           trackData![`${id}`].metadata.genome !==
             genomeArr![genomeIdx!].genome.getName()
         ) {

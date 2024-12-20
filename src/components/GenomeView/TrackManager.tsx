@@ -1,7 +1,7 @@
 import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-
+import QBedTrack from "./TrackComponents/QBedTrack";
 import RefGeneTrack from "./TrackComponents/RefGeneTrack";
 import BedTrack from "./TrackComponents/BedTrack";
 import BigBedTrack from "./TrackComponents/BigBedTrack";
@@ -32,6 +32,26 @@ import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./TrackComponents/RulerTrack";
 import FiberTrack from "./TrackComponents/FiberTrack";
 import DBedGraphTrack from "./TrackComponents/DBedGraphTrack";
+import _ from "lodash";
+import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
+import SubToolButtons from "./ToolComponents/SubToolButtons";
+import HighlightMenu from "./ToolComponents/HighlightMenu";
+import History from "./ToolComponents/History";
+import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
+import BedgraphTrack from "./TrackComponents/BedgraphTrack";
+
+import BoxplotTrack from "./TrackComponents/BoxplotTrack";
+import JasparTrack from "./TrackComponents/JasparTrack";
+import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
+import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
+
+import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
+import SnpTrack from "./TrackComponents/SnpTrack";
+import BamTrack from "./TrackComponents/BamTrack";
+import BamSource from "@/getRemoteData/BamSource";
+import OmeroTrack from "./TrackComponents/OmeroTrack";
+import { useGenome } from "@/lib/contexts/GenomeContext";
+import { m } from "framer-motion";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
@@ -50,26 +70,6 @@ function sumArray(numbers) {
   return total;
 }
 
-import _ from "lodash";
-import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import SubToolButtons from "./ToolComponents/SubToolButtons";
-import HighlightMenu from "./ToolComponents/HighlightMenu";
-import History from "./ToolComponents/History";
-import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
-import BedgraphTrack from "./TrackComponents/BedgraphTrack";
-import QBedTrack from "./TrackComponents/QBedTrack";
-import BoxplotTrack from "./TrackComponents/BoxplotTrack";
-import JasparTrack from "./TrackComponents/JasparTrack";
-import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
-import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
-
-import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
-import SnpTrack from "./TrackComponents/SnpTrack";
-import BamTrack from "./TrackComponents/BamTrack";
-import BamSource from "@/getRemoteData/BamSource";
-import OmeroTrack from "./TrackComponents/OmeroTrack";
-import { useGenome } from "@/lib/contexts/GenomeContext";
-import { m } from "framer-motion";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -665,7 +665,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   async function fetchGenomeData(initial: number = 0, trackSide, dataIdx) {
     // console.log(window.performance);
-
     let tempObj = {};
     let curFetchRegionNav;
 
@@ -1180,11 +1179,38 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function initializeTracks() {
     // set initial track manager control values and create fetch instance for track that can't use worker like hic.
-    let genome = genomeArr[genomeIdx];
+    let genomeConfig = genomeArr[genomeIdx];
+    const tmpQueryGenObj: { [key: string]: any } = {};
+    tmpQueryGenObj[`${genomeConfig.genome.getName()}`] = "";
+    const annotationTracks = genomeConfig.annotationTracks || {};
+    const comparisonTracks = annotationTracks["Genome Comparison"] || [];
+
+    trackManagerState.current.tracks.map((items, index) => {
+      if (items.type === "genomealign") {
+        let queryGenomeName;
+
+        if (items.querygenome) {
+          queryGenomeName = items.querygenome;
+          tmpQueryGenObj[`${items.querygenome}`] = "";
+        } else if (items.metadata && items.metadata.genome) {
+          queryGenomeName = items.metadata.genome;
+          tmpQueryGenObj[`${items.metadata.genome}`] = "";
+          items.querygenome = queryGenomeName;
+        }
+        if (queryGenomeName) {
+          const theTrack =
+            comparisonTracks.find(
+              (track: any) => track.querygenome === queryGenomeName
+            ) || {};
+
+          items.url = theTrack.url;
+        }
+      }
+    });
 
     if (preload.current && genomeArr[genomeIdx].sizeChange) {
       for (let i = 1; i < startingBpArr.current.length; i++) {
-        if (startingBpArr.current[i] > genome.defaultRegion.start) {
+        if (startingBpArr.current[i] > genomeConfig.defaultRegion.start) {
           leftStartCoord.current = startingBpArr.current[i - 1];
           rightStartCoord.current = startingBpArr.current[i];
 
@@ -1192,16 +1218,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
     } else {
-      leftStartCoord.current = genome.defaultRegion.start;
-      rightStartCoord.current = genome.defaultRegion.end;
+      leftStartCoord.current = genomeConfig.defaultRegion.start;
+      rightStartCoord.current = genomeConfig.defaultRegion.end;
     }
 
     bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
     basePerPixel.current = bpRegionSize.current / windowWidth;
     pixelPerBase.current = windowWidth / bpRegionSize.current;
-    if (preload.current && genomeArr[genomeIdx].sizeChange) {
+    if (preload.current && genomeConfig.sizeChange) {
       dragX.current =
-        (leftStartCoord.current - genome.defaultRegion.start) *
+        (leftStartCoord.current - genomeConfig.defaultRegion.start) *
         pixelPerBase.current;
     }
     bpX.current = leftStartCoord.current;
@@ -1213,6 +1239,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     initialPreloadTrackFetch.current = [];
     // loop through trackmanager checking to see if the track is already created else if create a new one with default valuies
     for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
+      const curTrackModel = trackManagerState.current.tracks[i];
+      let foundInvalidTrack = false;
+      if (
+        (curTrackModel.metadata.genome &&
+          !(curTrackModel.metadata.genome in tmpQueryGenObj)) ||
+        !(curTrackModel.type in componentMap)
+      ) {
+        foundInvalidTrack = true;
+      }
       if (trackManagerState.current.tracks[i].type === "genomealign") {
         initialPreloadTrackFetch.current.push(
           trackManagerState.current.tracks[i]
@@ -1275,17 +1310,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           newTrackComponents.push({
             trackIdx: i,
             id: uniqueKey,
-            component:
-              trackManagerState.current.tracks[i].type in componentMap
-                ? componentMap[trackManagerState.current.tracks[i].type]
-                : componentMap.error,
+            component: !foundInvalidTrack
+              ? componentMap[trackManagerState.current.tracks[i].type]
+              : componentMap.error,
             posRef: newPosRef,
             legendRef: newLegendRef,
             trackModel: trackManagerState.current.tracks[i],
             hasData: false,
           });
-          console.log(componentMap.error);
-          if (trackManagerState.current.tracks[i].type in componentMap) {
+
+          if (!foundInvalidTrack) {
             initialPreloadTrackFetch.current.push(
               trackManagerState.current.tracks[i]
             );
@@ -1305,10 +1339,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           newTrackComponents.push({
             trackIdx: i,
             id: uniqueKey,
-            component:
-              trackManagerState.current.tracks[i].type in componentMap
-                ? componentMap[trackManagerState.current.tracks[i].type]
-                : componentMap.error,
+            component: !foundInvalidTrack
+              ? componentMap[trackManagerState.current.tracks[i].type]
+              : componentMap.error,
             posRef: newPosRef,
             legendRef: newLegendRef,
             trackModel: trackManagerState.current.tracks[i],
@@ -1358,7 +1391,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (
         Object.keys(preloadedTracks.current).length === trackComponents.length
       ) {
+        console.log("ASDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
         preloadedTracks.current = {};
+
         cancelAnimationFrame(frameID.current);
         trackComponents.map((component, i) => {
           frameID.current = requestAnimationFrame(() => {

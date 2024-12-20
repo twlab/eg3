@@ -126,7 +126,16 @@ self.onmessage = async (event: MessageEvent) => {
   let genomeAlignTracks = trackDefaults.filter((items, index) => {
     return items.type === "genomealign";
   });
-
+  const tmpQueryGenObj: { [key: string]: any } = {};
+  tmpQueryGenObj[`${primaryGenName}`] = "";
+  genomeAlignTracks.map((items, index) => {
+    if (items.querygenome) {
+      tmpQueryGenObj[`${items.querygenome}`] = "";
+    } else if (items.metadata && items.metadata.genome) {
+      tmpQueryGenObj[`${items.metadata.genome}`] = "";
+    }
+  });
+  console.log(tmpQueryGenObj);
   if (genomeAlignTracks.length > 0) {
     event.data.visData.visRegion;
 
@@ -142,7 +151,8 @@ self.onmessage = async (event: MessageEvent) => {
         genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
           item.result.primaryVisData;
 
-        //save the genomic location so that track that has query as parent can use that data to get data
+        //save the genomic location so that track that has query as parent can use that data to get data\
+        console.log(item);
         genomicFetchCoord[`${item.queryName}`] = {
           queryGenomicCoord: new Array(item.queryGenomicCoord),
           id: item.id,
@@ -254,6 +264,7 @@ self.onmessage = async (event: MessageEvent) => {
               records.push(new AlignmentRecord(record));
             }
             // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
+            console.log(item);
             return {
               query: item.querygenome,
               records: records,
@@ -431,8 +442,14 @@ self.onmessage = async (event: MessageEvent) => {
       const genomeName = item.genome ? item.genome : event.data.primaryGenName;
       const id = item.id;
       const url = item.url;
-
-      if (!(item.type in componentMap)) {
+      let foundInvalidTrack = false;
+      if (
+        (item.metadata.genome && !(item.metadata.genome in tmpQueryGenObj)) ||
+        !(item.type in componentMap)
+      ) {
+        foundInvalidTrack = true;
+      }
+      if (foundInvalidTrack) {
         fetchResults.push({
           name: trackType,
           id: id,
@@ -531,6 +548,7 @@ self.onmessage = async (event: MessageEvent) => {
       trackModel.metadata.genome !== undefined &&
       trackModel.metadata.genome !== event.data.primaryGenName
     ) {
+      console.log(trackModel, genomicFetchCoord);
       curFetchNav =
         genomicFetchCoord[`${trackModel.metadata.genome}`].queryGenomicCoord;
     } else if (

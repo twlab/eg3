@@ -243,7 +243,7 @@ export class TrackModel {
 export default TrackModel;
 
 // modified from juicebox
-export function mapUrl(url: string) {
+export function mapUrl(url: any) {
   if (!url) {
     return undefined;
   }

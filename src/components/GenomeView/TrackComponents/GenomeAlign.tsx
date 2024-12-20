@@ -120,7 +120,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
       xPos.current = curXPos;
       checkTrackPreload(id);
       updateSide.current = side;
-      console.log(res);
+
       setSvgComponents(res);
     }
   }

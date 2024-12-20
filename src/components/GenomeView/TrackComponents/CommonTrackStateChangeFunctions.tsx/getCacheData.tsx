@@ -105,7 +105,7 @@ export function getCacheData({
     // } else {
     let viewData: any = [];
 
-    if (trackModel.type in trackUsingExpandedLoci) {
+    if (trackModel.type in trackUsingExpandedLoci || !usePrimaryNav) {
       // CHANGE LEFT NOT SUBTRACT BY 1 ANYMORE
       if (dataIdx! > rightIdx && dataIdx! <= 0) {
         viewData = fetchedDataCache[dataIdx!].dataCache;
@@ -130,7 +130,7 @@ export function getCacheData({
         }
       }
     }
-
+    console.log(viewData);
     let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
     newIntanceTrackState["recreate"] = true;
     createSVGOrCanvas(

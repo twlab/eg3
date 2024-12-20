@@ -128,18 +128,9 @@ export function cacheTrackData({
             hic: "",
           }
             ? trackData![`${id}`].result
-            : trackModel !== "" &&
-              trackModel.type in
-                {
-                  matplot: "",
-                  dynamic: "",
-                  dynamicbed: "",
-                  dynamiclongrange: "",
-                  longrange: "",
-                  biginteract: "",
-                }
-            ? trackData![`${id}`].result.flat(1)
-            : trackData![`${id}`].result[0],
+            : trackModel !== "" && trackModel.type === "genomealign"
+            ? trackData![`${id}`].result[0]
+            : trackData![`${id}`].result.flat(1),
         trackState: newTrackState,
       };
       rightIdx.current--;

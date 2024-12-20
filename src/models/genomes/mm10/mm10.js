@@ -41,7 +41,6 @@ const defaultTracks = [
   //     type: "ruler",
   //     name: "Ruler",
   // }),
-
   // new TrackModel({
   //     type: "geneAnnotation",
   //     name: "gencodeM19",
@@ -57,7 +56,6 @@ const defaultTracks = [
   //   type: "jaspar",
   //   url: "https://hgdownload.soe.ucsc.edu/gbdb/mm10/jaspar/JASPAR2022.bb",
   // }),
-
   // new TrackModel({
   //   type: "dbedgraph",
   //   url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
@@ -94,36 +92,28 @@ const defaultTracks = [
   //   name: "RepeatMasker",
   //   url: "https://vizhub.wustl.edu/public/mm10/rmsk16.bb",
   // }),
-
-  // new TrackModel({
-  //     type: 'refbed',
-  //     name: 'refGene in refbed',
-  //     url: 'https://wangftp.wustl.edu/~rsears/FOR_DAOFENG/gencodeM18_load_basic_Gene.bed.gz',
-  // }),
   // new TrackModel({
   //     type: 'cool',
   //     name: 'Cool Track',
   //     url: 'CQMd6V_cRw6iCI_-Unl3PQ'
   // }),
-
-    // new TrackModel({
-    //     "type": "dynamicbed",
-    //     "name": "dynamic bed",
-    //     "showOnHubLoad": true,
-    //     "tracks": [
-    //     {
-    //         "type": "bed",
-    //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-    //         "name": "peak1"
-    //     },
-    //     {
-    //         "type": "bed",
-    //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
-    //         "name": "peak2"
-    //     }
-    //     ]
-    // })
-        
+  // new TrackModel({
+  //     "type": "dynamicbed",
+  //     "name": "dynamic bed",
+  //     "showOnHubLoad": true,
+  //     "tracks": [
+  //     {
+  //         "type": "bed",
+  //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+  //         "name": "peak1"
+  //     },
+  //     {
+  //         "type": "bed",
+  //         "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
+  //         "name": "peak2"
+  //     }
+  //     ]
+  // })
 ];
 
 const publicHubData = {
