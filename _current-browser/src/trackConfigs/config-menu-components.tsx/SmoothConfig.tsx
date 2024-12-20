@@ -1,4 +1,4 @@
-import NumberConfig from "../config-menu-components.tsx/NumberConfig";
+import NumberConfig from "./NumberConfig";
 
 /**
  * A context menu item that configures track smooth.
