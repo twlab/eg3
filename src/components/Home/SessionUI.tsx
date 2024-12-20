@@ -61,7 +61,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       state: state, // Replace with actual state
     };
     const sessionId = uuidv4();
-    console.log(state);
+
     let newBundle = {
       bundleId: curBundle.bundleId,
       currentId: sessionId,
@@ -317,7 +317,11 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   return (
-    <div className={`p-5 ${withGenomePicker ? 'flex flex-col items-center' : 'block'}`}>
+    <div
+      className={`p-5 ${
+        withGenomePicker ? "flex flex-col items-center" : "block"
+      }`}
+    >
       <div className="mb-4">
         <label className="flex gap-2 items-center">
           <input
@@ -327,7 +331,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
             value={retrieveId}
             onChange={(e) => setRetrieveId(e.target.value.trim())}
           />
-          <button 
+          <button
             className="bg-[#5BA4CF] text-white px-6 py-2 rounded-md hover:bg-[#4A93BE]"
             onClick={retrieveSession}
           >
@@ -341,8 +345,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <button className="bg-[#5CB85C] text-white px-6 py-2 rounded-md hover:bg-[#4CA84C]">
               Upload
             </button>
-            <input 
-              type="file" 
+            <input
+              type="file"
               className="absolute inset-0 opacity-0 cursor-pointer"
               onChange={uploadSession}
             />
@@ -357,7 +361,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
               Session bundle Id: {curBundle.bundleId}
               <CopyToClip value={curBundle.bundleId} />
             </p>
-            
+
             <label className="flex flex-col items-start gap-2">
               Name your session:
               <input
@@ -378,27 +382,27 @@ const SessionUI: React.FC<SessionUIProps> = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <button 
+            <button
               className="bg-[#4285F4] text-white px-6 py-2 rounded-md hover:bg-[#3367D6]"
               onClick={saveSession}
             >
               Save session
             </button>
-            
+
             <button
               className="bg-[#5CB85C] text-white px-6 py-2 rounded-md hover:bg-[#4CA84C]"
               onClick={downloadAsSession}
             >
               Download current session
             </button>
-            
-            <button 
+
+            <button
               className="bg-[#5BA4CF] text-white px-6 py-2 rounded-md hover:bg-[#4A93BE]"
               onClick={downloadAsHub}
             >
               Download as datahub
             </button>
-            
+
             <button
               className="bg-[#F0AD4E] text-white px-6 py-2 rounded-md hover:bg-[#EC971F]"
               onClick={downloadWholeBundle}
@@ -412,14 +416,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
       {renderSavedSessions()}
 
       <div className="mt-4 max-w-[600px] italic">
-        Disclaimer: please use{" "}
-        <span className="font-bold">sessionFile</span> or{" "}
-        <span className="font-bold">hub</span> URL for publishing using
-        the Browser. Session id is supposed to be shared with trusted people
-        only. Please check our docs for{" "}
-        <a 
-          href={HELP_LINKS.publish} 
-          target="_blank" 
+        Disclaimer: please use <span className="font-bold">sessionFile</span> or{" "}
+        <span className="font-bold">hub</span> URL for publishing using the
+        Browser. Session id is supposed to be shared with trusted people only.
+        Please check our docs for{" "}
+        <a
+          href={HELP_LINKS.publish}
+          target="_blank"
           rel="noopener noreferrer"
           className="text-blue-500 hover:text-blue-700"
         >

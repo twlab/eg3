@@ -669,6 +669,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   async function fetchGenomeData(initial: number = 0, trackSide, dataIdx) {
     // console.log(window.performance);
+    console.log(genomeArr[genomeIdx], initial, trackSide, dataIdx);
     let tempObj = {};
     let curFetchRegionNav;
 
@@ -1488,6 +1489,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // on GenomeRoot first creation we add the default state to StateArr in genomeroot
       // on recreation of trackManager we do not need to set the defaultState because it is saved in genomeroot so we skip to else
       // and do not add to the StateArr.
+
       if (genomeArr[genomeIdx].isInitial) {
         let genome = genomeArr[genomeIdx];
 
@@ -1505,6 +1507,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // create the worker and trigger state change before we can actually use them takes one re render to acutally
         // start working.Thats why we need the initialStart state.
         if (initialStart === "workerNotReady") {
+          console.log("ASDASDASDASDASD");
           infiniteScrollWorker.current = new Worker(
             new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
             {
@@ -1527,7 +1530,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           trackManagerState.current.highlights
         );
         setHighlight([...highlight, ...highlightElement]);
-
+        console.log(genomeArr[genomeIdx], dragX.current);
         initializeTracks();
       }
     }

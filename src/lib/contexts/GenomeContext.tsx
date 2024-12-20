@@ -164,6 +164,7 @@ function useGenomeState(isLocal = 1) {
 
   function addGenomeView(obj: any) {
     if (selectedGenome.length < 1) {
+      isInitial.current = true;
       setSelectedGenome((prevList: any) => [...prevList, obj]);
     }
   }
@@ -258,7 +259,7 @@ function useGenomeState(isLocal = 1) {
       asyncInitUrlParamState(query);
     } else if (storedBrowserSession !== null) {
       const genomeConfigObj = JSON.parse(storedBrowserSession);
-      console.log(genomeConfigObj);
+
       let sessionGenomeConfig = getGenomeConfig(genomeConfigObj.genomeName);
 
       let initTrackModel = genomeConfigObj.defaultTracks.map((trackObj) => {
@@ -266,14 +267,13 @@ function useGenomeState(isLocal = 1) {
           ...trackObj,
         });
       });
-      console.log(initTrackModel);
+
       sessionGenomeConfig.defaultTracks = initTrackModel;
       sessionGenomeConfig.defaultRegion = new OpenInterval(
         genomeConfigObj.defaultRegion.start,
         genomeConfigObj.defaultRegion.end
       );
 
-      console.log(sessionGenomeConfig);
       setSelectedGenome((prevList: any) => [...prevList, sessionGenomeConfig]);
     }
   }, []);
@@ -296,11 +296,7 @@ function useGenomeState(isLocal = 1) {
       state.viewRegion._startBase,
       state.viewRegion._endBase
     );
-    console.log({
-      defaultTracks: curGenomeConfig.defaultTracks,
-      defaultRegion: curGenomeConfig.defaultRegion,
-      genomeName: curGenomeConfig.genome.getName(),
-    });
+
     const serializedGenomeConfig = JSON.stringify({
       defaultTracks: curGenomeConfig.defaultTracks,
       defaultRegion: curGenomeConfig.defaultRegion,
@@ -312,14 +308,14 @@ function useGenomeState(isLocal = 1) {
       serializedGenomeConfig
     );
 
-    setViewRegion(data.viewRegion);
+    setViewRegion(state.viewRegion);
   }
 
   function recreateTrackmanager(trackConfig: { [key: string]: any }) {
     let curGenomeConfig = trackConfig.genomeConfig;
     curGenomeConfig["isInitial"] = isInitial.current;
-    console.log(curGenomeConfig);
-    curGenomeConfig["sizeChange"] = true;
+
+    curGenomeConfig["sizeChange"] = false;
     curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
     setGenomeList(new Array<any>(curGenomeConfig));
   }
@@ -484,7 +480,15 @@ function useGenomeState(isLocal = 1) {
       trackModel.id = trackModelId.current;
       trackModelId.current++;
     });
-    let curGenomeConfig = getGenomeConfig(state.genomeName);
+    let curGenomeConfig;
+    if (state.genomeName !== genomeConfigInHub.current.genome._name) {
+      curGenomeConfig = getGenomeConfig(state.genomeName);
+      curGenomeConfig["genomeID"] = genomeConfigInHub.current.genomeID;
+      isInitial.current = true;
+      genomeConfigInHub.current = curGenomeConfig;
+    } else {
+      curGenomeConfig = genomeConfigInHub.current;
+    }
 
     curGenomeConfig.navContext = state["viewRegion"]._navContext;
     curGenomeConfig.defaultTracks = state.tracks;
@@ -492,11 +496,12 @@ function useGenomeState(isLocal = 1) {
       state.viewRegion._startBase!,
       state.viewRegion._endBase!
     );
+
     addGlobalState(state);
     setLegendWidth(state.trackLegendWidth);
     setShowGenNav(state.isShowingNavigator);
     recreateTrackmanager({ genomeConfig: curGenomeConfig });
-
+    setSelectedGenome([curGenomeConfig]);
     setCurBundle(bundle);
   }
 

@@ -52,6 +52,8 @@ function GenomeHub() {
     isInitial,
     selectedGenome,
     genomeConfigInHub,
+    recreateTrackmanager,
+    setViewRegion,
   } = useGenome();
   const debounceTimeout = useRef<any>(null);
 
@@ -69,15 +71,6 @@ function GenomeHub() {
   //   presentStateIdx.current = stateArr.current.length - 1;
 
   // }
-
-  function recreateTrackmanager(trackConfig: { [key: string]: any }) {
-    let curGenomeConfig = trackConfig.genomeConfig;
-    // curGenomeConfig["genomeID"] = uuidv4();
-    curGenomeConfig["isInitial"] = isInitial.current;
-    curGenomeConfig["sizeChange"] = false;
-    curGenomeConfig["curState"] = stateArr.current[presentStateIdx.current];
-    setGenomeList(new Array<any>(curGenomeConfig));
-  }
 
   function undoRedo(triggerType: string) {
     let prevState = stateArr.current[presentStateIdx.current];
@@ -97,6 +90,7 @@ function GenomeHub() {
     if (state.genomeName !== genomeConfigInHub.current.genome._name) {
       curGenomeConfig = getGenomeConfig(state.genomeName);
       curGenomeConfig["genomeID"] = genomeConfigInHub.current.genomeID;
+      isInitial.current = true;
       genomeConfigInHub.current = curGenomeConfig;
     } else {
       curGenomeConfig = genomeConfigInHub.current;
@@ -143,7 +137,6 @@ function GenomeHub() {
   }
 
   function genomeNavigatorRegionSelect(startbase, endbase, isHighlight) {
-    console.log(startbase, endbase);
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {
@@ -236,7 +229,7 @@ function GenomeHub() {
         }
         curGenome = genomeConfigInHub.current;
         curGenome["isInitial"] = isInitial.current;
-
+        console.log(genomeConfigInHub.current, selectedGenome);
         if (!isInitial.current) {
           curGenome["curState"] = stateArr.current[presentStateIdx.current];
           curGenome.defaultRegion = new OpenInterval(
@@ -266,7 +259,7 @@ function GenomeHub() {
         isInitial.current = false;
       }, 300);
     }
-  }, [size.width]);
+  }, [size.width, selectedGenome]);
 
   return (
     <div style={{ paddingLeft: "1%", paddingRight: "1%" }}>
@@ -278,34 +271,7 @@ function GenomeHub() {
                   key={index}
                   style={{ display: "flex", flexDirection: "column" }}
                 >
-                  {/* {stateArr.current[presentStateIdx.current] ? (
-                    <Nav
-                      isShowingNavigator={showGenNav}
-                      selectedRegion={viewRegion}
-                      genomeConfig={genomeList[index]}
-                      trackLegendWidth={legendWidth}
-                      onRegionSelected={genomeNavigatorRegionSelect}
-                      onGenomeSelected={onGenomeSelected}
-                      state={stateArr.current[presentStateIdx.current]}
-                      onTracksAdded={onTracksAdded}
-                      addSessionState={addSessionState}
-                      onRetrieveBundle={onRetrieveBundle}
-                      onRestoreSession={onRestoreSession}
-                      curBundle={curBundle}
-                      onHubUpdated={onHubUpdated}
-                      publicTracksPool={publicTracksPool}
-                      customTracksPool={customTracksPool}
-                      addTermToMetaSets={addTermToMetaSets}
-                      onSetsChanged={onSetsChanged}
-                      onSetSelected={onSetsSelected}
-                      onTabSettingsChange={onTabSettingsChange}
-                      sets={regionSets}
-                      selectedSet={selectedSet}
-                    />
-                  ) : (
-                    ""
-                  )} */}
-                  {viewRegion && showGenNav ? (
+                  {viewRegion && showGenNav && selectedGenome.length > 0 ? (
                     <GenomeNavigator
                       selectedRegion={viewRegion}
                       genomeConfig={genomeList[index]}

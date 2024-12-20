@@ -216,6 +216,10 @@ const Nav: FC<NavProps> = ({
             onRegionSelected={onRegionSelected}
             contentColorSetup={{ background: "white", color: "#222" }}
             genomeConfig={genomeConfig}
+            genomeArr={[]}
+            genomeIdx={0}
+            addGlobalState={undefined}
+            trackManagerState={undefined}
           />
         </div>
         <div
