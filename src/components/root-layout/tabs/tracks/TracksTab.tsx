@@ -110,11 +110,11 @@ export default function TracksTab() {
           title="Local Tracks"
           description="Manage tracks loaded from your local files"
         />
-        <NavigationLink
+        {/* <NavigationLink
           path="local-text-tracks"
           title="Local Text Tracks"
           description="Create and edit simple text-based genomic tracks"
-        />
+        /> */}
         <NavigationLink
           path="track-list"
           title="Track List"

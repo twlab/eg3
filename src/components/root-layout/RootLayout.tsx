@@ -1,21 +1,23 @@
+import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useGenome } from "../../lib/contexts/GenomeContext";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
 import { selectNavigationTab, setNavigationTab } from "../../lib/redux/slices/navigationSlice";
 import GenomePicker from "../genome-picker/GenomePicker";
+import GenomeRoot from "../GenomeView/GenomeRoot";
 import AppsTab from './tabs/apps/AppsTab';
 import HelpTab from './tabs/help/HelpTab';
 import SettingsTab from './tabs/settings/SettingsTab';
 import ShareTab from './tabs/share/ShareTab';
 import TracksTab from './tabs/tracks/TracksTab';
 import Toolbar from "./toolbar/Toolbar";
-import GenomeRoot from "../GenomeView/GenomeRoot";
-import { useGenome } from "../../lib/contexts/GenomeContext";
 
 const CURL_RADIUS = 15;
 
 export default function RootLayout() {
+    const { ref: toolbarRef, height: toolbarHeight } = useElementGeometry();
     const isSmallScreen = useSmallScreen();
     const { selectedGenome } = useGenome();
 
@@ -37,10 +39,13 @@ export default function RootLayout() {
                     borderRadius: showModal ? 15 : 0
                 }}
             >
-                <Toolbar showMenuButtons={selectedGenome.length > 0} />
-                <div className="flex flex-row h-full">
+                <div ref={toolbarRef}>
+                    <Toolbar showMenuButtons={selectedGenome.length > 0} />
+                </div>
+                <div className="flex flex-row" style={{ height: `calc(100vh - ${toolbarHeight}px)` }}>
                     <motion.div
-                        className="h-full border-r bg-white overflow-hidden"
+                        className="border-r bg-white overflow-hidden"
+                        style={{ height: `calc(100vh - ${toolbarHeight}px)` }}
                         initial={{
                             width: '100vw'
                         }}
@@ -54,6 +59,7 @@ export default function RootLayout() {
                             {selectedGenome.length > 0 ? (
                                 <motion.div
                                     key="genome-view"
+                                    className="h-full w-screen overflow-auto"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
@@ -64,6 +70,7 @@ export default function RootLayout() {
                             ) : (
                                 <motion.div
                                     key="genome-picker"
+                                    className="h-full overflow-auto"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
@@ -78,7 +85,8 @@ export default function RootLayout() {
                     <AnimatePresence mode="wait">
                         {showRightTab && (
                             <motion.div
-                                className="h-full bg-white overflow-hidden"
+                                className="bg-white overflow-hidden"
+                                style={{ height: `calc(100vh - ${toolbarHeight}px)` }}
                                 key="navigation-tabs"
                                 initial={{
                                     width: 0,

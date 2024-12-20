@@ -2,10 +2,13 @@ import { NavigationComponentProps } from "@/components/core-navigation/Navigatio
 import { useGenome } from "@/lib/contexts/GenomeContext";
 import { TrackModel } from "@/models/TrackModel";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 
 export default function AnnotationTracks({ params }: NavigationComponentProps) {
   const { state, onTracksAdded, genomeConfig, secondaryGenomes } = useGenome();
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchBarGeometry = useElementGeometry();
 
   const selectedGenomeName = params?.genome;
 
@@ -48,31 +51,44 @@ export default function AnnotationTracks({ params }: NavigationComponentProps) {
 
   const organizedTracks = useMemo(() => {
     const tracks = selectedGenomeConfig?.annotationTracks || {};
-    return Object.entries(tracks).map(([key, value]) => {
-      if (Array.isArray(value) && value.length > 0 && Array.isArray(value[0])) {
+    return Object.entries(tracks)
+      .map(([key, value]) => {
+        if (Array.isArray(value) && value.length > 0 && Array.isArray(value[0])) {
+          return {
+            name: key,
+            tracks: value.flat().filter(track =>
+              Object.values(track).some(val =>
+                String(val).toLowerCase().includes(searchQuery.toLowerCase())
+              )
+            ),
+          };
+        }
+
+        if (!Array.isArray(value) && typeof value === "object" && value !== null) {
+          return {
+            name: key,
+            tracks: Object.values(value as Record<string, unknown>)
+              .flat()
+              .filter(track =>
+                Object.values(track as object).some(val =>
+                  String(val).toLowerCase().includes(searchQuery.toLowerCase())
+                )
+              ),
+          };
+        }
+
+        const tracks = Array.isArray(value) ? value : [value];
         return {
           name: key,
-          tracks: value.flat(),
+          tracks: tracks.filter(track =>
+            Object.values(track).some(val =>
+              String(val).toLowerCase().includes(searchQuery.toLowerCase())
+            )
+          ),
         };
-      }
-
-      if (
-        !Array.isArray(value) &&
-        typeof value === "object" &&
-        value !== null
-      ) {
-        return {
-          name: key,
-          tracks: Object.values(value as Record<string, unknown>).flat(),
-        };
-      }
-
-      return {
-        name: key,
-        tracks: Array.isArray(value) ? value : [value],
-      };
-    });
-  }, [selectedGenomeConfig]);
+      })
+      .filter(group => group.tracks.length > 0); // Only show groups with matching tracks
+  }, [selectedGenomeConfig, searchQuery]);
 
   const addTrack = (track: any) => {
     const trackModel = new TrackModel(track);
@@ -112,7 +128,10 @@ export default function AnnotationTracks({ params }: NavigationComponentProps) {
 
   const renderTrackGroup = (groupName: string, tracks: any[]) => (
     <div key={groupName} className="mb-4 relative">
-      <h2 className="text-base font-medium mb-1 sticky top-0 bg-white z-10 py-2">
+      <h2
+        className="text-base font-medium mb-1 sticky bg-white z-10 py-2"
+        style={{ top: `${searchBarGeometry.height}px` }}
+      >
         {groupName}
       </h2>
       <div className="pl-3 border-l border-gray-200">
@@ -121,8 +140,24 @@ export default function AnnotationTracks({ params }: NavigationComponentProps) {
     </div>
   );
 
+  const renderSearchBar = () => (
+    <div
+      ref={searchBarGeometry.ref}
+      className="sticky top-0 bg-white z-20 pb-2"
+    >
+      <input
+        type="text"
+        placeholder="Search tracks..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+      />
+    </div>
+  );
+
   return (
     <div>
+      {renderSearchBar()}
       {organizedTracks.map((group) =>
         renderTrackGroup(group.name, group.tracks)
       )}

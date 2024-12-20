@@ -25,7 +25,13 @@ function ZoomButtons(props) {
   const buttons = ZOOMS.map((zoom, index) => (
     <button
       key={index}
-      className="btn btn-outline-secondary"
+      className={`border border-gray-500 p-2 py-2.5 -ml-[1px] first:ml-0 ${
+        index === 0 
+          ? 'rounded-l-md' 
+          : index === ZOOMS.length - 1 
+            ? 'rounded-r-md' 
+            : ''
+      }`}
       title={zoom.title}
       style={{ fontFamily: "monospace" }}
       onClick={() => props.onToolClicked(zoom)}

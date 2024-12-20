@@ -24,6 +24,7 @@ import {
   TrackState,
 } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import TrackManager from "./TrackManager";
+import TrackRegionController from "./genomeNavigator/TrackRegionController";
 
 // const firebaseConfig = {
 //   apiKey: import.meta.env.VITE_FIREBASE_KEY,
@@ -82,6 +83,7 @@ function GenomeHub() {
     allGenome,
     addGenomeView,
     setLoading,
+    onTracksAdded,
   } = useGenome();
   const debounceTimeout = useRef<any>(null);
   const scrollYPos = useRef(0);
@@ -537,11 +539,12 @@ function GenomeHub() {
                     stateArr={stateArr.current}
                     presentStateIdx={presentStateIdx.current}
                     onTracksLoaded={onTracksLoaded}
+                    selectedRegion={viewRegion}
                   />
                 </div>
               );
             })
-          : ""}
+          : null}
       </div>
     </div>
   );

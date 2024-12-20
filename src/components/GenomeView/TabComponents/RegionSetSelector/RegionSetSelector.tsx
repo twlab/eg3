@@ -64,52 +64,19 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
 
   const renderItemForSet = (set: RegionSet, index: number) => {
     const isBackingView = set === selectedSet;
-
     const numRegions = set.features.length;
     const name = set.name || `Unnamed set of ${numRegions} region(s)`;
     const text = `${name} (${numRegions} regions)`;
 
-    let useSetButton;
-    if (isBackingView) {
-      useSetButton = (
-        <button className="btn btn-sm btn-info" disabled={true}>
-          Is current view
-        </button>
-      );
-    } else {
-      useSetButton = (
-        <button
-          className="btn btn-sm btn-success"
-          onClick={() => onSetSelected(set)}
-          disabled={numRegions <= 0}
-        >
-          Enter region set view
-        </button>
-      );
-    }
-
-    const deleteButton = (
-      <button
-        className="btn btn-sm btn-danger"
-        onClick={() => deleteSet(index)}
-      >
-        DELETE
-      </button>
-    );
-
     return (
-      <div
-        key={index}
-        style={{ backgroundColor: isBackingView ? "lightgreen" : undefined }}
-      >
+      <div key={index} className="mb-2">
         <button
           title="Click to edit"
-          className="btn btn-link"
+          className="text-black text-sm hover:text-gray-700"
           onClick={() => setIndexBeingConfigured(index)}
         >
           {text}
-        </button>{" "}
-        {useSetButton} {deleteButton}
+        </button>
       </div>
     );
   };
@@ -117,23 +84,41 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
   const setBeingConfigured = sets[indexBeingConfigured];
 
   return (
-    <div>
-      <h3>Select a gene/region set</h3>
-      {selectedSet ? (
-        <button
-          className="btn btn-sm btn-warning"
-          onClick={() => onSetSelected(null)}
-        >
-          Exit region set view
-        </button>
-      ) : null}
-      {sets.map((set, index) => renderItemForSet(set, index))}
+    <div className="text-black">
+      <h1 className="text-base font-medium mb-4">Select a gene/region set</h1>
+
       <button
-        className="btn btn-sm btn-primary"
+        className="bg-tint text-white px-4 py-2 rounded-md text-sm mb-4"
         onClick={() => setIndexBeingConfigured(sets.length)}
       >
         Add new set
       </button>
+
+      {selectedSet && (
+        <button
+          className="bg-yellow-500 text-white px-4 py-2 rounded-md ml-2 text-sm"
+          onClick={() => onSetSelected(null)}
+        >
+          Exit region set view
+        </button>
+      )}
+
+      <div className="mb-4">
+        {sets.map((set, index) => renderItemForSet(set, index))}
+      </div>
+
+      {indexBeingConfigured === sets.length && (
+        <>
+          <h2 className="text-base font-medium mb-2">Create a new set</h2>
+          <h3 className="text-base mb-1">Enter a list of regions</h3>
+          <p className="text-sm mb-4">
+            Enter a list of gene names or coordinates to make a gene set one item per line.
+            Gene names and coordinates can be mixed for input.
+            Coordinate string must be in the form of "chr1:345-678" fields can be joined by space/tab/comma/colon/hyphen.
+          </p>
+        </>
+      )}
+
       <RegionSetConfig
         genome={genome}
         set={setBeingConfigured}

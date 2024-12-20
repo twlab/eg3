@@ -32,6 +32,25 @@ import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./TrackComponents/RulerTrack";
 import FiberTrack from "./TrackComponents/FiberTrack";
 import DBedGraphTrack from "./TrackComponents/DBedGraphTrack";
+import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
+import React from "react";
+import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
+import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
+import {
+  createNewTrackState,
+  TrackState,
+} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import ZoomControls from "./ToolComponents/ZoomControls";
+import TrackRegionController from "./genomeNavigator/TrackRegionController";
+
+function sumArray(numbers) {
+  let total = 0;
+  for (let i = 0; i < numbers.length; i++) {
+    total += numbers[i];
+  }
+  return total;
+}
+
 import _ from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import SubToolButtons from "./ToolComponents/SubToolButtons";
@@ -50,25 +69,6 @@ import SnpTrack from "./TrackComponents/SnpTrack";
 import BamTrack from "./TrackComponents/BamTrack";
 import BamSource from "@/getRemoteData/BamSource";
 import OmeroTrack from "./TrackComponents/OmeroTrack";
-import { useGenome } from "@/lib/contexts/GenomeContext";
-import { m } from "framer-motion";
-import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
-import React from "react";
-import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
-import ErrorTrack from "./TrackComponents/ErrorTrack";
-import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
-import {
-  createNewTrackState,
-  TrackState,
-} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
-
-function sumArray(numbers) {
-  let total = 0;
-  for (let i = 0; i < numbers.length; i++) {
-    total += numbers[i];
-  }
-  return total;
-}
 
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
@@ -153,6 +153,7 @@ interface TrackManagerProps {
   presentStateIdx: number;
   legendWidth: number;
   onTracksLoaded?: any;
+  selectedRegion: any;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeIdx,
@@ -166,6 +167,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   presentStateIdx,
   legendWidth,
   onTracksLoaded,
+  selectedRegion,
 }) {
   //useRef to store data between states without re render the component
   const { setScreenshotData } = useGenome();
@@ -1290,8 +1292,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             trackComponent.trackModel.id ===
               trackManagerState.current.tracks[i].id &&
-            trackComponent.hasData &&
-            trackManagerState.current.tracks[i].type !== "bam"
+            trackComponent.hasData
           ) {
             trackComponent.trackModel.options =
               trackManagerState.current.tracks[i].options;
@@ -1533,7 +1534,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           whiteSpace: "nowrap",
         }}
       >
-        <div>
+        {/* <div>
           {" "}
           {Math.round(bpX.current) +
             "-" +
@@ -1576,28 +1577,48 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ) : (
             <div style={{ height: 20 }}>DATA READY LETS GO</div>
           )}
-        </div>
+        </div> */}
 
-        <div>1pixel to {basePerPixel.current}bp</div>
+        {/* <div>1pixel to {basePerPixel.current}bp</div> */}
         {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-          <HighlightMenu
-            highlights={trackManagerState.current.highlights}
-            viewRegion={trackManagerState.current.viewRegion}
-            showHighlightMenuModal={true}
-            onNewRegion={highlightJump}
-            onSetHighlights={getHighlightState}
-          />
-          <History
-            state={{
-              past: stateArr.slice(0, presentStateIdx + 1),
-              future: stateArr.slice(presentStateIdx + 1),
-            }}
-            jumpToPast={jumpToState}
-            jumpToFuture={jumpToState}
-            clearHistory={jumpToState}
-          />
-          <SubToolButtons onToolClicked={onToolClicked} />
+          <div className="flex flex-row py-10 items-center">
+            <HighlightMenu
+              highlights={trackManagerState.current.highlights}
+              viewRegion={trackManagerState.current.viewRegion}
+              showHighlightMenuModal={true}
+              onNewRegion={highlightJump}
+              onSetHighlights={getHighlightState}
+            />
+            <History
+              state={{
+                past: stateArr.slice(0, presentStateIdx + 1),
+                future: stateArr.slice(presentStateIdx + 1),
+              }}
+              jumpToPast={jumpToState}
+              jumpToFuture={jumpToState}
+              clearHistory={jumpToState}
+            />
+            <SubToolButtons onToolClicked={onToolClicked} />
+            <ZoomControls onToolClicked={onToolClicked} />
+            {selectedRegion && (
+              <TrackRegionController
+                selectedRegion={selectedRegion}
+                onRegionSelected={(start: number, end: number) =>
+                  onRegionSelected(start, end, "Zoom in 5-fold")
+                }
+                contentColorSetup={{ background: "white", color: "#222" }}
+                genomeConfig={genomeArr[genomeIdx]}
+                genomeArr={genomeArr}
+                genomeIdx={genomeIdx}
+                addGlobalState={addGlobalState}
+                trackManagerState={trackManagerState}
+              />
+            )}
+            <p className="text-sm font-mono pl-2">
+              1px: {basePerPixel.current.toFixed(2)}bp
+            </p>
+          </div>
           <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
             <div
               style={{
@@ -1690,7 +1711,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           applyTrackConfigChange={applyTrackConfigChange}
                           dragX={dragX.current}
                           checkTrackPreload={checkTrackPreload}
-                          sentScreenshotData={sentScreenshotData}
                           // viewWindow={trackManagerState.current.viewRegion}
                         />
 

@@ -6,6 +6,8 @@ import { HighlightInterval } from "../ToolComponents/HighlightMenu";
 import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import Genome from "@/models/Genome";
+import SnpSearch from "../SnpSearch";
+
 const MODAL_STYLE = {
   content: {
     top: "50px",
@@ -41,6 +43,10 @@ interface TrackRegionControllerProps {
   contentColorSetup: { color: string; background: string };
   virusBrowserMode?: boolean;
   genomeConfig: Genome;
+  genomeArr: any[];
+  genomeIdx: number;
+  addGlobalState: any;
+  trackManagerState: any;
 }
 
 const TrackRegionController: FC<TrackRegionControllerProps> = ({
@@ -50,6 +56,10 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   contentColorSetup,
   virusBrowserMode,
   genomeConfig,
+  genomeArr,
+  genomeIdx,
+  addGlobalState,
+  trackManagerState,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [badInputMessage, setBadInputMessage] = useState("");
@@ -98,8 +108,8 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   const coordinates = selectedRegion.currentRegionAsString();
 
   return (
-    <div className="bg tool-element">
-      <button className="btn btn-secondary" onClick={handleOpenModal}>
+    <div className="bg tool-element font-mono pl-2">
+      <button className="btn btn-secondary underline" onClick={handleOpenModal}>
         {coordinates}
       </button>
       <ReactModal

@@ -474,6 +474,30 @@ function useGenomeState(isLocal = 1) {
     setLoading(isLoading);
   }
 
+  function onTrackRemoved(trackId: number) {
+    let newStateObj = createNewTrackState(
+      stateArr.current[presentStateIdx.current],
+      {}
+    );
+
+    newStateObj.tracks = newStateObj.tracks.filter(
+      (track: any) => track.id !== trackId
+    );
+
+    addGlobalState(newStateObj);
+
+    let state = stateArr.current[presentStateIdx.current];
+    let curGenomeConfig = getGenomeConfig(state.genomeName);
+    curGenomeConfig.navContext = state["viewRegion"]._navContext;
+    curGenomeConfig.defaultTracks = state.tracks;
+    curGenomeConfig.defaultRegion = new OpenInterval(
+      state.viewRegion._startBase,
+      state.viewRegion._endBase
+    );
+
+    recreateTrackmanager({ genomeConfig: curGenomeConfig });
+  }
+
   // MARK: - Return
 
   return {
@@ -509,10 +533,12 @@ function useGenomeState(isLocal = 1) {
     setItems,
     setViewRegion,
     setLoading,
+    setSelectedGenome,
     stateArr,
     presentStateIdx,
     trackModelId,
     isInitial,
+    loading,
 
     state,
     genomeConfig,
@@ -526,6 +552,7 @@ function useGenomeState(isLocal = 1) {
     onRestoreSession,
     onRetrieveBundle,
     addSessionState,
+    onTrackRemoved,
     setScreenshotOpen,
     setScreenshotData,
     screenshotData,
