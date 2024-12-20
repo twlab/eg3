@@ -71,7 +71,7 @@ function sumArray(numbers) {
   }
   return total;
 }
-
+const MIN_VIEW_REGION_SIZE = 5;
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -954,6 +954,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     endbase: number,
     toolTitle: string = ""
   ) {
+    const newLength = endbase - startbase;
+    if (newLength < MIN_VIEW_REGION_SIZE) {
+      const amountToExpand = 0.5 * (MIN_VIEW_REGION_SIZE - newLength);
+      startbase -= amountToExpand;
+      endbase += amountToExpand;
+    }
     if (
       selectedTool.title === `Zoom-in tool (Alt+M)` ||
       toolTitle in
@@ -1610,7 +1616,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 onRegionSelected={(start: number, end: number) =>
                   onRegionSelected(start, end, "Zoom in 5-fold")
                 }
-                contentColorSetup={{ background: "blue", color: "#222" }}
+                contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
                 genomeConfig={genomeArr[genomeIdx]}
                 genomeArr={genomeArr}
                 genomeIdx={genomeIdx}
@@ -1628,7 +1634,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 //makes components align right or right when we switch sides
 
-                border: "2px solid Tomato",
+                border: "2px solid #BCCCDC",
                 flexDirection: "row",
                 // full windowwidth will make canvas only loop 0-windowidth
                 // the last value will have no data.

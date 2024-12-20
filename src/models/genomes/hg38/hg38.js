@@ -47,10 +47,10 @@ const genome = new Genome("hg38", [
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
-  // new TrackModel({
-  //   type: "ruler",
-  //   name: "Ruler",
-  // }),
+  new TrackModel({
+    type: "ruler",
+    name: "Ruler",
+  }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
   // new TrackModel({
   //   type: "hi",
@@ -72,21 +72,21 @@ const defaultTracks = [
   //     },
   //   },
   // }),
-  // new TrackModel({
-  //   type: "bed",
-  //   name: "mm10 bed",
-  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "refGene",
-  //   genome: "hg38",
-  // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV39",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "bed",
+    name: "mm10 bed",
+    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV39",
+    genome: "hg38",
+  }),
 
   //   new TrackModel({
   //   type: "bigbed",
@@ -94,11 +94,11 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
   // }),
 
-  // new TrackModel({
-  //   type: "repeatmasker",
-  //   name: "RepeatMasker",
-  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  // }),
+  new TrackModel({
+    type: "repeatmasker",
+    name: "RepeatMasker",
+    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  }),
 
   // new TrackModel({
   //   type: "snp",

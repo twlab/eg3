@@ -18,12 +18,8 @@ import { SelectDemo } from "./tesShadcn";
 import History from "./ToolComponents/History";
 import Drag from "./TrackComponents/commonComponents/chr-order/ChrOrder";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
-import {
-  createNewTrackState,
-  TrackState,
-} from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
+import { createNewTrackState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import TrackManager from "./TrackManager";
-import TrackRegionController from "./genomeNavigator/TrackRegionController";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
@@ -147,6 +143,7 @@ function GenomeHub() {
   }
 
   function genomeNavigatorRegionSelect(startbase, endbase, isHighlight) {
+    console.log(startbase, endbase);
     let newStateObj = createNewTrackState(
       stateArr.current[presentStateIdx.current],
       {
