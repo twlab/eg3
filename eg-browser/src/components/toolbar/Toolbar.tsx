@@ -4,15 +4,13 @@ import { selectNavigationTab, setNavigationTab } from '../../lib/redux/slices/na
 import Button from '../ui/button/Button';
 import { motion, AnimatePresence } from 'framer-motion'
 import useSmallScreen from '../../lib/hooks/useSmallScreen';
+import { selectCurrentSessionId } from '@/lib/redux/slices/browserSlice';
 
-export default function Toolbar({
-    showMenuButtons,
-}: {
-    showMenuButtons?: boolean;
-}) {
+export default function Toolbar() {
     const isSmallScreen = useSmallScreen();
     const dispatch = useAppDispatch();
     const currentTab = useAppSelector(selectNavigationTab);
+    const sessionId = useAppSelector(selectCurrentSessionId);
 
     return (
         <div className="w-screen flex flex-row justify-between items-center p-4 border-b border-primary bg-white">
@@ -25,7 +23,7 @@ export default function Toolbar({
                 )}
             </div>
             <AnimatePresence>
-                {showMenuButtons && (
+                {sessionId !== null && (
                     <motion.div
                         className="flex flex-row items-center gap-4"
                         initial={{ opacity: 0, y: 20 }}

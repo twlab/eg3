@@ -1,19 +1,20 @@
-import { GenomeState } from "../../lib/redux/slices/genomeSlice";
-import BrowserPlaceholder from "../../assets/browser-placeholder.jpg";
-import { TrackContainer, ITrackContainerState } from '@eg/tracks';
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { ITrackContainerState, TrackContainer } from '@eg/tracks';
 
-export default function GenomeView({
-    genome
-}: {
-    genome: GenomeState;
-}) {
+import BrowserPlaceholder from "../../assets/browser-placeholder.jpg";
+import { GenomeState } from "../../lib/redux/slices/genomeSlice";
+
+export default function GenomeView() {
+    const currentSession = useAppSelector(selectCurrentSession);
+
+    console.log(currentSession);
 
     return (
         <div className="h-full">
             <TrackContainer
-
+                
             />
-            <img src={BrowserPlaceholder} alt="browser" />
         </div>
     );
 }

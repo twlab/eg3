@@ -7,6 +7,9 @@
         "dev": "tsc -w",
         "build": "tsc"
     },
+    "dependencies": {
+        "@eg/core": "0.0.0"
+    },
     "devDependencies": {
         "typescript": "^4.6.3"
     },

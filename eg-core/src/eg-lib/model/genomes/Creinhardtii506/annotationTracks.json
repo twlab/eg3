@@ -1,0 +1,20 @@
+{
+    "Ruler": [
+        {
+            "type": "ruler",
+            "label": "Ruler",
+            "name": "Ruler"
+        }
+    ],
+    "Genes": [
+        {
+            "name": "PhytozomeGene",
+            "label": "Phytozome genes",
+            "filetype": "geneAnnotation",
+            "queryEndpoint": {
+                "name": "Phytozome",
+                "endpoint": "https://phytozome.jgi.doe.gov/phytomine/portal.do?class=Protein&externalids="
+            }
+        }
+    ]
+}

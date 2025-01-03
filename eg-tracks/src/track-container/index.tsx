@@ -1,10 +1,11 @@
 import { ITrackContainerState } from "../types";
+import TracksPlaceholder from "../assets/tracks-placeholder.jpg";
 
 export function TrackContainer(props: ITrackContainerState) {
 
     return (
         <div>
-            <h1>Track Container from separate @eg/tracks package</h1>
+            <img src={TracksPlaceholder} alt="tracks" />
         </div>
     )
 }

@@ -1,11 +1,13 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
-import navigationReducer from "./slices/navigationSlice";
+import browserReducer from "./slices/browserSlice";
 import genomeReducer from "./slices/genomeSlice";
+import navigationReducer from "./slices/navigationSlice";
 
 const rootReducer = combineReducers({
     navigation: navigationReducer,
-    genome: genomeReducer
+    genome: genomeReducer,
+    browser: browserReducer
 });
 
 export const store = configureStore({

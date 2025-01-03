@@ -6,22 +6,22 @@ import placeholder from "../../assets/placeholder.png";
 import { GENOME_LIST } from "./genome-list";
 import Progress from '../ui/progress/Progress';
 import { useAppDispatch } from '../../lib/redux/hooks';
-import { setGenome } from '../../lib/redux/slices/genomeSlice';
+import { createSessionWithGenomeId } from '@/lib/redux/slices/browserSlice';
+
+type GenomeName = string;
+type AssemblyName = string;
 
 export default function GenomePicker() {
     const dispatch = useAppDispatch();
     
-    const [selectedPath, setSelectedPath] = useState<[string, string] | null>(null);
+    const [selectedPath, setSelectedPath] = useState<[GenomeName, AssemblyName] | null>(null);
 
     useEffect(() => {
         let timeout: any;
 
         if (selectedPath !== null) {
             timeout = setTimeout(() => {
-                dispatch(setGenome({
-                    name: selectedPath[0],
-                    version: selectedPath[1]
-                }));
+                dispatch(createSessionWithGenomeId(selectedPath[1]));
             }, 1500);
         }
 

@@ -11,6 +11,7 @@ import HelpTab from './tabs/HelpTab';
 import ShareTab from './tabs/ShareTab';
 import SettingsTab from './tabs/SettingsTab';
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
+import { selectCurrentSessionId } from "@/lib/redux/slices/browserSlice";
 
 const CURL_RADIUS = 15;
 
@@ -18,7 +19,7 @@ export default function RootLayout() {
     const isSmallScreen = useSmallScreen();
 
     const dispatch = useAppDispatch();
-    const genome = useAppSelector(selectGenome);
+    const sessionId = useAppSelector(selectCurrentSessionId);
     const navigationTab = useAppSelector(selectNavigationTab);
 
     const isNavigationTabEmpty = navigationTab === null;
@@ -36,7 +37,7 @@ export default function RootLayout() {
                     borderRadius: showModal ? 15 : 0
                 }}
             >
-                <Toolbar showMenuButtons={genome !== null} />
+                <Toolbar />
                 <div className="flex flex-row h-full">
                     <motion.div
                         className="h-full border-r bg-white overflow-hidden"
@@ -50,7 +51,7 @@ export default function RootLayout() {
                         }}
                     >
                         <AnimatePresence mode="wait">
-                            {genome !== null ? (
+                            {sessionId !== null ? (
                                 <motion.div
                                     key="genome-view"
                                     initial={{ opacity: 0 }}
@@ -58,7 +59,7 @@ export default function RootLayout() {
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: 0.3 }}
                                 >
-                                    <GenomeView genome={genome} />
+                                    <GenomeView />
                                 </motion.div>
                             ) : (
                                 <motion.div
