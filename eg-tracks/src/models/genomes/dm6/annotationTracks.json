@@ -1,0 +1,34 @@
+{
+    "Ruler": [
+        {
+            "type": "ruler",
+            "label": "Ruler",
+            "name": "Ruler"
+        }
+    ],
+    "Genes": [
+        {
+            "name": "refGene",
+            "label": "RefSeq genes",
+            "filetype": "geneAnnotation"
+        }
+    ],
+    "Transcription Factor": [
+        {
+            "name": "JASPAR Transcription Factors 2022",
+            "type": "jaspar",
+            "url": "https://vizhub.wustl.edu/public/JASPAR/2022/JASPAR2022_dm6.bb"
+        }
+    ],
+    "RepeatMasker": {
+        "All Repeats": [
+            {
+                "name": "rmsk_all",
+                "label": "RepeatMasker",
+                "filetype": "repeatmasker",
+                "url": "https://vizhub.wustl.edu/public/dm6/rmsk16.bb",
+                "height": 30
+            }
+        ]
+    }
+}
