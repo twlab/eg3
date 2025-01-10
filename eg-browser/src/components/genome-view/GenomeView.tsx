@@ -5,9 +5,9 @@ import { ITrackContainerState, TrackContainer } from "@eg/tracks";
 
 import BrowserPlaceholder from "../../assets/browser-placeholder.jpg";
 import { GenomeState } from "../../lib/redux/slices/genomeSlice";
-import TrackModel from "../../../../eg-core/src/eg-lib/model/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import { useEffect, useState } from "react";
-import DisplayedRegionModel from "@/lib/eg-lib/model/DisplayedRegionModel";
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 
 export default function GenomeView() {
   const [genomeConfig, setGenomeConfig] = useState<any>(null);

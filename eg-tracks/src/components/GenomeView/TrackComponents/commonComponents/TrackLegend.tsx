@@ -178,8 +178,8 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
         width,
         minWidth: width,
         height,
-        backgroundColor: undefined,
-        color: undefined,
+        backgroundColor: "white",
+        color: "black",
         justifyContent: "space-between",
       },
       style

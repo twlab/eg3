@@ -35,6 +35,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
+  const trackModelId = useRef(0);
   //Control and manage the state RegionSetSelect, gene plot, scatter plot
   //_________________________________________________________________________________________________________________________
 
@@ -44,18 +45,27 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     if (size.width > 0) {
       debounceTimeout.current = setTimeout(() => {
-        let curGenome = { ...genomeConfig };
-        curGenome["isInitial"] = isInitial.current;
+        let curGenome;
 
         if (!isInitial.current) {
+          curGenome = { ...currentGenomeConfig };
+          curGenome["isInitial"] = isInitial.current;
           curGenome.defaultRegion = new OpenInterval(
             viewRegion._startBase!,
             viewRegion._endBase!
           );
           curGenome["sizeChange"] = true;
         } else {
+          curGenome = { ...genomeConfig };
+          curGenome["isInitial"] = isInitial.current;
           curGenome["genomeID"] = uuidv4();
           let bundleId = uuidv4();
+          curGenome["bundleId"] = bundleId;
+          curGenome.defaultTracks.map((trackModel) => {
+            trackModel.id = trackModelId.current;
+            trackModelId.current++;
+          });
+          isInitial.current = false;
         }
         setCurrentGenomeConfig(curGenome);
       }, 300);

@@ -380,10 +380,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackManagerState.current.viewRegion._endBase =
       curBp + bpRegionSize.current;
 
-    let newStateObj = createNewTrackState(trackManagerState.current, {
-      viewRegion: trackManagerState.current.viewRegion.clone(),
-    });
-
     //addGlobalState(newStateObj);
 
     bpX.current = curBp;
@@ -1454,23 +1450,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           setInitialStart("workerReady");
         }
         trackManagerId.current = genomeConfig.id;
-      }
-      // else {
-      //   preload.current = true;
-      //   prevDataIdx.current = dataIdx;
-      //   refreshState();
-      //   trackManagerState.current = createNewTrackState(
-      //     genomeConfig.curState,
-      //     {}
-      //   );
-      //   initialConfig.current = true;
-      //   let highlightElement = createHighlight(
-      //     trackManagerState.current.highlights
-      //   );
-      //   setHighlight([...highlight, ...highlightElement]);
+      } else {
+        preload.current = true;
+        prevDataIdx.current = dataIdx;
+        refreshState();
+        // trackManagerState.current = createNewTrackState(
+        //   genomeConfig.curState,
+        //   {}
+        // );
+        initialConfig.current = true;
+        // let highlightElement = createHighlight(
+        //   trackManagerState.current.highlights
+        // );
+        // setHighlight([...highlight, ...highlightElement]);
 
-      //   initializeTracks();
-      // }
+        initializeTracks();
+      }
     }
   }, [genomeConfig]);
 
