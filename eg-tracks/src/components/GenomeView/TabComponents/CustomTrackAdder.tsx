@@ -7,12 +7,12 @@ import {
 } from "react";
 
 import JSON5 from "json5";
-import TrackModel from "@/models/TrackModel";
-import { getSecondaryGenomes } from "@/models/util";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import { getSecondaryGenomes } from "@eg/core/src/eg-lib/models/util";
 import CustomHubAdder from "./CustomHubAdder";
-import { HELP_LINKS } from "@/models/util";
+import { HELP_LINKS } from "@eg/core/src/eg-lib/models/util";
 import TrackOptionsUI from "./TrackOptionsUI";
-import { getTrackConfig } from "@/trackConfigs/config-menu-models.tsx/getTrackConfig";
+
 import FacetTable from "./FacetTable";
 
 export const TRACK_TYPES = {
@@ -207,14 +207,14 @@ const CustomTrackAdder = ({
     const primaryGenome = genomeConfig.genome.getName();
     var allGenomes = getSecondaryGenomes(primaryGenome, addedTracks);
     allGenomes.unshift(primaryGenome);
-    
+
     return (
       <form className="space-y-6">
         <div className="space-y-4">
           <div>
             <label className="flex items-center gap-2">
               <span className="text-gray-700 font-medium">Track type</span>
-              <a 
+              <a
                 href={HELP_LINKS.tracks}
                 className="text-blue-600 italic hover:underline text-sm"
                 target="_blank"
@@ -226,7 +226,9 @@ const CustomTrackAdder = ({
             <select
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               value={type}
-              onChange={(e) => setState(prev => ({ ...prev, type: e.target.value }))}
+              onChange={(e) =>
+                setState((prev) => ({ ...prev, type: e.target.value }))
+              }
             >
               {renderTypeOptions()}
             </select>
@@ -240,7 +242,9 @@ const CustomTrackAdder = ({
               type="text"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               value={url}
-              onChange={(e) => setState(prev => ({ ...prev, url: e.target.value.trim() }))}
+              onChange={(e) =>
+                setState((prev) => ({ ...prev, url: e.target.value.trim() }))
+              }
             />
           </div>
 
@@ -249,46 +253,55 @@ const CustomTrackAdder = ({
               Track label
             </label>
             <input
-              type="text" 
+              type="text"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               value={name}
-              onChange={(e) => setState(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) =>
+                setState((prev) => ({ ...prev, name: e.target.value }))
+              }
             />
           </div>
 
           {TYPES_NEED_INDEX.includes(type.toLowerCase()) && (
             <div>
               <label className="block text-gray-700 font-medium">
-                Track index URL <span className="text-gray-500 font-normal">(optional, only need if data and index files are not in same folder)</span>
+                Track index URL{" "}
+                <span className="text-gray-500 font-normal">
+                  (optional, only need if data and index files are not in same
+                  folder)
+                </span>
               </label>
               <input
                 type="text"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 value={indexUrl}
-                onChange={(e) => setState(prev => ({ ...prev, indexUrl: e.target.value.trim() }))}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    indexUrl: e.target.value.trim(),
+                  }))
+                }
               />
             </div>
           )}
 
           <div>
-            <label className="block text-gray-700 font-medium">
-              Genome
-            </label>
+            <label className="block text-gray-700 font-medium">Genome</label>
             <select
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               value={metadata.genome}
-              onChange={(e) => setState(prev => ({ 
-                ...prev, 
-                metadata: { genome: e.target.value }
-              }))}
+              onChange={(e) =>
+                setState((prev) => ({
+                  ...prev,
+                  metadata: { genome: e.target.value },
+                }))
+              }
             >
               {renderGenomeOptions(allGenomes)}
             </select>
           </div>
 
-          {urlError && (
-            <p className="text-red-500 text-sm">{urlError}</p>
-          )}
+          {urlError && <p className="text-red-500 text-sm">{urlError}</p>}
 
           <TrackOptionsUI onGetOptions={getOptions} />
         </div>
@@ -296,7 +309,7 @@ const CustomTrackAdder = ({
         <div className="flex gap-4">
           {state.trackAdded ? (
             <>
-              <button 
+              <button
                 disabled
                 className="px-4 py-2 bg-green-500 text-white rounded-md opacity-50 cursor-not-allowed"
               >
@@ -304,7 +317,9 @@ const CustomTrackAdder = ({
               </button>
               <button
                 className="text-blue-600 hover:underline"
-                onClick={() => setState(prev => ({ ...prev, trackAdded: false }))}
+                onClick={() =>
+                  setState((prev) => ({ ...prev, trackAdded: false }))
+                }
               >
                 Add another track
               </button>
@@ -332,22 +347,26 @@ const CustomTrackAdder = ({
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-medium mb-4 bg-white py-2">Add Remote Track</h2>
+        <h2 className="text-xl font-medium mb-4 bg-white py-2">
+          Add Remote Track
+        </h2>
         <div className="bg-white rounded-lg pb-6">
           {renderCustomTrackAdder()}
         </div>
       </div>
 
       <div>
-        <h2 className="text-xl font-medium mb-4 bg-white py-2">Add Remote Data Hub</h2>
-        <div className="bg-white rounded-lg pb-6">
-          {renderCustomHubAdder()}
-        </div>
+        <h2 className="text-xl font-medium mb-4 bg-white py-2">
+          Add Remote Data Hub
+        </h2>
+        <div className="bg-white rounded-lg pb-6">{renderCustomHubAdder()}</div>
       </div>
 
       {customTracksPool.length > 0 && (
         <div>
-          <h2 className="text-xl font-medium mb-4 bg-white py-2">Added Custom Tracks</h2>
+          <h2 className="text-xl font-medium mb-4 bg-white py-2">
+            Added Custom Tracks
+          </h2>
           <div className="bg-white rounded-lg shadow-sm">
             <FacetTable
               tracks={customTracksPool}

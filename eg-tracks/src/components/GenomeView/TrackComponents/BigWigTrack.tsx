@@ -9,10 +9,9 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
-import OpenInterval from "@/models/OpenInterval";
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
@@ -22,8 +21,7 @@ DEFAULT_OPTIONS.aggregateMethod = "MEAN";
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
   updateGlobalTrackConfig,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   side,
   windowWidth = 0,
   trackModel,
@@ -36,7 +34,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   sentScreenshotData,
   dragX,
 }) {
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
   const configOptions = useRef({ ...DEFAULT_OPTIONS });
   const svgHeight = useRef(0);
   const rightIdx = useRef(0);
@@ -144,14 +142,13 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         if (
           "genome" in trackData![`${id}`].metadata &&
           trackData![`${id}`].metadata.genome &&
-          trackData![`${id}`].metadata.genome !==
-            genomeArr![genomeIdx!].genome.getName()
+          trackData![`${id}`].metadata.genome !== genomeConfig.genome.getName()
         ) {
           usePrimaryNav.current = false;
         }
         if (
-          !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange &&
+          !genomeConfig.isInitial &&
+          genomeConfig.sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
           const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -159,7 +156,7 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =

@@ -4,8 +4,8 @@ import _ from "lodash";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { ITrackContainerState } from "@/types";
-import { useGenome } from "../../lib/contexts/GenomeContext";
+import { ITrackContainerState } from "../../types";
+
 import { chrType } from "../../localdata/genomename";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
@@ -16,7 +16,6 @@ import { SelectDemo } from "./tesShadcn";
 import Drag from "./TrackComponents/commonComponents/chr-order/ChrOrder";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
@@ -33,9 +32,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   viewRegion,
 }) {
   const debounceTimeout = useRef<any>(null);
-  const isInitial = useRef(false);
+  const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
-
+  const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   //Control and manage the state RegionSetSelect, gene plot, scatter plot
   //_________________________________________________________________________________________________________________________
 
@@ -45,9 +44,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     if (size.width > 0) {
       debounceTimeout.current = setTimeout(() => {
-        let curGenome;
-
-        curGenome = genomeConfig;
+        let curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;
 
         if (!isInitial.current) {
@@ -60,6 +57,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           curGenome["genomeID"] = uuidv4();
           let bundleId = uuidv4();
         }
+        setCurrentGenomeConfig(curGenome);
       }, 300);
     }
   }, [size.width, genomeConfig]);
@@ -69,24 +67,27 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         {size.width > 0 ? (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {viewRegion && showGenomeNav && genomeConfig ? (
+            {viewRegion && showGenomeNav && currentGenomeConfig ? (
               <GenomeNavigator
                 selectedRegion={viewRegion}
-                genomeConfig={genomeConfig}
+                genomeConfig={currentGenomeConfig}
                 windowWidth={size.width}
                 onRegionSelected={onNewRegion}
               />
             ) : (
               ""
             )}
-
-            <TrackManager
-              key={genomeConfig.genomeID}
-              legendWidth={legendWidth}
-              windowWidth={size.width - legendWidth}
-              selectedRegion={viewRegion}
-              genomeConfig={genomeConfig}
-            />
+            {currentGenomeConfig ? (
+              <TrackManager
+                key={currentGenomeConfig.genomeID}
+                legendWidth={legendWidth}
+                windowWidth={size.width - legendWidth}
+                selectedRegion={viewRegion}
+                genomeConfig={currentGenomeConfig}
+              />
+            ) : (
+              ""
+            )}
           </div>
         ) : null}
       </div>

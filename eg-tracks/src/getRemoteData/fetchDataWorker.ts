@@ -15,7 +15,7 @@ import trackFetchFunction from "./fetchTrackData";
 import {
   localTrackFetchFunction,
   textFetchFunction,
-} from "@/getLocalData/localFetchData";
+} from "../getLocalData/localFetchData";
 import { niceBpCount } from "../models/util";
 
 export interface PlacedAlignment {

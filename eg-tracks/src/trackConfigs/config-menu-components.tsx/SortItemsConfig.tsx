@@ -1,5 +1,5 @@
 import SelectConfig from "./SelectConfig";
-import { SortItemsOptions } from "@/models/SortItemsOptions";
+import { SortItemsOptions } from "@eg/core/src/eg-lib/models/SortItemsOptions";
 
 function SortItemsConfig(props) {
   return (

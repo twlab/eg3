@@ -12,13 +12,12 @@ export interface TrackProps {
   trackData?: { [key: string]: any }; // Replace with the actual type
 
   dragX?: number;
-
+  genomeConfig: any;
   genomeName?: string;
   visData?: ViewExpansion;
   trackManagerId: string;
   trackComponents: any;
-  genomeArr?: Array<any>;
-  genomeIdx?: number;
+
   trackModel?: any;
   dataIdx: number;
   getConfigMenu: any;

@@ -1,11 +1,11 @@
 import React, { FC } from "react";
 
-import NavigationContext from "@/models/NavigationContext";
+import NavigationContext from "../../../models/NavigationContext";
 // import GeneSearchBoxBase from "./GeneSearchBoxBase";
-import Gene from "@/models/Gene";
+import Gene from "../../../models/Gene";
 import GeneSearchBoxBase from "./GeneSearchBoxBase";
 
-import Genome from "@/models/Genome";
+import Genome from "../../../models/Genome";
 
 interface GeneSearchBoxProps {
   navContext: NavigationContext; // The current navigation context

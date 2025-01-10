@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { TrackModel } from "@/models/TrackModel";
-import { getSecondaryGenomes } from "@/models/util";
-import { getGenomeConfig } from "@/models/genomes/allGenomes";
+import { TrackModel } from "@eg/core/src/eg-lib/models/TrackModel";
+import { getSecondaryGenomes } from "@eg/core/src/eg-lib/models/util";
+import { getGenomeConfig } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 import AnnotationTrackSelector from "./AnnotationTrackSelector";
 
 interface AnnotationTrackUIProps {

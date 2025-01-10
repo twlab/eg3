@@ -15,8 +15,8 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
-import OpenInterval from "@/models/OpenInterval";
+
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -38,8 +38,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
   checkTrackPreload,
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
   trackIdx,
@@ -68,7 +67,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
@@ -238,7 +237,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
       feature,
       event.pageX,
       event.pageY,
-      genomeArr![genomeIdx!].genome._name,
+      genomeConfig.genome._name,
       onClose
     );
     setToolTipVisible(true);
@@ -253,8 +252,8 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
     if (trackData![`${id}`]) {
       if (trackData!.trackState.initial === 1) {
         if (
-          !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange &&
+          !genomeConfig.isInitial &&
+          genomeConfig.sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
           const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -262,7 +261,7 @@ const BigBedTrack: React.FC<TrackProps> = memo(function BigBedTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =

@@ -6,7 +6,7 @@ import { scaleLinear } from "d3-scale";
 import {
   FeatureAggregator,
   DefaultArrayAggregators,
-} from "@/models/FeatureAggregator";
+} from "@eg/core/src/eg-lib/models/FeatureAggregator";
 import { PixiScene } from "./PixiScene";
 import GenomicCoordinates from "./GenomicCoordinates";
 

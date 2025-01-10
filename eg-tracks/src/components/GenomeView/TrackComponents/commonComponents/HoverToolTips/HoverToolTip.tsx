@@ -3,8 +3,8 @@ import "./Tooltip.css";
 import AlignmentSequence from "../../GenomeAlignComponents/AlignmentCoordinate";
 import HorizontalFragment from "../../GenomeAlignComponents/HorizontalFragment";
 import GenomicCoordinates from "../numerical/GenomicCoordinates";
-import TrackModel from "@/models/TrackModel";
-import { getContrastingColor } from "@/models/util";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import { getContrastingColor } from "@eg/core/src/eg-lib/models/util";
 import _ from "lodash";
 import pointInPolygon from "point-in-polygon";
 interface HoverToolTipProps {
@@ -24,7 +24,7 @@ interface HoverToolTipProps {
   legendWidth?: any;
   viewWindow?: any;
 }
-import { sameLoci } from "@/models/util";
+import { sameLoci } from "@eg/core/src/eg-lib/models/util";
 import { arc } from "d3";
 import ReactDOM from "react-dom";
 function getAbsolutePosition(element) {

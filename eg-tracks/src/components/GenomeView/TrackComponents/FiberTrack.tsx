@@ -6,14 +6,13 @@ import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
-import { FiberDisplayModes } from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
+import { FiberDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { Manager, Reference, Popper } from "react-popper";
-import { Fiber } from "@/models/Feature";
-import OpenInterval from "@/models/OpenInterval";
+import { Fiber } from "@eg/core/src/eg-lib/models/Feature";
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 export const DEFAULT_OPTIONS = {
@@ -35,8 +34,7 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
   updateGlobalTrackConfig,
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
   checkTrackPreload,
@@ -62,7 +60,7 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
@@ -274,14 +272,13 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
       if (trackData!.trackState.initial === 1) {
         if (
           "genome" in trackData![`${id}`].metadata &&
-          trackData![`${id}`].metadata.genome !==
-            genomeArr![genomeIdx!].genome.getName()
+          trackData![`${id}`].metadata.genome !== genomeConfig.genome.getName()
         ) {
           usePrimaryNav.current = false;
         }
         if (
-          !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange &&
+          !genomeConfig.isInitial &&
+          genomeConfig.sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
           const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -289,7 +286,7 @@ const FiberTrack: React.FC<TrackProps> = memo(function FiberTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =

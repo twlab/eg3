@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useContext, ChangeEvent } from "react";
 import _ from "lodash";
 import RegionSetSelector from "../RegionSetSelector/RegionSetSelector";
-import { getTrackConfig } from "@/trackConfigs/config-menu-models.tsx/getTrackConfig";
-import NavigationContext from "@/models/NavigationContext";
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
-import { NUMERRICAL_TRACK_TYPES } from "@/trackConfigs/config-menu-components.tsx/TrackContextMenu";
-import { HELP_LINKS, pcorr } from "@/models/util";
-import ColorPicker from "@/trackConfigs/config-menu-components.tsx/ColorPicker";
+import { getTrackConfig } from "../../../../trackConfigs/config-menu-models.tsx/getTrackConfig";
+import NavigationContext from "@eg/core/src/eg-lib/models/NavigationContext";
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import { NUMERRICAL_TRACK_TYPES } from "../../../../trackConfigs/config-menu-components.tsx/TrackContextMenu";
+import { HELP_LINKS, pcorr } from "@eg/core/src/eg-lib/models/util";
+import ColorPicker from "../../../../trackConfigs/config-menu-components.tsx/ColorPicker";
 import Plot from "react-plotly.js";
-import trackFetchFunction from "@/getRemoteData/fetchTrackData";
-import ChromosomeInterval from "@/models/ChromosomeInterval";
-import { NumericalFeature } from "@/models/Feature";
+import trackFetchFunction from "../../../../getRemoteData/fetchTrackData";
+import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
+import { NumericalFeature } from "@eg/core/src/eg-lib/models/Feature";
 
 interface Props {
   genomeConfig: any;

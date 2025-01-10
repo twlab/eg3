@@ -16,7 +16,6 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -50,8 +49,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
   updateGlobalTrackConfig,
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
   checkTrackPreload,
@@ -78,7 +76,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
 
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
@@ -178,7 +176,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
       feature,
       event.pageX,
       event.pageY,
-      genomeArr![genomeIdx!].genome._name,
+      genomeConfig.genome._name,
       onClose
     );
     setToolTipVisible(true);
@@ -255,14 +253,13 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
       if (trackData!.trackState.initial === 1) {
         if (
           "genome" in trackData![`${id}`].metadata &&
-          trackData![`${id}`].metadata.genome !==
-            genomeArr![genomeIdx!].genome.getName()
+          trackData![`${id}`].metadata.genome !== genomeConfig.genome.getName()
         ) {
           usePrimaryNav.current = false;
         }
         if (
-          !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange &&
+          !genomeConfig.isInitial &&
+          genomeConfig.sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
           const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -270,7 +267,7 @@ const CategoricalTrack: React.FC<TrackProps> = memo(function CategoricalTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =

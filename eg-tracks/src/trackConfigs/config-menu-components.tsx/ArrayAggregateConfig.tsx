@@ -1,5 +1,5 @@
 import SelectConfig from "./SelectConfig";
-import { ArrayAggregatorTypes } from "@/models/FeatureAggregator";
+import { ArrayAggregatorTypes } from "@eg/core/src/eg-lib/models/FeatureAggregator";
 
 /**
  * the options to control data aggregate for dynamic numerical track, default is mean

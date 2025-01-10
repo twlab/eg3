@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useTable, usePagination, useFilters, Column } from "react-table";
 import Fuse from "fuse.js";
 import _ from "lodash";
-import TrackModel from "@/models/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import TrackSearchBox from "./TrackSearchBox";
 const UNUSED_META_KEY = "notused";
 

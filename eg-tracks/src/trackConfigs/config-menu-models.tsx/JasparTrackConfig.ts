@@ -1,4 +1,4 @@
-import TrackModel from "@/models/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import { AnnotationTrackConfig } from "./AnnotationTrackConfig";
 import { DEFAULT_OPTIONS } from "../../components/GenomeView/TrackComponents/JasparTrack";
 

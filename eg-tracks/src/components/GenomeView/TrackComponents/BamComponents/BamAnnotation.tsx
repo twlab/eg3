@@ -4,9 +4,9 @@ import {
   FeaturePlacer,
   PlacedSegment,
   PlacedFeature,
-} from "@/models/getXSpan/FeaturePlacer";
-import { BamRecord } from "@/models/BamRecord";
-import { AlignmentIterator } from "@/models/AlignmentStringUtils";
+} from "@eg/core/src/eg-lib/models/getXSpan/FeaturePlacer";
+import { BamRecord } from "@eg/core/src/eg-lib/models/BamRecord";
+import { AlignmentIterator } from "@eg/core/src/eg-lib/models/AlignmentStringUtils";
 
 const HEIGHT = 10;
 const MIN_DRAW_WIDTH = 0; // Pixels

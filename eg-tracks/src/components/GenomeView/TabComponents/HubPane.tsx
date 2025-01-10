@@ -1,7 +1,7 @@
 import React from "react";
 
 import HubTable from "./HubTable";
-import TrackModel from "@/models/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import FacetTable from "./FacetTable";
 
 /**

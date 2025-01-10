@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import * as PIXI from "pixi.js";
 import pointInPolygon from "point-in-polygon";
 
-import { colorString2number } from "@/models/util";
+import { colorString2number } from "@eg/core/src/eg-lib/models/util";
 
 const ANGLE = Math.PI / 4;
 const SIDE_SCALE = Math.sin(ANGLE);

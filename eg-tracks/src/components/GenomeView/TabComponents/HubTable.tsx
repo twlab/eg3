@@ -6,9 +6,9 @@ import {
   usePagination,
 } from "react-table";
 import _ from "lodash";
-import Json5Fetcher from "@/models/Json5Fetcher";
-import DataHubParser from "@/models/DataHubParser";
-import TrackModel from "@/models/TrackModel";
+import Json5Fetcher from "@eg/core/src/eg-lib/models/Json5Fetcher";
+import DataHubParser from "@eg/core/src/eg-lib/models/DataHubParser";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 
 interface ObjectAsTableProps {
   title?: string;

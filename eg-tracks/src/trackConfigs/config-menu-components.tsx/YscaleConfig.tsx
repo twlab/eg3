@@ -5,7 +5,7 @@ import {
   PrimaryAboveColorConfig,
   SecondaryBelowColorConfig,
 } from "./ColorConfig";
-import { ScaleChoices } from "@/models/ScaleChoices";
+import { ScaleChoices } from "@eg/core/src/eg-lib/models/ScaleChoices";
 /**
  * A context menu item that configures track y-scale.
  *

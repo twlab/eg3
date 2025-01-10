@@ -3,11 +3,11 @@ import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 // import axios from "axios";
 import percentile from "percentile";
-import G3dFile from "@/getRemoteData/g3dFileV2";
+import G3dFile from "../../../../getRemoteData/g3dFileV2";
 import Drawer from "rc-drawer";
-import TrackModel from "@/models/TrackModel";
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
-import ChromosomeInterval from "@/models/ChromosomeInterval";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
 import GeneSearchBox3D from "../../genomeNavigator/GeneSearchBox3D";
 // import { BigwigSource } from "./BigwigSource";
 import { CORS_PROXY } from "../imageTrackComponents/OmeroSvgVisualizer";
@@ -45,7 +45,7 @@ import {
   HELP_LINKS,
   getContrastingColor,
   getSymbolRegions,
-} from "@/models/util";
+} from "@eg/core/src/eg-lib/models/util";
 
 import "rc-drawer/assets/index.css";
 import "./ThreedmolContainer.css";

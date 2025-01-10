@@ -3,13 +3,13 @@ import _ from "lodash";
 import { OmeroSvgVisualizer } from "./OmeroSvgVisualizer";
 import OmeroHtmlVisualizer from "./OmeroHtmlVisualizer";
 
-import { DefaultAggregators } from "@/models/FeatureAggregator";
+import { DefaultAggregators } from "@eg/core/src/eg-lib/models/FeatureAggregator";
 import NumericalTrack from "../commonComponents/numerical/NumericalTrack";
 import {
   AnnotationDisplayModes,
   NumericalDisplayModes,
-} from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
-import OpenInterval from "@/models/OpenInterval";
+} from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 
 export const MAX_NUMBER_THUMBNAILS = 384;
 export const THUMBNAIL_PADDING = 2;

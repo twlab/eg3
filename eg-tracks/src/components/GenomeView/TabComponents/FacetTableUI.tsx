@@ -1,6 +1,6 @@
 import React from "react";
 import FacetTable from "./FacetTable";
-import TrackModel from "@/models/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 
 interface FacetTableUIProps {
   publicTracksPool: TrackModel[];
@@ -24,9 +24,7 @@ const FacetTableUI: React.FC<FacetTableUIProps> = ({
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-xl font-medium mb-1 bg-white py-2">
-          Public hubs
-        </h2>
+        <h2 className="text-xl font-medium mb-1 bg-white py-2">Public hubs</h2>
         {publicTracksPool.length > 0 ? (
           <FacetTable
             tracks={publicTracksPool}
@@ -57,7 +55,9 @@ const FacetTableUI: React.FC<FacetTableUIProps> = ({
             addTermToMetaSets={addTermToMetaSets}
           />
         ) : (
-          <p>No custom tracks yet. Submit custom tracks or load custom data hub.</p>
+          <p>
+            No custom tracks yet. Submit custom tracks or load custom data hub.
+          </p>
         )}
       </div>
     </div>

@@ -8,7 +8,6 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
   props
@@ -22,8 +21,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
     checkTrackPreload,
     windowWidth,
     dataIdx,
-    genomeArr,
-    genomeIdx,
+    genomeConfig,
     trackModel,
     id,
 
@@ -46,7 +44,7 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
@@ -128,13 +126,13 @@ const DynamicHicTrack: React.FC<TrackProps> = memo(function DynamicHicTrack(
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             usePrimaryNav.current = false;
           }
           if (
-            !genomeArr![genomeIdx!].isInitial &&
-            genomeArr![genomeIdx!].sizeChange &&
+            !genomeConfig.isInitial &&
+            genomeConfig.sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
             const trackIndex = trackData![`${id}`].trackDataIdx;

@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 
 import RegionSetConfig from "./RegionSetConfig";
 
-import RegionSet from "@/models/RegionSet";
-import Genome from "@/models/Genome";
+import RegionSet from "@eg/core/src/eg-lib/models/RegionSet";
+import Genome from "@eg/core/src/eg-lib/models/Genome";
 
 interface RegionSetSelectorProps {
   genome: Genome;
@@ -112,9 +112,10 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
           <h2 className="text-base font-medium mb-2">Create a new set</h2>
           <h3 className="text-base mb-1">Enter a list of regions</h3>
           <p className="text-sm mb-4">
-            Enter a list of gene names or coordinates to make a gene set one item per line.
-            Gene names and coordinates can be mixed for input.
-            Coordinate string must be in the form of "chr1:345-678" fields can be joined by space/tab/comma/colon/hyphen.
+            Enter a list of gene names or coordinates to make a gene set one
+            item per line. Gene names and coordinates can be mixed for input.
+            Coordinate string must be in the form of "chr1:345-678" fields can
+            be joined by space/tab/comma/colon/hyphen.
           </p>
         </>
       )}

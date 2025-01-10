@@ -8,10 +8,9 @@ import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackP
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
-import OpenInterval from "@/models/OpenInterval";
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 
 const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
   props
@@ -25,8 +24,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
     checkTrackPreload,
     windowWidth = 0,
     dataIdx,
-    genomeArr,
-    genomeIdx,
+    genomeConfig,
     trackModel,
     id,
     dragX,
@@ -52,7 +50,7 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
 
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
 
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
 
@@ -144,13 +142,13 @@ const BigInteractTrack: React.FC<TrackProps> = memo(function BigInteractTrack(
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             usePrimaryNav.current = false;
           }
           if (
-            !genomeArr![genomeIdx!].isInitial &&
-            genomeArr![genomeIdx!].sizeChange &&
+            !genomeConfig.isInitial &&
+            genomeConfig.sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
             const trackIndex = trackData![`${id}`].trackDataIdx;

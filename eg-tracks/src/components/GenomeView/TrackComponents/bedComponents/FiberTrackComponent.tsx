@@ -5,16 +5,16 @@ import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
 import Track, { PropsFromTrackContainer } from "../commonComponents/Track";
 
-import { Fiber } from "@/models/Feature";
-import { PlacedFeatureGroup } from "@/models/FeatureArranger";
-import OpenInterval from "@/models/OpenInterval";
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
-import { FeaturePlacer } from "@/models/getXSpan/FeaturePlacer";
+import { Fiber } from "@eg/core/src/eg-lib/models/Feature";
+import { PlacedFeatureGroup } from "@eg/core/src/eg-lib/models/FeatureArranger";
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import { FeaturePlacer } from "@eg/core/src/eg-lib/models/getXSpan/FeaturePlacer";
 import TrackLegend from "../commonComponents/TrackLegend";
 import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
-import { FiberDisplayModes } from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
+import { FiberDisplayModes } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 const ROW_VERTICAL_PADDING = 2;
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 

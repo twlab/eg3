@@ -8,7 +8,6 @@ import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrack
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
 const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
   function DynamicLongrangeTrack({
@@ -16,8 +15,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     updateGlobalTrackConfig,
     side,
     windowWidth = 0,
-    genomeArr,
-    genomeIdx,
+    genomeConfig,
     trackModel,
     dataIdx,
     trackIdx,
@@ -37,7 +35,7 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
     const fetchedDataCache = useRef<{ [key: string]: any }>({});
     const usePrimaryNav = useRef<boolean>(true);
     const xPos = useRef(0);
-    const { screenshotOpen } = useGenome();
+    const screenshotOpen = null;
     const updateSide = useRef("right");
     const updatedLegend = useRef<any>();
 
@@ -126,13 +124,13 @@ const DynamicLongrangeTrack: React.FC<TrackProps> = memo(
             if (
               "genome" in trackData![`${id}`].metadata &&
               trackData![`${id}`].metadata.genome !==
-                genomeArr![genomeIdx!].genome.getName()
+                genomeConfig.genome.getName()
             ) {
               usePrimaryNav.current = false;
             }
             if (
-              !genomeArr![genomeIdx!].isInitial &&
-              genomeArr![genomeIdx!].sizeChange &&
+              !genomeConfig.isInitial &&
+              genomeConfig.sizeChange &&
               Object.keys(fetchedDataCache.current).length > 0
             ) {
               const trackIndex = trackData![`${id}`].trackDataIdx;

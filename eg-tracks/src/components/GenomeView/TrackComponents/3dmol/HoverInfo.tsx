@@ -1,9 +1,9 @@
 import React from "react";
-import ChromosomeInterval from "@/models/ChromosomeInterval";
-import Feature from "@/models/Feature";
+import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
+import Feature from "@eg/core/src/eg-lib/models/Feature";
 // import { notify } from "react-notify-toast"
-import RegionSet from "@/models/RegionSet";
-import FlankingStrategy from "@/models/FlankingStrategy";
+import RegionSet from "@eg/core/src/eg-lib/models/RegionSet";
+import FlankingStrategy from "@eg/core/src/eg-lib/models/FlankingStrategy";
 export const HoverInfo = ({
   atom,
   resolution,

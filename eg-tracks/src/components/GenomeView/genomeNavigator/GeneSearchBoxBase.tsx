@@ -4,8 +4,8 @@ import { Manager, Popper } from "react-popper";
 // import SpeechRecognition from "react-speech-recognition";
 import IsoformSelection from "./IsoformSelection";
 import OutsideClickDetector from "../TrackComponents/commonComponents/OutsideClickDetector";
-import { Genome } from "@/models/Genome";
-import Gene from "@/models/Gene";
+
+import Gene from "@eg/core/src/eg-lib/models/Gene";
 import _ from "lodash";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";

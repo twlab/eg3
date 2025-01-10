@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import FlankingStrategy from "@/models/FlankingStrategy";
+import FlankingStrategy from "@eg/core/src/eg-lib/models/FlankingStrategy";
 
 interface FlankingStratConfigProps {
   strategy: FlankingStrategy;

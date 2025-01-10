@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TrackModel } from "@/models/TrackModel";
+import { TrackModel } from "@eg/core/src/eg-lib/models/TrackModel";
 import TreeView from "./TreeView";
 
 interface SchemaNode {

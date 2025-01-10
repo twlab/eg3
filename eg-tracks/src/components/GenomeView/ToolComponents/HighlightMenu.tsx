@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ReactModal from "react-modal";
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
-import ColorPicker from "@/trackConfigs/config-menu-components.tsx/ColorPicker";
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import ColorPicker from "../../../trackConfigs/config-menu-components.tsx/ColorPicker";
 import "./HighlightMenu.css";
 
 export class HighlightInterval {

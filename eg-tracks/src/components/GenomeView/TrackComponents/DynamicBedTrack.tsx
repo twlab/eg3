@@ -11,7 +11,6 @@ import {
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import _ from "lodash";
 
@@ -37,8 +36,7 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   updateGlobalTrackConfig,
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
   trackIdx,
@@ -58,7 +56,7 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
 
@@ -161,14 +159,13 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
       if (trackData!.trackState.initial === 1) {
         if (
           "genome" in trackData![`${id}`].metadata &&
-          trackData![`${id}`].metadata.genome !==
-            genomeArr![genomeIdx!].genome.getName()
+          trackData![`${id}`].metadata.genome !== genomeConfig.genome.getName()
         ) {
           usePrimaryNav.current = false;
         }
         if (
-          !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange &&
+          !genomeConfig.isInitial &&
+          genomeConfig.sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
           const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -176,7 +173,7 @@ const DynamicBedTrack: React.FC<TrackProps> = memo(function DynamicBedTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =

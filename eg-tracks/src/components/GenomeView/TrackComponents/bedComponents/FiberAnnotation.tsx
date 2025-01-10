@@ -2,7 +2,7 @@ import React from "react";
 import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
-import { FiberDisplayModes } from "@/trackConfigs/config-menu-models.tsx/DisplayModes";
+import { FiberDisplayModes } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 
 const DOT_BP_PIXEL_CUTOFF = 2.5;

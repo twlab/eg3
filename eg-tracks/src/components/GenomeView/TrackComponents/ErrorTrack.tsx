@@ -5,7 +5,6 @@ import { objToInstanceAlign } from "../TrackManager";
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import RulerComponent from "./RulerComponents/RulerComponent";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 
@@ -17,8 +16,7 @@ const ErrorTrack: React.FC<TrackProps> = memo(function ErrorTrack({
   checkTrackPreload,
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
 
@@ -37,7 +35,7 @@ const ErrorTrack: React.FC<TrackProps> = memo(function ErrorTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
 
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();

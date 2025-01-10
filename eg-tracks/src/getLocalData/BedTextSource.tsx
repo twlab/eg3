@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 import TextSource from "./localTextSource";
-import BinIndexer from "@/models/BinIndexer";
+import BinIndexer from "@eg/core/src/eg-lib/models/BinIndexer";
 /**
  * @author Daofeng Li
  * get data from TextSource, index it and return by region querying

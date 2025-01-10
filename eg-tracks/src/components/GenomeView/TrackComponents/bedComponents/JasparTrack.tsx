@@ -5,10 +5,10 @@
 
 // import JasparDetail from "../commonComponents/annotation/JasparDetail";
 
-// import { JasparFeature } from "@/models/Feature";
-// import { PlacedFeatureGroup } from "@/models/FeatureArranger";
-// import OpenInterval from "@/models/OpenInterval";
-// import DisplayedRegionModel from "@/models/DisplayedRegionModel";
+// import { JasparFeature } from "@eg/core/src/eg-lib/models/Feature";
+// import { PlacedFeatureGroup } from "@eg/core/src/eg-lib/models/FeatureArranger";
+// import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+// import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 
 // const ROW_VERTICAL_PADDING = 2;
 // const ROW_HEIGHT = BedAnnotation.HEIGHT + ROW_VERTICAL_PADDING;

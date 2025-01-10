@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import * as PIXI from "pixi.js";
-import { colorString2number } from "@/models/util";
+import { colorString2number } from "@eg/core/src/eg-lib/models/util";
 
 interface PixiSceneProps {
   xToValue: { length: number }[];

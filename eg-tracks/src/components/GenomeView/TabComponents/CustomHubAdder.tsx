@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import JSON5 from "json5";
-import Json5Fetcher from "@/models/Json5Fetcher";
-import DataHubParser from "@/models/DataHubParser";
-import { readFileAsText, HELP_LINKS } from "@/models/util";
-import TrackModel, { mapUrl } from "@/models/TrackModel";
+import Json5Fetcher from "@eg/core/src/eg-lib/models/Json5Fetcher";
+import DataHubParser from "@eg/core/src/eg-lib/models/DataHubParser";
+import { readFileAsText, HELP_LINKS } from "@eg/core/src/eg-lib/models/util";
+import TrackModel, { mapUrl } from "@eg/core/src/eg-lib/models/TrackModel";
 
 interface CustomHubAdderProps {
   onTracksAdded: (tracks: TrackModel[]) => void;

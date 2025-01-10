@@ -1,5 +1,5 @@
-import { DownsamplingChoices } from "@/models/DownsamplingChoices";
-import TrackModel from "@/models/TrackModel";
+import { DownsamplingChoices } from "@eg/core/src/eg-lib/models/DownsamplingChoices";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import {
   PrimaryColorConfig,
   SecondaryColorConfig,

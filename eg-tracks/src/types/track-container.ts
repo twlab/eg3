@@ -1,4 +1,4 @@
-import DisplayedRegionModel from "@/models/DisplayedRegionModel";
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 import { TrackModel } from "../../../eg-core/src/eg-lib/model/TrackModel";
 
 // add the same props that were being passed into TrackContainer.tsx

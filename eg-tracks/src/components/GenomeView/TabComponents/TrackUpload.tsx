@@ -1,8 +1,8 @@
 import React, { Component, CSSProperties } from "react";
 import PropTypes from "prop-types";
 import JSON5 from "json5";
-import TrackModel from "@/models/TrackModel";
-import { readFileAsText, HELP_LINKS } from "@/models/util";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import { readFileAsText, HELP_LINKS } from "@eg/core/src/eg-lib/models/util";
 import TrackOptionsUI from "./TrackOptionsUI";
 
 export const TYPES_DESC = {
@@ -233,26 +233,43 @@ export class TrackUpload extends Component<TrackUploadProps, TrackUploadState> {
           <div>
             <label>
               <h3>1. Choose track file type:</h3>
-              <select value={this.state.fileType} onChange={this.handleTypeChange}>
+              <select
+                value={this.state.fileType}
+                onChange={this.handleTypeChange}
+              >
                 <optgroup label="select only the track file (can select many of same type)">
                   <option value="bigWig">bigWig - {TYPES_DESC.bigWig}</option>
                   <option value="bigBed">bigBed - {TYPES_DESC.bigBed}</option>
-                  <option value="rgbpeak">RgbPeak - {TYPES_DESC.rgbpeak}</option>
+                  <option value="rgbpeak">
+                    RgbPeak - {TYPES_DESC.rgbpeak}
+                  </option>
                   <option value="hic">HiC - {TYPES_DESC.hic}</option>
-                  <option value="bigInteract">bigInteract - {TYPES_DESC.bigInteract}</option>
+                  <option value="bigInteract">
+                    bigInteract - {TYPES_DESC.bigInteract}
+                  </option>
                   <option value="dynseq">dynseq - {TYPES_DESC.dynseq}</option>
                   <option value="g3d">G3D - {TYPES_DESC.g3d}</option>
                 </optgroup>
                 <optgroup label="select both the track file and index file (only select 1 pair)">
-                  <option value="bedGraph">bedGraph - {TYPES_DESC.bedGraph}</option>
-                  <option value="methylC">methylC - {TYPES_DESC.methylC}</option>
+                  <option value="bedGraph">
+                    bedGraph - {TYPES_DESC.bedGraph}
+                  </option>
+                  <option value="methylC">
+                    methylC - {TYPES_DESC.methylC}
+                  </option>
                   <option value="modbed">modbed - {TYPES_DESC.modbed}</option>
-                  <option value="categorical">categorical - {TYPES_DESC.categorical}</option>
+                  <option value="categorical">
+                    categorical - {TYPES_DESC.categorical}
+                  </option>
                   <option value="bed">bed - {TYPES_DESC.bed}</option>
                   <option value="vcf">vcf - {TYPES_DESC.vcf}</option>
                   <option value="refBed">refBed - {TYPES_DESC.refBed}</option>
-                  <option value="longrange">longrange - {TYPES_DESC.longrange}</option>
-                  <option value="longrangecolor">longrange - {TYPES_DESC.longrangecolor}</option>
+                  <option value="longrange">
+                    longrange - {TYPES_DESC.longrange}
+                  </option>
+                  <option value="longrangecolor">
+                    longrange - {TYPES_DESC.longrangecolor}
+                  </option>
                   <option value="qbed">qBED - {TYPES_DESC.qBED}</option>
                   <option value="bam">BAM - {TYPES_DESC.bam}</option>
                 </optgroup>
@@ -292,7 +309,11 @@ export class TrackUpload extends Component<TrackUploadProps, TrackUploadState> {
                 <strong>Choose a folder</strong> that contains a file named{" "}
                 <strong>hub.config.json</strong>: (
                 <span>
-                  <a href={HELP_LINKS.localhub} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={HELP_LINKS.localhub}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     local hub documentation
                   </a>
                 </span>
@@ -316,7 +337,7 @@ export class TrackUpload extends Component<TrackUploadProps, TrackUploadState> {
             </label>
           </div>
         </div>
-        
+
         <div className="text-danger font-italic">{this.state.msg}</div>
       </div>
     );

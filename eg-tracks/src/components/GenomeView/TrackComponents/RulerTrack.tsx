@@ -5,11 +5,11 @@ import { objToInstanceAlign } from "../TrackManager";
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import ReactDOM from "react-dom";
 import RulerComponent from "./RulerComponents/RulerComponent";
-import { useGenome } from "@/lib/contexts/GenomeContext";
+
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
-import OpenInterval from "@/models/OpenInterval";
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 
 export const DEFAULT_OPTIONS = { backgroundColor: "var(--bg-color)" };
@@ -20,8 +20,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   checkTrackPreload,
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
 
@@ -40,7 +39,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
 
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
@@ -63,7 +62,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
       trackState,
       windowWidth,
       configOptions: configOptions.current,
-      genomeName: genomeArr![genomeIdx!].genome.getName(),
+      genomeName: genomeConfig.genome.getName(),
       updatedLegend,
       trackModel,
     });
@@ -104,14 +103,13 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
         trackData![`${id}`].result = [[], [], []];
         if (
           "genome" in trackData![`${id}`].metadata &&
-          trackData![`${id}`].metadata.genome !==
-            genomeArr![genomeIdx!].genome.getName()
+          trackData![`${id}`].metadata.genome !== genomeConfig.genome.getName()
         ) {
           usePrimaryNav.current = false;
         }
         if (
-          !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange &&
+          !genomeConfig.isInitial &&
+          genomeConfig.sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
           const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -119,7 +117,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
@@ -210,7 +208,7 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           trackState,
           windowWidth,
           configOptions: drawOptions,
-          genomeName: genomeArr![genomeIdx!].genome.getName(),
+          genomeName: genomeConfig.genome.getName(),
           updatedLegend,
           trackModel,
         });
@@ -244,8 +242,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   }, [dataIdx]);
 
   useEffect(() => {
-    if (!genomeArr![genomeIdx!].isInitial) {
-    }
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [canvasComponents]);
 

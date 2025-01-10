@@ -1,0 +1,49 @@
+{
+    "Ruler": [
+        {
+            "type": "ruler",
+            "label": "Ruler",
+            "name": "Ruler"
+        }
+    ],
+    "Genes": [
+        {
+            "name": "refGene",
+            "label": "RefSeq genes",
+            "filetype": "geneAnnotation"
+        }
+    ],
+    "RepeatMasker": {
+        "All Repeats": [
+            {
+                "name": "rmsk_all",
+                "label": "RepeatMasker",
+                "filetype": "repeatmasker",
+                "url": "https://vizhub.wustl.edu/public/mm9/rmsk16.bb",
+                "height": 30
+            }
+        ]
+    },
+    
+    
+    "Genome Comparison": [
+        {
+            "name": "mm9tohg19",
+            "label": "Query human hg19 to mm9 blastz",
+            "querygenome": "hg19",
+            "filetype": "genomealign",
+            "url": "https://vizhub.wustl.edu/public/mm9/weaver/mm9_hg19_axt.gz"
+        },
+        {
+            "name": "mm9tocalJac3",
+            "label": "Query marmoset calJac3 to mm9 blastz",
+            "querygenome": "calJac3",
+            "filetype": "genomealign",
+            "url": "https://vizhub.wustl.edu/public/mm9/weaver/mm9-calJac3.gz",
+            "details": {
+                "source": "UCSC Genome Browser",
+                "download url": "https://hgdownload.soe.ucsc.edu/goldenPath/mm9/vsCalJac3/axtNet/"
+            }
+        }
+    ]
+}

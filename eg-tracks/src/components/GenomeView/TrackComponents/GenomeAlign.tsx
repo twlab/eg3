@@ -9,9 +9,8 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
 
-import OpenInterval from "@/models/OpenInterval";
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 DEFAULT_OPTIONS["displayMode"] = "full";
 const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   basePerPixel,
@@ -30,7 +29,7 @@ const GenomeAlign: React.FC<TrackProps> = memo(function GenomeAlign({
   applyTrackConfigChange,
   sentScreenshotData,
 }) {
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
   const configOptions = useRef<any>({ ...DEFAULT_OPTIONS });
   const rightIdx = useRef(0);
   const leftIdx = useRef(1);

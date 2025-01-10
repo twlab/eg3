@@ -3,12 +3,12 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import { useTable, useFilters, useSortBy, Column } from "react-table";
 import FlankingStratConfig from "./FlankingStratConfig";
-import Genome from "@/models/Genome";
-import Feature from "@/models/Feature";
-import FlankingStrategy from "@/models/FlankingStrategy";
-import RegionSet from "@/models/RegionSet";
-import ChromosomeInterval from "@/models/ChromosomeInterval";
-import { getSymbolRegions } from "@/models/util";
+import Genome from "@eg/core/src/eg-lib/models/Genome";
+import Feature from "@eg/core/src/eg-lib/models/Feature";
+import FlankingStrategy from "@eg/core/src/eg-lib/models/FlankingStrategy";
+import RegionSet from "@eg/core/src/eg-lib/models/RegionSet";
+import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
+import { getSymbolRegions } from "@eg/core/src/eg-lib/models/util";
 
 const DEFAULT_LIST = `CYP4A22
 chr10:96796528-96829254
@@ -87,7 +87,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           if (locus) {
             return new Feature(symbol, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) { }
+        } catch (error) {}
         return getSymbolRegions(genomeName, symbol);
       })
     );
@@ -101,10 +101,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                gene.name,
-                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                gene.strand
-              )
+                  gene.name,
+                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                  gene.strand
+                )
               : null
           )
           .filter((hit) => hit);
@@ -286,9 +286,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
               >
                 Clear
               </button>
-              <span className="text-sm italic text-red-500">
-                {loadingMsg}
-              </span>
+              <span className="text-sm italic text-red-500">{loadingMsg}</span>
             </div>
           </form>
         </div>
@@ -336,7 +334,9 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
               </button>
             </div>
             {newRegionError && (
-              <p className="text-sm text-red-500 mt-1">{newRegionError.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {newRegionError.message}
+              </p>
             )}
           </div>
 
@@ -389,7 +389,8 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           <div className="mt-4">
             <label className="flex items-center space-x-2 mb-4">
               <span className="text-sm text-gray-700">
-                No flip for regions on <span className="font-medium">-</span> strand:
+                No flip for regions on <span className="font-medium">-</span>{" "}
+                strand:
               </span>
               <input
                 type="checkbox"

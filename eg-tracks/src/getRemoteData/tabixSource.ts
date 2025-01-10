@@ -3,7 +3,7 @@ import { TabixIndexedFile } from "@gmod/tabix";
 import { RemoteFile } from "generic-filehandle";
 import fetch from "isomorphic-fetch";
 
-import { ensureMaxListLength } from "@/models/util";
+import { ensureMaxListLength } from "@eg/core/src/eg-lib/models/util";
 // import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
 
 /**

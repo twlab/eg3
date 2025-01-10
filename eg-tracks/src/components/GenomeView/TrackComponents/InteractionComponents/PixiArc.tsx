@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import * as PIXI from "pixi.js";
-import { colorString2number } from "@/models/util";
-import { FeaturePlacer } from "@/models/getXSpan/FeaturePlacer";
+import { colorString2number } from "@eg/core/src/eg-lib/models/util";
+import { FeaturePlacer } from "@eg/core/src/eg-lib/models/getXSpan/FeaturePlacer";
 import { GenomeInteraction } from "@/getRemoteData/GenomeInteraction";
-import TrackModel from "@/models/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 const ITEM_LIMIT = 1000;
 interface PixiArcProps {
   placedInteractionsArray: any;

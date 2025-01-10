@@ -48,7 +48,7 @@ import { GenomeInteraction } from "../../../getRemoteData/GenomeInteraction";
 import FiberTrackComponent from "./bedComponents/FiberTrackComponent";
 import FiberAnnotation from "./bedComponents/FiberAnnotation";
 import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotTrackComponent";
-import QBed from "@/models/QBed";
+import QBed from "@eg/core/src/eg-lib/models/QBed";
 import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
 import { Model } from "flexlayout-react";
@@ -56,20 +56,20 @@ import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicIn
 import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
 
 import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
-import Snp from "@/models/Snp";
+import Snp from "@eg/core/src/eg-lib/models/Snp";
 import SnpAnnotation from "./SnpComponents/SnpAnnotation";
-import { BamAlignment } from "@/models/BamAlignment";
+import { BamAlignment } from "@eg/core/src/eg-lib/models/BamAlignment";
 import { BamAnnotation } from "./BamComponents/BamAnnotation";
-import ImageRecord from "@/models/ImageRecord";
+import ImageRecord from "@eg/core/src/eg-lib/models/ImageRecord";
 
 import OmeroTrackComponents, {
   MAX_NUMBER_THUMBNAILS,
   THUMBNAIL_PADDING,
 } from "./imageTrackComponents/OmeroTrackComponents";
-import { initialLayout } from "@/models/layoutUtils";
+import { initialLayout } from "@eg/core/src/eg-lib/models/layoutUtils";
 import _ from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
-import { getGenomeConfig } from "@/models/genomes/allGenomes";
+import { getGenomeConfig } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 
 enum BedColumnIndex {
   CATEGORY = 3,

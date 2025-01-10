@@ -1,5 +1,5 @@
 import BedTextSource from "./BedTextSource";
-import BinIndexer from "@/models/BinIndexer";
+import BinIndexer from "@eg/core/src/eg-lib/models/BinIndexer";
 
 // Type definition for BED record
 interface BedRecord {

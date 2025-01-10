@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import ReactModal from "react-modal";
 import HubTrackTable from "./HubTrackTable";
-import TrackModel from "@/models/TrackModel";
-import { variableIsObject } from "@/models/util";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import { variableIsObject } from "@eg/core/src/eg-lib/models/util";
 import "./FacetTable.css";
 
 const DEFAULT_ROW = "Sample";

@@ -48,7 +48,7 @@ import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
 import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
 import SnpTrack from "./TrackComponents/SnpTrack";
 import BamTrack from "./TrackComponents/BamTrack";
-import BamSource from "@/getRemoteData/BamSource";
+import BamSource from "../../getRemoteData/BamSource";
 import OmeroTrack from "./TrackComponents/OmeroTrack";
 
 import { m } from "framer-motion";
@@ -1431,16 +1431,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // on GenomeRoot first creation we add the default state to StateArr in genomeroot
       // on recreation of trackManager we do not need to set the defaultState because it is saved in genomeroot so we skip to else
       // and do not add to the StateArr.
-
+      console.log(genomeConfig);
       if (genomeConfig.isInitial) {
+        console.log("ERER");
         trackManagerState.current.viewRegion._startBase =
           genomeConfig.defaultRegion.start;
         trackManagerState.current.viewRegion._endBase =
           genomeConfig.defaultRegion.end;
         trackManagerState.current.bundleId = genomeConfig.bundleId;
-        let newStateObj = createNewTrackState(trackManagerState.current, {
-          viewRegion: trackManagerState.current.viewRegion.clone(),
-        });
 
         //addGlobalState(newStateObj);
 
@@ -1456,22 +1454,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           setInitialStart("workerReady");
         }
         trackManagerId.current = genomeConfig.id;
-      } else {
-        preload.current = true;
-        prevDataIdx.current = dataIdx;
-        refreshState();
-        trackManagerState.current = createNewTrackState(
-          genomeConfig.curState,
-          {}
-        );
-        initialConfig.current = true;
-        let highlightElement = createHighlight(
-          trackManagerState.current.highlights
-        );
-        setHighlight([...highlight, ...highlightElement]);
-
-        initializeTracks();
       }
+      // else {
+      //   preload.current = true;
+      //   prevDataIdx.current = dataIdx;
+      //   refreshState();
+      //   trackManagerState.current = createNewTrackState(
+      //     genomeConfig.curState,
+      //     {}
+      //   );
+      //   initialConfig.current = true;
+      //   let highlightElement = createHighlight(
+      //     trackManagerState.current.highlights
+      //   );
+      //   setHighlight([...highlight, ...highlightElement]);
+
+      //   initializeTracks();
+      // }
     }
   }, [genomeConfig]);
 

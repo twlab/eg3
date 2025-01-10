@@ -16,8 +16,8 @@ import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
-import OpenInterval from "@/models/OpenInterval";
+
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
@@ -47,8 +47,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
 
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
   checkTrackPreload,
@@ -94,7 +93,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
   }
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
   const [svgComponents, setSvgComponents] = useState<any>(null);
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
@@ -249,7 +248,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
       feature,
       event.pageX,
       event.pageY,
-      genomeArr![genomeIdx!].genome._name,
+      genomeConfig.genome._name,
       onClose
     );
     setToolTipVisible(true);
@@ -266,13 +265,13 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             usePrimaryNav.current = false;
           }
           if (
-            !genomeArr![genomeIdx!].isInitial &&
-            genomeArr![genomeIdx!].sizeChange &&
+            !genomeConfig.isInitial &&
+            genomeConfig.sizeChange &&
             Object.keys(fetchedDataCache.current).length > 0
           ) {
             const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -280,7 +279,7 @@ const BamTrack: React.FC<TrackProps> = memo(function BamTrack({
             if (
               "genome" in trackData![`${id}`].metadata &&
               trackData![`${id}`].metadata.genome !==
-                genomeArr![genomeIdx!].genome.getName()
+                genomeConfig.genome.getName()
             ) {
               let idx = trackIndex in cache ? trackIndex : 0;
               trackData![`${id}`].result =

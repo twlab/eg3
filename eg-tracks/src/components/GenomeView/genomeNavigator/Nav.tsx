@@ -1,14 +1,14 @@
 import React, { useState, useCallback, FC, useEffect } from "react";
 import ReactModal from "react-modal";
-import { treeOfLife } from "@/models/genomes/allGenomes";
+import { treeOfLife } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 import { Button } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
 import AnnotationTrackUI from "../TabComponents/AnnotationTrackUI";
 import _ from "lodash";
-import { getSpeciesInfo } from "@/models/genomes/allGenomes";
+import { getSpeciesInfo } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 import TrackRegionController from "./TrackRegionController";
-import TrackModel from "@/models/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import GenomePicker from "@/components/Home/GenomePicker";
 import CustomTrackAdder from "../TabComponents/CustomTrackAdder";
 import SessionUI from "@/components/Home/SessionUI";

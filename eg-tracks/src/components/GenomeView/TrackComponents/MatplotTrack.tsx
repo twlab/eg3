@@ -14,8 +14,8 @@ import {
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import { useGenome } from "@/lib/contexts/GenomeContext";
-import OpenInterval from "@/models/OpenInterval";
+
+import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 import { isError } from "lodash";
 
 export const DEFAULT_OPTIONS = {
@@ -30,8 +30,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   updateGlobalTrackConfig,
   side,
   windowWidth = 0,
-  genomeArr,
-  genomeIdx,
+  genomeConfig,
   trackModel,
   dataIdx,
   trackIdx,
@@ -51,7 +50,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const usePrimaryNav = useRef<boolean>(true);
   const xPos = useRef(0);
-  const { screenshotOpen } = useGenome();
+  const screenshotOpen = null;
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>();
 
@@ -136,8 +135,8 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
     if (trackData![`${id}`]) {
       if (trackData!.trackState.initial === 1) {
         if (
-          !genomeArr![genomeIdx!].isInitial &&
-          genomeArr![genomeIdx!].sizeChange &&
+          !genomeConfig.isInitial &&
+          genomeConfig.sizeChange &&
           Object.keys(fetchedDataCache.current).length > 0
         ) {
           const trackIndex = trackData![`${id}`].trackDataIdx;
@@ -145,7 +144,7 @@ const MatplotTrack: React.FC<TrackProps> = memo(function MatplotTrack({
           if (
             "genome" in trackData![`${id}`].metadata &&
             trackData![`${id}`].metadata.genome !==
-              genomeArr![genomeIdx!].genome.getName()
+              genomeConfig.genome.getName()
           ) {
             let idx = trackIndex in cache ? trackIndex : 0;
             trackData![`${id}`].result =
