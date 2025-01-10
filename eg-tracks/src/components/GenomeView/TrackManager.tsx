@@ -1459,10 +1459,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         //   {}
         // );
         initialConfig.current = true;
-        // let highlightElement = createHighlight(
-        //   trackManagerState.current.highlights
-        // );
-        // setHighlight([...highlight, ...highlightElement]);
+        let highlightElement = createHighlight(
+          trackManagerState.current.highlights
+        );
+        setHighlight([...highlight, ...highlightElement]);
 
         initializeTracks();
       }

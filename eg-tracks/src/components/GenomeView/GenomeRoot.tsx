@@ -5,7 +5,7 @@ import _ from "lodash";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ITrackContainerState } from "../../types";
-
+import "../../index.css";
 import { chrType } from "../../localdata/genomename";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
@@ -73,7 +73,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [size.width, genomeConfig]);
 
   return (
-    <div style={{ paddingLeft: "1%", paddingRight: "1%" }}>
+    <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         {size.width > 0 ? (
           <div style={{ display: "flex", flexDirection: "column" }}>

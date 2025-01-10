@@ -5,23 +5,15 @@ import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 export function TrackContainer(props: ITrackContainerState) {
   return (
     <GenomeRoot
-      tracks={[]}
+      tracks={props.tracks}
       genomeConfig={props.genomeConfig}
-      highlights={[]}
-      legendWidth={0}
-      showGenomeNav={false}
-      onNewRegion={function (startbase: number, endbase: number): void {
-        throw new Error("Function not implemented.");
-      }}
-      onNewHighlight={function (highlightState: Array<any>): void {
-        throw new Error("Function not implemented.");
-      }}
-      onTrackSelected={function (trackSelected: TrackModel[]): void {
-        throw new Error("Function not implemented.");
-      }}
-      onTrackDeleted={function (currenTracks: TrackModel[]): void {
-        throw new Error("Function not implemented.");
-      }}
+      highlights={props.highlights}
+      legendWidth={props.legendWidth}
+      showGenomeNav={props.showGenomeNav}
+      onNewRegion={props.onNewRegion}
+      onNewHighlight={props.onNewHighlight}
+      onTrackSelected={props.onTrackSelected}
+      onTrackDeleted={props.onTrackDeleted}
       viewRegion={props.viewRegion}
     />
   );
