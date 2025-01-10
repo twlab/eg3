@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { GenomeConfig } from "./GenomeConfig";
 import HG19 from "./hg19/hg19";
 import HG38 from "./hg38/hg38";
@@ -144,7 +146,7 @@ export const allGenomes = [
     GRCg7w,
 ];
 
-const genomeNameToConfig = {};
+const genomeNameToConfig: { [key: string]: GenomeConfig } = {};
 for (const config of allGenomes) {
     const genomeName = config.genome.getName();
     if (genomeNameToConfig[genomeName]) {
@@ -160,15 +162,15 @@ interface PhasedSpeciesConfig {
     color: string;
 }
 
-export const phasedTreeOfLife: { [speciesName: string] : PhasedSpeciesConfig } = {
+export const phasedTreeOfLife: { [speciesName: string]: PhasedSpeciesConfig } = {
     human: {
         logoUrl: "https://i.imgur.com/YLAO4B6.png",
         groupedAssemblies: [[HG002_maternal.genome.getName(), HG002_paternal.genome.getName()],
-                            [HG00621_maternal.genome.getName(), HG00621_paternal.genome.getName()],
-                            [HG00741_maternal.genome.getName(), HG00741_paternal.genome.getName()],
-                            [HG01952_maternal.genome.getName(), HG01952_paternal.genome.getName()],
-                            [HG01978_maternal.genome.getName(), HG01978_paternal.genome.getName()],
-                            [HG03516_maternal.genome.getName(), HG03516_paternal.genome.getName()]],
+        [HG00621_maternal.genome.getName(), HG00621_paternal.genome.getName()],
+        [HG00741_maternal.genome.getName(), HG00741_paternal.genome.getName()],
+        [HG01952_maternal.genome.getName(), HG01952_paternal.genome.getName()],
+        [HG01978_maternal.genome.getName(), HG01978_paternal.genome.getName()],
+        [HG03516_maternal.genome.getName(), HG03516_paternal.genome.getName()]],
         color: "white",
     },
 }

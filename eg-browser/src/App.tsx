@@ -14,7 +14,7 @@ export default function App() {
 
 const snappyTransition = {
   type: 'spring',
-  damping: 30,
+  damping: 35,
   stiffness: 400,
   mass: 0.8
 }

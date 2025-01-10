@@ -1,36 +1,21 @@
-import DisplayedRegionModel from "@/lib/eg-lib/model/DisplayedRegionModel";
-import { getGenomeConfig } from "@/lib/eg-lib/model/genomes/allGenomes";
-import { GenomeConfig } from "@/lib/eg-lib/model/genomes/GenomeConfig";
-import RegionSet from "@/lib/eg-lib/model/RegionSet";
-import TrackModel from "@/lib/eg-lib/model/TrackModel";
 import { createEntityAdapter, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { getGenomeDefaultState } from "@eg/core";
+import { ITrackModel, IHighlightInterval, GenomeCoordinate } from "@eg/tracks";
 
 import { RootState } from "../store";
 
-// MARK: - Types
-
-type uuid = string;
-
-export interface HighlightInterval {
-    start: number;
-    end: number;
-    display: boolean;
-    color: string;
-    tag: string;
-}
+export type uuid = string;
 
 export interface BrowserSession {
     id: uuid;
     createdAt: number;
     updatedAt: number;
-
-    viewRegion: DisplayedRegionModel;
-    tracks: TrackModel[];
-    customTracksPool?: TrackModel[];
-    genomeConfig: GenomeConfig;
-    regionSets: RegionSet[];
-    regionSetView: RegionSet | null;
-    highlights: HighlightInterval[];
+    
+    genome: string;
+    viewRegion: GenomeCoordinate;
+    tracks: ITrackModel[];
+    customTracksPool?: ITrackModel[];
+    highlights: IHighlightInterval[];
     metadataTerms: string[];
 }
 
@@ -48,27 +33,32 @@ export const browserSlice = createSlice({
     },
     reducers: {
         createSessionWithGenomeId: (state, action: PayloadAction<string>) => {
-            const genomeConfig = getGenomeConfig(action.payload);
+            const defaultState = getGenomeDefaultState(action.payload);
 
-            if (genomeConfig) {
-                const nextViewRegion = new DisplayedRegionModel(genomeConfig.navContext, ...genomeConfig.defaultRegion);
-                const nextTracks = genomeConfig.defaultTracks;
+            if (defaultState) {
+                const { viewRegion, tracks } = defaultState;
 
-                const nextSession = {
+                const nextSession: BrowserSession = {
                     id: crypto.randomUUID(),
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
-                    viewRegion: nextViewRegion,
-                    tracks: nextTracks,
-                    genomeConfig: genomeConfig,
-                    regionSets: [],
-                    regionSetView: null,
+                    viewRegion: viewRegion as GenomeCoordinate,
+                    tracks: tracks,
+                    genome: action.payload,
                     highlights: [],
                     metadataTerms: [],
                 }
 
                 browserSessionAdapter.addOne(state.sessions, nextSession);
                 state.currentSession = nextSession.id;
+            }
+        },
+        updateSession: (state, action: PayloadAction<{ id: uuid, changes: Partial<BrowserSession> }>) => {
+            browserSessionAdapter.updateOne(state.sessions, action.payload);
+        },
+        updateCurrentSession: (state, action: PayloadAction<Partial<BrowserSession>>) => {
+            if (state.currentSession) {
+                browserSessionAdapter.updateOne(state.sessions, { id: state.currentSession, changes: action.payload });
             }
         },
         upsertSession: (state, action: PayloadAction<BrowserSession>) => {
@@ -83,7 +73,13 @@ export const browserSlice = createSlice({
     }
 });
 
-export const { createSessionWithGenomeId, upsertSession, deleteSession, setCurrentSession } = browserSlice.actions;
+export const { 
+    createSessionWithGenomeId, 
+    upsertSession, 
+    deleteSession, 
+    setCurrentSession,
+    updateCurrentSession,
+} = browserSlice.actions;
 
 export const selectCurrentSessionId = (state: RootState) => state.browser.currentSession;
 

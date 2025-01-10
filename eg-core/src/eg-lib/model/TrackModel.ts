@@ -82,7 +82,13 @@ export class TrackModel {
     queryEndpoint?: QueryEndpoint;
 
     constructor(plainObject: ITrackModel) {
-        Object.assign(this, plainObject);
+        const data = {
+            ...plainObject,
+            options: { ...plainObject.options },
+            metadata: { ...plainObject.metadata },
+        };
+
+        Object.assign(this, data);
         this.name = this.name || "";
         this.label = this.options && this.options.label ? this.options.label : this.label || this.name || "";
         this.isSelected = this.isSelected || false;

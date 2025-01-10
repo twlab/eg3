@@ -14,7 +14,8 @@ export const navigationSlice = createSlice({
     name: "navigation",
     initialState: {
         path: [] as NavigationPath,
-        tab: null as NavigationRoute | null
+        tab: null as NavigationRoute | null,
+        sessionPanelOpen: false,
     },
     reducers: {
         setNavigationPath: (state, action: PayloadAction<NavigationPath>) => {
@@ -25,6 +26,9 @@ export const navigationSlice = createSlice({
         },
         setNavigationTab: (state, action: PayloadAction<NavigationRoute | null>) => {
             state.tab = action.payload;
+        },
+        setSessionPanelOpen: (state, action: PayloadAction<boolean>) => {
+            state.sessionPanelOpen = action.payload;
         }
     }
 });
@@ -32,10 +36,12 @@ export const navigationSlice = createSlice({
 export const {
     setNavigationPath,
     pushNavigationPath,
-    setNavigationTab
+    setNavigationTab,
+    setSessionPanelOpen
 } = navigationSlice.actions;
 
 export const selectNavigationPath = (state: RootState) => state.navigation.path;
 export const selectNavigationTab = (state: RootState) => state.navigation.tab;
+export const selectSessionPanelOpen = (state: RootState) => state.navigation.sessionPanelOpen;
 
 export default navigationSlice.reducer;

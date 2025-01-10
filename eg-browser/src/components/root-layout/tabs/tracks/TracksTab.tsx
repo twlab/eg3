@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import NavigationStack, { NavigationDestination } from "../../../core-navigation/NavigationStack";
 import DescriptiveNavigationLink from "../../../ui/navigation/DescriptiveNavigationLink";
 import AnnotationTracks from "./destinations/AnnotationTracks";
+import PublicDataHubs from "./destinations/PublicDataHubs";
+import TrackFacetTable from "./destinations/TrackFacetTable";
 
 export default function TracksTab() {
 
@@ -13,6 +15,20 @@ export default function TracksTab() {
                 title: "Annotation Tracks"
             }
         },
+        {
+            path: 'public-data-hubs',
+            component: PublicDataHubs,
+            options: {
+                title: "Public Data Hubs"
+            }
+        },
+        {
+            path: 'track-facet-table',
+            component: TrackFacetTable,
+            options: {
+                title: "Track Facet Table"
+            }
+        }
     ], []);
 
     return (

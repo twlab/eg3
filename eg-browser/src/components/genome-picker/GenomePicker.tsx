@@ -22,7 +22,7 @@ export default function GenomePicker() {
         if (selectedPath !== null) {
             timeout = setTimeout(() => {
                 dispatch(createSessionWithGenomeId(selectedPath[1]));
-            }, 1500);
+            }, 500);
         }
 
         return () => clearTimeout(timeout);
