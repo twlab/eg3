@@ -148,6 +148,11 @@ interface TrackManagerProps {
   legendWidth: number;
   selectedRegion?: any;
   genomeConfig: any;
+  highlights: Array<any>;
+  onNewRegion: (startbase: number, endbase: number) => void;
+  onNewHighlight: (highlightState: Array<any>) => void;
+  onTrackSelected: (trackSelected: TrackModel[]) => void;
+  onTrackDeleted: (currenTracks: TrackModel[]) => void;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -155,6 +160,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   legendWidth,
   genomeConfig,
   selectedRegion,
+  highlights,
+  onNewRegion,
+  onNewHighlight,
+  onTrackSelected,
+  onTrackDeleted,
 }) {
   //useRef to store data between states without re render the component
 
@@ -175,7 +185,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const horizontalLineRef = useRef<any>(0);
   const verticalLineRef = useRef<any>(0);
-  const prevDataIdx = useRef<number>(0);
+
   const hicStrawObj = useRef<{ [key: string]: any }>({});
   const isMouseInsideRef = useRef(false);
   const globalTrackConfig = useRef<{ [key: string]: any }>({});
@@ -240,7 +250,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   });
   const [trackData, setTrackData] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
-  const [highlight, setHighlight] = useState<Array<any>>([]);
+  const [highlightElements, setHighLightElements] = useState<Array<any>>([]);
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({
     configMenus: "",
   });
@@ -379,7 +389,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackManagerState.current.viewRegion._startBase = curBp;
     trackManagerState.current.viewRegion._endBase =
       curBp + bpRegionSize.current;
-
+    onNewRegion(curBp, curBp + bpRegionSize.current);
     //addGlobalState(newStateObj);
 
     bpX.current = curBp;
@@ -974,31 +984,30 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         tag: "",
       };
 
-      let newStateObj = createNewTrackState(trackManagerState.current, {
-        highlights: [newHightlight],
-      });
-
-      //addGlobalState(newStateObj);
-      trackManagerState.current.highlights = [
-        ...trackManagerState.current.highlights,
-        newHightlight,
-      ];
       let highlightElement = createHighlight([newHightlight]);
 
-      setHighlight([...highlight, ...highlightElement]);
+      setHighLightElements([...highlightElements, ...highlightElement]);
+      console.log(highlightElements);
     }
   }
 
   function createHighlight(highlightArr: Array<any>) {
+    console.log(highlightArr);
     let resHighlights: Array<any> = [];
+    let pixelPBase =
+      windowWidth /
+      (genomeConfig.defaultRegion.end - genomeConfig.defaultRegion.start);
     for (const curhighlight of highlightArr) {
       let highlightSide =
-        curhighlight.start - leftStartCoord.current <= 0 ? "right" : "left";
+        curhighlight.start - genomeConfig.defaultRegion.start <= 0
+          ? "right"
+          : "left";
+
       let startHighlight =
-        (curhighlight.start - leftStartCoord.current) * pixelPerBase.current;
+        (curhighlight.start - genomeConfig.defaultRegion.start) * pixelPBase;
 
       let endHighlight =
-        -(curhighlight.end - leftStartCoord.current) * pixelPerBase.current;
+        -(curhighlight.end - genomeConfig.defaultRegion.start) * pixelPBase;
       let highlightWidth = Math.abs(startHighlight + endHighlight);
 
       let curXPos = highlightSide === "right" ? startHighlight : endHighlight;
@@ -1007,8 +1016,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         xPos: curXPos,
         width: highlightWidth,
         side: highlightSide,
-        startbase: curhighlight.start,
-        endbase: curhighlight.end,
+        start: curhighlight.start,
+        end: curhighlight.end,
         color: curhighlight.color,
         display: curhighlight.display,
         tag: curhighlight.tag,
@@ -1018,13 +1027,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return resHighlights;
   }
   function getHighlightState(highlightState: any) {
-    trackManagerState.current.highlights = highlightState;
+    // trackManagerState.current.highlights = highlightState;
 
-    let newStateObj = createNewTrackState(trackManagerState.current, {});
+    // let newStateObj = createNewTrackState(trackManagerState.current, {});
     //addGlobalState(newStateObj);
-
-    let highlightElements = createHighlight(highlightState);
-    setHighlight([...highlightElements]);
+    console.log(highlightState);
+    let highlightElement = createHighlight(highlightState);
+    setHighLightElements([...highlightElement]);
   }
 
   function highlightJump(startbase: any, endbase: any) {
@@ -1123,7 +1132,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (!genomeConfig.sizeChange) {
       setDataIdx(0);
     }
-    setHighlight([]);
+    setHighLightElements([]);
     setConfigMenu({ configMenus: "" });
     setApplyTrackConfigChange({});
   };
@@ -1365,7 +1374,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // setScreenshotData({
       //   tracks: trackManagerState.current.tracks,
       //   componentData: screenshotDataObj.current,
-      //   highlights: highlight,
+      //   highlights: highlightElements,
       // });
       screenshotDataObj.current = {};
     }
@@ -1376,8 +1385,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
-    window.addEventListener("scroll", handleScroll);
 
+    console.log(genomeConfig, "HUH", windowWidth);
     const parentElement = block.current;
     if (parentElement) {
       parentElement.addEventListener("mouseenter", handleMouseEnter);
@@ -1394,7 +1403,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("scroll", handleScroll);
+
       console.log("trackmanager terminate");
     };
   }, []);
@@ -1423,13 +1432,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [initialStart]);
 
   useEffect(() => {
+    console.log("EWRERERERREREREERER");
     if (windowWidth > 0) {
       // on GenomeRoot first creation we add the default state to StateArr in genomeroot
       // on recreation of trackManager we do not need to set the defaultState because it is saved in genomeroot so we skip to else
       // and do not add to the StateArr.
-      console.log(genomeConfig);
+
       if (genomeConfig.isInitial) {
-        console.log("ERER");
         trackManagerState.current.viewRegion._startBase =
           genomeConfig.defaultRegion.start;
         trackManagerState.current.viewRegion._endBase =
@@ -1449,26 +1458,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           );
           setInitialStart("workerReady");
         }
-        trackManagerId.current = genomeConfig.id;
       } else {
         preload.current = true;
-        prevDataIdx.current = dataIdx;
+
         refreshState();
         // trackManagerState.current = createNewTrackState(
         //   genomeConfig.curState,
         //   {}
         // );
         initialConfig.current = true;
-        let highlightElement = createHighlight(
-          trackManagerState.current.highlights
-        );
-        setHighlight([...highlight, ...highlightElement]);
+        // let highlightElement = createHighlight(
+        //   trackManagerState.current.highlights
+        // );
+        // setHighLightElements([...highlightElements, ...highlightElement]);
 
         initializeTracks();
       }
     }
   }, [genomeConfig]);
 
+  useEffect(() => {
+    console.log(highlights);
+    if (highlights.length > 0) {
+      console.log(highlights);
+      let highlightElement = createHighlight(highlights);
+      console.log(highlightElement);
+      setHighLightElements([...highlightElement]);
+    }
+  }, [highlights]);
   return (
     <>
       <div
@@ -1529,7 +1546,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
           <div className="flex flex-row py-10 items-center">
             <HighlightMenu
-              highlights={trackManagerState.current.highlights}
+              highlights={highlightElements}
               viewRegion={trackManagerState.current.viewRegion}
               showHighlightMenuModal={true}
               onNewRegion={highlightJump}
@@ -1659,8 +1676,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           // viewWindow={trackManagerState.current.viewRegion}
                         />
 
-                        {highlight.length > 0
-                          ? highlight.map((item, index) => {
+                        {highlightElements.length > 0
+                          ? highlightElements.map((item, index) => {
                               if (item.display) {
                                 return (
                                   <div

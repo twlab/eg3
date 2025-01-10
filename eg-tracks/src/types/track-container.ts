@@ -1,5 +1,5 @@
 import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
-import { TrackModel } from "../../../eg-core/src/eg-lib/model/TrackModel";
+import { TrackModel } from "@eg/core/src/eg-lib/models/TrackModel";
 
 // add the same props that were being passed into TrackContainer.tsx
 export interface ITrackContainerState {
@@ -13,6 +13,7 @@ export interface ITrackContainerState {
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   viewRegion: DisplayedRegionModel;
+  userViewRegion: DisplayedRegionModel;
   // ...
 }
 
