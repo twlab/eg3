@@ -8,6 +8,7 @@ export const DEFAULT_OPTIONS = {
   height: 40, // For density display mode
   hideMinimalItems: false,
   sortItems: false,
+  aggregateMethod: "COUNT",
 };
 import { AnnotationDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";
 import {

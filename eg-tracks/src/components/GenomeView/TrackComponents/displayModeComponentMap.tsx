@@ -21,7 +21,7 @@ import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotati
 import { objToInstanceAlign } from "../TrackManager";
 import BedAnnotation from "./bedComponents/BedAnnotation";
 import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
-import { RepeatDASFeature } from "./RepeatMaskerTrack";
+import { RepeatDASFeature } from "@/models/RepeatMaskerFeature";
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";

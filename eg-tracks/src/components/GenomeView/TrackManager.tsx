@@ -37,6 +37,7 @@ import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/T
 import SubToolButtons from "./ToolComponents/SubToolButtons";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
 import History from "./ToolComponents/History";
+import SvgOrCanvasTracks from "./TrackComponents/SvgOrCanvasTracks";
 import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
 import BedgraphTrack from "./TrackComponents/BedgraphTrack";
 
@@ -97,9 +98,9 @@ export function objToInstanceAlign(alignment) {
   return visRegion;
 }
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
-  geneannotation: RefGeneTrack,
-  bed: BedTrack,
-  bigwig: BigWigTrack,
+  geneannotation: SvgOrCanvasTracks,
+  bed: SvgOrCanvasTracks,
+  bigwig: SvgOrCanvasTracks,
   dynseq: DynseqTrack,
   methylc: MethylcTrack,
   hic: HiCTrack,
@@ -108,9 +109,9 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   categorical: CategoricalTrack,
   longrange: LongrangeTrack,
   biginteract: BigInteractTrack,
-  repeatmasker: RepeatMaskerTrack,
-  bigbed: BigBedTrack,
-  refbed: RefBedTrack,
+  repeatmasker: SvgOrCanvasTracks,
+  bigbed: SvgOrCanvasTracks,
+  refbed: SvgOrCanvasTracks,
   matplot: MatplotTrack,
   ruler: RulerTrack,
   modbed: FiberTrack,
@@ -123,9 +124,9 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   dynamicbed: DynamicBedTrack,
   dbedgraph: DBedGraphTrack,
   dynamiclongrange: DynamicLongrangeTrack,
-  snp: SnpTrack,
-  bam: BamTrack,
-  omeroidr: OmeroTrack,
+  snp: SvgOrCanvasTracks,
+  bam: SvgOrCanvasTracks,
+  omeroidr: SvgOrCanvasTracks,
   error: ErrorTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {

@@ -16,7 +16,6 @@ import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 export const DEFAULT_OPTIONS = {
   ...defaultNumericalTrack,
 };
-DEFAULT_OPTIONS.aggregateMethod = "MEAN";
 
 const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
   trackData,
@@ -271,7 +270,6 @@ const BigWigTrack: React.FC<TrackProps> = memo(function BigWigTrack({
         drawOptions["forceSvg"] = true;
 
         let result = await getDisplayModeFunction({
-          usePrimaryNav: usePrimaryNav.current,
           genesArr,
           trackState,
           windowWidth,

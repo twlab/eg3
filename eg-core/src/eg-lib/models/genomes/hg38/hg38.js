@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27207174-27219988");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -58,20 +58,20 @@ const defaultTracks = [
   //   name: "NOTSUPPORTEDTRACEXAMPLE",
   // }),
 
-  //   new TrackModel({
-  //   type: "refbed",
-  //   name: "mm10 gencode basic",
-  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-  //   options: {
-  //     categoryColors: {
-  //       coding: "rgb(101,1,168)",
-  //       nonCoding: "rgb(1,193,75)",
-  //       pseudo: "rgb(230,0,172)",
-  //       problem: "rgb(224,2,2)",
-  //       other: "rgb(128,128,128)",
-  //     },
-  //   },
-  // }),
+  new TrackModel({
+    type: "refbed",
+    name: "mm10 gencode basic",
+    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+    options: {
+      categoryColors: {
+        coding: "rgb(101,1,168)",
+        nonCoding: "rgb(1,193,75)",
+        pseudo: "rgb(230,0,172)",
+        problem: "rgb(224,2,2)",
+        other: "rgb(128,128,128)",
+      },
+    },
+  }),
   new TrackModel({
     type: "bed",
     name: "mm10 bed",
@@ -88,11 +88,11 @@ const defaultTracks = [
     genome: "hg38",
   }),
 
-  //   new TrackModel({
-  //   type: "bigbed",
-  //   name: "test bigbed",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  // }),
+  new TrackModel({
+    type: "bigbed",
+    name: "test bigbed",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  }),
 
   new TrackModel({
     type: "repeatmasker",
@@ -100,11 +100,11 @@ const defaultTracks = [
     url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
   }),
 
-  // new TrackModel({
-  //   type: "snp",
-  //   name: "snp",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "snp",
+    name: "snp",
+    genome: "hg38",
+  }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "MANE_select_1.0",
@@ -112,31 +112,31 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "",
+    options: {
+      color: "blue",
+    },
+  }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+    options: {
+      color: "blue",
+    },
+  }),
 
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+    options: {
+      color: "blue",
+    },
+  }),
   // new TrackModel({
   //   type: "modbed",
   //   name: "examplemod",
@@ -329,11 +329,11 @@ const defaultTracks = [
   //   genome: "hg38",
   //   metadata: { genome: "mm10" },
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
+  // }),
 
   // new TrackModel({
   //   name: "hg38tomm10",
