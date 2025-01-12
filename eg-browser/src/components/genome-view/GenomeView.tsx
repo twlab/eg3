@@ -14,7 +14,8 @@ export default function GenomeView() {
   const [tracks, setTracks] = useState<Array<TrackModel>>([]);
   const [viewRegion, setViewRegion] = useState<any>();
   const trackModelId = useRef(0);
-
+  const addedTracks = useRef<Array<TrackModel>>([]);
+  const debounceTimeout = useRef<any>(null);
   const [highlights, setHighLights] = useState<Array<any>>([
     {
       start: 1259080171,
@@ -68,14 +69,29 @@ export default function GenomeView() {
   }
   function onTrackSelected(trackSelected: TrackModel[]) {}
   function onTrackDeleted(trackSelected: TrackModel[]) {}
-  function onTrackAdded(trackModels: TrackModel[]) {
-    trackModels.map((trackModel) => {
+
+  function onTrackAdded(trackModels: Array<TrackModel>) {
+    //you should update the tab UI with  new added TrackModels right away so the changes
+    //reflects in the UI right away, like if a track is already added
+    for (let trackModel of trackModels) {
       trackModel.id = trackModelId.current;
       trackModelId.current++;
-    });
+      addedTracks.current.push(trackModel);
+    }
+
+    // when users add too many single tracks, it will cause too much state changes,
+    // so we delay each click by 1 sec until the user stop then process the added tracks
+    clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      processTracks();
+    }, 1000);
+  }
+
+  function processTracks() {
     let prevTracks =
       tracks.length === 0 ? [...genomeConfig.defaultTracks] : [...tracks];
-    setTracks([...prevTracks, ...trackModels]);
+    setTracks([...prevTracks, ...addedTracks.current]);
+    addedTracks.current = [];
   }
   useEffect(() => {
     const newGenomeConfig = getGenomeConfig("hg38");
@@ -107,6 +123,9 @@ export default function GenomeView() {
           onTrackDeleted={onTrackDeleted}
           onNewRegionSelect={onNewRegionSelect}
           onTrackAdded={onTrackAdded}
+          //separate viewRegions
+          //viewRegion - for when we need to jump to a nav coordinate: zoom, selecting new region, etc
+          // userViewRegion - the current nav coordinate the user is currently viewing
           viewRegion={viewRegion}
           userViewRegion={userViewRegion}
         />

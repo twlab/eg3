@@ -1491,15 +1491,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (tracks.length > 0) {
       preload.current = true;
-      refreshState();
-      initialConfig.current = true;
-      trackManagerState.current.tracks = tracks;
-      trackManagerState.current.viewRegion = selectedRegion;
+
       genomeConfig.defaultRegion = new OpenInterval(
         selectedRegion._startBase,
         selectedRegion._endBase
       );
-      console.log(genomeConfig);
+      refreshState();
+      initialConfig.current = true;
+      trackManagerState.current.tracks = tracks;
+      trackManagerState.current.viewRegion = selectedRegion;
+
       initializeTracks();
     }
   }, [tracks]);

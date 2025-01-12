@@ -41,8 +41,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome = { ...currentGenomeConfig };
         curGenome["isInitial"] = isInitial.current;
         curGenome.defaultRegion = new OpenInterval(
-          viewRegion._startBase!,
-          viewRegion._endBase!
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
         );
         curGenome["sizeChange"] = true;
         console.log(curGenome);
