@@ -6,12 +6,15 @@ import { ITrackContainerState, TrackContainer } from "@eg/tracks";
 import BrowserPlaceholder from "../../assets/browser-placeholder.jpg";
 import { GenomeState } from "../../lib/redux/slices/genomeSlice";
 import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 
 export default function GenomeView() {
   const [genomeConfig, setGenomeConfig] = useState<any>(null);
+  const [tracks, setTracks] = useState<Array<TrackModel>>([]);
   const [viewRegion, setViewRegion] = useState<any>();
+  const trackModelId = useRef(0);
+
   const [highlights, setHighLights] = useState<Array<any>>([
     {
       start: 1259080171,
@@ -44,18 +47,42 @@ export default function GenomeView() {
   ]);
   const [userViewRegion, setUserViewRegion] = useState<any>();
   const currentSession = useAppSelector(selectCurrentSession);
-
-  function onNewRegion(startbase: number, endbase: number) {
+  function onNewRegionSelect(startbase: number, endbase: number) {
+    setViewRegion(
+      new DisplayedRegionModel(genomeConfig.navContext, startbase, endbase)
+    );
     setUserViewRegion(
       new DisplayedRegionModel(genomeConfig.navContext, startbase, endbase)
     );
   }
+  function onNewRegion(startbase: number, endbase: number) {
+    if (startbase && endbase) {
+      setUserViewRegion(
+        new DisplayedRegionModel(genomeConfig.navContext, startbase, endbase)
+      );
+    }
+  }
 
-  function onNewHighlight(highlightState: Array<any>) {}
+  function onNewHighlight(highlightState: Array<any>) {
+    setHighLights([...highlights, ...highlightState]);
+  }
   function onTrackSelected(trackSelected: TrackModel[]) {}
   function onTrackDeleted(trackSelected: TrackModel[]) {}
+  function onTrackAdded(trackModels: TrackModel[]) {
+    trackModels.map((trackModel) => {
+      trackModel.id = trackModelId.current;
+      trackModelId.current++;
+    });
+    let prevTracks =
+      tracks.length === 0 ? [...genomeConfig.defaultTracks] : [...tracks];
+    setTracks([...prevTracks, ...trackModels]);
+  }
   useEffect(() => {
     const newGenomeConfig = getGenomeConfig("hg38");
+    newGenomeConfig.defaultTracks.map((trackModel) => {
+      trackModel.id = trackModelId.current;
+      trackModelId.current++;
+    });
     setGenomeConfig(newGenomeConfig);
     const initialView = new DisplayedRegionModel(
       newGenomeConfig.navContext,
@@ -66,10 +93,10 @@ export default function GenomeView() {
     setUserViewRegion(initialView);
   }, []);
   return (
-    <div className="h-full">
+    <div>
       {genomeConfig ? (
         <TrackContainer
-          tracks={genomeConfig.defaultTracks}
+          tracks={tracks}
           genomeConfig={genomeConfig}
           highlights={highlights}
           legendWidth={120}
@@ -78,6 +105,8 @@ export default function GenomeView() {
           onNewHighlight={onNewHighlight}
           onTrackSelected={onTrackSelected}
           onTrackDeleted={onTrackDeleted}
+          onNewRegionSelect={onNewRegionSelect}
+          onTrackAdded={onTrackAdded}
           viewRegion={viewRegion}
           userViewRegion={userViewRegion}
         />

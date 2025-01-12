@@ -14,6 +14,8 @@ export function TrackContainer(props: ITrackContainerState) {
       onNewHighlight={props.onNewHighlight}
       onTrackSelected={props.onTrackSelected}
       onTrackDeleted={props.onTrackDeleted}
+      onNewRegionSelect={props.onNewRegionSelect}
+      onTrackAdded={props.onTrackAdded}
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
     />

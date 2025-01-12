@@ -9,9 +9,9 @@ import _ from "lodash";
 import { getSpeciesInfo } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 import TrackRegionController from "./TrackRegionController";
 import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
-import GenomePicker from "@/components/Home/GenomePicker";
+
 import CustomTrackAdder from "../TabComponents/CustomTrackAdder";
-import SessionUI from "@/components/Home/SessionUI";
+
 import "./Nav.css";
 import { TrackState } from "../TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import HubPane from "../TabComponents/HubPane";
@@ -26,8 +26,8 @@ import TextTrack from "../TabComponents/TextTrack";
 interface NavProps {
   selectedRegion: any;
   onRegionSelected: any;
-
-  state: TrackState;
+  tracks: Array<TrackModel>;
+  state?: TrackState;
   genomeConfig: any;
   onTracksAdded?: (tracks: TrackModel[]) => void;
   onTrackRemoved?: any;
@@ -53,6 +53,7 @@ interface NavProps {
 }
 
 const Nav: FC<NavProps> = ({
+  tracks,
   state,
   genomeConfig,
   onTracksAdded,
@@ -115,7 +116,7 @@ const Nav: FC<NavProps> = ({
 
   function groupTrackByGenome() {
     const grouped = {};
-    state.tracks.forEach((track) => {
+    tracks.forEach((track) => {
       const gname = track.getMetadata("genome");
       const targeName = gname ? gname : genomeConfig.genome.getName();
       if (grouped[targeName]) {
@@ -132,8 +133,8 @@ const Nav: FC<NavProps> = ({
   const modalfg = "#222";
   const modalbg = "white";
   const tracksUrlSets = new Set([
-    ...state.tracks.filter((track) => track.url).map((track) => track.url),
-    ...state.tracks.filter((track) => !track.url).map((track) => track.name),
+    ...tracks.filter((track) => track.url).map((track) => track.url),
+    ...tracks.filter((track) => !track.url).map((track) => track.name),
   ]);
   const groupedTrackSets = groupTrackByGenome();
   const handleCheckboxChange = (event) => {
@@ -181,7 +182,7 @@ const Nav: FC<NavProps> = ({
           <span className="capitalize">{name}</span>{" "}
           <span className="italic">{genomeName}</span>
         </div>
-        <ReactModal
+        {/* <ReactModal
           isOpen={genomeModal}
           ariaHideApp={false}
           contentLabel="genomeModal"
@@ -208,7 +209,7 @@ const Nav: FC<NavProps> = ({
           >
             Close
           </Button>
-        </ReactModal>
+        </ReactModal> */}
         <div className="element Nav-center">
           <TrackRegionController
             selectedRegion={selectedRegion}
@@ -244,7 +245,7 @@ const Nav: FC<NavProps> = ({
                 style={{ content: { color: modalfg, background: modalbg } }}
               >
                 <AnnotationTrackUI
-                  addedTracks={state.tracks}
+                  addedTracks={tracks}
                   onTracksAdded={onTracksAdded}
                   addedTrackSets={tracksUrlSets}
                   genomeConfig={genomeConfig}
@@ -264,7 +265,7 @@ const Nav: FC<NavProps> = ({
                 }}
               >
                 <HubPane
-                  addedTracks={state.tracks}
+                  addedTracks={tracks}
                   onTracksAdded={onTracksAdded}
                   addTermToMetaSets={addTermToMetaSets}
                   onHubUpdated={onHubUpdated}
@@ -291,7 +292,7 @@ const Nav: FC<NavProps> = ({
                 <FacetTableUI
                   publicTracksPool={publicTracksPool}
                   customTracksPool={customTracksPool}
-                  addedTracks={state.tracks}
+                  addedTracks={tracks}
                   onTracksAdded={onTracksAdded}
                   addTermToMetaSets={addTermToMetaSets}
                   addedTrackSets={tracksUrlSets}
@@ -310,7 +311,7 @@ const Nav: FC<NavProps> = ({
                 style={{ content: { color: modalfg, background: modalbg } }}
               >
                 <CustomTrackAdder
-                  addedTracks={state.tracks}
+                  addedTracks={tracks}
                   onTracksAdded={onTracksAdded}
                   genomeConfig={genomeConfig}
                   onHubUpdated={onHubUpdated}
@@ -382,7 +383,7 @@ const Nav: FC<NavProps> = ({
                 />
               </ModalMenuItem>
 
-              <ModalMenuItem
+              {/* <ModalMenuItem
                 itemLabel="Gene Plot"
                 isOpen={openModal === "Gene Plot"}
                 onOpen={() => setOpenModal("Gene Plot")}
@@ -403,7 +404,7 @@ const Nav: FC<NavProps> = ({
                   genome={genomeConfig.genome}
                   sets={sets}
                   selectedSet={selectedSet}
-                  tracks={state.tracks}
+                  tracks={tracks}
                   onSetSelected={onSetSelected}
                   onSetsChanged={onSetsChanged}
                 />
@@ -430,7 +431,7 @@ const Nav: FC<NavProps> = ({
                   genomeConfig={genomeConfig.genome}
                   sets={sets}
                   selectedSet={selectedSet}
-                  tracks={state.tracks}
+                  tracks={tracks}
                 />
               </ModalMenuItem>
               <ModalMenuItem
@@ -458,7 +459,7 @@ const Nav: FC<NavProps> = ({
                   curBundle={curBundle}
                   addSessionState={addSessionState}
                 />
-              </ModalMenuItem>
+              </ModalMenuItem> */}
             </div>
           </div>
 

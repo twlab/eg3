@@ -149,6 +149,7 @@ interface TrackManagerProps {
   selectedRegion?: any;
   genomeConfig: any;
   highlights: Array<any>;
+  tracks: Array<TrackModel>;
   onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: TrackModel[]) => void;
@@ -161,6 +162,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   genomeConfig,
   selectedRegion,
   highlights,
+  tracks,
   onNewRegion,
   onNewHighlight,
   onTrackSelected,
@@ -658,7 +660,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   async function fetchGenomeData(initial: number = 0, trackSide, dataIdx) {
     // console.log(window.performance);
-    console.log(genomeConfig, initial, trackSide, dataIdx);
+    console.log(genomeConfig, initial, trackSide, dataIdx, dragX.current);
     let tempObj = {};
     let curFetchRegionNav;
 
@@ -795,6 +797,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     try {
+      console.log({
+        primaryGenName: genomeConfig.genome.getName(),
+        trackModelArr:
+          !genomeConfig.isInitial && initial === 1 && genomeConfig.sizeChange
+            ? initialPreloadTrackFetch.current
+            : trackManagerState.current.tracks,
+        visData: newVisData,
+        genomicLoci,
+        expandedGenLoci: expandedGenomeCoordLocus,
+        useFineModeNav: useFineModeNav.current,
+        windowWidth,
+        initGenomicLoci: bpNavToGenNav(initNavLoci, genomeConfig),
+        trackSide,
+        xDist: dragX.current,
+        initial,
+        bpRegionSize: bpRegionSize.current,
+        trackDataIdx: dataIdx,
+      });
       enqueueMessage({
         primaryGenName: genomeConfig.genome.getName(),
         trackModelArr:
@@ -984,15 +1004,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         tag: "",
       };
 
-      let highlightElement = createHighlight([newHightlight]);
-
-      setHighLightElements([...highlightElements, ...highlightElement]);
-      console.log(highlightElements);
+      onNewHighlight([newHightlight]);
     }
   }
 
   function createHighlight(highlightArr: Array<any>) {
-    console.log(highlightArr);
     let resHighlights: Array<any> = [];
     let pixelPBase =
       windowWidth /
@@ -1027,13 +1043,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     return resHighlights;
   }
   function getHighlightState(highlightState: any) {
-    // trackManagerState.current.highlights = highlightState;
-
-    // let newStateObj = createNewTrackState(trackManagerState.current, {});
-    //addGlobalState(newStateObj);
-    console.log(highlightState);
-    let highlightElement = createHighlight(highlightState);
-    setHighLightElements([...highlightElement]);
+    onNewHighlight(highlightState);
   }
 
   function highlightJump(startbase: any, endbase: any) {
@@ -1106,7 +1116,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         1
       ),
       trackLegendWidth: legendWidth,
-      tracks: genomeConfig ? genomeConfig.defaultTracks : [],
+      tracks: tracks.length > 0 ? tracks : genomeConfig.defaultTracks,
     };
     initialConfig.current = true;
     configMenuPos.current = {};
@@ -1116,6 +1126,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     frameID.current = 0;
     lastX.current = 0;
     dragX.current = 0;
+
     isLoading.current = true;
     isToolSelected.current = false;
     side.current = "right";
@@ -1128,11 +1139,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setG3dTrackComponents([]);
     setSelectedTool({ isSelected: false, title: "none" });
     setTrackData({});
+    let highlightElement = createHighlight(highlights);
 
+    setHighLightElements([...highlightElement]);
     if (!genomeConfig.sizeChange) {
       setDataIdx(0);
     }
-    setHighLightElements([]);
+
     setConfigMenu({ configMenus: "" });
     setApplyTrackConfigChange({});
   };
@@ -1183,6 +1196,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
+
     basePerPixel.current = bpRegionSize.current / windowWidth;
     pixelPerBase.current = windowWidth / bpRegionSize.current;
     if (preload.current && genomeConfig.sizeChange) {
@@ -1190,6 +1204,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         (leftStartCoord.current - genomeConfig.defaultRegion.start) *
         pixelPerBase.current;
     }
+
     bpX.current = leftStartCoord.current;
     maxBp.current = rightStartCoord.current;
     minBp.current = leftStartCoord.current;
@@ -1345,6 +1360,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     fetchGenomeData(1, "right", dataIdx);
   }
+
   function checkTrackPreload(trackId) {
     if (preload.current || genomeConfig.isInitial) {
       preloadedTracks.current[`${trackId}`] = "";
@@ -1352,7 +1368,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         Object.keys(preloadedTracks.current).length === trackComponents.length
       ) {
         preloadedTracks.current = {};
-
         cancelAnimationFrame(frameID.current);
         trackComponents.map((component, i) => {
           frameID.current = requestAnimationFrame(() => {
@@ -1360,7 +1375,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
         });
         preload.current = false;
-
         if (genomeConfig.isInitial) {
         }
       }
@@ -1386,7 +1400,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
 
-    console.log(genomeConfig, "HUH", windowWidth);
     const parentElement = block.current;
     if (parentElement) {
       parentElement.addEventListener("mouseenter", handleMouseEnter);
@@ -1432,7 +1445,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [initialStart]);
 
   useEffect(() => {
-    console.log("EWRERERERREREREERER");
     if (windowWidth > 0) {
       // on GenomeRoot first creation we add the default state to StateArr in genomeroot
       // on recreation of trackManager we do not need to set the defaultState because it is saved in genomeroot so we skip to else
@@ -1460,17 +1472,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       } else {
         preload.current = true;
-
         refreshState();
-        // trackManagerState.current = createNewTrackState(
-        //   genomeConfig.curState,
-        //   {}
-        // );
         initialConfig.current = true;
-        // let highlightElement = createHighlight(
-        //   trackManagerState.current.highlights
-        // );
-        // setHighLightElements([...highlightElements, ...highlightElement]);
 
         initializeTracks();
       }
@@ -1478,14 +1481,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [genomeConfig]);
 
   useEffect(() => {
-    console.log(highlights);
     if (highlights.length > 0) {
-      console.log(highlights);
       let highlightElement = createHighlight(highlights);
-      console.log(highlightElement);
+
       setHighLightElements([...highlightElement]);
     }
   }, [highlights]);
+
+  useEffect(() => {
+    if (tracks.length > 0) {
+      preload.current = true;
+      refreshState();
+      initialConfig.current = true;
+      trackManagerState.current.tracks = tracks;
+      trackManagerState.current.viewRegion = selectedRegion;
+      genomeConfig.defaultRegion = new OpenInterval(
+        selectedRegion._startBase,
+        selectedRegion._endBase
+      );
+      console.log(genomeConfig);
+      initializeTracks();
+    }
+  }, [tracks]);
   return (
     <>
       <div

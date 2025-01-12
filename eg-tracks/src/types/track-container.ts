@@ -12,6 +12,9 @@ export interface ITrackContainerState {
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
+  onTrackAdded: (trackModels: TrackModel[]) => void;
+  onNewRegionSelect: (startbase: number, endbase: number) => void;
+
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   // ...
