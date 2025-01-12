@@ -660,7 +660,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   async function fetchGenomeData(initial: number = 0, trackSide, dataIdx) {
     // console.log(window.performance);
-    console.log(genomeConfig, initial, trackSide, dataIdx, dragX.current);
+
     let tempObj = {};
     let curFetchRegionNav;
 
@@ -797,24 +797,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     try {
-      console.log({
-        primaryGenName: genomeConfig.genome.getName(),
-        trackModelArr:
-          !genomeConfig.isInitial && initial === 1 && genomeConfig.sizeChange
-            ? initialPreloadTrackFetch.current
-            : trackManagerState.current.tracks,
-        visData: newVisData,
-        genomicLoci,
-        expandedGenLoci: expandedGenomeCoordLocus,
-        useFineModeNav: useFineModeNav.current,
-        windowWidth,
-        initGenomicLoci: bpNavToGenNav(initNavLoci, genomeConfig),
-        trackSide,
-        xDist: dragX.current,
-        initial,
-        bpRegionSize: bpRegionSize.current,
-        trackDataIdx: dataIdx,
-      });
       enqueueMessage({
         primaryGenName: genomeConfig.genome.getName(),
         trackModelArr:

@@ -1,6 +1,5 @@
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
-import { getGenomeConfig } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 import { ITrackContainerState, TrackContainer } from "@eg/tracks";
 
 import BrowserPlaceholder from "../../assets/browser-placeholder.jpg";
@@ -94,16 +93,17 @@ export default function GenomeView() {
     addedTracks.current = [];
   }
   useEffect(() => {
-    const newGenomeConfig = getGenomeConfig("hg38");
-    newGenomeConfig.defaultTracks.map((trackModel) => {
+    const newGenomeConfig = currentSession?.genomeConfig;
+
+    newGenomeConfig!.defaultTracks.map((trackModel) => {
       trackModel.id = trackModelId.current;
       trackModelId.current++;
     });
     setGenomeConfig(newGenomeConfig);
     const initialView = new DisplayedRegionModel(
-      newGenomeConfig.navContext,
-      newGenomeConfig.defaultRegion.start,
-      newGenomeConfig.defaultRegion.end
+      newGenomeConfig!.navContext,
+      newGenomeConfig!.defaultRegion.start,
+      newGenomeConfig!.defaultRegion.end
     );
     setViewRegion(initialView);
     setUserViewRegion(initialView);

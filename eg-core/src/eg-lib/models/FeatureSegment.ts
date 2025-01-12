@@ -1,6 +1,5 @@
 import OpenInterval from "./OpenInterval";
 import ChromosomeInterval from "./ChromosomeInterval";
-import { Feature } from "./Feature";
 
 /**
  * A 0-indexed open interval within a Feature.  Or, put another way, attaches an interval to a Feature.
