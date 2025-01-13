@@ -1321,13 +1321,6 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
     });
-    if (displayCache) {
-      displayCache.current.density[cacheIdx] = {
-        canvasData: canvasElements,
-        height: drawData.configOptions.height,
-        xPos: curXPos,
-      };
-    }
 
     return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {

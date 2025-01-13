@@ -2,19 +2,19 @@ import _ from "lodash";
 import { variableIsObject } from "../util.ts";
 
 export interface TrackOptions {
-    label?: string;
-    [k: string]: any;
+  label?: string;
+  [k: string]: any;
 }
 
 interface ITrackModelMetadata {
-    "Track Type"?: string;
-    genome?: string;
-    [k: string]: any;
+  "Track Type"?: string;
+  genome?: string;
+  [k: string]: any;
 }
 
 interface QueryEndpoint {
-    name?: string;
-    endpoint?: string;
+  name?: string;
+  endpoint?: string;
 }
 
 /**
@@ -34,16 +34,16 @@ interface QueryEndpoint {
  * }
  */
 interface ITrackModel {
-    name: string;
-    type?: string;
-    filetype?: string;
-    options: TrackOptions;
-    url: string;
-    indexUrl?: string;
-    metadata: ITrackModelMetadata;
-    fileObj?: Blob;
-    queryEndpoint?: QueryEndpoint;
-    querygenome?: string;
+  name: string;
+  type?: string;
+  filetype?: string;
+  options: TrackOptions;
+  url: string;
+  indexUrl?: string;
+  metadata: ITrackModelMetadata;
+  fileObj?: Blob;
+  queryEndpoint?: QueryEndpoint;
+  querygenome?: string;
 }
 
 let nextId = 0;
@@ -55,192 +55,200 @@ let nextId = 0;
  * @author Silas Hsu
  */
 export class TrackModel {
-    /**
-     * Makes a new TrackModel based off the input plain object.  Bascially does a shallow copy of the object and sets
-     * sets reasonable defaults for certain properties.
-     *
-     * @param {ITrackModel} plainObject - data that will form the basis of the new instance
-     */
-    name!: string;
-    type!: string;
-    label!: string;
-    filetype?: string;
-    options!: TrackOptions;
-    url!: string;
-    indexUrl?: string;
-    metadata!: ITrackModelMetadata;
-    id!: number;
-    isSelected!: boolean;
-    showOnHubLoad?: boolean;
-    fileObj?: any;
-    files?: any;
-    tracks?: TrackModel[]; // for matplot
-    querygenome?: string;
-    isText?: boolean;
-    textConfig?: any;
-    apiConfig?: any;
-    queryEndpoint?: QueryEndpoint;
+  /**
+   * Makes a new TrackModel based off the input plain object.  Bascially does a shallow copy of the object and sets
+   * sets reasonable defaults for certain properties.
+   *
+   * @param {ITrackModel} plainObject - data that will form the basis of the new instance
+   */
+  name!: string;
+  type!: string;
+  label!: string;
+  filetype?: string;
+  options!: TrackOptions;
+  url!: string;
+  indexUrl?: string;
+  metadata!: ITrackModelMetadata;
+  id!: number;
+  isSelected!: boolean;
+  showOnHubLoad?: boolean;
+  fileObj?: any;
+  files?: any;
+  tracks?: TrackModel[]; // for matplot
+  querygenome?: string;
+  isText?: boolean;
+  textConfig?: any;
+  apiConfig?: any;
+  queryEndpoint?: QueryEndpoint;
 
-    constructor(plainObject: ITrackModel) {
-        Object.assign(this, plainObject);
-        this.name = this.name || "";
-        this.label = this.options && this.options.label ? this.options.label : this.label || this.name || "";
-        this.isSelected = this.isSelected || false;
-        this.type = this.type || this.filetype || "";
-        this.type = this.type.toLowerCase();
-        this.options = this.options || {}; // `options` stores dynamically-configurable options.
-        this.options.label = this.label; // ...which is why we copy this.name.
-        this.url = mapUrl(this.url) || "";
-        this.indexUrl = this.indexUrl ? mapUrl(this.indexUrl) : undefined;
-        this.metadata = variableIsObject(this.metadata) || Array.isArray(this.metadata) ? this.metadata : {}; // avoid number or string as metadata
-        this.metadata["Track type"] = this.type;
-        this.fileObj = this.fileObj || "";
-        this.files = this.files || [];
-        this.tracks = this.tracks ? this.tracks.map((tk) => new TrackModel(tk)) : [];
-        this.isText = this.isText || false;
-        this.textConfig = this.textConfig || {};
-        this.apiConfig = this.apiConfig || {};
-        this.queryEndpoint = this.queryEndpoint || {};
-        if (plainObject.querygenome) {
-            // only set if there is value
-            this.querygenome = plainObject.querygenome;
-        }
-
-        // in case user define height in string, like "25" instead of 25
-        if (this.options.height && typeof this.options.height === "string") {
-            this.options.height = Number.parseFloat(this.options.height) || 20;
-        }
-
-        // Other misc props
-        this.id = nextId;
-        nextId++;
+  constructor(plainObject: ITrackModel) {
+    Object.assign(this, plainObject);
+    this.name = this.name || "";
+    this.label =
+      this.options && this.options.label
+        ? this.options.label
+        : this.label || this.name || "";
+    this.isSelected = this.isSelected || false;
+    this.type = this.type || this.filetype || "";
+    this.type = this.type.toLowerCase();
+    this.options = this.options || {}; // `options` stores dynamically-configurable options.
+    this.options.label = this.label || ""; // ...which is why we copy this.name.
+    this.url = mapUrl(this.url) || "";
+    this.indexUrl = this.indexUrl ? mapUrl(this.indexUrl) : undefined;
+    this.metadata =
+      variableIsObject(this.metadata) || Array.isArray(this.metadata)
+        ? this.metadata
+        : {}; // avoid number or string as metadata
+    this.metadata["Track type"] = this.type;
+    this.fileObj = this.fileObj || "";
+    this.files = this.files || [];
+    this.tracks = this.tracks
+      ? this.tracks.map((tk) => new TrackModel(tk))
+      : [];
+    this.isText = this.isText || false;
+    this.textConfig = this.textConfig || {};
+    this.apiConfig = this.apiConfig || {};
+    this.queryEndpoint = this.queryEndpoint || {};
+    if (plainObject.querygenome) {
+      // only set if there is value
+      this.querygenome = plainObject.querygenome;
     }
 
-    serialize() {
-        const plainObject = _.clone(this);
-        // @ts-ignore
-        delete plainObject.id;
-        return plainObject;
+    // in case user define height in string, like "25" instead of 25
+    if (this.options.height && typeof this.options.height === "string") {
+      this.options.height = Number.parseFloat(this.options.height) || 20;
     }
 
-    static deserialize(plainObject: any) {
-        return new TrackModel(plainObject);
-    }
+    // Other misc props
+    this.id = nextId;
+    nextId++;
+  }
 
-    /**
-     * Gets this object's id.  Ids are used to keep track of track identity even through different instances of
-     * TrackModel; two models with the same id are considered the same track, perhaps with different options configured.
-     *
-     * @return {number} this object's id
-     */
-    getId(): number {
-        return this.id;
-    }
+  serialize() {
+    const plainObject = _.clone(this);
+    // @ts-ignore
+    delete plainObject.id;
+    return plainObject;
+  }
 
-    /**
-     * Gets the label to display for this track; this method returns a reasonable default even in the absence of data.
-     *
-     * @return {string} the display label of the track
-     */
-    getDisplayLabel(): string {
-        return this.options.label || "(unnamed track)";
-    }
+  static deserialize(plainObject: any) {
+    return new TrackModel(plainObject);
+  }
 
-    /**
-     * TODO: Document this.
-     *
-     * @param {string} term
-     * @returns {string}
-     * @memberof TrackModel
-     * always return a string
-     */
-    getMetadata(term: string): string | undefined {
-        const value = this.metadata[term];
-        if (Array.isArray(value)) {
-            return value[value.length - 1];
-        } else {
-            return value;
-        }
-    }
+  /**
+   * Gets this object's id.  Ids are used to keep track of track identity even through different instances of
+   * TrackModel; two models with the same id are considered the same track, perhaps with different options configured.
+   *
+   * @return {number} this object's id
+   */
+  getId(): number {
+    return this.id;
+  }
 
-    /**
-     *
-     * @param term
-     * always return an array
-     */
-    getMetadataAsArray(term: string): string[] | undefined {
-        const value = this.metadata[term];
-        if (Array.isArray(value)) {
-            return value;
-        } else {
-            if (variableIsObject(value)) {
-                return [value.name];
-            } else {
-                return [value];
-            }
-        }
-    }
+  /**
+   * Gets the label to display for this track; this method returns a reasonable default even in the absence of data.
+   *
+   * @return {string} the display label of the track
+   */
+  getDisplayLabel(): string {
+    return this.options.label || "(unnamed track)";
+  }
 
-    /**
-     *
-     * @param term
-     * @return return the meta value defined by user, maybe a string, an array or an object
-     * purpose of this is to allow users to customize metadata display, like defining colors
-     * in this way, for example
-     * Assay: {name: "ATAC-seq", color: "red"}
-     */
-    getMetadataAsis(term: string): any | undefined {
-        return this.metadata[term];
+  /**
+   * TODO: Document this.
+   *
+   * @param {string} term
+   * @returns {string}
+   * @memberof TrackModel
+   * always return a string
+   */
+  getMetadata(term: string): string | undefined {
+    const value = this.metadata[term];
+    if (Array.isArray(value)) {
+      return value[value.length - 1];
+    } else {
+      return value;
     }
+  }
 
-    /**
-     * **Shallowly** clones this.
-     *
-     * @return {TrackModel} a shallow copy of this
-     */
-    clone(): TrackModel {
-        return _.clone(this);
+  /**
+   *
+   * @param term
+   * always return an array
+   */
+  getMetadataAsArray(term: string): string[] | undefined {
+    const value = this.metadata[term];
+    if (Array.isArray(value)) {
+      return value;
+    } else {
+      if (variableIsObject(value)) {
+        return [value.name];
+      } else {
+        return [value];
+      }
     }
+  }
 
-    /**
-     * Shallowly clones `this` and `this.options`, and then modifies the clone's options.  Returns the clone.  This
-     * method will not mutate this instance.
-     *
-     * @param {string} name - the name of the option to set
-     * @param {any} optionValue - the value of the option
-     * @return {TrackModel} shallow clone of this, with the option set
-     */
-    cloneAndSetOption(name: string, optionValue: any): TrackModel {
-        const clone = this._cloneThisAndProp("options");
-        clone.options[name] = optionValue;
-        return clone;
-    }
+  /**
+   *
+   * @param term
+   * @return return the meta value defined by user, maybe a string, an array or an object
+   * purpose of this is to allow users to customize metadata display, like defining colors
+   * in this way, for example
+   * Assay: {name: "ATAC-seq", color: "red"}
+   */
+  getMetadataAsis(term: string): any | undefined {
+    return this.metadata[term];
+  }
 
-    /**
-     * Shallowly clones this and also selects a particular property to be cloned one level deeper.
-     *
-     * @param {string} prop - property name to also clone
-     * @return {TrackModel} shallow clone of this
-     */
-    _cloneThisAndProp(prop: string): TrackModel {
-        const clone = _.clone(this);
-        // @ts-ignore
-        clone[prop] = _.clone(this[prop]);
-        return clone;
-    }
+  /**
+   * **Shallowly** clones this.
+   *
+   * @return {TrackModel} a shallow copy of this
+   */
+  clone(): TrackModel {
+    return _.clone(this);
+  }
+
+  /**
+   * Shallowly clones `this` and `this.options`, and then modifies the clone's options.  Returns the clone.  This
+   * method will not mutate this instance.
+   *
+   * @param {string} name - the name of the option to set
+   * @param {any} optionValue - the value of the option
+   * @return {TrackModel} shallow clone of this, with the option set
+   */
+  cloneAndSetOption(name: string, optionValue: any): TrackModel {
+    const clone = this._cloneThisAndProp("options");
+    clone.options[name] = optionValue;
+    return clone;
+  }
+
+  /**
+   * Shallowly clones this and also selects a particular property to be cloned one level deeper.
+   *
+   * @param {string} prop - property name to also clone
+   * @return {TrackModel} shallow clone of this
+   */
+  _cloneThisAndProp(prop: string): TrackModel {
+    const clone = _.clone(this);
+    // @ts-ignore
+    clone[prop] = _.clone(this[prop]);
+    return clone;
+  }
 }
 
 export default TrackModel;
 
 // modified from juicebox
 export function mapUrl(url: string) {
-    if (!url) {
-        return undefined;
-    }
-    if (url.includes("//www.dropbox.com")) {
-        return url.replace("//www.dropbox.com", "//dl.dropboxusercontent.com");
-    } else if (url.startsWith("ftp://ftp.ncbi.nlm.nih.gov")) {
-        return url.replace("ftp://", "https://");
-    }
-    return url;
+  if (!url) {
+    return undefined;
+  }
+  if (url.includes("//www.dropbox.com")) {
+    return url.replace("//www.dropbox.com", "//dl.dropboxusercontent.com");
+  } else if (url.startsWith("ftp://ftp.ncbi.nlm.nih.gov")) {
+    return url.replace("ftp://", "https://");
+  }
+  return url;
 }

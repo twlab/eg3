@@ -100,7 +100,7 @@ export class TrackModel {
     this.type = this.type || this.filetype || "";
     this.type = this.type.toLowerCase();
     this.options = this.options || {}; // `options` stores dynamically-configurable options.
-    this.options.label = this.label; // ...which is why we copy this.name.
+
     this.url = mapUrl(this.url) || "";
     this.indexUrl = this.indexUrl ? mapUrl(this.indexUrl) : undefined;
     this.metadata =

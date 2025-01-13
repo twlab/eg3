@@ -6,16 +6,28 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
-import { DEFAULT_OPTIONS as defaultBedTrack } from "./bedComponents/BedAnnotation";
+import BedAnnotation, {
+  DEFAULT_OPTIONS as defaultBedTrack,
+} from "./bedComponents/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultBigBedTrack } from "./bedComponents/BedAnnotation";
 import { DEFAULT_OPTIONS as defaultNumericalTrack } from "./commonComponents/numerical/NumericalTrack";
 import { DEFAULT_OPTIONS as defaultAnnotationTrack } from "../../../trackConfigs/config-menu-models.tsx/AnnotationTrackConfig";
 import { DEFAULT_OPTIONS as defaultOmeroTrack } from "./imageTrackComponents/OmeroTrackComponents";
+import { DEFAULT_OPTIONS as defaultCategorical } from "../../../trackConfigs/config-menu-models.tsx/CategoricalTrackConfig";
+import { DEFAULT_OPTIONS as defaultMethylc } from "./MethylcComponents/MethylCTrackComputation";
+import { DEFAULT_OPTIONS as defaultDynseq } from "./DynseqComponents/DynseqTrackComponents";
+import { DEFAULT_OPTIONS as defaultBoxplotTrack } from "./commonComponents/stats/BoxplotTrackComponents";
+import { DEFAULT_OPTIONS as defaultQBedTrack } from "./QBedComponents/QBedTrackComponents";
+import { DEFAULT_OPTIONS as defaultFiberTrack } from "./bedComponents/FiberTrackComponent";
+import { DEFAULT_OPTIONS as defaultInteractTrack } from "./InteractionComponents/InteractionTrackComponent";
 
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
-import { cacheTrackData } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
+import {
+  cacheTrackData,
+  trackUsingExpandedLoci,
+} from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
@@ -24,6 +36,9 @@ import Feature from "../../../models/Feature";
 import { DefaultAggregators } from "@eg/core/src/eg-lib/models/FeatureAggregator";
 import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
 import SnpDetail from "./SnpComponents/SnpDetail";
+import { Fiber, JasparFeature } from "@eg/core/src/eg-lib/models/Feature";
+import JasparDetail from "./commonComponents/annotation/JasparDetail";
+import { objToInstanceAlign } from "../TrackManager";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -51,6 +66,7 @@ const trackOptionMap: { [key: string]: any } = {
     },
     getGenePadding: function getGenePadding(gene) {
       return gene.getName().length * 9;
+      ``;
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
@@ -149,15 +165,126 @@ const trackOptionMap: { [key: string]: any } = {
     getGenePadding: 5,
     ROW_HEIGHT: SNP_ROW_HEIGHT,
   },
+  modbed: {
+    defaultOptions: {
+      ...defaultFiberTrack,
+    },
+    getGenePadding: function getGenePadding(
+      feature: Fiber,
+      xSpan: OpenInterval
+    ) {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
+    },
+    ROW_HEIGHT: 40,
+  },
 
+  //SVG only tracks
+  categorical: {
+    defaultOptions: {
+      ...defaultAnnotationTrack,
+      ...defaultCategorical,
+      height: 20,
+      color: "blue",
+      maxRows: 1,
+      hiddenPixels: 0.5,
+      backgroundColor: "var(--bg-color)",
+      alwaysDrawLabel: true,
+      category: {},
+    },
+    getGenePadding: function getGenePadding(
+      feature: Feature,
+      xSpan: OpenInterval
+    ) {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
+    },
+    ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
+  },
+  jaspar: {
+    defaultOptions: {
+      ...defaultAnnotationTrack,
+
+      hiddenPixels: 0.5,
+      alwaysDrawLabel: true,
+      backgroundColor: "var(--bg-color)",
+    },
+    getGenePadding: function getGenePadding(
+      feature: JasparFeature,
+      xSpan: OpenInterval
+    ) {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
+    },
+    ROW_HEIGHT: BedAnnotation.HEIGHT + 2,
+  },
+
+  // canvas only tracks
   bigwig: {
     defaultOptions: {
       ...defaultNumericalTrack,
     },
   },
+  methylc: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      ...defaultMethylc,
+      displayMode: "density",
+    },
+  },
+  dynseq: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      ...defaultDynseq,
+    },
+  },
+  boxplot: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      ...defaultBoxplotTrack,
+      displayMode: "density",
+    },
+  },
+  qbed: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      ...defaultQBedTrack,
+    },
+    displayMode: "density",
+  },
+  bedgraph: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      displayMode: "density",
+    },
+  },
+  // interaction track
+
+  hic: {
+    defaultOptions: {
+      ...defaultInteractTrack,
+    },
+  },
 };
 const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
   function SvgOrCanvasTracks({
+    trackManagerRef,
+    basePerPixel,
     trackData,
     updateGlobalTrackConfig,
     side,
@@ -185,6 +312,8 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
     const updatedLegend = useRef<any>();
     const fetchError = useRef<boolean>(false);
     const usePrimaryNav = useRef<boolean>(true);
+    const useExpandedLoci = useRef<boolean>(false);
+    const straw = useRef<{ [key: string]: any }>({});
     const fetchedDataCache = useRef<{ [key: string]: any }>({});
     const displayCache = useRef<{ [key: string]: any }>({
       full: {},
@@ -240,8 +369,10 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
       if (rowsToDraw < 1) {
         rowsToDraw = 1;
       }
-      console.log();
-      return rowsToDraw * rowHeight + TOP_PADDING;
+
+      return trackModel.type === "modbed"
+        ? (rowsToDraw + 1) * rowHeight + 2
+        : rowsToDraw * rowHeight + TOP_PADDING;
     }
 
     async function createSVGOrCanvas(trackState, genesArr, isError) {
@@ -272,7 +403,8 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
           trackState,
           windowWidth,
           configOptions: configOptions.current,
-          renderTooltip,
+          renderTooltip:
+            trackModel.type === "modbed" ? renderTooltipModbed : renderTooltip,
           svgHeight,
           updatedLegend,
           trackModel,
@@ -284,9 +416,9 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
 
       if (
         ((rightIdx.current + 2 >= dataIdx || leftIdx.current - 2 <= dataIdx) &&
-          usePrimaryNav.current) ||
+          !useExpandedLoci.current) ||
         ((rightIdx.current + 1 >= dataIdx || leftIdx.current - 1 <= dataIdx) &&
-          !usePrimaryNav.current) ||
+          useExpandedLoci.current) ||
         trackState.initial ||
         trackState.recreate
       ) {
@@ -877,6 +1009,143 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
           document.body
         );
       },
+      categorical: function featureClickTooltip(
+        feature: any,
+        pageX,
+        pageY,
+        name,
+        onClose
+      ) {
+        const contentStyle = Object.assign({
+          marginTop: ARROW_SIZE,
+          pointerEvents: "auto",
+        });
+
+        return ReactDOM.createPortal(
+          <Manager>
+            <Reference>
+              {({ ref }) => (
+                <div
+                  ref={ref}
+                  style={{
+                    position: "absolute",
+                    left: pageX - 8 * 2,
+                    top: pageY,
+                  }}
+                />
+              )}
+            </Reference>
+            <Popper
+              placement="bottom-start"
+              modifiers={[{ name: "flip", enabled: false }]}
+            >
+              {({ ref, style, placement, arrowProps }) => (
+                <div
+                  ref={ref}
+                  style={{
+                    ...style,
+                    ...contentStyle,
+                    zIndex: 1001,
+                  }}
+                  className="Tooltip"
+                >
+                  <OutsideClickDetector onOutsideClick={onClose}>
+                    <FeatureDetail
+                      feature={feature}
+                      category={configOptions.current.category}
+                    />
+                  </OutsideClickDetector>
+                  {ReactDOM.createPortal(
+                    <div
+                      ref={arrowProps.ref}
+                      style={{
+                        ...arrowProps.style,
+                        width: 0,
+                        height: 0,
+                        position: "absolute",
+                        left: pageX - 8,
+                        top: pageY,
+                        borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                        borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                        borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                      }}
+                    />,
+                    document.body
+                  )}
+                </div>
+              )}
+            </Popper>
+          </Manager>,
+          document.body
+        );
+      },
+      jaspar: function JasparClickTooltip(
+        feature: any,
+        pageX,
+        pageY,
+        name,
+        onClose
+      ) {
+        const contentStyle = Object.assign({
+          marginTop: ARROW_SIZE,
+          pointerEvents: "auto",
+        });
+
+        return ReactDOM.createPortal(
+          <Manager>
+            <Reference>
+              {({ ref }) => (
+                <div
+                  ref={ref}
+                  style={{
+                    position: "absolute",
+                    left: pageX - 8 * 2,
+                    top: pageY,
+                  }}
+                />
+              )}
+            </Reference>
+            <Popper
+              placement="bottom-start"
+              modifiers={[{ name: "flip", enabled: false }]}
+            >
+              {({ ref, style, placement, arrowProps }) => (
+                <div
+                  ref={ref}
+                  style={{
+                    ...style,
+                    ...contentStyle,
+                    zIndex: 1001,
+                  }}
+                  className="Tooltip"
+                >
+                  <OutsideClickDetector onOutsideClick={onClose}>
+                    <JasparDetail feature={feature} />
+                  </OutsideClickDetector>
+                  {ReactDOM.createPortal(
+                    <div
+                      ref={arrowProps.ref}
+                      style={{
+                        ...arrowProps.style,
+                        width: 0,
+                        height: 0,
+                        position: "absolute",
+                        left: pageX - 8,
+                        top: pageY,
+                        borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                        borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                        borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                      }}
+                    />,
+                    document.body
+                  )}
+                </div>
+              )}
+            </Popper>
+          </Manager>,
+          document.body
+        );
+      },
     };
 
     function renderTooltip(event, gene) {
@@ -891,6 +1160,112 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
       setToolTip(ReactDOM.createPortal(currtooltip, document.body));
     }
 
+    function barTooltip(feature: any, pageX, pageY, onCount, onPct, total) {
+      const contentStyle = Object.assign({
+        marginTop: ARROW_SIZE,
+        pointerEvents: "auto",
+      });
+
+      return ReactDOM.createPortal(
+        <Manager>
+          <Reference>
+            {({ ref }) => (
+              <div
+                ref={ref}
+                style={{
+                  position: "absolute",
+                  left: pageX - 8 * 2,
+                  top: pageY,
+                }}
+              />
+            )}
+          </Reference>
+          <Popper
+            placement="bottom-start"
+            modifiers={[{ name: "flip", enabled: false }]}
+          >
+            {({ ref, style, placement, arrowProps }) => (
+              <div
+                ref={ref}
+                style={{
+                  ...style,
+                  ...contentStyle,
+                  zIndex: 1001,
+                }}
+                className="Tooltip"
+              >
+                <div>
+                  {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
+                </div>
+                <div>{feature.getName()}</div>
+              </div>
+            )}
+          </Popper>
+        </Manager>,
+        document.body
+      );
+    }
+    function normToolTip(bs: any, pageX, pageY, feature) {
+      const contentStyle = Object.assign({
+        marginTop: ARROW_SIZE,
+        pointerEvents: "auto",
+      });
+
+      return ReactDOM.createPortal(
+        <Manager>
+          <Reference>
+            {({ ref }) => (
+              <div
+                ref={ref}
+                style={{
+                  position: "absolute",
+                  left: pageX - 8 * 2,
+                  top: pageY,
+                }}
+              />
+            )}
+          </Reference>
+
+          <div
+            style={{
+              ...contentStyle,
+              zIndex: 1001,
+            }}
+            className="Tooltip"
+          >
+            <div>
+              {bs && `position ${bs} in`} {feature.getName()} read
+            </div>
+          </div>
+        </Manager>,
+        document.body
+      );
+    }
+    function renderTooltipModbed(
+      event,
+      feature,
+      bs,
+      type,
+      onCount = "",
+      onPct = "",
+      total = ""
+    ) {
+      let currtooltip;
+      if (type === "norm") {
+        currtooltip = normToolTip(bs, event.pageX, event.pageY, feature);
+      } else {
+        currtooltip = barTooltip(
+          feature,
+          event.pageX,
+          event.pageY,
+          onCount,
+          onPct,
+          total
+        );
+      }
+      setToolTipVisible(true);
+      setToolTip(currtooltip);
+    }
     function onClose() {
       setToolTipVisible(false);
     }
@@ -905,6 +1280,10 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
                 genomeConfig.genome.getName()
             ) {
               usePrimaryNav.current = false;
+              useExpandedLoci.current = true;
+            }
+            if (trackModel.type in trackUsingExpandedLoci) {
+              useExpandedLoci.current = true;
             }
             if (
               !genomeConfig.isInitial &&
@@ -913,11 +1292,7 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
             ) {
               const trackIndex = trackData![`${id}`].trackDataIdx;
               const cache = fetchedDataCache.current;
-              if (
-                "genome" in trackData![`${id}`].metadata &&
-                trackData![`${id}`].metadata.genome !==
-                  genomeConfig.genome.getName()
-              ) {
+              if (useExpandedLoci.current) {
                 let idx = trackIndex in cache ? trackIndex : 0;
                 trackData![`${id}`].result =
                   fetchedDataCache.current[idx].dataCache;
@@ -959,6 +1334,12 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
               legendRef: legendRef,
               usePrimaryNav: usePrimaryNav.current,
             });
+            if (trackModel.type === "hic") {
+              if (trackData![`${id}`].straw) {
+                straw.current = trackData![`${id}`].straw;
+              }
+              configOptions.current["trackManagerRef"] = trackManagerRef;
+            }
           }
           if (trackModel.type === "bam") {
             let tmpRawData: Array<Promise<any>> = [];
@@ -973,6 +1354,26 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
             if (!trackData!.trackState.initial) {
               trackData![`${id}`]["result"] =
                 trackData![`${id}`]["result"].flat();
+            }
+          } else if (trackModel.type === "hic") {
+            const primaryVisData =
+              trackData!.trackState.genomicFetchCoord[
+                trackData!.trackState.primaryGenName
+              ].primaryVisData;
+
+            let visRegion =
+              "genome" in trackData![`${id}`].metadata
+                ? trackData!.trackState.genomicFetchCoord[
+                    trackData![`${id}`].metadata.genome
+                  ].queryRegion
+                : primaryVisData.visRegion;
+
+            if (trackData![`${id}`].result === undefined) {
+              trackData![`${id}`]["result"] = await straw.current.getData(
+                objToInstanceAlign(visRegion),
+                basePerPixel,
+                configOptions.current
+              );
             }
           }
           if ("result" in trackData![`${id}`]) {
@@ -1090,7 +1491,10 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
             trackState,
             windowWidth,
             configOptions: drawOptions,
-            renderTooltip,
+            renderTooltip:
+              trackModel.type === "modbed"
+                ? renderTooltipModbed
+                : renderTooltip,
             svgHeight,
             updatedLegend,
             trackModel,

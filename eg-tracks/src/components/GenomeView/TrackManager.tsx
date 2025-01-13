@@ -1,13 +1,7 @@
 import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-import QBedTrack from "./TrackComponents/QBedTrack";
-import RefGeneTrack from "./TrackComponents/RefGeneTrack";
-import BedTrack from "./TrackComponents/BedTrack";
-import BigBedTrack from "./TrackComponents/BigBedTrack";
-import BigWigTrack from "./TrackComponents/BigWigTrack";
-import DynseqTrack from "./TrackComponents/DynseqTrack";
-import MethylcTrack from "./TrackComponents/MethylcTrack";
+
 import GenomeAlign from "./TrackComponents/GenomeAlign";
 import MatplotTrack from "./TrackComponents/MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -22,15 +16,13 @@ import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
 import { HicSource } from "../../getRemoteData/hicSource";
 import HiCTrack from "./TrackComponents/HiCTrack";
-import CategoricalTrack from "./TrackComponents/CategoricalTrack";
+
 import LongrangeTrack from "./TrackComponents/LongrangeTrack";
 import BigInteractTrack from "./TrackComponents/BigInteractTrack";
-import RepeatMaskerTrack from "./TrackComponents/RepeatMaskerTrack";
-import RefBedTrack from "./TrackComponents/RefBedTrack";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./TrackComponents/RulerTrack";
-import FiberTrack from "./TrackComponents/FiberTrack";
+
 import DBedGraphTrack from "./TrackComponents/DBedGraphTrack";
 import _ from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
@@ -39,20 +31,14 @@ import HighlightMenu from "./ToolComponents/HighlightMenu";
 import History from "./ToolComponents/History";
 import SvgOrCanvasTracks from "./TrackComponents/SvgOrCanvasTracks";
 import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
-import BedgraphTrack from "./TrackComponents/BedgraphTrack";
 
-import BoxplotTrack from "./TrackComponents/BoxplotTrack";
-import JasparTrack from "./TrackComponents/JasparTrack";
 import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
 import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
 
 import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
-import SnpTrack from "./TrackComponents/SnpTrack";
-import BamTrack from "./TrackComponents/BamTrack";
-import BamSource from "../../getRemoteData/BamSource";
-import OmeroTrack from "./TrackComponents/OmeroTrack";
 
-import { m } from "framer-motion";
+import BamSource from "../../getRemoteData/BamSource";
+
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
@@ -101,12 +87,12 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   geneannotation: SvgOrCanvasTracks,
   bed: SvgOrCanvasTracks,
   bigwig: SvgOrCanvasTracks,
-  dynseq: DynseqTrack,
-  methylc: MethylcTrack,
-  hic: HiCTrack,
+  dynseq: SvgOrCanvasTracks,
+  methylc: SvgOrCanvasTracks,
+  hic: SvgOrCanvasTracks,
   genomealign: GenomeAlign,
-  cool: HiCTrack,
-  categorical: CategoricalTrack,
+
+  categorical: SvgOrCanvasTracks,
   longrange: LongrangeTrack,
   biginteract: BigInteractTrack,
   repeatmasker: SvgOrCanvasTracks,
@@ -114,12 +100,12 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   refbed: SvgOrCanvasTracks,
   matplot: MatplotTrack,
   ruler: RulerTrack,
-  modbed: FiberTrack,
+  modbed: SvgOrCanvasTracks,
   dynamic: DynamicplotTrack,
-  bedgraph: BedgraphTrack,
-  qbed: QBedTrack,
-  boxplot: BoxplotTrack,
-  jaspar: JasparTrack,
+  bedgraph: SvgOrCanvasTracks,
+  qbed: SvgOrCanvasTracks,
+  boxplot: SvgOrCanvasTracks,
+  jaspar: SvgOrCanvasTracks,
   dynamichic: DynamicHicTrack,
   dynamicbed: DynamicBedTrack,
   dbedgraph: DBedGraphTrack,

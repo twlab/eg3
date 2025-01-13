@@ -78,7 +78,6 @@ const HiCTrack: React.FC<TrackProps> = memo(function HiCTrack(props) {
       fetchError.current = true;
     }
     let tmpObj = { ...configOptions.current };
-    tmpObj["trackManagerHeight"] = trackManagerRef.current.offsetHeight;
 
     trackState["viewWindow"] =
       updateSide.current === "right"
