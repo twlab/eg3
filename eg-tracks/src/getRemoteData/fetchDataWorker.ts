@@ -456,12 +456,20 @@ self.onmessage = async (event: MessageEvent) => {
           metadata: item.metadata,
           trackModel: item,
         });
-      } else if (trackType in { hic: "", ruler: "", dynamichic: "" }) {
+      } else if (trackType in { hic: "", dynamichic: "" }) {
         fetchResults.push({
           name: trackType,
           id: id,
           metadata: item.metadata,
           trackModel: item,
+        });
+      } else if (trackType === "ruler") {
+        fetchResults.push({
+          name: trackType,
+          id: id,
+          metadata: item.metadata,
+          trackModel: item,
+          result: event.data.initial === 1 ? [[], [], []] : [],
         });
       } else if (trackType === "geneannotation") {
         let genRefResponses: Array<any> = await fetchData(item, genomeName, id);

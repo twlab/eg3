@@ -100,7 +100,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
   useEffect(() => {
     if (trackData![`${id}`]) {
       if (trackData!.trackState.initial === 1) {
-        trackData![`${id}`].result = [[], [], []];
         if (
           "genome" in trackData![`${id}`].metadata &&
           trackData![`${id}`].metadata.genome !== genomeConfig.genome.getName()
@@ -160,8 +159,6 @@ const RulerTrack: React.FC<TrackProps> = memo(function RulerTrack({
           legendRef: legendRef,
           usePrimaryNav: usePrimaryNav.current,
         });
-      } else {
-        trackData![`${id}`].result = [];
       }
       if ("result" in trackData![`${id}`]) {
         if (trackData![`${id}`].result) {

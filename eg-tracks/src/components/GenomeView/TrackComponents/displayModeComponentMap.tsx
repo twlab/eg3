@@ -70,6 +70,8 @@ import { initialLayout } from "@eg/core/src/eg-lib/models/layoutUtils";
 import _ from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
 import { getGenomeConfig } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
+import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
+import React from "react";
 
 enum BedColumnIndex {
   CATEGORY = 3,
@@ -1101,22 +1103,38 @@ export function getDisplayModeFunction(
         );
       } else {
         element = (
-          <svg
-            width={drawData.trackState.visWidth}
-            height={drawData.configOptions.height}
-            display={"block"}
-          >
-            {svgElements}
-          </svg>
+          <React.Fragment>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                position: "absolute",
+                zIndex: 3,
+              }}
+            >
+              <HoverToolTip
+                data={drawData.genesArr}
+                windowWidth={drawData.trackState.visWidth}
+                trackType={"genomealignFine"}
+                height={drawData.configOptions.height}
+                viewRegion={drawData.trackState.visRegion}
+                side={drawData.trackState.side}
+                options={drawData.configOptions}
+              />
+            </div>
+
+            <svg
+              width={drawData.trackState.visWidth}
+              height={drawData.configOptions.height}
+              display={"block"}
+            >
+              {svgElements}
+            </svg>
+          </React.Fragment>
         );
       }
-      let tempObj = {
-        alignment: drawData.genesArr,
-        svgElements: element,
-        trackState: drawData.trackState,
-      };
 
-      return tempObj;
+      return element;
     } else {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
       drawData.updatedLegend.current = (
@@ -1173,23 +1191,38 @@ export function getDisplayModeFunction(
         );
       } else {
         element = (
-          <svg
-            width={drawData.trackState.visWidth}
-            height={drawData.configOptions.height}
-            display={"block"}
-          >
-            {svgElements}
-          </svg>
+          <React.Fragment>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                position: "absolute",
+                zIndex: 3,
+              }}
+            >
+              <HoverToolTip
+                data={drawData.genesArr}
+                windowWidth={drawData.trackState.visWidth}
+                trackType={"genomealignRough"}
+                height={drawData.configOptions.height}
+                viewRegion={drawData.trackState.visRegion}
+                side={drawData.trackState.side}
+                options={drawData.configOptions}
+              />
+            </div>
+
+            <svg
+              width={drawData.trackState.visWidth}
+              height={drawData.configOptions.height}
+              display={"block"}
+            >
+              {svgElements}
+            </svg>
+          </React.Fragment>
         );
       }
-      let tempObj = {
-        alignment: drawData.genesArr,
-        svgElements: element,
 
-        trackState: drawData.trackState,
-      };
-
-      return tempObj;
+      return element;
     }
   } else if (drawData.trackModel.type === "matplot") {
     let formattedData: Array<any> = [];

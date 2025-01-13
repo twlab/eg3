@@ -63,7 +63,7 @@ export class TrackModel {
    */
   name!: string;
   type!: string;
-  label!: string;
+  label: string;
   filetype?: string;
   options!: TrackOptions;
   url!: string;
@@ -85,14 +85,12 @@ export class TrackModel {
     Object.assign(this, plainObject);
     this.name = this.name || "";
     this.label =
-      this.options && this.options.label
-        ? this.options.label
-        : this.label || this.name || "";
+      this.options && this.options.label ? this.options.label : this.name || "";
     this.isSelected = this.isSelected || false;
     this.type = this.type || this.filetype || "";
     this.type = this.type.toLowerCase();
     this.options = this.options || {}; // `options` stores dynamically-configurable options.
-    this.options.label = this.label || ""; // ...which is why we copy this.name.
+    this.options["label"] = this.label || ""; // ...which is why we copy this.name.
     this.url = mapUrl(this.url) || "";
     this.indexUrl = this.indexUrl ? mapUrl(this.indexUrl) : undefined;
     this.metadata =

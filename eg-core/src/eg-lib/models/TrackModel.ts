@@ -99,8 +99,9 @@ export class TrackModel {
     this.isSelected = this.isSelected || false;
     this.type = this.type || this.filetype || "";
     this.type = this.type.toLowerCase();
-    this.options = this.options || {}; // `options` stores dynamically-configurable options.
-
+    this.options = this.options
+      ? { ...this.options, label: this.label }
+      : { label: this.label }; // `options` stores dynamically-configurable options.
     this.url = mapUrl(this.url) || "";
     this.indexUrl = this.indexUrl ? mapUrl(this.indexUrl) : undefined;
     this.metadata =

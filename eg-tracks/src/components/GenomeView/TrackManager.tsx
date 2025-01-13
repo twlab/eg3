@@ -2,7 +2,6 @@ import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 
-import GenomeAlign from "./TrackComponents/GenomeAlign";
 import MatplotTrack from "./TrackComponents/MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
@@ -15,13 +14,9 @@ import ChromosomeInterval from "../../models/ChromosomeInterval";
 import Feature from "../../models/Feature";
 import NavigationContext from "../../models/NavigationContext";
 import { HicSource } from "../../getRemoteData/hicSource";
-import HiCTrack from "./TrackComponents/HiCTrack";
 
-import LongrangeTrack from "./TrackComponents/LongrangeTrack";
-import BigInteractTrack from "./TrackComponents/BigInteractTrack";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
-import RulerTrack from "./TrackComponents/RulerTrack";
 
 import DBedGraphTrack from "./TrackComponents/DBedGraphTrack";
 import _ from "lodash";
@@ -90,16 +85,16 @@ const componentMap: { [key: string]: React.FC<TrackProps> } = {
   dynseq: SvgOrCanvasTracks,
   methylc: SvgOrCanvasTracks,
   hic: SvgOrCanvasTracks,
-  genomealign: GenomeAlign,
+  genomealign: SvgOrCanvasTracks,
 
   categorical: SvgOrCanvasTracks,
-  longrange: LongrangeTrack,
-  biginteract: BigInteractTrack,
+  longrange: SvgOrCanvasTracks,
+  biginteract: SvgOrCanvasTracks,
   repeatmasker: SvgOrCanvasTracks,
   bigbed: SvgOrCanvasTracks,
   refbed: SvgOrCanvasTracks,
   matplot: MatplotTrack,
-  ruler: RulerTrack,
+  ruler: SvgOrCanvasTracks,
   modbed: SvgOrCanvasTracks,
   dynamic: DynamicplotTrack,
   bedgraph: SvgOrCanvasTracks,

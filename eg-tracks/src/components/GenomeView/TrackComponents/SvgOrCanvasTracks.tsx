@@ -20,6 +20,7 @@ import { DEFAULT_OPTIONS as defaultBoxplotTrack } from "./commonComponents/stats
 import { DEFAULT_OPTIONS as defaultQBedTrack } from "./QBedComponents/QBedTrackComponents";
 import { DEFAULT_OPTIONS as defaultFiberTrack } from "./bedComponents/FiberTrackComponent";
 import { DEFAULT_OPTIONS as defaultInteractTrack } from "./InteractionComponents/InteractionTrackComponent";
+import { DEFAULT_OPTIONS as defaultGenomeAlignTrack } from "./GenomeAlignComponents/GenomeAlignComponents";
 
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
@@ -58,6 +59,9 @@ const SNP_ROW_VERTICAL_PADDING = 2;
 const SNP_ROW_HEIGHT = SNP_HEIGHT + SNP_ROW_VERTICAL_PADDING;
 
 const trackOptionMap: { [key: string]: any } = {
+  ruler: {
+    defaultOptions: { backgroundColor: "var(--bg-color)" },
+  },
   bigbed: {
     defaultOptions: {
       ...defaultBigBedTrack,
@@ -80,6 +84,12 @@ const trackOptionMap: { [key: string]: any } = {
       return gene.getName().length * 9;
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
+  },
+  genomealign: {
+    defaultOptions: {
+      ...defaultGenomeAlignTrack,
+      displayMode: "full",
+    },
   },
   refbed: {
     defaultOptions: {
@@ -280,6 +290,16 @@ const trackOptionMap: { [key: string]: any } = {
       ...defaultInteractTrack,
     },
   },
+  biginteract: {
+    defaultOptions: {
+      ...defaultInteractTrack,
+    },
+  },
+  longrange: {
+    defaultOptions: {
+      ...defaultInteractTrack,
+    },
+  },
 };
 const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
   function SvgOrCanvasTracks({
@@ -399,7 +419,9 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
         </div>
       ) : (
         await getDisplayModeFunction({
+          basesByPixel: basePerPixel,
           genesArr,
+          genomeName: genomeConfig.genome.getName(),
           trackState,
           windowWidth,
           configOptions: configOptions.current,
@@ -1274,51 +1296,8 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
       async function handle() {
         if (trackData![`${id}`]) {
           if (trackData!.trackState.initial === 1) {
-            if (
-              "genome" in trackData![`${id}`].metadata &&
-              trackData![`${id}`].metadata.genome !==
-                genomeConfig.genome.getName()
-            ) {
-              usePrimaryNav.current = false;
-              useExpandedLoci.current = true;
-            }
             if (trackModel.type in trackUsingExpandedLoci) {
               useExpandedLoci.current = true;
-            }
-            if (
-              !genomeConfig.isInitial &&
-              genomeConfig.sizeChange &&
-              Object.keys(fetchedDataCache.current).length > 0
-            ) {
-              const trackIndex = trackData![`${id}`].trackDataIdx;
-              const cache = fetchedDataCache.current;
-              if (useExpandedLoci.current) {
-                let idx = trackIndex in cache ? trackIndex : 0;
-                trackData![`${id}`].result =
-                  fetchedDataCache.current[idx].dataCache;
-              } else {
-                let left, mid, right;
-
-                if (
-                  trackIndex in cache &&
-                  trackIndex + 1 in cache &&
-                  trackIndex - 1 in cache
-                ) {
-                  left = trackIndex + 1;
-                  mid = trackIndex;
-                  right = trackIndex - 1;
-                } else {
-                  left = 1;
-                  mid = 0;
-                  right = -1;
-                }
-
-                trackData![`${id}`].result = [
-                  cache[left].dataCache,
-                  cache[mid].dataCache,
-                  cache[right].dataCache,
-                ];
-              }
             }
             resetState();
             configOptions.current = {
@@ -1334,11 +1313,60 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
               legendRef: legendRef,
               usePrimaryNav: usePrimaryNav.current,
             });
-            if (trackModel.type === "hic") {
-              if (trackData![`${id}`].straw) {
-                straw.current = trackData![`${id}`].straw;
+            if (trackModel.type !== "genomealign") {
+              if (
+                "genome" in trackData![`${id}`].metadata &&
+                trackData![`${id}`].metadata.genome !==
+                  genomeConfig.genome.getName()
+              ) {
+                usePrimaryNav.current = false;
+                useExpandedLoci.current = true;
               }
-              configOptions.current["trackManagerRef"] = trackManagerRef;
+
+              if (
+                !genomeConfig.isInitial &&
+                genomeConfig.sizeChange &&
+                Object.keys(fetchedDataCache.current).length > 0
+              ) {
+                const trackIndex = trackData![`${id}`].trackDataIdx;
+                const cache = fetchedDataCache.current;
+                if (useExpandedLoci.current) {
+                  let idx = trackIndex in cache ? trackIndex : 0;
+                  trackData![`${id}`].result =
+                    fetchedDataCache.current[idx].dataCache;
+                } else {
+                  let left, mid, right;
+
+                  if (
+                    trackIndex in cache &&
+                    trackIndex + 1 in cache &&
+                    trackIndex - 1 in cache
+                  ) {
+                    left = trackIndex + 1;
+                    mid = trackIndex;
+                    right = trackIndex - 1;
+                  } else {
+                    left = 1;
+                    mid = 0;
+                    right = -1;
+                  }
+
+                  trackData![`${id}`].result = [
+                    cache[left].dataCache,
+                    cache[mid].dataCache,
+                    cache[right].dataCache,
+                  ];
+                }
+              }
+
+              if (
+                trackModel.type in { hic: "", biginteract: "", longrange: "" }
+              ) {
+                if (trackData![`${id}`].straw) {
+                  straw.current = trackData![`${id}`].straw;
+                }
+                configOptions.current["trackManagerRef"] = trackManagerRef;
+              }
             }
           }
           if (trackModel.type === "bam") {
@@ -1376,19 +1404,18 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
               );
             }
           }
-          if ("result" in trackData![`${id}`]) {
-            if (trackData![`${id}`].result) {
-              cacheTrackData({
-                usePrimaryNav: usePrimaryNav.current,
-                id,
-                trackData,
-                fetchedDataCache,
-                rightIdx,
-                leftIdx,
-                createSVGOrCanvas,
-                trackModel,
-              });
-            }
+
+          if (trackData![`${id}`].result) {
+            cacheTrackData({
+              usePrimaryNav: usePrimaryNav.current,
+              id,
+              trackData,
+              fetchedDataCache,
+              rightIdx,
+              leftIdx,
+              createSVGOrCanvas,
+              trackModel,
+            });
           }
         }
       }
@@ -1487,6 +1514,8 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
           drawOptions["forceSvg"] = true;
 
           let result = await getDisplayModeFunction({
+            basesByPixel: basePerPixel,
+            genomeName: genomeConfig.genome.getName(),
             genesArr,
             trackState,
             windowWidth,
