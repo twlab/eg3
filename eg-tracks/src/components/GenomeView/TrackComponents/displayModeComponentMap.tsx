@@ -1357,6 +1357,7 @@ export function getDisplayModeFunction(
 
     return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {
+    console.log(drawData);
     let formattedData = drawData.genesArr;
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,
@@ -1366,11 +1367,7 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
     });
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
+
     return canvasElements;
   } else if (
     drawData.trackModel.type in
@@ -1442,11 +1439,7 @@ export function getDisplayModeFunction(
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
-    displayCache.current.density[cacheIdx] = {
-      canvasData: canvasElements,
-      height: drawData.configOptions,
-      xPos: curXPos,
-    };
+
     return canvasElements;
   } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
     let formattedData = drawData.genesArr.map((record) => {

@@ -58,53 +58,53 @@ const defaultTracks = [
   //   name: "NOTSUPPORTEDTRACEXAMPLE",
   // }),
 
-  new TrackModel({
-    type: "refbed",
-    name: "mm10 gencode basic",
-    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-    options: {
-      categoryColors: {
-        coding: "rgb(101,1,168)",
-        nonCoding: "rgb(1,193,75)",
-        pseudo: "rgb(230,0,172)",
-        problem: "rgb(224,2,2)",
-        other: "rgb(128,128,128)",
-      },
-    },
-  }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "refbed",
+  //   name: "mm10 gencode basic",
+  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+  //   options: {
+  //     categoryColors: {
+  //       coding: "rgb(101,1,168)",
+  //       nonCoding: "rgb(1,193,75)",
+  //       pseudo: "rgb(230,0,172)",
+  //       problem: "rgb(224,2,2)",
+  //       other: "rgb(128,128,128)",
+  //     },
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
+  // }),
 
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
 
-  new TrackModel({
-    type: "repeatmasker",
-    name: "RepeatMasker",
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  }),
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "RepeatMasker",
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  // }),
 
-  new TrackModel({
-    type: "snp",
-    name: "snp",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "snp",
+  //   name: "snp",
+  //   genome: "hg38",
+  // }),
   // new TrackModel({
   //   type: "geneAnnotation",
   //   name: "MANE_select_1.0",
@@ -143,38 +143,38 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
   // }),
 
-  // new TrackModel({
-  //   type: "matplot",
-  //   name: "matplot wrap",
-  //   tracks: [
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  //       name: "MeDIP",
-  //       options: {
-  //         color: "red",
-  //         backgroundColor: "#FFE7AB",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MeDIP",
-  //       },
-  //     },
-  //     {
-  //       type: "bigwig",
-  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-  //       name: "MRE",
-  //       options: {
-  //         color: "blue",
-  //         backgroundColor: "#C0E3CC",
-  //       },
-  //       metadata: {
-  //         sample: "bone",
-  //         assay: "MRE",
-  //       },
-  //     },
-  //   ],
-  // }),
+  new TrackModel({
+    type: "matplot",
+    name: "matplot wrap",
+    tracks: [
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+        name: "MeDIP",
+        options: {
+          color: "red",
+          backgroundColor: "#FFE7AB",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MeDIP",
+        },
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+        name: "MRE",
+        options: {
+          color: "blue",
+          backgroundColor: "#C0E3CC",
+        },
+        metadata: {
+          sample: "bone",
+          assay: "MRE",
+        },
+      },
+    ],
+  }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "example bigwig",
@@ -263,50 +263,50 @@ const defaultTracks = [
   // "showOnHubLoad": true
   //     }),
 
-  //   new TrackModel({
-  //       "type": "dynamicbed",
-  //       "name": "dynamic bed",
-  //       "showOnHubLoad": true,
-  //       "tracks": [
-  //       {
-  //           "type": "bed",
-  //           "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
-  //           "name": "peak1"
-  //       },
-  //       {
-  //           "type": "bed",
-  //           "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
-  //           "name": "peak2"
-  //       }
-  //       ]
-  //   }),
-  //   new TrackModel(  {
-  //   "type": "dynamic",
-  //   "name": "dynamic plot example",
-  //   "showOnHubLoad": true,
-  //   "tracks": [
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
-  //       "name": "CH12 H3K4me1"
-  //     },
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
-  //       "name": "CH12 H3K27ac"
-  //     },
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
-  //       "name": "CH12 H3K4me3"
-  //     },
-  //     {
-  //       "type": "bigwig",
-  //       "url": "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
-  //       "name": "CH12 H3K36me3"
-  //     }
-  //   ]
-  // }),
+  new TrackModel({
+    type: "dynamicbed",
+    name: "dynamic bed",
+    showOnHubLoad: true,
+    tracks: [
+      {
+        type: "bed",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak1.bed.gz",
+        name: "peak1",
+      },
+      {
+        type: "bed",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/bed/peak2.bed.gz",
+        name: "peak2",
+      },
+    ],
+  }),
+  new TrackModel({
+    type: "dynamic",
+    name: "dynamic plot example",
+    showOnHubLoad: true,
+    tracks: [
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF051LQD_H3K4me1.bigWig",
+        name: "CH12 H3K4me1",
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF096TSJ_H3K27ac.bigWig",
+        name: "CH12 H3K27ac",
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF011TAF_H3K4me3.bigWig",
+        name: "CH12 H3K4me3",
+      },
+      {
+        type: "bigwig",
+        url: "https://vizhub.wustl.edu/public/misc/dynamicTrack/markers/ENCFF700XWH_H3K36me3.bigWig",
+        name: "CH12 H3K36me3",
+      },
+    ],
+  }),
 
   // new TrackModel({
   //   type: "hic",
@@ -377,27 +377,26 @@ const defaultTracks = [
   //   },
   // }),
 
-  //       new TrackModel(  {
-  //   "name": "dynamic long",
-  //   "type": "dynamiclongrange",
-  //   "options": {
-
-  //               "dynamicColors": ["red", "blue"],
-  //               "useDynamicColors": true
-  //           },
-  //   "tracks": [
-  //     {
-  //       "type": "longrange",
-  //       "url": "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz"
-  //     },
-  //     {
-  //       "name": "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
-  //       "type": "longrange",
-  //       "url": "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz"
-  //     }
-  //   ],
-  //   "showOnHubLoad": true
-  //       }),
+  new TrackModel({
+    name: "dynamic long",
+    type: "dynamiclongrange",
+    options: {
+      dynamicColors: ["red", "blue"],
+      useDynamicColors: true,
+    },
+    tracks: [
+      {
+        type: "longrange",
+        url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+      },
+      {
+        name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+        type: "longrange",
+        url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+      },
+    ],
+    showOnHubLoad: true,
+  }),
   // new TrackModel({
   //   type: "longrange",
   //   name: "ES-E14 ChIA-PET",

@@ -21,6 +21,8 @@ import { DEFAULT_OPTIONS as defaultQBedTrack } from "./QBedComponents/QBedTrackC
 import { DEFAULT_OPTIONS as defaultFiberTrack } from "./bedComponents/FiberTrackComponent";
 import { DEFAULT_OPTIONS as defaultInteractTrack } from "./InteractionComponents/InteractionTrackComponent";
 import { DEFAULT_OPTIONS as defaultGenomeAlignTrack } from "./GenomeAlignComponents/GenomeAlignComponents";
+import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/DynamicplotTrackComponent";
+import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
@@ -28,6 +30,7 @@ import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDa
 import {
   cacheTrackData,
   trackUsingExpandedLoci,
+  transformArray,
 } from "./CommonTrackStateChangeFunctions.tsx/cacheTrackData";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
@@ -60,7 +63,7 @@ const SNP_ROW_HEIGHT = SNP_HEIGHT + SNP_ROW_VERTICAL_PADDING;
 
 const trackOptionMap: { [key: string]: any } = {
   ruler: {
-    defaultOptions: { backgroundColor: "var(--bg-color)" },
+    defaultOptions: { backgroundColor: "var(--bg-color)", height: 40 },
   },
   bigbed: {
     defaultOptions: {
@@ -298,6 +301,73 @@ const trackOptionMap: { [key: string]: any } = {
   longrange: {
     defaultOptions: {
       ...defaultInteractTrack,
+    },
+  },
+
+  // dynamic expandedloci tracks
+  dynamichic: {
+    defaultOptions: {
+      ...defaultInteractTrack,
+    },
+  },
+  dynamiclongrange: {
+    defaultOptions: {
+      ...defaultInteractTrack,
+    },
+  },
+  dynamic: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      ...defaultDynamic,
+      displayMode: "density",
+    },
+  },
+  // dynamic both nav
+  matplot: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      ...defaultMatplot,
+      displayMode: "density",
+    },
+  },
+  dbedgraph: {
+    defaultOptions: {
+      ...defaultAnnotationTrack,
+      color: "blue",
+      color2: "red",
+      rowHeight: 10,
+      maxRows: 5,
+      hiddenPixels: 0.5,
+      speed: [5],
+      playing: true,
+      dynamicColors: [],
+      useDynamicColors: false,
+      backgroundColor: "white",
+      arrayAggregateMethod: "MEAN",
+      displayMode: "density",
+    },
+  },
+  dynamicbed: {
+    defaultOptions: {
+      ...defaultAnnotationTrack,
+      color: "blue",
+      color2: "red",
+      rowHeight: 10,
+      maxRows: 5,
+      hiddenPixels: 0.5,
+      speed: [5],
+      playing: true,
+      dynamicColors: [],
+      useDynamicColors: false,
+      backgroundColor: "white",
+      displayMode: "density",
+    },
+  },
+  dynamicplot: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+      ...defaultDynamic,
+      displayMode: "density",
     },
   },
 };
@@ -1299,20 +1369,7 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
             if (trackModel.type in trackUsingExpandedLoci) {
               useExpandedLoci.current = true;
             }
-            resetState();
-            configOptions.current = {
-              ...configOptions.current,
-              ...trackModel.options,
-            };
 
-            updateGlobalTrackConfig({
-              configOptions: configOptions.current,
-              trackModel: trackModel,
-              id: id,
-              trackIdx: trackIdx,
-              legendRef: legendRef,
-              usePrimaryNav: usePrimaryNav.current,
-            });
             if (trackModel.type !== "genomealign") {
               if (
                 "genome" in trackData![`${id}`].metadata &&
@@ -1350,17 +1407,42 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
                     mid = 0;
                     right = -1;
                   }
+                  if (
+                    trackModel.type in
+                    {
+                      matplot: "",
+                      dbedgraph: "",
+                      dynamicbed: "",
+                      dynamicplot: "",
+                    }
+                  ) {
+                    const dataCacheCurrentNext =
+                      fetchedDataCache.current[left]?.dataCache ?? [];
+                    const dataCacheCurrent =
+                      fetchedDataCache.current[mid]?.dataCache ?? [];
+                    const dataCacheCurrentPrev =
+                      fetchedDataCache.current[right]?.dataCache ?? [];
 
-                  trackData![`${id}`].result = [
-                    cache[left].dataCache,
-                    cache[mid].dataCache,
-                    cache[right].dataCache,
-                  ];
+                    let combined: Array<any> = [
+                      dataCacheCurrentNext,
+                      dataCacheCurrent,
+                      dataCacheCurrentPrev,
+                    ];
+
+                    trackData![`${id}`].result = transformArray(combined);
+                  } else {
+                    trackData![`${id}`].result = [
+                      cache[left].dataCache,
+                      cache[mid].dataCache,
+                      cache[right].dataCache,
+                    ];
+                  }
                 }
               }
 
               if (
-                trackModel.type in { hic: "", biginteract: "", longrange: "" }
+                trackModel.type in
+                { hic: "", biginteract: "", longrange: "", dynamichic: "" }
               ) {
                 if (trackData![`${id}`].straw) {
                   straw.current = trackData![`${id}`].straw;
@@ -1368,6 +1450,20 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
                 configOptions.current["trackManagerRef"] = trackManagerRef;
               }
             }
+            resetState();
+            configOptions.current = {
+              ...configOptions.current,
+              ...trackModel.options,
+            };
+
+            updateGlobalTrackConfig({
+              configOptions: configOptions.current,
+              trackModel: trackModel,
+              id: id,
+              trackIdx: trackIdx,
+              legendRef: legendRef,
+              usePrimaryNav: usePrimaryNav.current,
+            });
           }
           if (trackModel.type === "bam") {
             let tmpRawData: Array<Promise<any>> = [];
@@ -1383,7 +1479,10 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
               trackData![`${id}`]["result"] =
                 trackData![`${id}`]["result"].flat();
             }
-          } else if (trackModel.type === "hic") {
+          } else if (
+            trackModel.type === "hic" ||
+            trackModel.type === "dynamichic"
+          ) {
             const primaryVisData =
               trackData!.trackState.genomicFetchCoord[
                 trackData!.trackState.primaryGenName
@@ -1397,11 +1496,22 @@ const SvgOrCanvasTracks: React.FC<TrackProps> = memo(
                 : primaryVisData.visRegion;
 
             if (trackData![`${id}`].result === undefined) {
-              trackData![`${id}`]["result"] = await straw.current.getData(
-                objToInstanceAlign(visRegion),
-                basePerPixel,
-                configOptions.current
-              );
+              trackData![`${id}`]["result"] =
+                trackModel.type === "hic"
+                  ? await straw.current.getData(
+                      objToInstanceAlign(visRegion),
+                      basePerPixel,
+                      configOptions.current
+                    )
+                  : await Promise.all(
+                      straw.current.map((straw, index) => {
+                        return straw.getData(
+                          objToInstanceAlign(visRegion),
+                          basePerPixel,
+                          configOptions.current
+                        );
+                      })
+                    );
             }
           }
 
