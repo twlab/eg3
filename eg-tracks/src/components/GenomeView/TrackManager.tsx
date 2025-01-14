@@ -2,7 +2,6 @@ import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 
-import MatplotTrack from "./TrackComponents/MatplotTrack";
 import CircularProgress from "@mui/material/CircularProgress";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
@@ -18,19 +17,12 @@ import { HicSource } from "../../getRemoteData/hicSource";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 
-import DBedGraphTrack from "./TrackComponents/DBedGraphTrack";
 import _ from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import SubToolButtons from "./ToolComponents/SubToolButtons";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
 import History from "./ToolComponents/History";
-import SvgOrCanvasTracks from "./TrackComponents/SvgOrCanvasTracks";
-import DynamicplotTrack from "./TrackComponents/DynamicplotTrack";
-
-import DynamicHicTrack from "./TrackComponents/DynamicHicTrack";
-import DynamicBedTrack from "./TrackComponents/DynamicBedTrack";
-
-import DynamicLongrangeTrack from "./TrackComponents/DynamicLongrangeTrack";
+import TrackFactory from "./TrackComponents/TrackFactory";
 
 import BamSource from "../../getRemoteData/BamSource";
 
@@ -79,35 +71,35 @@ export function objToInstanceAlign(alignment) {
   return visRegion;
 }
 const componentMap: { [key: string]: React.FC<TrackProps> } = {
-  geneannotation: SvgOrCanvasTracks,
-  bed: SvgOrCanvasTracks,
-  bigwig: SvgOrCanvasTracks,
-  dynseq: SvgOrCanvasTracks,
-  methylc: SvgOrCanvasTracks,
-  hic: SvgOrCanvasTracks,
-  genomealign: SvgOrCanvasTracks,
+  geneannotation: TrackFactory,
+  bed: TrackFactory,
+  bigwig: TrackFactory,
+  dynseq: TrackFactory,
+  methylc: TrackFactory,
+  hic: TrackFactory,
+  genomealign: TrackFactory,
 
-  categorical: SvgOrCanvasTracks,
-  longrange: SvgOrCanvasTracks,
-  biginteract: SvgOrCanvasTracks,
-  repeatmasker: SvgOrCanvasTracks,
-  bigbed: SvgOrCanvasTracks,
-  refbed: SvgOrCanvasTracks,
-  matplot: SvgOrCanvasTracks,
-  ruler: SvgOrCanvasTracks,
-  modbed: SvgOrCanvasTracks,
-  dynamic: SvgOrCanvasTracks,
-  bedgraph: SvgOrCanvasTracks,
-  qbed: SvgOrCanvasTracks,
-  boxplot: SvgOrCanvasTracks,
-  jaspar: SvgOrCanvasTracks,
-  dynamichic: SvgOrCanvasTracks,
-  dynamicbed: SvgOrCanvasTracks,
-  dbedgraph: SvgOrCanvasTracks,
-  dynamiclongrange: SvgOrCanvasTracks,
-  snp: SvgOrCanvasTracks,
-  bam: SvgOrCanvasTracks,
-  omeroidr: SvgOrCanvasTracks,
+  categorical: TrackFactory,
+  longrange: TrackFactory,
+  biginteract: TrackFactory,
+  repeatmasker: TrackFactory,
+  bigbed: TrackFactory,
+  refbed: TrackFactory,
+  matplot: TrackFactory,
+  ruler: TrackFactory,
+  modbed: TrackFactory,
+  dynamic: TrackFactory,
+  bedgraph: TrackFactory,
+  qbed: TrackFactory,
+  boxplot: TrackFactory,
+  jaspar: TrackFactory,
+  dynamichic: TrackFactory,
+  dynamicbed: TrackFactory,
+  dbedgraph: TrackFactory,
+  dynamiclongrange: TrackFactory,
+  snp: TrackFactory,
+  bam: TrackFactory,
+  omeroidr: TrackFactory,
   error: ErrorTrack,
 };
 export function bpNavToGenNav(bpNavArr, genome) {
