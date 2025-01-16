@@ -52,7 +52,7 @@ export const DYNAMIC_TYPES = [
   "dynamiclongrange",
 ];
 
-const TYPE_NAME_TO_CONFIG = {
+export const TYPE_NAME_TO_CONFIG = {
   bed: BedTrackConfig,
   categorical: CategoricalTrackConfig,
   bigbed: BigBedTrackConfig,

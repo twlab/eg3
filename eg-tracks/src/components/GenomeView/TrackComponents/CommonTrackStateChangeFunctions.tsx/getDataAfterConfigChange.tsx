@@ -1,3 +1,4 @@
+import { getDeDupeArrMatPlot } from "./cacheFetchedData";
 import { trackUsingExpandedLoci } from "./cacheTrackData";
 
 interface GetConfigChangeDataParams {
@@ -6,8 +7,7 @@ interface GetConfigChangeDataParams {
   createSVGOrCanvas: (
     trackState: any,
     viewData: any[],
-    dataIdx: number,
-    signal: any
+    isError: boolean
   ) => void;
   trackType: string;
   usePrimaryNav: boolean;
@@ -20,7 +20,6 @@ export function getConfigChangeData({
   createSVGOrCanvas,
   trackType,
   usePrimaryNav,
-  signal,
 }: GetConfigChangeDataParams) {
   // unlike getting cached data for the SVG that was created for eg2, the return svgDATA is not a react component but instead an SVG
   // so when props change like how the density component are created it doesn't trigger a rebuild, only when it gets taken out of view,
@@ -29,8 +28,9 @@ export function getConfigChangeData({
   // view and get rebuilt again.
 
   let viewData;
-
+  let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
   if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
+    console.log(fetchedDataCache, dataIdx, "YET");
     viewData = fetchedDataCache[dataIdx!].dataCache;
   } else {
     viewData = [
@@ -39,9 +39,17 @@ export function getConfigChangeData({
       fetchedDataCache[dataIdx! - 1],
     ];
 
-    viewData = viewData.map((item) => item.dataCache).flat(1);
+    if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
+      viewData = getDeDupeArrMatPlot(viewData, newIntanceTrackState.isError);
+    } else {
+      viewData = viewData.map((item) => item.dataCache).flat(1);
+    }
   }
-  let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
+
   newIntanceTrackState["recreate"] = true;
-  createSVGOrCanvas(newIntanceTrackState, viewData, dataIdx, signal);
+  createSVGOrCanvas(
+    newIntanceTrackState,
+    viewData,
+    newIntanceTrackState.isError
+  );
 }

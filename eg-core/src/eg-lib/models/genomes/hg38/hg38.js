@@ -52,11 +52,11 @@ const defaultTracks = [
     name: "Ruler",
   }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
-  // new TrackModel({
-  //   type: "hi",
-  //   url: "",
-  //   name: "NOTSUPPORTEDTRACEXAMPLE",
-  // }),
+  new TrackModel({
+    type: "hi",
+    url: "",
+    name: "NOTSUPPORTEDTRACEXAMPLE",
+  }),
 
   // new TrackModel({
   //   type: "refbed",
@@ -112,22 +112,22 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "",
-    options: {
-      color: "blue",
-    },
-  }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
   // new TrackModel({
   //   type: "bigwig",
@@ -241,26 +241,26 @@ const defaultTracks = [
   //   name: "test bigInteract",
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
-  new TrackModel({
-    name: "dynamic hic",
-    type: "dynamichic",
-    options: {
-      dynamicColors: ["red", "blue"],
-      useDynamicColors: true,
-    },
-    tracks: [
-      {
-        type: "hic",
-        url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-      },
-      {
-        name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
-        type: "hic",
-        url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-      },
-    ],
-    showOnHubLoad: true,
-  }),
+  // new TrackModel({
+  //   name: "dynamic hic",
+  //   type: "dynamichic",
+  //   options: {
+  //     dynamicColors: ["red", "blue"],
+  //     useDynamicColors: true,
+  //   },
+  //   tracks: [
+  //     {
+  //       type: "hic",
+  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //     },
+  //     {
+  //       name: "olfactory receptor cell in situ Hi-C [4DNFIXKC48TK]",
+  //       type: "hic",
+  //       url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //     },
+  //   ],
+  //   showOnHubLoad: true,
+  // }),
 
   // new TrackModel({
   //   type: "dynamicbed",
@@ -307,15 +307,15 @@ const defaultTracks = [
   //   ],
   // }),
 
-  new TrackModel({
-    type: "hic",
-    name: "test hic",
-    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-    // "options": {
-    //     "displayMode": "arc"
-    // }
-    // metadata: { genome: "mm10" },
-  }),
+  // new TrackModel({
+  //   type: "hic",
+  //   name: "test hic",
+  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   // "options": {
+  //   //     "displayMode": "arc"
+  //   // }
+  //   // metadata: { genome: "mm10" },
+  // }),
   // new TrackModel({
 
   //   type: "geneAnnotation",

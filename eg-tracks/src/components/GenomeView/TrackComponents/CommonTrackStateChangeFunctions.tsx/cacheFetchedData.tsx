@@ -4,6 +4,7 @@ import {
   removeDuplicates,
   removeDuplicatesWithoutId,
 } from "../commonComponents/check-obj-dupe";
+
 export function getDeDupeArrMatPlot(data: Array<any>, isError) {
   if (isError) {
     return;
@@ -72,6 +73,7 @@ function checkFetchError(trackData) {
 
   return detectError;
 }
+
 export function cacheFetchedData({
   id,
   trackData,

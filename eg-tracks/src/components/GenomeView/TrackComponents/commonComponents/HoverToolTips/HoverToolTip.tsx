@@ -506,7 +506,9 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         legendWidth,
         targetRef,
       });
-
+      if (trackType === "interactionHeatmap") {
+        console.log(options);
+      }
       setPosition({
         ...rectPosition,
         top: rect.bottom,
