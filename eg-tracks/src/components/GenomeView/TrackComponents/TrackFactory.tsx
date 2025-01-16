@@ -43,6 +43,7 @@ import SnpDetail from "./SnpComponents/SnpDetail";
 import { Fiber, JasparFeature } from "@eg/core/src/eg-lib/models/Feature";
 import JasparDetail from "./commonComponents/annotation/JasparDetail";
 import { objToInstanceAlign } from "../TrackManager";
+import { getDeDupeArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
 const ARROW_SIZE = 16;
 
@@ -61,7 +62,7 @@ const SNP_HEIGHT = 9;
 const SNP_ROW_VERTICAL_PADDING = 2;
 const SNP_ROW_HEIGHT = SNP_HEIGHT + SNP_ROW_VERTICAL_PADDING;
 
-const trackOptionMap: { [key: string]: any } = {
+export const trackOptionMap: { [key: string]: any } = {
   ruler: {
     defaultOptions: { backgroundColor: "var(--bg-color)", height: 40 },
   },
@@ -328,6 +329,7 @@ const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultMatplot,
       displayMode: "density",
+      forceSvg: false,
     },
   },
   dbedgraph: {
@@ -390,6 +392,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   applyTrackConfigChange,
   sentScreenshotData,
   dragX,
+  newDrawData,
+  trackFetchedDataCache,
 }) {
   const configOptions = useRef({
     ...trackOptionMap[`${trackModel.type}`].defaultOptions,
@@ -1361,183 +1365,183 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     setToolTipVisible(false);
   }
 
-  useEffect(() => {
-    async function handle() {
-      if (trackData![`${id}`]) {
-        if (trackData!.trackState.initial === 1) {
-          if (trackModel.type in trackUsingExpandedLoci) {
-            useExpandedLoci.current = true;
-          }
+  // useEffect(() => {
+  //   async function handle() {
+  //     if (trackData![`${id}`]) {
+  //       if (trackData!.trackState.initial === 1) {
+  //         if (trackModel.type in trackUsingExpandedLoci) {
+  //           useExpandedLoci.current = true;
+  //         }
 
-          if (trackModel.type !== "genomealign") {
-            if (
-              "genome" in trackData![`${id}`].metadata &&
-              trackData![`${id}`].metadata.genome !==
-                genomeConfig.genome.getName()
-            ) {
-              usePrimaryNav.current = false;
-              useExpandedLoci.current = true;
-            }
+  //         if (trackModel.type !== "genomealign") {
+  //           if (
+  //             "genome" in trackData![`${id}`].metadata &&
+  //             trackData![`${id}`].metadata.genome !==
+  //               genomeConfig.genome.getName()
+  //           ) {
+  //             usePrimaryNav.current = false;
+  //             useExpandedLoci.current = true;
+  //           }
 
-            if (
-              !genomeConfig.isInitial &&
-              genomeConfig.sizeChange &&
-              Object.keys(fetchedDataCache.current).length > 0
-            ) {
-              const trackIndex = trackData![`${id}`].trackDataIdx;
-              const cache = fetchedDataCache.current;
-              if (useExpandedLoci.current) {
-                let idx = trackIndex in cache ? trackIndex : 0;
-                trackData![`${id}`].result =
-                  fetchedDataCache.current[idx].dataCache;
-              } else {
-                let left, mid, right;
+  //           if (
+  //             !genomeConfig.isInitial &&
+  //             genomeConfig.sizeChange &&
+  //             Object.keys(fetchedDataCache.current).length > 0
+  //           ) {
+  //             const trackIndex = trackData![`${id}`].trackDataIdx;
+  //             const cache = fetchedDataCache.current;
+  //             if (useExpandedLoci.current) {
+  //               let idx = trackIndex in cache ? trackIndex : 0;
+  //               trackData![`${id}`].result =
+  //                 fetchedDataCache.current[idx].dataCache;
+  //             } else {
+  //               let left, mid, right;
 
-                if (
-                  trackIndex in cache &&
-                  trackIndex + 1 in cache &&
-                  trackIndex - 1 in cache
-                ) {
-                  left = trackIndex + 1;
-                  mid = trackIndex;
-                  right = trackIndex - 1;
-                } else {
-                  left = 1;
-                  mid = 0;
-                  right = -1;
-                }
-                if (
-                  trackModel.type in
-                  {
-                    matplot: "",
-                    dbedgraph: "",
-                    dynamicbed: "",
-                    dynamicplot: "",
-                  }
-                ) {
-                  const dataCacheCurrentNext =
-                    fetchedDataCache.current[left]?.dataCache ?? [];
-                  const dataCacheCurrent =
-                    fetchedDataCache.current[mid]?.dataCache ?? [];
-                  const dataCacheCurrentPrev =
-                    fetchedDataCache.current[right]?.dataCache ?? [];
+  //               if (
+  //                 trackIndex in cache &&
+  //                 trackIndex + 1 in cache &&
+  //                 trackIndex - 1 in cache
+  //               ) {
+  //                 left = trackIndex + 1;
+  //                 mid = trackIndex;
+  //                 right = trackIndex - 1;
+  //               } else {
+  //                 left = 1;
+  //                 mid = 0;
+  //                 right = -1;
+  //               }
+  //               if (
+  //                 trackModel.type in
+  //                 {
+  //                   matplot: "",
+  //                   dbedgraph: "",
+  //                   dynamicbed: "",
+  //                   dynamicplot: "",
+  //                 }
+  //               ) {
+  //                 const dataCacheCurrentNext =
+  //                   fetchedDataCache.current[left]?.dataCache ?? [];
+  //                 const dataCacheCurrent =
+  //                   fetchedDataCache.current[mid]?.dataCache ?? [];
+  //                 const dataCacheCurrentPrev =
+  //                   fetchedDataCache.current[right]?.dataCache ?? [];
 
-                  let combined: Array<any> = [
-                    dataCacheCurrentNext,
-                    dataCacheCurrent,
-                    dataCacheCurrentPrev,
-                  ];
+  //                 let combined: Array<any> = [
+  //                   dataCacheCurrentNext,
+  //                   dataCacheCurrent,
+  //                   dataCacheCurrentPrev,
+  //                 ];
 
-                  trackData![`${id}`].result = transformArray(combined);
-                } else {
-                  trackData![`${id}`].result = [
-                    cache[left].dataCache,
-                    cache[mid].dataCache,
-                    cache[right].dataCache,
-                  ];
-                }
-              }
-            }
+  //                 trackData![`${id}`].result = transformArray(combined);
+  //               } else {
+  //                 trackData![`${id}`].result = [
+  //                   cache[left].dataCache,
+  //                   cache[mid].dataCache,
+  //                   cache[right].dataCache,
+  //                 ];
+  //               }
+  //             }
+  //           }
 
-            if (
-              trackModel.type in
-              { hic: "", biginteract: "", longrange: "", dynamichic: "" }
-            ) {
-              if (trackData![`${id}`].straw) {
-                straw.current = trackData![`${id}`].straw;
-              }
-              configOptions.current["trackManagerRef"] = trackManagerRef;
-            }
-          }
-          resetState();
-          configOptions.current = {
-            ...configOptions.current,
-            ...trackModel.options,
-          };
+  //           if (
+  //             trackModel.type in
+  //             { hic: "", biginteract: "", longrange: "", dynamichic: "" }
+  //           ) {
+  //             if (trackData![`${id}`].straw) {
+  //               straw.current = trackData![`${id}`].straw;
+  //             }
+  //             configOptions.current["trackManagerRef"] = trackManagerRef;
+  //           }
+  //         }
+  //         resetState();
+  //         configOptions.current = {
+  //           ...configOptions.current,
+  //           ...trackModel.options,
+  //         };
 
-          updateGlobalTrackConfig({
-            configOptions: configOptions.current,
-            trackModel: trackModel,
-            id: id,
-            trackIdx: trackIdx,
-            legendRef: legendRef,
-            usePrimaryNav: usePrimaryNav.current,
-          });
-        }
-        if (trackModel.type === "bam") {
-          let tmpRawData: Array<Promise<any>> = [];
+  //         updateGlobalTrackConfig({
+  //           configOptions: configOptions.current,
+  //           trackModel: trackModel,
+  //           id: id,
+  //           trackIdx: trackIdx,
+  //           legendRef: legendRef,
+  //           usePrimaryNav: usePrimaryNav.current,
+  //         });
+  //       }
+  //       if (trackModel.type === "bam") {
+  //         let tmpRawData: Array<Promise<any>> = [];
 
-          trackData![`${id}`].curFetchNav.forEach((locuses) => {
-            tmpRawData.push(trackData![`${id}`].fetchInstance.getData(locuses));
-          });
+  //         trackData![`${id}`].curFetchNav.forEach((locuses) => {
+  //           tmpRawData.push(trackData![`${id}`].fetchInstance.getData(locuses));
+  //         });
 
-          trackData![`${id}`]["result"] = await Promise.all(tmpRawData);
-          if (!trackData!.trackState.initial) {
-            trackData![`${id}`]["result"] =
-              trackData![`${id}`]["result"].flat();
-          }
-        } else if (
-          trackModel.type === "hic" ||
-          trackModel.type === "dynamichic"
-        ) {
-          const primaryVisData =
-            trackData!.trackState.genomicFetchCoord[
-              trackData!.trackState.primaryGenName
-            ].primaryVisData;
+  //         trackData![`${id}`]["result"] = await Promise.all(tmpRawData);
+  //         if (!trackData!.trackState.initial) {
+  //           trackData![`${id}`]["result"] =
+  //             trackData![`${id}`]["result"].flat();
+  //         }
+  //       } else if (
+  //         trackModel.type === "hic" ||
+  //         trackModel.type === "dynamichic"
+  //       ) {
+  //         const primaryVisData =
+  //           trackData!.trackState.genomicFetchCoord[
+  //             trackData!.trackState.primaryGenName
+  //           ].primaryVisData;
 
-          let visRegion =
-            "genome" in trackData![`${id}`].metadata
-              ? trackData!.trackState.genomicFetchCoord[
-                  trackData![`${id}`].metadata.genome
-                ].queryRegion
-              : primaryVisData.visRegion;
+  //         let visRegion =
+  //           "genome" in trackData![`${id}`].metadata
+  //             ? trackData!.trackState.genomicFetchCoord[
+  //                 trackData![`${id}`].metadata.genome
+  //               ].queryRegion
+  //             : primaryVisData.visRegion;
 
-          if (trackData![`${id}`].result === undefined) {
-            trackData![`${id}`]["result"] =
-              trackModel.type === "hic"
-                ? await straw.current.getData(
-                    objToInstanceAlign(visRegion),
-                    basePerPixel,
-                    configOptions.current
-                  )
-                : await Promise.all(
-                    straw.current.map((straw, index) => {
-                      return straw.getData(
-                        objToInstanceAlign(visRegion),
-                        basePerPixel,
-                        configOptions.current
-                      );
-                    })
-                  );
-          }
-        }
+  //         if (trackData![`${id}`].result === undefined) {
+  //           trackData![`${id}`]["result"] =
+  //             trackModel.type === "hic"
+  //               ? await straw.current.getData(
+  //                   objToInstanceAlign(visRegion),
+  //                   basePerPixel,
+  //                   configOptions.current
+  //                 )
+  //               : await Promise.all(
+  //                   straw.current.map((straw, index) => {
+  //                     return straw.getData(
+  //                       objToInstanceAlign(visRegion),
+  //                       basePerPixel,
+  //                       configOptions.current
+  //                     );
+  //                   })
+  //                 );
+  //         }
+  //       }
 
-        if (trackData![`${id}`].result) {
-          cacheTrackData({
-            usePrimaryNav: usePrimaryNav.current,
-            id,
-            trackData,
-            fetchedDataCache,
-            rightIdx,
-            leftIdx,
-            createSVGOrCanvas,
-            trackModel,
-          });
-        }
-      }
-    }
-    handle();
-  }, [trackData]);
+  //       if (trackData![`${id}`].result) {
+  //         cacheTrackData({
+  //           usePrimaryNav: usePrimaryNav.current,
+  //           id,
+  //           trackData,
+  //           fetchedDataCache,
+  //           rightIdx,
+  //           leftIdx,
+  //           createSVGOrCanvas,
+  //           trackModel,
+  //         });
+  //       }
+  //     }
+  //   }
+  //   handle();
+  // }, [trackData]);
 
   useEffect(() => {
     getCacheData({
       isError: fetchError.current,
       usePrimaryNav: usePrimaryNav.current,
-      rightIdx: rightIdx.current,
-      leftIdx: leftIdx.current,
+      rightIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].rightIdx,
+      leftIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].leftIdx,
       dataIdx,
       displayCache: displayCache.current,
-      fetchedDataCache: fetchedDataCache.current,
+      fetchedDataCache: trackFetchedDataCache.current[`${id}`],
       displayType: configOptions.current.displayMode,
       displaySetter,
       svgHeight,
@@ -1553,7 +1557,127 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
+  useEffect(() => {
+    if ("curDataIdx" in newDrawData && newDrawData.curDataIdx === dataIdx) {
+      let left, mid, right;
+      let trackIndex = newDrawData.curDataIdx;
 
+      let trackData = trackFetchedDataCache.current[`${id}`];
+      console.log(trackData);
+
+      if (trackData[trackIndex].trackState.initial === 1) {
+        usePrimaryNav.current = trackData.usePrimaryNav;
+        useExpandedLoci.current = trackData.useExpandedLoci;
+        if (
+          trackModel.type in
+          { hic: "", biginteract: "", longrange: "", dynamichic: "" }
+        ) {
+          configOptions.current["trackManagerRef"] = trackManagerRef;
+        }
+        resetState();
+        configOptions.current = {
+          ...configOptions.current,
+          ...trackModel.options,
+        };
+
+        updateGlobalTrackConfig({
+          configOptions: configOptions.current,
+          trackModel: trackModel,
+          id: id,
+          trackIdx: trackIdx,
+          legendRef: legendRef,
+          usePrimaryNav: usePrimaryNav.current,
+        });
+      }
+
+      if (!useExpandedLoci.current) {
+        if (trackData[trackIndex].trackState.initial === 1) {
+          if (
+            trackIndex in trackData &&
+            trackIndex + 1 in trackData &&
+            trackIndex - 1 in trackData
+          ) {
+            left = trackIndex + 1;
+            mid = trackIndex;
+            right = trackIndex - 1;
+          } else {
+            left = 1;
+            mid = 0;
+            right = -1;
+          }
+          let viewData: any = [
+            trackData[left],
+            trackData[mid],
+            trackData[right],
+          ];
+          if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+            viewData = getDeDupeArrMatPlot(viewData, false);
+          } else {
+            viewData = viewData.map((item) => item.dataCache).flat(1);
+          }
+          console.log(viewData);
+          createSVGOrCanvas(
+            trackData[mid].trackState,
+            viewData,
+            trackData[newDrawData.curDataIdx].trackState.isError
+          );
+        } else {
+          if (trackData[newDrawData.curDataIdx].trackState.side === "right") {
+            let viewData: any = [];
+            let currIdx = newDrawData.curDataIdx + 1;
+            for (let i = 0; i < 3; i++) {
+              viewData.push(trackData[currIdx]);
+              currIdx--;
+            }
+
+            if (
+              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+            ) {
+              viewData = getDeDupeArrMatPlot(viewData, false);
+            } else {
+              viewData = viewData.map((item) => item.dataCache).flat(1);
+            }
+
+            createSVGOrCanvas(
+              trackData[newDrawData.curDataIdx].trackState,
+              viewData,
+              trackData[newDrawData.curDataIdx].trackState.isError
+            );
+          } else if (
+            trackData[newDrawData.curDataIdx].trackState.side === "left"
+          ) {
+            let viewData: any = [];
+            let currIdx = newDrawData.curDataIdx + 1;
+            for (let i = 0; i < 3; i++) {
+              viewData.push(trackData[currIdx]);
+              currIdx--;
+            }
+
+            if (
+              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+            ) {
+              viewData = getDeDupeArrMatPlot(viewData, false);
+            } else {
+              viewData = viewData.map((item) => item.dataCache).flat(1);
+            }
+
+            createSVGOrCanvas(
+              trackData[newDrawData.curDataIdx].trackState,
+              viewData,
+              trackData[newDrawData.curDataIdx].trackState.isError
+            );
+          }
+        }
+      } else {
+        const viewData = trackData[newDrawData.curDataIdx].dataCache;
+        createSVGOrCanvas(
+          trackData[newDrawData.curDataIdx].trackState,
+          viewData,
+          trackData[newDrawData.curDataIdx].trackState.isError
+        );
+      }
+    }
+  }, [newDrawData]);
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {

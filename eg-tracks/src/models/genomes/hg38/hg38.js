@@ -112,22 +112,22 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "",
+    options: {
+      color: "blue",
+    },
+  }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+    options: {
+      color: "blue",
+    },
+  }),
 
   // new TrackModel({
   //   type: "bigwig",

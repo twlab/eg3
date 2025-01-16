@@ -226,8 +226,8 @@ interface LinePlotTrackProps {
   lineWidth: any;
   xToValue: any;
   trackModel: TrackModel;
-  forceSvg: any;
-  viewWindow: any;
+  forceSvg?: any;
+  viewWindow?: any;
 }
 class LinePlot extends React.PureComponent<LinePlotTrackProps> {
   static propTypes = {
@@ -278,7 +278,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
 
   render() {
     const { xToValue, height, width, forceSvg, viewWindow } = this.props;
-    console.log(xToValue);
+    console.log;
     return xToValue.length === 0 ? (
       <div
         style={{
@@ -288,7 +288,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
       ></div>
     ) : (
       <DesignRenderer
-        type={1 ? RenderTypes.SVG : RenderTypes.CANVAS}
+        type={RenderTypes.SVG}
         width={width}
         height={height}
         forceSvg={forceSvg}

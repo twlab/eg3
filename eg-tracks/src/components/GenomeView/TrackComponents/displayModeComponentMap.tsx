@@ -525,6 +525,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackModel.type in { repeatmasker: "" }
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
+    if (trackModel.type === "bam") {
+      console.log(placeFeatureData, trackState);
+    }
     let svgDATA = createFullVisualizer(
       placeFeatureData.placements,
       trackState.visWidth,
@@ -980,6 +983,7 @@ export function getDisplayModeFunction(
     } else if (drawData.trackModel.type === "bam") {
       const filteredArray = removeDuplicates(drawData.genesArr, "_id");
       formattedData = BamAlignment.makeBamAlignments(filteredArray);
+      console.log(formattedData);
     } else if (drawData.trackModel.type === "omeroidr") {
       formattedData = drawData.genesArr.map(
         (record) => new ImageRecord(record)

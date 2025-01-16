@@ -10,7 +10,7 @@ export interface TrackProps {
   windowWidth: number;
   handleDelete: (trackIndex: number) => void;
   trackData?: { [key: string]: any }; // Replace with the actual type
-
+  trackFetchedDataCache: any;
   dragX?: number;
   genomeConfig: any;
   genomeName?: string;
@@ -18,6 +18,7 @@ export interface TrackProps {
   trackManagerId: string;
   trackComponents: any;
 
+  newDrawData: any;
   trackModel?: any;
   dataIdx: number;
   getConfigMenu: any;

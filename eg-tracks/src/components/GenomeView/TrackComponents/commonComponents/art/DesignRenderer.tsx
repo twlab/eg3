@@ -73,7 +73,14 @@ export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
             />
           );
         } else {
-          return <svg {...otherProps} style={mergedStyle} />;
+          return (
+            <svg
+              width={this.props.width}
+              height={this.props.height}
+              children={this.props.children}
+              style={mergedStyle}
+            />
+          );
         }
 
       default:
