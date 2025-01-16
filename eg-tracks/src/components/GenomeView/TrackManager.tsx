@@ -742,13 +742,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         minBp.current = minBp.current - bpRegionSize.current;
       }
     }
-    console.log(trackManagerState.current.tracks);
-    let test =
-      !genomeConfig.isInitial && initial === 1 && genomeConfig.sizeChange
-        ? initialPreloadTrackFetch.current
-        : trackManagerState.current.tracks;
-    console.log(test);
+
     try {
+      // add to fetch queue when user reaches a new region without data.
       enqueueMessage({
         primaryGenName: genomeConfig.genome.getName(),
         trackModelArr:
@@ -810,13 +806,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         })
       )
         .then(() => {
-          console.log(trackFetchedDataCache.current);
+          console.log(trackFetchedDataCache.current, "Fetched data");
           setNewDrawData({
             curDataIdx: event.data.trackDataIdx,
             isInitial: event.data.initial,
           });
           isWorkerBusy.current = false;
           isLoading.current = false;
+          // once we finish with a fetch we need to check if there are any more
+          // request in the queue, user might scroll fast and have multipe region data to fetch
           processQueue();
         })
         .catch((error) => {
@@ -1501,7 +1499,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
   }, [genomeConfig]);
-
+  function trackSizeChange() {}
   useEffect(() => {
     if (highlights.length > 0) {
       let highlightElement = createHighlight(highlights);
