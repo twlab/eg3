@@ -163,13 +163,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       trackState.initial ||
       trackState.recreate
     ) {
-      xPos.current = curXPos;
       checkTrackPreload(id);
       updateSide.current = side;
 
       configOptions.current.displayMode === "full"
         ? setSvgComponents(res)
         : setCanvasComponents(res);
+      xPos.current = curXPos;
     }
   }
   // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer

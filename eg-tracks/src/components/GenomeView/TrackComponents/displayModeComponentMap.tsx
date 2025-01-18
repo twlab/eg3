@@ -519,16 +519,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
     //     }
     //   );
     // }
-    let height;
+    var height;
 
     height =
       trackModel.type in { repeatmasker: "" }
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
-    if (trackModel.type === "bam") {
-      console.log(placeFeatureData, trackState);
-    }
-    let svgDATA = createFullVisualizer(
+
+    var svgDATA = createFullVisualizer(
       placeFeatureData.placements,
       trackState.visWidth,
       height,
@@ -540,7 +538,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     }
     if (updatedLegend) {
       updatedLegend.current = (
-        <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+        <TrackLegend height={height} trackModel={trackModel} />
       );
     }
 

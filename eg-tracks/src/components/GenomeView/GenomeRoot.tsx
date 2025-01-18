@@ -45,7 +45,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           userViewRegion._endBase!
         );
         curGenome["sizeChange"] = true;
-        console.log(curGenome);
       } else {
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;

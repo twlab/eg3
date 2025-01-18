@@ -15,21 +15,14 @@ const useResizeObserver = () => {
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
         if (
           initialWidth.current ||
-          Math.abs(width - prevSize.current.width) > 200
+          Math.abs(width - prevSize.current.width) > 50
         ) {
           setSize({ width, height: prevSize.current.height });
           prevSize.current = { width, height: prevSize.current.height };
           initialWidth.current = false;
-        } else if (
-          initialHeight.current ||
-          Math.abs(height - prevSize.current.height) > 500
-        ) {
-          setSize({ height, width: prevSize.current.width });
-          prevSize.current = { width: prevSize.current.width, height };
-          initialHeight.current = false;
         }
       }
-    }, 50); // Adjust debounce delay as needed
+    }, 500); // Adjust debounce delay as needed
 
     const observer = new ResizeObserver(handleResize as any);
 

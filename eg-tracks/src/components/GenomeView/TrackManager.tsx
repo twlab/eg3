@@ -784,7 +784,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // Use Promise.all to wait for all createCache operations to complete
       Promise.all(
         event.data.fetchResults.map((item, index) => {
-          console.log(item);
           return createCache({
             trackState: {
               primaryGenName: genomeConfig.genome.getName(),
@@ -1389,6 +1388,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       ) {
         preloadedTracks.current = {};
         cancelAnimationFrame(frameID.current);
+
         trackComponents.map((component, i) => {
           frameID.current = requestAnimationFrame(() => {
             component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
@@ -1396,6 +1396,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
         preload.current = false;
         if (genomeConfig.isInitial) {
+          genomeConfig.isInitial = false;
         }
       }
     }
@@ -1471,6 +1472,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // and do not add to the StateArr.
 
       if (genomeConfig.isInitial) {
+        console.log(windowWidth, "oldWindow");
         trackManagerState.current.viewRegion._startBase =
           genomeConfig.defaultRegion.start;
         trackManagerState.current.viewRegion._endBase =
@@ -1490,16 +1492,87 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           );
           setInitialStart("workerReady");
         }
+      } else if (genomeConfig.sizeChange) {
+        preload.current = true;
+        // refreshState();
+        console.log("HGYHGG&U");
+        trackSizeChange();
+
+        // initialConfig.current = true;
+
+        // initializeTracks();
       } else {
         preload.current = true;
         refreshState();
+
         initialConfig.current = true;
 
         initializeTracks();
       }
     }
   }, [genomeConfig]);
-  function trackSizeChange() {}
+  function isNumberKey(key: string | symbol | number): boolean {
+    // Convert the key to a number
+    const numKey = Number(key);
+    // Check if the converted key is a finite number and if it matches the original key when coerced back to string
+    return (
+      typeof key === "number" || (!isNaN(numKey) && numKey.toString() === key)
+    );
+  }
+
+  function trackSizeChange() {
+    var prevWindowWidth;
+    for (const cacheKey in trackFetchedDataCache.current) {
+      const cache = trackFetchedDataCache.current[cacheKey];
+      for (var id in cache) {
+        if (isNumberKey(id)) {
+          var curTrackState = { ...cache[id].trackState };
+          var prevXDist = curTrackState.xDist;
+          var prevWindowWidth = curTrackState.startWindow;
+          // console.log(curTrackState);
+          // console.log(prevWindowWidth);
+          var newXDist = (prevXDist / prevWindowWidth) * windowWidth;
+          curTrackState.startWindow = windowWidth;
+          curTrackState.visWidth = curTrackState.startWindow * 3;
+          curTrackState.xDist = newXDist;
+          if ("genomicFetchCoord" in curTrackState) {
+            curTrackState.genomicFetchCoord[
+              `${curTrackState.primaryGenName}`
+            ].primaryVisData.visWidth = curTrackState.visWidth;
+            curTrackState.genomicFetchCoord[
+              `${curTrackState.primaryGenName}`
+            ].primaryVisData.viewWindow = {
+              start: windowWidth,
+              end: windowWidth * 2,
+            };
+          }
+          trackFetchedDataCache.current[cacheKey][id].trackState =
+            curTrackState;
+        }
+      }
+    }
+
+    basePerPixel.current = bpRegionSize.current / windowWidth;
+    pixelPerBase.current = windowWidth / bpRegionSize.current;
+
+    dragX.current = (dragX.current / prevWindowWidth) * windowWidth;
+
+    for (var i = 0; i < rightSectionSize.current.length; i++) {
+      rightSectionSize.current[i] = windowWidth;
+    }
+    for (var i = 0; i < leftSectionSize.current.length; i++) {
+      leftSectionSize.current[i] = windowWidth;
+    }
+    // trackComponents.forEach((component, i) => {
+    //   frameID.current = requestAnimationFrame(() => {
+    //     component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
+    //   });
+    // });
+    setNewDrawData({
+      curDataIdx: dataIdx,
+      isInitial: 0,
+    });
+  }
   useEffect(() => {
     if (highlights.length > 0) {
       let highlightElement = createHighlight(highlights);
