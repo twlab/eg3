@@ -88,17 +88,17 @@ const defaultTracks = [
     genome: "hg38",
   }),
 
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
 
-  new TrackModel({
-    type: "repeatmasker",
-    name: "RepeatMasker",
-    url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-  }),
+  // new TrackModel({
+  //   type: "repeatmasker",
+  //   name: "RepeatMasker",
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  // }),
 
   // new TrackModel({
   //   type: "snp",
@@ -143,70 +143,70 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/hg38/modbed/HG00621.remora.modbed.gz",
   // }),
 
-  new TrackModel({
-    type: "matplot",
-    name: "matplot wrap",
-    tracks: [
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-        name: "MeDIP",
-        options: {
-          color: "red",
-          backgroundColor: "#FFE7AB",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MeDIP",
-        },
-      },
-      {
-        type: "bigwig",
-        url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-        name: "MRE",
-        options: {
-          color: "blue",
-          backgroundColor: "#C0E3CC",
-        },
-        metadata: {
-          sample: "bone",
-          assay: "MRE",
-        },
-      },
-    ],
-  }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "matplot",
+  //   name: "matplot wrap",
+  //   tracks: [
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //       name: "MeDIP",
+  //       options: {
+  //         color: "red",
+  //         backgroundColor: "#FFE7AB",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MeDIP",
+  //       },
+  //     },
+  //     {
+  //       type: "bigwig",
+  //       url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //       name: "MRE",
+  //       options: {
+  //         color: "blue",
+  //         backgroundColor: "#C0E3CC",
+  //       },
+  //       metadata: {
+  //         sample: "bone",
+  //         assay: "MRE",
+  //       },
+  //     },
+  //   ],
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
-  new TrackModel({
-    type: "dynseq",
-    name: "example dynseq",
-    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-    options: {
-      color: "blue",
-      height: 100,
-    },
-  }),
-  new TrackModel({
-    type: "methylc",
-    name: "H1",
-    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-    options: {
-      label: "Methylation",
-      colorsForContext: {
-        CG: { color: "#648bd8", background: "#d9d9d9" },
-        CHG: { color: "#ff944d", background: "#ffe0cc" },
-        CHH: { color: "#ff00ff", background: "#ffe5ff" },
-      },
-      depthColor: "#01E9FE",
-    },
-  }),
+  // new TrackModel({
+  //   type: "dynseq",
+  //   name: "example dynseq",
+  //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+  //   options: {
+  //     color: "blue",
+  //     height: 100,
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "methylc",
+  //   name: "H1",
+  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+  //   options: {
+  //     label: "Methylation",
+  //     colorsForContext: {
+  //       CG: { color: "#648bd8", background: "#d9d9d9" },
+  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
+  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
+  //     },
+  //     depthColor: "#01E9FE",
+  //   },
+  // }),
   // new TrackModel({
   //   type: "methylc",
   //   name: "H1",

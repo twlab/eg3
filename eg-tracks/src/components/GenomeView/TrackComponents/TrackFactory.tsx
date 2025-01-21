@@ -113,7 +113,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
 
-  async function createSVGOrCanvas(trackState, genesArr, isError) {
+  async function createSVGOrCanvas(trackState, genesArr, isError, trackIndex) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
@@ -153,16 +153,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
       })
     );
-    const rightIdx = trackFetchedDataCache.current[id]["cacheDataIdx"].rightIdx;
-    const leftIdx = trackFetchedDataCache.current[id]["cacheDataIdx"].leftIdx;
-    if (
-      ((rightIdx + 2 >= dataIdx || leftIdx - 2 <= dataIdx) &&
-        !useExpandedLoci.current) ||
-      ((rightIdx + 1 >= dataIdx || leftIdx - 1 <= dataIdx) &&
-        useExpandedLoci.current) ||
-      trackState.initial ||
-      trackState.recreate
-    ) {
+
+    if (trackIndex === dataIdx) {
       checkTrackPreload(id);
       updateSide.current = side;
 
@@ -220,32 +212,41 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     setToolTipVisible(false);
   }
 
-  useEffect(() => {
-    getCacheData({
-      isError: fetchError.current,
-      usePrimaryNav: usePrimaryNav.current,
-      rightIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].rightIdx,
-      leftIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].leftIdx,
-      dataIdx,
-      displayCache: displayCache.current,
-      fetchedDataCache: trackFetchedDataCache.current[`${id}`],
-      displayType: configOptions.current.displayMode,
-      displaySetter,
-      svgHeight,
-      xPos,
-      updatedLegend,
-      trackModel,
-      createSVGOrCanvas,
-      side,
-      updateSide,
-    });
-  }, [dataIdx]);
+  // useEffect(() => {
+  //   getCacheData({
+  //     isError: fetchError.current,
+  //     usePrimaryNav: usePrimaryNav.current,
+  //     rightIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].rightIdx,
+  //     leftIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].leftIdx,
+  //     dataIdx,
+  //     displayCache: displayCache.current,
+  //     fetchedDataCache: trackFetchedDataCache.current[`${id}`],
+  //     displayType: configOptions.current.displayMode,
+  //     displaySetter,
+  //     svgHeight,
+  //     xPos,
+  //     updatedLegend,
+  //     trackModel,
+  //     createSVGOrCanvas,
+  //     side,
+  //     updateSide,
+  //   });
+  // }, [dataIdx]);
 
   useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
   useEffect(() => {
-    if ("curDataIdx" in newDrawData && newDrawData.curDataIdx === dataIdx) {
+    if (
+      "curDataIdx" in newDrawData &&
+      newDrawData.curDataIdx === dataIdx &&
+      id in newDrawData.trackToDrawId &&
+      trackFetchedDataCache.current[`${id}`][newDrawData.curDataIdx].trackState
+    ) {
+      console.log(
+        trackFetchedDataCache.current[`${id}`][newDrawData.curDataIdx]
+          .trackState
+      );
       let left, mid, right;
       let trackIndex = newDrawData.curDataIdx;
 
@@ -308,7 +309,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           createSVGOrCanvas(
             trackData[mid].trackState,
             viewData,
-            trackData[newDrawData.curDataIdx].trackState.isError
+            trackData[newDrawData.curDataIdx].trackState.isError,
+            trackIndex
           );
         } else {
           if (trackData[newDrawData.curDataIdx].trackState.side === "right") {
@@ -330,7 +332,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             createSVGOrCanvas(
               trackData[newDrawData.curDataIdx].trackState,
               viewData,
-              trackData[newDrawData.curDataIdx].trackState.isError
+              trackData[newDrawData.curDataIdx].trackState.isError,
+              trackIndex
             );
           } else if (
             trackData[newDrawData.curDataIdx].trackState.side === "left"
@@ -353,7 +356,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             createSVGOrCanvas(
               trackData[newDrawData.curDataIdx].trackState,
               viewData,
-              trackData[newDrawData.curDataIdx].trackState.isError
+              trackData[newDrawData.curDataIdx].trackState.isError,
+              trackIndex
             );
           }
         }
@@ -362,7 +366,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         createSVGOrCanvas(
           trackData[newDrawData.curDataIdx].trackState,
           viewData,
-          trackData[newDrawData.curDataIdx].trackState.isError
+          trackData[newDrawData.curDataIdx].trackState.isError,
+          trackIndex
         );
       }
     }

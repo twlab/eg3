@@ -568,7 +568,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-
+    console.log(curFetchNav, genomicLoci);
     if (trackModel.fileObj !== "" && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
@@ -659,5 +659,9 @@ self.onmessage = async (event: MessageEvent) => {
     useFineModeNav,
     genomicLoci,
     expandGenomicLoci,
+    dataSide: event.data.dataSide,
+    newRegion: event.data.newRegion,
+    missingIdx: event.data.missingIdx,
+    regionLoci: event.data.regionLoci,
   });
 };

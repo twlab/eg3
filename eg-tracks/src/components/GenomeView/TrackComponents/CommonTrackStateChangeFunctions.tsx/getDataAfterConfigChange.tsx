@@ -7,7 +7,8 @@ interface GetConfigChangeDataParams {
   createSVGOrCanvas: (
     trackState: any,
     viewData: any[],
-    isError: boolean
+    isError: boolean,
+    trackIndex: number
   ) => void;
   trackType: string;
   usePrimaryNav: boolean;
@@ -50,6 +51,7 @@ export function getConfigChangeData({
   createSVGOrCanvas(
     newIntanceTrackState,
     viewData,
-    newIntanceTrackState.isError
+    newIntanceTrackState.isError,
+    dataIdx
   );
 }
