@@ -847,14 +847,42 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
           console.log(trackFetchedDataCache.current, "newFetchedData");
           if (event.data.newRegion) {
-            dataIdxNavCoord.current[event.data.trackDataIdx] = {
-              primaryGenName: genomeConfig.genome.getName(),
-              initial: event.data.initial,
-              side: event.data.side,
-              xDist: event.data.xDist,
-              genomicFetchCoord: event.data.genomicFetchCoord,
-              regionLoci: event.data.regionLoci,
-            };
+            if (event.data.initial) {
+              const trackState0 = {
+                initial: 0,
+                regionLoci: event.data.regionLoci[0],
+                side: "left",
+                xDist: 0,
+                index: 1,
+              };
+
+              const trackState2 = {
+                regionLoci: event.data.regionLoci[2],
+                initial: 0,
+                side: "right",
+                xDist: 0,
+                index: -1,
+              };
+              dataIdxNavCoord.current[1] = trackState0;
+              dataIdxNavCoord.current[-1] = trackState2;
+              dataIdxNavCoord.current[event.data.trackDataIdx] = {
+                primaryGenName: genomeConfig.genome.getName(),
+                initial: event.data.initial,
+                side: event.data.side,
+                xDist: event.data.xDist,
+                genomicFetchCoord: event.data.genomicFetchCoord,
+                regionLoci: event.data.regionLoci[1],
+              };
+            } else {
+              dataIdxNavCoord.current[event.data.trackDataIdx] = {
+                primaryGenName: genomeConfig.genome.getName(),
+                initial: event.data.initial,
+                side: event.data.side,
+                xDist: event.data.xDist,
+                genomicFetchCoord: event.data.genomicFetchCoord,
+                regionLoci: event.data.regionLoci,
+              };
+            }
 
             console.log(dataIdxNavCoord.current);
           }
@@ -1662,39 +1690,38 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       var trackState;
       for (const key in trackFetchedDataCache.current) {
         const curTrack = trackFetchedDataCache.current[key];
+        if (dataIdx in curTrack && "dataCache" in curTrack[dataIdx]) {
+          if (
+            dataIdx + 1 in curTrack &&
+            !("dataCache" in curTrack[dataIdx + 1])
+          ) {
+            var curTrackModel: any = trackManagerState.current.tracks.find(
+              (trackModel: any) => trackModel.id === Number(key)
+            );
+            missingIdx = dataIdx + 1;
 
-        if (!("dataCache" in curTrack[dataIdx + 1])) {
-          var curTrackModel: any = trackManagerState.current.tracks.find(
-            (trackModel: any) => trackModel.id === Number(key)
-          );
-          missingIdx = dataIdx + 1;
-          trackState = curTrack[missingIdx].trackState;
-          trackToFetch.push(curTrackModel);
-        } else if (!("dataCache" in curTrack[dataIdx - 1])) {
-          var curTrackModel: any = trackManagerState.current.tracks.find(
-            (trackModel: any) => trackModel.id === Number(key)
-          );
-          missingIdx = dataIdx - 1;
-          trackState = curTrack[missingIdx].trackState;
-          trackToFetch.push(curTrackModel);
-        } else {
-          trackToDrawId[`${key}`] = "";
+            trackToFetch.push(curTrackModel);
+          } else if (
+            dataIdx - 1 in curTrack &&
+            !("dataCache" in curTrack[dataIdx - 1])
+          ) {
+            var curTrackModel: any = trackManagerState.current.tracks.find(
+              (trackModel: any) => trackModel.id === Number(key)
+            );
+            missingIdx = dataIdx - 1;
+
+            trackToFetch.push(curTrackModel);
+          } else if (dataIdx + 1 in curTrack && dataIdx - 1 in curTrack) {
+            trackToDrawId[`${key}`] = "";
+          }
         }
       }
-      if (trackToFetch.length > 0) {
-        var curSide;
-
-        if (prevDataIdx.current < dataIdx) {
-          curSide = "left";
-        } else {
-          curSide = "right";
-        }
-
+      if (trackToFetch.length > 0 && missingIdx in dataIdxNavCoord.current) {
         const curNav =
           dataIdxNavCoord.current[dataIdx].genomicFetchCoord[
             `${genomeConfig.genome.getName()}`
           ];
-
+        trackState = dataIdxNavCoord.current[missingIdx];
         console.log(
           dataIdx,
           missingIdx,
@@ -1710,9 +1737,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           useFineModeNav: useFineModeNav.current,
           windowWidth,
           initGenomicLoci: curNav.initGenomicLoci,
-          trackSide: trackState.side,
+          trackSide: curNav.side,
           dataSide: dataIdx > prevDataIdx.current ? "left" : "right",
-          xDist: trackState.xDist,
+          xDist: curNav.xDist,
           initial: 0,
           bpRegionSize: bpRegionSize.current,
           trackDataIdx: dataIdx,
@@ -1721,7 +1748,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       }
       if (Object.keys(trackToDrawId).length > 0) {
-        console.log(dataIdx);
         setNewDrawData({
           curDataIdx: dataIdx,
           isInitial: 0,

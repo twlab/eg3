@@ -300,6 +300,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackData[mid],
             trackData[right],
           ];
+          console.log([trackData[left], trackData[mid], trackData[right]]);
           if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
             viewData = getDeDupeArrMatPlot(viewData, false);
           } else {
@@ -317,6 +318,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             let viewData: any = [];
             let currIdx = newDrawData.curDataIdx + 1;
             for (let i = 0; i < 3; i++) {
+              console.log({ ...trackData[currIdx] });
               viewData.push(trackData[currIdx]);
               currIdx--;
             }
@@ -341,6 +343,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             let viewData: any = [];
             let currIdx = newDrawData.curDataIdx + 1;
             for (let i = 0; i < 3; i++) {
+              console.log({ ...trackData[currIdx] });
               viewData.push(trackData[currIdx]);
               currIdx--;
             }
