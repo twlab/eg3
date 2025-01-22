@@ -659,8 +659,6 @@ self.onmessage = async (event: MessageEvent) => {
     useFineModeNav,
     genomicLoci,
     expandGenomicLoci,
-    dataSide: event.data.dataSide,
-    newRegion: event.data.newRegion,
     missingIdx: event.data.missingIdx,
     regionLoci: event.data.regionLoci,
   });

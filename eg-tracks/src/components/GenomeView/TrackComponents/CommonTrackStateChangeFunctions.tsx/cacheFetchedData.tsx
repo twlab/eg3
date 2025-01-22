@@ -41,7 +41,6 @@ interface cacheFetchedDataParams {
   trackType: string;
   usePrimaryNav: boolean;
   metadata: any;
-  dataSide: string;
 }
 export const trackUsingExpandedLoci = {
   biginteract: "",
@@ -83,7 +82,6 @@ export function cacheFetchedData({
   trackType = "",
   usePrimaryNav,
   metadata,
-  dataSide,
 }: cacheFetchedDataParams) {
   const isError = checkFetchError(trackData);
   // Passing rawData to the correct tracks and saving it to cache to be displayed
@@ -149,7 +147,7 @@ export function cacheFetchedData({
         visWidth: primaryVisData.visWidth,
         isError: isError,
       };
-      console.log(trackState1);
+
       let trackState2 = {
         regionLoci: trackState.regionLoci[2],
         initial: 0,
@@ -212,7 +210,7 @@ export function cacheFetchedData({
     } else {
       visRegion = primaryVisData.visRegion;
     }
-    console.log(trackState);
+
     let newTrackState = {
       ...trackState,
       initial: 0,
@@ -223,9 +221,14 @@ export function cacheFetchedData({
       visWidth: primaryVisData.visWidth,
       isError: isError,
     };
-
+    console.log(
+      newTrackState,
+      trackData,
+      { ...trackFetchedDataCache.current[`${id}`].cacheDataIdx },
+      "cachnew"
+    );
     if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
-      if (dataSide === "right") {
+      if (trackState.side === "right") {
         newTrackState.index =
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"];
         trackFetchedDataCache.current[`${id}`][
@@ -236,7 +239,7 @@ export function cacheFetchedData({
           trackState: newTrackState,
         };
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
-      } else if (dataSide === "left") {
+      } else if (trackState.side === "left") {
         trackState.index =
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"];
 
@@ -254,7 +257,7 @@ export function cacheFetchedData({
     // tracks that dont use expanded nav loci_____________________________________________________________________________________________________________________________________________________________________
     //__________________________________________________________________________________________________________________________________________________________
     else {
-      if (dataSide === "right") {
+      if (trackState.side === "right") {
         trackState.index =
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"];
 
@@ -270,7 +273,7 @@ export function cacheFetchedData({
         ]["trackState"] = newTrackState;
 
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
-      } else if (dataSide === "left") {
+      } else if (trackState.side === "left") {
         trackState.index =
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"];
         trackFetchedDataCache.current[`${id}`][

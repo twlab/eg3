@@ -69,15 +69,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   const [legend, setLegend] = useState<any>();
 
-  const displaySetter = {
-    full: {
-      setComponents: setSvgComponents,
-    },
-    density: {
-      setComponents: setCanvasComponents,
-    },
-  };
-
   function resetState() {
     configOptions.current = trackOptionMap[trackModel.type]
       ? { ...trackOptionMap[`${trackModel.type}`].defaultOptions }
@@ -212,27 +203,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     setToolTipVisible(false);
   }
 
-  // useEffect(() => {
-  //   getCacheData({
-  //     isError: fetchError.current,
-  //     usePrimaryNav: usePrimaryNav.current,
-  //     rightIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].rightIdx,
-  //     leftIdx: trackFetchedDataCache.current[id]["cacheDataIdx"].leftIdx,
-  //     dataIdx,
-  //     displayCache: displayCache.current,
-  //     fetchedDataCache: trackFetchedDataCache.current[`${id}`],
-  //     displayType: configOptions.current.displayMode,
-  //     displaySetter,
-  //     svgHeight,
-  //     xPos,
-  //     updatedLegend,
-  //     trackModel,
-  //     createSVGOrCanvas,
-  //     side,
-  //     updateSide,
-  //   });
-  // }, [dataIdx]);
-
   useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
@@ -241,12 +211,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       "curDataIdx" in newDrawData &&
       newDrawData.curDataIdx === dataIdx &&
       id in newDrawData.trackToDrawId &&
+      newDrawData.curDataIdx in trackFetchedDataCache.current[`${id}`] &&
       trackFetchedDataCache.current[`${id}`][newDrawData.curDataIdx].trackState
     ) {
-      console.log(
-        trackFetchedDataCache.current[`${id}`][newDrawData.curDataIdx]
-          .trackState
-      );
       let left, mid, right;
       let trackIndex = newDrawData.curDataIdx;
 
@@ -300,7 +267,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackData[mid],
             trackData[right],
           ];
-          console.log([trackData[left], trackData[mid], trackData[right]]);
+
           if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
             viewData = getDeDupeArrMatPlot(viewData, false);
           } else {
@@ -318,50 +285,68 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             let viewData: any = [];
             let currIdx = newDrawData.curDataIdx + 1;
             for (let i = 0; i < 3; i++) {
-              console.log({ ...trackData[currIdx] });
               viewData.push(trackData[currIdx]);
               currIdx--;
             }
+            var noData = false;
 
             if (
               trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ) {
               viewData = getDeDupeArrMatPlot(viewData, false);
             } else {
-              viewData = viewData.map((item) => item.dataCache).flat(1);
+              viewData = viewData
+                .map((item) => {
+                  if (item && "dataCache" in item) {
+                    return item.dataCache;
+                  } else {
+                    noData = true;
+                  }
+                })
+                .flat(1);
             }
-
-            createSVGOrCanvas(
-              trackData[newDrawData.curDataIdx].trackState,
-              viewData,
-              trackData[newDrawData.curDataIdx].trackState.isError,
-              trackIndex
-            );
+            if (!noData) {
+              createSVGOrCanvas(
+                trackData[newDrawData.curDataIdx].trackState,
+                viewData,
+                trackData[newDrawData.curDataIdx].trackState.isError,
+                trackIndex
+              );
+            }
           } else if (
             trackData[newDrawData.curDataIdx].trackState.side === "left"
           ) {
             let viewData: any = [];
             let currIdx = newDrawData.curDataIdx + 1;
             for (let i = 0; i < 3; i++) {
-              console.log({ ...trackData[currIdx] });
               viewData.push(trackData[currIdx]);
               currIdx--;
             }
+            var noData = false;
 
             if (
               trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ) {
               viewData = getDeDupeArrMatPlot(viewData, false);
             } else {
-              viewData = viewData.map((item) => item.dataCache).flat(1);
+              viewData = viewData
+                .map((item) => {
+                  if (item && "dataCache" in item) {
+                    return item.dataCache;
+                  } else {
+                    noData = true;
+                  }
+                })
+                .flat(1);
             }
-
-            createSVGOrCanvas(
-              trackData[newDrawData.curDataIdx].trackState,
-              viewData,
-              trackData[newDrawData.curDataIdx].trackState.isError,
-              trackIndex
-            );
+            if (!noData) {
+              createSVGOrCanvas(
+                trackData[newDrawData.curDataIdx].trackState,
+                viewData,
+                trackData[newDrawData.curDataIdx].trackState.isError,
+                trackIndex
+              );
+            }
           }
         }
       } else {

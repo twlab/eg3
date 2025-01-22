@@ -981,7 +981,6 @@ export function getDisplayModeFunction(
     } else if (drawData.trackModel.type === "bam") {
       const filteredArray = removeDuplicates(drawData.genesArr, "_id");
       formattedData = BamAlignment.makeBamAlignments(filteredArray);
-      console.log(formattedData);
     } else if (drawData.trackModel.type === "omeroidr") {
       formattedData = drawData.genesArr.map(
         (record) => new ImageRecord(record)
