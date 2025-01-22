@@ -137,6 +137,7 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   if (genomeAlignTracks.length > 0) {
+    console.log("ASDASDASDASDASD");
     event.data.visData.visRegion;
 
     // step 2: fetch genome align data and put them into an array
@@ -163,6 +164,7 @@ self.onmessage = async (event: MessageEvent) => {
       item["result"] = [item.result];
       fetchResults.push(item);
     });
+    console.log(fetchResults);
   }
 
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
@@ -568,7 +570,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-    console.log(curFetchNav, genomicLoci);
+    // console.log(curFetchNav, genomicLoci);
     if (trackModel.fileObj !== "" && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;

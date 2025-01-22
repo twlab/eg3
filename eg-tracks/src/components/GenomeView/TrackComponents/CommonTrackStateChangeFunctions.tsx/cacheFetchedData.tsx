@@ -101,6 +101,7 @@ export function cacheFetchedData({
         side: "right",
         xDist: 0,
         visRegion: visRegion,
+        regionLoci: trackState.regionLoci[1],
         startWindow: primaryVisData.viewWindow.start,
         visWidth: primaryVisData.visWidth,
         isError: isError,
@@ -221,12 +222,12 @@ export function cacheFetchedData({
       visWidth: primaryVisData.visWidth,
       isError: isError,
     };
-    console.log(
-      newTrackState,
-      trackData,
-      { ...trackFetchedDataCache.current[`${id}`].cacheDataIdx },
-      "cachnew"
-    );
+    // console.log(
+    //   newTrackState,
+    //   trackData,
+    //   { ...trackFetchedDataCache.current[`${id}`].cacheDataIdx },
+    //   "cachnew"
+    // );
     if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
       if (trackState.side === "right") {
         newTrackState.index =
