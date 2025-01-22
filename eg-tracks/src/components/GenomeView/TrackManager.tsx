@@ -240,6 +240,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const message = messageQueue.current.shift();
     infiniteScrollWorker.current!.postMessage(message);
   };
+
+  // MARK: MOUSE
   const handleKeyDown = (event) => {
     if (event.key === "Escape") {
       let newSelectedTool = {};
@@ -249,23 +251,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   };
 
-  function handleScroll() {
-    // dont need to account for scroll because parenttop will always give the extact location of where the  event is
-    // so we just need the viewport position to get the right location
-    if (isMouseInsideRef.current) {
-      const parentRect = block.current!.getBoundingClientRect();
-      if (horizontalLineRef.current) {
-        horizontalLineRef.current.style.top = `${
-          mousePositionRef.current.y - parentRect.top
-        }px`;
-      }
-      if (verticalLineRef.current) {
-        verticalLineRef.current.style.left = `${
-          mousePositionRef.current.x - parentRect.left
-        }px`;
-      }
-    }
-  }
   function handleMouseEnter() {
     isMouseInsideRef.current = true;
   }
@@ -378,7 +363,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left", Math.ceil(dragX.current! / windowWidth));
     }
   }
-
+  // MARK: GloCONFIG
   // FUNCTIONS HANDLER FOR WHEN CONFIG FOR TRACKS CHANGES OR WHEN USER IS SELECTING MULITPLE TRACKS
   // the trackmanager will handle the config menu when mutiple  tracks are selected otherwise each
   // track will create their own configmenu.
@@ -602,7 +587,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     });
   }
-
+  // MARK: FETCHGEN
   // FUNCTION TO FETCH DATA AND CHANGE STATE TO INDICATE THERE ARE NEW DATA AFTER GETTING NAV COORD TELLING THE each TRACK
   // COMPONENTS TO UPDATE AND DRAW WITH THE NEW DATA
   //_________________________________________________________________________________________________________________________________
@@ -764,7 +749,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         minBp.current = minBp.current - bpRegionSize.current;
       }
     }
-
+    // MARK: FetchWorker
     try {
       // add to fetch queue when user reaches a new region without data.
 
@@ -864,6 +849,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
     };
   }
+
   async function createCache(fetchRes: { [key: string]: any }) {
     var tmpTrackState = { ...fetchRes.trackState };
 
@@ -959,6 +945,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     }
   }
+  // MARK: TOOL
   // handle SELECTABLE DRAG AREA TO GET DATA FOR TOOL FUNCTIONS and other tools functions
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -1136,6 +1123,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // });
   }
 
+  // MARK: InitState
   // state management functions
   //______________________________________________________________________________________________________________
   //______________________________________________________________________________________________________________
@@ -1464,6 +1452,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       screenshotDataObj.current = {};
     }
   }
+  // MARK: USEEFFECTS
   // USEEFFECTS
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
@@ -1514,7 +1503,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initializeTracks();
     }
   }, [initialStart]);
-
+  // MARK: [GenConfig]
   useEffect(() => {
     if (windowWidth > 0) {
       // on GenomeRoot first creation we add the default state to StateArr in genomeroot
@@ -1569,7 +1558,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       typeof key === "number" || (!isNaN(numKey) && numKey.toString() === key)
     );
   }
-
+  // MARK: trackSizeCha
   function trackSizeChange() {
     var prevWindowWidth;
     for (const cacheKey in trackFetchedDataCache.current) {
@@ -1624,7 +1613,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       isInitial: 0,
     });
   }
-
+  // MARK: [dataIdx]
   useEffect(() => {
     if (dataIdx === -6) {
       const curDataIdxObj = {

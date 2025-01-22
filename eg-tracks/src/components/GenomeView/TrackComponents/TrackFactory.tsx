@@ -103,7 +103,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ? (rowsToDraw + 1) * rowHeight + 2
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
-
+  // MARK: CREATESVG
   async function createSVGOrCanvas(trackState, genesArr, isError, trackIndex) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
@@ -206,6 +206,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
+
+  // MARK:[newDrawDat
   useEffect(() => {
     if (
       "curDataIdx" in newDrawData &&
@@ -360,6 +362,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
     }
   }, [newDrawData]);
+
+  // MARK: [applyConfig]
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {
