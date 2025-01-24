@@ -136,12 +136,13 @@ export class HicSource {
     queryLocus1,
     queryLocus2,
     binSize,
-    normalization = NormalizationMode.NONE
+    normalization = NormalizationMode.NONE,
+    region
   ) {
     if (!this.normOptions.includes(normalization)) {
       return [];
     }
-
+    console.log(queryLocus1);
     let records;
     try {
       records = await this.straw.getContactRecords(
@@ -155,7 +156,7 @@ export class HicSource {
       console.error("Failed to fetch contact records:", error);
       return []; // Return an empty array or handle the error as needed
     }
-
+    console.log(records);
     const interactions: Array<any> = [];
     for (const record of records) {
       const recordLocus1 = new ChromosomeInterval(
@@ -169,7 +170,16 @@ export class HicSource {
         (record.bin2 + 1) * binSize
       );
       interactions.push(
-        new GenomeInteraction(recordLocus1, recordLocus2, record.counts)
+        new GenomeInteraction(
+          recordLocus1,
+          recordLocus2,
+          record.counts,
+          "",
+          "",
+          recordLocus1.toString() + recordLocus2.toString(),
+          region._navContext.convertGenomeIntervalToBases(recordLocus1),
+          region._navContext.convertGenomeIntervalToBases(recordLocus2)
+        )
       );
     }
 
@@ -201,7 +211,8 @@ export class HicSource {
             loci[i],
             loci[j],
             binSize,
-            options.normalization
+            options.normalization,
+            region
           )
         );
       }

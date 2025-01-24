@@ -137,9 +137,6 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   if (genomeAlignTracks.length > 0) {
-    console.log("ASDASDASDASDASD");
-    event.data.visData.visRegion;
-
     // step 2: fetch genome align data and put them into an array
     //group all the genomealign track and fetch once in getGenomealign
     //return all the genomealign in an array
@@ -297,6 +294,112 @@ self.onmessage = async (event: MessageEvent) => {
       console.error("Error fetching genome align tracks:", error);
       // Handle the situation where the entire Promise.all fails, if necessary
     }
+    if (event.data.initial) {
+      var testResult: Array<any> = [];
+      for (let i = 0; i < initGenomicLoci.length; i++) {
+        let resRecords;
+
+        resRecords = await Promise.all(
+          initGenomicLoci[i].map(async (nav, index) => {
+            const responds = await trackFetchFunction["genomealign"]({
+              nav: [nav],
+              options: {
+                height: 40,
+                isCombineStrands: false,
+                colorsForContext: {
+                  CG: {
+                    color: "rgb(100,139,216)",
+                    background: "#d9d9d9",
+                  },
+                  CHG: {
+                    color: "rgb(255,148,77)",
+                    background: "#ffe0cc",
+                  },
+                  CHH: {
+                    color: "rgb(255,0,255)",
+                    background: "#ffe5ff",
+                  },
+                },
+                depthColor: "#525252",
+                depthFilter: 0,
+                maxMethyl: 1,
+                label: "",
+              },
+
+              url: genomeAlignTracks[0].url,
+              trackModel: genomeAlignTracks[0],
+            });
+
+            let records: AlignmentRecord[] = [];
+
+            for (const record of responds) {
+              let data = JSON5.parse("{" + record[3] + "}");
+              record[3] = data;
+              records.push(new AlignmentRecord(record));
+            }
+            // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
+
+            testResult.push(records);
+          })
+        );
+
+        fetchResults.push({
+          name: "genomealign",
+          result: testResult,
+          id: "test",
+          metadata: genomeAlignTracks[0].metadata,
+        });
+      }
+    } else {
+      const responds = await Promise.all(
+        genomicLoci.map(async (nav, index) => {
+          return await trackFetchFunction["genomealign"]({
+            nav: [nav],
+            options: {
+              height: 40,
+              isCombineStrands: false,
+              colorsForContext: {
+                CG: {
+                  color: "rgb(100,139,216)",
+                  background: "#d9d9d9",
+                },
+                CHG: {
+                  color: "rgb(255,148,77)",
+                  background: "#ffe0cc",
+                },
+                CHH: {
+                  color: "rgb(255,0,255)",
+                  background: "#ffe5ff",
+                },
+              },
+              depthColor: "#525252",
+              depthFilter: 0,
+              maxMethyl: 1,
+              label: "",
+            },
+
+            url: genomeAlignTracks[0].url,
+            trackModel: genomeAlignTracks[0],
+          });
+        })
+      );
+      let records: AlignmentRecord[] = [];
+
+      for (const record of responds[0]) {
+        let data = JSON5.parse("{" + record[3] + "}");
+        record[3] = data;
+        records.push(new AlignmentRecord(record));
+      }
+      // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
+
+      fetchResults.push({
+        name: "genomealign",
+        result: records,
+        id: "test",
+        metadata: genomeAlignTracks[0].metadata,
+      });
+    }
+
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
     let successFetch: Array<any> = [];
@@ -310,8 +413,9 @@ self.onmessage = async (event: MessageEvent) => {
     let multiCalInstance = new MultiAlignmentViewCalculator(
       event.data.primaryGenName
     );
+    console.log(successFetch);
     let alignment = multiCalInstance.multiAlign(visData, successFetch);
-
+    console.log(alignment, visData);
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
@@ -663,5 +767,6 @@ self.onmessage = async (event: MessageEvent) => {
     expandGenomicLoci,
     missingIdx: event.data.missingIdx,
     regionLoci: event.data.regionLoci,
+    visData: event.data.visData,
   });
 };

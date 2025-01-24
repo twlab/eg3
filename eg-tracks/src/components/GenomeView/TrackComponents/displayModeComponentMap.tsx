@@ -67,7 +67,7 @@ import OmeroTrackComponents, {
   THUMBNAIL_PADDING,
 } from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "@eg/core/src/eg-lib/models/layoutUtils";
-import _ from "lodash";
+import _, { uniqueId } from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
 import { getGenomeConfig } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
@@ -497,6 +497,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let sortType = SortItemsOptions.NOSORT;
 
     //FullDisplayMode part from eg2
+    console.log(trackState);
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       objToInstanceAlign(trackState.visRegion),
@@ -1094,6 +1095,7 @@ export function getDisplayModeFunction(
         let svgWidth = end - start;
         element = (
           <svg
+            key={uuidv4()}
             width={drawData.trackState.visWidth / 3}
             viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
             height={drawData.configOptions.height}
@@ -1125,6 +1127,7 @@ export function getDisplayModeFunction(
             </div>
 
             <svg
+              key={uuidv4()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
               display={"block"}
@@ -1455,7 +1458,7 @@ export function getDisplayModeFunction(
         return new NumericalFeature("", newChrInt).withValue(record.score);
       }
     });
-    let tmpObj = { ...drawData.configOptions };
+
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,
       trackState: drawData.trackState,

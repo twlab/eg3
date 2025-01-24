@@ -37,7 +37,6 @@ const convertAnnotationJsonSchema = (schemaNode: any, nodeLabel: string) => {
 
   const isLeaf = schemaNode.hasOwnProperty("name");
   if (isLeaf) {
-    console.log(schemaNode);
     return new TrackModel(schemaNode);
   }
 

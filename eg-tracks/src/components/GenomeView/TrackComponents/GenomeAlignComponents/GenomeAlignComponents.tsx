@@ -8,6 +8,7 @@ import { SequenceSegment } from "../../../../models/AlignmentStringUtils";
 import OpenInterval from "../../../../models/OpenInterval";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import { Sequence } from "./Sequence";
+import { v4 as uuidv4 } from "uuid";
 
 export const DEFAULT_OPTIONS = {
   height: 80,
@@ -48,6 +49,7 @@ export function renderGapText(
   i: number,
   options: { [key: string]: any }
 ) {
+  const uniqueKey = uuidv4();
   const { height, primaryColor, queryColor } = options;
   const placementTargetGap = gap.targetGapText;
   const placementQueryGap = gap.queryGapText;
@@ -71,7 +73,7 @@ export function renderGapText(
     : height - ALIGN_TRACK_MARGIN - 5;
 
   return (
-    <React.Fragment key={"gap " + i}>
+    <React.Fragment key={"gap " + uniqueKey + i}>
       {renderLine(
         gap.targetXSpan.start,
         ALIGN_TRACK_MARGIN,
@@ -146,8 +148,9 @@ export function renderFineAlignment(
   const queryLocus = placement.queryLocus;
   const nonGapsTarget = placement.nonGapsTarget;
   const nonGapsQuery = placement.nonGapsQuery;
+  const uniqueKey = uuidv4();
   return (
-    <React.Fragment key={i}>
+    <React.Fragment key={uniqueKey + i}>
       {renderSequenceSegments(
         targetLocus,
         targetSequence,
@@ -179,7 +182,7 @@ export function renderFineAlignment(
       ) {
         ticks.push(
           <line
-            key={i}
+            key={uniqueKey + i}
             x1={x + baseWidth / 2}
             y1={ALIGN_TRACK_MARGIN + RECT_HEIGHT + TICK_MARGIN}
             x2={x + baseWidth / 2}
@@ -204,7 +207,7 @@ export function renderFineAlignment(
   ) {
     const rects = nonGaps.map((segment, i) => (
       <rect
-        key={i}
+        key={uniqueKey + i}
         x={segment.xSpan.start}
         y={y}
         width={segment.xSpan.end - segment.xSpan.start}
@@ -215,7 +218,7 @@ export function renderFineAlignment(
     ));
     const letters = nonGaps.map((segment, i) => (
       <Sequence
-        key={i}
+        key={uniqueKey + i}
         sequence={sequence.substr(segment.index, segment.length)}
         xSpan={segment.xSpan}
         y={y}
@@ -225,7 +228,7 @@ export function renderFineAlignment(
     ));
     const arrows = nonGaps.map((segment, i) => (
       <AnnotationArrows
-        key={i}
+        key={uniqueKey + i}
         startX={segment.xSpan.start}
         endX={segment.xSpan.end}
         y={y}
@@ -264,10 +267,11 @@ export function renderRoughStrand(
   viewWindow: { [key: string]: any },
   isPrimary: boolean
 ) {
+  const uniqueKey = uuidv4();
   const plotReverse = strand === "-" ? true : false;
   return (
     <AnnotationArrows
-      key={"roughArrow" + viewWindow.start + isPrimary}
+      key={"roughArrow" + viewWindow.start + isPrimary + uniqueKey}
       startX={viewWindow.start}
       endX={viewWindow.end}
       y={topY}
@@ -299,6 +303,7 @@ export function renderRoughAlignment(
   targetGenome,
   queryGenome
 ) {
+  const uniqueKey = uuidv4();
   const targetXSpan: { [key: string]: any } = placement.targetXSpan;
   const segments: Array<{ [key: string]: any }> = placement.segments;
   const queryXSpan: { [key: string]: any } = placement.queryXSpan;
@@ -376,7 +381,7 @@ export function renderRoughAlignment(
 
     return (
       <path
-        key={i}
+        key={uniqueKey + i}
         d={d_string}
         fill={DEFAULT_OPTIONS.queryColor}
         fillOpacity={0.5}
@@ -398,7 +403,10 @@ export function renderRoughAlignment(
 
   return (
     <React.Fragment
-      key={`${queryFeature.locus.chr}:${queryFeature.locus.start}-${queryFeature.locus.end}`}
+      key={
+        `${queryFeature.locus.chr}:${queryFeature.locus.start}-${queryFeature.locus.end}` +
+        uniqueKey
+      }
     >
       {targetGenomeRect}
 

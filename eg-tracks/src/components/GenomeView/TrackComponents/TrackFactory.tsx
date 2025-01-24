@@ -251,6 +251,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
       if (!useExpandedLoci.current) {
         if (trackData[trackIndex].trackState.initial === 1) {
+          trackData[trackIndex].trackState.initial = 0;
+          console.log("HUHUHUHUHUHUHUH2");
           if (
             trackIndex in trackData &&
             trackIndex + 1 in trackData &&
@@ -291,7 +293,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               currIdx--;
             }
             var noData = false;
-
+            console.log(viewData);
             if (
               trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ) {
@@ -352,6 +354,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
         }
       } else {
+        if (trackData[trackIndex].trackState.initial === 1) {
+          trackData[trackIndex].trackState.initial = 0;
+        }
         const viewData = trackData[newDrawData.curDataIdx].dataCache;
         createSVGOrCanvas(
           trackData[newDrawData.curDataIdx].trackState,

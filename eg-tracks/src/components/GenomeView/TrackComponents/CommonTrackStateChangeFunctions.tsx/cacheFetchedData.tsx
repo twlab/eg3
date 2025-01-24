@@ -41,6 +41,7 @@ interface cacheFetchedDataParams {
   trackType: string;
   usePrimaryNav: boolean;
   metadata: any;
+  globalTrackState: any;
 }
 export const trackUsingExpandedLoci = {
   biginteract: "",
