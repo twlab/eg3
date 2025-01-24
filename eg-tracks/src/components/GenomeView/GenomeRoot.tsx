@@ -2,14 +2,13 @@ import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { ITrackContainerState } from "../../types";
-import "../../index.css";
+import "./track.css";
 import { chrType } from "../../localdata/genomename";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
 import Nav from "./genomeNavigator/Nav";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
