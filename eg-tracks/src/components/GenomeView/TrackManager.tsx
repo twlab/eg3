@@ -2,7 +2,6 @@ import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 
-import CircularProgress from "@mui/material/CircularProgress";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 import { v4 as uuidv4 } from "uuid";
@@ -820,6 +819,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
     // MARK: FetchWorker
+    console.log(initial, dataIdx);
     try {
       // add to fetch queue when user reaches a new region without data.
       if (hasGenomeAlign.current) {
@@ -847,7 +847,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           xDist: dragX.current,
           initial,
           bpRegionSize: bpRegionSize.current,
-          trackDataIdx: dataIdx,
+          trackDataIdx: initial === 1 ? 0 : dataIdx,
 
           missingIdx: null,
         });
@@ -871,7 +871,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         xDist: dragX.current,
         initial,
         bpRegionSize: bpRegionSize.current,
-        trackDataIdx: dataIdx,
+        trackDataIdx: initial === 1 ? 0 : dataIdx,
 
         missingIdx: null,
       });
@@ -1328,11 +1328,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setSelectedTool({ isSelected: false, title: "none" });
 
     let highlightElement = createHighlight(highlights);
-
+    globalTrackState.current = { rightIdx: 0, leftIdx: 1, trackState: {} };
+    trackFetchedDataCache.current = {};
     setHighLightElements([...highlightElement]);
-    if (!genomeConfig.sizeChange) {
-      setDataIdx(0);
-    }
+
+    setDataIdx(0);
 
     setConfigMenu({ configMenus: "" });
     setApplyTrackConfigChange({});
