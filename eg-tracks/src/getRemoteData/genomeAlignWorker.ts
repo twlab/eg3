@@ -108,7 +108,7 @@ self.onmessage = async (event: MessageEvent) => {
   const genomicLoci = event.data.genomicLoci;
   const visData = event.data.visData;
   // let primaryGenName = event.data.primaryGenName;
-  console.log(event.data, "genomeALignworkerdata");
+
   // let fetchResults: Array<any> = [];
 
   // let expandGenomicLoci = event.data.expandedGenLoci;

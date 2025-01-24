@@ -4,7 +4,7 @@ export function removeDuplicates(
   idKey2: any = ""
 ) {
   const uniqueObjectsMap = new Map<string, any>();
-  console.log(arr, idKey);
+
   for (const obj of arr) {
     const combinedKey = idKey2
       ? obj[`${idKey}`] + "|" + obj[`${idKey2}`]

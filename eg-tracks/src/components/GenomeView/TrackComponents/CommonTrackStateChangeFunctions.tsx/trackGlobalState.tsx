@@ -1,5 +1,3 @@
-// import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-
 interface cacheFetchedDataParams {
   trackState: any;
   globalTrackState: any;
@@ -59,14 +57,7 @@ export function trackGlobalState({
       };
 
     globalTrackState.current["rightIdx"]--;
-  }
-
-  // NON INITIAL POSITION DATA
-  //__________________________________________________________________________________________________________@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  //__________________________________________________________________________________________________________@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  //__________________________________________________________________________________________________________@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  //__________________________________________________________________________________________________________@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  else {
+  } else {
     let newTrackState = {
       ...trackState,
       initial: 0,
@@ -76,15 +67,6 @@ export function trackGlobalState({
       startWindow: primaryVisData.viewWindow.start,
       visWidth: primaryVisData.visWidth,
     };
-    // console.log(
-    //   newTrackState,
-    //   trackData,
-    //   { ...trackFetchedDataCache.current[`${id}`].cacheDataIdx },
-    //   "cachnew"
-    // );
-
-    // tracks that dont use expanded nav loci_____________________________________________________________________________________________________________________________________________________________________
-    //__________________________________________________________________________________________________________________________________________________________
 
     if (trackState.side === "right") {
       globalTrackState.current.trackState[
@@ -101,7 +83,7 @@ export function trackGlobalState({
       ] = {
         trackState: newTrackState,
       };
-      console.log(globalTrackState.current);
+
       globalTrackState.current["rightIdx"]--;
     } else if (trackState.side === "left") {
       globalTrackState.current.trackState[globalTrackState.current["leftIdx"]] =

@@ -40,7 +40,6 @@ class TabixSource {
    * @return {Promise<BedRecord[]>} Promise for the data
    */
   getData = async (loci, basesPerPixel, options) => {
-    console.log(loci);
     // let promises = loci.map(this.getDataForLocus);
     const promises = loci.map((locus) => {
       // graph container uses this source directly w/o initial track, so options is null

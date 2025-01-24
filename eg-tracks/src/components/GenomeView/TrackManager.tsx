@@ -884,7 +884,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (hasGenomeAlign.current) {
       genomeAlignWorker.current!.onmessage = (event) => {
-        console.log("hi", event.data);
         // var bpInt = getIntervals(
         //   event.data.visData._startBase + bpRegionSize.current,
         //   event.data.visData._endBase - bpRegionSize.current
@@ -1051,12 +1050,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (isNumber(fetchRes.missingIdx)) {
-      console.log(fetchRes);
       if (!("viewRegion" in tmpTrackState)) {
         const visRegion =
           tmpTrackState.genomicFetchCoord[genomeConfig.genome.getName()]
             .primaryVisData.visRegion;
-        console.log(visRegion);
+
         trackFetchedDataCache.current[`${fetchRes.id}`][
           fetchRes.missingIdx
         ].trackState["visRegion"] = visRegion;
@@ -1800,11 +1798,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [dataIdx]
 
   useEffect(() => {
-    console.log(
-      trackFetchedDataCache.current,
-      globalTrackState.current,
-      "Tracksstate"
-    );
     if (dataIdx === -6) {
       const curDataIdxObj = {
         [Number(dataIdx) + 1]: "",
@@ -1827,7 +1820,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       var needToFetch = false;
       const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
-      console.log(idxArr);
+
       for (const key in trackFetchedDataCache.current) {
         const curTrackCache = trackFetchedDataCache.current[key];
         var hasData = true;
@@ -1897,12 +1890,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       if (Object.keys(trackToDrawId).length > 0) {
-        console.log(
-          "HUHUH",
-          trackToDrawId,
-          dataIdx,
-          trackFetchedDataCache.current
-        );
         setNewDrawData({
           curDataIdx: dataIdx,
           isInitial: 0,
@@ -1987,7 +1974,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackManagerState.current.tracks = tracks;
       setTrackComponents(newTrackComponents);
 
-      console.log(trackFetchedDataCache.current, newTrackComponents);
       // preload.current = true;
 
       // genomeConfig.defaultRegion = new OpenInterval(

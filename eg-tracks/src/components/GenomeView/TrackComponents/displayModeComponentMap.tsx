@@ -495,9 +495,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
-
-    //FullDisplayMode part from eg2
-    console.log(trackState);
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       objToInstanceAlign(trackState.visRegion),
