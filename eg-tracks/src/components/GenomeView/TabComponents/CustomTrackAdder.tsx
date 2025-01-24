@@ -9,7 +9,6 @@ import {
 import JSON5 from "json5";
 import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import { getSecondaryGenomes } from "@eg/core/src/eg-lib/models/util";
-import CustomHubAdder from "./CustomHubAdder";
 import { HELP_LINKS } from "@eg/core/src/eg-lib/models/util";
 import TrackOptionsUI from "./TrackOptionsUI";
 

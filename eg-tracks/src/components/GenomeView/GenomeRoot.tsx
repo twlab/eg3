@@ -9,7 +9,6 @@ import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-import Nav from "./genomeNavigator/Nav";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
@@ -85,36 +84,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             />
           ) : null}
 
-          {viewRegion ? (
-            <Nav
-              tracks={tracks}
-              isShowingNavigator={showGenomeNav}
-              selectedRegion={viewRegion}
-              genomeConfig={genomeConfig}
-              trackLegendWidth={legendWidth}
-              onRegionSelected={onNewRegionSelect}
-              onTracksAdded={onTrackAdded}
-              onGenomeSelected={function (name: string): void {
-                throw new Error("Function not implemented.");
-              }}
-              onHubUpdated={function (name: string): void {
-                throw new Error("Function not implemented.");
-              }}
-              onRestoreSession={undefined}
-              publicTracksPool={[]}
-              customTracksPool={[]}
-              addTermToMetaSets={function (name: string): void {
-                throw new Error("Function not implemented.");
-              }}
-              onSetSelected={undefined}
-              onSetsChanged={undefined}
-              sets={[]}
-              selectedSet={undefined}
-              onTabSettingsChange={undefined}
-            />
-          ) : (
-            ""
-          )}
           {currentGenomeConfig && (
             <TrackManager
               key={currentGenomeConfig.genomeID}
