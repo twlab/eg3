@@ -120,6 +120,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const infiniteScrollWorker = useRef<Worker>();
   const genomeAlignWorker = useRef<Worker>();
   const useFineModeNav = useRef(false);
+
   const useCacheData = useRef(false);
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
@@ -819,7 +820,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
     // MARK: FetchWorker
-    console.log(initial, dataIdx);
+
     try {
       // add to fetch queue when user reaches a new region without data.
       if (hasGenomeAlign.current) {
@@ -1412,9 +1413,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         foundInvalidTrack = true;
       }
       if (trackManagerState.current.tracks[i].type === "genomealign") {
-        initialPreloadTrackFetch.current.push(
-          trackManagerState.current.tracks[i]
-        );
         if (basePerPixel.current < 10) {
           useFineModeNav.current = true;
         }
