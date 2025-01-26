@@ -118,7 +118,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //useRef to store data between states without re render the component
 
   const infiniteScrollWorker = useRef<Worker>();
-  const genomeAlignWorker = useRef<Worker>();
+  const fetchGenomeAlignWorker = useRef<Worker>();
   const useFineModeNav = useRef(false);
 
   const useCacheData = useRef(false);
@@ -222,7 +222,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const messageQueue = useRef<any>([]);
   const isWorkerBusy = useRef(false);
   const genomeAlignMessageQueue = useRef<any>([]);
-  const isGenomeAlignWorkerBusy = useRef(false);
+  const isfetchGenomeAlignWorkerBusy = useRef(false);
   const enqueueMessage = (message) => {
     messageQueue.current.push(message);
     processQueue();
@@ -252,14 +252,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
   const processGenomeAlignQueue = () => {
     if (
-      isGenomeAlignWorkerBusy.current ||
+      isfetchGenomeAlignWorkerBusy.current ||
       genomeAlignMessageQueue.current.length === 0
     ) {
       return;
     }
-    isGenomeAlignWorkerBusy.current = true;
+    isfetchGenomeAlignWorkerBusy.current = true;
     const message = genomeAlignMessageQueue.current.shift();
-    genomeAlignWorker.current!.postMessage(message);
+    fetchGenomeAlignWorker.current!.postMessage(message);
   };
 
   // MARK: MOUSE
@@ -712,7 +712,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       expandedGenomeCoordLocus = expandedGenomeFeatureSegment.map(
         (item, index) => item.getLocus()
       );
-      minBp.current = minBp.current - bpRegionSize.current;
+      minBp.current = minBp.current - bpRegionSize.current * 2;
       maxBp.current = maxBp.current + bpRegionSize.current * 2;
       regionLoci = bpNavToGenNav(initNavLoci, genomeConfig);
     } else {
@@ -824,9 +824,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     try {
       // add to fetch queue when user reaches a new region without data.
       if (hasGenomeAlign.current) {
+        const genomeAlignTracks = trackManagerState.current.tracks.filter(
+          (items, index) => {
+            return items.type === "genomealign";
+          }
+        );
         enqueueGenomeAlignMessage({
-          cacheData: ["hey"],
-          trackToFetch: ["Yo"],
+          cacheData: [],
+          trackToFetch: genomeAlignTracks,
           visData: newVisData,
           genomicLoci,
           initGenomicLoci: bpNavToGenNav(initNavLoci, genomeConfig),
@@ -852,39 +857,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           missingIdx: null,
         });
-      }
-      enqueueMessage({
-        primaryGenName: genomeConfig.genome.getName(),
-        trackModelArr:
-          !genomeConfig.isInitial && initial === 1 && genomeConfig.sizeChange
-            ? initialPreloadTrackFetch.current
-            : trackManagerState.current.tracks,
-        visData: newVisData,
-        genomicLoci,
-        expandedGenLoci: expandedGenomeCoordLocus,
-        useFineModeNav: useFineModeNav.current,
-        windowWidth,
-        initGenomicLoci: bpNavToGenNav(initNavLoci, genomeConfig),
-        initExpandLoci: bpNavToGenNav(initExpandLoci, genomeConfig),
-        regionLoci,
-        trackSide: trackSide,
-        dataSide: trackSide,
-        xDist: dragX.current,
-        initial,
-        bpRegionSize: bpRegionSize.current,
-        trackDataIdx: initial === 1 ? 0 : dataIdx,
+      } else {
+        enqueueMessage({
+          primaryGenName: genomeConfig.genome.getName(),
+          trackModelArr:
+            !genomeConfig.isInitial && initial === 1 && genomeConfig.sizeChange
+              ? initialPreloadTrackFetch.current
+              : trackManagerState.current.tracks,
+          visData: newVisData,
+          genomicLoci,
+          expandedGenLoci: expandedGenomeCoordLocus,
+          useFineModeNav: useFineModeNav.current,
+          windowWidth,
+          initGenomicLoci: bpNavToGenNav(initNavLoci, genomeConfig),
+          initExpandLoci: bpNavToGenNav(initExpandLoci, genomeConfig),
+          regionLoci,
+          trackSide: trackSide,
+          dataSide: trackSide,
+          xDist: dragX.current,
+          initial,
+          bpRegionSize: bpRegionSize.current,
+          trackDataIdx: initial === 1 ? 0 : dataIdx,
 
-        missingIdx: null,
-      });
-
-      if (initial === 1) {
-        //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
-        minBp.current = minBp.current - bpRegionSize.current;
+          missingIdx: null,
+        });
       }
     } catch {}
 
     if (hasGenomeAlign.current) {
-      genomeAlignWorker.current!.onmessage = (event) => {
+      fetchGenomeAlignWorker.current!.onmessage = (event) => {
+        console.log(event.data);
         // var bpInt = getIntervals(
         //   event.data.visData._startBase + bpRegionSize.current,
         //   event.data.visData._endBase - bpRegionSize.current
@@ -912,6 +914,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackGlobalState({
           trackState: curTrackState,
           globalTrackState: globalTrackState,
+          navContext: genomeConfig.navContext,
+          bpRegionSize: bpRegionSize.current,
         });
       }
 
@@ -1012,7 +1016,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ? tmpTrackState.genomicFetchCoord[fetchRes.metadata.genome]
               .queryRegion
           : primaryVisData.visRegion;
-      var leftOver: Array<any> = [];
+
       if (fetchRes.trackType === "hic") {
         result = await fetchInstances.current[`${fetchRes.id}`].getData(
           objToInstanceAlign(visRegion),
@@ -1051,11 +1055,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (isNumber(fetchRes.missingIdx)) {
-      if (!("viewRegion" in tmpTrackState)) {
+      if (!("visRegion" in tmpTrackState)) {
         const visRegion =
           tmpTrackState.genomicFetchCoord[genomeConfig.genome.getName()]
             .primaryVisData.visRegion;
-
+        if (!visRegion) console.log(visRegion, fetchRes);
         trackFetchedDataCache.current[`${fetchRes.id}`][
           fetchRes.missingIdx
         ].trackState["visRegion"] = visRegion;
@@ -1073,7 +1077,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackFetchedDataCache: trackFetchedDataCache,
         metadata: fetchRes.metadata,
         trackType: fetchRes.trackType,
-        globalTrackState,
+        navContext: genomeConfig.navContext,
+        bpRegionSize: bpRegionSize.current,
       });
     }
   }
@@ -1176,7 +1181,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       genomeConfig.defaultTracks = newDefaultTracksArr;
       genomeConfig.defaultRegion = new OpenInterval(startbase, endbase);
-
       // recreateTrackmanager({
       //   selectedTool: selectedTool,
       //   genomeConfig: genomeConfig,
@@ -1599,8 +1603,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (infiniteScrollWorker.current) {
         infiniteScrollWorker.current!.terminate();
       }
-      if (genomeAlignWorker.current) {
-        genomeAlignWorker.current!.terminate();
+      if (fetchGenomeAlignWorker.current) {
+        fetchGenomeAlignWorker.current!.terminate();
       }
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
@@ -1672,9 +1676,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               type: "module",
             }
           );
-          genomeAlignWorker.current = new Worker(
+          fetchGenomeAlignWorker.current = new Worker(
             new URL(
-              "../../getRemoteData/genomeAlignWorker.ts",
+              "../../getRemoteData/fetchGenomeAlignWorker.ts",
               import.meta.url
             ),
             {
@@ -1695,6 +1699,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // initializeTracks();
       } else {
         preload.current = true;
+        genomeConfig.defaultTracks = trackManagerState.current.tracks;
         refreshState();
 
         initialConfig.current = true;
@@ -1812,6 +1817,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
       }
+      console.log(trackFetchedDataCache.current, dataIdx, "delete");
     }
     if (useCacheData.current || needToFetchAddTrack.current) {
       const trackToDrawId = {};
@@ -1866,8 +1872,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             enqueueMessage({
               primaryGenName: genName,
               trackModelArr: trackToFetch,
-              visData: trackState.visData ? trackState.visData : "",
+              visData: trackState.visData
+                ? trackState.visData
+                : trackState.genomicFetchCoord
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                : "",
               genomicLoci: trackState.regionLoci,
+              visRegion: trackState.visRegion
+                ? trackState.visRegion
+                : trackState.genomicFetchCoord
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                    .visRegion
+                : "",
               expandedGenLoci: trackState.genomicFetchCoord
                 ? trackState.genomicFetchCoord[`${genName}`].expandGenomicLoci
                 : "",

@@ -1,5 +1,6 @@
 // import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 
+import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 import {
   removeDuplicates,
   removeDuplicatesWithoutId,
@@ -41,7 +42,8 @@ interface cacheFetchedDataParams {
   trackType: string;
   usePrimaryNav: boolean;
   metadata: any;
-  globalTrackState: any;
+  navContext: any;
+  bpRegionSize: number;
 }
 export const trackUsingExpandedLoci = {
   biginteract: "",
@@ -83,18 +85,19 @@ export function cacheFetchedData({
   trackType = "",
   usePrimaryNav,
   metadata,
+  navContext,
+  bpRegionSize,
 }: cacheFetchedDataParams) {
   const isError = checkFetchError(trackData);
   // Passing rawData to the correct tracks and saving it to cache to be displayed
 
   const primaryVisData =
     trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
-
+  let visRegion = !usePrimaryNav
+    ? trackState.genomicFetchCoord[metadata.genome].queryRegion
+    : primaryVisData.visRegion;
+  console.log(visRegion, navContext, bpRegionSize);
   if (trackState.initial === 1) {
-    let visRegion = !usePrimaryNav
-      ? trackState.genomicFetchCoord[metadata.genome].queryRegion
-      : primaryVisData.visRegion;
-
     if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
       let newTrackState = {
         ...trackState,
@@ -132,6 +135,11 @@ export function cacheFetchedData({
       let trackState0 = {
         initial: 0,
         regionLoci: trackState.regionLoci[0],
+        visRegion: new DisplayedRegionModel(
+          navContext,
+          visRegion._startBase - bpRegionSize,
+          visRegion._startBase
+        ),
         side: "left",
         xDist: 0,
         index: 1,
@@ -151,6 +159,11 @@ export function cacheFetchedData({
       };
 
       let trackState2 = {
+        visRegion: new DisplayedRegionModel(
+          navContext,
+          visRegion._endBase,
+          visRegion._endBase + bpRegionSize
+        ),
         regionLoci: trackState.regionLoci[2],
         initial: 0,
         side: "right",

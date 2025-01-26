@@ -1,11 +1,17 @@
+import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
+
 interface cacheFetchedDataParams {
   trackState: any;
   globalTrackState: any;
+  navContext: any;
+  bpRegionSize: number;
 }
 
 export function trackGlobalState({
   trackState,
   globalTrackState,
+  navContext,
+  bpRegionSize,
 }: cacheFetchedDataParams) {
   const primaryVisData =
     trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
@@ -17,9 +23,19 @@ export function trackGlobalState({
       side: "left",
       xDist: 0,
       index: 1,
+      visRegion: new DisplayedRegionModel(
+        navContext,
+        trackState.visData.visRegion._startBase - bpRegionSize,
+        trackState.visData.visRegion._startBase
+      ),
     };
     let trackState1 = {
       ...trackState,
+      visRegion: new DisplayedRegionModel(
+        navContext,
+        trackState.visData.visRegion._endBase,
+        trackState.visData.visRegion._endBase + bpRegionSize
+      ),
       regionLoci: trackState.regionLoci[1],
       initial: 0,
       side: "right",

@@ -21,7 +21,7 @@ import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotati
 import { objToInstanceAlign } from "../TrackManager";
 import BedAnnotation from "./bedComponents/BedAnnotation";
 import CategoricalAnnotation from "./CategoricalComponents/CategoricalAnnotation";
-import { RepeatDASFeature } from "@/models/RepeatMaskerFeature";
+import { RepeatDASFeature } from "../../../models/RepeatMaskerFeature";
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
@@ -1044,7 +1044,7 @@ export function getDisplayModeFunction(
         ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
       });
     }
-
+    if (!drawData.trackState.visRegion) console.log(drawData);
     let svgDATA = displayModeComponentMap.full({
       formattedData,
       trackState: drawData.trackState,
