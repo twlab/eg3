@@ -92,7 +92,8 @@ self.onmessage = async (event: MessageEvent) => {
   const genomeAlignTracks = trackToFetch;
   genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData;
 
-  const fetchArrNav = event.data.initial ? initGenomicLoci : genomicLoci;
+  const fetchArrNav = event.data.initial ? initGenomicLoci : [genomicLoci];
+  console.log(fetchArrNav);
   if (genomeAlignTracks.length > 0) {
     await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks);
   }
@@ -215,6 +216,7 @@ self.onmessage = async (event: MessageEvent) => {
             }
           })
         );
+
         fetchResults[`${item.id}`] = {
           name: item.name,
           result: fetchRes,
@@ -234,8 +236,40 @@ self.onmessage = async (event: MessageEvent) => {
     let successFetch: Array<any> = [];
 
     for (let key in fetchResults) {
+      let tmpObj = { ...fetchResults[key] };
+      tmpObj.result = [...fetchResults[key].result];
       if (!("error" in fetchResults[key])) {
-        successFetch.push(fetchResults[key]);
+        if (key in cacheData) {
+          for (const data of cacheData[`${key}`]) {
+            const newAlignment: Array<any> = [];
+            for (const alignmentData of data) {
+              const record = {
+                chr: alignmentData.locus.chr,
+                start: alignmentData.locus.start,
+                end: alignmentData.locus.end,
+                strand: alignmentData.strand,
+                3: {
+                  id: alignmentData.name,
+                  genomealign: {
+                    strand: alignmentData.queryStrand,
+
+                    chr: alignmentData.queryLocus.chr,
+                    start: alignmentData.queryLocus.start,
+                    stop: alignmentData.queryLocus.end,
+
+                    querySeq: alignmentData.querySeq,
+
+                    targetSeq: alignmentData.targetSeq,
+                  },
+                },
+              };
+              newAlignment.push(new AlignmentRecord(record));
+            }
+
+            tmpObj.result.push([...newAlignment]);
+          }
+        }
+        successFetch.push(tmpObj);
       }
     }
     let multiCalInstance = new MultiAlignmentViewCalculator(
@@ -382,6 +416,11 @@ self.onmessage = async (event: MessageEvent) => {
   postMessage({
     fetchResults,
 
-    navData: { ...event.data, genomicFetchCoord, trackToDrawId },
+    navData: {
+      ...event.data,
+      genomicFetchCoord,
+      trackToDrawId,
+      side: event.data.trackSide,
+    },
   });
 };

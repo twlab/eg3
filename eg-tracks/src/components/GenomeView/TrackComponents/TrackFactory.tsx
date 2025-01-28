@@ -53,6 +53,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const usePrimaryNav = useRef<boolean>(true);
   const useExpandedLoci = useRef<boolean>(false);
   const straw = useRef<{ [key: string]: any }>({});
+
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
   const displayCache = useRef<{ [key: string]: any }>({
     full: {},
@@ -149,9 +150,18 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       checkTrackPreload(id);
       updateSide.current = side;
 
-      configOptions.current.displayMode === "full"
-        ? setSvgComponents(res)
-        : setCanvasComponents(res);
+      if (configOptions.current.displayMode === "full") {
+        setSvgComponents(res);
+        if (!(trackIndex in displayCache.current["full"])) {
+          displayCache.current["full"][trackIndex] = res;
+        }
+      } else {
+        setCanvasComponents(res);
+        if (!(trackIndex in displayCache.current["density"])) {
+          displayCache.current["density"][trackIndex] = res;
+        }
+      }
+
       xPos.current = curXPos;
     }
   }
@@ -209,6 +219,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
+    console.log(newDrawData, "REEEE");
     if (
       "curDataIdx" in newDrawData &&
       newDrawData.curDataIdx === dataIdx &&
@@ -248,7 +259,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         });
       }
 
-      if (!useExpandedLoci.current && trackModel.type !== "genomealign") {
+      if (!useExpandedLoci.current) {
         if (trackData[trackIndex].trackState.initial === 1) {
           if (
             trackIndex in trackData &&
@@ -277,7 +288,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           createSVGOrCanvas(
             trackData[mid].trackState,
-            viewData,
+            trackModel.type !== "genomealign"
+              ? viewData
+              : trackData[newDrawData.curDataIdx],
             trackData[newDrawData.curDataIdx].trackState.isError,
             trackIndex
           );
@@ -306,10 +319,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 })
                 .flat(1);
             }
+            console.log("REACHS");
             if (!noData) {
               createSVGOrCanvas(
                 trackData[newDrawData.curDataIdx].trackState,
-                viewData,
+                trackModel.type !== "genomealign"
+                  ? viewData
+                  : trackData[newDrawData.curDataIdx],
                 trackData[newDrawData.curDataIdx].trackState.isError,
                 trackIndex
               );
@@ -351,11 +367,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
         }
       } else {
-        const viewData =
-          trackModel.type !== "genomealign"
-            ? trackData[newDrawData.curDataIdx].dataCache
-            : trackData[newDrawData.curDataIdx].records;
-        console.log(viewData);
+        const viewData = trackData[newDrawData.curDataIdx].dataCache;
+
         createSVGOrCanvas(
           trackData[newDrawData.curDataIdx].trackState,
           viewData,

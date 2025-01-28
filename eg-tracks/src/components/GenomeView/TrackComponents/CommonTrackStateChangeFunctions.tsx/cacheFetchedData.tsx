@@ -271,6 +271,19 @@ export function cacheFetchedData({
     // tracks that dont use expanded nav loci_____________________________________________________________________________________________________________________________________________________________________
     //__________________________________________________________________________________________________________________________________________________________
     else {
+      if (trackType === "genomealign") {
+        console.log(
+          id,
+          trackData,
+          trackFetchedDataCache,
+          trackState,
+          trackType,
+          usePrimaryNav,
+          metadata,
+          navContext,
+          bpRegionSize
+        );
+      }
       if (trackState.side === "right") {
         trackState.index =
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"];

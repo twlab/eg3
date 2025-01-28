@@ -189,6 +189,7 @@ self.onmessage = async (event: MessageEvent) => {
             event.data.initial !== 1 ? genRefResponses[0] : genRefResponses,
           id: id,
           metadata: item.metadata,
+          trackModel: item,
         });
       } else if (trackType === "bam") {
         let curFetchNav;
@@ -242,6 +243,7 @@ self.onmessage = async (event: MessageEvent) => {
           result: tmpResults,
           id: id,
           metadata: item.metadata,
+          trackModel: item,
         });
       } else {
         let responses: Array<any> = await fetchData(item, genomeName, id);
@@ -250,6 +252,7 @@ self.onmessage = async (event: MessageEvent) => {
           result: event.data.initial !== 1 ? responses[0] : responses,
           id: id,
           metadata: item.metadata,
+          trackModel: item,
         });
       }
     })

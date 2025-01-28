@@ -344,18 +344,18 @@ const defaultTracks = [
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   }),
-  new TrackModel({
-    name: "hg38topantro5",
-    label: "query Chimpanzee panTro5 to hg38 blastz",
-    querygenome: "panTro5",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_panTro5_axt.gz",
-    details: {
-      source: "UCSC Genome Browser",
-      "download url":
-        "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/vsPanTro5/",
-    },
-  }),
+  // new TrackModel({
+  //   name: "hg38topantro5",
+  //   label: "query Chimpanzee panTro5 to hg38 blastz",
+  //   querygenome: "panTro5",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_panTro5_axt.gz",
+  //   details: {
+  //     source: "UCSC Genome Browser",
+  //     "download url":
+  //       "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/vsPanTro5/",
+  //   },
+  // }),
 
   // new TrackModel({
   //   name: "hg38tomm10",

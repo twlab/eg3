@@ -19,7 +19,6 @@ export class AlignmentRecord extends Feature {
   constructor(record: any) {
     const locus = new ChromosomeInterval(record.chr, record.start, record.end);
     super(record[3].id, locus, record.strand);
-
     const { chr, start, stop, strand, targetseq, queryseq } =
       record[3].genomealign;
     this.queryLocus = new ChromosomeInterval(chr, start, stop);
