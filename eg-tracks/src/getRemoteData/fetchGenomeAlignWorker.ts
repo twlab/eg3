@@ -77,7 +77,8 @@ self.onmessage = async (event: MessageEvent) => {
   const trackToFetch = event.data.trackToFetch;
   const genomicLoci = event.data.genomicLoci;
   const visData = event.data.visData;
-  const fetchResults: Array<any> = [];
+  const fetchResults = {};
+  const trackToDrawId = {};
   const genomicFetchCoord = {};
   const useFineModeNav = event.data.useFineModeNav;
   const primaryGenName = event.data.primaryGenName;
@@ -90,32 +91,10 @@ self.onmessage = async (event: MessageEvent) => {
   };
   const genomeAlignTracks = trackToFetch;
   genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData;
+
+  const fetchArrNav = event.data.initial ? initGenomicLoci : genomicLoci;
   if (genomeAlignTracks.length > 0) {
-    // step 2: fetch genome align data and put them into an array
-    //group all the genomealign track and fetch once in getGenomealign
-    //return all the genomealign in an array
-    (
-      await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks)
-    ).map((item) => {
-      // if there is a genomealigntrack and its in fine mode then
-      // we change the primaryVisdata because other tracks relies on the visdata
-      if (!("error" in item.result)) {
-        genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
-          item.result.primaryVisData;
-
-        //save the genomic location so that track that has query as parent can use that data to get data\
-
-        genomicFetchCoord[`${item.queryName}`] = {
-          queryGenomicCoord: new Array(item.queryGenomicCoord),
-          id: item.id,
-          queryRegion: item.result.queryRegion,
-        };
-      }
-      item["metadata"] = { "track type": "genomealign" };
-      item["result"] = [item.result];
-      fetchResults.push(item);
-    });
-    console.log(fetchResults);
+    await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks);
   }
 
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
@@ -176,194 +155,87 @@ self.onmessage = async (event: MessageEvent) => {
       viewWindowRegion,
     };
 
-    if (event.data.initial) {
-      var testResult: Array<any> = [];
-      for (let i = 0; i < initGenomicLoci.length; i++) {
-        let resRecords;
-
-        resRecords = await Promise.all(
-          initGenomicLoci[i].map(async (nav, index) => {
-            const responds = await trackFetchFunction["genomealign"]({
-              nav: [nav],
-              options: {
-                height: 40,
-                isCombineStrands: false,
-                colorsForContext: {
-                  CG: {
-                    color: "rgb(100,139,216)",
-                    background: "#d9d9d9",
+    await Promise.all(
+      genomeAlignTracks.map(async (item, index) => {
+        var fetchRes: Array<any> = [];
+        await Promise.all(
+          fetchArrNav.map(async (nav, index) => {
+            try {
+              const responds = await trackFetchFunction["genomealign"]({
+                nav: nav,
+                options: {
+                  height: 40,
+                  isCombineStrands: false,
+                  colorsForContext: {
+                    CG: {
+                      color: "rgb(100,139,216)",
+                      background: "#d9d9d9",
+                    },
+                    CHG: {
+                      color: "rgb(255,148,77)",
+                      background: "#ffe0cc",
+                    },
+                    CHH: {
+                      color: "rgb(255,0,255)",
+                      background: "#ffe5ff",
+                    },
                   },
-                  CHG: {
-                    color: "rgb(255,148,77)",
-                    background: "#ffe0cc",
-                  },
-                  CHH: {
-                    color: "rgb(255,0,255)",
-                    background: "#ffe5ff",
-                  },
+                  depthColor: "#525252",
+                  depthFilter: 0,
+                  maxMethyl: 1,
+                  label: "",
                 },
-                depthColor: "#525252",
-                depthFilter: 0,
-                maxMethyl: 1,
-                label: "",
-              },
 
-              url: genomeAlignTracks[0].url,
-              trackModel: genomeAlignTracks[0],
-            });
+                url: item.url,
+                trackModel: item,
+              });
 
-            let records: AlignmentRecord[] = [];
+              let records: AlignmentRecord[] = [];
 
-            for (const record of responds) {
-              let data = JSON5.parse("{" + record[3] + "}");
-              record[3] = data;
-              records.push(new AlignmentRecord(record));
+              for (const record of responds) {
+                let data = JSON5.parse("{" + record[3] + "}");
+                record[3] = data;
+                records.push(new AlignmentRecord(record));
+              }
+              // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
+
+              fetchRes.push(records);
+              trackToDrawId[`${item.id}`] = "";
+            } catch (error) {
+              fetchRes.push({
+                result: {
+                  error: `Error processing genome align track with id ${
+                    item.id
+                  }: ${"Error"}`,
+                },
+                error: `Error processing genome align track with id ${
+                  item.id
+                }: ${"Error"}`,
+              });
             }
-            // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
-
-            testResult.push(records);
           })
         );
-      }
-      fetchResults.push({
-        name: "genomealign",
-        result: testResult,
-        id: "test",
-        metadata: genomeAlignTracks[0].metadata,
-      });
-    } else {
-      const responds = await Promise.all(
-        genomicLoci.map(async (nav, index) => {
-          return await trackFetchFunction["genomealign"]({
-            nav: [nav],
-            options: {
-              height: 40,
-              isCombineStrands: false,
-              colorsForContext: {
-                CG: {
-                  color: "rgb(100,139,216)",
-                  background: "#d9d9d9",
-                },
-                CHG: {
-                  color: "rgb(255,148,77)",
-                  background: "#ffe0cc",
-                },
-                CHH: {
-                  color: "rgb(255,0,255)",
-                  background: "#ffe5ff",
-                },
-              },
-              depthColor: "#525252",
-              depthFilter: 0,
-              maxMethyl: 1,
-              label: "",
-            },
+        fetchResults[`${item.id}`] = {
+          name: item.name,
+          result: fetchRes,
+          query: item.querygenome,
+          id: item.id,
+          trackModel: item,
+          metadata: item.metadata,
+          isBigChain: false,
+        };
 
-            url: genomeAlignTracks[0].url,
-            trackModel: genomeAlignTracks[0],
-          });
-        })
-      );
-      let records: AlignmentRecord[] = [];
+        return fetchRes;
+      })
+    );
 
-      for (const record of responds[0]) {
-        let data = JSON5.parse("{" + record[3] + "}");
-        record[3] = data;
-        records.push(new AlignmentRecord(record));
-      }
-      // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
-
-      fetchResults.push({
-        name: "genomealign",
-        result: records,
-        id: "test",
-        metadata: genomeAlignTracks[0].metadata,
-      });
-    }
-    console.log(fetchResults);
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
     let successFetch: Array<any> = [];
 
-    let oldRecordsArray;
-    try {
-      oldRecordsArray = await Promise.all(
-        genomeAlignTracks.map(async (item, index) => {
-          try {
-            let curGenomeAlignRespond = await trackFetchFunction.genomealign({
-              nav: expandGenomicLoci,
-              options: {
-                height: 40,
-                isCombineStrands: false,
-                colorsForContext: {
-                  CG: {
-                    color: "rgb(100,139,216)",
-                    background: "#d9d9d9",
-                  },
-                  CHG: {
-                    color: "rgb(255,148,77)",
-                    background: "#ffe0cc",
-                  },
-                  CHH: {
-                    color: "rgb(255,0,255)",
-                    background: "#ffe5ff",
-                  },
-                },
-                depthColor: "#525252",
-                depthFilter: 0,
-                maxMethyl: 1,
-                label: "",
-              },
-              url: item.url,
-              trackModel: item,
-            });
-
-            let records: AlignmentRecord[] = [];
-            let recordArr: any = curGenomeAlignRespond;
-
-            for (const record of recordArr) {
-              let data = JSON5.parse("{" + record[3] + "}");
-              record[3] = data;
-              records.push(new AlignmentRecord(record));
-            }
-            // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
-
-            return {
-              query: item.querygenome,
-              records: records,
-              isBigChain: false,
-              id: item.id,
-            };
-          } catch (error) {
-            return {
-              query: item.querygenome,
-              name: item.querygenome,
-              isBigChain: false,
-              id: item.id,
-              result: {
-                error: `Error processing genome align track with id ${
-                  item.id
-                }: ${"Error"}`,
-              },
-              error: `Error processing genome align track with id ${
-                item.id
-              }: ${"Error"}`,
-            };
-          }
-        })
-      );
-
-      // Handle the oldRecordsArray as needed
-    } catch (error) {
-      console.error("Error fetching genome align tracks:", error);
-      // Handle the situation where the entire Promise.all fails, if necessary
-    }
-    console.log(oldRecordsArray, "expand");
-    for (let curGenomeAlign of oldRecordsArray) {
-      if (!("error" in curGenomeAlign)) {
-        successFetch.push(curGenomeAlign);
-      } else {
-        result.push(curGenomeAlign);
+    for (let key in fetchResults) {
+      if (!("error" in fetchResults[key])) {
+        successFetch.push(fetchResults[key]);
       }
     }
     let multiCalInstance = new MultiAlignmentViewCalculator(
@@ -371,7 +243,7 @@ self.onmessage = async (event: MessageEvent) => {
     );
     console.log(successFetch);
     let alignment = multiCalInstance.multiAlign(visData, successFetch);
-    console.log(alignment, visData);
+
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
@@ -478,16 +350,19 @@ self.onmessage = async (event: MessageEvent) => {
         }
       }
 
-      result.push({
-        queryName: query,
-        result: alignment[`${query}`],
-        id: alignment[`${query}`].id,
-        name: "genomealign",
-        queryGenomicCoord: queryGenomicCoords,
-      });
-    }
+      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
+        alignment[`${query}`].primaryVisData;
 
-    return result;
+      //save the genomic location so that track that has query as parent can use that data to get data\
+
+      genomicFetchCoord[`${query}`] = {
+        queryGenomicCoord: new Array(queryGenomicCoords),
+        id: alignment[`${query}`].id,
+        queryRegion: alignment[`${query}`].queryRegion,
+      };
+      fetchResults[`${alignment[`${query}`].id}`]["records"] =
+        alignment[`${query}`];
+    }
   }
 
   function parseGenomicCoordinates(input: string): {
@@ -506,17 +381,7 @@ self.onmessage = async (event: MessageEvent) => {
   }
   postMessage({
     fetchResults,
-    side: event.data.trackSide,
-    xDist: event.data.xDist,
-    initial: event.data.initial,
-    trackDataIdx: event.data.trackDataIdx,
-    genomicFetchCoord,
-    bpX: event.data.bpX,
-    useFineModeNav,
-    genomicLoci,
-    expandGenomicLoci,
-    missingIdx: event.data.missingIdx,
-    regionLoci: event.data.regionLoci,
-    visData: event.data.visData,
+
+    navData: { ...event.data, genomicFetchCoord, trackToDrawId },
   });
 };

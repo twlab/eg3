@@ -51,7 +51,6 @@ export const trackUsingExpandedLoci = {
   dynamiclongrange: "",
   hic: "",
   longrange: "",
-  genomealign: "",
 };
 
 function checkFetchError(trackData) {
@@ -96,7 +95,7 @@ export function cacheFetchedData({
   let visRegion = !usePrimaryNav
     ? trackState.genomicFetchCoord[metadata.genome].queryRegion
     : primaryVisData.visRegion;
-  console.log(visRegion, navContext, bpRegionSize);
+
   if (trackState.initial === 1) {
     if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
       let newTrackState = {

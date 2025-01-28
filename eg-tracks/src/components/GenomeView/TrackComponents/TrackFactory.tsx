@@ -248,7 +248,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         });
       }
 
-      if (!useExpandedLoci.current) {
+      if (!useExpandedLoci.current && trackModel.type !== "genomealign") {
         if (trackData[trackIndex].trackState.initial === 1) {
           if (
             trackIndex in trackData &&
@@ -351,7 +351,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
         }
       } else {
-        const viewData = trackData[newDrawData.curDataIdx].dataCache;
+        const viewData =
+          trackModel.type !== "genomealign"
+            ? trackData[newDrawData.curDataIdx].dataCache
+            : trackData[newDrawData.curDataIdx].records;
+        console.log(viewData);
         createSVGOrCanvas(
           trackData[newDrawData.curDataIdx].trackState,
           viewData,

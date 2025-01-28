@@ -166,7 +166,30 @@ export class MultiAlignmentViewCalculator {
       //   );
       //   return { query: fetcher.queryGenome, records: records };
       // });
-      recordsArray = rawRecords;
+      const recordsArray: Array<any> = [];
+
+      for (const record of rawRecords) {
+        const flattenedAlignmentRecords = record.result.flat();
+
+        const uniqueRecords: Array<any> = [];
+        const recordObj = {};
+        const strandNames = new Set();
+        recordObj["id"] = record.id;
+        recordObj["query"] = record.query;
+
+        // Assuming 'aggregateStrand.name' is a property of 'record'
+
+        for (const unique of flattenedAlignmentRecords) {
+          const name = unique.name;
+
+          if (!strandNames.has(name)) {
+            strandNames.add(name);
+            uniqueRecords.push(unique);
+          }
+        }
+        recordObj["records"] = uniqueRecords;
+        recordsArray.push({ ...recordObj });
+      }
 
       // Don't need to change each records for rough alignment, directly loop through them:
       return recordsArray.reduce(
