@@ -1,6 +1,6 @@
-import { getGenomeConfig as getGenomeConfigFromAllGenomes } from "./eg-lib/model/genomes/allGenomes";
-import DisplayedRegionModel from "./eg-lib/model/DisplayedRegionModel";
-import DataHubParser from "./eg-lib/model/DataHubParser";
+import { getGenomeConfig as getGenomeConfigFromAllGenomes } from "./eg-lib/models/genomes/allGenomes";
+import DisplayedRegionModel from "./eg-lib/models/DisplayedRegionModel";
+import DataHubParser from "./eg-lib/models/DataHubParser";
 
 export function getGenomeDefaultState(genome: string) {
     const genomeConfig = getGenomeConfigFromAllGenomes(genome);
