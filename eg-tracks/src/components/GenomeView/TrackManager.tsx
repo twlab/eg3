@@ -229,7 +229,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
   const enqueueGenomeAlignMessage = (message) => {
     genomeAlignMessageQueue.current.push(message);
-    console.log(genomeAlignMessageQueue.current, "queue", message);
+
     processGenomeAlignQueue();
   };
   // when a new track is added, for any track currently in the manager
@@ -841,7 +841,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
     // MARK: FetchWorker
-    console.log("ASDDASASDd");
+
     try {
       // add to fetch queue when user reaches a new region without data.
       if (hasGenomeAlign.current) {
@@ -908,11 +908,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               // once we finish with a fetch we need to check if there are any more
               // request in the queue, user might scroll fast and have multipe region data to fetch
               processGenomeAlignQueue();
-              console.log(
-                curTrackState,
-                { ...trackFetchedDataCache.current },
-                "GENOMEALIGNFETCH"
-              );
+
               enqueueMessage(curTrackState);
             })
             .catch((error) => {
@@ -951,7 +947,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       //   event.data.visData._startBase + bpRegionSize.current,
       //   event.data.visData._endBase - bpRegionSize.current
       // );
-      console.log(event.data, "nongenomealignfetch");
+
       const curTrackState = {
         primaryGenName: genomeConfig.genome.getName(),
         initial: event.data.initial,
@@ -1867,31 +1863,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [dataIdx]
 
   useEffect(() => {
-    console.log(
-      messageQueue.current,
-      genomeAlignMessageQueue.current,
-      hasGenomeAlign.current,
-      globalTrackState.current
-    );
-    // if (dataIdx === -6) {
-    //   const curDataIdxObj = {
-    //     [Number(dataIdx) + 1]: "",
-    //     [dataIdx]: "",
-    //     [Number(dataIdx) - 1]: "",
-    //   };
+    if (dataIdx === -20) {
+      const curDataIdxObj = {
+        [Number(dataIdx) + 1]: "",
+        [dataIdx]: "",
+        [Number(dataIdx) - 1]: "",
+      };
 
-    //   for (const key in trackFetchedDataCache.current) {
-    //     const curTrack = trackFetchedDataCache.current[key];
+      for (const key in trackFetchedDataCache.current) {
+        const curTrack = trackFetchedDataCache.current[key];
 
-    //     for (const dataIdx in curTrack) {
-    //       if (isNumberKey(dataIdx) && !(dataIdx in curDataIdxObj)) {
-    //         delete curTrack[dataIdx].dataCache;
-    //       }
-    //     }
-    //   }
-    //   console.log(trackFetchedDataCache.current, dataIdx, "delete");
-    // }
-    console.log(globalTrackState.current);
+        for (const dataIdx in curTrack) {
+          if (isNumberKey(dataIdx) && !(dataIdx in curDataIdxObj)) {
+            delete curTrack[dataIdx].dataCache;
+            if ("records" in curTrack[dataIdx]) {
+              delete curTrack[dataIdx].records;
+            }
+          }
+        }
+      }
+      console.log(trackFetchedDataCache.current, dataIdx, "delete");
+    }
+
     if (useCacheData.current || needToFetchAddTrack.current) {
       const trackToDrawId = {};
 

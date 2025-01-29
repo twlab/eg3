@@ -1194,7 +1194,7 @@ export function getDisplayModeFunction(
       } else {
         element = (
           <React.Fragment>
-            <div
+            {/* <div
               style={{
                 display: "flex",
                 flexDirection: "row",
@@ -1211,7 +1211,7 @@ export function getDisplayModeFunction(
                 side={drawData.trackState.side}
                 options={drawData.configOptions}
               />
-            </div>
+            </div> */}
 
             <svg
               width={drawData.trackState.visWidth}

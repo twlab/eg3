@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27195171-27202238");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -124,6 +124,26 @@ const defaultTracks = [
       color: "blue",
     },
   }),
+  new TrackModel({
+    name: "hg38tomm10",
+    label: "Query mouse mm10 to hg38 blastz",
+    type: "genomealign",
+    querygenome: "mm10",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  }),
+  new TrackModel({
+    name: "hg38topantro5",
+    label: "query Chimpanzee panTro5 to hg38 blastz",
+    querygenome: "panTro5",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_panTro5_axt.gz",
+    details: {
+      source: "UCSC Genome Browser",
+      "download url":
+        "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/vsPanTro5/",
+    },
+  }),
 
   new TrackModel({
     type: "bigwig",
@@ -133,7 +153,11 @@ const defaultTracks = [
       color: "blue",
     },
   }),
-
+  new TrackModel({
+    type: "bed",
+    name: "mm10 bed",
+    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  }),
   // new TrackModel({
   //   type: "modbed",
   //   name: "examplemod",
@@ -332,30 +356,13 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
   // new TrackModel({
-  //   name: "hg38topantro5",
-  //   label: "query Chimpanzee panTro5 to hg38 blastz",
-  //   querygenome: "panTro5",
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
   //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_panTro5_axt.gz",
-  //   details: {
-  //     source: "UCSC Genome Browser",
-  //     "download url":
-  //       "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/vsPanTro5/",
-  //   },
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
   // }),
 
   // new TrackModel({
@@ -422,7 +429,6 @@ const defaultTracks = [
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
 ];
-
 const publicHubData = {
   "4D Nucleome Network":
     "The 4D Nucleome Network aims to understand the principles underlying nuclear organization " +
