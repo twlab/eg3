@@ -126,8 +126,32 @@ export class MultiAlignmentViewCalculator {
       //     isBigChain: fetcher.isBigChain,
       //   };
       // });
+      let oldRecordsArray;
+      const tmp: Array<any> = [];
+      for (const record of rawRecords) {
+        const flattenedAlignmentRecords = record.result.flat();
 
-      const oldRecordsArray = rawRecords;
+        const uniqueRecords: Array<any> = [];
+        const recordObj = {};
+        const strandNames = new Set();
+        recordObj["id"] = record.id;
+        recordObj["query"] = record.query;
+
+        // Assuming 'aggregateStrand.name' is a property of 'record'
+
+        for (const unique of flattenedAlignmentRecords) {
+          const name = unique.name;
+
+          if (!strandNames.has(name)) {
+            strandNames.add(name);
+            uniqueRecords.push(unique);
+          }
+        }
+        recordObj["records"] = uniqueRecords;
+        tmp.push({ ...recordObj });
+      }
+      console.log(tmp);
+      oldRecordsArray = tmp;
       const { newRecordsArray, allGaps } = this.refineRecordsArray(
         oldRecordsArray,
         visData

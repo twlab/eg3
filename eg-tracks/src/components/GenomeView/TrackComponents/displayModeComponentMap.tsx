@@ -1203,7 +1203,7 @@ export function getDisplayModeFunction(
               }}
             >
               <HoverToolTip
-                data={drawData.genesArr}
+                data={drawData.genesArr.records}
                 windowWidth={drawData.trackState.visWidth}
                 trackType={"genomealignRough"}
                 height={drawData.configOptions.height}

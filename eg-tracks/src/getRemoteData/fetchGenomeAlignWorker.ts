@@ -93,7 +93,7 @@ self.onmessage = async (event: MessageEvent) => {
   genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData;
 
   const fetchArrNav = event.data.initial ? initGenomicLoci : [genomicLoci];
-  console.log(fetchArrNav);
+
   if (genomeAlignTracks.length > 0) {
     await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks);
   }
@@ -257,16 +257,17 @@ self.onmessage = async (event: MessageEvent) => {
                     start: alignmentData.queryLocus.start,
                     stop: alignmentData.queryLocus.end,
 
-                    querySeq: alignmentData.querySeq,
+                    queryseq: alignmentData.querySeq,
 
-                    targetSeq: alignmentData.targetSeq,
+                    targetseq: alignmentData.targetSeq,
                   },
                 },
               };
+
               newAlignment.push(new AlignmentRecord(record));
             }
 
-            tmpObj.result.push([...newAlignment]);
+            tmpObj.result.unshift([...newAlignment]);
           }
         }
         successFetch.push(tmpObj);

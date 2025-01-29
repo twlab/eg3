@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -133,11 +133,7 @@ const defaultTracks = [
       color: "blue",
     },
   }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
+
   // new TrackModel({
   //   type: "modbed",
   //   name: "examplemod",
@@ -343,6 +339,11 @@ const defaultTracks = [
     querygenome: "mm10",
     filetype: "genomealign",
     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  }),
+  new TrackModel({
+    type: "bed",
+    name: "mm10 bed",
+    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
   }),
   // new TrackModel({
   //   name: "hg38topantro5",
