@@ -107,7 +107,7 @@ export function TrackContainerRepresentable({
         cache.delete(key);
       }
     }
-    console.log(result);
+
     return result;
   }, [tracks]);
   genomeConfig["defaultTracks"] = convertedTracks;

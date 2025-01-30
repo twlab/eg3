@@ -39,12 +39,10 @@ export default function GenomeView() {
   };
 
   const handleTrackAdded = (tracks: ITrackModel[]) => {
-    console.log([...tracks]);
     dispatch(updateCurrentSession({ tracks }));
   };
 
   const handleNewRegionSelect = (coordinate: GenomeCoordinate) => {
-    console.log(coordinate);
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
     dispatch(updateCurrentSession({ viewRegion: coordinate }));
   };
