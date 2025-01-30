@@ -14,7 +14,7 @@ import NavigationContext from "../../models/NavigationContext";
 import { HicSource } from "../../getRemoteData/hicSource";
 import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
-import TrackModel from "../../models/TrackModel";
+import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import { TYPE_NAME_TO_CONFIG } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import _, { isNumber } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
@@ -42,7 +42,7 @@ import {
 } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 
-function sumArray(numbers) {
+function sumArray(numbers: Array<any>) {
   let total = 0;
   for (let i = 0; i < numbers.length; i++) {
     total += numbers[i];
@@ -181,7 +181,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const isDragging = useRef(false);
   const rightSectionSize = useRef<Array<any>>([windowWidth]);
   const leftSectionSize = useRef<Array<any>>([]);
-  const test = useRef<Array<any>>([]);
   const preloadedTracks = useRef<{ [key: string]: any }>({});
   const screenshotDataObj = useRef<{ [key: string]: any }>({});
   const preload = useRef<boolean>(false);
@@ -416,7 +415,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
 
-  function onConfigChange(key, value) {
+  function onConfigChange(key: string, value: string | number) {
     if (key === "displayMode") {
       let menuComponents: Array<any> = [];
       let optionsObjects: Array<any> = [];
@@ -471,14 +470,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newStateObj = createNewTrackState(trackManagerState.current, {});
 
     //addGlobalState(newStateObj);
-    let newSelected = {};
+    let newSelected: { [key: string]: any } = {};
     for (const selected in selectedTracks.current) {
       newSelected[`${selected}`] = { [key]: value };
     }
     setApplyTrackConfigChange(newSelected);
   }
 
-  function renderTrackSpecificConfigMenu(x, y) {
+  function renderTrackSpecificConfigMenu(x: number, y: number) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
     for (const config in selectedTracks.current) {
@@ -918,7 +917,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } catch {}
 
     infiniteScrollWorker.current!.onmessage = (event) => {
-      const trackToDrawId = {};
+      const trackToDrawId: { [key: string]: any } = {};
       // var bpInt = getIntervals(
       //   event.data.visData._startBase + bpRegionSize.current,
       //   event.data.visData._endBase - bpRegionSize.current
@@ -1164,13 +1163,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else {
       setSelectedTool((prevState) => {
         if (prevState.title === tool.title) {
-          let newSelectedTool = {};
+          let newSelectedTool: { [key: string]: any } = {};
           newSelectedTool["title"] = "none";
           newSelectedTool["isSelected"] = false;
           isToolSelected.current = false;
           return newSelectedTool;
         } else {
-          let newSelectedTool = {};
+          let newSelectedTool: { [key: string]: any } = {};
           newSelectedTool["title"] = tool.title;
           newSelectedTool["isSelected"] = true;
           isToolSelected.current = true;
@@ -1606,7 +1605,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
         preload.current = false;
         if (genomeConfig.isInitial) {
-          console.log("FDDFFDDF");
           genomeConfig.isInitial = false;
         }
       }
@@ -1990,11 +1988,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (trackComponent.trackModel.id === curTrackModel.id) {
             newTrackComponents.push(trackComponent);
             foundComp = true;
-            console.log("ASDASDSDA");
           }
         }
         if (!foundComp) {
-          console.log("ASDASDSDA2");
           needToFetchAddTrack.current = true;
           const newPosRef = createRef();
           const newLegendRef = createRef();
