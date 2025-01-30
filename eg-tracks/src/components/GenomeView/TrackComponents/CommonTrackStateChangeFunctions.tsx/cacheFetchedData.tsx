@@ -51,6 +51,7 @@ export const trackUsingExpandedLoci = {
   dynamiclongrange: "",
   hic: "",
   longrange: "",
+  genomealign: "",
 };
 
 function checkFetchError(trackData) {
@@ -122,7 +123,7 @@ export function cacheFetchedData({
           }
             ? trackData
             : trackType === "genomealign"
-            ? trackData[0]
+            ? trackData
             : trackData.flat(1),
         trackState: newTrackState,
       };
@@ -137,7 +138,7 @@ export function cacheFetchedData({
         visRegion: new DisplayedRegionModel(
           navContext,
           visRegion._startBase - bpRegionSize,
-          visRegion._startBase
+          visRegion._startBase + bpRegionSize * 2
         ),
         side: "left",
         xDist: 0,
@@ -160,7 +161,7 @@ export function cacheFetchedData({
       let trackState2 = {
         visRegion: new DisplayedRegionModel(
           navContext,
-          visRegion._endBase,
+          visRegion._endBase - bpRegionSize * 2,
           visRegion._endBase + bpRegionSize
         ),
         regionLoci: trackState.regionLoci[2],

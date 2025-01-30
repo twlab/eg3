@@ -1,5 +1,6 @@
 import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import Genome from "../models/Genome";
 
 // add the same props that were being passed into TrackContainer.tsx
 export interface ITrackContainerState {
@@ -41,11 +42,14 @@ export interface ITrackContainerRepresentableProps {
   onTrackAdded: (trackModels: ITrackModel[]) => void;
   onNewRegionSelect: (coordinate: GenomeCoordinate) => void;
   viewRegion: GenomeCoordinate;
+  userViewRegion: null | GenomeCoordinate;
 }
 
 // MARK: Track Model
 
-export type GenomeCoordinate = `chr${number | string}:${number}-${number}` | `chr${number | string}:${number}-chr${number | string}-${number}`;
+export type GenomeCoordinate =
+  | `chr${number | string}:${number}-${number}`
+  | `chr${number | string}:${number}-chr${number | string}-${number}`;
 
 export interface TrackOptions {
   label?: string;
@@ -74,6 +78,7 @@ export interface ITrackModel {
   fileObj?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
+  id: number | string;
 }
 
 export interface IHighlightInterval {

@@ -9,7 +9,7 @@ import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-import Nav from "./genomeNavigator/Nav";
+import TrackModel from "../../models/TrackModel";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
@@ -37,6 +37,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
       if (!isInitial.current) {
         curGenome = { ...currentGenomeConfig };
+        console.log(userViewRegion);
         curGenome["isInitial"] = isInitial.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
@@ -45,37 +46,42 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome["sizeChange"] = true;
       } else {
         curGenome = { ...genomeConfig };
+        console.log(curGenome);
         curGenome["isInitial"] = isInitial.current;
         curGenome["genomeID"] = uuidv4();
         let bundleId = uuidv4();
         curGenome["bundleId"] = bundleId;
       }
+
       setCurrentGenomeConfig(curGenome);
       isInitial.current = false;
     }
   }, [size.width]);
-  useEffect(() => {
-    if (size.width > 0) {
-      let curGenome;
+  // useEffect(() => {
+  //   if (size.width > 0) {
+  //     let curGenome;
 
-      if (!isInitial.current) {
-        curGenome = { ...currentGenomeConfig };
-        curGenome["isInitial"] = isInitial.current;
-        curGenome.defaultRegion = new OpenInterval(
-          viewRegion._startBase!,
-          viewRegion._endBase!
-        );
-        curGenome["sizeChange"] = false;
-        setCurrentGenomeConfig(curGenome);
-      }
-    }
-  }, [viewRegion]);
+  //     if (!isInitial.current) {
+  //       curGenome = { ...currentGenomeConfig };
+  //       curGenome["isInitial"] = isInitial.current;
+  //       curGenome.defaultRegion = new OpenInterval(
+  //         viewRegion._startBase!,
+  //         viewRegion._endBase!
+  //       );
+  //       curGenome["sizeChange"] = false;
+  //       setCurrentGenomeConfig(curGenome);
+  //     }
+  //   }
+  // }, [viewRegion]);
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {userViewRegion && showGenomeNav && currentGenomeConfig ? (
+          {size.width > 0 &&
+          userViewRegion &&
+          showGenomeNav &&
+          currentGenomeConfig ? (
             <GenomeNavigator
               selectedRegion={userViewRegion}
               genomeConfig={currentGenomeConfig}
@@ -83,36 +89,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               onRegionSelected={onNewRegionSelect}
             />
           ) : null}
-          {viewRegion ? (
-            <Nav
-              tracks={tracks}
-              isShowingNavigator={showGenomeNav}
-              selectedRegion={viewRegion}
-              genomeConfig={genomeConfig}
-              trackLegendWidth={legendWidth}
-              onRegionSelected={onNewRegionSelect}
-              onTracksAdded={onTrackAdded}
-              onGenomeSelected={function (name: string): void {
-                throw new Error("Function not implemented.");
-              }}
-              onHubUpdated={function (name: string): void {
-                throw new Error("Function not implemented.");
-              }}
-              onRestoreSession={undefined}
-              publicTracksPool={[]}
-              customTracksPool={[]}
-              addTermToMetaSets={function (name: string): void {
-                throw new Error("Function not implemented.");
-              }}
-              onSetSelected={undefined}
-              onSetsChanged={undefined}
-              sets={[]}
-              selectedSet={undefined}
-              onTabSettingsChange={undefined}
-            />
-          ) : (
-            ""
-          )}
+
           {currentGenomeConfig && (
             <TrackManager
               key={currentGenomeConfig.genomeID}
@@ -124,8 +101,12 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               genomeConfig={currentGenomeConfig}
               onNewRegion={onNewRegion}
               onNewHighlight={onNewHighlight}
-              onTrackSelected={onTrackSelected}
-              onTrackDeleted={onTrackDeleted}
+              onTrackSelected={function (trackSelected: TrackModel[]): void {
+                throw new Error("Function not implemented.");
+              }}
+              onTrackDeleted={function (currenTracks: TrackModel[]): void {
+                throw new Error("Function not implemented.");
+              }}
             />
           )}
         </div>

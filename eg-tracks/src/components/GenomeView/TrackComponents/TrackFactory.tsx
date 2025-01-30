@@ -152,14 +152,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
       if (configOptions.current.displayMode === "full") {
         setSvgComponents(res);
-        if (!(trackIndex in displayCache.current["full"])) {
-          displayCache.current["full"][trackIndex] = res;
-        }
+        // if (!(trackIndex in displayCache.current["full"])) {
+        //   displayCache.current["full"][trackIndex] = res;
+        // }
       } else {
         setCanvasComponents(res);
-        if (!(trackIndex in displayCache.current["density"])) {
-          displayCache.current["density"][trackIndex] = res;
-        }
+        // if (!(trackIndex in displayCache.current["density"])) {
+        //   displayCache.current["density"][trackIndex] = res;
+        // }
       }
 
       xPos.current = curXPos;
@@ -219,7 +219,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
-    console.log(newDrawData, "REEEE");
     if (
       "curDataIdx" in newDrawData &&
       newDrawData.curDataIdx === dataIdx &&
@@ -288,9 +287,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           createSVGOrCanvas(
             trackData[mid].trackState,
-            trackModel.type !== "genomealign"
-              ? viewData
-              : trackData[newDrawData.curDataIdx],
+            viewData,
+
             trackData[newDrawData.curDataIdx].trackState.isError,
             trackIndex
           );
@@ -319,13 +317,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 })
                 .flat(1);
             }
-            console.log("REACHS");
+
             if (!noData) {
               createSVGOrCanvas(
                 trackData[newDrawData.curDataIdx].trackState,
-                trackModel.type !== "genomealign"
-                  ? viewData
-                  : trackData[newDrawData.curDataIdx],
+                viewData,
+
                 trackData[newDrawData.curDataIdx].trackState.isError,
                 trackIndex
               );

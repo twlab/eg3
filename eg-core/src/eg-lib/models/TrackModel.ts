@@ -44,6 +44,7 @@ interface ITrackModel {
   fileObj?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
+  id: string | number;
 }
 
 let nextId = 0;
@@ -80,7 +81,7 @@ export class TrackModel {
   textConfig?: any;
   apiConfig?: any;
   queryEndpoint?: QueryEndpoint;
-
+  legendWidth?: any;
   constructor(plainObject: ITrackModel) {
     const data = {
       ...plainObject,
@@ -90,7 +91,10 @@ export class TrackModel {
 
     Object.assign(this, data);
     this.name = this.name || "";
-    this.label = this.options && this.options.label ? this.options.label : this.label || this.name || "";
+    this.label =
+      this.options && this.options.label
+        ? this.options.label
+        : this.label || this.name || "";
     this.isSelected = this.isSelected || false;
     this.type = this.type || this.filetype || "";
     this.type = this.type.toLowerCase();
@@ -98,11 +102,16 @@ export class TrackModel {
     this.options.label = this.label; // ...which is why we copy this.name.
     this.url = mapUrl(this.url) || "";
     this.indexUrl = this.indexUrl ? mapUrl(this.indexUrl) : undefined;
-    this.metadata = variableIsObject(this.metadata) || Array.isArray(this.metadata) ? this.metadata : {}; // avoid number or string as metadata
+    this.metadata =
+      variableIsObject(this.metadata) || Array.isArray(this.metadata)
+        ? this.metadata
+        : {}; // avoid number or string as metadata
     this.metadata["Track type"] = this.type;
     this.fileObj = this.fileObj || "";
     this.files = this.files || [];
-    this.tracks = this.tracks ? this.tracks.map((tk) => new TrackModel(tk)) : [];
+    this.tracks = this.tracks
+      ? this.tracks.map((tk) => new TrackModel(tk))
+      : [];
     this.isText = this.isText || false;
     this.textConfig = this.textConfig || {};
     this.apiConfig = this.apiConfig || {};
@@ -116,10 +125,6 @@ export class TrackModel {
     if (this.options.height && typeof this.options.height === "string") {
       this.options.height = Number.parseFloat(this.options.height) || 20;
     }
-
-    // Other misc props
-    this.id = nextId;
-    nextId++;
   }
 
   serialize() {

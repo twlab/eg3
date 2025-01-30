@@ -338,6 +338,7 @@ export const treeOfLife: { [speciesName: string]: SpeciesConfig } = {
  * @return {GenomeConfig} the genome's configuration object, or null if no such genome exists.
  */
 export function getGenomeConfig(genomeName: string): GenomeConfig {
+  console.log({ ...genomeNameToConfig[genomeName] });
   return { ...genomeNameToConfig[genomeName] };
 }
 

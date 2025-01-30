@@ -92,12 +92,12 @@ self.onmessage = async (event: MessageEvent) => {
   const genomeAlignTracks = trackToFetch;
   genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData;
 
-  const fetchArrNav = [expandGenomicLoci];
+  const fetchArrNav = event.data.initial ? initGenomicLoci : [genomicLoci];
 
   if (genomeAlignTracks.length > 0) {
     await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks);
   }
-  console.log(expandGenomicLoci);
+
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
     let result: Array<any> = [];
@@ -158,11 +158,10 @@ self.onmessage = async (event: MessageEvent) => {
 
     await Promise.all(
       genomeAlignTracks.map(async (item, index) => {
-        let rawRecords;
+        var fetchRes: Array<any> = [];
         await Promise.all(
           fetchArrNav.map(async (nav, index) => {
             try {
-              console.log(nav);
               const responds = await trackFetchFunction["genomealign"]({
                 nav: nav,
                 options: {
@@ -193,7 +192,7 @@ self.onmessage = async (event: MessageEvent) => {
               });
 
               let records: AlignmentRecord[] = [];
-              console.log(responds);
+
               for (const record of responds) {
                 let data = JSON5.parse("{" + record[3] + "}");
                 record[3] = data;
@@ -201,39 +200,79 @@ self.onmessage = async (event: MessageEvent) => {
               }
               // Added trackId for genomeAlign tracks so we can put the correct data to the correct track after we send the data back
 
-              rawRecords = records;
+              fetchRes.push(records);
               trackToDrawId[`${item.id}`] = "";
             } catch (error) {
-              rawRecords = {
+              fetchRes.push({
+                result: {
+                  error: `Error processing genome align track with id ${
+                    item.id
+                  }: ${"Error"}`,
+                },
                 error: `Error processing genome align track with id ${
                   item.id
                 }: ${"Error"}`,
-              };
+              });
             }
           })
         );
 
         fetchResults[`${item.id}`] = {
           name: item.name,
-          records: rawRecords,
+          result: fetchRes,
           query: item.querygenome,
           id: item.id,
           trackModel: item,
           metadata: item.metadata,
           isBigChain: false,
         };
+
+        return fetchRes;
       })
     );
 
     // step 3 sent the array of genomealign fetched data to find the gaps and get drawData
 
     let successFetch: Array<any> = [];
-    for (const key in fetchResults) {
-      if (!("error" in fetchResults[key].records)) {
-        successFetch.push(fetchResults[key]);
+
+    for (let key in fetchResults) {
+      let tmpObj = { ...fetchResults[key] };
+      tmpObj.result = [...fetchResults[key].result];
+      if (!("error" in fetchResults[key])) {
+        if (key in cacheData) {
+          for (const data of cacheData[`${key}`]) {
+            const newAlignment: Array<any> = [];
+            for (const alignmentData of data) {
+              const record = {
+                chr: alignmentData.locus.chr,
+                start: alignmentData.locus.start,
+                end: alignmentData.locus.end,
+                strand: alignmentData.strand,
+                3: {
+                  id: alignmentData.name,
+                  genomealign: {
+                    strand: alignmentData.queryStrand,
+
+                    chr: alignmentData.queryLocus.chr,
+                    start: alignmentData.queryLocus.start,
+                    stop: alignmentData.queryLocus.end,
+
+                    queryseq: alignmentData.querySeq,
+
+                    targetseq: alignmentData.targetSeq,
+                  },
+                },
+              };
+
+              newAlignment.push(new AlignmentRecord(record));
+            }
+
+            tmpObj.result.unshift([...newAlignment]);
+          }
+        }
+        successFetch.push(tmpObj);
       }
     }
-    console.log(fetchResults);
     let multiCalInstance = new MultiAlignmentViewCalculator(
       event.data.primaryGenName
     );

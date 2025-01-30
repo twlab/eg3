@@ -9,7 +9,7 @@ export interface GenomeConfig {
   navContext: NavigationContext;
   cytobands: CytobandMap;
   defaultRegion: OpenInterval;
-  defaultTracks: TrackModel[];
+  defaultTracks: Array<TrackModel>;
   publicHubData: any;
   publicHubList: any[];
   annotationTracks: any;

@@ -1061,7 +1061,7 @@ export function getDisplayModeFunction(
 
     return svgDATA;
   } else if (drawData.trackModel.type === "genomealign") {
-    let result = drawData.genesArr.records;
+    let result = drawData.genesArr;
     let svgElements;
 
     if (drawData.basesByPixel <= 10) {
@@ -1137,7 +1137,6 @@ export function getDisplayModeFunction(
       drawData.genesArr.records = "";
       return element;
     } else {
-      console.log(drawData.genesArr);
       const drawDatas = result.drawData as PlacedMergedAlignment[];
       drawData.updatedLegend.current = (
         <TrackLegend
