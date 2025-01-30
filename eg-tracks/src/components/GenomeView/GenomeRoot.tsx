@@ -57,22 +57,22 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       isInitial.current = false;
     }
   }, [size.width]);
-  // useEffect(() => {
-  //   if (size.width > 0) {
-  //     let curGenome;
+  useEffect(() => {
+    if (size.width > 0) {
+      let curGenome;
 
-  //     if (!isInitial.current) {
-  //       curGenome = { ...currentGenomeConfig };
-  //       curGenome["isInitial"] = isInitial.current;
-  //       curGenome.defaultRegion = new OpenInterval(
-  //         viewRegion._startBase!,
-  //         viewRegion._endBase!
-  //       );
-  //       curGenome["sizeChange"] = false;
-  //       setCurrentGenomeConfig(curGenome);
-  //     }
-  //   }
-  // }, [viewRegion]);
+      if (!isInitial.current) {
+        curGenome = { ...currentGenomeConfig };
+        curGenome["isInitial"] = isInitial.current;
+        curGenome.defaultRegion = new OpenInterval(
+          viewRegion._startBase!,
+          viewRegion._endBase!
+        );
+        curGenome["sizeChange"] = false;
+        setCurrentGenomeConfig(curGenome);
+      }
+    }
+  }, [viewRegion]);
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>

@@ -44,6 +44,8 @@ export default function GenomeView() {
   };
 
   const handleNewRegionSelect = (coordinate: GenomeCoordinate) => {
+    console.log(coordinate);
+    dispatch(updateCurrentSession({ userViewRegion: coordinate }));
     dispatch(updateCurrentSession({ viewRegion: coordinate }));
   };
 
