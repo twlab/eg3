@@ -219,6 +219,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
+    console.log(newDrawData, trackFetchedDataCache.current);
     if (
       "curDataIdx" in newDrawData &&
       newDrawData.curDataIdx === dataIdx &&
@@ -230,11 +231,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackIndex = newDrawData.curDataIdx;
 
       let trackData = trackFetchedDataCache.current[`${id}`];
+      usePrimaryNav.current = trackData.usePrimaryNav;
+      useExpandedLoci.current = trackData.useExpandedLoci;
 
       if (trackData[trackIndex].trackState.initial === 1) {
         // use previous data before resetState
-        usePrimaryNav.current = trackData.usePrimaryNav;
-        useExpandedLoci.current = trackData.useExpandedLoci;
 
         if (
           trackModel.type in

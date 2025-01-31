@@ -72,11 +72,10 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  const cacheData = event.data.cacheData;
   const expandGenomicLoci = event.data.expandedGenLoci;
   const trackToFetch = event.data.trackToFetch;
   const genomicLoci = event.data.genomicLoci;
-  const visData = event.data.visData;
+
   const fetchResults = {};
   const trackToDrawId = {};
   const genomicFetchCoord = {};
@@ -97,7 +96,7 @@ self.onmessage = async (event: MessageEvent) => {
   if (genomeAlignTracks.length > 0) {
     await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks);
   }
-  console.log(expandGenomicLoci);
+
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
     let result: Array<any> = [];
@@ -162,7 +161,6 @@ self.onmessage = async (event: MessageEvent) => {
         await Promise.all(
           fetchArrNav.map(async (nav, index) => {
             try {
-              console.log(nav);
               const responds = await trackFetchFunction["genomealign"]({
                 nav: nav,
                 options: {
@@ -193,7 +191,7 @@ self.onmessage = async (event: MessageEvent) => {
               });
 
               let records: AlignmentRecord[] = [];
-              console.log(responds);
+
               for (const record of responds) {
                 let data = JSON5.parse("{" + record[3] + "}");
                 record[3] = data;
@@ -233,7 +231,7 @@ self.onmessage = async (event: MessageEvent) => {
         successFetch.push(fetchResults[key]);
       }
     }
-    console.log(fetchResults);
+
     let multiCalInstance = new MultiAlignmentViewCalculator(
       event.data.primaryGenName
     );
@@ -375,6 +373,7 @@ self.onmessage = async (event: MessageEvent) => {
 
     return { chr, start, end };
   }
+
   postMessage({
     fetchResults,
 

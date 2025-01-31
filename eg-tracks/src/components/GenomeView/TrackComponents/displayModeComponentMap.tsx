@@ -1061,6 +1061,7 @@ export function getDisplayModeFunction(
 
     return svgDATA;
   } else if (drawData.trackModel.type === "genomealign") {
+    console.log(drawData);
     let result = drawData.genesArr;
     let svgElements;
 
