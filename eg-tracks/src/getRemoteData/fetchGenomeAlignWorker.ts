@@ -89,7 +89,7 @@ self.onmessage = async (event: MessageEvent) => {
     initGenomicLoci,
   };
   const genomeAlignTracks = trackToFetch;
-  genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = event.data.visData;
+  console.log(event.data.visData);
 
   const fetchArrNav = [expandGenomicLoci];
 

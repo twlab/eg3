@@ -73,6 +73,7 @@ export class NumericalAggregator {
           ? xToValueBeforeSmooth
           : Smooth(xToValueBeforeSmooth, smoothNumber);
     }
+
     return [xToValue, xToValue2, hasReverse];
   }
 }

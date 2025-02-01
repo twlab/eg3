@@ -48,7 +48,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   const svgHeight = useRef(0);
   const updateSide = useRef("right");
-  const updatedLegend = useRef<any>();
+  const updatedLegend = useRef<any>(undefined);
   const fetchError = useRef<boolean>(false);
   const usePrimaryNav = useRef<boolean>(true);
   const useExpandedLoci = useRef<boolean>(false);
@@ -106,6 +106,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
   // MARK: CREATESVG
   async function createSVGOrCanvas(trackState, genesArr, isError, trackIndex) {
+    console.log(trackState, windowWidth);
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
@@ -219,7 +220,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
-    console.log(newDrawData, trackFetchedDataCache.current);
     if (
       "curDataIdx" in newDrawData &&
       newDrawData.curDataIdx === dataIdx &&
@@ -229,7 +229,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     ) {
       let left, mid, right;
       let trackIndex = newDrawData.curDataIdx;
-
+      console.log(newDrawData, trackFetchedDataCache.current[`${id}`]);
       let trackData = trackFetchedDataCache.current[`${id}`];
       usePrimaryNav.current = trackData.usePrimaryNav;
       useExpandedLoci.current = trackData.useExpandedLoci;
@@ -453,7 +453,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 className="Tooltip"
               >
                 <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail feature={feature} />
+                  <FeatureDetail
+                    feature={feature}
+                    category={undefined}
+                    queryEndpoint={undefined}
+                  />
                 </OutsideClickDetector>
                 {ReactDOM.createPortal(
                   <div
@@ -685,7 +689,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 className="Tooltip"
               >
                 <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail feature={feature} />
+                  <FeatureDetail
+                    feature={feature}
+                    category={undefined}
+                    queryEndpoint={undefined}
+                  />
                 </OutsideClickDetector>
                 {ReactDOM.createPortal(
                   <div
@@ -895,7 +903,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 className="Tooltip"
               >
                 <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail feature={feature} />
+                  <FeatureDetail
+                    feature={feature}
+                    category={undefined}
+                    queryEndpoint={undefined}
+                  />
                   <div style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
                     <div>Ref {alignment.reference}</div>
                     <div> {alignment.lines}</div>
@@ -1031,6 +1043,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   <FeatureDetail
                     feature={feature}
                     category={configOptions.current.category}
+                    queryEndpoint={undefined}
                   />
                 </OutsideClickDetector>
                 {ReactDOM.createPortal(

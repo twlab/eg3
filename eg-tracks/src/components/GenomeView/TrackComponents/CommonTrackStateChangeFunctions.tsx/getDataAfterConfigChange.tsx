@@ -31,7 +31,6 @@ export function getConfigChangeData({
   let viewData;
   let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
   if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
-    console.log(fetchedDataCache, dataIdx, "YET");
     viewData = fetchedDataCache[dataIdx!].dataCache;
   } else {
     viewData = [

@@ -94,7 +94,9 @@ export function cacheFetchedData({
   const primaryVisData =
     trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
   let visRegion = !usePrimaryNav
-    ? trackState.genomicFetchCoord[metadata.genome].queryRegion
+    ? trackState.genomicFetchCoord[
+        trackFetchedDataCache.current[`${id}`].queryGenome
+      ].queryRegion
     : primaryVisData.visRegion;
 
   if (trackState.initial === 1) {
@@ -221,7 +223,9 @@ export function cacheFetchedData({
     let visRegion;
     if (!usePrimaryNav) {
       visRegion =
-        trackState.genomicFetchCoord[`${metadata.genome}`].queryRegion;
+        trackState.genomicFetchCoord[
+          `${trackFetchedDataCache.current[`${id}`].queryGenome}`
+        ].queryRegion;
     } else {
       visRegion = primaryVisData.visRegion;
     }
@@ -273,17 +277,6 @@ export function cacheFetchedData({
     //__________________________________________________________________________________________________________________________________________________________
     else {
       if (trackType === "genomealign") {
-        console.log(
-          id,
-          trackData,
-          trackFetchedDataCache,
-          trackState,
-          trackType,
-          usePrimaryNav,
-          metadata,
-          navContext,
-          bpRegionSize
-        );
       }
       if (trackState.side === "right") {
         trackState.index =

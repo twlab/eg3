@@ -374,5 +374,7 @@ self.onmessage = async (event: MessageEvent) => {
     missingIdx: event.data.missingIdx,
     regionLoci: event.data.regionLoci,
     visData: event.data.visData,
+    initExpandBpLoci: event.data.initExpandBpLoci,
+    initBpLoci: event.data.initBpLoci,
   });
 };
