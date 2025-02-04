@@ -138,6 +138,7 @@ export class FeatureAggregator {
       width,
       useCenter
     );
+
     for (const placedFeature of placement) {
       const startX = Math.max(0, Math.floor(placedFeature.xSpan.start));
       const endX = Math.min(width - 1, Math.ceil(placedFeature.xSpan.end));

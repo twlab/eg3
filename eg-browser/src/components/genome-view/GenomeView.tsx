@@ -22,11 +22,11 @@ export default function GenomeView() {
   }
 
   const handleNewRegion = (coordinate: GenomeCoordinate) => {
-    console.log(coordinate);
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
   };
 
   const handleNewHighlight = (highlights: IHighlightInterval[]) => {
+    console.log(highlights, "new highlights");
     dispatch(updateCurrentSession({ highlights }));
   };
 

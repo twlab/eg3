@@ -1358,7 +1358,6 @@ export function getDisplayModeFunction(
 
     return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {
-    console.log(drawData);
     let formattedData = drawData.genesArr;
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,

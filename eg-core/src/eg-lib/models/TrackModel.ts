@@ -47,8 +47,6 @@ interface ITrackModel {
   id: string | number;
 }
 
-let nextId = 0;
-
 /**
  * An object storing track metadata and state.
  *
@@ -70,7 +68,7 @@ export class TrackModel {
   url!: string;
   indexUrl?: string;
   metadata!: ITrackModelMetadata;
-  id!: number;
+  id!: number | string;
   isSelected!: boolean;
   showOnHubLoad?: boolean;
   fileObj?: any;

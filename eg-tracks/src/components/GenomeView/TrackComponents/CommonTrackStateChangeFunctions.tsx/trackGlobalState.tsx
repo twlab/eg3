@@ -20,6 +20,7 @@ export function trackGlobalState({
     let trackState0 = {
       initial: 0,
       regionLoci: trackState.regionLoci[0],
+      visData: trackState.initVisData[0],
       side: "left",
       xDist: 0,
       index: 1,
@@ -37,7 +38,7 @@ export function trackGlobalState({
         trackState.visData.visRegion._endBase + bpRegionSize
       ),
       regionLoci: trackState.regionLoci[1],
-      initial: 0,
+      initial: 1,
       side: "right",
       xDist: 0,
 
@@ -49,6 +50,7 @@ export function trackGlobalState({
     let trackState2 = {
       regionLoci: trackState.regionLoci[2],
       initial: 0,
+      visData: trackState.initVisData[2],
       side: "right",
       xDist: 0,
       index: -1,

@@ -48,7 +48,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   const svgHeight = useRef(0);
   const updateSide = useRef("right");
-  const updatedLegend = useRef<any>();
+  const updatedLegend = useRef<any>(undefined);
   const fetchError = useRef<boolean>(false);
   const usePrimaryNav = useRef<boolean>(true);
   const useExpandedLoci = useRef<boolean>(false);
@@ -230,11 +230,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackIndex = newDrawData.curDataIdx;
 
       let trackData = trackFetchedDataCache.current[`${id}`];
+      usePrimaryNav.current = trackData.usePrimaryNav;
+      useExpandedLoci.current = trackData.useExpandedLoci;
 
       if (trackData[trackIndex].trackState.initial === 1) {
         // use previous data before resetState
-        usePrimaryNav.current = trackData.usePrimaryNav;
-        useExpandedLoci.current = trackData.useExpandedLoci;
 
         if (
           trackModel.type in
@@ -452,7 +452,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 className="Tooltip"
               >
                 <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail feature={feature} />
+                  <FeatureDetail
+                    feature={feature}
+                    category={undefined}
+                    queryEndpoint={undefined}
+                  />
                 </OutsideClickDetector>
                 {ReactDOM.createPortal(
                   <div
@@ -684,7 +688,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 className="Tooltip"
               >
                 <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail feature={feature} />
+                  <FeatureDetail
+                    feature={feature}
+                    category={undefined}
+                    queryEndpoint={undefined}
+                  />
                 </OutsideClickDetector>
                 {ReactDOM.createPortal(
                   <div
@@ -894,7 +902,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 className="Tooltip"
               >
                 <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail feature={feature} />
+                  <FeatureDetail
+                    feature={feature}
+                    category={undefined}
+                    queryEndpoint={undefined}
+                  />
                   <div style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
                     <div>Ref {alignment.reference}</div>
                     <div> {alignment.lines}</div>
@@ -1030,6 +1042,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   <FeatureDetail
                     feature={feature}
                     category={configOptions.current.category}
+                    queryEndpoint={undefined}
                   />
                 </OutsideClickDetector>
                 {ReactDOM.createPortal(
