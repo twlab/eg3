@@ -278,20 +278,30 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             trackData[mid],
             trackData[right],
           ];
+          var noData = false;
 
           if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
             viewData = getDeDupeArrMatPlot(viewData, false);
           } else {
-            viewData = viewData.map((item) => item.dataCache).flat(1);
+            viewData = viewData
+              .map((item) => {
+                if (item && "dataCache" in item) {
+                  return item.dataCache;
+                } else {
+                  noData = true;
+                }
+              })
+              .flat(1);
           }
+          if (!noData) {
+            createSVGOrCanvas(
+              trackData[mid].trackState,
+              viewData,
 
-          createSVGOrCanvas(
-            trackData[mid].trackState,
-            viewData,
-
-            trackData[newDrawData.curDataIdx].trackState.isError,
-            trackIndex
-          );
+              trackData[newDrawData.curDataIdx].trackState.isError,
+              trackIndex
+            );
+          }
         } else {
           if (trackData[newDrawData.curDataIdx].trackState.side === "right") {
             let viewData: any = [];

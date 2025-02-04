@@ -79,6 +79,7 @@ export interface ITrackModel {
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
   id: number | string;
+  isSelected: boolean;
 }
 
 export interface IHighlightInterval {

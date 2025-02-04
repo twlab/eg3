@@ -28,9 +28,8 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ highlights }));
   };
 
-  const handleTrackSelected = (selectedTracks: ITrackModel[]) => {
-    console.log("Selected tracks:", selectedTracks);
-    dispatch(updateCurrentSession({ highlights }));
+  const handleTrackSelected = (tracks: ITrackModel[]) => {
+    dispatch(updateCurrentSession({ tracks }));
   };
 
   const handleTrackDeleted = (tracks: ITrackModel[]) => {

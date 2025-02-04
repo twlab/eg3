@@ -444,9 +444,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         item.options = { ...oldOption, [key]: newVal };
       }
     });
-    let newStateObj = createNewTrackState(trackManagerState.current, {});
+    onTrackSelected([...trackManagerState.current.tracks]);
 
-    //addGlobalState(newStateObj);
     let newSelected: { [key: string]: any } = {};
     for (const selected in selectedTracks.current) {
       newSelected[`${selected}`] = { [key]: value };
@@ -507,7 +506,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         });
       }
-      // onTrackSelected(trackManagerState.current.tracks);
+      console.log(trackManagerState.current.tracks);
+      onTrackSelected([...trackManagerState.current.tracks]);
 
       if (
         configMenu.configMenus !== "" &&
@@ -539,7 +539,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       selectedTracks.current[`${trackDetails.trackModel.id}`] =
         globalTrackConfig.current[`${trackDetails.trackModel.id}`];
-
+      onTrackSelected([...trackManagerState.current.tracks]);
       renderTrackSpecificConfigMenu(e.pageX, e.pageY);
     }
   }
@@ -2095,97 +2095,154 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     return str !== null && !isNaN(num) && Number.isInteger(num);
   }
+  function arraysHaveSameTrackModels(
+    array1: Array<TrackModel>,
+    array2: Array<TrackModel>
+  ): boolean {
+    if (array1.length !== array2.length) {
+      return false;
+    }
+
+    const sortedArray1 = array1.sort((a, b) => (a.id > b.id ? 1 : -1));
+    const sortedArray2 = array2.sort((a, b) => (a.id > b.id ? 1 : -1));
+    for (let i = 0; i < sortedArray1.length; i++) {
+      if (sortedArray1[i].id !== sortedArray2[i].id) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   useEffect(() => {
-    if (!genomeConfig.isInitial) {
-      const newTrackId: { [key: string]: any } = {};
-      for (const trackModel of tracks) {
-        newTrackId[`${trackModel.id}`] = {};
-        if (trackModel.isSelected) {
+    console.log(tracks, "hjere1");
+    if (
+      arraysHaveSameTrackModels(tracks, trackManagerState.current.tracks) ||
+      genomeConfig.isInitial
+    ) {
+      console.log(tracks, "hjere2", selectedTracks.current, trackComponents);
+      const isSelected: Array<any> = [];
+      tracks.map((item) => {
+        if (item.isSelected) {
+          isSelected.push(item.id);
         }
-      }
-      for (const key in trackFetchedDataCache.current) {
-        if (!(key in newTrackId)) {
-          delete trackFetchedDataCache.current[key];
-        }
-      }
-      const newTrackComponents: Array<any> = [];
+      });
 
-      for (var i = 0; i < tracks.length; i++) {
-        const curTrackModel = tracks[i];
-        let foundComp = false;
-
-        // find tracks already in view
-        for (let trackComponent of trackComponents) {
-          if (trackComponent.trackModel.id === curTrackModel.id) {
-            newTrackComponents.push(trackComponent);
-            foundComp = true;
+      for (const key in selectedTracks.current) {
+        if (!(key in isSelected)) {
+          for (const component of trackComponents) {
+            if (component.id === key) {
+              component.legendRef.current.style.backgroundColor = "white";
+              delete selectedTracks.current[key];
+            }
           }
         }
-        // if not in view this means that this is the new track that was added.
-        if (!foundComp) {
-          if (curTrackModel.type === "genomealign") {
-            if (basePerPixel.current < 10) {
-              useFineModeNav.current = true;
+      }
+      for (const key of isSelected) {
+        if (key! in selectedTracks.current) {
+          continue;
+        } else {
+          console.log("HERE@@@@@@@@");
+          for (const component of trackComponents) {
+            if (component.id === key) {
+              component.legendRef.current.style.backgroundColor = "lightblue";
+              selectedTracks.current[key!] = globalTrackConfig.current[key!];
+              break;
             }
-            hasGenomeAlign.current = true;
-            for (const key in trackFetchedDataCache.current) {
-              const trackCache = trackFetchedDataCache.current[key];
+          }
+        }
+      }
+    } else {
+      if (!genomeConfig.isInitial) {
+        const newTrackId: { [key: string]: any } = {};
+        for (const trackModel of tracks) {
+          newTrackId[`${trackModel.id}`] = {};
+          if (trackModel.isSelected) {
+          }
+        }
+        for (const key in trackFetchedDataCache.current) {
+          if (!(key in newTrackId)) {
+            delete trackFetchedDataCache.current[key];
+          }
+        }
+        const newTrackComponents: Array<any> = [];
 
-              for (const dataKey in trackCache) {
-                if (isInteger(dataKey)) {
-                  const regionData = trackCache[dataKey];
+        for (var i = 0; i < tracks.length; i++) {
+          const curTrackModel = tracks[i];
+          let foundComp = false;
 
-                  if (trackCache.trackType !== "genomealign") {
-                    if (
-                      "trackState" in regionData &&
-                      "genomicFetchCoord" in regionData.trackState
-                    ) {
+          // find tracks already in view
+          for (let trackComponent of trackComponents) {
+            if (trackComponent.trackModel.id === curTrackModel.id) {
+              newTrackComponents.push(trackComponent);
+              foundComp = true;
+            }
+          }
+          // if not in view this means that this is the new track that was added.
+          if (!foundComp) {
+            if (curTrackModel.type === "genomealign") {
+              if (basePerPixel.current < 10) {
+                useFineModeNav.current = true;
+              }
+              hasGenomeAlign.current = true;
+              for (const key in trackFetchedDataCache.current) {
+                const trackCache = trackFetchedDataCache.current[key];
+
+                for (const dataKey in trackCache) {
+                  if (isInteger(dataKey)) {
+                    const regionData = trackCache[dataKey];
+
+                    if (trackCache.trackType !== "genomealign") {
+                      if (
+                        "trackState" in regionData &&
+                        "genomicFetchCoord" in regionData.trackState
+                      ) {
+                        delete trackFetchedDataCache.current[key][dataKey]
+                          .trackState.genomicFetchCoord;
+                      }
+                    } else {
                       delete trackFetchedDataCache.current[key][dataKey]
                         .trackState.genomicFetchCoord;
+                      delete trackFetchedDataCache.current[key][dataKey]
+                        .dataCache;
                     }
-                  } else {
-                    delete trackFetchedDataCache.current[key][dataKey]
-                      .trackState.genomicFetchCoord;
-                    delete trackFetchedDataCache.current[key][dataKey]
-                      .dataCache;
                   }
+                }
+              }
+
+              for (const key in globalTrackState.current.trackState) {
+                const regionTrackState =
+                  globalTrackState.current.trackState[`${key}`].trackState;
+
+                if ("genomicFetchCoord" in regionTrackState) {
+                  delete globalTrackState.current.trackState[`${key}`]
+                    .trackState.genomicFetchCoord;
                 }
               }
             }
 
-            for (const key in globalTrackState.current.trackState) {
-              const regionTrackState =
-                globalTrackState.current.trackState[`${key}`].trackState;
+            //create initial state for the new track, give it all the prevregion trackstate, and trigger fetch by updating trackcomponents
+            needToFetchAddTrack.current = true;
+            const newPosRef = createRef();
+            const newLegendRef = createRef();
 
-              if ("genomicFetchCoord" in regionTrackState) {
-                delete globalTrackState.current.trackState[`${key}`].trackState
-                  .genomicFetchCoord;
-              }
-            }
-          }
+            curTrackModel["legendWidth"] = legendWidth;
 
-          //create initial state for the new track, give it all the prevregion trackstate, and trigger fetch by updating trackcomponents
-          needToFetchAddTrack.current = true;
-          const newPosRef = createRef();
-          const newLegendRef = createRef();
+            newTrackComponents.push({
+              trackIdx: i,
+              id: curTrackModel.id,
+              component: TrackFactory,
+              posRef: newPosRef,
+              legendRef: newLegendRef,
+              trackModel: curTrackModel,
+            });
+            trackFetchedDataCache.current[`${curTrackModel.id}`] = _.cloneDeep(
+              globalTrackState.current.trackState
+            );
 
-          curTrackModel["legendWidth"] = legendWidth;
-
-          newTrackComponents.push({
-            trackIdx: i,
-            id: curTrackModel.id,
-            component: TrackFactory,
-            posRef: newPosRef,
-            legendRef: newLegendRef,
-            trackModel: curTrackModel,
-          });
-          trackFetchedDataCache.current[`${curTrackModel.id}`] = _.cloneDeep(
-            globalTrackState.current.trackState
-          );
-
-          trackFetchedDataCache.current[`${curTrackModel.id}`]["cacheDataIdx"] =
-            {
+            trackFetchedDataCache.current[`${curTrackModel.id}`][
+              "cacheDataIdx"
+            ] = {
               rightIdx:
                 curTrackModel.type in trackUsingExpandedLoci
                   ? globalTrackState.current.rightIdx + 1
@@ -2196,14 +2253,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   : globalTrackState.current.leftIdx,
             };
 
-          initTrackFetchCache(curTrackModel);
+            initTrackFetchCache(curTrackModel);
+          }
         }
-      }
-      trackManagerState.current.tracks = tracks;
+        trackManagerState.current.tracks = tracks;
 
-      setTrackComponents(newTrackComponents);
+        setTrackComponents(newTrackComponents);
+      }
     }
-  }, [tracks]);
+  }, [tracks, trackComponents]);
   return (
     <>
       <div

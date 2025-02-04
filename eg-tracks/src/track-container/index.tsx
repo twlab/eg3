@@ -67,6 +67,7 @@ export function TrackContainerRepresentable({
       queryEndpoint: track.queryEndpoint,
       querygenome: track.querygenome,
       id: track.id,
+      isSelected: track.isSelected,
     }),
     []
   );
