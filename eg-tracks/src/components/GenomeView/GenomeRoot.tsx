@@ -104,6 +104,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               highlights={highlights}
               genomeConfig={currentGenomeConfig}
               onNewRegion={onNewRegion}
+              onNewRegionSelect={onNewRegionSelect}
               onNewHighlight={onNewHighlight}
               onTrackSelected={function (trackSelected: TrackModel[]): void {
                 throw new Error("Function not implemented.");

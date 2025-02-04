@@ -101,6 +101,7 @@ interface TrackManagerProps {
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
+  onNewRegionSelect: (startbase: number, endbase: number) => void;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -113,6 +114,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   onNewRegion,
   onNewHighlight,
   onTrackSelected,
+  onNewRegionSelect,
   onTrackDeleted,
 }) {
   //useRef to store data between states without re render the component
@@ -186,7 +188,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const preload = useRef<boolean>(false);
   // These states are used to update the tracks with new fetch(data);
   const containerRef = useRef(null);
-  const initialConfig = useRef(true);
+
   const globalTrackState = useRef<{ [key: string]: any }>({
     rightIdx: 0,
     leftIdx: 1,
@@ -344,7 +346,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackManagerState.current.viewRegion._endBase =
       curBp + bpRegionSize.current;
     onNewRegion(curBp, curBp + bpRegionSize.current);
-    //addGlobalState(newStateObj);
 
     bpX.current = curBp;
     //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE when using ref,
@@ -389,24 +390,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function updateGlobalTrackConfig(config: any) {
     globalTrackConfig.current[`${config.trackModel.id}`] = _.cloneDeep(config);
-    if (
-      Object.keys(globalTrackConfig.current).length ===
-        trackManagerState.current.tracks.length &&
-      initialConfig.current
-    ) {
-      trackManagerState.current.tracks.map((trackModel) => {
-        if (trackModel.isSelected) {
-          selectedTracks.current[`${trackModel.id}`] =
-            globalTrackConfig.current[`${trackModel.id}`];
-
-          globalTrackConfig.current[
-            `${trackModel.id}`
-          ].legendRef.current.style.backgroundColor = "lightblue";
-        }
-      });
-
-      initialConfig.current = false;
-    }
   }
 
   function onConfigChange(key: string, value: string | number) {
@@ -524,10 +507,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         });
       }
-
-      let newStateObj = createNewTrackState(trackManagerState.current, {});
-
-      //addGlobalState(newStateObj);
+      // onTrackSelected(trackManagerState.current.tracks);
 
       if (
         configMenu.configMenus !== "" &&
@@ -1198,6 +1178,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       startbase -= amountToExpand;
       endbase += amountToExpand;
     }
+
     if (
       selectedTool.title === `Zoom-in tool (Alt+M)` ||
       toolTitle in
@@ -1214,23 +1195,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
-      // let newStateObj = createNewTrackState(trackManagerState.current, {
-      //   viewRegion: trackManagerState.current.viewRegion.clone(),
-      // });
-      //addGlobalState(newStateObj);
       let newDefaultTracksArr: Array<TrackModel> = [];
+
       for (let key in globalTrackConfig.current) {
         let curTrackOptions = globalTrackConfig.current[`${key}`];
         curTrackOptions["trackModel"].options = curTrackOptions.configOptions;
         newDefaultTracksArr.push(curTrackOptions["trackModel"]);
       }
+
       genomeConfig.defaultTracks = newDefaultTracksArr;
       genomeConfig.defaultRegion = new OpenInterval(startbase, endbase);
-      // recreateTrackmanager({
-      //   selectedTool: selectedTool,
-      //   genomeConfig: genomeConfig,
-      //   scrollY: window.scrollY,
-      // });
+      onNewRegionSelect(startbase, endbase);
     } else if (selectedTool.title === `Highlight tool (Alt+N)`) {
       let newHightlight = {
         start: startbase,
@@ -1239,8 +1214,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         color: "rgba(0, 123, 255, 0.15)",
         tag: "",
       };
-
-      onNewHighlight([newHightlight]);
+      const tmpHighlight = [...highlights, newHightlight];
+      onNewHighlight(tmpHighlight);
     }
   }
 
@@ -1380,7 +1355,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackLegendWidth: legendWidth,
       tracks: tracks.length > 0 ? tracks : genomeConfig.defaultTracks,
     };
-    initialConfig.current = true;
+
     configMenuPos.current = {};
     lastDragX.current = 0;
     isThereG3dTrack.current = false;
@@ -1773,8 +1748,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         genomeConfig.defaultTracks = trackManagerState.current.tracks;
         refreshState();
 
-        initialConfig.current = true;
-
         initializeTracks();
       }
     }
@@ -1898,7 +1871,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [dataIdx,tra]
 
   useEffect(() => {
-    console.log(window.performance.memory.usedJSHeapSize, "CURRENT MERMOPT");
+    console.log(window.performance["memory"].usedJSHeapSize, "CURRENT MERMOPT");
 
     if (dataIdx === -20) {
       const curDataIdxObj = {
@@ -2111,11 +2084,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [dataIdx, trackComponents]);
 
   useEffect(() => {
-    if (highlights.length > 0) {
-      let highlightElement = createHighlight(highlights);
+    let highlightElement = createHighlight(highlights);
 
-      setHighLightElements([...highlightElement]);
-    }
+    setHighLightElements([...highlightElement]);
   }, [highlights]);
   // MARK: [tracks]
   //TO DO ADD FUNCTIONALITY TO ADD BAM TRACK
@@ -2130,6 +2101,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const newTrackId: { [key: string]: any } = {};
       for (const trackModel of tracks) {
         newTrackId[`${trackModel.id}`] = {};
+        if (trackModel.isSelected) {
+        }
       }
       for (const key in trackFetchedDataCache.current) {
         if (!(key in newTrackId)) {

@@ -9,7 +9,6 @@ import {
 import Toolbar from "./toolbar/Toolbar";
 import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
@@ -21,16 +20,17 @@ export default function GenomeView() {
   }
 
   const handleNewRegion = (coordinate: GenomeCoordinate) => {
-    console.log(coordinate);
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
   };
 
   const handleNewHighlight = (highlights: IHighlightInterval[]) => {
+    console.log(highlights, "new highlights");
     dispatch(updateCurrentSession({ highlights }));
   };
 
   const handleTrackSelected = (selectedTracks: ITrackModel[]) => {
     console.log("Selected tracks:", selectedTracks);
+    dispatch(updateCurrentSession({ highlights }));
   };
 
   const handleTrackDeleted = (tracks: ITrackModel[]) => {
