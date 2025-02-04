@@ -106,7 +106,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
   // MARK: CREATESVG
   async function createSVGOrCanvas(trackState, genesArr, isError, trackIndex) {
-    console.log(trackState, windowWidth);
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
@@ -229,7 +228,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     ) {
       let left, mid, right;
       let trackIndex = newDrawData.curDataIdx;
-      console.log(newDrawData, trackFetchedDataCache.current[`${id}`]);
+
       let trackData = trackFetchedDataCache.current[`${id}`];
       usePrimaryNav.current = trackData.usePrimaryNav;
       useExpandedLoci.current = trackData.useExpandedLoci;

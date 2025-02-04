@@ -120,7 +120,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
   const useFineModeNav = useRef(false);
-
+  const prevWindowWidth = useRef<number>(0);
   const useCacheData = useRef(false);
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
@@ -610,8 +610,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   async function fetchGenomeData(initial: number = 0, trackSide, dataIdx) {
-    // console.log(window.performance);
-
     let curFetchRegionNav;
 
     let genomicLoci: Array<ChromosomeInterval> = [];
@@ -1106,12 +1104,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const visRegion =
           tmpTrackState.genomicFetchCoord[genomeConfig.genome.getName()]
             .primaryVisData.visRegion;
-        if (!visRegion) console.log(visRegion, fetchRes);
+
         trackFetchedDataCache.current[`${fetchRes.id}`][
           fetchRes.missingIdx
         ].trackState["visRegion"] = visRegion;
       }
-      console.log("CACHEMIssingIDx", fetchRes.missingIdx, result[0]);
+
       trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
         "dataCache"
       ] = result;
@@ -1725,6 +1723,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       if (genomeConfig.isInitial) {
         console.log(windowWidth, "oldWindow");
+        prevWindowWidth.current = windowWidth;
         trackManagerState.current.viewRegion._startBase =
           genomeConfig.defaultRegion.start;
         trackManagerState.current.viewRegion._endBase =
@@ -1783,7 +1782,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: trackSizeCha
   function trackSizeChange() {
-    var prevWindowWidth;
     const trackToDrawId: { [key: string]: any } = {};
     for (const cacheKey in trackFetchedDataCache.current) {
       const cache = trackFetchedDataCache.current[cacheKey];
@@ -1792,10 +1790,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (isInteger(id)) {
           var curTrackState = { ...cache[id].trackState };
           var prevXDist = curTrackState.xDist;
-          var prevWindowWidth = curTrackState.startWindow;
+
           // console.log(curTrackState);
           // console.log(prevWindowWidth);
-          var newXDist = (prevXDist / prevWindowWidth) * windowWidth;
+          var newXDist = (prevXDist / prevWindowWidth.current) * windowWidth;
           curTrackState.startWindow = windowWidth;
           curTrackState.visWidth = curTrackState.startWindow * 3;
           curTrackState.xDist = newXDist;
@@ -1820,10 +1818,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ...globalTrackState.current.trackState[id].trackState,
       };
       var prevXDist = curTrackState.xDist;
-      var prevWindowWidth = curTrackState.startWindow;
+
       // console.log(curTrackState);
       // console.log(prevWindowWidth);
-      var newXDist = (prevXDist / prevWindowWidth) * windowWidth;
+      var newXDist = (prevXDist / prevWindowWidth.current) * windowWidth;
       curTrackState.startWindow = windowWidth;
       curTrackState.visWidth = curTrackState.startWindow * 3;
       curTrackState.xDist = newXDist;
@@ -1840,6 +1838,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       globalTrackState.current.trackState[id].trackState = curTrackState;
     }
+
     basePerPixel.current = bpRegionSize.current / windowWidth;
     pixelPerBase.current = windowWidth / bpRegionSize.current;
 
@@ -1857,15 +1856,50 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //     component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
     //   });
     // });
-    setNewDrawData({
-      curDataIdx: dataIdx,
-      isInitial: 0,
-      trackToDrawId,
-    });
+
+    // if there genomealign we delete its data to recalculate visData
+
+    if (hasGenomeAlign.current) {
+      for (const key in trackFetchedDataCache.current) {
+        const trackCache = trackFetchedDataCache.current[key];
+
+        for (const dataKey in trackCache) {
+          if (isInteger(dataKey)) {
+            const regionData = trackCache[dataKey];
+
+            if (trackCache.trackType !== "genomealign") {
+              if (
+                "trackState" in regionData &&
+                "genomicFetchCoord" in regionData.trackState
+              ) {
+                delete trackFetchedDataCache.current[key][dataKey].trackState
+                  .genomicFetchCoord;
+              }
+            } else {
+              delete trackFetchedDataCache.current[key][dataKey].trackState
+                .genomicFetchCoord;
+              delete trackFetchedDataCache.current[key][dataKey].dataCache;
+            }
+          }
+        }
+      }
+      const tmpArr = [...trackComponents];
+      setTrackComponents(tmpArr);
+    } else {
+      setNewDrawData({
+        curDataIdx: dataIdx,
+        isInitial: 0,
+        trackToDrawId,
+      });
+    }
+
+    prevWindowWidth.current = windowWidth;
   }
   // MARK: [dataIdx,tra]
 
   useEffect(() => {
+    console.log(window.performance.memory.usedJSHeapSize, "CURRENT MERMOPT");
+
     if (dataIdx === -20) {
       const curDataIdxObj = {
         [Number(dataIdx) + 1]: "",
@@ -2087,7 +2121,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //TO DO ADD FUNCTIONALITY TO ADD BAM TRACK
   function isInteger(str: string): boolean {
     const num = Number(str);
-    console.log(str, num);
+
     return str !== null && !isNaN(num) && Number.isInteger(num);
   }
 
@@ -2350,17 +2384,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     >
                       <div
                         style={{
-                          zIndex: 10, // Ensure the legend is on top
+                          zIndex: 10,
                           width: legendWidth,
                           backgroundColor: "white",
-                          position: "relative", // Ensure zIndex works with relative positioning
+                          position: "relative",
                         }}
                         ref={item.legendRef}
                       ></div>
                       <div
                         ref={trackComponents[index].posRef}
                         style={{
-                          zIndex: 1, // Set a lower zIndex for the main track components
+                          zIndex: 1,
                           display: "flex",
                         }}
                       >
