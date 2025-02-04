@@ -6,18 +6,20 @@ import browserReducer from "./slices/browserSlice";
 import genomeReducer from "./slices/genomeSlice";
 import navigationReducer from "./slices/navigationSlice";
 import utilityReducer from "./slices/utilitySlice";
+import hubReducer from "./slices/hubSlice";
 
 const persistConfig = {
     key: "root",
     storage,
-    blacklist: ["navigation"]
+    blacklist: ["navigation", "hub"]
 };
 
 const rootReducer = combineReducers({
     navigation: navigationReducer,
     genome: genomeReducer,
     browser: browserReducer,
-    utility: utilityReducer
+    utility: utilityReducer,
+    hub: hubReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

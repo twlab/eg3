@@ -9,18 +9,18 @@ import {
 import Toolbar from "./toolbar/Toolbar";
 import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import { selectTool } from "@/lib/redux/slices/utilitySlice";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
+  const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenomeConfig();
 
   if (!currentSession || !genomeConfig) {
     return null;
   }
 
-  console.log({ ...genomeConfig }, currentSession);
   const handleNewRegion = (coordinate: GenomeCoordinate) => {
     console.log(coordinate);
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
@@ -48,7 +48,7 @@ export default function GenomeView() {
   };
 
   return (
-    <div>
+    <div className="w-full h-full">
       <TrackContainerRepresentable
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
@@ -67,9 +67,10 @@ export default function GenomeView() {
             ? currentSession.userViewRegion
             : currentSession.viewRegion
         }
+        tool={tool}
       />
 
-      <div className="fixed bottom-0 z-50">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50">
         <Toolbar />
       </div>
     </div>

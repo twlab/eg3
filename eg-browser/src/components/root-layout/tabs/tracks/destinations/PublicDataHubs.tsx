@@ -8,13 +8,14 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession, updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { fetchDataHubTracks } from "@eg/core";
 import { ITrackModel } from "@eg/tracks";
+import { addPublicTracksPool } from "@/lib/redux/slices/hubSlice";
 
 export default function PublicDataHubs() {
-    const [loadedHubs, setLoadedHubs] = useState<Set<string>>(new Set());
-
     const genomeConfig = useCurrentGenomeConfig();
-    const session = useAppSelector(selectCurrentSession);
     const dispatch = useAppDispatch();
+    const session = useAppSelector(selectCurrentSession);
+
+    const [loadedHubs, setLoadedHubs] = useState<Set<string>>(new Set());
 
     const data = useMemo(() => {
         const hubs = genomeConfig?.publicHubList || [];
@@ -32,13 +33,14 @@ export default function PublicDataHubs() {
 
         try {
             const fetchedTracks: ITrackModel[] = await fetchDataHubTracks(hub);
+            dispatch(addPublicTracksPool(fetchedTracks));
 
             if (fetchedTracks.length > 0) {
                 dispatch(updateCurrentSession({
                     tracks: [...session!.tracks, ...fetchedTracks]
                 }));
             }
-        } catch (error) {
+        } catch {
             setLoadedHubs(prev => {
                 const next = new Set(prev);
                 next.delete(hub.url);

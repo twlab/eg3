@@ -9,7 +9,7 @@ export default function NavigationToolbar({
     const { canGoBack, pop } = useNavigation();
 
     return (
-        <div className="p-4 flex flex-row justify-between items-center gap-2">
+        <div className="p-4 flex flex-row justify-between items-center gap-2 bg-white">
             {canGoBack && (
                 <button className="text-primary flex flex-row items-center" onClick={pop}>
                     <ChevronLeftIcon className="size-6" />

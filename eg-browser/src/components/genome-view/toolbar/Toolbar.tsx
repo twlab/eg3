@@ -1,5 +1,6 @@
 import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
-import { selectTool, setTool, Tool } from '@/lib/redux/slices/utilitySlice';
+import { selectTool, setTool } from '@/lib/redux/slices/utilitySlice';
+import { Tool } from '@eg/tracks';
 import { ArrowsUpDownIcon, BookOpenIcon, ClockIcon, HandRaisedIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon, PaintBrushIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +21,7 @@ export default function Toolbar() {
     };
 
     return (
-        <div className="bg-white/60 backdrop-blur-md flex flex-col p-1.5 gap-1.5 mb-4 border-gray-300 border rounded-xl shadow-md">
+        <div className="bg-white/80 backdrop-blur-md flex flex-col p-1.5 gap-1.5 mb-4 border-gray-300 border rounded-xl shadow-md">
             <div className='flex flex-row pt-1 gap-1'>
                 <MagnifyingGlassIcon className='size-6 text-gray-500' />
                 <input
