@@ -1,18 +1,8 @@
 import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
-import Genome from "../models/Genome";
 
 // add the same props that were being passed into TrackContainer.tsx
 export interface ITrackContainerState {
-  // tracks: TrackModel[]
-
-  // highlights
-  // genome...
-
-  // onNewRegion
-  // onNewHiglight
-  // ...
-
   tracks: TrackModel[];
   highlights: Array<any>;
   genomeConfig?: any;
@@ -27,6 +17,8 @@ export interface ITrackContainerState {
 
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
+
+  tool: Tool;
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -43,6 +35,7 @@ export interface ITrackContainerRepresentableProps {
   onNewRegionSelect: (coordinate: GenomeCoordinate) => void;
   viewRegion: GenomeCoordinate;
   userViewRegion: null | GenomeCoordinate;
+  tool: Tool;
 }
 
 // MARK: Track Model
@@ -88,4 +81,13 @@ export interface IHighlightInterval {
   display: boolean;
   color: string;
   tag: string;
+}
+
+// MARK: Utility
+
+export enum Tool {
+  Pan,
+  Reorder,
+  Zoom,
+  Highlight
 }

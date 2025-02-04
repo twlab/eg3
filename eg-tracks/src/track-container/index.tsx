@@ -26,6 +26,7 @@ export function TrackContainer(props: ITrackContainerState) {
       onTrackAdded={props.onTrackAdded}
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
+      tool={props.tool}
     />
   );
 }
@@ -50,6 +51,7 @@ export function TrackContainerRepresentable({
   onNewRegionSelect,
   viewRegion,
   userViewRegion,
+  tool,
 }: ITrackContainerRepresentableProps) {
   // MARK: Tracks
 
@@ -251,6 +253,7 @@ export function TrackContainerRepresentable({
       onNewRegionSelect={handleNewRegionSelect}
       viewRegion={convertedViewRegion}
       userViewRegion={convertedUserViewRegion}
+      tool={tool}
     />
   );
 }

@@ -9,10 +9,12 @@ import {
 import Toolbar from "./toolbar/Toolbar";
 import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { selectTool } from "@/lib/redux/slices/utilitySlice";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
+  const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenomeConfig();
 
   if (!currentSession || !genomeConfig) {
@@ -28,8 +30,13 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ highlights }));
   };
 
+<<<<<<< HEAD
   const handleTrackSelected = (tracks: ITrackModel[]) => {
     dispatch(updateCurrentSession({ tracks }));
+=======
+  const handleTrackSelected = (selectedTracks: ITrackModel[]) => {
+    console.log("Selected tracks:", selectedTracks);
+>>>>>>> 29b9a91b80344605843022ae269b36b1fbec9247
   };
 
   const handleTrackDeleted = (tracks: ITrackModel[]) => {
@@ -46,7 +53,7 @@ export default function GenomeView() {
   };
 
   return (
-    <div>
+    <div className="w-full h-full">
       <TrackContainerRepresentable
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
@@ -65,9 +72,10 @@ export default function GenomeView() {
             ? currentSession.userViewRegion
             : currentSession.viewRegion
         }
+        tool={tool}
       />
 
-      <div className="fixed bottom-0 z-50">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50">
         <Toolbar />
       </div>
     </div>

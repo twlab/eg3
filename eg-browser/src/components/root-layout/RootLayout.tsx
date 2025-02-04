@@ -3,6 +3,7 @@ import {
   selectNavigationTab,
   setNavigationTab,
   selectSessionPanelOpen,
+  selectExpandNavigationTab,
 } from "../../lib/redux/slices/navigationSlice";
 import GenomePicker from "../genome-picker/GenomePicker";
 import GenomeView from "../genome-view/GenomeView";
@@ -26,6 +27,7 @@ export default function RootLayout() {
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
   const navigationTab = useAppSelector(selectNavigationTab);
+  const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
 
   const isNavigationTabEmpty = navigationTab === null;
@@ -80,6 +82,7 @@ export default function RootLayout() {
             )}
           </AnimatePresence>
 
+          {/* MARK: - Main Content */}
           <motion.div
             className="flex flex-row flex-1 overflow-hidden"
             animate={{
@@ -93,6 +96,7 @@ export default function RootLayout() {
               pointerEvents: sessionPanelOpen ? "none" : "auto",
             }}
           >
+            {/* MARK: - Genome View */}
             <motion.div
               className="h-full border-r bg-white overflow-hidden"
               initial={{
@@ -101,6 +105,13 @@ export default function RootLayout() {
               animate={{
                 borderTopRightRadius: !showRightTab ? 0 : CURL_RADIUS,
                 borderBottomRightRadius: !showRightTab ? 0 : CURL_RADIUS,
+                borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
+                borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
+                scale: expandNavigationTab ? 0.95 : 1,
+                filter: expandNavigationTab
+                  ? "blur(5px) brightness(0.7)"
+                  : "blur(0px) brightness(1)",
+                translateX: expandNavigationTab ? 50 : 0,
                 width: !showRightTab ? "100vw" : "75vw",
               }}
             >
@@ -131,10 +142,11 @@ export default function RootLayout() {
               </AnimatePresence>
             </motion.div>
 
+            {/* MARK: - Navigation Tabs */}
             <AnimatePresence mode="wait">
               {showRightTab && (
                 <motion.div
-                  className="h-full bg-white overflow-hidden"
+                  className="h-full bg-white overflow-hidden z-10"
                   key="navigation-tabs"
                   initial={{
                     width: 0,
@@ -143,7 +155,7 @@ export default function RootLayout() {
                     borderBottomLeftRadius: 0,
                   }}
                   animate={{
-                    width: "25vw",
+                    width: expandNavigationTab ? "75vw" : "25vw",
                     marginLeft: 5,
                     borderTopLeftRadius: CURL_RADIUS,
                     borderBottomLeftRadius: CURL_RADIUS,

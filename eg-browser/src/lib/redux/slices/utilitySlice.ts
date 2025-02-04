@@ -1,12 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Tool } from "@eg/tracks";
 import { RootState } from "../store";
-
-export enum Tool {
-    Pan,
-    Reorder,
-    Zoom,
-    Highlight
-}
 
 export const utilitySlice = createSlice({
     name: "utility",
