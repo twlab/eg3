@@ -10,7 +10,7 @@ function ConfigMenuComponent(props) {
 
   let blockPosData = menuData.blockRef.current.getBoundingClientRect();
   let leftMargin = blockPosData.left;
-
+  console.log(blockPosData, menuData);
   return ReactDOM.createPortal(
     // need to set id matching the track component so it rememebers each specific
     // track config settings
@@ -23,7 +23,7 @@ function ConfigMenuComponent(props) {
             style={{
               position: "absolute",
               left: menuData.pageX - leftMargin,
-              top: menuData.pageY - 300,
+              top: menuData.pageY + 150,
             }}
           >
             {" "}
@@ -33,7 +33,7 @@ function ConfigMenuComponent(props) {
                   ref={ref}
                   style={{
                     ...style,
-                    maxHeight: "calc(100vh - 20px)",
+                    // maxHeight: "calc(100vh - 20px)",
                     overflow: "auto",
                     zIndex: 1000,
                   }}

@@ -570,6 +570,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return !id.includes(String(item.id));
       }
     );
+    onTrackDeleted([...trackManagerState.current.tracks]);
     // let newStateObj = createNewTrackState(trackManagerState.current, {});
 
     //addGlobalState(newStateObj);
@@ -1178,7 +1179,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       startbase -= amountToExpand;
       endbase += amountToExpand;
     }
-
+    console.log(selectedTool);
     if (
       selectedTool.title === `Zoom-in tool (Alt+M)` ||
       toolTitle in
@@ -1195,16 +1196,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
-      let newDefaultTracksArr: Array<TrackModel> = [];
 
-      for (let key in globalTrackConfig.current) {
-        let curTrackOptions = globalTrackConfig.current[`${key}`];
-        curTrackOptions["trackModel"].options = curTrackOptions.configOptions;
-        newDefaultTracksArr.push(curTrackOptions["trackModel"]);
-      }
-
-      genomeConfig.defaultTracks = newDefaultTracksArr;
-      genomeConfig.defaultRegion = new OpenInterval(startbase, endbase);
       onNewRegionSelect(startbase, endbase);
     } else if (selectedTool.title === `Highlight tool (Alt+N)`) {
       let newHightlight = {
@@ -1613,6 +1605,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
         preload.current = false;
         if (genomeConfig.isInitial) {
+          const isSelected: Array<any> = [];
+          tracks.map((item) => {
+            if (item.isSelected) {
+              isSelected.push(item.id);
+            }
+          });
+
+          for (const key in selectedTracks.current) {
+            if (!(key in isSelected)) {
+              for (const component of trackComponents) {
+                if (component.id === key) {
+                  component.legendRef.current.style.backgroundColor = "white";
+                  delete selectedTracks.current[key];
+                }
+              }
+            }
+          }
+          for (const key of isSelected) {
+            if (key! in selectedTracks.current) {
+              continue;
+            } else {
+              for (const component of trackComponents) {
+                if (component.id === key) {
+                  component.legendRef.current.style.backgroundColor =
+                    "lightblue";
+                  selectedTracks.current[key!] =
+                    globalTrackConfig.current[key!];
+                }
+              }
+            }
+          }
           genomeConfig.isInitial = false;
         }
       }
@@ -2115,45 +2138,39 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
-    console.log(tracks, "hjere1");
-    if (
-      arraysHaveSameTrackModels(tracks, trackManagerState.current.tracks) ||
-      genomeConfig.isInitial
-    ) {
-      console.log(tracks, "hjere2", selectedTracks.current, trackComponents);
-      const isSelected: Array<any> = [];
-      tracks.map((item) => {
-        if (item.isSelected) {
-          isSelected.push(item.id);
-        }
-      });
+    if (!genomeConfig.isInitial) {
+      if (arraysHaveSameTrackModels(tracks, trackManagerState.current.tracks)) {
+        console.log(tracks, "hjere2", selectedTracks.current, trackComponents);
+        const isSelected: Array<any> = [];
+        tracks.map((item) => {
+          if (item.isSelected) {
+            isSelected.push(item.id);
+          }
+        });
 
-      for (const key in selectedTracks.current) {
-        if (!(key in isSelected)) {
-          for (const component of trackComponents) {
-            if (component.id === key) {
-              component.legendRef.current.style.backgroundColor = "white";
-              delete selectedTracks.current[key];
+        for (const key in selectedTracks.current) {
+          if (!(key in isSelected)) {
+            for (const component of trackComponents) {
+              if (component.id === key) {
+                component.legendRef.current.style.backgroundColor = "white";
+                delete selectedTracks.current[key];
+              }
             }
           }
         }
-      }
-      for (const key of isSelected) {
-        if (key! in selectedTracks.current) {
-          continue;
-        } else {
-          console.log("HERE@@@@@@@@");
-          for (const component of trackComponents) {
-            if (component.id === key) {
-              component.legendRef.current.style.backgroundColor = "lightblue";
-              selectedTracks.current[key!] = globalTrackConfig.current[key!];
-              break;
+        for (const key of isSelected) {
+          if (key! in selectedTracks.current) {
+            continue;
+          } else {
+            for (const component of trackComponents) {
+              if (component.id === key) {
+                component.legendRef.current.style.backgroundColor = "lightblue";
+                selectedTracks.current[key!] = globalTrackConfig.current[key!];
+              }
             }
           }
         }
-      }
-    } else {
-      if (!genomeConfig.isInitial) {
+      } else {
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
           newTrackId[`${trackModel.id}`] = {};
@@ -2166,7 +2183,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         const newTrackComponents: Array<any> = [];
-
+        let checkHasGenAlign = false;
         for (var i = 0; i < tracks.length; i++) {
           const curTrackModel = tracks[i];
           let foundComp = false;
@@ -2181,6 +2198,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           // if not in view this means that this is the new track that was added.
           if (!foundComp) {
             if (curTrackModel.type === "genomealign") {
+              checkHasGenAlign = true;
               if (basePerPixel.current < 10) {
                 useFineModeNav.current = true;
               }
@@ -2256,12 +2274,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             initTrackFetchCache(curTrackModel);
           }
         }
+        if (!checkHasGenAlign) {
+          useFineModeNav.current = false;
+          hasGenomeAlign.current = false;
+        }
         trackManagerState.current.tracks = tracks;
 
         setTrackComponents(newTrackComponents);
       }
     }
-  }, [tracks, trackComponents]);
+  }, [tracks]);
   return (
     <>
       <div

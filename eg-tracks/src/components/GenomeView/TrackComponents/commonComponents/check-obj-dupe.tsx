@@ -3,7 +3,6 @@ export function removeDuplicates(
   idKey: any,
   idKey2: any = ""
 ) {
-  console.log(arr, idKey);
   const uniqueObjectsMap = new Map<string, any>();
 
   for (const obj of arr) {

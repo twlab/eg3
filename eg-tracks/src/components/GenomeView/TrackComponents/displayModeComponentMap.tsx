@@ -933,7 +933,7 @@ export function getDisplayModeFunction(
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
       const filteredArray = removeDuplicates(drawData.genesArr, "id");
-      console.log(drawData.genesArr);
+
       formattedData = filteredArray.map((record) => new Gene(record));
     } else if (drawData.trackModel.type === "refbed") {
       const filteredArray = removeDuplicates(drawData.genesArr, 7);
