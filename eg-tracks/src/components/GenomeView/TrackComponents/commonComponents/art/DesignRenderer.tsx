@@ -11,7 +11,7 @@ const DEFAULT_STYLE = { display: "block" }; // display: block prevents extra bot
 interface DesignRendererProps {
   children: React.ReactNode;
   type: any;
-  style: any;
+  style?: any;
   width: any;
   height: number;
   viewWindow?: any;

@@ -8,7 +8,10 @@ import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
-import { getDisplayModeFunction } from "./displayModeComponentMap";
+import {
+  displayModeComponentMap,
+  getDisplayModeFunction,
+} from "./displayModeComponentMap";
 import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
 import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
 import SnpDetail from "./SnpComponents/SnpDetail";
@@ -105,7 +108,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
   // MARK: CREATESVG
-  async function createSVGOrCanvas(trackState, genesArr, isError, trackIndex) {
+  function createSVGOrCanvas(
+    trackState,
+    genesArr,
+    isError,
+    trackIndex,
+    cacheViewData = null
+  ) {
+    console.log(genesArr, cacheViewData, configOptions.current.displayMode);
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
@@ -114,8 +124,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (isError) {
       fetchError.current = true;
     }
-
-    let res = fetchError.current ? (
+    let newConfigOptions = { ...configOptions.current };
+    if (trackModel.type !== "bigwig") {
+      newConfigOptions.displayMode = "auto";
+    }
+    let [res, viewData] = fetchError.current ? (
       <div
         style={{
           width: trackState.visWidth,
@@ -127,8 +140,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       >
         Error remotely getting track data
       </div>
-    ) : (
-      await getDisplayModeFunction({
+    ) : genesArr ? (
+      getDisplayModeFunction({
         basesByPixel: basePerPixel,
         genesArr,
         genomeName: genomeConfig.genome.getName(),
@@ -144,6 +157,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getHeight,
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
       })
+    ) : (
+      displayModeComponentMap.density({
+        formattedData: null,
+        trackState,
+        configOptions: newConfigOptions,
+        updatedLegend,
+        trackModel,
+        viewData: cacheViewData,
+      })
     );
 
     if (trackIndex === dataIdx) {
@@ -153,13 +175,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (configOptions.current.displayMode === "full") {
         setSvgComponents(res);
         // if (!(trackIndex in displayCache.current["full"])) {
-        //   displayCache.current["full"][trackIndex] = res;
+        //   displayCache.current["full"][trackIndex] = res;W
         // }
       } else {
         setCanvasComponents(res);
-        // if (!(trackIndex in displayCache.current["density"])) {
-        //   displayCache.current["density"][trackIndex] = res;
-        // }
+        console.log(res, viewData, "checkDATA");
+        if (
+          !trackFetchedDataCache.current[`${id}`][`${trackIndex}`]["viewData"]
+        ) {
+          trackFetchedDataCache.current[`${id}`][`${trackIndex}`]["viewData"] =
+            viewData;
+        }
       }
 
       xPos.current = curXPos;
@@ -259,93 +285,39 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       if (!useExpandedLoci.current) {
-        if (trackData[trackIndex].trackState.initial === 1) {
-          if (
-            trackIndex in trackData &&
-            trackIndex + 1 in trackData &&
-            trackIndex - 1 in trackData
-          ) {
-            left = trackIndex + 1;
-            mid = trackIndex;
-            right = trackIndex - 1;
-          } else {
-            left = 1;
-            mid = 0;
-            right = -1;
-          }
-          let viewData: any = [
-            trackData[left],
-            trackData[mid],
-            trackData[right],
-          ];
-          var noData = false;
-
-          if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-            viewData = getDeDupeArrMatPlot(viewData, false);
-          } else {
-            viewData = viewData
-              .map((item) => {
-                if (item && "dataCache" in item) {
-                  return item.dataCache;
-                } else {
-                  noData = true;
-                }
-              })
-              .flat(1);
-          }
-          if (!noData) {
-            createSVGOrCanvas(
-              trackData[mid].trackState,
-              viewData,
-
-              trackData[newDrawData.curDataIdx].trackState.isError,
-              trackIndex
-            );
-          }
+        if (
+          "viewData" in trackData[trackIndex] &&
+          trackData[trackIndex].viewData
+        ) {
+          const cacheViewData = trackData[newDrawData.curDataIdx].viewData;
+          console.log("gothere1", cacheViewData);
+          createSVGOrCanvas(
+            trackData[newDrawData.curDataIdx].trackState,
+            null,
+            trackData[newDrawData.curDataIdx].trackState.isError,
+            trackIndex,
+            cacheViewData
+          );
         } else {
-          if (trackData[newDrawData.curDataIdx].trackState.side === "right") {
-            let viewData: any = [];
-            let currIdx = newDrawData.curDataIdx + 1;
-            for (let i = 0; i < 3; i++) {
-              viewData.push(trackData[currIdx]);
-              currIdx--;
-            }
-            var noData = false;
-
+          if (trackData[trackIndex].trackState.initial === 1) {
             if (
-              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+              trackIndex in trackData &&
+              trackIndex + 1 in trackData &&
+              trackIndex - 1 in trackData
             ) {
-              viewData = getDeDupeArrMatPlot(viewData, false);
+              left = trackIndex + 1;
+              mid = trackIndex;
+              right = trackIndex - 1;
             } else {
-              viewData = viewData
-                .map((item) => {
-                  if (item && "dataCache" in item) {
-                    return item.dataCache;
-                  } else {
-                    noData = true;
-                  }
-                })
-                .flat(1);
+              left = 1;
+              mid = 0;
+              right = -1;
             }
-
-            if (!noData) {
-              createSVGOrCanvas(
-                trackData[newDrawData.curDataIdx].trackState,
-                viewData,
-
-                trackData[newDrawData.curDataIdx].trackState.isError,
-                trackIndex
-              );
-            }
-          } else if (
-            trackData[newDrawData.curDataIdx].trackState.side === "left"
-          ) {
-            let viewData: any = [];
-            let currIdx = newDrawData.curDataIdx + 1;
-            for (let i = 0; i < 3; i++) {
-              viewData.push(trackData[currIdx]);
-              currIdx--;
-            }
+            let viewData: any = [
+              trackData[left],
+              trackData[mid],
+              trackData[right],
+            ];
             var noData = false;
 
             if (
@@ -365,11 +337,82 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             }
             if (!noData) {
               createSVGOrCanvas(
-                trackData[newDrawData.curDataIdx].trackState,
+                trackData[mid].trackState,
                 viewData,
+
                 trackData[newDrawData.curDataIdx].trackState.isError,
                 trackIndex
               );
+            }
+          } else {
+            if (trackData[newDrawData.curDataIdx].trackState.side === "right") {
+              let viewData: any = [];
+              let currIdx = newDrawData.curDataIdx + 1;
+              for (let i = 0; i < 3; i++) {
+                viewData.push(trackData[currIdx]);
+                currIdx--;
+              }
+              var noData = false;
+
+              if (
+                trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+              ) {
+                viewData = getDeDupeArrMatPlot(viewData, false);
+              } else {
+                viewData = viewData
+                  .map((item) => {
+                    if (item && "dataCache" in item) {
+                      return item.dataCache;
+                    } else {
+                      noData = true;
+                    }
+                  })
+                  .flat(1);
+              }
+
+              if (!noData) {
+                createSVGOrCanvas(
+                  trackData[newDrawData.curDataIdx].trackState,
+                  viewData,
+
+                  trackData[newDrawData.curDataIdx].trackState.isError,
+                  trackIndex
+                );
+              }
+            } else if (
+              trackData[newDrawData.curDataIdx].trackState.side === "left"
+            ) {
+              let viewData: any = [];
+              let currIdx = newDrawData.curDataIdx + 1;
+              for (let i = 0; i < 3; i++) {
+                viewData.push(trackData[currIdx]);
+                currIdx--;
+              }
+              var noData = false;
+
+              if (
+                trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
+              ) {
+                viewData = getDeDupeArrMatPlot(viewData, false);
+              } else {
+                viewData = viewData
+                  .map((item) => {
+                    if (item && "dataCache" in item) {
+                      return item.dataCache;
+                    } else {
+                      noData = true;
+                    }
+                  })
+                  .flat(1);
+              }
+              if (!noData) {
+                createSVGOrCanvas(
+                  trackData[newDrawData.curDataIdx].trackState,
+                  viewData,
+                  trackData[newDrawData.curDataIdx].trackState.isError,
+                  trackIndex
+                );
+              }
             }
           }
         }

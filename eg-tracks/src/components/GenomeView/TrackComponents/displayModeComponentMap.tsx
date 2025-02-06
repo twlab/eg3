@@ -546,32 +546,30 @@ export const displayModeComponentMap: { [key: string]: any } = {
   density: function getDensity({
     formattedData,
     trackState,
-    windowWidth,
     configOptions,
     updatedLegend,
     trackModel,
+    viewData,
   }) {
     function getNumLegend(legend: ReactNode) {
       updatedLegend.current = legend;
     }
 
-    let canvasElements = (
-      <NumericalTrack
-        data={formattedData}
-        options={configOptions}
-        viewWindow={
-          trackState.viewWindow
-            ? trackState.viewWindow
-            : new OpenInterval(0, trackState.visWidth)
-        }
-        viewRegion={objToInstanceAlign(trackState.visRegion)}
-        width={trackState.visWidth}
-        forceSvg={configOptions.forceSvg}
-        trackModel={trackModel}
-        getNumLegend={getNumLegend}
-      />
-    );
-    return canvasElements;
+    const [canvasElements, xToFeaturesArr] = NumericalTrack({
+      data: formattedData,
+      viewData: viewData,
+      options: configOptions,
+      viewWindow: trackState.viewWindow
+        ? trackState.viewWindow
+        : new OpenInterval(0, trackState.visWidth),
+      viewRegion: objToInstanceAlign(trackState.visRegion),
+      width: trackState.visWidth,
+      forceSvg: configOptions.forceSvg,
+      trackModel: trackModel,
+      getNumLegend: getNumLegend,
+    });
+
+    return [canvasElements, xToFeaturesArr];
   },
 
   qbed: function getqbed({
@@ -621,8 +619,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        isLoading={false}
-        error={undefined}
         unit={""}
       />
     );
@@ -1045,7 +1041,7 @@ export function getDisplayModeFunction(
         ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
       });
     }
-    if (!drawData.trackState.visRegion) console.log(drawData);
+
     let svgDATA = displayModeComponentMap.full({
       formattedData,
       trackState: drawData.trackState,
@@ -1597,7 +1593,7 @@ export function getDisplayModeFunction(
     if (drawData.trackModel.type !== "bigwig") {
       newConfigOptions.displayMode = "auto";
     }
-    let canvasElements = displayModeComponentMap.density({
+    const [canvasElements, xToFeaturesArr] = displayModeComponentMap.density({
       formattedData,
       trackState: drawData.trackState,
       windowWidth: drawData.windowWidth,
@@ -1605,7 +1601,7 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
     });
-
-    return canvasElements;
+    console.log(xToFeaturesArr);
+    return [canvasElements, xToFeaturesArr];
   }
 }

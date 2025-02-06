@@ -20,8 +20,11 @@ export class NumericalAggregator {
   aggregateFeatures(data, viewRegion, width, aggregatorId) {
     const aggregator = new FeatureAggregator();
     const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
-
-    return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
+    console.log(xToFeatures);
+    return [
+      xToFeatures.map(DefaultAggregators.fromId(aggregatorId)),
+      xToFeatures,
+    ];
   }
 
   xToValueMaker(data, viewRegion, width, options) {
@@ -30,14 +33,18 @@ export class NumericalAggregator {
     let xToValue2BeforeSmooth,
       xToValue,
       xToValue2,
+      xToFeatures,
+      xToFeatures2,
+      xToValueBeforeSmooth,
       hasReverse = false;
     if (data) {
       const dataForward = data.filter(
         (feature) => feature.value === undefined || feature.value >= 0
       ); // bed track to density mode
+
       const dataReverse = data.filter((feature) => feature.value < 0);
       if (dataReverse.length) {
-        xToValue2BeforeSmooth = this.aggregateFeatures(
+        [xToValue2BeforeSmooth, xToFeatures2] = this.aggregateFeatures(
           dataReverse,
           viewRegion,
           width,
@@ -59,7 +66,7 @@ export class NumericalAggregator {
       ) {
         hasReverse = true;
       }
-      const xToValueBeforeSmooth =
+      [xToValueBeforeSmooth, xToFeatures] =
         dataForward.length > 0
           ? this.aggregateFeatures(
               dataForward,
@@ -74,6 +81,6 @@ export class NumericalAggregator {
           : Smooth(xToValueBeforeSmooth, smoothNumber);
     }
 
-    return [xToValue, xToValue2, hasReverse];
+    return [xToValue, xToValue2, xToFeatures, xToFeatures2, hasReverse];
   }
 }

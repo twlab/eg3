@@ -47,10 +47,10 @@ const genome = new Genome("hg38", [
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
-  new TrackModel({
-    type: "ruler",
-    name: "Ruler",
-  }),
+  // new TrackModel({
+  //   type: "ruler",
+  //   name: "Ruler",
+  // }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
   // new TrackModel({
   //   type: "hi",
@@ -58,31 +58,31 @@ const defaultTracks = [
   //   name: "NOTSUPPORTEDTRACEXAMPLE",
   // }),
 
-  new TrackModel({
-    type: "refbed",
-    name: "mm10 gencode basic",
-    url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-    options: {
-      categoryColors: {
-        coding: "rgb(101,1,168)",
-        nonCoding: "rgb(1,193,75)",
-        pseudo: "rgb(230,0,172)",
-        problem: "rgb(224,2,2)",
-        other: "rgb(128,128,128)",
-      },
-    },
-  }),
+  // new TrackModel({
+  //   type: "refbed",
+  //   name: "mm10 gencode basic",
+  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+  //   options: {
+  //     categoryColors: {
+  //       coding: "rgb(101,1,168)",
+  //       nonCoding: "rgb(1,193,75)",
+  //       pseudo: "rgb(230,0,172)",
+  //       problem: "rgb(224,2,2)",
+  //       other: "rgb(128,128,128)",
+  //     },
+  //   },
+  // }),
 
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "refGene",
-    genome: "hg38",
-  }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "refGene",
+  //   genome: "hg38",
+  // }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
+  // }),
 
   // new TrackModel({
   //   type: "bigbed",
@@ -125,19 +125,19 @@ const defaultTracks = [
     },
   }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
   // new TrackModel({
   //   type: "modbed",
   //   name: "examplemod",
@@ -176,14 +176,15 @@ const defaultTracks = [
   //     },
   //   ],
   // }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
-  // }),
+  new TrackModel({
+    type: "bigwig",
+    name: "example bigwig",
+    url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+    options: {
+      color: "blue",
+      height: 200,
+    },
+  }),
 
   // new TrackModel({
   //   type: "dynseq",
@@ -223,14 +224,14 @@ const defaultTracks = [
   //   },
   // }),
 
-  // new TrackModel({
-  //   name: "vertebratephastCons46way",
-  //   label: "Vertebrate PhastCons 46-way",
-  //   filetype: "bedgraph",
-  //   url: "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
-  //   height: 50,
-  //   options: { color: "#006385" },
-  // }),
+  new TrackModel({
+    name: "vertebratephastCons46way",
+    label: "Vertebrate PhastCons 46-way",
+    filetype: "bedgraph",
+    url: "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
+    height: 200,
+    options: { color: "#006385", height: 200 },
+  }),
   // new TrackModel({
   //   type: "boxplot",
   //   name: "example boxplot",

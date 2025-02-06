@@ -20,6 +20,7 @@ import HoverToolTip from "../HoverToolTips/HoverToolTip";
 // import { withLogPropChanges } from "components/withLogPropChanges";
 interface NumericalTrackProps {
   data?: Array<any>;
+  viewData?: Array<any>;
   unit?: string;
   options?: any;
   isLoading?: boolean;
@@ -57,9 +58,10 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
  *
  * @author Silas Hsu
  */
-const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
+const NumericalTrack = (props) => {
   const {
     data,
+    viewData,
     viewRegion,
     width,
     trackModel,
@@ -70,129 +72,126 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
-  const aggregator = useMemo(() => new NumericalAggregator(), []);
+  const aggregator = new NumericalAggregator();
+  let xToValue, xToValue2, hasReverse;
+  if (data) {
+    const xvalues = aggregator.xToValueMaker(data, viewRegion, width, options);
+    [xToValue, xToValue2, hasReverse] = xvalues;
+  } else {
+    console.log(viewData, "numerical NO REPEAT VCOMPOUTER");
+    [xToValue, xToValue2, hasReverse] = viewData;
+  }
 
-  const xvalues = useMemo(
-    () => aggregator.xToValueMaker(data, viewRegion, width, options),
-    [data, viewRegion, width, options]
-  );
-
-  const [xToValue, xToValue2, hasReverse] = xvalues;
-
-  const computeScales = useMemo(() => {
-    return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
-      const { yScale, yMin, yMax } = options;
-      if (yMin >= yMax) {
-        console.log("Y-axis min must less than max", "error", 2000);
+  function computeScales(xToValue: any[], xToValue2: any[], height: number) {
+    const { yScale, yMin, yMax } = options;
+    if (yMin >= yMax) {
+      console.log("Y-axis min must less than max", "error", 2000);
+    }
+    const { trackModel, groupScale } = props;
+    let gscale: any = {},
+      min,
+      max,
+      xValues2: Array<any> = [];
+    if (groupScale) {
+      if (trackModel.options.hasOwnProperty("group")) {
+        gscale = groupScale[trackModel.options.group];
       }
-      const { trackModel, groupScale } = props;
-      let gscale: any = {},
+    }
+    if (!_.isEmpty(gscale)) {
+      max = _.max(Object.values(gscale.max));
+      min = _.min(Object.values(gscale.min));
+    } else {
+      const visibleValues = xToValue.slice(
+        props.viewWindow.start,
+        props.viewWindow.end
+      );
+      // TO- DO implement when dragX changes then the legend also changings with viewWindow values
+      // const visibleValues = xToValue.slice(
+      //   props.viewWindow.start + props.width / 3,
+      //   props.viewWindow.end - props.width / 3
+      // );
+      max = _.max(visibleValues) || 1;
+      xValues2 = xToValue2.filter((x) => x);
+      min =
+        (xValues2.length
+          ? _.min(xToValue2.slice(props.viewWindow.start, props.viewWindow.end))
+          : 0) || 0;
+      const maxBoth = Math.max(Math.abs(max), Math.abs(min));
+      max = maxBoth;
+      min = xValues2.length ? -maxBoth : 0;
+      if (yScale === ScaleChoices.FIXED) {
+        max = yMax ? yMax : max;
+        min = yMin !== undefined ? yMin : min;
+      }
+    }
+    if (min > max) {
+      console.log("Y-axis min should less than Y-axis max", "warning", 5000);
+      min = 0;
+    }
+
+    const zeroLine =
+      min < 0
+        ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
+        : height;
+
+    if (
+      xValues2.length &&
+      (yScale === ScaleChoices.AUTO ||
+        (yScale === ScaleChoices.FIXED && yMin < 0))
+    ) {
+      return {
+        axisScale: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height - TOP_PADDING])
+          .clamp(true),
+        valueToY: scaleLinear()
+          .domain([max, 0])
+          .range([TOP_PADDING, zeroLine])
+          .clamp(true),
+        valueToYReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, height - zeroLine - TOP_PADDING])
+          .clamp(true),
+        valueToOpacity: scaleLinear()
+          .domain([0, max])
+          .range([0, 1])
+          .clamp(true),
+        valueToOpacityReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, 1])
+          .clamp(true),
         min,
         max,
-        xValues2: Array<any> = [];
-      if (groupScale) {
-        if (trackModel.options.hasOwnProperty("group")) {
-          gscale = groupScale[trackModel.options.group];
-        }
-      }
-      if (!_.isEmpty(gscale)) {
-        max = _.max(Object.values(gscale.max));
-        min = _.min(Object.values(gscale.min));
-      } else {
-        const visibleValues = xToValue.slice(
-          props.viewWindow.start,
-          props.viewWindow.end
-        );
-        // TO- DO implement when dragX changes then the legend also changings with viewWindow values
-        // const visibleValues = xToValue.slice(
-        //   props.viewWindow.start + props.width / 3,
-        //   props.viewWindow.end - props.width / 3
-        // );
-        max = _.max(visibleValues) || 1;
-        xValues2 = xToValue2.filter((x) => x);
-        min =
-          (xValues2.length
-            ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-              )
-            : 0) || 0;
-        const maxBoth = Math.max(Math.abs(max), Math.abs(min));
-        max = maxBoth;
-        min = xValues2.length ? -maxBoth : 0;
-        if (yScale === ScaleChoices.FIXED) {
-          max = yMax ? yMax : max;
-          min = yMin !== undefined ? yMin : min;
-        }
-      }
-      if (min > max) {
-        console.log("Y-axis min should less than Y-axis max", "warning", 5000);
-        min = 0;
-      }
-
-      const zeroLine =
-        min < 0
-          ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : height;
-
-      if (
-        xValues2.length &&
-        (yScale === ScaleChoices.AUTO ||
-          (yScale === ScaleChoices.FIXED && yMin < 0))
-      ) {
-        return {
-          axisScale: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height - TOP_PADDING])
-            .clamp(true),
-          valueToY: scaleLinear()
-            .domain([max, 0])
-            .range([TOP_PADDING, zeroLine])
-            .clamp(true),
-          valueToYReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, height - zeroLine - TOP_PADDING])
-            .clamp(true),
-          valueToOpacity: scaleLinear()
-            .domain([0, max])
-            .range([0, 1])
-            .clamp(true),
-          valueToOpacityReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, 1])
-            .clamp(true),
-          min,
-          max,
-          zeroLine,
-        };
-      } else {
-        return {
-          axisScale: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height])
-            .clamp(true),
-          valueToY: scaleLinear()
-            .domain([max, min])
-            .range([TOP_PADDING, height])
-            .clamp(true),
-          valueToOpacity: scaleLinear()
-            .domain([min, max])
-            .range([0, 1])
-            .clamp(true),
-          valueToYReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, height - zeroLine - TOP_PADDING])
-            .clamp(true),
-          valueToOpacityReverse: scaleLinear()
-            .domain([0, min])
-            .range([0, 1])
-            .clamp(true),
-          min,
-          max,
-          zeroLine,
-        };
-      }
-    });
-  }, [options, props]);
+        zeroLine,
+      };
+    } else {
+      return {
+        axisScale: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height])
+          .clamp(true),
+        valueToY: scaleLinear()
+          .domain([max, min])
+          .range([TOP_PADDING, height])
+          .clamp(true),
+        valueToOpacity: scaleLinear()
+          .domain([min, max])
+          .range([0, 1])
+          .clamp(true),
+        valueToYReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, height - zeroLine - TOP_PADDING])
+          .clamp(true),
+        valueToOpacityReverse: scaleLinear()
+          .domain([0, min])
+          .range([0, 1])
+          .clamp(true),
+        min,
+        max,
+        zeroLine,
+      };
+    }
+  }
 
   const scales = computeScales(xToValue, xToValue2, height);
 
@@ -314,7 +313,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     </React.Fragment>
   );
 
-  return visualizer;
+  return [visualizer, [xToValue, xToValue2, hasReverse]];
 };
 interface ValueTrackProps {
   xToValue: any[]; // Replace 'any' with the actual type for xToValue
