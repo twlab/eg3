@@ -306,8 +306,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
           dataIdx,
-          usePrimaryNav:
-            trackFetchedDataCache.current[`${id}`].cacheTrackData.usePrimaryNav,
+          usePrimaryNav: trackFetchedDataCache.current[`${id}`].usePrimaryNav,
           createSVGOrCanvas,
           trackType: trackModel.type,
         });
