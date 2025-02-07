@@ -50,15 +50,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
   const fetchError = useRef<boolean>(false);
-  const usePrimaryNav = useRef<boolean>(true);
-  const useExpandedLoci = useRef<boolean>(false);
+
   const straw = useRef<{ [key: string]: any }>({});
 
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
-  const displayCache = useRef<{ [key: string]: any }>({
-    full: {},
-    density: {},
-  });
 
   const xPos = useRef(0);
   const screenshotOpen = null;
@@ -69,25 +64,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const [toolTipVisible, setToolTipVisible] = useState(false);
 
   const [legend, setLegend] = useState<any>();
-
-  function resetState() {
-    configOptions.current = trackOptionMap[trackModel.type]
-      ? { ...trackOptionMap[`${trackModel.type}`].defaultOptions }
-      : { ...trackOptionMap["error"].defaultOptions };
-    svgHeight.current = 0;
-
-    updateSide.current = "right";
-    updatedLegend.current = undefined;
-    fetchedDataCache.current = {};
-    displayCache.current = {
-      full: {},
-      density: {},
-    };
-
-    setToolTip(undefined);
-    setToolTipVisible(false);
-    setLegend(undefined);
-  }
 
   function getHeight(numRows: number): number {
     let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
@@ -105,7 +81,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
   // MARK: CREATESVG
-  async function createSVGOrCanvas(trackState, genesArr, isError, trackIndex) {
+  async function createSVGOrCanvas(
+    trackState,
+    genesArr,
+    isError,
+    cacheDataIdx
+  ) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
@@ -146,19 +127,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       })
     );
 
-    if (trackIndex === dataIdx) {
+    if (cacheDataIdx === dataIdx) {
       checkTrackPreload(id);
       updateSide.current = side;
 
       if (configOptions.current.displayMode === "full") {
         setSvgComponents(res);
-        // if (!(trackIndex in displayCache.current["full"])) {
-        //   displayCache.current["full"][trackIndex] = res;
+        // if (!(cacheDataIdx in displayCache.current["full"])) {
+        //   displayCache.current["full"][cacheDataIdx] = res;
         // }
       } else {
         setCanvasComponents(res);
-        // if (!(trackIndex in displayCache.current["density"])) {
-        //   displayCache.current["density"][trackIndex] = res;
+        // if (!(cacheDataIdx in displayCache.current["density"])) {
+        //   displayCache.current["density"][cacheDataIdx] = res;
         // }
       }
 
@@ -226,14 +207,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       newDrawData.curDataIdx in trackFetchedDataCache.current[`${id}`] &&
       trackFetchedDataCache.current[`${id}`][newDrawData.curDataIdx].trackState
     ) {
-      let left, mid, right;
-      let trackIndex = newDrawData.curDataIdx;
+      let cacheDataIdx = newDrawData.curDataIdx;
+      let cacheTrackData = trackFetchedDataCache.current[`${id}`];
 
-      let trackData = trackFetchedDataCache.current[`${id}`];
-      usePrimaryNav.current = trackData.usePrimaryNav;
-      useExpandedLoci.current = trackData.useExpandedLoci;
-
-      if (trackData[trackIndex].trackState.initial === 1) {
+      if (cacheTrackData[cacheDataIdx].trackState.initial === 1) {
         // use previous data before resetState
 
         if (
@@ -254,133 +231,49 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           id: id,
           trackIdx: trackIdx,
           legendRef: legendRef,
-          usePrimaryNav: usePrimaryNav.current,
+          usePrimaryNav: cacheTrackData.usePrimaryNav,
         });
       }
 
-      if (!useExpandedLoci.current) {
-        if (trackData[trackIndex].trackState.initial === 1) {
-          if (
-            trackIndex in trackData &&
-            trackIndex + 1 in trackData &&
-            trackIndex - 1 in trackData
-          ) {
-            left = trackIndex + 1;
-            mid = trackIndex;
-            right = trackIndex - 1;
-          } else {
-            left = 1;
-            mid = 0;
-            right = -1;
-          }
-          let viewData: any = [
-            trackData[left],
-            trackData[mid],
-            trackData[right],
-          ];
-          var noData = false;
+      if (!cacheTrackData.useExpandedLoci) {
+        let combinedData: any = [];
+        let currIdx = newDrawData.curDataIdx + 1;
+        for (let i = 0; i < 3; i++) {
+          combinedData.push(cacheTrackData[currIdx]);
+          currIdx--;
+        }
+        var noData = false;
 
-          if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-            viewData = getDeDupeArrMatPlot(viewData, false);
-          } else {
-            viewData = viewData
-              .map((item) => {
-                if (item && "dataCache" in item) {
-                  return item.dataCache;
-                } else {
-                  noData = true;
-                }
-              })
-              .flat(1);
-          }
-          if (!noData) {
-            createSVGOrCanvas(
-              trackData[mid].trackState,
-              viewData,
-
-              trackData[newDrawData.curDataIdx].trackState.isError,
-              trackIndex
-            );
-          }
+        if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+          combinedData = getDeDupeArrMatPlot(combinedData, false);
         } else {
-          if (trackData[newDrawData.curDataIdx].trackState.side === "right") {
-            let viewData: any = [];
-            let currIdx = newDrawData.curDataIdx + 1;
-            for (let i = 0; i < 3; i++) {
-              viewData.push(trackData[currIdx]);
-              currIdx--;
-            }
-            var noData = false;
+          combinedData = combinedData
+            .map((item) => {
+              if (item && "dataCache" in item) {
+                return item.dataCache;
+              } else {
+                noData = true;
+              }
+            })
+            .flat(1);
+        }
 
-            if (
-              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
-            ) {
-              viewData = getDeDupeArrMatPlot(viewData, false);
-            } else {
-              viewData = viewData
-                .map((item) => {
-                  if (item && "dataCache" in item) {
-                    return item.dataCache;
-                  } else {
-                    noData = true;
-                  }
-                })
-                .flat(1);
-            }
-
-            if (!noData) {
-              createSVGOrCanvas(
-                trackData[newDrawData.curDataIdx].trackState,
-                viewData,
-
-                trackData[newDrawData.curDataIdx].trackState.isError,
-                trackIndex
-              );
-            }
-          } else if (
-            trackData[newDrawData.curDataIdx].trackState.side === "left"
-          ) {
-            let viewData: any = [];
-            let currIdx = newDrawData.curDataIdx + 1;
-            for (let i = 0; i < 3; i++) {
-              viewData.push(trackData[currIdx]);
-              currIdx--;
-            }
-            var noData = false;
-
-            if (
-              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
-            ) {
-              viewData = getDeDupeArrMatPlot(viewData, false);
-            } else {
-              viewData = viewData
-                .map((item) => {
-                  if (item && "dataCache" in item) {
-                    return item.dataCache;
-                  } else {
-                    noData = true;
-                  }
-                })
-                .flat(1);
-            }
-            if (!noData) {
-              createSVGOrCanvas(
-                trackData[newDrawData.curDataIdx].trackState,
-                viewData,
-                trackData[newDrawData.curDataIdx].trackState.isError,
-                trackIndex
-              );
-            }
-          }
+        if (!noData) {
+          createSVGOrCanvas(
+            cacheTrackData[newDrawData.curDataIdx].trackState,
+            combinedData,
+            cacheTrackData[newDrawData.curDataIdx].trackState.isError,
+            cacheDataIdx
+          );
         }
       } else {
-        const viewData = trackData[newDrawData.curDataIdx].dataCache;
+        const combinedData = cacheTrackData[newDrawData.curDataIdx].dataCache;
 
         createSVGOrCanvas(
-          trackData[newDrawData.curDataIdx].trackState,
-          viewData,
-          trackData[newDrawData.curDataIdx].trackState.isError,
-          trackIndex
+          cacheTrackData[newDrawData.curDataIdx].trackState,
+          combinedData,
+          cacheTrackData[newDrawData.curDataIdx].trackState.isError,
+          cacheDataIdx
         );
       }
     }
@@ -413,7 +306,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
           dataIdx,
-          usePrimaryNav: usePrimaryNav.current,
+          usePrimaryNav:
+            trackFetchedDataCache.current[`${id}`].cacheTrackData.usePrimaryNav,
           createSVGOrCanvas,
           trackType: trackModel.type,
         });

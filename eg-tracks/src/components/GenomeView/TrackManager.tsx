@@ -971,6 +971,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         })
       )
         .then(() => {
+          const regionDrawIdx = event.data.trackDataIdx;
+          const curDataIdxObj = {
+            [regionDrawIdx + 1]: "",
+            [regionDrawIdx]: "",
+            [regionDrawIdx - 1]: "",
+          };
+
           let newTmpDrawId = { ...trackToDrawId, ...event.data.trackToDrawId };
 
           setNewDrawData({
@@ -979,6 +986,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             trackToDrawId: newTmpDrawId,
           });
 
+          console.log(
+            window.performance["memory"].usedJSHeapSize,
+            window.performance["memory"].jsHeapSizeLimit,
+            "CURRENT MERMOPT"
+          );
+          if (
+            window.performance["memory"].usedJSHeapSize >
+            window.performance["memory"].jsHeapSizeLimit * 0.7
+          ) {
+            console.log(
+              window.performance["memory"].usedJSHeapSize,
+              window.performance["memory"].jsHeapSizeLimit,
+              "DELETE  MERMOPT"
+            );
+          }
+          for (const key in trackFetchedDataCache.current) {
+            const curTrack = trackFetchedDataCache.current[key];
+
+            for (const trackToDrawId in curTrack) {
+              if (
+                isInteger(trackToDrawId) &&
+                !(trackToDrawId in curDataIdxObj)
+              ) {
+                delete trackFetchedDataCache.current[key][trackToDrawId]
+                  .dataCache;
+                if (
+                  "records" in trackFetchedDataCache.current[key][trackToDrawId]
+                ) {
+                  delete trackFetchedDataCache.current[key][trackToDrawId]
+                    .records;
+                }
+              }
+            }
+          }
           console.log(
             event.data.trackDataIdx,
             trackFetchedDataCache.current,
@@ -1894,30 +1935,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [dataIdx,tra]
 
   useEffect(() => {
-    console.log(window.performance["memory"].usedJSHeapSize, "CURRENT MERMOPT");
-
-    if (dataIdx === -20) {
-      const curDataIdxObj = {
-        [Number(dataIdx) + 1]: "",
-        [dataIdx]: "",
-        [Number(dataIdx) - 1]: "",
-      };
-
-      for (const key in trackFetchedDataCache.current) {
-        const curTrack = trackFetchedDataCache.current[key];
-
-        for (const dataIdx in curTrack) {
-          if (isInteger(dataIdx) && !(dataIdx in curDataIdxObj)) {
-            delete curTrack[dataIdx].dataCache;
-            if ("records" in curTrack[dataIdx]) {
-              delete curTrack[dataIdx].records;
-            }
-          }
-        }
-      }
-      console.log(trackFetchedDataCache.current, dataIdx, "delete");
-    }
-
     if (useCacheData.current || needToFetchAddTrack.current) {
       const trackToDrawId: { [key: string]: any } = {};
 
@@ -2140,36 +2157,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (!genomeConfig.isInitial) {
       if (arraysHaveSameTrackModels(tracks, trackManagerState.current.tracks)) {
-        console.log(tracks, "hjere2", selectedTracks.current, trackComponents);
-        const isSelected: Array<any> = [];
-        tracks.map((item) => {
-          if (item.isSelected) {
-            isSelected.push(item.id);
-          }
-        });
-
-        for (const key in selectedTracks.current) {
-          if (!(key in isSelected)) {
-            for (const component of trackComponents) {
-              if (component.id === key) {
-                component.legendRef.current.style.backgroundColor = "white";
-                delete selectedTracks.current[key];
-              }
-            }
-          }
-        }
-        for (const key of isSelected) {
-          if (key! in selectedTracks.current) {
-            continue;
-          } else {
-            for (const component of trackComponents) {
-              if (component.id === key) {
-                component.legendRef.current.style.backgroundColor = "lightblue";
-                selectedTracks.current[key!] = globalTrackConfig.current[key!];
-              }
-            }
-          }
-        }
+        // console.log(tracks, "hjere2", selectedTracks.current, trackComponents);
+        // const isSelected: Array<any> = [];
+        // tracks.map((item) => {
+        //   if (item.isSelected) {
+        //     isSelected.push(item.id);
+        //   }
+        // });
+        // for (const key in selectedTracks.current) {
+        //   if (!(key in isSelected)) {
+        //     for (const component of trackComponents) {
+        //       if (component.id === key) {
+        //         component.legendRef.current.style.backgroundColor = "white";
+        //         delete selectedTracks.current[key];
+        //       }
+        //     }
+        //   }
+        // }
+        // for (const key of isSelected) {
+        //   if (key! in selectedTracks.current) {
+        //     continue;
+        //   } else {
+        //     for (const component of trackComponents) {
+        //       if (component.id === key) {
+        //         component.legendRef.current.style.backgroundColor = "lightblue";
+        //         selectedTracks.current[key!] = globalTrackConfig.current[key!];
+        //       }
+        //     }
+        //   }
+        // }
       } else {
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {

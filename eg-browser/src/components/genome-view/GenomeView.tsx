@@ -53,7 +53,7 @@ export default function GenomeView() {
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
         genomeConfig={genomeConfig}
-        legendWidth={100}
+        legendWidth={120}
         showGenomeNav={true}
         onNewRegion={handleNewRegion}
         onNewHighlight={handleNewHighlight}
