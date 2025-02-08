@@ -72,7 +72,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  const expandGenomicLoci = event.data.expandedGenLoci;
+  const regionExpandLoci = event.data.regionExpandLoci;
   const trackToFetch = event.data.trackToFetch;
   const genomicLoci = event.data.genomicLoci;
 
@@ -82,16 +82,16 @@ self.onmessage = async (event: MessageEvent) => {
   const useFineModeNav = event.data.useFineModeNav;
   const primaryGenName = event.data.primaryGenName;
   const initGenomicLoci = event.data.initGenomicLoci;
-
+  console.log(event.data);
   genomicFetchCoord[`${primaryGenName}`] = {
     genomicLoci,
-    expandGenomicLoci,
+    regionExpandLoci,
     initGenomicLoci,
   };
   const genomeAlignTracks = trackToFetch;
   console.log(event.data.visData);
 
-  const fetchArrNav = [expandGenomicLoci];
+  const fetchArrNav = [regionExpandLoci];
 
   if (genomeAlignTracks.length > 0) {
     await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks);

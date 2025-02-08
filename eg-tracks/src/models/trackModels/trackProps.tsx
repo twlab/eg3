@@ -9,7 +9,7 @@ export interface TrackProps {
   side: string;
   windowWidth: number;
   handleDelete: (trackIndex: number) => void;
-
+  globalTrackState: any;
   trackFetchedDataCache: any;
   dragX?: number;
   genomeConfig: any;

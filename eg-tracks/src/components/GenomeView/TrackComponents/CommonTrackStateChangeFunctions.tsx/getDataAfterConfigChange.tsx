@@ -1,5 +1,5 @@
 import { getDeDupeArrMatPlot } from "./cacheFetchedData";
-import { trackUsingExpandedLoci } from "./cacheTrackData";
+import { trackUsingExpandedLoci } from "./cacheFetchedData";
 
 interface GetConfigChangeDataParams {
   fetchedDataCache: any;

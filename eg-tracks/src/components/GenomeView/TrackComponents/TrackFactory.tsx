@@ -39,6 +39,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   dragX,
   newDrawData,
   trackFetchedDataCache,
+  globalTrackState,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -205,12 +206,30 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       newDrawData.curDataIdx === dataIdx &&
       id in newDrawData.trackToDrawId &&
       newDrawData.curDataIdx in trackFetchedDataCache.current[`${id}`] &&
-      trackFetchedDataCache.current[`${id}`][newDrawData.curDataIdx].trackState
+      newDrawData.curDataIdx in globalTrackState.current.trackStates
     ) {
+      console.log("GOT EHRER #$####2323");
       let cacheDataIdx = newDrawData.curDataIdx;
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
 
-      if (cacheTrackData[cacheDataIdx].trackState.initial === 1) {
+      let trackState = {
+        ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
+      };
+      console.log(trackState);
+
+      if (cacheDataIdx.trackType !== "genomealign") {
+        const primaryVisData =
+          trackState.genomicFetchCoord[trackState.primaryGenName]
+            .primaryVisData;
+        let visRegion = !cacheTrackData.usePrimaryNav
+          ? trackState.genomicFetchCoord[
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
+          : primaryVisData.visRegion;
+        trackState["visRegion"] = visRegion;
+      }
+
+      if (trackState.initial === 1) {
         // use previous data before resetState
 
         if (
@@ -236,6 +255,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       if (!cacheTrackData.useExpandedLoci) {
+        console.log("ERREER111");
         let combinedData: any = [];
         let currIdx = newDrawData.curDataIdx + 1;
         for (let i = 0; i < 3; i++) {
@@ -257,24 +277,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             })
             .flat(1);
         }
-
+        console.log("DATAS", combinedData);
         if (!noData) {
-          createSVGOrCanvas(
-            cacheTrackData[newDrawData.curDataIdx].trackState,
-            combinedData,
-            cacheTrackData[newDrawData.curDataIdx].trackState.isError,
-            cacheDataIdx
-          );
+          console.log("ERREER");
+          createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
         }
       } else {
         const combinedData = cacheTrackData[newDrawData.curDataIdx].dataCache;
 
-        createSVGOrCanvas(
-          cacheTrackData[newDrawData.curDataIdx].trackState,
-          combinedData,
-          cacheTrackData[newDrawData.curDataIdx].trackState.isError,
-          cacheDataIdx
-        );
+        createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
       }
     }
   }, [newDrawData]);

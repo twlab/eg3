@@ -106,7 +106,7 @@ self.onmessage = async (event: MessageEvent) => {
   const primaryGenName = event.data.primaryGenName;
   const fetchResults: Array<any> = [];
   const genomicLoci = event.data.genomicLoci;
-  const expandedGenLoci = event.data.expandedGenLoci;
+  const regionExpandLoci = event.data.regionExpandLoci;
   const initGenomicLoci = event.data.initGenomicLoci;
   const trackDefaults = event.data.trackModelArr;
   const trackToDrawId = event.data.trackToDrawId
@@ -121,7 +121,7 @@ self.onmessage = async (event: MessageEvent) => {
     genomicFetchCoord = {};
     genomicFetchCoord[`${primaryGenName}`] = {
       genomicLoci,
-      expandedGenLoci,
+      regionExpandLoci,
       initGenomicLoci,
     };
     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
@@ -206,7 +206,7 @@ self.onmessage = async (event: MessageEvent) => {
           item.type === "longrange" ||
           item.type === "biginteract"
         ) {
-          curFetchNav = new Array(expandedGenLoci);
+          curFetchNav = new Array(regionExpandLoci);
         } else if (event.data.initial === 1) {
           curFetchNav = initGenomicLoci;
         } else {
@@ -273,7 +273,7 @@ self.onmessage = async (event: MessageEvent) => {
       trackModel.type === "longrange" ||
       trackModel.type === "biginteract"
     ) {
-      curFetchNav = new Array(expandedGenLoci);
+      curFetchNav = new Array(regionExpandLoci);
     } else if (event.data.initial === 1) {
       curFetchNav = initGenomicLoci;
     } else {
@@ -370,7 +370,7 @@ self.onmessage = async (event: MessageEvent) => {
     useFineModeNav,
     genomicLoci,
     trackToDrawId,
-    expandedGenLoci,
+    regionExpandLoci,
     missingIdx: event.data.missingIdx,
     regionLoci: event.data.regionLoci,
     visData: event.data.visData,

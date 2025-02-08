@@ -91,28 +91,8 @@ export function cacheFetchedData({
   const isError = checkFetchError(trackData);
   // Passing rawData to the correct tracks and saving it to cache to be displayed
 
-  const primaryVisData =
-    trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
-  let visRegion = !usePrimaryNav
-    ? trackState.genomicFetchCoord[
-        trackFetchedDataCache.current[`${id}`].queryGenome
-      ].queryRegion
-    : primaryVisData.visRegion;
-
   if (trackState.initial === 1) {
     if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
-      let newTrackState = {
-        ...trackState,
-        initial: 1,
-        side: "right",
-        xDist: 0,
-        visRegion: visRegion,
-        regionLoci: trackState.regionLoci[1],
-        startWindow: primaryVisData.viewWindow.start,
-        visWidth: primaryVisData.visWidth,
-        isError: isError,
-      };
-
       trackFetchedDataCache.current[`${id}`][
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]
       ] = {
@@ -127,53 +107,12 @@ export function cacheFetchedData({
             : trackType === "genomealign"
             ? trackData
             : trackData.flat(1),
-        trackState: newTrackState,
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
     }
     // tracks that dont use expanded nav loci_____________________________________________________________________________________________________________________________________________________________________
     //__________________________________________________________________________________________________________________________________________________________
     else {
-      let trackState0 = {
-        initial: 0,
-        regionLoci: trackState.regionLoci[0],
-        visRegion: new DisplayedRegionModel(
-          navContext,
-          visRegion._startBase - bpRegionSize,
-          visRegion._startBase + bpRegionSize * 2
-        ),
-        side: "left",
-        xDist: 0,
-        index: 1,
-        isError: isError,
-      };
-      let trackState1 = {
-        ...trackState,
-        regionLoci: trackState.regionLoci[1],
-        initial: 1,
-        side: "right",
-        xDist: 0,
-        visRegion: visRegion,
-        index: 0,
-        startWindow: primaryVisData.viewWindow.start,
-        visWidth: primaryVisData.visWidth,
-        isError: isError,
-      };
-
-      let trackState2 = {
-        visRegion: new DisplayedRegionModel(
-          navContext,
-          visRegion._endBase - bpRegionSize * 2,
-          visRegion._endBase + bpRegionSize
-        ),
-        regionLoci: trackState.regionLoci[2],
-        initial: 0,
-        side: "right",
-        xDist: 0,
-        index: -1,
-        isError: isError,
-      };
-
       trackFetchedDataCache.current[`${id}`][
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]
       ] = {
@@ -183,7 +122,6 @@ export function cacheFetchedData({
                 return item[0];
               })
             : trackData[0],
-        trackState: trackState0,
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]++;
 
@@ -196,7 +134,6 @@ export function cacheFetchedData({
                 return item[1];
               })
             : trackData[1],
-        trackState: trackState1,
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
       trackFetchedDataCache.current[`${id}`][
@@ -208,7 +145,6 @@ export function cacheFetchedData({
                 return item[2];
               })
             : trackData[2],
-        trackState: trackState2,
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
     }
@@ -220,26 +156,6 @@ export function cacheFetchedData({
   //__________________________________________________________________________________________________________@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   //__________________________________________________________________________________________________________@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   else {
-    let visRegion;
-    if (!usePrimaryNav) {
-      visRegion =
-        trackState.genomicFetchCoord[
-          `${trackFetchedDataCache.current[`${id}`].queryGenome}`
-        ].queryRegion;
-    } else {
-      visRegion = primaryVisData.visRegion;
-    }
-
-    let newTrackState = {
-      ...trackState,
-      initial: 0,
-      side: trackState.side,
-      xDist: trackState.xDist,
-      visRegion: visRegion,
-      startWindow: primaryVisData.viewWindow.start,
-      visWidth: primaryVisData.visWidth,
-      isError: isError,
-    };
     // console.log(
     //   newTrackState,
     //   trackData,
@@ -248,26 +164,19 @@ export function cacheFetchedData({
     // );
     if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
       if (trackState.side === "right") {
-        newTrackState.index =
-          trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"];
         trackFetchedDataCache.current[`${id}`][
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]
         ] = {
           dataCache:
             metadata["track type"] === "genomealign" ? trackData[0] : trackData,
-          trackState: newTrackState,
         };
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
       } else if (trackState.side === "left") {
-        trackState.index =
-          trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"];
-
         trackFetchedDataCache.current[`${id}`][
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]
         ] = {
           dataCache:
             metadata["track type"] === "genomealign" ? trackData[0] : trackData,
-          trackState: newTrackState,
         };
 
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]++;
@@ -279,33 +188,19 @@ export function cacheFetchedData({
       if (trackType === "genomealign") {
       }
       if (trackState.side === "right") {
-        trackState.index =
-          trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"];
-
         trackFetchedDataCache.current[`${id}`][
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]
         ] = {
           dataCache: trackData,
-          trackState: newTrackState,
         };
-
-        trackFetchedDataCache.current[`${id}`][
-          trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"] + 1
-        ]["trackState"] = newTrackState;
 
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
       } else if (trackState.side === "left") {
-        trackState.index =
-          trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"];
         trackFetchedDataCache.current[`${id}`][
           trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]
         ] = {
           dataCache: trackData,
-          trackState: newTrackState,
         };
-        trackFetchedDataCache.current[`${id}`][
-          trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"] - 1
-        ]["trackState"] = newTrackState;
 
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]++;
       }

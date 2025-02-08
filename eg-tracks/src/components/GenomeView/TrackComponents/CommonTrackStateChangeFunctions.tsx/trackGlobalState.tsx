@@ -1,17 +1,11 @@
-import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-
 interface cacheFetchedDataParams {
   trackState: any;
   globalTrackState: any;
-  navContext: any;
-  bpRegionSize: number;
 }
 
 export function trackGlobalState({
   trackState,
   globalTrackState,
-  navContext,
-  bpRegionSize,
 }: cacheFetchedDataParams) {
   const primaryVisData =
     trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
@@ -23,26 +17,14 @@ export function trackGlobalState({
       visData: trackState.initVisData[0],
       side: "left",
       xDist: 0,
-      index: 1,
-      visRegion: new DisplayedRegionModel(
-        navContext,
-        trackState.visData.visRegion._startBase - bpRegionSize,
-        trackState.visData.visRegion._startBase
-      ),
     };
     let trackState1 = {
       ...trackState,
-      visRegion: new DisplayedRegionModel(
-        navContext,
-        trackState.visData.visRegion._endBase,
-        trackState.visData.visRegion._endBase + bpRegionSize
-      ),
       regionLoci: trackState.regionLoci[1],
       initial: 1,
       side: "right",
+      visData: trackState.initVisData[1],
       xDist: 0,
-
-      index: 0,
       startWindow: primaryVisData.viewWindow.start,
       visWidth: primaryVisData.visWidth,
     };
@@ -53,29 +35,30 @@ export function trackGlobalState({
       visData: trackState.initVisData[2],
       side: "right",
       xDist: 0,
-      index: -1,
     };
 
-    globalTrackState.current.trackState[globalTrackState.current["leftIdx"]] = {
-      trackState: trackState0,
-    };
+    globalTrackState.current.trackStates[globalTrackState.current["leftIdx"]] =
+      {
+        trackState: trackState0,
+      };
 
     globalTrackState.current["leftIdx"]++;
 
-    globalTrackState.current.trackState[globalTrackState.current["rightIdx"]] =
+    globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
       {
         trackState: trackState1,
       };
 
     globalTrackState.current["rightIdx"]--;
 
-    globalTrackState.current.trackState[globalTrackState.current["rightIdx"]] =
+    globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
       {
         trackState: trackState2,
       };
 
     globalTrackState.current["rightIdx"]--;
   } else {
+    console.log("ASDASDASDASDASDASDASDASDASD", trackState);
     let newTrackState = {
       ...trackState,
       initial: 0,
@@ -87,7 +70,7 @@ export function trackGlobalState({
     };
 
     if (trackState.side === "right") {
-      globalTrackState.current.trackState[
+      globalTrackState.current.trackStates[
         globalTrackState.current["rightIdx"]
       ] = {
         trackState: {
@@ -96,7 +79,7 @@ export function trackGlobalState({
             trackState.genomicFetchCoord[trackState.primaryGenName].genomicLoci,
         },
       };
-      globalTrackState.current.trackState[
+      globalTrackState.current.trackStates[
         globalTrackState.current["rightIdx"] + 1
       ] = {
         trackState: newTrackState,
@@ -104,11 +87,12 @@ export function trackGlobalState({
 
       globalTrackState.current["rightIdx"]--;
     } else if (trackState.side === "left") {
-      globalTrackState.current.trackState[globalTrackState.current["leftIdx"]] =
-        {
-          trackState: newTrackState,
-        };
-      globalTrackState.current.trackState[
+      globalTrackState.current.trackStates[
+        globalTrackState.current["leftIdx"]
+      ] = {
+        trackState: newTrackState,
+      };
+      globalTrackState.current.trackStates[
         globalTrackState.current["leftIdx"] - 1
       ] = {
         trackState: newTrackState,
