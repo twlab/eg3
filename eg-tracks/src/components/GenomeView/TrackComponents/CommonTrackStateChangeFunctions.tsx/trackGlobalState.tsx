@@ -74,7 +74,6 @@ export function trackGlobalState({
         globalTrackState.current["rightIdx"]
       ] = {
         trackState: {
-          ...newTrackState,
           regionLoci:
             trackState.genomicFetchCoord[trackState.primaryGenName].genomicLoci,
         },
@@ -90,8 +89,12 @@ export function trackGlobalState({
       globalTrackState.current.trackStates[
         globalTrackState.current["leftIdx"]
       ] = {
-        trackState: newTrackState,
+        trackState: {
+          regionLoci:
+            trackState.genomicFetchCoord[trackState.primaryGenName].genomicLoci,
+        },
       };
+
       globalTrackState.current.trackStates[
         globalTrackState.current["leftIdx"] - 1
       ] = {

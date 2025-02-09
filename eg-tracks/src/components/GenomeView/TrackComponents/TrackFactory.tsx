@@ -208,14 +208,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       newDrawData.curDataIdx in trackFetchedDataCache.current[`${id}`] &&
       newDrawData.curDataIdx in globalTrackState.current.trackStates
     ) {
-      console.log("GOT EHRER #$####2323");
       let cacheDataIdx = newDrawData.curDataIdx;
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
 
       let trackState = {
         ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
       };
-      console.log(trackState);
 
       if (cacheDataIdx.trackType !== "genomealign") {
         const primaryVisData =
@@ -255,7 +253,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       if (!cacheTrackData.useExpandedLoci) {
-        console.log("ERREER111");
         let combinedData: any = [];
         let currIdx = newDrawData.curDataIdx + 1;
         for (let i = 0; i < 3; i++) {
@@ -277,7 +274,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             })
             .flat(1);
         }
-        console.log("DATAS", combinedData);
+
         if (!noData) {
           console.log("ERREER");
           createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
