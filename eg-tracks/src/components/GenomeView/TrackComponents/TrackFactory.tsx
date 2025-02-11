@@ -46,7 +46,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ? { ...trackOptionMap[`${trackModel.type}`].defaultOptions }
       : { ...trackOptionMap["error"].defaultOptions }
   );
-
+  const initTrackStart = useRef(true);
   const svgHeight = useRef(0);
   const updateSide = useRef("right");
   const updatedLegend = useRef<any>(undefined);
@@ -227,7 +227,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         trackState["visRegion"] = visRegion;
       }
 
-      if (trackState.initial === 1) {
+      if (initTrackStart.current) {
         // use previous data before resetState
 
         if (
@@ -250,6 +250,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           legendRef: legendRef,
           usePrimaryNav: cacheTrackData.usePrimaryNav,
         });
+        initTrackStart.current = false;
       }
 
       if (!cacheTrackData.useExpandedLoci) {

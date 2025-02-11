@@ -36,6 +36,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       let curGenome;
 
       if (!isInitial.current) {
+        console.log("YEEEEEEEEEEEEEEEEET");
         curGenome = { ...currentGenomeConfig };
 
         curGenome["isInitial"] = isInitial.current;
@@ -46,21 +47,21 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome["sizeChange"] = true;
       } else {
         curGenome = { ...genomeConfig };
-
+        console.log("HERERERRE", genomeConfig);
         curGenome["isInitial"] = isInitial.current;
         curGenome["genomeID"] = uuidv4();
         let bundleId = uuidv4();
-        curGenome.defaultRegion = new OpenInterval(
-          userViewRegion._startBase!,
-          userViewRegion._endBase!
-        );
+        // curGenome.defaultRegion = new OpenInterval(
+        //   userViewRegion._startBase!,
+        //   userViewRegion._endBase!
+        // );
         curGenome["bundleId"] = bundleId;
       }
 
       setCurrentGenomeConfig(curGenome);
       isInitial.current = false;
     }
-  }, [size.width]);
+  }, [size.width, genomeConfig]);
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;

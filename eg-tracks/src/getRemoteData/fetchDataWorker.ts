@@ -178,7 +178,7 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
           trackModel: item,
-          result: event.data.initial === 1 ? [[], [], []] : [],
+          result: [],
         });
       } else if (trackType === "geneannotation") {
         let genRefResponses: Array<any> = await fetchData(item, genomeName, id);
@@ -186,8 +186,7 @@ self.onmessage = async (event: MessageEvent) => {
           name: trackType,
           // I fetch three sections so I need to have an array with 3 different section data [{},{},{}]
           // when moving left and right get only 1 region so [{}] I just sent {}
-          result:
-            event.data.initial !== 1 ? genRefResponses[0] : genRefResponses,
+          result: genRefResponses[0],
           id: id,
           metadata: item.metadata,
           trackModel: item,
@@ -231,14 +230,12 @@ self.onmessage = async (event: MessageEvent) => {
       ) {
         let tmpResults = await Promise.all(
           item.tracks.map(async (trackItem, index) => {
-            return event.data.initial !== 1
-              ? (await fetchData(trackItem, genomeName, id)).flat(1)
-              : fetchData(trackItem, genomeName, id);
+            return (await fetchData(trackItem, genomeName, id)).flat(1);
           })
         );
-        if (event.data.initial === 1 && trackType === "dynamiclongrange") {
-          tmpResults = tmpResults.flat(1);
-        }
+        // if (event.data.initial === 1 && trackType === "dynamiclongrange") {
+        //   tmpResults = tmpResults.flat(1);
+        // }
         fetchResults.push({
           name: trackType,
           result: tmpResults,
@@ -250,7 +247,7 @@ self.onmessage = async (event: MessageEvent) => {
         let responses: Array<any> = await fetchData(item, genomeName, id);
         fetchResults.push({
           name: trackType,
-          result: event.data.initial !== 1 ? responses[0] : responses,
+          result: responses[0],
           id: id,
           metadata: item.metadata,
           trackModel: item,
@@ -275,9 +272,11 @@ self.onmessage = async (event: MessageEvent) => {
       trackModel.type === "biginteract"
     ) {
       curFetchNav = new Array(regionExpandLoci);
-    } else if (event.data.initial === 1) {
-      curFetchNav = initGenomicLoci;
-    } else {
+    }
+    // else if (event.data.initial === 1) {
+    //   curFetchNav = initGenomicLoci;
+    // }
+    else {
       curFetchNav = new Array(genomicLoci);
     }
     // console.log(curFetchNav, genomicLoci);

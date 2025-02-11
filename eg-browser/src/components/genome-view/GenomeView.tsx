@@ -10,14 +10,17 @@ import Toolbar from "./toolbar/Toolbar";
 import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import { getGenomeConfig } from "@eg/core";
+import { useEffect, useState } from "react";
+import { GenomeConfig } from "@eg/core/src/eg-lib/models/genomes/GenomeConfig";
 
 export default function GenomeView() {
+  const [genomeConfig, setGenomeConfig] = useState<null | GenomeConfig>(null);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
-  const genomeConfig = useCurrentGenomeConfig();
 
-  if (!currentSession || !genomeConfig) {
+  if (!currentSession) {
     return null;
   }
 
@@ -46,8 +49,12 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
     dispatch(updateCurrentSession({ viewRegion: coordinate }));
   };
+  useEffect(() => {
+    // const genomeConfig = useCurrentGenomeConfig();]
 
-  return (
+    setGenomeConfig({ ...getGenomeConfig("hg38") });
+  }, []);
+  return genomeConfig ? (
     <div className="w-full h-full">
       <TrackContainerRepresentable
         tracks={currentSession.tracks}
@@ -74,5 +81,7 @@ export default function GenomeView() {
         <Toolbar />
       </div>
     </div>
+  ) : (
+    ""
   );
 }
