@@ -1218,12 +1218,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: createCache
   async function createCache(fetchRes: { [key: string]: any }) {
-    var tmpTrackState = { ...fetchRes.trackState };
+    const tmpTrackState = { ...fetchRes.trackState };
 
-    if (tmpTrackState.initial) {
-      initTrackFetchCache(fetchRes.trackModel);
-    }
-    var result;
+    let result;
     if (fetchRes.trackType in { hic: "", dynamichic: "", bam: "" }) {
       let configOptions;
       if (fetchRes.id in globalTrackConfig.current) {
@@ -1485,7 +1482,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //______________________________________________________________________________________________________________
 
   function initTrackFetchCache(initTrackModel: { [key: string]: any }) {
-    console.log(initTrackModel);
     trackFetchedDataCache.current[`${initTrackModel.id}`]["queryGenome"] =
       "querygenome" in initTrackModel && initTrackModel.querygenome
         ? initTrackModel.querygenome
@@ -1787,12 +1783,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       setTrackComponents(newTrackComponents);
     }
+
     newTrackComponents.map((item, _index) => {
       trackFetchedDataCache.current[`${item.trackModel.id}`] = {};
       trackFetchedDataCache.current[`${item.trackModel.id}`]["cacheDataIdx"] = {
         leftIdx: 1,
         rightIdx: 0,
       };
+      initTrackFetchCache(item.trackModel);
     });
     fetchGenomeData(1, "right", dataIdx);
   }

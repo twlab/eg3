@@ -13,11 +13,13 @@ interface GetConfigChangeDataParams {
   trackType: string;
   usePrimaryNav: boolean;
   signal?: any;
+  trackState: any;
 }
 
 export function getConfigChangeData({
   fetchedDataCache,
   dataIdx,
+  trackState,
   createSVGOrCanvas,
   trackType,
   usePrimaryNav,
@@ -29,7 +31,7 @@ export function getConfigChangeData({
   // view and get rebuilt again.
 
   let viewData;
-  let newIntanceTrackState = { ...fetchedDataCache[dataIdx!].trackState };
+  let newIntanceTrackState = trackState;
   if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
     viewData = fetchedDataCache[dataIdx!].dataCache;
   } else {
@@ -46,6 +48,7 @@ export function getConfigChangeData({
     }
   }
 
+  console.log(newIntanceTrackState);
   newIntanceTrackState["recreate"] = true;
   createSVGOrCanvas(
     newIntanceTrackState,

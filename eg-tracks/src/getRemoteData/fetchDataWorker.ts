@@ -344,20 +344,6 @@ self.onmessage = async (event: MessageEvent) => {
     }
     return responses;
   }
-  function parseGenomicCoordinates(input: string): {
-    chr: string;
-    start: number;
-    end: number;
-  } {
-    const [chrPart, positionPart] = input.split(":");
-    const [startStr, endStr] = positionPart.split("-");
-
-    const chr = chrPart.slice(3); // Remove the 'chr' prefix
-    const start = parseInt(startStr, 10);
-    const end = parseInt(endStr, 10);
-
-    return { chr, start, end };
-  }
 
   postMessage({
     fetchResults,

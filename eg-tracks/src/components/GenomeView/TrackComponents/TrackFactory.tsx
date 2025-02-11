@@ -215,7 +215,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
       };
 
-      if (cacheDataIdx.trackType !== "genomealign") {
+      if (cacheTrackData.trackType !== "genomealign") {
         const primaryVisData =
           trackState.genomicFetchCoord[trackState.primaryGenName]
             .primaryVisData;
@@ -311,12 +311,27 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackIdx: trackIdx,
           legendRef: legendRef,
         });
-
+        let cacheDataIdx = dataIdx;
+        let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+        let trackState = {
+          ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
+        };
+        if (cacheTrackData.trackType !== "genomealign") {
+          const primaryVisData =
+            trackState.genomicFetchCoord[trackState.primaryGenName]
+              .primaryVisData;
+          let visRegion = !cacheTrackData.usePrimaryNav
+            ? trackState.genomicFetchCoord[
+                trackFetchedDataCache.current[`${id}`].queryGenome
+              ].queryRegion
+            : primaryVisData.visRegion;
+          trackState["visRegion"] = visRegion;
+        }
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
           dataIdx,
-          usePrimaryNav:
-            trackFetchedDataCache.current[`${id}`].cacheTrackData.usePrimaryNav,
+          trackState,
+          usePrimaryNav: trackFetchedDataCache.current[`${id}`].usePrimaryNav,
           createSVGOrCanvas,
           trackType: trackModel.type,
         });
