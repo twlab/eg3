@@ -381,7 +381,6 @@ self.onmessage = async (event: MessageEvent) => {
       ...event.data,
       genomicFetchCoord,
       trackToDrawId,
-      side: event.data.trackSide,
     },
   });
 };

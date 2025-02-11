@@ -347,20 +347,9 @@ self.onmessage = async (event: MessageEvent) => {
 
   postMessage({
     fetchResults,
-    side: event.data.trackSide,
-    xDist: event.data.xDist,
-    initial: event.data.initial,
     trackDataIdx: event.data.trackDataIdx,
     genomicFetchCoord,
-    bpX: event.data.bpX,
-    useFineModeNav,
-    genomicLoci,
     trackToDrawId,
-    regionExpandLoci,
     missingIdx: event.data.missingIdx,
-    regionLoci: event.data.regionLoci,
-    visData: event.data.visData,
-    initExpandBpLoci: event.data.initExpandBpLoci,
-    initBpLoci: event.data.initBpLoci,
   });
 };
