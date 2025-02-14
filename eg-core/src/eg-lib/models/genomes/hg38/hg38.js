@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27195171-27202238");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -125,19 +125,19 @@ const defaultTracks = [
     },
   }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
   // new TrackModel({
   //   type: "modbed",
   //   name: "examplemod",
@@ -414,7 +414,7 @@ const defaultTracks = [
   //   type: "longrange",
   //   name: "ES-E14 ChIA-PET",
   //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  // }),
+  // }),  
   // new TrackModel({
   //   type: "biginteract",
   //   name: "test bigInteract",

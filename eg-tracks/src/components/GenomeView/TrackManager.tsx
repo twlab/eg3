@@ -815,7 +815,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
     // sent the navigation to fetch the data from server
     try {
-      findRegionToFetch(dataIdx);
+      findRegionToFetch(initial ? 0 : dataIdx);
     } catch { }
   }
   // MARK: onmessInfin
@@ -1925,7 +1925,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         preload.current = true;
         genomeConfig.defaultTracks = trackManagerState.current.tracks;
         refreshState();
-
+        console.log(genomeConfig)
         initializeTracks();
       }
     }
