@@ -7,6 +7,7 @@ import genomeReducer from "./slices/genomeSlice";
 import navigationReducer from "./slices/navigationSlice";
 import utilityReducer from "./slices/utilitySlice";
 import hubReducer from "./slices/hubSlice";
+import settingsReducer from "./slices/settingsSlice";
 
 const persistConfig = {
     key: "root",
@@ -19,7 +20,8 @@ const rootReducer = combineReducers({
     genome: genomeReducer,
     browser: browserReducer,
     utility: utilityReducer,
-    hub: hubReducer
+    hub: hubReducer,
+    settings: settingsReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

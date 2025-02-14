@@ -10,7 +10,7 @@ import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
 import { AnimatePresence, motion } from "framer-motion";
 import TracksTab from "./tabs/tracks/TracksTab";
-import AppsTab from "./tabs/AppsTab";
+import AppsTab from "./tabs/apps/AppsTab";
 import HelpTab from "./tabs/HelpTab";
 import ShareTab from "./tabs/ShareTab";
 import SettingsTab from "./tabs/SettingsTab";
