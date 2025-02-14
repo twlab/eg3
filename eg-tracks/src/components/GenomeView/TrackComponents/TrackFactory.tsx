@@ -221,8 +221,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+            trackFetchedDataCache.current[`${id}`].queryGenome
+          ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
       }
@@ -254,6 +254,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       if (!cacheTrackData.useExpandedLoci) {
+
         let combinedData: any = [];
         let currIdx = newDrawData.curDataIdx + 1;
         for (let i = 0; i < 3; i++) {
@@ -322,8 +323,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
@@ -1170,15 +1171,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         trackState["viewWindow"] =
           updateSide.current === "right"
             ? new OpenInterval(
-                -(dragX! + (xPos.current + windowWidth)),
-                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-              )
+              -(dragX! + (xPos.current + windowWidth)),
+              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+            )
             : new OpenInterval(
-                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-                windowWidth * 3 -
-                  (dragX! - (xPos.current + windowWidth)) +
-                  windowWidth
-              );
+              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+              windowWidth * 3 -
+              (dragX! - (xPos.current + windowWidth)) +
+              windowWidth
+            );
 
         genesArr = genesArr.map((item) => item.dataCache).flat(1);
         let drawOptions = { ...configOptions.current };

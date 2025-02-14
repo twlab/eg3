@@ -230,6 +230,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   // MARK: FetchQueue
+  //popqueue when fetching data. Lifo
   const messageQueue = useRef<any>([]);
   const isWorkerBusy = useRef(false);
   const genomeAlignMessageQueue = useRef<any>([]);
@@ -260,7 +261,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     isfetchGenomeAlignWorkerBusy.current = true;
-    const message = genomeAlignMessageQueue.current.shift();
+    const message = genomeAlignMessageQueue.current.pop();
 
     fetchGenomeAlignWorker.current!.postMessage(message);
   };
@@ -789,22 +790,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       regionExpandLoci: regionExpandLoci,
       initVisData: initial
         ? initExpandBpLoci.map((item, index) => {
-            return {
-              visRegion: new DisplayedRegionModel(
-                genomeConfig.navContext,
-                item.start,
-                item.end
-              ),
-              viewWindowRegion: new DisplayedRegionModel(
-                genomeConfig.navContext,
-                initBpLoci[index].start,
-                initBpLoci[index].end
-              ),
-              visWidth: windowWidth * 3,
+          return {
+            visRegion: new DisplayedRegionModel(
+              genomeConfig.navContext,
+              item.start,
+              item.end
+            ),
+            viewWindowRegion: new DisplayedRegionModel(
+              genomeConfig.navContext,
+              initBpLoci[index].start,
+              initBpLoci[index].end
+            ),
+            visWidth: windowWidth * 3,
 
-              viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-            };
-          })
+            viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+          };
+        })
         : "",
     };
 
@@ -812,9 +813,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState: newTrackState,
       globalTrackState: globalTrackState,
     });
+    // sent the navigation to fetch the data from server
     try {
       findRegionToFetch(dataIdx);
-    } catch {}
+    } catch { }
   }
   // MARK: onmessInfin
   function createInfiniteOnMessage() {
@@ -842,10 +844,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // }
 
       Promise.all(
-        event.data.fetchResults.map((item, _index) => {
+        event.data.fetchResults.map(async (item, _index) => {
           trackToDrawId[`${item.id}`] = "";
+          // need to await the function finishes for bam and hic that uses fetch instances
 
-          createCache({
+          await createCache({
             trackState: curTrackState,
             result:
               item.name in TYPE_NAME_TO_CONFIG
@@ -1101,15 +1104,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             visData: trackState.visData
               ? trackState.visData
               : trackState.genomicFetchCoord
-              ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-              : "",
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                : "",
             genomicLoci: trackState.regionLoci,
             visRegion: trackState.visRegion
               ? trackState.visRegion
               : trackState.genomicFetchCoord
-              ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
                   .visRegion
-              : "",
+                : "",
             regionExpandLoci: trackState.regionExpandLoci,
             useFineModeNav: useFineModeNav.current,
             windowWidth,
@@ -1191,16 +1194,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...curTrackModel.options,
         };
       }
+      let trackState = tmpTrackState
+      let cacheTrackData = trackFetchedDataCache.current[`${fetchRes.id}`];
 
       const primaryVisData =
-        tmpTrackState.genomicFetchCoord[tmpTrackState.primaryGenName]
+        trackState.genomicFetchCoord[genomeConfig.genome.getName()]
           .primaryVisData;
-
-      let visRegion =
-        "genome" in fetchRes.metadata
-          ? tmpTrackState.genomicFetchCoord[fetchRes.metadata.genome]
-              .queryRegion
-          : primaryVisData.visRegion;
+      let visRegion = !cacheTrackData.usePrimaryNav
+        ? trackState.genomicFetchCoord[
+          trackFetchedDataCache.current[`${fetchRes.id}`].queryGenome
+        ].queryRegion
+        : primaryVisData.visRegion;
+      trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
         result = await fetchInstances.current[`${fetchRes.id}`].getData(
@@ -1230,9 +1235,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             fetchInstances.current[`${fetchRes.id}`].getData(locuses)
           );
         });
-        result = await Promise.all(tmpRawData);
+
+        result = (await Promise.all(tmpRawData)).flat();
         // if (!tmpTrackState.initial) {
-        result = result.flat();
+
         // }
       }
     } else {
@@ -1250,21 +1256,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
         "dataCache"
       ] = result;
-    } else {
-      cacheFetchedData({
-        usePrimaryNav: trackFetchedDataCache.current[fetchRes.id].usePrimaryNav,
-        id: fetchRes.id,
-        trackData: result,
-        trackState: {
-          side: tmpTrackState.side,
-          initial: tmpTrackState.initial,
-        },
-        trackFetchedDataCache: trackFetchedDataCache,
-        metadata: fetchRes.metadata,
-        trackType: fetchRes.trackType,
-        navContext: genomeConfig.navContext,
-        bpRegionSize: bpRegionSize.current,
-      });
     }
   }
 
@@ -1342,16 +1333,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       selectedTool.title === `Zoom-in tool (Alt+M)` ||
       toolTitle in
-        {
-          "Zoom in 5-fold": "",
-          "Zoom in 1-fold (Alt+I)": "",
-          "Zoom in 1/3-fold": "",
-          "Zoom out 1/3-fold": "",
-          "Zoom out 1-fold (Alt+O)": "",
-          "Zoom out 5-fold": "",
-          "Pan right (Alt+X)": "",
-          "Pan left (Alt+Z)": "",
-        }
+      {
+        "Zoom in 5-fold": "",
+        "Zoom in 1-fold (Alt+I)": "",
+        "Zoom in 1/3-fold": "",
+        "Zoom out 1/3-fold": "",
+        "Zoom out 1-fold (Alt+O)": "",
+        "Zoom out 5-fold": "",
+        "Pan right (Alt+X)": "",
+        "Pan left (Alt+Z)": "",
+      }
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
@@ -1442,8 +1433,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       "querygenome" in initTrackModel && initTrackModel.querygenome
         ? initTrackModel.querygenome
         : "genome" in initTrackModel.metadata && initTrackModel.metadata.genome
-        ? initTrackModel.metadata.genome
-        : genomeConfig.genome.getName();
+          ? initTrackModel.metadata.genome
+          : genomeConfig.genome.getName();
 
     const queryGenome =
       trackFetchedDataCache.current[`${initTrackModel.id}`]["queryGenome"];
@@ -1452,7 +1443,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     trackFetchedDataCache.current[`${initTrackModel.id}`]["useExpandedLoci"] =
       initTrackModel.type in trackUsingExpandedLoci ||
-      queryGenome !== genomeConfig.genome.getName()
+        queryGenome !== genomeConfig.genome.getName()
         ? true
         : false;
 
@@ -1624,8 +1615,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackManagerState.current.tracks[i].tracks?.map((_item, index) => {
           fetchInstances.current[
             `${trackManagerState.current.tracks[i].id}` +
-              "subtrack" +
-              `${index}`
+            "subtrack" +
+            `${index}`
           ] = new HicSource(
             trackManagerState.current.tracks[i].tracks![index].url
           );
@@ -1650,7 +1641,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         for (let trackComponent of trackComponents) {
           if (
             trackComponent.trackModel.id ===
-              trackManagerState.current.tracks[i].id &&
+            trackManagerState.current.tracks[i].id &&
             trackComponent.hasAllRegionData &&
             trackManagerState.current.tracks[i].type !== "bam"
           ) {
@@ -1766,6 +1757,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
         preload.current = false;
         if (genomeConfig.isInitial) {
+          // When a track changes viewRegion, or a new genome is initialize, we 
+          // highlight the region that was selected before the refresh
           const isSelected: Array<any> = [];
           tracks.map((item) => {
             if (item.isSelected) {
@@ -2141,9 +2134,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
           newTrackId[`${trackModel.id}`] = {};
-          if (trackModel.isSelected) {
-          }
+
         }
+        // check if a track inside trackmanager was deleted
         for (const key in trackFetchedDataCache.current) {
           if (!(key in newTrackId)) {
             delete trackFetchedDataCache.current[key];
@@ -2217,7 +2210,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               }
             }
-
+            // for tracks like hic and bam where we create an  instance obj
+            // that we reuse to fetch data
+            else if (curTrackModel.type === "hic") {
+              fetchInstances.current[`${curTrackModel.id}`] =
+                new HicSource(curTrackModel.url);
+            } else if (curTrackModel.type === "dynamichic") {
+              curTrackModel.tracks?.map((_item, index) => {
+                fetchInstances.current[
+                  `${curTrackModel.id}` +
+                  "subtrack" +
+                  `${index}`
+                ] = new HicSource(
+                  curTrackModel.tracks![index].url
+                );
+              });
+            } else if (
+              curTrackModel.type in
+              { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+            ) {
+              curTrackModel.tracks?.map((trackModel, index) => {
+                trackModel.id =
+                  `${curTrackModel.id}` +
+                  "subtrack" +
+                  `${index}`;
+              });
+            } else if (curTrackModel.type === "bam") {
+              fetchInstances.current[`${curTrackModel.id}`] =
+                new BamSource(curTrackModel.url);
+            }
             //create initial state for the new track, give it all the prevregion trackstate, and trigger fetch by updating trackcomponents
             needToFetchAddTrack.current = true;
             const newPosRef = createRef();
@@ -2453,52 +2474,52 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           newDrawData={newDrawData}
                           trackFetchedDataCache={trackFetchedDataCache}
                           globalTrackState={globalTrackState}
-                          // viewWindow={trackManagerState.current.viewRegion}
+                        // viewWindow={trackManagerState.current.viewRegion}
                         />
 
                         {highlightElements.length > 0
                           ? highlightElements.map((item, index) => {
-                              if (item.display) {
-                                return (
+                            if (item.display) {
+                              return (
+                                <div
+                                  key={index}
+                                  style={{
+                                    display: "flex",
+                                    height: "100%",
+                                  }}
+                                >
                                   <div
-                                    key={index}
                                     style={{
                                       display: "flex",
+                                      position: "relative",
                                       height: "100%",
                                     }}
                                   >
                                     <div
+                                      key={index}
                                       style={{
-                                        display: "flex",
-                                        position: "relative",
-                                        height: "100%",
-                                      }}
-                                    >
-                                      <div
-                                        key={index}
-                                        style={{
-                                          position: "absolute",
-                                          backgroundColor: item.color,
+                                        position: "absolute",
+                                        backgroundColor: item.color,
 
-                                          top: "0",
-                                          height: "100%",
-                                          left:
-                                            item.side === "right"
-                                              ? `${item.xPos}px`
-                                              : "",
-                                          right:
-                                            item.side === "left"
-                                              ? `${item.xPos}px`
-                                              : "",
-                                          width: item.width,
-                                          pointerEvents: "none", // This makes the highlighted area non-interactive
-                                        }}
-                                      ></div>
-                                    </div>
+                                        top: "0",
+                                        height: "100%",
+                                        left:
+                                          item.side === "right"
+                                            ? `${item.xPos}px`
+                                            : "",
+                                        right:
+                                          item.side === "left"
+                                            ? `${item.xPos}px`
+                                            : "",
+                                        width: item.width,
+                                        pointerEvents: "none", // This makes the highlighted area non-interactive
+                                      }}
+                                    ></div>
                                   </div>
-                                );
-                              }
-                            })
+                                </div>
+                              );
+                            }
+                          })
                           : ""}
                       </div>
                     </div>

@@ -287,15 +287,15 @@ self.onmessage = async (event: MessageEvent) => {
         curRespond = await Promise.all(
           trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
+              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
+              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
         );
 
         responses.push(_.flatten(curRespond));
