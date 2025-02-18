@@ -96,5 +96,5 @@ export enum Tool {
   ZoomInOneThirdFold,
   ZoomInOneFold,
   ZoomInFiveFold,
-
+  highlightMenu
 }

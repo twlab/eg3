@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactModal from "react-modal";
 import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 import ColorPicker from "../../../trackConfigs/config-menu-components.tsx/ColorPicker";
@@ -31,6 +31,7 @@ interface HighlightMenuProps {
   showHighlightMenuModal: boolean;
   onNewRegion: (start: number, end: number) => void;
   onSetHighlights: any;
+  selectedTool: any;
 }
 
 const HighlightMenu: React.FC<HighlightMenuProps> = ({
@@ -39,6 +40,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   showHighlightMenuModal,
   onNewRegion,
   onSetHighlights,
+  selectedTool
 }) => {
   const handleHighlightIntervalUpdate = (
     doDelete: boolean,
@@ -59,10 +61,12 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
     }
   };
   const [showModal, setShowModal] = useState(false);
-  const handleOpenModal = () => {
-    setShowModal(true);
-  };
 
+  useEffect(() => {
+    if (selectedTool.title === 12) {
+      setShowModal(true);
+    }
+  }, [selectedTool])
   const handleViewRegionJump = (interval: HighlightInterval): void => {
     const { start, end } = interval;
     onNewRegion(start, end);
@@ -98,15 +102,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
 
   return (
     <>
-      <button
-        onClick={handleOpenModal}
-        title="Highlight Menu {Alt+U)"
-        className="border border-gray-300 rounded-md p-2 mx-2"
-      >
-        <span role="img" aria-label="highlights">
-          ⚡
-        </span>
-      </button>
+
       <ReactModal
         isOpen={showModal}
         onRequestClose={handleCloseModal}
@@ -121,7 +117,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
           <h5 style={{ margin: 15 }}>Highlights</h5>
           {highlights.length ? (
             <div style={{ paddingBottom: "5px" }}>
-              <button onClick={() => {}}>Remove all</button>
+              <button onClick={() => { }}>Remove all</button>
             </div>
           ) : null}
           <div
@@ -212,9 +208,8 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             color={interval.color}
             disableAlpha={false}
             onChange={(color: any) => {
-              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${
-                color.rgb.b
-              }, ${0.15})`;
+              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b
+                }, ${0.15})`;
               const newInterval = new HighlightInterval(
                 interval.start,
                 interval.end,

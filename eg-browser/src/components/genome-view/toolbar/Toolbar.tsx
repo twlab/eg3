@@ -224,7 +224,8 @@ export default function Toolbar() {
                     </button>
                     <button
                         className={getButtonClass()}
-                        title="Zoom in"
+                        onClick={() => dispatch(setTool(Tool.highlightMenu))}
+                        title="Highlight Menu"
                     >
                         <BookOpenIcon className="size-6 text-gray-600" />
                     </button>

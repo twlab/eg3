@@ -954,7 +954,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         primaryGenName: genomeConfig.genome.getName(),
         ...event.data.navData,
       };
-      console.log(event.data, "GENOMEALIGNFETCH");
+
       Promise.all(
         Object.values(event.data.fetchResults).map((item: any, _index) => {
           createCache({
@@ -1136,24 +1136,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // MARK: addGenAlign
         const curTrackState =
           globalTrackState.current.trackStates[curIdx].trackState;
-        console.log(
-          curIdx,
-          {
-            trackToFetch: genomeAlignTracks,
-            visData: curTrackState.visData,
-            genomicLoci: curTrackState.regionLoci,
-            primaryGenName: genomeConfig.genome.getName(),
-            trackModelArr: genomeAlignTracks,
-            regionExpandLoci: curTrackState.regionExpandLoci,
-            useFineModeNav: useFineModeNav.current,
-            windowWidth,
-            bpRegionSize: bpRegionSize.current,
-            fetchAfterGenAlignTracks: dataToFetchArr,
-            trackDataIdx: curIdx,
-            missingIdx: curIdx,
-          },
-          "data before fetch"
-        );
+
         enqueueGenomeAlignMessage({
           trackToFetch: genomeAlignTracks,
           visData: curTrackState.visData
@@ -1334,7 +1317,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       startbase -= amountToExpand;
       endbase += amountToExpand;
     }
-    console.log(selectedTool, tool)
+
     // drag select zoom in or zoom factor options or regionController jump
     if (
       String(tool.title) in
@@ -1860,7 +1843,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [trackComponents, windowWidth]);
 
   useEffect(() => {
-    console.log(tool, "checktool")
+
     if (tool.title === 4) {
       onRegionSelected(
         Math.round(bpX.current - bpRegionSize.current),
@@ -1897,7 +1880,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           isToolSelected.current = false;
           return newSelectedTool;
         } else if (tool) {
-          console.log(tool, selectedTool)
+
           let newSelectedTool: { [key: string]: any } = {};
           newSelectedTool["title"] = tool.title;
           if (tool.title !== 0) {
@@ -1977,7 +1960,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         preload.current = true;
         genomeConfig.defaultTracks = trackManagerState.current.tracks;
         refreshState();
-        console.log(genomeConfig)
         initializeTracks();
       }
     }
@@ -2395,13 +2377,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
           <div className="flex flex-row py-10 items-center">
-            {/* <HighlightMenu
+            <HighlightMenu
               highlights={highlightElements}
               viewRegion={trackManagerState.current.viewRegion}
               showHighlightMenuModal={true}
               onNewRegion={highlightJump}
               onSetHighlights={getHighlightState}
-            /> */}
+              selectedTool={selectedTool}
+            />
             {/* <History
               state={{
                 past: stateArr.slice(0, presentStateIdx + 1),
