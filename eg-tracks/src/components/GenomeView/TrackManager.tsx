@@ -1,11 +1,9 @@
 import { createRef, memo, useEffect, useRef, useState } from "react";
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
-
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 import { v4 as uuidv4 } from "uuid";
-
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
@@ -20,15 +18,11 @@ import _ from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import SubToolButtons from "./ToolComponents/SubToolButtons";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
-
 import TrackFactory from "./TrackComponents/TrackFactory";
-
 import BamSource from "../../getRemoteData/BamSource";
-
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
 import React from "react";
 import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClickDetector";
-
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import {
   createNewTrackState,
@@ -42,6 +36,16 @@ import {
 } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 
+
+const zoomFactors: { [key: string]: { [key: string]: any } } = {
+  "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
+  "7": { factor: 2, text: "1×", title: "Zoom out 1-fold (Alt+O)" },
+  "8": { factor: 5, text: "5×", title: "Zoom out 5-fold" },
+  "9": { factor: 2 / 3, text: "⅓×", title: "Zoom in 1/3-fold" },
+  "10": { factor: 0.5, text: "1×", title: "Zoom in 1-fold (Alt+I)" },
+  "11": { factor: 0.2, text: "5×", title: "Zoom in 5-fold" },
+}
+
 function sumArray(numbers: Array<any>) {
   let total = 0;
   for (let i = 0; i < numbers.length; i++) {
@@ -50,6 +54,7 @@ function sumArray(numbers: Array<any>) {
   return total;
 }
 const MIN_VIEW_REGION_SIZE = 5;
+
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -102,10 +107,10 @@ interface TrackManagerProps {
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   onNewRegionSelect: (startbase: number, endbase: number) => void;
+  tool: any;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
-
   legendWidth,
   genomeConfig,
   selectedRegion,
@@ -116,9 +121,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   onTrackSelected,
   onNewRegionSelect,
   onTrackDeleted,
+  tool
 }) {
   //useRef to store data between states without re render the component
-
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
   const useFineModeNav = useRef(false);
@@ -171,7 +176,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   });
 
   const configMenuPos = useRef<{ [key: string]: any }>({});
-
   const lastDragX = useRef(0);
   const isThereG3dTrack = useRef(false);
 
@@ -193,7 +197,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const preload = useRef<boolean>(false);
   // These states are used to update the tracks with new fetch(data);
   const containerRef = useRef(null);
-
   const globalTrackState = useRef<{ [key: string]: any }>({
     rightIdx: 0,
     leftIdx: 1,
@@ -387,6 +390,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       fetchGenomeData(0, "left", Math.ceil(dragX.current! / windowWidth));
     }
   }
+
   // MARK: GloCONFIG
   // FUNCTIONS HANDLER FOR WHEN CONFIG FOR TRACKS CHANGES OR WHEN USER IS SELECTING MULITPLE TRACKS
   // the trackmanager will handle the config menu when mutiple  tracks are selected otherwise each
@@ -419,12 +423,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const commonMenuComponents: Array<any> = _.intersection(
         ...menuComponents
       );
+
       let newUnique = uuidv4();
       let configMenuData = {
         key: newUnique,
         trackIdx: selectedTracks.current.length,
         handleDelete,
-
         pageX: configMenuPos.current.left,
         pageY: configMenuPos.current.top,
         onConfigMenuClose: onConfigMenuClose,
@@ -471,7 +475,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       menuComponents.push(menuItems);
       optionsObjects.push(curConfig.configOptions);
     }
-
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
     let newUnique = uuidv4();
     let configMenuData = {
@@ -1213,7 +1216,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           basePerPixel.current,
           configOptions
         );
-      } else if (fetchRes.trackType === "dynamichic") {
+
+      }
+      else if (fetchRes.trackType === "dynamichic") {
         const curStraw = fetchRes.trackModel.tracks.map((_hicTrack, index) => {
           return fetchInstances.current[
             `${fetchRes.id}` + "subtrack" + `${index}`
@@ -1264,64 +1269,64 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
-  function onToolClicked(tool: any) {
-    if (tool.title === "Pan left (Alt+Z)") {
-      onRegionSelected(
-        Math.round(bpX.current - bpRegionSize.current),
-        Math.round(bpX.current - bpRegionSize.current * 2),
-        tool.title
-      );
-    } else if (tool.title === "Pan right (Alt+X)") {
-      onRegionSelected(
-        Math.round(bpX.current + bpRegionSize.current),
-        Math.round(bpX.current + bpRegionSize.current * 2),
-        tool.title
-      );
-    } else if (
-      tool.title in
-      {
-        "Zoom in 5-fold": "",
-        "Zoom in 1-fold (Alt+I)": "",
-        "Zoom in 1/3-fold": "",
-        "Zoom out 1/3-fold": "",
-        "Zoom out 1-fold (Alt+O)": "",
-        "Zoom out 5-fold": "",
-      }
-    ) {
-      let useDisplayFunction = new DisplayedRegionModel(
-        genomeConfig.navContext,
-        bpX.current,
-        bpX.current + bpRegionSize.current
-      );
-      let res = useDisplayFunction.zoom(tool.factor);
-      onRegionSelected(
-        res._startBase as number,
-        res._endBase as number,
-        tool.title
-      );
-    } else {
-      setSelectedTool((prevState) => {
-        if (prevState.title === tool.title) {
-          let newSelectedTool: { [key: string]: any } = {};
-          newSelectedTool["title"] = "none";
-          newSelectedTool["isSelected"] = false;
-          isToolSelected.current = false;
-          return newSelectedTool;
-        } else {
-          let newSelectedTool: { [key: string]: any } = {};
-          newSelectedTool["title"] = tool.title;
-          newSelectedTool["isSelected"] = true;
-          isToolSelected.current = true;
-          return newSelectedTool;
-        }
-      });
-    }
-  }
+  // function onToolClicked(tool: any) {
+  //   if (tool.title === "Pan left (Alt+Z)") {
+  //     onRegionSelected(
+  //       Math.round(bpX.current - bpRegionSize.current),
+  //       Math.round(bpX.current - bpRegionSize.current * 2),
+  //       tool.title
+  //     );
+  //   } else if (tool.title === "Pan right (Alt+X)") {
+  //     onRegionSelected(
+  //       Math.round(bpX.current + bpRegionSize.current),
+  //       Math.round(bpX.current + bpRegionSize.current * 2),
+  //       tool.title
+  //     );
+  //   } else if (
+  //     tool.title in
+  //     {
+  //       "Zoom in 5-fold": "",
+  //       "Zoom in 1-fold (Alt+I)": "",
+  //       "Zoom in 1/3-fold": "",
+  //       "Zoom out 1/3-fold": "",
+  //       "Zoom out 1-fold (Alt+O)": "",
+  //       "Zoom out 5-fold": "",
+  //     }
+  //   ) {
+  //     let useDisplayFunction = new DisplayedRegionModel(
+  //       genomeConfig.navContext,
+  //       bpX.current,
+  //       bpX.current + bpRegionSize.current
+  //     );
+  //     let res = useDisplayFunction.zoom(tool.factor);
+  //     onRegionSelected(
+  //       res._startBase as number,
+  //       res._endBase as number,
+  //       tool.title
+  //     );
+  //   } else {
+  //     setSelectedTool((prevState) => {
+  //       if (prevState.title === tool.title) {
+  //         let newSelectedTool: { [key: string]: any } = {};
+  //         newSelectedTool["title"] = "none";
+  //         newSelectedTool["isSelected"] = false;
+  //         isToolSelected.current = false;
+  //         return newSelectedTool;
+  //       } else {
+  //         let newSelectedTool: { [key: string]: any } = {};
+  //         newSelectedTool["title"] = tool.title;
+  //         newSelectedTool["isSelected"] = true;
+  //         isToolSelected.current = true;
+  //         return newSelectedTool;
+  //       }
+  //     });
+  //   }
+  // }
 
   function onRegionSelected(
     startbase: number,
     endbase: number,
-    toolTitle: string = ""
+    isJump = false
   ) {
     const newLength = endbase - startbase;
     if (newLength < MIN_VIEW_REGION_SIZE) {
@@ -1329,26 +1334,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       startbase -= amountToExpand;
       endbase += amountToExpand;
     }
-    console.log(selectedTool);
+    console.log(selectedTool, tool)
+    // drag select zoom in or zoom factor options or regionController jump
     if (
-      selectedTool.title === `Zoom-in tool (Alt+M)` ||
-      toolTitle in
-      {
-        "Zoom in 5-fold": "",
-        "Zoom in 1-fold (Alt+I)": "",
-        "Zoom in 1/3-fold": "",
-        "Zoom out 1/3-fold": "",
-        "Zoom out 1-fold (Alt+O)": "",
-        "Zoom out 5-fold": "",
-        "Pan right (Alt+X)": "",
-        "Pan left (Alt+Z)": "",
-      }
+      String(tool.title) in
+      zoomFactors || String(tool.title) in {
+        "3": "",
+        "4": "",
+        "5": "",
+      } || isJump
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
 
       onNewRegionSelect(startbase, endbase);
-    } else if (selectedTool.title === `Highlight tool (Alt+N)`) {
+    }
+    // highlight option
+    else if (tool.title === 2) {
       let newHightlight = {
         start: startbase,
         end: endbase,
@@ -1462,9 +1464,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     bpRegionSize.current = 0;
     pixelPerBase.current = 0;
     isWorkerBusy.current = false;
-
     messageQueue.current = [];
-
     bpX.current = 0;
     maxBp.current = 0;
     minBp.current = 0;
@@ -1507,7 +1507,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     dragX.current = 0;
 
     isLoading.current = true;
-    isToolSelected.current = false;
+    // isToolSelected.current = false;
     side.current = "right";
     isDragging.current = false;
     rightSectionSize.current = [windowWidth];
@@ -1517,7 +1517,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // setTrackComponents([]);
     setG3dTrackComponents([]);
     setNewDrawData({});
-    setSelectedTool({ isSelected: false, title: "none" });
+    // setSelectedTool({ ...tool });
 
     let highlightElement = createHighlight(highlights);
     globalTrackState.current = { rightIdx: 0, leftIdx: 1, trackStates: {} };
@@ -1532,7 +1532,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function initializeTracks() {
     // set initial track manager control values and create fetch instance for track that can't use worker like hic.
-
     const tmpQueryGenObj: { [key: string]: any } = {};
     tmpQueryGenObj[`${genomeConfig.genome.getName()}`] = "";
     const annotationTracks = genomeConfig.annotationTracks || {};
@@ -1576,7 +1575,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
-
     basePerPixel.current = bpRegionSize.current / windowWidth;
     pixelPerBase.current = windowWidth / bpRegionSize.current;
     if (preload.current && genomeConfig.sizeChange) {
@@ -1861,6 +1859,60 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
   }, [trackComponents, windowWidth]);
 
+  useEffect(() => {
+    console.log(tool, "checktool")
+    if (tool.title === 4) {
+      onRegionSelected(
+        Math.round(bpX.current - bpRegionSize.current),
+        Math.round(bpX.current),
+
+
+      );
+    } else if (tool.title === 5) {
+      onRegionSelected(
+        Math.round(bpX.current + bpRegionSize.current),
+        Math.round(bpX.current + bpRegionSize.current * 2),
+
+      );
+    } else if (
+      String(tool.title) in
+      zoomFactors
+    ) {
+      let useDisplayFunction = new DisplayedRegionModel(
+        genomeConfig.navContext,
+        bpX.current,
+        bpX.current + bpRegionSize.current
+      );
+      let res = useDisplayFunction.zoom(zoomFactors[`${tool.title}`].factor);
+      onRegionSelected(
+        res._startBase as number,
+        res._endBase as number,
+      );
+    } else {
+      setSelectedTool((prevState) => {
+        if (tool && prevState.title === tool.title) {
+          let newSelectedTool: { [key: string]: any } = {};
+          newSelectedTool["title"] = "none";
+          newSelectedTool["isSelected"] = false;
+          isToolSelected.current = false;
+          return newSelectedTool;
+        } else if (tool) {
+          console.log(tool, selectedTool)
+          let newSelectedTool: { [key: string]: any } = {};
+          newSelectedTool["title"] = tool.title;
+          if (tool.title !== 0) {
+            newSelectedTool["isSelected"] = true;
+            isToolSelected.current = true;
+          }
+          else {
+            newSelectedTool["isSelected"] = false;
+            isToolSelected.current = false
+          }
+          return newSelectedTool;
+        }
+      });
+    }
+  }, [tool]);
   useEffect(() => {
     if (initialStart === "workerReady") {
       initializeTracks();
@@ -2283,7 +2335,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         setTrackComponents(newTrackComponents);
       }
     }
-  }, [tracks]);
+  }, [tracks]); ``
   return (
     <>
       <div
@@ -2343,13 +2395,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
         <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
           <div className="flex flex-row py-10 items-center">
-            <HighlightMenu
+            {/* <HighlightMenu
               highlights={highlightElements}
               viewRegion={trackManagerState.current.viewRegion}
               showHighlightMenuModal={true}
               onNewRegion={highlightJump}
               onSetHighlights={getHighlightState}
-            />
+            /> */}
             {/* <History
               state={{
                 past: stateArr.slice(0, presentStateIdx + 1),
@@ -2359,13 +2411,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               jumpToFuture={jumpToState}
               clearHistory={jumpToState}
             /> */}
-            <SubToolButtons onToolClicked={onToolClicked} />
-            <ZoomControls onToolClicked={onToolClicked} />
+
             {selectedRegion && (
               <TrackRegionController
                 selectedRegion={selectedRegion}
                 onRegionSelected={(start: number, end: number) =>
-                  onRegionSelected(start, end, "Zoom in 5-fold")
+                  onRegionSelected(start, end, true)
                 }
                 contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
                 genomeConfig={genomeConfig}
@@ -2534,7 +2585,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     zIndex: 10,
                   }}
                 >
-                  {selectedTool.isSelected ? (
+                  {selectedTool && selectedTool.isSelected ? (
                     <SelectableGenomeArea
                       selectableRegion={trackManagerState.current.viewRegion}
                       dragLimits={

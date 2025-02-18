@@ -38,7 +38,7 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
 
   getSelectedBases(xSpan: OpenInterval): OpenInterval {
     const { selectableRegion, dragLimits } = this.props;
-    console.log(selectableRegion, dragLimits, "CHECK SELECT");
+
     const navContext = selectableRegion.getNavigationContext();
     const drawModel = new LinearDrawingModel(
       selectableRegion,

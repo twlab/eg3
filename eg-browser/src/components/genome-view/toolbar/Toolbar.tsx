@@ -1,7 +1,7 @@
 import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
 import { selectTool, setTool } from '@/lib/redux/slices/utilitySlice';
 import { Tool } from '@eg/tracks';
-import { ArrowsUpDownIcon, BookOpenIcon, ClockIcon, HandRaisedIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon, PaintBrushIcon } from '@heroicons/react/24/outline';
+import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ArrowsUpDownIcon, BookOpenIcon, ClockIcon, HandRaisedIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon, PaintBrushIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,9 +13,7 @@ enum MagnifyingDirection {
 export default function Toolbar() {
     const tool = useAppSelector(selectTool);
     const dispatch = useAppDispatch();
-
     const [hoveredMagnifyingDirection, setHoveredMagnifyingDirection] = useState<MagnifyingDirection | null>(null);
-
     const getButtonClass = (buttonTool?: Tool) => {
         return `p-1.5 ${tool === buttonTool ? 'bg-secondary' : ''} ${tool !== buttonTool ? 'hover:bg-gray-200' : ''} rounded-md`;
     };
@@ -40,11 +38,26 @@ export default function Toolbar() {
                     transition={{ duration: 0.2 }}
                 >
                     <button
-                        onClick={() => dispatch(setTool(Tool.Pan))}
-                        className={getButtonClass(Tool.Pan)}
-                        title="Pan"
+                        onClick={() => dispatch(setTool(Tool.Drag))}
+                        className={getButtonClass(Tool.Drag)}
+                        title="Drag"
                     >
                         <HandRaisedIcon className="size-6 text-gray-600" />
+                    </button>
+
+                    <button
+                        onClick={() => dispatch(setTool(Tool.PanLeft))}
+                        className={getButtonClass(Tool.PanLeft)}
+                        title="Pan Left"
+                    >
+                        <ChevronDoubleLeftIcon className="size-6 text-gray-600" />
+                    </button>
+                    <button
+                        onClick={() => dispatch(setTool(Tool.PanRight))}
+                        className={getButtonClass(Tool.PanRight)}
+                        title="Pan Right"
+                    >
+                        <ChevronDoubleRightIcon className="size-6 text-gray-600" />
                     </button>
                     <button
                         onClick={() => dispatch(setTool(Tool.Reorder))}
@@ -104,14 +117,25 @@ export default function Toolbar() {
                                 animate={{ width: '350%', opacity: 1 }}
                                 exit={{ width: 0, opacity: 0 }}
                                 transition={{ duration: 0.2 }}
-                                style={{ translateX: '-40%' }}
+                                style={{ translateX: '-100%' }}
                             >
+
                                 <button
+
+                                    onClick={() => dispatch(setTool(Tool.ZoomOutOneThirdFold))}
+
                                     className={getButtonClass() + ' text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]'}
                                 >
                                     -⅓
                                 </button>
                                 <button
+                                    onClick={() => dispatch(setTool(Tool.ZoomOutOneFold))}
+                                    className={getButtonClass() + ' text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]'}
+                                >
+                                    -1
+                                </button>
+                                <button
+                                    onClick={() => dispatch(setTool(Tool.ZoomOutFiveFold))}
                                     className={getButtonClass() + ' text-gray-600 rounded-r-full pl-1.5 -ml-1.5 w-[33%]'}
                                 >
                                     -5
@@ -145,14 +169,25 @@ export default function Toolbar() {
                                 animate={{ width: '350%', opacity: 1 }}
                                 exit={{ width: 0, opacity: 0 }}
                                 transition={{ duration: 0.2 }}
-                                style={{ translateX: '-33%' }}
+                                style={{ translateX: '30%' }}
                             >
+
                                 <button
+                                    onClick={() => dispatch(setTool(Tool.ZoomInOneThirdFold))}
+
                                     className={getButtonClass() + ' text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]'}
                                 >
                                     +⅓
                                 </button>
                                 <button
+                                    onClick={() => dispatch(setTool(Tool.ZoomInOneFold))}
+
+                                    className={getButtonClass() + ' text-gray-600 rounded-r-full pr-1.5 -mr-1.5 w-[33%]'}
+                                >
+                                    +1
+                                </button>
+                                <button
+                                    onClick={() => dispatch(setTool(Tool.ZoomInFiveFold))}
                                     className={getButtonClass() + ' text-gray-600 rounded-r-full pl-1.5 -ml-1.5 w-[33%]'}
                                 >
                                     +5

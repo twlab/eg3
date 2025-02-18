@@ -93,9 +93,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       fetchError.current = true;
     }
     trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
-    if (isError) {
-      fetchError.current = true;
-    }
 
     let res = fetchError.current ? (
       <div
@@ -278,7 +275,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
-          console.log("ERREER");
+
           createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
         }
       } else {

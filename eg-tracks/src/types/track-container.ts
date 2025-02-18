@@ -14,10 +14,8 @@ export interface ITrackContainerState {
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   onTrackAdded: (trackModels: TrackModel[]) => void;
   onNewRegionSelect: (startbase: number, endbase: number) => void;
-
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
-
   tool: Tool;
 }
 
@@ -86,8 +84,17 @@ export interface IHighlightInterval {
 // MARK: Utility
 
 export enum Tool {
-  Pan,
+  Drag,
   Reorder,
+  Highlight,
   Zoom,
-  Highlight
+  PanLeft,
+  PanRight,
+  ZoomOutOneThirdFold,
+  ZoomOutOneFold,
+  ZoomOutFiveFold,
+  ZoomInOneThirdFold,
+  ZoomInOneFold,
+  ZoomInFiveFold,
+
 }

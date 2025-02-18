@@ -5,11 +5,19 @@ import { RootState } from "../store";
 export const utilitySlice = createSlice({
     name: "utility",
     initialState: {
-        tool: Tool.Pan
+        tool: { title: Tool.Drag }
     },
     reducers: {
         setTool: (state, action: PayloadAction<Tool>) => {
-            state.tool = action.payload;
+            //changes state even when the user click on the same tool by
+            //setting new obj
+            const newObj: {
+                title: Tool;
+            } = {
+                title: action.payload
+            }
+
+            state.tool = newObj;
         }
     }
 });
