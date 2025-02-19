@@ -802,7 +802,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             viewWindowRegion: new DisplayedRegionModel(
               genomeConfig.navContext,
               initBpLoci[index].start,
-              initBpLoci[index].end
+              initBpLoci[index].endS
             ),
             visWidth: windowWidth * 3,
 
@@ -1312,6 +1312,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     isJump = false
   ) {
     const newLength = endbase - startbase;
+    console.log(newLength, "WJAT")
     if (newLength < MIN_VIEW_REGION_SIZE) {
       const amountToExpand = 0.5 * (MIN_VIEW_REGION_SIZE - newLength);
       startbase -= amountToExpand;
@@ -1329,7 +1330,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
-
+      onNewRegion(startbase, endbase);
       onNewRegionSelect(startbase, endbase);
     }
     // highlight option
@@ -1843,57 +1844,61 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [trackComponents, windowWidth]);
 
   useEffect(() => {
+    if (!genomeConfig.isInitial) {
+      if (tool.title === 4) {
+        onRegionSelected(
+          Math.round(bpX.current - bpRegionSize.current),
+          Math.round(bpX.current),
 
-    if (tool.title === 4) {
-      onRegionSelected(
-        Math.round(bpX.current - bpRegionSize.current),
-        Math.round(bpX.current),
+
+        );
+      } else if (tool.title === 5) {
+        onRegionSelected(
+          Math.round(bpX.current + bpRegionSize.current),
+          Math.round(bpX.current + bpRegionSize.current * 2),
+
+        );
+      }
+
+      else if (
+        String(tool.title) in
+        zoomFactors
+      ) {
+        let useDisplayFunction = new DisplayedRegionModel(
+          genomeConfig.navContext,
+          bpX.current,
+          bpX.current + bpRegionSize.current
+        );
+        let res = useDisplayFunction.zoom(zoomFactors[`${tool.title}`].factor);
+        onRegionSelected(
+          res._startBase as number,
+          res._endBase as number,
+        );
+      }
 
 
-      );
-    } else if (tool.title === 5) {
-      onRegionSelected(
-        Math.round(bpX.current + bpRegionSize.current),
-        Math.round(bpX.current + bpRegionSize.current * 2),
+      else {
+        setSelectedTool((prevState) => {
+          if (tool && (prevState.title === tool.title || tool.title === 12 || tool.title === 0)) {
 
-      );
-    } else if (
-      String(tool.title) in
-      zoomFactors
-    ) {
-      let useDisplayFunction = new DisplayedRegionModel(
-        genomeConfig.navContext,
-        bpX.current,
-        bpX.current + bpRegionSize.current
-      );
-      let res = useDisplayFunction.zoom(zoomFactors[`${tool.title}`].factor);
-      onRegionSelected(
-        res._startBase as number,
-        res._endBase as number,
-      );
-    } else {
-      setSelectedTool((prevState) => {
-        if (tool && prevState.title === tool.title) {
-          let newSelectedTool: { [key: string]: any } = {};
-          newSelectedTool["title"] = "none";
-          newSelectedTool["isSelected"] = false;
-          isToolSelected.current = false;
-          return newSelectedTool;
-        } else if (tool) {
+            let newSelectedTool: { [key: string]: any } = {};
+            newSelectedTool["title"] = tool.title;
+            newSelectedTool["isSelected"] = false;
+            isToolSelected.current = false;
 
-          let newSelectedTool: { [key: string]: any } = {};
-          newSelectedTool["title"] = tool.title;
-          if (tool.title !== 0) {
+            return newSelectedTool;
+
+          } else if (tool) {
+
+            let newSelectedTool: { [key: string]: any } = {};
+            newSelectedTool["title"] = tool.title;
             newSelectedTool["isSelected"] = true;
             isToolSelected.current = true;
+
+            return newSelectedTool;
           }
-          else {
-            newSelectedTool["isSelected"] = false;
-            isToolSelected.current = false
-          }
-          return newSelectedTool;
-        }
-      });
+        });
+      }
     }
   }, [tool]);
   useEffect(() => {
@@ -1961,6 +1966,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         genomeConfig.defaultTracks = trackManagerState.current.tracks;
         refreshState();
         initializeTracks();
+        console.log(trackManagerState.current, genomeConfig, "check")
       }
     }
   }, [genomeConfig]);

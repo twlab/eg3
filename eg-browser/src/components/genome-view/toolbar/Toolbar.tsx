@@ -45,20 +45,7 @@ export default function Toolbar() {
                         <HandRaisedIcon className="size-6 text-gray-600" />
                     </button>
 
-                    <button
-                        onClick={() => dispatch(setTool(Tool.PanLeft))}
-                        className={getButtonClass(Tool.PanLeft)}
-                        title="Pan Left"
-                    >
-                        <ChevronDoubleLeftIcon className="size-6 text-gray-600" />
-                    </button>
-                    <button
-                        onClick={() => dispatch(setTool(Tool.PanRight))}
-                        className={getButtonClass(Tool.PanRight)}
-                        title="Pan Right"
-                    >
-                        <ChevronDoubleRightIcon className="size-6 text-gray-600" />
-                    </button>
+
                     <button
                         onClick={() => dispatch(setTool(Tool.Reorder))}
                         className={getButtonClass(Tool.Reorder)}
@@ -92,7 +79,22 @@ export default function Toolbar() {
                     }}
                     transition={{ duration: 0.2 }}
                 />
-
+                <motion.div
+                    className="flex flex-row items-center gap-1.5"
+                    animate={{
+                        opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
+                        scale: hoveredMagnifyingDirection !== null ? 0.95 : 1
+                    }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <button
+                        onClick={() => dispatch(setTool(Tool.PanLeft))}
+                        className={getButtonClass(Tool.PanLeft)}
+                        title="Pan Left"
+                    >
+                        <ChevronDoubleLeftIcon className="size-6 text-gray-600" />
+                    </button>
+                </motion.div>
                 <motion.div
                     className='relative'
                     animate={{
@@ -196,7 +198,22 @@ export default function Toolbar() {
                         )}
                     </AnimatePresence>
                 </motion.div>
-
+                <motion.div
+                    className="flex flex-row items-center gap-1.5"
+                    animate={{
+                        opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
+                        scale: hoveredMagnifyingDirection !== null ? 0.95 : 1
+                    }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <button
+                        onClick={() => dispatch(setTool(Tool.PanRight))}
+                        className={getButtonClass(Tool.PanRight)}
+                        title="Pan Right"
+                    >
+                        <ChevronDoubleRightIcon className="size-6 text-gray-600" />
+                    </button>
+                </motion.div>
                 <motion.div
                     className='self-stretch w-[1px] border-r border-gray-400'
                     animate={{
