@@ -23,7 +23,7 @@ function ConfigMenuComponent(props) {
             style={{
               position: "absolute",
               left: menuData.pageX - leftMargin,
-              top: menuData.pageY + 150,
+              top: menuData.pageY,
             }}
           >
             {" "}

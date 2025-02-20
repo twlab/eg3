@@ -16,7 +16,7 @@ export interface ITrackContainerState {
   onNewRegionSelect: (startbase: number, endbase: number) => void;
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
-  tool: Tool;
+  tool: { title: Tool };
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -33,7 +33,7 @@ export interface ITrackContainerRepresentableProps {
   onNewRegionSelect: (coordinate: GenomeCoordinate) => void;
   viewRegion: GenomeCoordinate;
   userViewRegion: null | GenomeCoordinate;
-  tool: Tool;
+  tool: { title: Tool };
 }
 
 // MARK: Track Model

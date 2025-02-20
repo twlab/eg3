@@ -31,7 +31,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
-
+  const genomeRootBlockRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -79,7 +79,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [viewRegion]);
 
   return (
-    <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
+    <div ref={genomeRootBlockRef} data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {size.width > 0 &&
@@ -109,6 +109,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               onTrackSelected={onTrackSelected}
               onTrackDeleted={onTrackDeleted}
               tool={tool}
+              genomeRootBlockRef={genomeRootBlockRef}
             />
           )}
         </div>

@@ -29,7 +29,7 @@ interface HighlightMenuProps {
   highlights: HighlightInterval[];
   viewRegion: DisplayedRegionModel;
   showHighlightMenuModal: boolean;
-  onNewRegion: (start: number, end: number) => void;
+  onNewRegion: (start: number, end: number, isJump: boolean) => void;
   onSetHighlights: any;
   selectedTool: any;
 }
@@ -69,7 +69,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   }, [selectedTool])
   const handleViewRegionJump = (interval: HighlightInterval): void => {
     const { start, end } = interval;
-    onNewRegion(start, end);
+    onNewRegion(start, end, true);
   };
   const handleCloseModal = () => {
     setShowModal(false);
