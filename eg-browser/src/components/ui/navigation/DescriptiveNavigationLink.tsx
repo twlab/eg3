@@ -4,16 +4,18 @@ import { useNavigation } from "../../core-navigation/NavigationStack";
 export default function DescriptiveNavigationLink({
     title,
     description,
-    path
+    path,
+    params
 }: {
     title: string;
-    description: string;
+    description?: string;
     path: string;
+    params?: Record<string, string>;
 }) {
     const { push } = useNavigation();
 
     const handleClick = () => {
-        push({ path });
+        push({ path, params });
     }
 
     return (
@@ -23,7 +25,7 @@ export default function DescriptiveNavigationLink({
         >
             <div className="flex flex-col gap-2">
                 <h1 className="text-2xl">{title}</h1>
-                <p className="text-sm">{description}</p>
+                {description && <p className="text-sm">{description}</p>}
             </div>
             <div>
                 <ChevronRightIcon className="size-6" />

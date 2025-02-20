@@ -1,10 +1,30 @@
+import NavigationStack, { NavigationDestination } from "@/components/core-navigation/NavigationStack";
+import Switch from "@/components/ui/switch/Switch";
+import { selectIsNavigatorVisible, setNavigatorVisibility } from "@/lib/redux/slices/settingsSlice";
+import { useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 
 
 export default function SettingsTab() {
+    const dispatch = useAppDispatch();
+    const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
+
+    const destinations: NavigationDestination[] = useMemo(() => [
+
+    ], []);
 
     return (
-        <div className="p-4">
-            <h1 className="text-2xl">Settings</h1>
-        </div>
+        <NavigationStack destinations={destinations} rootOptions={{ title: 'Settings' }}>
+            <div className="flex flex-col gap-4 pt-4">
+                <div className="w-full flex items-center justify-between">
+                    <p>Show Navigator</p>
+                    <Switch
+                        checked={isNavigatorVisible}
+                        onChange={(checked) => dispatch(setNavigatorVisibility(checked))}
+                    />
+                </div>
+                <div className="w-full h-[1px] bg-gray-200"></div>
+            </div>
+        </NavigationStack>
     )
 }

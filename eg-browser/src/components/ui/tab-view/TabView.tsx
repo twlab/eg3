@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-
 interface ITabViewItem<T extends string> {
     label: string;
     value: T;

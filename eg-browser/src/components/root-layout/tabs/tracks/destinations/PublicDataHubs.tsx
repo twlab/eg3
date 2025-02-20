@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
 import _ from "lodash";
-import DataHubParser from "../../../../../../../eg-core/src/eg-lib/model/DataHubParser";
-// import FacetTable from "@/components/GenomeView/TabComponents/FacetTable";
 import CollectionView, { ICollectionViewDataSource } from "@/components/ui/collection/CollectionView";
 import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
@@ -32,7 +30,11 @@ export default function PublicDataHubs() {
         setLoadedHubs(prev => new Set([...prev, hub.url]));
 
         try {
-            const fetchedTracks: ITrackModel[] = await fetchDataHubTracks(hub);
+            const fetchedTracks: ITrackModel[] = await fetchDataHubTracks(hub).then(tracks => tracks.map<ITrackModel>(track => ({
+                ...track,
+                id: crypto.randomUUID(),
+                isSelected: false,
+            })));
             dispatch(addPublicTracksPool(fetchedTracks));
 
             if (fetchedTracks.length > 0) {

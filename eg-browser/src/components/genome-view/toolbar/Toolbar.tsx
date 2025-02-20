@@ -4,6 +4,7 @@ import { Tool } from '@eg/tracks';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ArrowsUpDownIcon, BookOpenIcon, ClockIcon, HandRaisedIcon, MagnifyingGlassIcon, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon, PaintBrushIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useElementGeometry } from '@/lib/hooks/useElementGeometry';
 
 enum MagnifyingDirection {
     In,
@@ -13,22 +14,53 @@ enum MagnifyingDirection {
 export default function Toolbar() {
     const tool = useAppSelector(selectTool);
     const dispatch = useAppDispatch();
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [hoveredMagnifyingDirection, setHoveredMagnifyingDirection] = useState<MagnifyingDirection | null>(null);
+    const { ref: searchContainerRef, height: searchHeight } = useElementGeometry();
+
     const getButtonClass = (buttonTool?: Tool) => {
         return `p-1.5 ${tool === buttonTool ? 'bg-secondary' : ''} ${tool !== buttonTool ? 'hover:bg-gray-200' : ''} rounded-md`;
     };
 
     return (
-        <div className="bg-white/80 backdrop-blur-md flex flex-col p-1.5 gap-1.5 mb-4 border-gray-300 border rounded-xl shadow-md">
-            <div className='flex flex-row pt-1 gap-1'>
-                <MagnifyingGlassIcon className='size-6 text-gray-500' />
-                <input
-                    className='flex-1 outline-none bg-transparent'
-                    placeholder="Search for something..."
+        <motion.div
+            className="bg-white/80 backdrop-blur-md flex flex-col p-1.5 mb-4 border-gray-300 border rounded-xl shadow-md"
+            animate={{
+                gap: isSearchFocused ? 0 : '0.5rem'
+            }}
+            transition={{ duration: 0.2 }}
+        >
+            <motion.div
+                ref={searchContainerRef}
+                className='flex flex-col'
+                animate={{ height: searchHeight }}
+                transition={{ duration: 0.2 }}
+            >
+                <div className='flex flex-row pt-1 gap-1.5'>
+                    <MagnifyingGlassIcon className='size-6 text-gray-500' />
+                    <input
+                        className='flex-1 outline-none bg-transparent pb-2'
+                        placeholder="Search for something..."
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() => setIsSearchFocused(false)}
+                    />
+                </div>
+                <motion.div
+                    className='w-full mb-1 border-b border-gray-400'
+                    animate={{ opacity: isSearchFocused ? 0 : 1 }}
+                    transition={{ duration: 0.2 }}
                 />
-            </div>
-            <div className='w-full my-1 border-b border-gray-400' />
-            <div className="flex flex-row items-center gap-1.5">
+            </motion.div>
+
+            <motion.div
+                className="flex flex-row items-center gap-1.5"
+                animate={{
+                    height: isSearchFocused ? 0 : 'auto',
+                    opacity: isSearchFocused ? 0 : 1,
+                }}
+                transition={{ duration: 0.2 }}
+                style={{ overflow: 'hidden' }}
+            >
                 <motion.div
                     className="flex flex-row items-center gap-1.5"
                     animate={{
@@ -247,7 +279,7 @@ export default function Toolbar() {
                         <BookOpenIcon className="size-6 text-gray-600" />
                     </button>
                 </motion.div>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 }
