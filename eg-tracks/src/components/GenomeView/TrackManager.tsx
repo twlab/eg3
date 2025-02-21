@@ -31,7 +31,6 @@ import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClic
 
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import {
-  createNewTrackState,
   TrackState,
 } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import TrackRegionController from "./genomeNavigator/TrackRegionController";

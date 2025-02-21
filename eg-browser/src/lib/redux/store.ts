@@ -8,6 +8,7 @@ import navigationReducer from "./slices/navigationSlice";
 import utilityReducer from "./slices/utilitySlice";
 import hubReducer from "./slices/hubSlice";
 import settingsReducer from "./slices/settingsSlice";
+import searchReducer from "./slices/searchSlice";
 
 const persistConfig = {
     key: "root",
@@ -21,7 +22,8 @@ const rootReducer = combineReducers({
     browser: browserReducer,
     utility: utilityReducer,
     hub: hubReducer,
-    settings: settingsReducer
+    settings: settingsReducer,
+    search: searchReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

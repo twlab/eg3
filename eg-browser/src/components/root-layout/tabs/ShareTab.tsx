@@ -28,7 +28,7 @@ export default function ShareTab() {
             method: 'POST',
             headers: {
                 'accept': 'application/json',
-                // 'authorization': `Bearer ${window.ENV.NEXT_PUBLIC_TINYURL_BEARER}`,
+                'authorization': `Bearer 2nLQGpsuegHP8l8J0Uq1TsVkCzP3un3T23uQ5YovVf5lvvGOucGmFOYRVj6L`,
                 'content-type': 'application/json',
             },
             body: JSON.stringify({

@@ -21,8 +21,9 @@ export interface NavigationDestination {
     options?: NavigationDestinationOptions;
 }
 
-interface NavigationDestinationOptions {
+export interface NavigationDestinationOptions {
     title?: string;
+    trailing?: React.ReactNode;
 }
 
 interface NavigationStackContext {
@@ -98,7 +99,7 @@ export default function NavigationStack({
     return (
         <NavigationStackContext.Provider value={{ path, setPath }}>
             <div className="flex flex-col h-full">
-                <NavigationToolbar title={currentOptions?.title} />
+                <NavigationToolbar options={currentOptions} />
                 <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
                     <motion.div
                         className="px-4 pb-4 absolute overflow-y-scroll bg-white"

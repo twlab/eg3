@@ -17,7 +17,7 @@ import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import { selectCurrentSessionId } from "@/lib/redux/slices/browserSlice";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
-import SessionPanel from "./session-panel/SessionPanel";
+import SessionPanel from "../sessions/SessionPanel";
 
 const CURL_RADIUS = 15;
 
@@ -75,7 +75,10 @@ export default function RootLayout() {
                   translateX: "-100%",
                 }}
               >
-                <div className="flex flex-col h-full">
+                <div
+                  className="flex flex-col"
+                  style={{ height: contentHeight, }}
+                >
                   <SessionPanel />
                 </div>
               </motion.div>
@@ -130,11 +133,13 @@ export default function RootLayout() {
                   </motion.div>
                 ) : (
                   <motion.div
+                    className="h-full"
                     key="genome-picker"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
+                    style={{ width: contentWidth, height: contentHeight}}
                   >
                     <GenomePicker />
                   </motion.div>

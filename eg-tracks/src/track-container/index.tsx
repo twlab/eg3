@@ -9,6 +9,7 @@ import { useCallback, useMemo, useRef } from "react";
 import { TrackModel } from "@eg/core/src/eg-lib/models/TrackModel";
 import NavigationContext from "@eg/core/src/eg-lib/models/NavigationContext";
 import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import GenomeSerializer from "../genome-hub/GenomeSerializer";
 
 export function TrackContainer(props: ITrackContainerState) {
   return (
@@ -40,7 +41,7 @@ export function TrackContainer(props: ITrackContainerState) {
 export function TrackContainerRepresentable({
   tracks,
   highlights,
-  genomeConfig,
+  genomeConfig: _genomeConfig,
   legendWidth,
   showGenomeNav,
   onNewRegion,
@@ -53,6 +54,12 @@ export function TrackContainerRepresentable({
   userViewRegion,
   tool,
 }: ITrackContainerRepresentableProps) {
+  // MARK: Genome Config
+
+  const genomeConfig = useMemo(() => {
+    return GenomeSerializer.deserialize(_genomeConfig);
+  }, [_genomeConfig]);
+
   // MARK: Tracks
 
   const trackCache = useRef(new Map<string, TrackModel>());

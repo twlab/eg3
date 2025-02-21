@@ -1,10 +1,10 @@
 import { ChevronLeftIcon } from "@heroicons/react/16/solid";
-import { useNavigation } from "./NavigationStack";
+import { NavigationDestinationOptions, useNavigation } from "./NavigationStack";
 
 export default function NavigationToolbar({
-    title,
+    options,
 }: {
-    title?: string;
+    options?: NavigationDestinationOptions
 }) {
     const { canGoBack, pop } = useNavigation();
 
@@ -16,8 +16,8 @@ export default function NavigationToolbar({
                     Back
                 </button>
             )}
-            {title && <h1 className="text-xl line-clamp-1">{title}</h1>}
-            {canGoBack && (
+            {options?.title && <h1 className="text-xl line-clamp-1">{options?.title}</h1>}
+            {options?.trailing ? options.trailing : canGoBack && (
                 <button className="text-primary flex flex-row items-center invisible" onClick={pop}>
                     <ChevronLeftIcon className="size-6" />
                     Back

@@ -1,10 +1,11 @@
 import Button from "@/components/ui/button/Button";
 import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import TabView from "@/components/ui/tab-view/TabView";
-import { useAppSelector } from "@/lib/redux/hooks";
-import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { addTracks, selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import React from "react";
 import JSON5 from "json5";
+import { ITrackModel } from "@eg/tracks";
 
 export default function RemoteTracks() {
     return (
@@ -48,6 +49,7 @@ interface TrackState {
 }
 
 function AddTracks() {
+    const dispatch = useAppDispatch();
     const session = useAppSelector(selectCurrentSession);
 
     const [trackState, setTrackState] = React.useState<TrackState>({
@@ -55,7 +57,8 @@ function AddTracks() {
         url: "",
         name: "",
         urlError: "",
-        metadata: { genome: session?.genome ?? "hg19" },
+        metadata: { genome: session?.genome ?? "" },
+        queryGenome: "",
     });
 
     const [selectedStep, setSelectedStep] = React.useState<AddTracksStep | null>(AddTracksStep.TRACK_TYPE);
@@ -97,6 +100,10 @@ function AddTracks() {
         }
     };
 
+    const handleQueryGenomeChange = (queryGenome: string) => {
+        setTrackState(prev => ({ ...prev, queryGenome }));
+    };
+
     const handleTrackLabelEnter = () => {
         setSelectedStep(AddTracksStep.CONFIGURE_TRACK);
     };
@@ -106,10 +113,33 @@ function AddTracks() {
             const options = JSON5.parse(value) as Record<string, any>;
             setTrackState(prev => ({ ...prev, options }));
         } catch (error) {
-            // Ignore invalid JSON
             setTrackState(prev => ({ ...prev, options: undefined }));
         }
     };
+
+    const handleSubmit = () => {
+        if (session) {
+            const track: ITrackModel = {
+                type: trackState.type,
+                url: trackState.url,
+                name: trackState.name,
+                options: trackState.options ?? {},
+                metadata: { genome: trackState.metadata.genome },
+                id: Date.now(),
+                isSelected: false,
+            }
+
+            if (trackState.indexUrl) {
+                track.indexUrl = trackState.indexUrl;
+            }
+
+            if (track.type === "genomealign" || track.type === "bigchain") {
+                track.querygenome = trackState.queryGenome || session.genome;
+            }
+
+            dispatch(addTracks(track));
+        }
+    }
 
     return (
         <div className="flex flex-col py-4">
@@ -135,8 +165,11 @@ function AddTracks() {
                             indexUrl={trackState.indexUrl}
                             urlError={trackState.urlError}
                             showIndex={TYPES_NEED_INDEX.includes(trackState.type.toLowerCase())}
+                            showQueryGenome={trackState.type === "genomealign" || trackState.type === "bigchain"}
+                            queryGenome={trackState.queryGenome}
                             onUrlChange={handleUrlChange}
                             onIndexUrlChange={handleIndexUrlChange}
+                            onQueryGenomeChange={handleQueryGenomeChange}
                         />
                     },
                     {
@@ -159,6 +192,7 @@ function AddTracks() {
             />
             <Button
                 active
+                onClick={handleSubmit}
                 style={{
                     width: "100%",
                     marginTop: "10px",
@@ -202,11 +236,24 @@ interface TrackFileUrlProps {
     indexUrl?: string;
     urlError: string;
     showIndex: boolean;
+    showQueryGenome?: boolean;
+    queryGenome?: string;
     onUrlChange: (url: string) => void;
     onIndexUrlChange: (indexUrl: string) => void;
+    onQueryGenomeChange?: (queryGenome: string) => void;
 }
 
-function TrackFileUrl({ url, indexUrl, urlError, showIndex, onUrlChange, onIndexUrlChange }: TrackFileUrlProps) {
+function TrackFileUrl({
+    url,
+    indexUrl,
+    urlError,
+    showIndex,
+    showQueryGenome,
+    queryGenome,
+    onUrlChange,
+    onIndexUrlChange,
+    onQueryGenomeChange
+}: TrackFileUrlProps) {
     return (
         <div className="space-y-4 py-4">
             <div>
@@ -229,6 +276,17 @@ function TrackFileUrl({ url, indexUrl, urlError, showIndex, onUrlChange, onIndex
                         className="w-full p-2 border rounded"
                         value={indexUrl}
                         onChange={(e) => onIndexUrlChange(e.target.value.trim())}
+                    />
+                </div>
+            )}
+            {showQueryGenome && (
+                <div>
+                    <label className="block mb-2">Query Genome</label>
+                    <input
+                        type="text"
+                        className="w-full p-2 border rounded"
+                        value={queryGenome || ""}
+                        onChange={(e) => onQueryGenomeChange?.(e.target.value.trim())}
                     />
                 </div>
             )}

@@ -77,16 +77,16 @@ export default function TracksTab() {
                     title="Remote Tracks"
                     description="Access and manage tracks from remote servers and databases"
                 />
-                <DescriptiveNavigationLink
+                {/* <DescriptiveNavigationLink
                     path="local-tracks"
                     title="Local Tracks"
                     description="Manage tracks loaded from your local files"
-                />
-                <DescriptiveNavigationLink
+                /> */}
+                {/* <DescriptiveNavigationLink
                     path="local-text-tracks"
                     title="Local Text Tracks"
                     description="Create and edit simple text-based genomic tracks"
-                />
+                /> */}
                 <DescriptiveNavigationLink
                     path="track-list"
                     title="Track List"
