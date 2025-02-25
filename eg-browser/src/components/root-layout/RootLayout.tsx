@@ -117,28 +117,25 @@ export default function RootLayout() {
                 width: !showRightTab ? "100vw" : "75vw",
               }}
             >
-              <motion.div
-                className="flex flex-col w-screen overflow-auto"
-                key="genome-view"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              // style={{ width: contentWidth, height: contentHeight }}
-              >
-                <GenomeView isGenomeViewLoaded={isGenomeViewLoaded} onLoadComplete={() => {
-                  console.log("HUHUHUH tRIGGER")
-                  setIsGenomeViewLoaded(true)
-                }} />
-
-              </motion.div>
               <AnimatePresence mode="wait">
+                <motion.div
+                  className="flex flex-col w-screen overflow-auto"
+                  key="genome-view"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                // style={{ width: contentWidth, height: contentHeight }}
+                >
+                  <GenomeView key={"genome-view"} isGenomeViewLoaded={isGenomeViewLoaded} onLoadComplete={() => {
+                    console.log("HUHUHUH tRIGGER")
+                    setIsGenomeViewLoaded(true)
+                  }} />
 
+                </motion.div>
 
-
-
-
-
+              </AnimatePresence>
+              <AnimatePresence mode="wait">
                 {!isGenomeViewLoaded ?
                   <motion.div
                     key="genome-picker"
