@@ -27,6 +27,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tool,
   viewRegion,
   userViewRegion,
+  isGenomeViewLoaded,
+  onLoadComplete
 }) {
   const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
@@ -34,9 +36,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const genomeRootBlockRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (size.width > 0) {
+      console.log("did it reset here222?")
       let curGenome;
 
       if (!isInitial.current) {
+        console.log("did it reset hereasddsads3443343434aads?")
         curGenome = { ...currentGenomeConfig };
 
         curGenome["isInitial"] = isInitial.current;
@@ -46,6 +50,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome["sizeChange"] = true;
       } else {
+        console.log("did it reset hereasddsadsaads?")
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;
         curGenome["genomeID"] = uuidv4();
@@ -63,6 +68,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [size.width]);
   useEffect(() => {
     if (size.width > 0) {
+      console.log("did it reset here?")
       let curGenome;
 
       if (!isInitial.current) {
@@ -85,7 +91,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           {size.width > 0 &&
             userViewRegion &&
             showGenomeNav &&
-            currentGenomeConfig ? (
+            currentGenomeConfig && isGenomeViewLoaded ? (
             <GenomeNavigator
               selectedRegion={userViewRegion}
               genomeConfig={currentGenomeConfig}
@@ -110,6 +116,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               onTrackDeleted={onTrackDeleted}
               tool={tool}
               genomeRootBlockRef={genomeRootBlockRef}
+              isGenomeViewLoaded={isGenomeViewLoaded}
+              onLoadComplete={onLoadComplete}
             />
           )}
         </div>

@@ -27,6 +27,8 @@ export function TrackContainer(props: ITrackContainerState) {
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
       tool={props.tool}
+      isGenomeViewLoaded={props.isGenomeViewLoaded}
+      onLoadComplete={props.onLoadComplete}
     />
   );
 }
@@ -52,6 +54,8 @@ export function TrackContainerRepresentable({
   viewRegion,
   userViewRegion,
   tool,
+  isGenomeViewLoaded,
+  onLoadComplete
 }: ITrackContainerRepresentableProps) {
   // MARK: Tracks
 
@@ -254,6 +258,8 @@ export function TrackContainerRepresentable({
       viewRegion={convertedViewRegion}
       userViewRegion={convertedUserViewRegion}
       tool={tool}
+      isGenomeViewLoaded={isGenomeViewLoaded}
+      onLoadComplete={onLoadComplete}
     />
   );
 }

@@ -39,7 +39,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   dragX,
   newDrawData,
   trackFetchedDataCache,
-  globalTrackState,
+  globalTrackState, isGenomeViewLoaded
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -207,7 +207,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     ) {
       let cacheDataIdx = newDrawData.curDataIdx;
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-
       let trackState = {
         ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
       };
@@ -258,6 +257,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           combinedData.push(cacheTrackData[currIdx]);
           currIdx--;
         }
+
         var noData = false;
 
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
@@ -1211,46 +1211,47 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
   }, [screenshotOpen]);
   return (
-    <div
-      style={{
-        display: "flex",
-        height:
-          configOptions.current.displayMode === "full"
-            ? !fetchError.current
-              ? svgHeight.current + 2
-              : 40 + 2
-            : configOptions.current.height + 2,
-        position: "relative",
-      }}
-    >
-      {configOptions.current.displayMode === "full" ? (
-        <div
-          style={{
-            position: "absolute",
-            lineHeight: 0,
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            backgroundColor: configOptions.current.backgroundColor,
-          }}
-        >
-          {svgComponents}
-        </div>
-      ) : (
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
-      )}
-      {toolTipVisible ? toolTip : ""}
-      {legend}
-    </div>
-  );
+    isGenomeViewLoaded ?
+      <div
+        style={{
+          display: "flex",
+          height:
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current + 2
+                : 40 + 2
+              : configOptions.current.height + 2,
+          position: "relative",
+        }}
+      >
+        {configOptions.current.displayMode === "full" ? (
+          <div
+            style={{
+              position: "absolute",
+              lineHeight: 0,
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              backgroundColor: configOptions.current.backgroundColor,
+            }}
+          >
+            {svgComponents}
+          </div>
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              backgroundColor: configOptions.current.backgroundColor,
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            }}
+          >
+            {canvasComponents}
+          </div>
+        )}
+        {toolTipVisible ? toolTip : ""}
+        {legend}
+      </div>
+      : <></>)
 });
 
 export default memo(TrackFactory);

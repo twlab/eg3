@@ -1,22 +1,17 @@
-import _, { padEnd } from "lodash";
-import JSON5 from "json5";
+import _ from "lodash";
 import { SequenceSegment } from "../models/AlignmentStringUtils";
 import AlignmentRecord from "../models/AlignmentRecord";
 import { AlignmentSegment } from "../models/AlignmentSegment";
 import { NavContextBuilder } from "../models/NavContextBuilder";
-import ChromosomeInterval from "../models/ChromosomeInterval";
 import OpenInterval from "../models/OpenInterval";
-import NavigationContext from "../models/NavigationContext";
 import Feature from "../models/Feature";
 import { ViewExpansion } from "../models/RegionExpander";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
-import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
 import {
   localTrackFetchFunction,
   textFetchFunction,
 } from "../getLocalData/localFetchData";
-import { niceBpCount } from "../models/util";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -148,9 +143,7 @@ self.onmessage = async (event: MessageEvent) => {
   await Promise.all(
     leftOverTrackModels.map(async (item, index) => {
       const trackType = item?.type || item?.metadata["Track type"];
-      const genomeName = item.genome ? item.genome : event.data.primaryGenName;
       const id = item.id;
-      const url = item.url;
       let foundInvalidTrack = false;
       if (
         (item.metadata.genome && !(item.metadata.genome in tmpQueryGenObj)) ||
@@ -164,6 +157,7 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
           trackModel: item,
+          result: { error: "invalidTrackType" }
         });
       } else if (trackType in { hic: "", dynamichic: "" }) {
         fetchResults.push({
@@ -181,7 +175,7 @@ self.onmessage = async (event: MessageEvent) => {
           result: [],
         });
       } else if (trackType === "geneannotation") {
-        let genRefResponses: Array<any> = await fetchData(item, genomeName, id);
+        let genRefResponses: Array<any> = await fetchData(item);
         fetchResults.push({
           name: trackType,
           // I fetch three sections so I need to have an array with 3 different section data [{},{},{}]
@@ -230,7 +224,7 @@ self.onmessage = async (event: MessageEvent) => {
       ) {
         let tmpResults = await Promise.all(
           item.tracks.map(async (trackItem, index) => {
-            return (await fetchData(trackItem, genomeName, id)).flat(1);
+            return (await fetchData(trackItem)).flat(1);
           })
         );
         // if (event.data.initial === 1 && trackType === "dynamiclongrange") {
@@ -244,7 +238,7 @@ self.onmessage = async (event: MessageEvent) => {
           trackModel: item,
         });
       } else {
-        let responses: Array<any> = await fetchData(item, genomeName, id);
+        let responses: Array<any> = await fetchData(item);
         fetchResults.push({
           name: trackType,
           result: responses[0],
@@ -256,7 +250,7 @@ self.onmessage = async (event: MessageEvent) => {
     })
   );
 
-  async function fetchData(trackModel, genomeName, id): Promise<Array<any>> {
+  async function fetchData(trackModel): Promise<Array<any>> {
     let responses: Array<any> = [];
     let curFetchNav;
 
@@ -338,10 +332,11 @@ self.onmessage = async (event: MessageEvent) => {
             `Error fetching data for track model type ${trackModel.type}:`,
             error
           );
-          responses.push({ error: `Error fetching data: ${"ERERER"}` });
+          responses.push({ error: "fetchError" });
         }
       }
     }
+    console.log(responses)
     return responses;
   }
 

@@ -17,6 +17,8 @@ export interface ITrackContainerState {
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   tool: { title: Tool };
+  isGenomeViewLoaded: boolean;
+  onLoadComplete: any;
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -34,6 +36,8 @@ export interface ITrackContainerRepresentableProps {
   viewRegion: GenomeCoordinate;
   userViewRegion: null | GenomeCoordinate;
   tool: { title: Tool };
+  onLoadComplete: any;
+  isGenomeViewLoaded: boolean
 }
 
 // MARK: Track Model

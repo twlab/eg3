@@ -21,6 +21,14 @@ export default function Toolbar() {
     const getButtonClass = (buttonTool?: Tool) => {
         return `p-1.5 ${tool === buttonTool ? 'bg-secondary' : ''} ${tool !== buttonTool ? 'hover:bg-gray-200' : ''} rounded-md`;
     };
+    const handleToolClick = (selectedTool: Tool): any => {
+        if (tool === selectedTool) {
+            dispatch(setTool(null))
+        }
+        else {
+            dispatch(setTool(selectedTool))
+        }
+    }
 
     return (
         <motion.div
@@ -70,30 +78,28 @@ export default function Toolbar() {
                     transition={{ duration: 0.2 }}
                 >
                     <button
-                        onClick={() => dispatch(setTool(Tool.Drag))}
+                        onClick={() => handleToolClick(Tool.Drag)}
                         className={getButtonClass(Tool.Drag)}
                         title="Drag"
                     >
                         <HandRaisedIcon className="size-6 text-gray-600" />
                     </button>
-
-
                     <button
-                        onClick={() => dispatch(setTool(Tool.Reorder))}
+                        onClick={() => handleToolClick(Tool.Reorder)}
                         className={getButtonClass(Tool.Reorder)}
                         title="Reorder tracks"
                     >
                         <ArrowsUpDownIcon className="size-6 text-gray-600" />
                     </button>
                     <button
-                        onClick={() => dispatch(setTool(Tool.Zoom))}
+                        onClick={() => handleToolClick(Tool.Zoom)}
                         className={getButtonClass(Tool.Zoom)}
                         title="Zoom out"
                     >
                         <MagnifyingGlassIcon className="size-6 text-gray-600" />
                     </button>
                     <button
-                        onClick={() => dispatch(setTool(Tool.Highlight))}
+                        onClick={() => handleToolClick(Tool.Highlight)}
                         className={getButtonClass(Tool.Highlight)}
                         title="Highlight region"
                     >
@@ -120,7 +126,7 @@ export default function Toolbar() {
                     transition={{ duration: 0.2 }}
                 >
                     <button
-                        onClick={() => dispatch(setTool(Tool.PanLeft))}
+                        onClick={() => handleToolClick(Tool.PanLeft)}
                         className={getButtonClass(Tool.PanLeft)}
                         title="Pan Left"
                     >
@@ -155,21 +161,19 @@ export default function Toolbar() {
                             >
 
                                 <button
-
-                                    onClick={() => dispatch(setTool(Tool.ZoomOutOneThirdFold))}
-
+                                    onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
                                     className={getButtonClass() + ' text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]'}
                                 >
                                     -⅓
                                 </button>
                                 <button
-                                    onClick={() => dispatch(setTool(Tool.ZoomOutOneFold))}
+                                    onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
                                     className={getButtonClass() + ' text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]'}
                                 >
                                     -1
                                 </button>
                                 <button
-                                    onClick={() => dispatch(setTool(Tool.ZoomOutFiveFold))}
+                                    onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
                                     className={getButtonClass() + ' text-gray-600 rounded-r-full pl-1.5 -ml-1.5 w-[33%]'}
                                 >
                                     -5
@@ -207,21 +211,21 @@ export default function Toolbar() {
                             >
 
                                 <button
-                                    onClick={() => dispatch(setTool(Tool.ZoomInOneThirdFold))}
+                                    onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
 
                                     className={getButtonClass() + ' text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]'}
                                 >
                                     +⅓
                                 </button>
                                 <button
-                                    onClick={() => dispatch(setTool(Tool.ZoomInOneFold))}
+                                    onClick={() => handleToolClick(Tool.ZoomInOneFold)}
 
                                     className={getButtonClass() + ' text-gray-600 rounded-r-full pr-1.5 -mr-1.5 w-[33%]'}
                                 >
                                     +1
                                 </button>
                                 <button
-                                    onClick={() => dispatch(setTool(Tool.ZoomInFiveFold))}
+                                    onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
                                     className={getButtonClass() + ' text-gray-600 rounded-r-full pl-1.5 -ml-1.5 w-[33%]'}
                                 >
                                     +5
@@ -239,7 +243,7 @@ export default function Toolbar() {
                     transition={{ duration: 0.2 }}
                 >
                     <button
-                        onClick={() => dispatch(setTool(Tool.PanRight))}
+                        onClick={() => handleToolClick(Tool.PanRight)}
                         className={getButtonClass(Tool.PanRight)}
                         title="Pan Right"
                     >
@@ -273,7 +277,7 @@ export default function Toolbar() {
                     </button>
                     <button
                         className={getButtonClass()}
-                        onClick={() => dispatch(setTool(Tool.highlightMenu))}
+                        onClick={() => handleToolClick(Tool.highlightMenu)}
                         title="Highlight Menu"
                     >
                         <BookOpenIcon className="size-6 text-gray-600" />
