@@ -2340,7 +2340,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       {/* <div>1pixel to {basePerPixel.current}bp</div> */}
       {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-        <div className="flex flex-row py-10 items-center">
+        {isGenomeViewLoaded && <div className="flex flex-row py-10 items-center">
           <HighlightMenu
             highlights={highlightElements}
             viewRegion={trackManagerState.current.viewRegion}
@@ -2376,14 +2376,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           <p className="text-sm font-mono pl-2">
             1px: {basePerPixel.current.toFixed(2)}bp
           </p>
-        </div>
+        </div>}
+
         <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
           <div
             style={{
               display: "flex",
               //makes components align right or right when we switch sides
 
-              border: "2px solid #BCCCDC",
+              border: isGenomeViewLoaded ? "2px solid #BCCCDC" : "",
               flexDirection: "row",
               // full windowwidth will make canvas only loop 0-windowidth
               // the last value will have no data.

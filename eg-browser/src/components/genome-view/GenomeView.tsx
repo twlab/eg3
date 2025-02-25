@@ -73,10 +73,10 @@ export default function GenomeView({ onLoadComplete, isGenomeViewLoaded }: any) 
         onLoadComplete={onLoadComplete}
         isGenomeViewLoaded={isGenomeViewLoaded}
       />
-
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50">
+      {isGenomeViewLoaded ? <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50">
         <Toolbar />
-      </div>
+      </div> : ""}
+
     </div>
   );
 }

@@ -118,12 +118,12 @@ export default function RootLayout() {
               }}
             >
               <motion.div
-              // className="flex flex-col h-full w-screen overflow-auto"
-              // key="genome-view"
-              // initial={{ opacity: 0 }}
-              // animate={{ opacity: 1 }}
-              // exit={{ opacity: 0 }}
-              // transition={{ duration: 0.3 }}
+                className="flex flex-col w-screen overflow-auto"
+                key="genome-view"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
               // style={{ width: contentWidth, height: contentHeight }}
               >
                 <GenomeView isGenomeViewLoaded={isGenomeViewLoaded} onLoadComplete={() => {
