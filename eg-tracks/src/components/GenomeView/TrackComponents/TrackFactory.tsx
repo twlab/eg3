@@ -6,7 +6,6 @@ import { Manager, Popper, Reference } from "react-popper";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
-import { getCacheData } from "./CommonTrackStateChangeFunctions.tsx/getCacheData";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
@@ -55,15 +54,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const straw = useRef<{ [key: string]: any }>({});
 
   const fetchedDataCache = useRef<{ [key: string]: any }>({});
-
   const xPos = useRef(0);
   const screenshotOpen = null;
   const [svgComponents, setSvgComponents] = useState<any>(null);
-
   const [canvasComponents, setCanvasComponents] = useState<any>(null);
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-
   const [legend, setLegend] = useState<any>();
 
   function getHeight(numRows: number): number {
@@ -252,12 +248,18 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (!cacheTrackData.useExpandedLoci) {
 
         let combinedData: any = [];
+        let hasError = false
         let currIdx = newDrawData.curDataIdx + 1;
         for (let i = 0; i < 3; i++) {
-          combinedData.push(cacheTrackData[currIdx]);
+          console.log(cacheTrackData[currIdx])
+          if (cacheTrackData[currIdx].dataCache && "error" in cacheTrackData[currIdx].dataCache) {
+            hasError = true
+          }
+          else { combinedData.push(cacheTrackData[currIdx]); }
+
           currIdx--;
         }
-
+        console.log(hasError)
         var noData = false;
 
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
@@ -275,8 +277,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
-
-          createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
+          createSVGOrCanvas(trackState, combinedData, hasError, cacheDataIdx);
         }
       } else {
         const combinedData = cacheTrackData[newDrawData.curDataIdx].dataCache;

@@ -52,11 +52,11 @@ const defaultTracks = [
     name: "Ruler",
   }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
-  // new TrackModel({
-  //   type: "hi",
-  //   url: "",
-  //   name: "NOTSUPPORTEDTRACEXAMPLE",
-  // }),
+  new TrackModel({
+    type: "hi",
+    url: "",
+    name: "NOTSUPPORTEDTRACEXAMPLE",
+  }),
 
   // new TrackModel({
   //   type: "refbed",

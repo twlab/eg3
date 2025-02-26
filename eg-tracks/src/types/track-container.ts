@@ -16,7 +16,7 @@ export interface ITrackContainerState {
   onNewRegionSelect: (startbase: number, endbase: number) => void;
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
-  tool: { title: Tool };
+  tool: Tool | null;
   isGenomeViewLoaded: boolean;
   onLoadComplete: any;
 }
@@ -35,7 +35,7 @@ export interface ITrackContainerRepresentableProps {
   onNewRegionSelect: (coordinate: GenomeCoordinate) => void;
   viewRegion: GenomeCoordinate;
   userViewRegion: null | GenomeCoordinate;
-  tool: { title: Tool };
+  tool: Tool | null;
   onLoadComplete: any;
   isGenomeViewLoaded: boolean
 }

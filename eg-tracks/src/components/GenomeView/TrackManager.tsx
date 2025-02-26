@@ -818,7 +818,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
     // sent the navigation to fetch the data from server
     try {
-      findRegionToFetch(initial ? 0 : dataIdx);
+      queueRegionToFetch(initial ? 0 : dataIdx);
     } catch { }
   }
   // MARK: onmessInfin
@@ -854,9 +854,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           await createCache({
             trackState: curTrackState,
             result:
-              item.name in TYPE_NAME_TO_CONFIG
-                ? item.result
-                : [{ error: "ASDASDASDASDASD" }],
+              item.result,
+
             id: item.id,
             trackType: item.name,
             metadata: item.metadata,
@@ -868,11 +867,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         })
       )
         .then(() => {
-          const curDataIdxObj = {
-            [regionDrawIdx + 1]: "",
-            [regionDrawIdx]: "",
-            [regionDrawIdx - 1]: "",
-          };
+          // const curDataIdxObj = {
+          //   [regionDrawIdx + 1]: "",
+          //   [regionDrawIdx]: "",
+          //   [regionDrawIdx - 1]: "",
+          // };
 
           let newTmpDrawId = { ...trackToDrawId, ...event.data.trackToDrawId };
 
@@ -881,6 +880,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             isInitial: event.data.initial,
             trackToDrawId: newTmpDrawId,
           });
+
           const browserMemorySize: { [key: string]: any } = window.performance
           console.log(
             browserMemorySize["memory"].usedJSHeapSize,
@@ -888,38 +888,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             "CURRENT MERMOPT"
           );
 
-          // if (
-          //   window.performance["memory"].usedJSHeapSize >
-          //   window.performance["memory"].jsHeapSizeLimit * 0.7
-          // ) {
-          //   console.log(
-          //     window.performance["memory"].usedJSHeapSize,
-          //     window.performance["memory"].jsHeapSizeLimit,
-          //     "DELETE  MERMOPT"
-          //   );
-          // }
-          for (const key in trackFetchedDataCache.current) {
-            const curTrack = trackFetchedDataCache.current[key];
+          if (
+            browserMemorySize["memory"].usedJSHeapSize >
+            browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+          ) {
+            for (const key in trackFetchedDataCache.current) {
+              const curTrack = trackFetchedDataCache.current[key];
 
-            for (const cacheDataIdx in curTrack) {
-              if (
-                curTrack.trackType in trackUsingExpandedLoci &&
-                isInteger(cacheDataIdx)
-              ) {
-                if (Number(cacheDataIdx) !== regionDrawIdx) {
-                  delete trackFetchedDataCache.current[key][cacheDataIdx]
-                    .dataCache;
-                  if (
-                    "records" in
-                    trackFetchedDataCache.current[key][cacheDataIdx]
-                  ) {
+              for (const cacheDataIdx in curTrack) {
+                if (
+                  curTrack.trackType in trackUsingExpandedLoci &&
+                  isInteger(cacheDataIdx)
+                ) {
+                  if (Number(cacheDataIdx) !== regionDrawIdx) {
                     delete trackFetchedDataCache.current[key][cacheDataIdx]
-                      .records;
+                      .dataCache;
+                    if (
+                      "records" in
+                      trackFetchedDataCache.current[key][cacheDataIdx]
+                    ) {
+                      delete trackFetchedDataCache.current[key][cacheDataIdx]
+                        .records;
+                    }
                   }
                 }
               }
             }
+            console.log("cache deleted")
           }
+
           console.log(
             event.data.trackDataIdx,
             trackFetchedDataCache.current,
@@ -973,7 +970,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       )
         .then(() => {
           isfetchGenomeAlignWorkerBusy.current = false;
-
           // once we finish with a fetch we need to check if there are any more
           // request in the queue, user might scroll fast and have multipe region data to fetch
           globalTrackState.current.trackStates[
@@ -1017,9 +1013,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
     };
   }
-  // MARK: findRegion
+  // MARK: queueRegion
 
-  function findRegionToFetch(regionIdx: number) {
+  function queueRegionToFetch(regionIdx: number) {
     const trackToDrawId: { [key: string]: any } = {};
 
     var needToFetch = false;
@@ -1181,6 +1177,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...curTrackModel.options,
         };
       }
+
       let trackState = tmpTrackState
       let cacheTrackData = trackFetchedDataCache.current[`${fetchRes.id}`];
 
@@ -1665,8 +1662,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
         preload.current = false;
         if (genomeConfig.isInitial) {
-          console.log("yetetetet")
-          onLoadComplete()
 
           setSelectedTool((prevState) => {
             if (tool === null || tool === 0) {
@@ -1723,6 +1718,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           genomeConfig.isInitial = false;
 
         }
+        onLoadComplete()
       }
     }
   }
@@ -1756,7 +1752,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     else if (toolTitle === 5) {
-      console.log("HUHUHUHUHUHUHUH")
+
       onRegionSelected(
         Math.round(bpX.current + bpRegionSize.current),
         Math.round(bpX.current + bpRegionSize.current * 2),
@@ -1848,7 +1844,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (tool === null || tool === 0) {
 
           const newSelectedTool = toolSelect(prevState.title)
-          console.log(tool, prevState, newSelectedTool, "NULL")
+
           return newSelectedTool;
 
         }
@@ -1918,14 +1914,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackSizeChange();
 
         // initialConfig.current = true;
-
+        console.log(trackManagerState.current, genomeConfig, "sizeChangeCheck")
         // initializeTracks();
       } else {
         preload.current = true;
         genomeConfig.defaultTracks = trackManagerState.current.tracks;
         refreshState();
         initializeTracks();
-        console.log(trackManagerState.current, genomeConfig, "check")
+        console.log(trackManagerState.current, genomeConfig, "viewRegioncheck")
       }
     }
   }, [genomeConfig]);
@@ -2083,7 +2079,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           trackToDrawId[key] = "";
         }
       }
-      findRegionToFetch(curIdx);
+      queueRegionToFetch(curIdx);
       if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
         setNewDrawData({
           curDataIdx: dataIdx,

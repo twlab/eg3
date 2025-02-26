@@ -24,10 +24,11 @@ const CURL_RADIUS = 15;
 
 export default function RootLayout() {
   const isSmallScreen = useSmallScreen();
-  const [isGenomeViewLoaded, setIsGenomeViewLoaded] = useState(false);
-
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
+
+  const [isGenomeViewLoaded, setIsGenomeViewLoaded] = useState(sessionId ? true : false);
+
   const navigationTab = useAppSelector(selectNavigationTab);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);

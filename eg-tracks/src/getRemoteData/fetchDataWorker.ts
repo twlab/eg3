@@ -336,7 +336,7 @@ self.onmessage = async (event: MessageEvent) => {
         }
       }
     }
-    console.log(responses)
+
     return responses;
   }
 

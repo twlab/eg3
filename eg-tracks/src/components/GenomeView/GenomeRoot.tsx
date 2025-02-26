@@ -9,7 +9,6 @@ import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-import TrackModel from "../../models/TrackModel";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
@@ -34,6 +33,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const genomeRootBlockRef = useRef<HTMLInputElement>(null);
+  // TO-DO need to set initial.current back to true when genomeConfig changes 
+  // to see if genomeConfig we can check its session id because it will unique
   useEffect(() => {
     if (size.width > 0) {
       console.log("did it reset here222?")

@@ -10,7 +10,7 @@ import Toolbar from "./toolbar/Toolbar";
 import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
-import { useEffect } from "react";
+
 
 export default function GenomeView({ onLoadComplete, isGenomeViewLoaded }: any) {
 
