@@ -157,7 +157,7 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
           trackModel: item,
-          result: { error: "invalidTrackType" }
+          result: { error: "This track type is currently not support" }
         });
       } else if (trackType in { hic: "", dynamichic: "" }) {
         fetchResults.push({
@@ -332,7 +332,7 @@ self.onmessage = async (event: MessageEvent) => {
             `Error fetching data for track model type ${trackModel.type}:`,
             error
           );
-          responses.push({ error: "fetchError" });
+          responses.push({ error: "Data fetch failed. Reload page or change view to retry" });
         }
       }
     }

@@ -52,11 +52,11 @@ const defaultTracks = [
     name: "Ruler",
   }),
   //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
-  new TrackModel({
-    type: "hi",
-    url: "",
-    name: "NOTSUPPORTEDTRACEXAMPLE",
-  }),
+  // new TrackModel({
+  //   type: "hi",
+  //   url: "",
+  //   name: "NOTSUPPORTEDTRACEXAMPLE",
+  // }),
 
   // new TrackModel({
   //   type: "refbed",
@@ -78,11 +78,11 @@ const defaultTracks = [
     name: "refGene",
     genome: "hg38",
   }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV39",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV39",
+    genome: "hg38",
+  }),
 
   // new TrackModel({
   //   type: "bigbed",
@@ -116,14 +116,14 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
   // new TrackModel({
   //   type: "bigwig",

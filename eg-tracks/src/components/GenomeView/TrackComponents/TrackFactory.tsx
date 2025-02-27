@@ -94,13 +94,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       <div
         style={{
           width: trackState.visWidth,
-          height: 60,
-          backgroundColor: "orange",
+          height: 40,
+          backgroundColor: "#F37199",
           textAlign: "center",
           lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
         }}
       >
-        Error remotely getting track data
+        {genesArr[0]}
       </div>
     ) : (
       await getDisplayModeFunction({
@@ -251,8 +251,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let hasError = false
         let currIdx = newDrawData.curDataIdx + 1;
         for (let i = 0; i < 3; i++) {
+          if (!cacheTrackData[currIdx].dataCache) {
+            continue
+          }
           if (cacheTrackData[currIdx].dataCache && "error" in cacheTrackData[currIdx].dataCache) {
             hasError = true
+            combinedData.push(cacheTrackData[currIdx].dataCache.error)
           }
           else { combinedData.push(cacheTrackData[currIdx]); }
 
@@ -260,20 +264,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         var noData = false;
-
-        if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-          combinedData = getDeDupeArrMatPlot(combinedData, false);
-        } else {
-          combinedData = combinedData
-            .map((item) => {
-              if (item && "dataCache" in item) {
-                return item.dataCache;
-              } else {
-                noData = true;
-              }
-            })
-            .flat(1);
+        if (!hasError) {
+          if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+            combinedData = getDeDupeArrMatPlot(combinedData, false);
+          } else {
+            combinedData = combinedData
+              .map((item) => {
+                if (item && "dataCache" in item) {
+                  return item.dataCache;
+                } else {
+                  noData = true;
+                }
+              })
+              .flat(1);
+          }
         }
+
 
         if (!noData) {
           createSVGOrCanvas(trackState, combinedData, hasError, cacheDataIdx);
@@ -1225,7 +1231,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               ? !fetchError.current
                 ? svgHeight.current + 2
                 : 40 + 2
-              : configOptions.current.height + 2,
+              : !fetchError.current
+                ? configOptions.current.height + 2 : 40 + 2,
           position: "relative",
         }}
       >

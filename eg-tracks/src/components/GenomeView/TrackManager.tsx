@@ -196,7 +196,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const screenshotDataObj = useRef<{ [key: string]: any }>({});
   const preload = useRef<boolean>(false);
   // These states are used to update the tracks with new fetch(data);
-  const containerRef = useRef(null);
   const globalTrackState = useRef<{ [key: string]: any }>({
     rightIdx: 0,
     leftIdx: 1,
@@ -943,7 +942,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           processQueue();
         })
         .catch((error) => {
-          console.error("An error occurred:", error);
+          console.error("An error occurred trying to fetch data:", error);
         });
     };
   }
@@ -1014,7 +1013,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         })
         .catch((error) => {
-          console.error("An error occurred:", error);
+          console.error("An error occurred when trying to fetch genomealign track:", error);
         });
     };
   }
