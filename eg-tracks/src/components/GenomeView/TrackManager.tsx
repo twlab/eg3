@@ -1781,7 +1781,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
     }
     else {
-      if (tool && tool !== 0) { newSelectedTool.isSelected = true }
+      if (tool && tool !== 0 && tool !== 12) { newSelectedTool.isSelected = true }
 
     }
     newSelectedTool['title'] = toolTitle
