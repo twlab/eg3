@@ -32,7 +32,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
-  const genomeRootBlockRef = useRef<HTMLInputElement>(null);
   // TO-DO need to set initial.current back to true when genomeConfig changes 
   // to see if genomeConfig we can check its session id because it will unique
   useEffect(() => {
@@ -86,7 +85,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [viewRegion]);
 
   return (
-    <div ref={genomeRootBlockRef} data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
+    <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {size.width > 0 &&
@@ -116,7 +115,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               onTrackSelected={onTrackSelected}
               onTrackDeleted={onTrackDeleted}
               tool={tool}
-              genomeRootBlockRef={genomeRootBlockRef}
               isGenomeViewLoaded={isGenomeViewLoaded}
               onLoadComplete={onLoadComplete}
             />

@@ -251,7 +251,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let hasError = false
         let currIdx = newDrawData.curDataIdx + 1;
         for (let i = 0; i < 3; i++) {
-          console.log(cacheTrackData[currIdx])
           if (cacheTrackData[currIdx].dataCache && "error" in cacheTrackData[currIdx].dataCache) {
             hasError = true
           }
@@ -259,7 +258,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           currIdx--;
         }
-        console.log(hasError)
+
         var noData = false;
 
         if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
@@ -290,8 +289,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   // MARK: [applyConfig]
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
+      console.log("WHY NO UODATE00000", applyTrackConfigChange)
       if (id in applyTrackConfigChange) {
+        console.log("WHY NO UODATE1")
         if ("type" in applyTrackConfigChange) {
+          console.log("WHY NO UODATE2")
           configOptions.current = {
             ...trackOptionMap[`${trackModel.type}`].defaultOptions,
             ...applyTrackConfigChange[`${id}`],
@@ -315,6 +317,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let trackState = {
           ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
         };
+        console.log("WHY NO UODATE3")
         if (cacheTrackData.trackType !== "genomealign") {
           const primaryVisData =
             trackState.genomicFetchCoord[trackState.primaryGenName]
@@ -326,6 +329,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
+        console.log("WHY NO UODATE")
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
           dataIdx,

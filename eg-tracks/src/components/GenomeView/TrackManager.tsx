@@ -105,7 +105,6 @@ interface TrackManagerProps {
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   onNewRegionSelect: (startbase: number, endbase: number) => void;
   tool: any;
-  genomeRootBlockRef: any,
   isGenomeViewLoaded: boolean
   onLoadComplete: any
 }
@@ -122,7 +121,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   onNewRegionSelect,
   onTrackDeleted,
   tool,
-  genomeRootBlockRef,
   isGenomeViewLoaded,
   onLoadComplete
 }) {
@@ -222,9 +220,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const [dataIdx, setDataIdx] = useState(0);
   const [highlightElements, setHighLightElements] = useState<Array<any>>([]);
-  const [configMenu, setConfigMenu] = useState<{ [key: string]: any }>({
-    configMenus: "",
-  });
+  const [configMenu, setConfigMenu] = useState<{ [key: string]: any } | null>(null);
 
   const [applyTrackConfigChange, setApplyTrackConfigChange] = useState<{
     [key: string]: any;
@@ -278,6 +274,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       newSelectedTool["tool"] = "none";
       newSelectedTool["isSelected"] = false;
       setSelectedTool(newSelectedTool);
+      onTrackUnSelect()
+      onConfigMenuClose()
     }
   };
 
@@ -438,10 +436,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         configOptions: optionsObjects,
         items: commonMenuComponents,
         onConfigChange,
-        blockRef: genomeRootBlockRef,
+        blockRef: block,
       };
 
-      setConfigMenu({ configMenus: configMenuData });
+      setConfigMenu(configMenuData);
     } else {
       for (const config in selectedTracks.current) {
         let curConfig = selectedTracks.current[config];
@@ -486,16 +484,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       pageX: x,
       pageY: y,
       onConfigMenuClose: onConfigMenuClose,
-      selectLen: selectedTracks.current.length,
+      selectLen: Object.keys(selectedTracks.current).length,
       configOptions: optionsObjects,
       items: commonMenuComponents,
       onConfigChange,
-      blockRef: genomeRootBlockRef,
+      blockRef: block
     };
 
     configMenuPos.current = { left: x, top: y };
 
-    setConfigMenu({ configMenus: configMenuData });
+    setConfigMenu(configMenuData);
   }
   function handleShiftSelect(e: any, trackDetails: { [key: string]: any }) {
     if (e.shiftKey) {
@@ -521,13 +519,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onTrackSelected([...trackManagerState.current.tracks]);
 
       if (
-        configMenu.configMenus !== "" &&
+        configMenu &&
         Object.keys(selectedTracks.current).length > 0
       ) {
         renderTrackSpecificConfigMenu(e.pageX, e.pageY);
       } else {
-        let tmpObh = { configMenus: "" };
-        setConfigMenu(tmpObh);
+
+        setConfigMenu(null);
       }
     }
   }
@@ -554,25 +552,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       renderTrackSpecificConfigMenu(e.pageX, e.pageY);
     }
   }
+
   function onConfigMenuClose() {
-    setConfigMenu({ configMenus: "" });
+    console.log("HUH2 why")
+    setConfigMenu(null);
   }
+
   function onTrackUnSelect() {
+    console.log(configMenu)
+
     if (Object.keys(selectedTracks.current).length !== 0) {
       for (const key in selectedTracks.current) {
         selectedTracks.current[key].legendRef.current.style.backgroundColor =
           "white";
       }
+
       trackManagerState.current.tracks.map((trackModel) => {
         trackModel.isSelected = false;
       });
-      // let newStateObj = createNewTrackState(trackManagerState.current, {});
 
+      // let newStateObj = createNewTrackState(trackManagerState.current, {});
       //addGlobalState(newStateObj);
 
       selectedTracks.current = {};
-      setConfigMenu({ configMenus: "" });
+
     }
+
   }
 
   function handleDelete(id: Array<any>) {
@@ -1273,6 +1278,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         "5": "",
       } || toolTitle === "isJump"
     ) {
+      console.log("SADDS")
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
       onNewRegionSelect(startbase, endbase);
@@ -1433,7 +1439,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     setDataIdx(0);
 
-    setConfigMenu({ configMenus: "" });
+    setConfigMenu(null);
     setApplyTrackConfigChange({});
   };
 
@@ -1910,9 +1916,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else if (genomeConfig.sizeChange) {
         preload.current = true;
         // refreshState();
-
         trackSizeChange();
-
         // initialConfig.current = true;
         console.log(trackManagerState.current, genomeConfig, "sizeChangeCheck")
         // initializeTracks();
@@ -2137,6 +2141,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             delete trackFetchedDataCache.current[key];
           }
         }
+
         const newTrackComponents: Array<any> = [];
         let checkHasGenAlign = false;
         for (var i = 0; i < tracks.length; i++) {
@@ -2210,7 +2215,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             else if (curTrackModel.type === "hic") {
               fetchInstances.current[`${curTrackModel.id}`] =
                 new HicSource(curTrackModel.url);
-            } else if (curTrackModel.type === "dynamichic") {
+            }
+            else if (curTrackModel.type === "dynamichic") {
               curTrackModel.tracks?.map((_item, index) => {
                 fetchInstances.current[
                   `${curTrackModel.id}` +
@@ -2220,7 +2226,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   curTrackModel.tracks![index].url
                 );
               });
-            } else if (
+            }
+            else if (
               curTrackModel.type in
               { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
             ) {
@@ -2230,10 +2237,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   "subtrack" +
                   `${index}`;
               });
-            } else if (curTrackModel.type === "bam") {
+            }
+            else if (curTrackModel.type === "bam") {
               fetchInstances.current[`${curTrackModel.id}`] =
                 new BamSource(curTrackModel.url);
             }
+
             //create initial state for the new track, give it all the prevregion trackstate, and trigger fetch by updating trackcomponents
             needToFetchAddTrack.current = true;
             const newPosRef = createRef();
@@ -2249,6 +2258,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               legendRef: newLegendRef,
               trackModel: curTrackModel,
             });
+
             trackFetchedDataCache.current[`${curTrackModel.id}`] = _.cloneDeep(
               globalTrackState.current.trackStates
             );
@@ -2278,329 +2288,345 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         setTrackComponents(newTrackComponents);
       }
     }
-  }, [tracks]); ``
+  }, [tracks]);
   return (<>
-    <div
+    {/* <div
       ref={containerRef}
       style={{
         display: "flex",
         flexDirection: "column",
         whiteSpace: "nowrap",
       }}
-    >
-      {/* <div>
-          {" "}
-          {Math.round(bpX.current) +
-            "-" +
-            Math.round(bpX.current + bpRegionSize.current)}
-        </div>
-        <div>Pixel distance from starting point : {dragX.current}px</div>
-        <div style={{ display: "flex" }}>
-          {" "}
-          {selectedTool.isSelected ? (
-            <CircularProgress
-              variant="indeterminate"
-              disableShrink
-              sx={{
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "pink" : "#308fe8",
-                animationDuration: "550ms",
+    > */}
+    {/* <div>
+            {" "}
+            {Math.round(bpX.current) +
+              "-" +
+              Math.round(bpX.current + bpRegionSize.current)}
+          </div>
+          <div>Pixel distance from starting point : {dragX.current}px</div>
+          <div style={{ display: "flex" }}>
+            {" "}
+            {selectedTool.isSelected ? (
+              <CircularProgress
+                variant="indeterminate"
+                disableShrink
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "pink" : "#308fe8",
+                  animationDuration: "550ms",
 
-                left: 0,
-              }}
-              size={20}
-              thickness={4}
-            />
-          ) : (
-            ""
-          )}
-          {isLoading.current ? (
-            <CircularProgress
-              variant="indeterminate"
-              disableShrink
-              sx={{
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
-                animationDuration: "550ms",
+                  left: 0,
+                }}
+                size={20}
+                thickness={4}
+              />
+            ) : (
+              ""
+            )}
+            {isLoading.current ? (
+              <CircularProgress
+                variant="indeterminate"
+                disableShrink
+                sx={{
+                  color: (theme) =>
+                    theme.palette.mode === "light" ? "#1a90ff" : "#308fe8",
+                  animationDuration: "550ms",
 
-                left: 0,
-              }}
-              size={20}
-              thickness={4}
-            />
-          ) : (
-            <div style={{ height: 20 }}>DATA READY LETS GO</div>
-          )}
-        </div> */}
+                  left: 0,
+                }}
+                size={20}
+                thickness={4}
+              />
+            ) : (
+              <div style={{ height: 20 }}>DATA READY LETS GO</div>
+            )}
+          </div> */}
 
-      {/* <div>1pixel to {basePerPixel.current}bp</div> */}
-      {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
-      <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-        {isGenomeViewLoaded && <div className="flex flex-row py-10 items-center">
-          <HighlightMenu
-            highlights={highlightElements}
-            viewRegion={trackManagerState.current.viewRegion}
-            showHighlightMenuModal={true}
-            onNewRegion={onRegionSelected}
-            onSetHighlights={getHighlightState}
-            selectedTool={selectedTool}
+    {/* <div>1pixel to {basePerPixel.current}bp</div> */}
+    {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
+    <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
+      {isGenomeViewLoaded && <div className="flex flex-row py-10 items-center">
+        <HighlightMenu
+          highlights={highlightElements}
+          viewRegion={trackManagerState.current.viewRegion}
+          showHighlightMenuModal={true}
+          onNewRegion={onRegionSelected}
+          onSetHighlights={getHighlightState}
+          selectedTool={selectedTool}
+        />
+        {/* <History
+                state={{
+                  past: stateArr.slice(0, presentStateIdx + 1),
+                  future: stateArr.slice(presentStateIdx + 1),
+                }}
+                jumpToPast={jumpToState}
+                jumpToFuture={jumpToState}
+                clearHistory={jumpToState}
+              /> */}
+
+        {selectedRegion && (
+          <TrackRegionController
+            selectedRegion={selectedRegion}
+            onRegionSelected={(start: number, end: number) =>
+              onRegionSelected(start, end, "isJump")
+            }
+            contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+            genomeConfig={genomeConfig}
+            trackManagerState={trackManagerState}
+            genomeArr={[]}
+            genomeIdx={0}
+            addGlobalState={undefined}
           />
-          {/* <History
-              state={{
-                past: stateArr.slice(0, presentStateIdx + 1),
-                future: stateArr.slice(presentStateIdx + 1),
-              }}
-              jumpToPast={jumpToState}
-              jumpToFuture={jumpToState}
-              clearHistory={jumpToState}
-            /> */}
+        )}
+        <p className="text-sm font-mono pl-2">
+          1px: {basePerPixel.current.toFixed(2)}bp
+        </p>
+      </div>}
 
-          {selectedRegion && (
-            <TrackRegionController
-              selectedRegion={selectedRegion}
-              onRegionSelected={(start: number, end: number) =>
-                onRegionSelected(start, end, "isJump")
-              }
-              contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-              genomeConfig={genomeConfig}
-              trackManagerState={trackManagerState}
-              genomeArr={[]}
-              genomeIdx={0}
-              addGlobalState={undefined}
-            />
-          )}
-          <p className="text-sm font-mono pl-2">
-            1px: {basePerPixel.current.toFixed(2)}bp
-          </p>
-        </div>}
+      <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            //makes components align right or right when we switch sides
 
-        <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
+            border: isGenomeViewLoaded ? "2px solid #BCCCDC" : "",
+            flexDirection: "row",
+            // full windowwidth will make canvas only loop 0-windowidth
+            // the last value will have no data.
+            // so we have to subtract from the size of the canvas
+            width: `${windowWidth + legendWidth}px`,
+            // width: `${fullWindowWidth / 2}px`,
+            // height: "2000px",
+            overflowX: "hidden",
+            overflowY: "hidden",
+          }}
+        >
           <div
+            onMouseDown={handleMouseDown}
+            ref={block}
             style={{
               display: "flex",
-              //makes components align right or right when we switch sides
-
-              border: isGenomeViewLoaded ? "2px solid #BCCCDC" : "",
-              flexDirection: "row",
-              // full windowwidth will make canvas only loop 0-windowidth
-              // the last value will have no data.
-              // so we have to subtract from the size of the canvas
-              width: `${windowWidth + legendWidth}px`,
-              // width: `${fullWindowWidth / 2}px`,
-              // height: "2000px",
-              overflowX: "hidden",
-              overflowY: "hidden",
+              flexDirection: "column",
+              position: "relative",
             }}
           >
-            <div
-              onMouseDown={handleMouseDown}
-              ref={block}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-              }}
-            >
-              <div ref={horizontalLineRef} className="horizontal-line" />
-              <div ref={verticalLineRef} className="vertical-line" />
+            <div ref={horizontalLineRef} className="horizontal-line" />
+            <div ref={verticalLineRef} className="vertical-line" />
 
-              {trackComponents.map((item, index) => {
-                let Component = item.component;
+            {trackComponents.map((item, index) => {
+              let Component = item.component;
 
-                // if (
-                //   Object.keys(trackData).length > 0 &&
-                //   "result" in trackData[`${item.trackModel.id}`]
-                // ) {
-                //   item.hasAllRegionData = true;
-                // }
-                return (
+              // if (
+              //   Object.keys(trackData).length > 0 &&
+              //   "result" in trackData[`${item.trackModel.id}`]
+              // ) {
+              //   item.hasAllRegionData = true;
+              // }
+              return (
+                <div
+                  onMouseDown={(event) => handleShiftSelect(event, item)}
+                  onContextMenu={(event) => handleRightClick(event, item)}
+                  key={item.id}
+                  style={{
+                    display: "flex",
+                    WebkitBackfaceVisibility: "hidden",
+
+                    WebkitPerspective: `${windowWidth + legendWidth}px`,
+                    backfaceVisibility: "hidden",
+                    perspective: `${windowWidth + legendWidth}px`,
+                    backgroundColor: "#F2F2F2",
+                    width: `${windowWidth + legendWidth}px`,
+                    outline: "1px solid Dodgerblue",
+                  }}
+                >
                   <div
-                    onMouseDown={(event) => handleShiftSelect(event, item)}
-                    onContextMenu={(event) => handleRightClick(event, item)}
-                    key={item.id}
                     style={{
+                      zIndex: 10,
+                      width: legendWidth,
+                      backgroundColor: "white",
+                      position: "relative",
+                    }}
+                    ref={item.legendRef}
+                  ></div>
+                  <div
+                    ref={trackComponents[index].posRef}
+                    style={{
+                      zIndex: 1,
                       display: "flex",
-                      WebkitBackfaceVisibility: "hidden",
-
-                      WebkitPerspective: `${windowWidth + legendWidth}px`,
-                      backfaceVisibility: "hidden",
-                      perspective: `${windowWidth + legendWidth}px`,
-                      backgroundColor: "#F2F2F2",
-                      width: `${windowWidth + legendWidth}px`,
-                      outline: "1px solid Dodgerblue",
                     }}
                   >
-                    <div
-                      style={{
-                        zIndex: 10,
-                        width: legendWidth,
-                        backgroundColor: "white",
-                        position: "relative",
-                      }}
-                      ref={item.legendRef}
-                    ></div>
-                    <div
-                      ref={trackComponents[index].posRef}
-                      style={{
-                        zIndex: 1,
-                        display: "flex",
-                      }}
-                    >
-                      <Component
-                        id={item.trackModel.id}
-                        trackModel={item.trackModel}
-                        bpRegionSize={bpRegionSize.current}
-                        useFineModeNav={useFineModeNav.current}
-                        basePerPixel={basePerPixel.current}
-                        side={side.current}
-                        windowWidth={windowWidth}
-                        genomeConfig={genomeConfig}
-                        dataIdx={dataIdx}
-                        trackIdx={index}
-                        trackManagerRef={block}
-                        setShow3dGene={setShow3dGene}
-                        isThereG3dTrack={isThereG3dTrack.current}
-                        legendRef={item.legendRef}
-                        updateGlobalTrackConfig={updateGlobalTrackConfig}
-                        applyTrackConfigChange={applyTrackConfigChange}
-                        dragX={dragX.current}
-                        checkTrackPreload={checkTrackPreload}
-                        sentScreenshotData={sentScreenshotData}
-                        newDrawData={newDrawData}
-                        trackFetchedDataCache={trackFetchedDataCache}
-                        globalTrackState={globalTrackState}
-                        isGenomeViewLoaded={isGenomeViewLoaded}
-                      // viewWindow={trackManagerState.current.viewRegion}
-                      />
+                    <Component
+                      id={item.trackModel.id}
+                      trackModel={item.trackModel}
+                      bpRegionSize={bpRegionSize.current}
+                      useFineModeNav={useFineModeNav.current}
+                      basePerPixel={basePerPixel.current}
+                      side={side.current}
+                      windowWidth={windowWidth}
+                      genomeConfig={genomeConfig}
+                      dataIdx={dataIdx}
+                      trackIdx={index}
+                      trackManagerRef={block}
+                      setShow3dGene={setShow3dGene}
+                      isThereG3dTrack={isThereG3dTrack.current}
+                      legendRef={item.legendRef}
+                      updateGlobalTrackConfig={updateGlobalTrackConfig}
+                      applyTrackConfigChange={applyTrackConfigChange}
+                      dragX={dragX.current}
+                      checkTrackPreload={checkTrackPreload}
+                      sentScreenshotData={sentScreenshotData}
+                      newDrawData={newDrawData}
+                      trackFetchedDataCache={trackFetchedDataCache}
+                      globalTrackState={globalTrackState}
+                      isGenomeViewLoaded={isGenomeViewLoaded}
+                    // viewWindow={trackManagerState.current.viewRegion}
+                    />
 
-                      {highlightElements.length > 0
-                        ? highlightElements.map((item, index) => {
-                          if (item.display) {
-                            return (
+                    {highlightElements.length > 0
+                      ? highlightElements.map((item, index) => {
+                        if (item.display) {
+                          return (
+                            <div
+                              key={index}
+                              style={{
+                                display: "flex",
+                                height: "100%",
+                              }}
+                            >
                               <div
-                                key={index}
                                 style={{
                                   display: "flex",
+                                  position: "relative",
                                   height: "100%",
                                 }}
                               >
                                 <div
+                                  key={index}
                                   style={{
-                                    display: "flex",
-                                    position: "relative",
+                                    position: "absolute",
+                                    backgroundColor: item.color,
+
+                                    top: "0",
                                     height: "100%",
+                                    left:
+                                      item.side === "right"
+                                        ? `${item.xPos}px`
+                                        : "",
+                                    right:
+                                      item.side === "left"
+                                        ? `${item.xPos}px`
+                                        : "",
+                                    width: item.width,
+                                    pointerEvents: "none", // This makes the highlighted area non-interactive
                                   }}
-                                >
-                                  <div
-                                    key={index}
-                                    style={{
-                                      position: "absolute",
-                                      backgroundColor: item.color,
-
-                                      top: "0",
-                                      height: "100%",
-                                      left:
-                                        item.side === "right"
-                                          ? `${item.xPos}px`
-                                          : "",
-                                      right:
-                                        item.side === "left"
-                                          ? `${item.xPos}px`
-                                          : "",
-                                      width: item.width,
-                                      pointerEvents: "none", // This makes the highlighted area non-interactive
-                                    }}
-                                  ></div>
-                                </div>
+                                ></div>
                               </div>
-                            );
-                          }
-                        })
-                        : ""}
-                    </div>
+                            </div>
+                          );
+                        }
+                      })
+                      : ""}
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
 
-              <div
-                style={{
-                  display: "flex",
-                  position: "absolute",
-                  width: `${windowWidth + legendWidth}px`,
-                  zIndex: 10,
-                }}
-              >
-                {selectedTool && selectedTool.isSelected ? (
-                  <SelectableGenomeArea
-                    selectableRegion={trackManagerState.current.viewRegion}
-                    dragLimits={
-                      new OpenInterval(legendWidth, windowWidth + legendWidth)
-                    }
-                    onRegionSelected={onRegionSelected}
-                    selectedTool={selectedTool}
-                  >
-                    <div
-                      style={{
-                        height: block.current
-                          ? block.current?.getBoundingClientRect().height
-                          : 0,
-                        zIndex: 3,
-                        width: `${windowWidth + legendWidth}px`,
-                      }}
-                    ></div>
-                  </SelectableGenomeArea>
-                ) : (
-                  ""
-                )}
-              </div>
+            <div
+              style={{
+                display: "flex",
+                position: "absolute",
+                width: `${windowWidth + legendWidth}px`,
+                zIndex: 10,
+              }}
+            >
+              {selectedTool && selectedTool.isSelected ? (
+                <SelectableGenomeArea
+                  selectableRegion={trackManagerState.current.viewRegion}
+                  dragLimits={
+                    new OpenInterval(legendWidth, windowWidth + legendWidth)
+                  }
+                  onRegionSelected={onRegionSelected}
+                  selectedTool={selectedTool}
+                >
+                  <div
+                    style={{
+                      height: block.current
+                        ? block.current?.getBoundingClientRect().height
+                        : 0,
+                      zIndex: 3,
+                      width: `${windowWidth + legendWidth}px`,
+                    }}
+                  ></div>
+                </SelectableGenomeArea>
+              ) : (
+                ""
+              )}
             </div>
           </div>
-
-          {/* 
-          <div
-            ref={g3dRect}
-            style={{
-              display: "flex",
-              width: `${fullWindowWidth / 2}px`,
-              backgroundColor: "blue",
-            }}
-          >
-            {g3dtrackComponents.map((item, index) => {
-              const rectInfo = g3dRect.current!.getBoundingClientRect();
-
-              let Component = item.component;
-              if (windowRegion) {
-                return (
-                  <Component
-                    //infinitescroll type track data
-                    key={item.id}
-                    tracks={genomeConfig.defaultTracks}
-                    g3dtrack={item.trackModel}
-                    viewRegion={windowRegion}
-                    width={rectInfo.width}
-                    height={rectInfo.height}
-                    x={rectInfo.x}
-                    y={rectInfo.y}  
-                    genomeConfig={genomeConfig}
-                    geneFor3d={show3dGene}
-                  />
-                );
-              } else {
-                return "";
-              }
-            })}
-          </div> */}
         </div>
-      </OutsideClickDetector>
-    </div>
-    {configMenu.configMenus !== "" ? (
-      <ConfigMenuComponent
-        key={configMenu.configMenus.key}
-        menuData={configMenu.configMenus}
-      />
-    ) : (
-      ""
-    )}
+
+        {/* 
+            <div
+              ref={g3dRect}
+              style={{
+                display: "flex",
+                width: `${fullWindowWidth / 2}px`,
+                backgroundColor: "blue",
+              }}
+            >
+              {g3dtrackComponents.map((item, index) => {
+                const rectInfo = g3dRect.current!.getBoundingClientRect();
+
+                let Component = item.component;
+                if (windowRegion) {
+                  return (
+                    <Component
+                      //infinitescroll type track data
+                      key={item.id}
+                      tracks={genomeConfig.defaultTracks}
+                      g3dtrack={item.trackModel}
+                      viewRegion={windowRegion}
+                      width={rectInfo.width}
+                      height={rectInfo.height}
+                      x={rectInfo.x}
+                      y={rectInfo.y}  
+                      genomeConfig={genomeConfig}
+                      geneFor3d={show3dGene}
+                    />
+                  );
+                } else {
+                  return "";
+                }
+              })}
+            </div> */}
+      </div>
+
+      {configMenu ? (
+        <div
+
+          style={{
+            position: "fixed", // position the menu absolutely
+
+            zIndex: 1000, // ensure it appears on top of other elements
+            flexDirection: "column",
+            whiteSpace: "nowrap",
+            overflow: "visible" // ensure the menu can overflow the parent
+
+          }}
+        >
+          <ConfigMenuComponent
+            key={configMenu.key}
+            menuData={configMenu}
+          />
+        </div>
+      ) : (
+        ""
+      )}
+
+    </OutsideClickDetector>
+    {/* </div> */}
+
   </>
 
   );
