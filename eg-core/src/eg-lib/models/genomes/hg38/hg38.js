@@ -38,7 +38,7 @@ const genome = new Genome("hg38", [
 
 //chr7:26805572-26825594
 // biginteract chr3:63836292-64336395
-// https://target.wustl.edu/dli/tmp/test2.g3d
+// https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d
 // chr7:74083652-74084068 dynseq cromorsome
 // broken area chr7:27212313-27212454
 // long range chr7:23208969-31218193
@@ -90,6 +90,13 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
   // }),
 
+  new TrackModel({
+    "type": "g3d",
+    "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
+    "name": "example 3d track",
+    "showOnHubLoad": true
+  }),
+
   // new TrackModel({
   //   type: "repeatmasker",
   //   name: "RepeatMasker",
@@ -101,12 +108,12 @@ const defaultTracks = [
   //   name: "snp",
   //   genome: "hg38",
   // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "MANE_select_1.0",
-  //   label: "MANE selection v1.0",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "MANE_select_1.0",
+    label: "MANE selection v1.0",
+    genome: "hg38",
+  }),
 
   // new TrackModel({
   //   type: "bigwig",

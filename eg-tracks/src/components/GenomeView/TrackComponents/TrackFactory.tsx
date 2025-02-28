@@ -27,7 +27,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   genomeConfig,
   trackModel,
   dataIdx,
-  checkTrackPreload,
+  signalTrackLoadComplete,
   trackIdx,
   id,
   setShow3dGene,
@@ -38,7 +38,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   dragX,
   newDrawData,
   trackFetchedDataCache,
-  globalTrackState, isGenomeViewLoaded
+  globalTrackState
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -122,7 +122,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     );
 
     if (cacheDataIdx === dataIdx) {
-      checkTrackPreload(id);
+      signalTrackLoadComplete(id);
       updateSide.current = side;
 
       if (configOptions.current.displayMode === "full") {
@@ -295,11 +295,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   // MARK: [applyConfig]
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
-      console.log("WHY NO UODATE00000", applyTrackConfigChange)
+
       if (id in applyTrackConfigChange) {
-        console.log("WHY NO UODATE1")
+
         if ("type" in applyTrackConfigChange) {
-          console.log("WHY NO UODATE2")
+
           configOptions.current = {
             ...trackOptionMap[`${trackModel.type}`].defaultOptions,
             ...applyTrackConfigChange[`${id}`],
@@ -323,7 +323,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let trackState = {
           ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
         };
-        console.log("WHY NO UODATE3")
+
         if (cacheTrackData.trackType !== "genomealign") {
           const primaryVisData =
             trackState.genomicFetchCoord[trackState.primaryGenName]
@@ -335,7 +335,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
-        console.log("WHY NO UODATE")
+
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
           dataIdx,
@@ -1221,49 +1221,47 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       handle();
     }
   }, [screenshotOpen]);
-  return (
-    isGenomeViewLoaded ?
+  return <div
+    style={{
+      display: "flex",
+      height:
+        configOptions.current.displayMode === "full"
+          ? !fetchError.current
+            ? svgHeight.current + 2
+            : 40 + 2
+          : !fetchError.current
+            ? configOptions.current.height + 2 : 40 + 2,
+      position: "relative",
+    }}
+  >
+    {configOptions.current.displayMode === "full" ? (
       <div
         style={{
-          display: "flex",
-          height:
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current + 2
-                : 40 + 2
-              : !fetchError.current
-                ? configOptions.current.height + 2 : 40 + 2,
-          position: "relative",
+          position: "absolute",
+          lineHeight: 0,
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          backgroundColor: configOptions.current.backgroundColor,
         }}
       >
-        {configOptions.current.displayMode === "full" ? (
-          <div
-            style={{
-              position: "absolute",
-              lineHeight: 0,
-              right: updateSide.current === "left" ? `${xPos.current}px` : "",
-              left: updateSide.current === "right" ? `${xPos.current}px` : "",
-              backgroundColor: configOptions.current.backgroundColor,
-            }}
-          >
-            {svgComponents}
-          </div>
-        ) : (
-          <div
-            style={{
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: updateSide.current === "right" ? `${xPos.current}px` : "",
-              right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            }}
-          >
-            {canvasComponents}
-          </div>
-        )}
-        {toolTipVisible ? toolTip : ""}
-        {legend}
+        {svgComponents}
       </div>
-      : <></>)
+    ) : (
+      <div
+        style={{
+          position: "absolute",
+          backgroundColor: configOptions.current.backgroundColor,
+          left: updateSide.current === "right" ? `${xPos.current}px` : "",
+          right: updateSide.current === "left" ? `${xPos.current}px` : "",
+        }}
+      >
+        {canvasComponents}
+      </div>
+    )}
+    {toolTipVisible ? toolTip : ""}
+    {legend}
+  </div>
+
 });
 
 export default memo(TrackFactory);

@@ -142,7 +142,7 @@ export class HicSource {
     if (!this.normOptions.includes(normalization)) {
       return [];
     }
-    console.log(queryLocus1);
+
     let records;
     try {
       records = await this.straw.getContactRecords(
@@ -156,7 +156,7 @@ export class HicSource {
       console.error("Failed to fetch contact records:", error);
       return []; // Return an empty array or handle the error as needed
     }
-    console.log(records);
+
     const interactions: Array<any> = [];
     for (const record of records) {
       const recordLocus1 = new ChromosomeInterval(

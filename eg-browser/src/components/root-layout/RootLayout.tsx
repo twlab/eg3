@@ -18,17 +18,14 @@ import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import { selectCurrentSessionId } from "@/lib/redux/slices/browserSlice";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "./session-panel/SessionPanel";
-import { useState } from "react";
 
 const CURL_RADIUS = 15;
 
 export default function RootLayout() {
   const isSmallScreen = useSmallScreen();
+
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
-
-  const [isGenomeViewLoaded, setIsGenomeViewLoaded] = useState(sessionId ? true : false);
-
   const navigationTab = useAppSelector(selectNavigationTab);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
@@ -119,25 +116,19 @@ export default function RootLayout() {
               }}
             >
               <AnimatePresence mode="wait">
-                <motion.div
-                  className="flex flex-col w-screen overflow-auto"
-                  key="genome-view"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                // style={{ width: contentWidth, height: contentHeight }}
-                >
-                  <GenomeView key={"genome-view"} isGenomeViewLoaded={isGenomeViewLoaded} onLoadComplete={() => {
-                    console.log("HUHUHUH tRIGGER")
-                    setIsGenomeViewLoaded(true)
-                  }} />
-
-                </motion.div>
-
-              </AnimatePresence>
-              <AnimatePresence mode="wait">
-                {!isGenomeViewLoaded ?
+                {sessionId !== null ? (
+                  <motion.div
+                    className="flex flex-col h-full w-screen overflow-auto"
+                    key="genome-view"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    style={{ width: contentWidth, height: contentHeight }}
+                  >
+                    <GenomeView />
+                  </motion.div>
+                ) : (
                   <motion.div
                     key="genome-picker"
                     initial={{ opacity: 0 }}
@@ -146,12 +137,9 @@ export default function RootLayout() {
                     transition={{ duration: 0.3 }}
                   >
                     <GenomePicker />
-                  </motion.div> : ""}
-
-
-
+                  </motion.div>
+                )}
               </AnimatePresence>
-
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}

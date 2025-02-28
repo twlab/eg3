@@ -11,9 +11,7 @@ import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
 
-
-export default function GenomeView({ onLoadComplete, isGenomeViewLoaded }: any) {
-
+export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
@@ -22,7 +20,7 @@ export default function GenomeView({ onLoadComplete, isGenomeViewLoaded }: any) 
   if (!currentSession || !genomeConfig) {
     return null;
   }
-  console.log(currentSession, "HUHHHHHHHHHHHHHHHHHHHHH")
+
   const handleNewRegion = (coordinate: GenomeCoordinate) => {
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
   };
@@ -70,13 +68,11 @@ export default function GenomeView({ onLoadComplete, isGenomeViewLoaded }: any) 
             : currentSession.viewRegion
         }
         tool={tool}
-        onLoadComplete={onLoadComplete}
-        isGenomeViewLoaded={isGenomeViewLoaded}
       />
-      {isGenomeViewLoaded ? <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50">
-        <Toolbar />
-      </div> : ""}
 
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50">
+        <Toolbar />
+      </div>
     </div>
   );
 }

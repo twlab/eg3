@@ -349,13 +349,14 @@ class ThreedmolContainer extends React.Component<
     }
     try {
       this.g3dFile = new G3dFile(g3dconfig);
+      await this.g3dFile.readHeader();
     } catch (error) {
       this.setMessage(
         "parse g3d file error, please check your file or contact the browser team."
       );
       return;
     }
-    await this.g3dFile.readHeader();
+
     const reso = Math.max(...this.g3dFile.meta.resolutions);
     this.setState({
       resolutions: this.g3dFile.meta.resolutions,
@@ -1468,19 +1469,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-            cartoon: {
-              color: highlightingColor,
-              style: "trace",
-              thickness: cartoonThickness,
-            },
-          }
+          cartoon: {
+            color: highlightingColor,
+            style: "trace",
+            thickness: cartoonThickness,
+          },
+        }
         : {
-            sphere: {
-              color: highlightingColor,
-              opacity: 1,
-              radius: cartoonThickness,
-            },
-          };
+          sphere: {
+            color: highlightingColor,
+            opacity: 1,
+            radius: cartoonThickness,
+          },
+        };
     let validateRegion = false;
     // console.log(regionRange);
     Object.keys(curModelDisplayConfig).forEach((hap) => {
@@ -1489,9 +1490,8 @@ class ThreedmolContainer extends React.Component<
           regionRange[hap][region.chrom][0] !== undefined &&
           regionRange[hap][region.chrom][1] !== undefined
         ) {
-          const resiSelect = `${regionRange[hap][region.chrom][0]}-${
-            regionRange[hap][region.chrom][1]
-          }`;
+          const resiSelect = `${regionRange[hap][region.chrom][0]}-${regionRange[hap][region.chrom][1]
+            }`;
           this.viewer.setStyle(
             {
               chain: region.chrom,
@@ -1684,19 +1684,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-            cartoon: {
-              colorfunc: colorByValue,
-              style: "trace",
-              thickness: cartoonThickness,
-            },
-          }
+          cartoon: {
+            colorfunc: colorByValue,
+            style: "trace",
+            thickness: cartoonThickness,
+          },
+        }
         : {
-            sphere: {
-              colorfunc: colorByValue,
-              opacity: 1,
-              radius: cartoonThickness,
-            },
-          };
+          sphere: {
+            colorfunc: colorByValue,
+            opacity: 1,
+            radius: cartoonThickness,
+          },
+        };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -1882,7 +1882,7 @@ class ThreedmolContainer extends React.Component<
       const bwData = await bw.getData(chrom, 0, this.chromHash[chrom], {
         scale: 1 / resolution,
       });
-      // console.log(bwData);
+      console.log(bwData);
       bwData.forEach((bw) => {
         const binkey = reg2bin(bw.start, bw.end).toString();
         if (!keeper.hasOwnProperty(binkey)) {
@@ -1932,7 +1932,7 @@ class ThreedmolContainer extends React.Component<
   };
 
   parseUploadedFile = async (fileobj) => {
-    // console.log(fileobj);
+    console.log(fileobj);
     try {
       const gzipFile = /gzip/;
       let dataString;
@@ -2466,19 +2466,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-            cartoon: {
-              colorfunc: colorByAnnotation,
-              style: "trace",
-              thickness: cartoonThickness,
-            },
-          }
+          cartoon: {
+            colorfunc: colorByAnnotation,
+            style: "trace",
+            thickness: cartoonThickness,
+          },
+        }
         : {
-            sphere: {
-              colorfunc: colorByAnnotation,
-              opacity: 1,
-              radius: cartoonThickness,
-            },
-          };
+          sphere: {
+            colorfunc: colorByAnnotation,
+            opacity: 1,
+            radius: cartoonThickness,
+          },
+        };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -3040,7 +3040,7 @@ class ThreedmolContainer extends React.Component<
         if (locus) {
           return { label, locus };
         }
-      } catch (error) {}
+      } catch (error) { }
       return getSymbolRegions(genomeName, symbol);
     });
     const parsed = await Promise.all(promise);
@@ -3186,7 +3186,7 @@ class ThreedmolContainer extends React.Component<
       selectedSet,
       genomeConfig,
     } = this.props;
-    const bwTracks = tracks.filter((track) => {});
+    const bwTracks = tracks.filter((track) => { });
     return (
       <div id="threed-mol-container">
         {childShow && (
@@ -4127,12 +4127,12 @@ class ThreedmolContainer extends React.Component<
 
             {(paintMethod === "compartment" ||
               paintMethod === "annotation") && (
-              <CategoryLegend
-                categories={categories}
-                onUpdateLegendColor={this.updateLegendColor}
-                fullWidth={paintMethod === "annotation"}
-              />
-            )}
+                <CategoryLegend
+                  categories={categories}
+                  onUpdateLegendColor={this.updateLegendColor}
+                  fullWidth={paintMethod === "annotation"}
+                />
+              )}
           </div>
           <div id="static-legend">
             <StaticLegend categories={staticCategories} />

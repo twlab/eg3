@@ -55,6 +55,7 @@ class G3dFile {
     const size = this.getPackSize(buffer);
     const newBuffer = buffer.slice(0, size);
     const header: any = decode(newBuffer);
+
     const magic = header.magic;
     const genome = header.genome;
     const version = header.version;

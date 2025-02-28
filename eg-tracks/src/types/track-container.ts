@@ -17,8 +17,7 @@ export interface ITrackContainerState {
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null;
-  isGenomeViewLoaded: boolean;
-  onLoadComplete: any;
+
 }
 
 export interface ITrackContainerRepresentableProps {

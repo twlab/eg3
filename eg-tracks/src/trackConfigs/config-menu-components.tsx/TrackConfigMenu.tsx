@@ -1,4 +1,3 @@
-import ReactDOM from "react-dom";
 import { Manager, Reference, Popper } from "react-popper";
 import { MenuTitle, RemoveOption } from "./TrackContextMenu";
 import "./TrackContextMenu.css";
@@ -10,7 +9,7 @@ function ConfigMenuComponent(props: any) {
 
   let blockPosData = menuData.blockRef.current.getBoundingClientRect();
   let leftMargin = blockPosData.left;
-  console.log(blockPosData, menuData, "checkData here");
+
   // ReactDOM.createPortal(
   // need to set id matching the track component so it rememebers each specific
   // track config settings

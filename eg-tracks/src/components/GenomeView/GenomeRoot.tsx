@@ -1,10 +1,10 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { ITrackContainerState } from "../../types";
 import "./track.css";
-import { chrType } from "../../localdata/genomename";
-import { getGenomeConfig } from "../../models/genomes/allGenomes";
+// import { chrType } from "../../localdata/genomename";
+// import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
@@ -26,8 +26,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tool,
   viewRegion,
   userViewRegion,
-  isGenomeViewLoaded,
-  onLoadComplete
+
 }) {
   const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
@@ -35,6 +34,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // TO-DO need to set initial.current back to true when genomeConfig changes 
   // to see if genomeConfig we can check its session id because it will unique
   useEffect(() => {
+
     if (size.width > 0) {
       console.log("did it reset here222?")
       let curGenome;
@@ -68,10 +68,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [size.width]);
   useEffect(() => {
     if (size.width > 0) {
-      console.log("did it reset here?")
+
       let curGenome;
 
       if (!isInitial.current) {
+        console.log("did it reset here?", viewRegion)
         curGenome = { ...currentGenomeConfig };
         curGenome["isInitial"] = isInitial.current;
         curGenome.defaultRegion = new OpenInterval(
@@ -91,14 +92,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           {size.width > 0 &&
             userViewRegion &&
             showGenomeNav &&
-            currentGenomeConfig && isGenomeViewLoaded ? (
-            <GenomeNavigator
-              selectedRegion={userViewRegion}
-              genomeConfig={currentGenomeConfig}
-              windowWidth={size.width}
-              onRegionSelected={onNewRegionSelect}
-            />
-          ) : null}
+            currentGenomeConfig && (
+              <GenomeNavigator
+                selectedRegion={userViewRegion}
+                genomeConfig={currentGenomeConfig}
+                windowWidth={size.width}
+                onRegionSelected={onNewRegionSelect}
+              />
+            )}
 
           {currentGenomeConfig && (
             <TrackManager
@@ -115,8 +116,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               onTrackSelected={onTrackSelected}
               onTrackDeleted={onTrackDeleted}
               tool={tool}
-              isGenomeViewLoaded={isGenomeViewLoaded}
-              onLoadComplete={onLoadComplete}
+
             />
           )}
         </div>

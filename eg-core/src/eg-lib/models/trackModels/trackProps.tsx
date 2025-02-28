@@ -27,7 +27,7 @@ export interface TrackProps {
   trackManagerRef: any;
   setShow3dGene: any;
   isThereG3dTrack: boolean;
-  checkTrackPreload?: any;
+  signalTrackLoadComplete?: any;
   legendRef: any;
 
   updateGlobalTrackConfig: any;

@@ -205,13 +205,11 @@ self.onmessage = async (event: MessageEvent) => {
             } catch (error) {
               fetchRes.push({
                 result: {
-                  error: `Error processing genome align track with id ${
-                    item.id
-                  }: ${"Error"}`,
+                  error: `Error processing genome align track with id ${item.id
+                    }: ${"Error"}`,
                 },
-                error: `Error processing genome align track with id ${
-                  item.id
-                }: ${"Error"}`,
+                error: `Error processing genome align track with id ${item.id
+                  }: ${"Error"}`,
               });
             }
           })
@@ -276,7 +274,7 @@ self.onmessage = async (event: MessageEvent) => {
     let multiCalInstance = new MultiAlignmentViewCalculator(
       event.data.primaryGenName
     );
-    console.log(successFetch);
+
     let alignment = multiCalInstance.multiAlign(visData, successFetch);
 
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
