@@ -18,8 +18,6 @@ export interface ITrackContainerState {
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null;
-
-  tool: Tool | null;
 }
 
 export interface ITrackContainerRepresentableProps {
