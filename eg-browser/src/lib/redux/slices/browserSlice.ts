@@ -1,10 +1,6 @@
-import {
-  createEntityAdapter,
-  createSlice,
-  PayloadAction,
-} from "@reduxjs/toolkit";
 import { getGenomeDefaultState } from "@eg/core";
-import { ITrackModel, IHighlightInterval, GenomeCoordinate } from "@eg/tracks";
+import { GenomeCoordinate, IHighlightInterval, ITrackModel } from "@eg/tracks";
+import { createEntityAdapter, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { RootState } from "../store";
 
@@ -15,7 +11,8 @@ export interface BrowserSession {
   createdAt: number;
   updatedAt: number;
 
-  genome: string;
+  title: string;
+  genomeId: uuid;
   viewRegion: GenomeCoordinate;
   userViewRegion: null | GenomeCoordinate;
   tracks: ITrackModel[];
@@ -47,7 +44,9 @@ export const browserSlice = createSlice({
         const initializedTracks = tracks.map((track) => ({
           ...track,
           id: trackModelId++,
+          isSelected: false,
         }));
+
         const nextSession: BrowserSession = {
           id: crypto.randomUUID(),
           createdAt: Date.now(),
@@ -69,7 +68,13 @@ export const browserSlice = createSlice({
       state,
       action: PayloadAction<{ id: uuid; changes: Partial<BrowserSession> }>
     ) => {
-      browserSessionAdapter.updateOne(state.sessions, action.payload);
+      browserSessionAdapter.updateOne(state.sessions, {
+        id: action.payload.id,
+        changes: {
+          ...action.payload.changes,
+          updatedAt: Date.now()
+        }
+      });
     },
     updateCurrentSession: (
       state,
@@ -88,8 +93,43 @@ export const browserSlice = createSlice({
         }
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
-          changes: action.payload,
+          changes: {
+            ...changes,
+            updatedAt: Date.now()
+          }
         });
+      }
+    },
+    addTracks: (
+      state,
+      action: PayloadAction<ITrackModel | ITrackModel[]>
+    ) => {
+      if (state.currentSession) {
+        const session = state.sessions.entities[state.currentSession];
+        if (session) {
+          const newTracks = Array.isArray(action.payload)
+            ? action.payload
+            : [action.payload];
+
+          const tracksWithIds = newTracks.map(track => {
+            if (!("id" in track)) {
+              return {
+                ...(track as object),
+                id: session.trackModelId++
+              } as ITrackModel;
+            }
+            return track;
+          });
+
+          browserSessionAdapter.updateOne(state.sessions, {
+            id: state.currentSession,
+            changes: {
+              tracks: [...session.tracks, ...tracksWithIds],
+              trackModelId: session.trackModelId,
+              updatedAt: Date.now()
+            }
+          });
+        }
       }
     },
     upsertSession: (state, action: PayloadAction<BrowserSession>) => {
@@ -98,8 +138,17 @@ export const browserSlice = createSlice({
     deleteSession: (state, action: PayloadAction<uuid>) => {
       browserSessionAdapter.removeOne(state.sessions, action.payload);
     },
-    setCurrentSession: (state, action: PayloadAction<uuid>) => {
+    setCurrentSession: (state, action: PayloadAction<uuid | null>) => {
       state.currentSession = action.payload;
+      if (action.payload) {
+        const session = state.sessions.entities[action.payload];
+        if (session) {
+          browserSessionAdapter.updateOne(state.sessions, {
+            id: action.payload,
+            changes: { updatedAt: Date.now() }
+          });
+        }
+      }
     },
   },
 });
@@ -110,6 +159,7 @@ export const {
   deleteSession,
   setCurrentSession,
   updateCurrentSession,
+  addTracks,
 } = browserSlice.actions;
 
 export const selectCurrentSessionId = (state: RootState) =>
