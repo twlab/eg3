@@ -17,9 +17,7 @@ export interface ITrackContainerState {
   onNewRegionSelect: (startbase: number, endbase: number) => void;
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
-  tool: Tool | null;
-
-  tool: Tool | null;
+  tool: Tool | null | string;
 }
 
 export interface ITrackContainerRepresentableProps {
