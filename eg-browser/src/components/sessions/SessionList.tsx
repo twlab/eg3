@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo } from "react";
 import Switch from "@/components/ui/switch/Switch";
 import { selectSessionSortPreference, setSessionSortPreference } from "@/lib/redux/slices/settingsSlice";
+import EmptyView from "../ui/empty/EmptyView";
 
 export default function SessionList({
     onSessionClick
@@ -25,7 +26,7 @@ export default function SessionList({
     }, [sessions, sortPreference]);
 
     return (
-        <div className="flex flex-col gap-4 pt-1">
+        <div className="flex flex-col gap-4 pt-1 h-full">
             <div className="flex items-center justify-between">
                 <p>Sort by last updated</p>
                 <Switch
@@ -35,24 +36,31 @@ export default function SessionList({
                     }
                 />
             </div>
-            <AnimatePresence initial={false}>
-                {sortedSessions.map(session => (
-                    <motion.div
-                        key={session.id}
-                        layout
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <SessionListItem
-                            session={session}
-                            onClick={() => onSessionClick(session)}
-                            sortPreference={sortPreference}
-                        />
-                    </motion.div>
-                ))}
-            </AnimatePresence>
+            {sortedSessions.length === 0 ? (
+                <EmptyView
+                    title="No Sessions Found"
+                    description="Sessions are stored locally in your browser. Start a session and it will appear here."
+                />
+            ) : (
+                <AnimatePresence initial={false}>
+                    {sortedSessions.map(session => (
+                        <motion.div
+                            key={session.id}
+                            layout
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <SessionListItem
+                                session={session}
+                                onClick={() => onSessionClick(session)}
+                                sortPreference={sortPreference}
+                            />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            )}
         </div>
     );
 }
@@ -80,7 +88,7 @@ function SessionListItem({
         >
             <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl">Genome: {session.genome}</h1>
+                    <h1 className="text-2xl">Genome: {session.genomeId}</h1>
                     <p className="text-sm">
                         {sortPreference === 'updatedAt'
                             ? `Updated: ${new Date(session.updatedAt).toLocaleDateString()}`

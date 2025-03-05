@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface ITabViewItem<T extends string> {
@@ -8,14 +8,18 @@ interface ITabViewItem<T extends string> {
 }
 
 export default function TabView<T extends string>({
-    tabs
+    tabs,
+    initialTab
 }: {
     tabs: ITabViewItem<T>[];
+    initialTab?: T;
 }) {
-    const [selectedTab, setSelectedTab] = useState<ITabViewItem<T>>(tabs[0]);
+    const [selectedTabId, setSelectedTabId] = useState<T>(initialTab ?? tabs[0].value);
+
+    const selectedTab = useMemo(() => tabs.find(t => t.value === selectedTabId), [tabs, selectedTabId]);
 
     return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 h-full">
             <div className="flex flex-row items-center justify-between gap-1 bg-gray-100 rounded-lg p-1 relative">
                 <div
                     className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary rounded-lg"
@@ -27,8 +31,8 @@ export default function TabView<T extends string>({
                 {tabs.map(tab => (
                     <div
                         key={tab.value}
-                        className={`relative flex-1 text-center py-1 rounded-lg cursor-pointer z-10 transition-colors`}
-                        onClick={() => setSelectedTab(tab)}
+                        className="relative flex-1 text-center py-1 rounded-lg cursor-pointer z-10 transition-colors"
+                        onClick={() => setSelectedTabId(tab.value)}
                     >
                         {tab.label}
                     </div>
@@ -36,14 +40,14 @@ export default function TabView<T extends string>({
             </div>
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={selectedTab.value}
+                    key={selectedTabId}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                     className="flex-1"
                 >
-                    {selectedTab.component}
+                    {selectedTab?.component}
                 </motion.div>
             </AnimatePresence>
         </div>

@@ -3,7 +3,7 @@ import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, 
 import storage from "redux-persist/lib/storage";
 
 import browserReducer from "./slices/browserSlice";
-import genomeReducer from "./slices/genomeSlice";
+import genomeHubReducer from "./slices/genomeHubSlice";
 import navigationReducer from "./slices/navigationSlice";
 import utilityReducer from "./slices/utilitySlice";
 import hubReducer from "./slices/hubSlice";
@@ -13,15 +13,15 @@ import searchReducer from "./slices/searchSlice";
 const persistConfig = {
     key: "root",
     storage,
-    blacklist: ["navigation", "hub"]
+    blacklist: ["navigation", "hub", "genomeHub"]
 };
 
 const rootReducer = combineReducers({
     navigation: navigationReducer,
-    genome: genomeReducer,
     browser: browserReducer,
     utility: utilityReducer,
     hub: hubReducer,
+    genomeHub: genomeHubReducer,
     settings: settingsReducer,
     search: searchReducer
 });
