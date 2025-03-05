@@ -78,11 +78,11 @@ const defaultTracks = [
     name: "refGene",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
+  // }),
 
   // new TrackModel({
   //   type: "bigbed",
@@ -90,17 +90,17 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
   // }),
 
-  new TrackModel({
-    "type": "g3d",
-    "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
-    "name": "example 3d track",
-    "showOnHubLoad": true
-  }),
+  // new TrackModel({
+  //   "type": "g3d",
+  //   "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
+  //   "name": "example 3d track",
+  //   "showOnHubLoad": true
+  // }),
 
   // new TrackModel({
   //   type: "repeatmasker",
   //   name: "RepeatMasker",
-  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+  //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",`
   // }),
 
   // new TrackModel({
@@ -108,12 +108,12 @@ const defaultTracks = [
   //   name: "snp",
   //   genome: "hg38",
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "MANE_select_1.0",
-    label: "MANE selection v1.0",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "MANE_select_1.0",
+  //   label: "MANE selection v1.0",
+  //   genome: "hg38",
+  // }),
 
   // new TrackModel({
   //   type: "bigwig",
