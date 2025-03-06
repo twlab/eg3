@@ -33,35 +33,37 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // TO-DO need to set initial.current back to true when genomeConfig changes
   // to see if genomeConfig we can check its session id because it will unique
   useEffect(() => {
-    console.log("did it reset here222?");
-    let curGenome;
+    if (size.width > 0) {
+      console.log("did it reset here222?");
+      let curGenome;
 
-    if (!isInitial.current) {
-      console.log("did it reset hereasddsads3443343434aads?");
-      curGenome = { ...currentGenomeConfig };
+      if (!isInitial.current) {
+        console.log("did it reset hereasddsads3443343434aads?");
+        curGenome = { ...currentGenomeConfig };
 
-      curGenome["isInitial"] = isInitial.current;
-      curGenome.defaultRegion = new OpenInterval(
-        userViewRegion._startBase!,
-        userViewRegion._endBase!
-      );
-      curGenome["sizeChange"] = true;
-    } else {
-      console.log("did it reset hereasddsadsaads?");
-      curGenome = { ...genomeConfig };
-      curGenome["isInitial"] = isInitial.current;
-      curGenome["genomeID"] = uuidv4();
-      let bundleId = uuidv4();
-      curGenome.defaultRegion = new OpenInterval(
-        userViewRegion._startBase!,
-        userViewRegion._endBase!
-      );
-      curGenome["bundleId"] = bundleId;
+        curGenome["isInitial"] = isInitial.current;
+        curGenome.defaultRegion = new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
+        );
+        curGenome["sizeChange"] = true;
+      } else {
+        console.log("did it reset hereasddsadsaads?");
+        curGenome = { ...genomeConfig };
+        curGenome["isInitial"] = isInitial.current;
+        curGenome["genomeID"] = uuidv4();
+        let bundleId = uuidv4();
+        curGenome.defaultRegion = new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
+        );
+        curGenome["bundleId"] = bundleId;
+      }
+
+      setCurrentGenomeConfig(curGenome);
+      isInitial.current = false;
     }
-
-    setCurrentGenomeConfig(curGenome);
-    isInitial.current = false;
-  }, [genomeConfig]);
+  }, [size.width]);
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -82,7 +84,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
-      <div>
+      <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {size.width > 0 &&
             userViewRegion &&
@@ -101,7 +103,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               key={currentGenomeConfig.genomeID}
               tracks={tracks}
               legendWidth={legendWidth}
-              windowWidth={1200 - legendWidth}
+              windowWidth={size.width - legendWidth}
               selectedRegion={userViewRegion}
               highlights={highlights}
               genomeConfig={currentGenomeConfig}

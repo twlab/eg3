@@ -2486,7 +2486,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ref={g3dRect}
         style={{
           display: "flex",
-          width: `${windowWidth / 2}px`,
+          width: `${1200}px`,
           backgroundColor: "blue",
         }}
       >
