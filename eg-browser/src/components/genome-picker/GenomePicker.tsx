@@ -1,8 +1,6 @@
 import useDebounce from '@/lib/hooks/useDebounce';
 import useSmallScreen from '@/lib/hooks/useSmallScreen';
 import { BrowserSession, createSessionWithGenomeId, selectSessions, setCurrentSession } from '@/lib/redux/slices/browserSlice';
-import { getGenomeConfig } from '@eg/core';
-import GenomeSerializer from '@eg/tracks/src/genome-hub';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
@@ -14,6 +12,9 @@ import NavigationStack from '../core-navigation/NavigationStack';
 import SessionList from '../sessions/SessionList';
 import Progress from '../ui/progress/Progress';
 import { GENOME_LIST } from "./genome-list";
+import TabView from '../ui/tab-view/TabView';
+import GenomeHubPanel from '../genome-hub/GenomeHubPanel';
+import AddCustomGenome from '../genome-hub/AddCustomGenome';
 
 type GenomeName = string;
 type AssemblyName = string;
@@ -76,14 +77,38 @@ export default function GenomePicker() {
         <div className="bg-black h-full flex flex-row">
             {!isSmallScreen && (
                 <div
-                    className="h-full bg-white w-[25vw] overflow-hidden"
+                    className="h-full bg-white w-[25vw] min-w-96 overflow-hidden"
                     style={{
                         borderTopRightRadius: CURL_RADIUS,
                         borderBottomRightRadius: CURL_RADIUS,
                     }}
                 >
-                    <NavigationStack destinations={[]} rootOptions={{ title: "Sessions" }}>
-                        <SessionList onSessionClick={handleSessionClick} />
+                    <NavigationStack
+                        destinations={[
+                            {
+                                component: AddCustomGenome,
+                                path: "add-custom-genome",
+                                options: {
+                                    title: "Add Custom Genome"
+                                }
+                            }
+                        ]}
+                    >
+                        <TabView<"sessions" | "genomes">
+                            initialTab={sessions.length > 0 ? "sessions" : "genomes"}
+                            tabs={[
+                                {
+                                    label: "Sessions",
+                                    value: "sessions",
+                                    component: <SessionList onSessionClick={handleSessionClick} />
+                                },
+                                {
+                                    label: "Genomes",
+                                    value: "genomes",
+                                    component: <GenomeHubPanel />
+                                }
+                            ]}
+                        />
                     </NavigationStack>
                 </div>
             )}

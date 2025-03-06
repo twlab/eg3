@@ -1,6 +1,6 @@
 import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
 import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
-import { IGenome } from './genome-hub';
+import { IGenome } from "./genome-hub";
 
 // add the same props that were being passed into TrackContainer.tsx
 export interface ITrackContainerState {
@@ -18,6 +18,7 @@ export interface ITrackContainerState {
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
+  tool: Tool | null;
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -36,7 +37,7 @@ export interface ITrackContainerRepresentableProps {
   userViewRegion: null | GenomeCoordinate;
   tool: Tool | null;
   onLoadComplete: any;
-  isGenomeViewLoaded: boolean
+  isGenomeViewLoaded: boolean;
 }
 
 // MARK: Track Model
@@ -99,5 +100,5 @@ export enum Tool {
   ZoomInOneThirdFold,
   ZoomInOneFold,
   ZoomInFiveFold,
-  highlightMenu
+  highlightMenu,
 }

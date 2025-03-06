@@ -11,9 +11,12 @@ export interface IGenome {
     twoBitURL: string;
 }
 
-export interface IListGenomeResult {
-    name: string;
-    genomeId: uuid;
+export interface IGenomeHubSource {
+    listGenomes(): Promise<IGenome[]>;
+
+    getGenomeById(id: uuid): Promise<IGenome>;
+
+    putGenome(genome: IGenome): Promise<uuid>;
 }
 
 type uuid = string;

@@ -17,7 +17,7 @@ export default function NavBar() {
     return (
         <div className="w-screen flex flex-row justify-between items-center p-4 border-b border-gray-300 bg-white">
             <div className="flex flex-row items-center gap-4 cursor-pointer" onClick={() => dispatch(setSessionPanelOpen(!sessionPanelOpen))}>
-                <img src={Logo} alt="logo" className="w-8 h-8" />
+                <img src={Logo} alt="logo" className="size-8" />
                 {!isSmallScreen && (
                     <h1 className="text-2xl text-primary font-light">
                         <span className="font-medium">WashU </span>  Epigenome Browser

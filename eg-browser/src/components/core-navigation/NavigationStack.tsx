@@ -63,11 +63,11 @@ const notFoundDestination: NavigationDestination = {
 
 export default function NavigationStack({
     children,
-    destinations,
+    destinations = [],
     rootOptions
 }: {
     children: React.ReactNode;
-    destinations: NavigationDestination[];
+    destinations?: NavigationDestination[];
     rootOptions?: NavigationDestinationOptions;
 }) {
     const { ref, width, height } = useElementGeometry();
