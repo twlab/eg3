@@ -235,6 +235,7 @@ export default function SearchBar({
   const [snpSelectedInput, setSnpSelectedInput] = useState<{
     [key: string]: any;
   } | null>(null);
+  const latestUserInput = useRef("");
   const [badInputMessage, setBadInputMessage] = useState("");
   const [loadingMsg, setLoadingMsg] = useState<string>("");
   const genomeConfig = useCurrentGenomeConfig();
@@ -306,7 +307,6 @@ export default function SearchBar({
 
     if (REGION_REGEX.test(query)) {
       setIsRegion(true);
-
       setSearchResults([]);
       return;
     }
@@ -317,42 +317,45 @@ export default function SearchBar({
         query,
         genomeConfig!.genome.getName()
       );
-      setSearchResults(results);
+      // Compare the ref value with the current query before updating the state:
+      if (latestUserInput.current === query) {
+        setSearchResults(results);
+      }
     } else if (activeCommand === "snp") {
       const results = await mockSnpSearch(
         query,
         genomeConfig!.genome.getName()
       );
-      if (results.length > 0) {
-        setLoadingMsg("searching...");
-      } else {
-        setLoadingMsg("");
+      if (latestUserInput.current === query) {
+        setSearchResults(results);
       }
-      console.log(results, " herer2");
-      setSearchResults(results);
     } else {
       const [geneResults, snpResults] = await Promise.all([
         mockGeneSearch(query, genomeConfig!.genome.getName()),
         mockSnpSearch(query, genomeConfig!.genome.getName()),
       ]);
-      setSearchResults([...geneResults, ...snpResults]);
+      if (latestUserInput.current === query) {
+        setSearchResults([...geneResults, ...snpResults]);
+      }
     }
   };
 
   const debouncedSearch = debounce(handleSearch, 50);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: any) => {
     const value = e.target.value;
+    latestUserInput.current = value; // Update the ref with the latest input
     setSearchInput(value);
 
     if (value.startsWith("/")) {
-      const command = value.slice(1) as CommandType;
+      const command = value.slice(1);
       if (SLASH_COMMANDS.includes(command)) {
         setActiveCommand(command);
         setSearchInput("");
         return;
       }
     }
+
     setIsShowingIsoforms(false);
     setIsShowingSNPforms(false);
     setSelectedInput("");
