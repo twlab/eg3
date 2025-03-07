@@ -218,6 +218,7 @@ class NavigationContext {
   ): OpenInterval[] {
     const potentialOverlaps = this._featuresForChr[chrInterval.chr] || [];
     const contextIntervals: Array<any> = [];
+
     for (const feature of potentialOverlaps) {
       const overlap = new FeatureSegment(feature).getGenomeOverlap(chrInterval);
       if (overlap) {

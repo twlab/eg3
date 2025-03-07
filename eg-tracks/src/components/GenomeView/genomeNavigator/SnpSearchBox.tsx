@@ -91,6 +91,7 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
         }
 
         const data = await response.json();
+
         setResult(data);
       } catch (error) {
         console.log("Error fetching SNP data.", "error", 2000);

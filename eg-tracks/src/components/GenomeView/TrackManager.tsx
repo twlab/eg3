@@ -558,7 +558,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // let newStateObj = createNewTrackState(trackManagerState.current, {});
       //addGlobalState(newStateObj);
-
+      onTrackSelected(trackManagerState.current.tracks);
       selectedTracks.current = {};
     }
   }

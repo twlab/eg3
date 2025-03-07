@@ -48,7 +48,7 @@ export default function GenomeView() {
   };
 
   return (
-    <div className="w-full h-full">
+    <div>
       <TrackContainerRepresentable
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
@@ -68,11 +68,8 @@ export default function GenomeView() {
             : currentSession.viewRegion
         }
         tool={tool}
+        Toolbar={Toolbar}
       />
-
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50">
-        <Toolbar />
-      </div>
     </div>
   );
 }

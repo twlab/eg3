@@ -15,7 +15,7 @@ const DRAW_WIDTH = 200;
 interface IsoformSelectionProps {
   genomeConfig: any;
   geneName: string;
-  onGeneSelected: (gene: Gene) => void;
+  onGeneSelected: any;
   simpleMode: boolean;
   color: string;
   background: string;
@@ -88,7 +88,10 @@ const IsoformSelection: React.FC<IsoformSelectionProps> = ({
         <div
           key={gene.dbRecord._id}
           className="IsoformSelection-item"
-          onClick={() => onGeneSelected(gene)}
+          onClick={() => {
+            console.log(gene);
+            onGeneSelected(gene);
+          }}
           style={{
             color,
             background,
@@ -138,7 +141,10 @@ const IsoformSelection: React.FC<IsoformSelectionProps> = ({
         <div
           key={gene.dbRecord._id}
           className="IsoformSelection-item-simple"
-          onClick={() => onGeneSelected(gene)}
+          onClick={() => {
+            console.log(gene);
+            onGeneSelected(gene);
+          }}
           style={{
             color,
             background,

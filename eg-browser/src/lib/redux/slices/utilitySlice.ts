@@ -1,17 +1,22 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "@eg/tracks";
 import { RootState } from "../store";
+interface UtilityState {
+  tool: Tool | null;
+}
+
+const initialState: UtilityState = {
+  tool: Tool.Drag,
+};
 
 export const utilitySlice = createSlice({
-    name: "utility",
-    initialState: {
-        tool: Tool.Drag
+  name: "utility",
+  initialState,
+  reducers: {
+    setTool: (state, action: PayloadAction<Tool | null>) => {
+      state.tool = action.payload;
     },
-    reducers: {
-        setTool: (state, action: PayloadAction<Tool>) => {
-            state.tool = action.payload;
-        }
-    }
+  },
 });
 export const { setTool } = utilitySlice.actions;
 

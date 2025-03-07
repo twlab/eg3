@@ -28,7 +28,6 @@ export function TrackContainer(props: ITrackContainerState) {
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
       tool={props.tool}
-
     />
   );
 }
@@ -55,7 +54,7 @@ export function TrackContainerRepresentable({
   viewRegion,
   userViewRegion,
   tool,
-
+  Toolbar,
 }: ITrackContainerRepresentableProps) {
   // MARK: Genome Config
 
@@ -235,7 +234,7 @@ export function TrackContainerRepresentable({
   );
 
   const handleNewRegionSelect = useCallback(
-    (startbase: number, endbase: number) => {
+    (startbase: number, endbase: number, highlightSearch: boolean = false) => {
       if (lastViewRegion.current) {
         const newRegion = lastViewRegion.current
           .clone()
@@ -244,27 +243,59 @@ export function TrackContainerRepresentable({
           newRegion.currentRegionAsString() as GenomeCoordinate
         );
       }
+
+      if (highlightSearch) {
+        const newHightlight = {
+          start: startbase,
+          end: endbase,
+          display: true,
+          color: "rgba(0, 123, 255, 0.15)",
+          tag: "",
+        };
+        const tmpHighlight = [...highlights, newHightlight];
+        onNewHighlight(tmpHighlight);
+      }
     },
     [lastViewRegion, onNewRegionSelect]
   );
 
   return (
-    <TrackContainer
-      tracks={convertedTracks}
-      highlights={highlights}
-      genomeConfig={genomeConfig}
-      legendWidth={legendWidth}
-      showGenomeNav={showGenomeNav}
-      onNewRegion={handleNewRegion}
-      onNewHighlight={onNewHighlight}
-      onTrackSelected={handleTrackSelected}
-      onTrackDeleted={handleTrackDeleted}
-      onTrackAdded={handleTrackAdded}
-      onNewRegionSelect={handleNewRegionSelect}
-      viewRegion={convertedViewRegion}
-      userViewRegion={convertedUserViewRegion}
-      tool={tool}
-
-    />
+    <div>
+      <TrackContainer
+        tracks={convertedTracks}
+        highlights={highlights}
+        genomeConfig={genomeConfig}
+        legendWidth={legendWidth}
+        showGenomeNav={showGenomeNav}
+        onNewRegion={handleNewRegion}
+        onNewHighlight={onNewHighlight}
+        onTrackSelected={handleTrackSelected}
+        onTrackDeleted={handleTrackDeleted}
+        onTrackAdded={handleTrackAdded}
+        onNewRegionSelect={handleNewRegionSelect}
+        viewRegion={convertedViewRegion}
+        userViewRegion={convertedUserViewRegion}
+        tool={tool}
+      />
+      {Toolbar ? (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 50,
+          }}
+        >
+          <Toolbar
+            highlights={highlights}
+            onNewHighlight={onNewHighlight}
+            onNewRegionSelect={handleNewRegionSelect}
+          />
+        </div>
+      ) : (
+        ""
+      )}
+    </div>
   );
 }

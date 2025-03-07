@@ -14,11 +14,14 @@ export interface ITrackContainerState {
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   onTrackAdded: (trackModels: TrackModel[]) => void;
-  onNewRegionSelect: (startbase: number, endbase: number) => void;
+  onNewRegionSelect: (
+    startbase: number,
+    endbase: number,
+    highlightSearch?: boolean
+  ) => void;
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
-  tool: Tool | null;
 }
 
 export interface ITrackContainerRepresentableProps {
@@ -38,6 +41,7 @@ export interface ITrackContainerRepresentableProps {
   tool: Tool | null;
   onLoadComplete: any;
   isGenomeViewLoaded: boolean;
+  Toolbar?: any;
 }
 
 // MARK: Track Model
