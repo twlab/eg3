@@ -21,7 +21,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
 import OpenInterval from "../../models/OpenInterval";
 import { v4 as uuidv4 } from "uuid";
-
+import Worker from "web-worker";
 import { TrackProps } from "../../models/trackModels/trackProps";
 import { FeatureSegment } from "../../models/FeatureSegment";
 import ChromosomeInterval from "../../models/ChromosomeInterval";
@@ -34,10 +34,11 @@ import LongrangeTrack from "./LongrangeTrack";
 import BigInteractTrack from "./BigInteractTrack";
 import RepeatMaskerTrack from "./RepeatMaskerTrack";
 import RefBedTrack from "./RefBedTrack";
-
+// import ThreedmolContainer from "../3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import RulerTrack from "./RulerTrack";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
+// import "./DivWithBullseye.css";
 import React from "react";
 import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
@@ -47,8 +48,6 @@ import { SelectableArea } from "./genomeNavigator/SelectableArea";
 import ZoomButtons from "./ToolsComponents/ZoomButtons";
 
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
-import { processGenomicData } from "../../getRemoteData/fetchDataWorkerLocal";
-
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -121,6 +120,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 }) {
   //useRef to store data between states without re render the component
 
+  const infiniteScrollWorker = useRef<Worker>();
   const useFineModeNav = useRef(false);
   const trackManagerId = useRef("");
   const leftStartCoord = useRef(0);
@@ -157,6 +157,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // These states are used to update the tracks with new fetched data
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
+
+  const [initialStart, setInitialStart] = useState("workerNotReady");
   const [selectedTool, setSelectedTool] = useState("none");
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
@@ -179,6 +181,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     return total;
   }
+
+  const horizontalLineStyle: CSSProperties = {
+    position: "absolute",
+    width: "100%",
+    height: "2px",
+
+    zIndex: 3,
+    pointerEvents: "none",
+  };
+  const verticalLineStyle: CSSProperties = {
+    position: "absolute",
+    height: "100%",
+    width: "2px",
+
+    zIndex: 3,
+    pointerEvents: "none",
+  };
 
   function handleScroll() {
     // dont need to account for scroll because parenttop will always give the extact location of where the  event is
@@ -480,6 +499,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     isMouseInsideRef.current = false;
   }
   async function fetchGenomeData(initial: number = 0, trackSide) {
+    console.log(infiniteScrollWorker.current, "ThE WORKER WORKS");
     if (initial === 0 || initial === 1) {
       let curFetchRegionNav;
       let tempObj = {};
@@ -628,7 +648,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       try {
-        let res = await processGenomicData({
+        infiniteScrollWorker.current!.postMessage({
           primaryGenName: genomeArr[genomeIdx].genome.getName(),
           trackModelArr: activeTrackModels.current,
           visData: newVisData,
@@ -645,13 +665,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           initial,
           bpRegionSize: bpRegionSize.current,
         });
-        console.log(res);
+
         if (initial === 1) {
           //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
           minBp.current = minBp.current - bpRegionSize.current;
         }
-
-        res.fetchResults.map((item, index) => {
+      } catch {}
+      infiniteScrollWorker.current!.onmessage = (event) => {
+        event.data.fetchResults.map((item, index) => {
           tempObj[item.id] = {
             result: item.result,
             metadata: item.metadata,
@@ -661,32 +682,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         });
 
-        tempObj["initial"] = res.initial;
-        tempObj["side"] = res.side;
-        tempObj["location"] = res.location;
-        tempObj["xDist"] = res.xDist;
+        tempObj["initial"] = event.data.initial;
+        tempObj["side"] = event.data.side;
+        tempObj["location"] = event.data.location;
+        tempObj["xDist"] = event.data.xDist;
         tempObj["trackState"] = {
           primaryGenName: genomeArr[genomeIdx].genome.getName(),
-          initial: res.initial,
-          side: res.side,
-          xDist: res.xDist,
-          genomicFetchCoord: res.genomicFetchCoord,
-          useFineModeNav: res.useFineModeNav,
+          initial: event.data.initial,
+          side: event.data.side,
+          xDist: event.data.xDist,
+          genomicFetchCoord: event.data.genomicFetchCoord,
+          useFineModeNav: event.data.useFineModeNav,
           regionNavCoord: new DisplayedRegionModel(
             genomeArr[genomeIdx].navContext,
-            res.curFetchRegionNav._startBase,
-            res.curFetchRegionNav._endBase
+            event.data.curFetchRegionNav._startBase,
+            event.data.curFetchRegionNav._endBase
           ),
         };
         console.log(
           tempObj,
-          res.genomicLoci,
-          res.expandGenomicLoci,
-          "fetched data for all tracks with their id"
+          event.data.genomicLoci,
+          event.data.expandGenomicLoci,
+          "fetched data for all tracks with their id",
+          infiniteScrollWorker.current,
+          "GOTWORKER"
         );
         isLoading.current = false;
         setTrackData({ ...tempObj });
-      } catch {}
+      };
     }
   }
   function handleDelete(id: number) {
@@ -715,6 +738,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       window.addEventListener("scroll", handleScroll);
     }
     return () => {
+      infiniteScrollWorker.current!.terminate();
       if (parentElement) {
         parentElement.removeEventListener("mousemove", handleMove);
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
@@ -741,113 +765,104 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [trackComponents]);
 
   useEffect(() => {
-    async function handle() {
-      if (trackManagerId.current === "") {
-        // on initial and when our genome data changes we set the default values here
+    if (initialStart === "workerReady") {
+      // go through genome defaultTrack to see what track components we need and give each component
+      // a unique id so it remember data and allows us to manipulate the position in the trackComponent arr
+      let genome = genomeArr[genomeIdx];
 
-        let genome = genomeArr[genomeIdx];
+      let newTrackComponents: Array<any> = [];
+      let trackIdx = 0;
+      let track3dIdx = 0;
+      for (let i = 0; i < genome.defaultTracks.length; i++) {
+        if (genome.defaultTracks[i].type !== "g3d") {
+          const newPosRef = createRef();
+          const newLegendRef = createRef();
+          const uniqueKey = uuidv4();
+          genome.defaultTracks[i]["id"] = uniqueKey;
+          newTrackComponents.push({
+            trackIdx: trackIdx,
+            id: uniqueKey,
+            component: componentMap[genome.defaultTracks[i].type],
+            posRef: newPosRef,
+            legendRef: newLegendRef,
+            trackModel: genome.defaultTracks[i],
+          });
 
-        leftStartCoord.current = genome.defaultRegion.start;
-        rightStartCoord.current = genome.defaultRegion.end;
-
-        bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
-
-        basePerPixel.current = bpRegionSize.current / windowWidth;
-
-        bpX.current = leftStartCoord.current;
-        maxBp.current = genome.defaultRegion.end;
-        minBp.current = genome.defaultRegion.start;
-
-        // create the worker and trigger state change before we can actually use them takes one re render to acutally
-        // start working.Thats why we need the initialStart state.
-
-        let curFetchRegionNav = new DisplayedRegionModel(
-          genomeArr[genomeIdx].navContext,
-          minBp.current,
-          minBp.current + bpRegionSize.current
-        );
-        let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
-          genomeIdx
-        ].navContext.getFeaturesInInterval(
-          minBp.current,
-          minBp.current + bpRegionSize.current
-        );
-
-        let genomicLoci = genomeFeatureSegment.map((item, index) =>
-          item.getLocus()
-        );
-        console.log(genomicLoci);
-        trackManagerId.current = genome.id;
-        const AWS_API = "https://lambda.epigenomegateway.org/v2";
-
-        const genRefResponse = await fetch(
-          `${AWS_API}/${"hg38"}/genes/${"refGene"}/queryRegion?chr=${
-            genomicLoci[0].chr
-          }&start=${genomicLoci[0].start}&end=${genomicLoci[0].end}`,
-          { method: "GET" }
-        );
-        let res = await genRefResponse.json();
-
-        let newTrackComponents: Array<any> = [];
-        let trackIdx = 0;
-        let track3dIdx = 0;
-        for (let i = 0; i < genome.defaultTracks.length; i++) {
-          if (genome.defaultTracks[i].type !== "g3d") {
-            const newPosRef = createRef();
-            const newLegendRef = createRef();
-            const uniqueKey = uuidv4();
-            genome.defaultTracks[i]["id"] = uniqueKey;
-            newTrackComponents.push({
-              trackIdx: trackIdx,
-              id: uniqueKey,
-              component: componentMap[genome.defaultTracks[i].type],
-              posRef: newPosRef,
-              legendRef: newLegendRef,
-              trackModel: genome.defaultTracks[i],
-            });
-
-            if (
-              genome.defaultTracks[i].type === "genomealign" &&
-              basePerPixel.current < 10
-            ) {
-              useFineModeNav.current = true;
-            }
-
-            if (genome.defaultTracks[i].type === "hic") {
-              hicStrawObj.current[`${uniqueKey}`] = new HicSource(
-                genome.defaultTracks[i].url
-              );
-            }
-            trackIdx++;
-          } else {
-            isThereG3dTrack.current = true;
-            let newG3dComponent: Array<any> = [];
-            const uniqueKeyG3d = uuidv4();
-            genome.defaultTracks[i]["id"] = uniqueKeyG3d;
-            newG3dComponent.push({
-              trackIdx: track3dIdx,
-              id: uniqueKeyG3d,
-
-              trackModel: genome.defaultTracks[i],
-            });
-            setG3dTrackComponents([...newG3dComponent]);
-            track3dIdx++;
+          if (
+            genome.defaultTracks[i].type === "genomealign" &&
+            basePerPixel.current < 10
+          ) {
+            useFineModeNav.current = true;
           }
+
+          if (genome.defaultTracks[i].type === "hic") {
+            hicStrawObj.current[`${uniqueKey}`] = new HicSource(
+              genome.defaultTracks[i].url
+            );
+          }
+          trackIdx++;
         }
-        activeTrackModels.current = genomeArr[genomeIdx].defaultTracks.filter(
-          (items, index) => {
-            return items.type !== "g3d";
+        // else {
+        //   isThereG3dTrack.current = true;
+        //   let newG3dComponent: Array<any> = [];
+        //   const uniqueKeyG3d = uuidv4();
+        //   genome.defaultTracks[i]["id"] = uniqueKeyG3d;
+        //   newG3dComponent.push({
+        //     trackIdx: track3dIdx,
+        //     id: uniqueKeyG3d,
+        //     component: ThreedmolContainer,
+
+        //     trackModel: genome.defaultTracks[i],
+        //   });
+        //   setG3dTrackComponents([...newG3dComponent]);
+        //   track3dIdx++;
+        // }
+      }
+      activeTrackModels.current = genomeArr[genomeIdx].defaultTracks.filter(
+        (items, index) => {
+          return items.type !== "g3d";
+        }
+      );
+
+      setTrackComponents((prevTrackComponents) => {
+        // Modify prevTrackComponents here
+        return [...prevTrackComponents, ...newTrackComponents];
+      });
+      fetchGenomeData(1, "right");
+    }
+  }, [initialStart]);
+
+  useEffect(() => {
+    if (trackManagerId.current === "") {
+      // on initial and when our genome data changes we set the default values here
+
+      let genome = genomeArr[genomeIdx];
+
+      leftStartCoord.current = genome.defaultRegion.start;
+      rightStartCoord.current = genome.defaultRegion.end;
+
+      bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
+
+      basePerPixel.current = bpRegionSize.current / windowWidth;
+
+      bpX.current = leftStartCoord.current;
+      maxBp.current = genome.defaultRegion.end;
+      minBp.current = genome.defaultRegion.start;
+
+      // create the worker and trigger state change before we can actually use them takes one re render to acutally
+      // start working.Thats why we need the initialStart state.
+      if (initialStart === "workerNotReady") {
+        infiniteScrollWorker.current = new Worker(
+          new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+          {
+            type: "module",
           }
         );
 
-        setTrackComponents((prevTrackComponents) => {
-          // Modify prevTrackComponents here
-          return [...prevTrackComponents, ...newTrackComponents];
-        });
-        fetchGenomeData(1, "right");
+        setInitialStart("workerReady");
       }
+      trackManagerId.current = genome.id;
     }
-    handle();
   }, [genomeArr]);
 
   return (
@@ -922,8 +937,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   flexDirection: "column",
                 }}
               >
-                <div ref={horizontalLineRef} className="horizontal-line" />
-                <div ref={verticalLineRef} className="vertical-line" />
+                <div
+                  ref={horizontalLineRef}
+                  className="Bullseye-horizontal-line"
+                  style={horizontalLineStyle}
+                />
+                <div
+                  ref={verticalLineRef}
+                  className="Bullseye-vertical-line"
+                  style={verticalLineStyle}
+                />
                 {trackComponents.map((item, index) => {
                   let Component = item.component;
 

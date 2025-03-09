@@ -5,7 +5,9 @@ import useResizeObserver from "./commonComponents/Resize";
 import { v4 as uuidv4 } from "uuid";
 import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
-import "../../index.css";
+// import "./index.css";
+// import "./DarkMode.css";
+import TrackModel from "../../models/TrackModel";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub(props: any) {
@@ -14,6 +16,8 @@ function GenomeHub(props: any) {
   const [genomeList, setGenomeList] = useState<Array<any>>([]);
   const [ref, size] = useResizeObserver();
   const [isInitial, setIsInitial] = useState<boolean>(true);
+  const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
+
   const addTrack = (curGen: any) => {
     curGen.genome.defaultRegion = curGen.region;
     curGen.genome.defaultTracks = [
@@ -68,10 +72,18 @@ function GenomeHub(props: any) {
   useEffect(() => {
     if (props.name || genomeList.length > 0) {
       let curGenome = getGenomeConfig(props.name);
+      console.log(curGenome, genomeList);
+      if (props.dataHub) {
+        const newTracks: Array<any> = [];
+        props.dataHub.map((item) => {
+          newTracks.push(new TrackModel(item));
+        });
+        curGenome.defaultTracks = newTracks;
+      }
       curGenome["genomeID"] = uuidv4();
       curGenome["windowWidth"] = size.width;
       setGenomeList([curGenome]);
-
+      setCurrentGenomeConfig(curGenome);
       curNavRegion.current.start = curGenome.defaultRegion.start;
       curNavRegion.current.end = curGenome.defaultRegion.end;
       setIsInitial(false);
@@ -87,8 +99,9 @@ function GenomeHub(props: any) {
     }
   }, []);
   useEffect(() => {
-    if (!isInitial) {
-      let curGenome = getGenomeConfig("hg38");
+    if (!isInitial && currentGenomeConfig) {
+      let curGenome = currentGenomeConfig;
+      console.log(curGenome);
       curGenome["genomeID"] = uuidv4();
       curGenome["windowWidth"] = size.width;
       if (curNavRegion.current.start === 0) {
@@ -109,22 +122,23 @@ function GenomeHub(props: any) {
 
   return (
     <div
-      ref={ref as React.RefObject<HTMLDivElement>}
+      data-theme={"light"}
       style={{
         paddingLeft: "1%",
         paddingRight: "2%",
       }}
     >
-      {genomeList.map((item, index) => (
-        <TrackManager
-          key={item.genomeID}
-          genomeIdx={index}
-          addTrack={addTrack}
-          startBp={startBp}
-          genomeArr={genomeList}
-          windowWidth={size.width}
-        />
-      ))}
+      <div ref={ref as React.RefObject<HTMLDivElement>}>
+        {genomeList.map((item, index) => (
+          <TrackManager
+            genomeIdx={index}
+            addTrack={addTrack}
+            startBp={startBp}
+            genomeArr={genomeList}
+            windowWidth={size.width}
+          />
+        ))}
+      </div>
     </div>
   );
 }
