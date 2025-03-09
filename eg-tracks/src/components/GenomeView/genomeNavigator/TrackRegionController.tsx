@@ -11,7 +11,7 @@ import SnpSearch from "../SnpSearch";
 const MODAL_STYLE = {
   content: {
     top: "50px",
-    left: "295px",
+    left: "40%",
     right: "unset",
     bottom: "unset",
     overflow: "visible",

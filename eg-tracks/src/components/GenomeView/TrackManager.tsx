@@ -26,6 +26,7 @@ import TrackRegionController from "./genomeNavigator/TrackRegionController";
 import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "@eg/core/src/eg-lib/models/genomes/GenomeConfig";
+import { niceBpCount } from "../../models/util";
 
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
@@ -785,22 +786,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       regionExpandLoci: regionExpandLoci,
       initVisData: initial
         ? initExpandBpLoci.map((item, index) => {
-            return {
-              visRegion: new DisplayedRegionModel(
-                genomeConfig.navContext,
-                item.start,
-                item.end
-              ),
-              viewWindowRegion: new DisplayedRegionModel(
-                genomeConfig.navContext,
-                initBpLoci[index].start,
-                initBpLoci[index].endS
-              ),
-              visWidth: windowWidth * 3,
+          return {
+            visRegion: new DisplayedRegionModel(
+              genomeConfig.navContext,
+              item.start,
+              item.end
+            ),
+            viewWindowRegion: new DisplayedRegionModel(
+              genomeConfig.navContext,
+              initBpLoci[index].start,
+              initBpLoci[index].endS
+            ),
+            visWidth: windowWidth * 3,
 
-              viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-            };
-          })
+            viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+          };
+        })
         : "",
     };
 
@@ -811,7 +812,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // sent the navigation to fetch the data from server
     try {
       queueRegionToFetch(initial ? 0 : dataIdx);
-    } catch {}
+    } catch { }
   }
   // MARK: onmessInfin
   function createInfiniteOnMessage() {
@@ -1111,15 +1112,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             visData: trackState.visData
               ? trackState.visData
               : trackState.genomicFetchCoord
-              ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-              : "",
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                : "",
             genomicLoci: trackState.regionLoci,
             visRegion: trackState.visRegion
               ? trackState.visRegion
               : trackState.genomicFetchCoord
-              ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
                   .visRegion
-              : "",
+                : "",
             regionExpandLoci: trackState.regionExpandLoci,
             useFineModeNav: useFineModeNav.current,
             windowWidth,
@@ -1192,8 +1193,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           .primaryVisData;
       let visRegion = !cacheTrackData.usePrimaryNav
         ? trackState.genomicFetchCoord[
-            trackFetchedDataCache.current[`${fetchRes.id}`].queryGenome
-          ].queryRegion
+          trackFetchedDataCache.current[`${fetchRes.id}`].queryGenome
+        ].queryRegion
         : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
 
@@ -1285,11 +1286,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       String(toolTitle) in zoomFactors ||
       String(toolTitle) in
-        {
-          "3": "",
-          "4": "",
-          "5": "",
-        } ||
+      {
+        "3": "",
+        "4": "",
+        "5": "",
+      } ||
       toolTitle === "isJump"
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
@@ -1359,8 +1360,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       "querygenome" in initTrackModel && initTrackModel.querygenome
         ? initTrackModel.querygenome
         : "genome" in initTrackModel.metadata && initTrackModel.metadata.genome
-        ? initTrackModel.metadata.genome
-        : genomeConfig.genome.getName();
+          ? initTrackModel.metadata.genome
+          : genomeConfig.genome.getName();
 
     const queryGenome =
       trackFetchedDataCache.current[`${initTrackModel.id}`]["queryGenome"];
@@ -1369,7 +1370,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     trackFetchedDataCache.current[`${initTrackModel.id}`]["useExpandedLoci"] =
       initTrackModel.type in trackUsingExpandedLoci ||
-      queryGenome !== genomeConfig.genome.getName()
+        queryGenome !== genomeConfig.genome.getName()
         ? true
         : false;
 
@@ -1486,8 +1487,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackManagerState.current.tracks[i].tracks?.map((_item, index) => {
           fetchInstances.current[
             `${trackManagerState.current.tracks[i].id}` +
-              "subtrack" +
-              `${index}`
+            "subtrack" +
+            `${index}`
           ] = new HicSource(
             trackManagerState.current.tracks[i].tracks![index].url
           );
@@ -2252,7 +2253,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       {/* <div>1pixel to {basePerPixel.current}bp</div> */}
       {/* <button onClick={handleButtonClick}>Add Favorite Color to User</button> */}
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-        <div className="flex flex-row py-10 items-center">
+        <div className="flex flex-row py-10 items-center justify-center">
           <HighlightMenu
             highlights={highlightElements}
             viewRegion={trackManagerState.current.viewRegion}
@@ -2285,8 +2286,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               addGlobalState={undefined}
             />
           )}
-          <p className="text-sm font-mono pl-2">
-            1px: {basePerPixel.current.toFixed(2)}bp
+          <p className="ml-4">
+            Viewing a {niceBpCount(trackManagerState.current.viewRegion.getWidth())} region in {Math.round(windowWidth)}px, 1 pixel spans {niceBpCount(basePerPixel.current, true)}
           </p>
         </div>
 
@@ -2380,52 +2381,52 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         trackFetchedDataCache={trackFetchedDataCache}
                         globalTrackState={globalTrackState}
 
-                        // viewWindow={trackManagerState.current.viewRegion}
+                      // viewWindow={trackManagerState.current.viewRegion}
                       />
 
                       {highlightElements.length > 0
                         ? highlightElements.map((item, index) => {
-                            if (item.display) {
-                              return (
+                          if (item.display) {
+                            return (
+                              <div
+                                key={index}
+                                style={{
+                                  display: "flex",
+                                  height: "100%",
+                                }}
+                              >
                                 <div
-                                  key={index}
                                   style={{
                                     display: "flex",
+                                    position: "relative",
                                     height: "100%",
                                   }}
                                 >
                                   <div
+                                    key={index}
                                     style={{
-                                      display: "flex",
-                                      position: "relative",
-                                      height: "100%",
-                                    }}
-                                  >
-                                    <div
-                                      key={index}
-                                      style={{
-                                        position: "absolute",
-                                        backgroundColor: item.color,
+                                      position: "absolute",
+                                      backgroundColor: item.color,
 
-                                        top: "0",
-                                        height: "100%",
-                                        left:
-                                          item.side === "right"
-                                            ? `${item.xPos}px`
-                                            : "",
-                                        right:
-                                          item.side === "left"
-                                            ? `${item.xPos}px`
-                                            : "",
-                                        width: item.width,
-                                        pointerEvents: "none", // This makes the highlighted area non-interactive
-                                      }}
-                                    ></div>
-                                  </div>
+                                      top: "0",
+                                      height: "100%",
+                                      left:
+                                        item.side === "right"
+                                          ? `${item.xPos}px`
+                                          : "",
+                                      right:
+                                        item.side === "left"
+                                          ? `${item.xPos}px`
+                                          : "",
+                                      width: item.width,
+                                      pointerEvents: "none", // This makes the highlighted area non-interactive
+                                    }}
+                                  ></div>
                                 </div>
-                              );
-                            }
-                          })
+                              </div>
+                            );
+                          }
+                        })
                         : ""}
                     </div>
                   </div>
