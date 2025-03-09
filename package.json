@@ -12,8 +12,7 @@
       "require": "./dist/index.umd.js",
       "types": "./dist/index.d.ts"
     },
-
-   "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css"
   },
   "files": [
     "dist"
@@ -51,6 +50,7 @@
     "@popperjs/core": "^2.11.8",
     "@primer/octicons-react": "^19.11.0",
     "@react-frontend-developer/buffers": "^2.0.1",
+    "@rollup/plugin-url": "^8.0.2",
     "@types/d3-scale": "^4.0.8",
     "@types/lodash": "^4.17.6",
     "@types/pako": "^2.0.3",

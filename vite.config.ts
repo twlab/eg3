@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import dts from "vite-plugin-dts";
 import { fileURLToPath } from "url";
-
+import url from "@rollup/plugin-url";
 export default defineConfig({
   resolve: {
     alias: {
@@ -36,10 +36,12 @@ export default defineConfig({
     },
   },
   plugins: [
+    url(),
     react(),
     dts({
       outDir: "dist",
       entryRoot: "src/lib",
     }),
   ],
+  worker: { format: "es" },
 });
