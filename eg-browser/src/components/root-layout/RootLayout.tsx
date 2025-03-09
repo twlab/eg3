@@ -121,7 +121,7 @@ export default function RootLayout() {
               <AnimatePresence mode="wait">
                 {sessionId !== null ? (
                   <motion.div
-                    className="flex flex-col h-full w-screen overflow-auto"
+                    className="flex flex-col h-full w-screen overflow-auto pb-44"
                     key="genome-view"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
