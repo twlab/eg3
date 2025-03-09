@@ -4,6 +4,7 @@ import Genome from "../models/Genome";
 import { GenomeConfig } from "../models/genomes/GenomeConfig";
 import TrackModel from "../models/TrackModel";
 import { IGenome } from "../types/genome-hub";
+import { validateGenomeData } from "./genome-schema";
 
 export default class GenomeSerializer {
     static serialize(genomeConfig: GenomeConfig): IGenome {
@@ -11,12 +12,12 @@ export default class GenomeSerializer {
 
         const serialized: IGenome = {
             name: genomeConfig.genome.getName(),
-            id: crypto.randomUUID(),
+            id: genomeConfig.genome.getName(),
             chromosomes: genomeConfig.genome["_chromosomes"].map((chr: Chromosome) => ({
                 name: chr.getName(),
                 length: chr.getLength(),
             })),
-            cytobands: genomeConfig.cytobands,
+            cytobands: genomeConfig.cytobands ?? {},
             defaultRegion,
             defaultTracks: genomeConfig.defaultTracks.map((track) => track.serialize()),
             publicHubList: genomeConfig.publicHubList,
@@ -35,21 +36,25 @@ export default class GenomeSerializer {
 
         const genome = new Genome(object.name, chromosomes);
         const navContext = genome.makeNavContext();
-        const defaultRegion = navContext.parse(object.defaultRegion);
-        const defaultTracks = object.defaultTracks.map((track) =>
+        const defaultRegion = navContext.parse(object.defaultRegion ? object.defaultRegion : "chr1:0-10000");
+        const defaultTracks = object.defaultTracks?.map((track) =>
             TrackModel.deserialize(track)
         );
 
         return {
             genome,
             navContext,
-            cytobands: object.cytobands,
+            cytobands: object.cytobands ? object.cytobands : {},
             defaultRegion,
-            defaultTracks,
-            publicHubList: object.publicHubList,
+            defaultTracks: defaultTracks ?? [],
+            publicHubList: object.publicHubList ?? [],
             publicHubData: object.publicHubData,
             annotationTracks: object.annotationTracks,
             twoBitURL: object.twoBitURL,
         };
+    }
+
+    static validate(object: any): boolean {
+        return validateGenomeData(object).valid;
     }
 }

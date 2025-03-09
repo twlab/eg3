@@ -7,7 +7,7 @@ import {
   TrackContainerRepresentable,
 } from "@eg/tracks";
 import Toolbar from "./toolbar/Toolbar";
-import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
 
@@ -15,7 +15,7 @@ export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
-  const genomeConfig = useCurrentGenomeConfig();
+  const genomeConfig = useCurrentGenome();
 
   if (!currentSession || !genomeConfig) {
     return null;

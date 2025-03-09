@@ -19,19 +19,32 @@ export default class GenomeHubManager {
         return this.instance;
     }
 
-    listDefaultGenomes(): IGenome[] {
-        return [];
-    }
-
     async listCustomGenomes(): Promise<IGenome[]> {
         return this.localGenomeRepository.listGenomes();
     }
 
     async getGenomeById(id: string): Promise<IGenome> {
-        return this.localGenomeRepository.getGenomeById(id);
+        if (this.genomeCache.has(id)) {
+            return this.genomeCache.get(id)!;
+        }
+
+        const genome = await this.localGenomeRepository.getGenomeById(id);
+
+        this.genomeCache.set(id, genome);
+
+        return genome;
+    }
+
+    isGenomeCached(id: string): boolean {
+        return this.genomeCache.has(id);
+    }
+
+    getGenomeFromCache(id: string): IGenome | undefined {
+        return this.genomeCache.get(id);
     }
 
     async putGenome(genome: IGenome): Promise<void> {
         this.localGenomeRepository.putGenome(genome);
+        this.genomeCache.set(genome.id, genome);
     }
 }

@@ -4,28 +4,54 @@ import { selectNavigationTab, selectSessionPanelOpen, setNavigationTab, setSessi
 import Button from '../ui/button/Button';
 import { motion, AnimatePresence } from 'framer-motion'
 import useSmallScreen from '../../lib/hooks/useSmallScreen';
-import { selectCurrentSessionId } from '@/lib/redux/slices/browserSlice';
+import { selectCurrentSession, updateCurrentSession } from '@/lib/redux/slices/browserSlice';
+import useCurrentGenome from '@/lib/hooks/useCurrentGenome';
+import InlineEditable from '../ui/input/InlineEditable';
 
 export default function NavBar() {
     const isSmallScreen = useSmallScreen();
 
     const dispatch = useAppDispatch();
     const currentTab = useAppSelector(selectNavigationTab);
-    const sessionId = useAppSelector(selectCurrentSessionId);
+    const currentSession = useAppSelector(selectCurrentSession);
     const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
+
+    const genome = useCurrentGenome();
 
     return (
         <div className="w-screen flex flex-row justify-between items-center p-4 border-b border-gray-300 bg-white">
-            <div className="flex flex-row items-center gap-4 cursor-pointer" onClick={() => dispatch(setSessionPanelOpen(!sessionPanelOpen))}>
-                <img src={Logo} alt="logo" className="size-8" />
+            <div className="flex flex-row items-center gap-4 cursor-pointer">
+                <img
+                    src={Logo}
+                    alt="logo"
+                    className="size-8"
+                    onClick={() => dispatch(setSessionPanelOpen(!sessionPanelOpen))}
+                />
                 {!isSmallScreen && (
-                    <h1 className="text-2xl text-primary font-light">
-                        <span className="font-medium">WashU </span>  Epigenome Browser
-                    </h1>
+                    currentSession ? (
+                        <div className="flex flex-row items-center gap-2">
+                            {(currentSession.title.length > 0 && genome?.name) && (
+                                <>
+                                    <p className="text-2xl text-primary font-medium">{genome?.name}</p>
+                                    <p className="text-2xl text-primary font-light">/</p>
+                                </>
+                            )}
+                            <InlineEditable
+                                value={currentSession.title.length > 0 ? currentSession.title : genome?.name ?? "Untitled"}
+                                onChange={(value) => dispatch(updateCurrentSession({ title: value }))}
+                                style={`text-2xl text-primary font-light ${currentSession.title.length > 0 ? "" : "font-medium"}`}
+                                tooltip={currentSession.title.length > 0 ? "Click to edit" : "Click to add title"}
+                            />
+                        </div>
+                    ) : (
+                        <h1 className="text-2xl text-primary font-light">
+                            <span className="font-medium">WashU </span>  Epigenome Browser
+                        </h1>
+                    )
                 )}
             </div>
             <AnimatePresence>
-                {sessionId !== null && (
+                {currentSession !== null && (
                     <motion.div
                         className="flex flex-row items-center gap-4"
                         style={{

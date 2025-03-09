@@ -30,7 +30,7 @@ export default function RootLayout() {
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
 
-  const isNavigationTabEmpty = navigationTab === null;
+  const isNavigationTabEmpty = !sessionId || navigationTab === null;
 
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;

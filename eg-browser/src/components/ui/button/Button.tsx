@@ -7,11 +7,13 @@ export default function Button({
     active = false,
     disabled = false,
     style,
+    outlined = false,
 }: {
     children: string;
     leftIcon?: React.ReactNode;
     onClick?: () => void;
     active?: boolean;
+    outlined?: boolean;
     disabled?: boolean;
     style?: React.CSSProperties;
 }) {
@@ -23,7 +25,7 @@ export default function Button({
 
     return (
         <button
-            className={classNames("text-primary px-2 py-2 rounded-2xl flex items-center justify-center", active && "bg-secondary", disabled && "bg-slate-200")}
+            className={classNames("text-primary px-2 py-2 rounded-2xl flex items-center justify-center", active && "bg-secondary", disabled && "bg-slate-200", outlined && "border border-primary")}
             onClick={_onClick}
             style={style}
         >
