@@ -1090,7 +1090,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             !("dataCache" in curTrackCache[curDataIdx])
           ) {
             var curTrackModel: any = trackManagerState.current.tracks.find(
-              (trackModel: any) => trackModel.id === Number(key)
+              (trackModel: any) =>
+                trackModel.id === Number(key) || trackModel.id === key
             );
 
             trackState =
@@ -2053,7 +2054,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             delete trackFetchedDataCache.current[key];
           }
         }
-
+        console.log(tracks);
         const newTrackComponents: Array<any> = [];
         let checkHasGenAlign = false;
         for (var i = 0; i < tracks.length; i++) {

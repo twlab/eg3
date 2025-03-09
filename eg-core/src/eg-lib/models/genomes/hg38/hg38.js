@@ -230,14 +230,14 @@ const defaultTracks = [
   //   },
   // }),
 
-  // new TrackModel({
-  //   name: "vertebratephastCons46way",
-  //   label: "Vertebrate PhastCons 46-way",
-  //   filetype: "bedgraph",
-  //   url: "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
-  //   height: 50,
-  //   options: { color: "#006385" },
-  // }),
+  new TrackModel({
+    name: "vertebratephastCons46way",
+    label: "Vertebrate PhastCons 46-way",
+    filetype: "bedgraph",
+    url: "https://egg.wustl.edu/d/hg19/vertebratephastCons46way.gz",
+    height: 50,
+    options: { color: "#006385" },
+  }),
   // new TrackModel({
   //   type: "boxplot",
   //   name: "example boxplot",
