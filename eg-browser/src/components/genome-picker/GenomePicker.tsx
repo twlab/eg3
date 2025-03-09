@@ -152,9 +152,9 @@ export default function GenomePicker() {
                             >
                                 <motion.img
                                     layout
-                                    src={placeholder}
+                                    src={genome.logoUrl ?? placeholder}
                                     alt={genome.name}
-                                    className="rounded-2xl h-24 w-full object-cover"
+                                    className="rounded-2xl h-28 w-full object-cover object-top"
                                 />
                                 <motion.div className="p-4 pb-6">
                                     <motion.h2
