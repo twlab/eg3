@@ -41,8 +41,7 @@ export function TrackContainer(props: ITrackContainerState) {
 export function TrackContainerRepresentable({
   tracks,
   highlights,
-  genomeConfig,
-  // : _genomeConfig
+  genomeConfig: _genomeConfig,
   legendWidth,
   showGenomeNav,
   onNewRegion,
@@ -57,10 +56,9 @@ export function TrackContainerRepresentable({
   Toolbar,
 }: ITrackContainerRepresentableProps) {
   // MARK: Genome Config
-
-  // const genomeConfig = useMemo(() => {
-  //   return GenomeSerializer.deserialize(_genomeConfig);
-  // }, [_genomeConfig]);
+  const genomeConfig = useMemo(() => {
+    return GenomeSerializer.deserialize(_genomeConfig);
+  }, [_genomeConfig]);
 
   // MARK: Tracks
 

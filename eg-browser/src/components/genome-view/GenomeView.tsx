@@ -69,6 +69,8 @@ export default function GenomeView() {
         }
         tool={tool}
         Toolbar={Toolbar}
+        onLoadComplete={undefined}
+        isGenomeViewLoaded={false}
       />
     </div>
   );

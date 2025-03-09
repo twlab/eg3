@@ -1,4 +1,10 @@
-import React, { ReactElement, useEffect, useRef, useState } from "react";
+import React, {
+  ReactElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MagnifyingGlassIcon,
@@ -16,11 +22,12 @@ import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 //   clearSearchHistory,
 // } from "@/lib/redux/slices/searchSlice";
 import { debounce } from "lodash";
-import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import OutsideClickDetector from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 import IsoformSelection from "@eg/tracks/src/components/GenomeView/genomeNavigator/IsoformSelection";
 import Gene from "@eg/core/src/eg-lib/models/Gene";
 import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
+import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
 const SNP_ENDPOINTS: any = {
   hg19: "https://grch37.rest.ensembl.org/variation/human",
@@ -238,9 +245,16 @@ export default function SearchBar({
   const latestUserInput = useRef("");
   const [badInputMessage, setBadInputMessage] = useState("");
   const [loadingMsg, setLoadingMsg] = useState<string>("");
-  const genomeConfig = useCurrentGenomeConfig();
+  const genome = useCurrentGenome();
   const [isShowingIsoforms, setIsShowingIsoforms] = useState(false);
   const [isShowingSNPforms, setIsShowingSNPforms] = useState(false);
+
+  const genomeConfig = useMemo(() => {
+    if (genome) {
+      return GenomeSerializer.deserialize(genome!);
+    }
+  }, [genome]);
+
   const parseRegion = (query: string) => {
     const navContext = genomeConfig?.navContext;
     let parsedRegion;
