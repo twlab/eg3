@@ -9,7 +9,6 @@ import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates
 // import TrackLegend from "./commonComponents/TrackLegend";
 
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-import { getGenomeConfig } from "../../../../models/genomes/allGenomes";
 import TrackModel from "../../../../models/TrackModel";
 import TrackLegend from "../commonComponents/TrackLegend";
 

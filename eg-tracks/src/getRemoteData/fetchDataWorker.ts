@@ -98,7 +98,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  console.log(event.data, " trigger fetch")
+  console.log(event.data, " trigger fetch");
   const primaryGenName = event.data.primaryGenName;
   const fetchResults: Array<any> = [];
   const genomicLoci = event.data.genomicLoci;
@@ -125,6 +125,7 @@ self.onmessage = async (event: MessageEvent) => {
   }
   const tmpQueryGenObj: { [key: string]: any } = {};
   tmpQueryGenObj[`${primaryGenName}`] = "";
+  console.log(trackDefaults);
   let genomeAlignTracks = trackDefaults.filter((items, index) => {
     return items.type === "genomealign";
   });
@@ -157,7 +158,7 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
           trackModel: item,
-          result: { error: "This track type is currently not support" }
+          result: { error: "This track type is currently not support" },
         });
       } else if (trackType in { hic: "", dynamichic: "" }) {
         fetchResults.push({
@@ -281,15 +282,15 @@ self.onmessage = async (event: MessageEvent) => {
         curRespond = await Promise.all(
           trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
         );
 
         responses.push(_.flatten(curRespond));
@@ -332,7 +333,9 @@ self.onmessage = async (event: MessageEvent) => {
             `Error fetching data for track model type ${trackModel.type}:`,
             error
           );
-          responses.push({ error: "Data fetch failed. Reload page or change view to retry" });
+          responses.push({
+            error: "Data fetch failed. Reload page or change view to retry",
+          });
         }
       }
     }

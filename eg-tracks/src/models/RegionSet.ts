@@ -2,7 +2,7 @@ import _ from "lodash";
 import Feature, { IFeature, FORWARD_STRAND_CHAR } from "./Feature";
 import NavigationContext from "./NavigationContext";
 import FlankingStrategy, { IFlankingStrategy } from "./FlankingStrategy";
-import { getGenomeConfig } from "./genomes/allGenomes";
+import { getGenomeConfig } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 import Genome from "./Genome";
 
 /**

@@ -360,9 +360,6 @@ export default function SearchBar({
     setIsShowingSNPforms(false);
     setSelectedInput("");
     setSnpSelectedInput(null);
-    if (value.trim().length < MIN_CHARS_FOR_SUGGESTIONS) {
-      setSearchResults([]);
-    }
 
     debouncedSearch(value);
   };

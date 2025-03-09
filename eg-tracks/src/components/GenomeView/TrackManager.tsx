@@ -1090,14 +1090,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             !("dataCache" in curTrackCache[curDataIdx])
           ) {
             var curTrackModel: any = trackManagerState.current.tracks.find(
-              (trackModel: any) => trackModel.id === Number(key)
+              (trackModel: any) =>
+                trackModel.id === Number(key) || trackModel.id === key
+            );
+
+            console.log(
+              curTrackModel,
+              trackManagerState.current,
+              key,
+              trackFetchedDataCache.current
             );
 
             trackState =
               curDataIdx in globalTrackState.current.trackStates
                 ? globalTrackState.current.trackStates[curDataIdx].trackState
                 : "";
-
             trackToFetch.push(curTrackModel);
           }
         }
@@ -1745,6 +1752,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // it gets the trackComponents at creation so when trackComponent updates we need to
     // add the listener so it can get the most updated trackCom
     // this also include other state changes values such windowWidth
+    console.log(trackComponents);
     trackComponents.forEach((component, _i) => {
       frameID.current = requestAnimationFrame(() => {
         component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
@@ -2040,6 +2048,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!genomeConfig.isInitial) {
+      console.log(tracks);
       if (
         !arraysHaveSameTrackModels(tracks, trackManagerState.current.tracks)
       ) {
@@ -2068,9 +2077,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           }
           // if not in view this means that this is the new track that was added.
+
           if (!foundComp) {
+            // MARK: TODO:g3d
+            if (curTrackModel.type === "g3d") {
+              continue;
+            }
             if (curTrackModel.type === "genomealign") {
               checkHasGenAlign = true;
+
               if (basePerPixel.current < 10) {
                 useFineModeNav.current = true;
               }
@@ -2188,7 +2203,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           hasGenomeAlign.current = false;
         }
         trackManagerState.current.tracks = tracks;
-
+        console.log(newTrackComponents);
         setTrackComponents(newTrackComponents);
       }
     }
