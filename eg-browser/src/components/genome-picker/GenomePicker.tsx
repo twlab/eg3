@@ -1,6 +1,6 @@
 import useDebounce from '@/lib/hooks/useDebounce';
 import useSmallScreen from '@/lib/hooks/useSmallScreen';
-import { BrowserSession, createSessionWithGenomeId, selectSessions, setCurrentSession } from '@/lib/redux/slices/browserSlice';
+import { BrowserSession, createSessionWithGenome, selectSessions, setCurrentSession } from '@/lib/redux/slices/browserSlice';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
@@ -15,6 +15,9 @@ import { GENOME_LIST } from "./genome-list";
 import TabView from '../ui/tab-view/TabView';
 import GenomeHubPanel from '../genome-hub/GenomeHubPanel';
 import AddCustomGenome from '../genome-hub/AddCustomGenome';
+import GenomeSchemaView from '../genome-hub/GenomeSchemaView';
+import { getGenomeConfig } from '@eg/tracks';
+import GenomeSerializer from '@eg/tracks/src/genome-hub/GenomeSerializer';
 
 type GenomeName = string;
 type AssemblyName = string;
@@ -36,21 +39,15 @@ export default function GenomePicker() {
 
 
         if (selectedPath !== null) {
-            // const serialized = GenomeSerializer.serialize(getGenomeConfig(selectedPath[1]));
-            // console.log('serialized', serialized);
-            // const genomeConfig = GenomeSerializer.deserialize(serialized);
-            // console.log('genomeConfig', genomeConfig);
-            // const reserialized = GenomeSerializer.serialize(genomeConfig);
-            // console.log('reserialized', reserialized);
-
-            // console.log('json.stringify(serialized) === json.stringify(reserialized)', JSON.stringify(serialized) === JSON.stringify(reserialized));
-
+            // TODO:
             // 1. preload the genome from indexedDB and store it in memory
             // 2. preload the track data
             // finally, show the session
 
+            const genomeConfig = getGenomeConfig(selectedPath[1]);
+
             timeout = setTimeout(() => {
-                dispatch(createSessionWithGenomeId(selectedPath[1]));
+                dispatch(createSessionWithGenome(GenomeSerializer.serialize(genomeConfig)));
             }, 500);
         }
 
@@ -90,6 +87,13 @@ export default function GenomePicker() {
                                 path: "add-custom-genome",
                                 options: {
                                     title: "Add Custom Genome"
+                                }
+                            },
+                            {
+                                component: GenomeSchemaView,
+                                path: "genome-schema",
+                                options: {
+                                    title: "Genome Schema"
                                 }
                             }
                         ]}

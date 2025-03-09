@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import CollectionView, {
   ICollectionViewDataSource,
 } from "@/components/ui/collection/CollectionView";
-import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,
@@ -13,7 +13,7 @@ import {
 export default function AnnotationTracks() {
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectCurrentSession);
-  const genomeConfig = useCurrentGenomeConfig();
+  const genomeConfig = useCurrentGenome();
 
   const selectedIds = useMemo(() => {
     return new Set(session?.tracks.map((track) => track.name));

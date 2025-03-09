@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import _ from "lodash";
 import CollectionView, { ICollectionViewDataSource } from "@/components/ui/collection/CollectionView";
-import useCurrentGenomeConfig from "@/lib/hooks/useCurrentGenomeConfig";
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession, updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { fetchDataHubTracks } from "@eg/core";
@@ -9,7 +9,7 @@ import { ITrackModel } from "@eg/tracks";
 import { addPublicTracksPool } from "@/lib/redux/slices/hubSlice";
 
 export default function PublicDataHubs() {
-    const genomeConfig = useCurrentGenomeConfig();
+    const genomeConfig = useCurrentGenome();
     const dispatch = useAppDispatch();
     const session = useAppSelector(selectCurrentSession);
 

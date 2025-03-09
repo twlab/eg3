@@ -254,7 +254,7 @@ class Chromosomes extends React.PureComponent<
    * @return {JSX.Element[]} cytoband elements
    */
   renderCytobandsInLocus(locus, drawModel) {
-    const cytobandsForChr = this.props.genomeConfig.cytobands[locus.chr] || [];
+    const cytobandsForChr = this.props.genomeConfig.cytobands?.[locus.chr] || [];
     let children: Array<any> = [];
     for (let cytoband of cytobandsForChr) {
       const cytobandLocus = new ChromosomeInterval(

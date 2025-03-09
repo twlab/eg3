@@ -53,11 +53,6 @@ const defaultTracks = [
     },
   }),
   new TrackModel({
-    type: "bam",
-    name: "Test bam",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
-  }),
-  new TrackModel({
     type: "geneAnnotation",
     name: "gencodeV39",
     genome: "hg19",

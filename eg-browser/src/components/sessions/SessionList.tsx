@@ -6,6 +6,7 @@ import { useState, useMemo } from "react";
 import Switch from "@/components/ui/switch/Switch";
 import { selectSessionSortPreference, setSessionSortPreference } from "@/lib/redux/slices/settingsSlice";
 import EmptyView from "../ui/empty/EmptyView";
+import useGenome from "@/lib/hooks/useGenome";
 
 export default function SessionList({
     onSessionClick
@@ -75,6 +76,16 @@ function SessionListItem({
     sortPreference: 'createdAt' | 'updatedAt';
 }) {
     const [isHovered, setIsHovered] = useState(false);
+    const { genome, error } = useGenome(session.genomeId);
+
+    if (error) {
+        return (
+            <div className="flex flex-col bg-secondary p-4 rounded-2xl cursor-pointer overflow-hidden">
+                <h1 className="text-2xl">Genome ID: {session.genomeId}</h1>
+                <p className="text-sm">Error loading genome: {error.message}</p>
+            </div>
+        );
+    }
 
     return (
         <motion.div
@@ -88,7 +99,14 @@ function SessionListItem({
         >
             <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl">Genome: {session.genomeId}</h1>
+                    {session.title.length > 0 ? (
+                        <>
+                            <h1 className="text-2xl">{session.title}</h1>
+                            <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
+                        </>
+                    ) : (
+                        <h1 className="text-2xl">Genome: {genome?.name ?? "..."}</h1>
+                    )}
                     <p className="text-sm">
                         {sortPreference === 'updatedAt'
                             ? `Updated: ${new Date(session.updatedAt).toLocaleDateString()}`

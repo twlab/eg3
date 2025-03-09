@@ -1,0 +1,196 @@
+{
+    "name": "canFam6",
+    "id": "32a1dfb2-9b61-4879-b6bb-588686854ce9",
+    "group": "Dog",
+    "cytobands": {},
+    "defaultRegion": "chr7:26733027-26803027",
+    "chromosomes": [
+        {
+            "name": "chr1",
+            "length": 122014068
+        },
+        {
+            "name": "chrX",
+            "length": 108808365
+        },
+        {
+            "name": "chr3",
+            "length": 94329250
+        },
+        {
+            "name": "chr5",
+            "length": 88913986
+        },
+        {
+            "name": "chr4",
+            "length": 87912527
+        },
+        {
+            "name": "chr2",
+            "length": 82037489
+        },
+        {
+            "name": "chr7",
+            "length": 80419774
+        },
+        {
+            "name": "chr6",
+            "length": 80213190
+        },
+        {
+            "name": "chr8",
+            "length": 73585679
+        },
+        {
+            "name": "chr11",
+            "length": 72832428
+        },
+        {
+            "name": "chr12",
+            "length": 72300020
+        },
+        {
+            "name": "chr10",
+            "length": 69219345
+        },
+        {
+            "name": "chr15",
+            "length": 64389122
+        },
+        {
+            "name": "chr17",
+            "length": 63738581
+        },
+        {
+            "name": "chr13",
+            "length": 62895387
+        },
+        {
+            "name": "chr22",
+            "length": 61822301
+        },
+        {
+            "name": "chr14",
+            "length": 60430354
+        },
+        {
+            "name": "chr9",
+            "length": 60315500
+        },
+        {
+            "name": "chr20",
+            "length": 57984708
+        },
+        {
+            "name": "chr16",
+            "length": 54556944
+        },
+        {
+            "name": "chr18",
+            "length": 54357284
+        },
+        {
+            "name": "chr19",
+            "length": 52989165
+        },
+        {
+            "name": "chr23",
+            "length": 52413914
+        },
+        {
+            "name": "chr25",
+            "length": 51908704
+        },
+        {
+            "name": "chr34",
+            "length": 51113282
+        },
+        {
+            "name": "chr21",
+            "length": 50232922
+        },
+        {
+            "name": "chr24",
+            "length": 46832179
+        },
+        {
+            "name": "chr27",
+            "length": 46280981
+        },
+        {
+            "name": "chr32",
+            "length": 41857359
+        },
+        {
+            "name": "chr28",
+            "length": 41264955
+        },
+        {
+            "name": "chr29",
+            "length": 40893792
+        },
+        {
+            "name": "chr30",
+            "length": 40067686
+        },
+        {
+            "name": "chr31",
+            "length": 39086971
+        },
+        {
+            "name": "chr26",
+            "length": 38725074
+        },
+        {
+            "name": "chr37",
+            "length": 31754289
+        },
+        {
+            "name": "chr33",
+            "length": 31422675
+        },
+        {
+            "name": "chr36",
+            "length": 30723464
+        },
+        {
+            "name": "chr35",
+            "length": 26040529
+        },
+        {
+            "name": "chr38",
+            "length": 23973277
+        },
+        {
+            "name": "chrM",
+            "length": 16727
+        }
+    ],
+    "annotationTracks": {
+        "Ruler": [
+            {
+                "type": "ruler",
+                "label": "Ruler",
+                "name": "Ruler"
+            }
+        ],
+        "Genes": [
+            {
+                "name": "ncbiRefSeq",
+                "label": "NCBI genes",
+                "filetype": "geneAnnotation"
+            }
+        ]
+    },
+    "defaultTracks": [
+        {
+            "name": "Ruler",
+            "type": "ruler"
+        },
+        {
+            "name": "ncbiRefSeq",
+            "label": "NCBI genes",
+            "filetype": "geneAnnotation"
+        }
+    ]
+}

@@ -1,14 +1,15 @@
 export interface IGenome {
     id: uuid;
     name: string;
+    group?: string;
     chromosomes: { name: string; length: number }[];
     cytobands: any;
-    defaultRegion: string;
-    defaultTracks: any[];
-    publicHubList: any[];
-    publicHubData: any;
-    annotationTracks: any;
-    twoBitURL: string;
+    defaultRegion?: string;
+    defaultTracks?: any[];
+    publicHubList?: any[];
+    publicHubData?: any;
+    annotationTracks?: any;
+    twoBitURL?: string;
 }
 
 export interface IGenomeHubSource {

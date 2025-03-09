@@ -37,22 +37,14 @@ interface ITrackModel {
   name: string;
   type?: string;
   filetype?: string;
-  options?: any;
-  url?: any;
+  options: TrackOptions;
+  url: string;
   indexUrl?: string;
-  metadata?: ITrackModelMetadata;
-  fileObj?: any;
+  metadata: ITrackModelMetadata;
+  fileObj?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
-  genome?: string;
-  isSelected?: any;
-  tracks?: any;
-  datahub?: any;
-  legendWidth?: any;
-  label?: any;
-  files?: any;
-  isText?: boolean;
-  textConfig?: { [key: string]: any };
+  id: string | number;
 }
 
 /**
@@ -72,8 +64,8 @@ export class TrackModel {
   type!: string;
   label!: string;
   filetype?: string;
-  options!: any;
-  url?: any;
+  options!: TrackOptions;
+  url!: string;
   indexUrl?: string;
   metadata!: ITrackModelMetadata;
   id!: number | string;
@@ -81,16 +73,21 @@ export class TrackModel {
   showOnHubLoad?: boolean;
   fileObj?: any;
   files?: any;
-  tracks?: TrackModel[];
+  tracks?: TrackModel[]; // for matplot
   querygenome?: string;
   isText?: boolean;
   textConfig?: any;
   apiConfig?: any;
   queryEndpoint?: QueryEndpoint;
   legendWidth?: any;
-
   constructor(plainObject: ITrackModel) {
-    Object.assign(this, plainObject);
+    const data = {
+      ...plainObject,
+      options: { ...plainObject.options },
+      metadata: { ...plainObject.metadata },
+    };
+
+    Object.assign(this, data);
     this.name = this.name || "";
     this.label =
       this.options && this.options.label
@@ -129,7 +126,8 @@ export class TrackModel {
   }
 
   serialize() {
-    const plainObject: Partial<TrackModel> = _.clone(this);
+    const plainObject = _.clone(this);
+    // @ts-ignore
     delete plainObject.id;
     return plainObject;
   }
@@ -144,7 +142,7 @@ export class TrackModel {
    *
    * @return {number} this object's id
    */
-  getId() {
+  getId(): number {
     return this.id;
   }
 
@@ -235,6 +233,7 @@ export class TrackModel {
    */
   _cloneThisAndProp(prop: string): TrackModel {
     const clone = _.clone(this);
+    // @ts-ignore
     clone[prop] = _.clone(this[prop]);
     return clone;
   }
@@ -243,7 +242,7 @@ export class TrackModel {
 export default TrackModel;
 
 // modified from juicebox
-export function mapUrl(url: any) {
+export function mapUrl(url: string) {
   if (!url) {
     return undefined;
   }

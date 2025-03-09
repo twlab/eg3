@@ -6,9 +6,9 @@ import {
 } from "../types";
 import GenomeRoot from "@eg/tracks/src/components/GenomeView/GenomeRoot";
 import { useCallback, useMemo, useRef } from "react";
-import { TrackModel } from "@eg/core/src/eg-lib/models/TrackModel";
-import NavigationContext from "@eg/core/src/eg-lib/models/NavigationContext";
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import { TrackModel } from "../models/TrackModel";
+import NavigationContext from "../models/NavigationContext";
+import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import GenomeSerializer from "../genome-hub/GenomeSerializer";
 
 export function TrackContainer(props: ITrackContainerState) {
