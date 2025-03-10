@@ -10,31 +10,31 @@ export default function HelpTab() {
                     description="Read our comprehensive documentation and user guides"
                     href="https://epigenomegateway.readthedocs.io/"
                 />
-
                 <ExternalLink
-                    title="Legacy Browser"
+                    title="GitHub Repository"
+                    description="View and contribute to our source code on GitHub"
+                    href="https://github.com/twlab/eg3"
+                />
+                <ExternalLink
+                    title="2nd Gen Browser"
+                    description="Visit the 2nd generation of WashU Epigenome Browser"
+                    href="http://epigenomegateway.wustl.edu/browser2022"
+                />
+                <ExternalLink
+                    title="1st Gen Browser"
                     description="Visit the classic version of WashU Epigenome Browser"
                     href="http://epigenomegateway.wustl.edu/legacy"
                 />
-
+                <ExternalLink
+                    title="Discord Server"
+                    description="Join our Discord server for real-time discussions and support"
+                    href="https://discord.gg/Mvngzxa9"
+                />
                 <ExternalLink
                     title="Google Groups"
                     description="Join our community discussions and get support"
                     href="https://groups.google.com/d/forum/epgg"
                 />
-
-                <ExternalLink
-                    title="Slack Community"
-                    description="Join our Slack workspace for real-time discussions and support"
-                    href="https://join.slack.com/t/epgg/shared_invite/enQtNTA5NDY5MDIwNjc4LTlhYjJlZWM4MmRlMTcyODEzMDI0ZTlmNmM2ZjIyYmY2NTU5ZTY2MWRmOWExMDg1N2U5ZWE3NzhkMjVkZDVhNTc"
-                />
-
-                <ExternalLink
-                    title="GitHub Repository"
-                    description="View and contribute to our source code on GitHub"
-                    href="https://github.com/lidaof/eg-react"
-                />
-
                 <ExternalLink
                     title="YouTube Channel"
                     description="Watch tutorials and demonstrations of the browser"
