@@ -5,7 +5,7 @@ import RepeatSource from "./RepeatSource";
 
 import JasparSource from "./JasparSource";
 
-const AWS_API = "https://lambda.epigenomegateway.org/v2";
+const AWS_API = "https://lambda.epigenomegateway.org/v3";
 let cachedFetchInstance: { [key: string]: any } = {};
 const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {

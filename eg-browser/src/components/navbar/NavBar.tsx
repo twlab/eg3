@@ -55,9 +55,8 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl text-primary font-light ${
-                  currentSession.title.length > 0 ? "" : "font-medium"
-                }`}
+                style={`text-2xl text-primary font-light ${currentSession.title.length > 0 ? "" : "font-medium"
+                  }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -109,16 +108,6 @@ export default function NavBar() {
             <Button
               onClick={() =>
                 dispatch(
-                  setNavigationTab(currentTab === "help" ? null : "help")
-                )
-              }
-              active={currentTab === "help"}
-            >
-              Help
-            </Button>
-            <Button
-              onClick={() =>
-                dispatch(
                   setNavigationTab(currentTab === "share" ? null : "share")
                 )
               }
@@ -137,6 +126,16 @@ export default function NavBar() {
               active={currentTab === "settings"}
             >
               Settings
+            </Button>
+            <Button
+              onClick={() =>
+                dispatch(
+                  setNavigationTab(currentTab === "help" ? null : "help")
+                )
+              }
+              active={currentTab === "help"}
+            >
+              Help
             </Button>
           </motion.div>
         )}
