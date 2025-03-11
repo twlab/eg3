@@ -53,6 +53,17 @@ const defaultTracks = [
     }),
 ];
 
+const publicHubList = [
+    {
+        collection: "Impact of Genomic Variation on Function (IGVF) ",
+        name: "(2025) IGVF released data",
+        numTracks: 7,
+        oldHubFormat: false,
+        url: "https://vizhub.wustl.edu/public/update2025/igvf_GRCm39.json",
+        description: "IGVF public released only, only include supported formats by Browser",
+    },
+];
+
 const MM39 = {
     genome: genome,
     navContext: navContext,
@@ -60,6 +71,7 @@ const MM39 = {
     defaultRegion: defaultRegion,
     defaultTracks: defaultTracks,
     twoBitURL: "https://vizhub.wustl.edu/public/mm39/mm39.2bit",
+    publicHubList,
     annotationTracks,
 };
 

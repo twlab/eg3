@@ -75,6 +75,18 @@ const publicHubData = {
 const publicHubList = [
     {
         collection: "4D Nucleome Network",
+        name: "(2025) 4DN datasets",
+        numTracks: 103,
+        oldHubFormat: false,
+        url: "https://vizhub.wustl.edu/public/update2025/4dn-galGal5-mar2025.json",
+        description: {
+            "hub built by": "Daofeng Li (dli23@wustl.edu)",
+            "last update": "Mar 3 2025",
+            "hub built notes": "metadata information are obtained directly from 4DN data portal",
+        },
+    },
+    {
+        collection: "4D Nucleome Network",
         name: "4DN datasets",
         numTracks: 103,
         oldHubFormat: false,

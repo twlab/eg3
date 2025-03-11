@@ -1,8 +1,8 @@
-import Chromosome from '../../Chromosome';
-import { Genome } from '../../Genome';
-import TrackModel from '../../TrackModel';
+import Chromosome from "../../Chromosome";
+import { Genome } from "../../Genome";
+import TrackModel from "../../TrackModel";
 import annotationTracks from "./annotationTracks.json";
-import cytobands from './cytoBandIdeo.json';
+import cytobands from "./cytoBandIdeo.json";
 
 const GENOME_NAME = "danRer11";
 
@@ -48,13 +48,36 @@ const defaultTracks = [
         name: "Ruler",
     }),
     new TrackModel({
-        type: 'repeatmasker',
-        name: 'RepeatMasker',
-        url: 'https://vizhub.wustl.edu/public/danRer11/rmsk16.bb',
+        type: "repeatmasker",
+        name: "RepeatMasker",
+        url: "https://vizhub.wustl.edu/public/danRer11/rmsk16.bb",
     }),
 ];
 
+const publicHubData = {
+    "4D Nucleome Network":
+        "The 4D Nucleome Network aims to understand the principles underlying nuclear " +
+        "organization in space and time, the role nuclear organization plays in gene expression and cellular function, " +
+        "and how changes in nuclear organization affect normal development as well as various diseases.  The program is " +
+        "developing novel tools to explore the dynamic nuclear architecture and its role in gene expression programs, " +
+        "models to examine the relationship between nuclear organization and function, and reference maps of nuclear" +
+        "architecture in a variety of cells and tissues as a community resource.",
+};
 
+const publicHubList = [
+    {
+        collection: "4D Nucleome Network",
+        name: "(2025) 4DN datasets",
+        numTracks: 35,
+        oldHubFormat: false,
+        url: "https://vizhub.wustl.edu/public/update2025/4dn-GRCz11-mar2025.json",
+        description: {
+            "hub built by": "Daofeng Li (dli23@wustl.edu)",
+            "last update": "Mar 3 2025",
+            "hub built notes": "metadata information are obtained directly from 4DN data portal",
+        },
+    },
+];
 
 const DAN_RER11 = {
     genome,
@@ -62,7 +85,9 @@ const DAN_RER11 = {
     cytobands,
     defaultRegion,
     defaultTracks,
-    twoBitURL: 'https://vizhub.wustl.edu/public/danRer11/danRer11.2bit',
+    twoBitURL: "https://vizhub.wustl.edu/public/danRer11/danRer11.2bit",
+    publicHubData,
+    publicHubList,
     annotationTracks,
 };
 
