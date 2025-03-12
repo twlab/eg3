@@ -274,37 +274,35 @@ self.onmessage = async (event: MessageEvent) => {
       curFetchNav = new Array(genomicLoci);
     }
     // console.log(curFetchNav, genomicLoci);
-    if (trackModel.fileObj !== "" && trackModel.url === "") {
+    const isLocalFetch = trackModel.fileObj instanceof File;
+    if (isLocalFetch && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
-        try {
-          // Assuming getData is bounded to the right context.
-          const curRespond = trackModel.isText
-            ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
-            : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              });
-          if (curRespond && typeof curRespond === "object") {
-            if (curRespond.hasOwnProperty("error")) {
-              responses.push({
-                error: curRespond.message,
-              });
-            }
-          } else {
-            responses.push(_.flatten(curRespond));
-          }
-        } catch (error) {
+        // Assuming getData is bounded to the right context.
+        const curRespond = trackModel.isText
+          ? await textFetchFunction[trackModel.type]({
+              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
+          : await localTrackFetchFunction[trackModel.type]({
+              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            });
+
+        if (
+          curRespond &&
+          typeof curRespond === "object" &&
+          curRespond.hasOwnProperty("error")
+        ) {
           responses.push({
-            error: error.message,
+            error: curRespond.message,
           });
+        } else {
+          responses.push(curRespond);
         }
       }
-    } else {
+    } else if (!isLocalFetch) {
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
         try {
@@ -347,6 +345,11 @@ self.onmessage = async (event: MessageEvent) => {
           });
         }
       }
+    } else {
+      console.log(trackModel);
+      responses.push({
+        error: "Fetch failed: data source is not valid",
+      });
     }
 
     return responses;

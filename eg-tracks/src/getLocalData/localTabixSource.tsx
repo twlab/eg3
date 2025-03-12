@@ -25,6 +25,7 @@ class LocalTabixSource {
    */
 
   constructor(trackModel, dataLimit = 100000) {
+    console.log(trackModel);
     if (trackModel.files[0].name.length > trackModel.files[1].name.length) {
       this.blob = trackModel.files[1];
       this.indexBlob = trackModel.files[0];
@@ -48,27 +49,33 @@ class LocalTabixSource {
    */
   getData = async (loci, options) => {
     // let promises = loci.map(this.getDataForLocus);
-    console.log(loci, options, "got HERE1");
-    const promises = loci.map((locus) => {
-      // graph container uses this source directly w/o initial track, so options is null
-      let chrom =
-        options && options.ensemblStyle
-          ? locus.chr.replace("chr", "")
-          : locus.chr;
-      if (chrom === "M") {
-        chrom = "MT";
-      }
-      return this.getDataForLocus(chrom, locus.start, locus.end);
-    });
-    console.log(promises, "got HERE2");
-    const dataForEachLocus = await Promise.all(promises);
-    if (options && options.ensemblStyle) {
-      loci.forEach((locus, index) => {
-        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+    try {
+      const promises = loci.map((locus) => {
+        // graph container uses this source directly w/o initial track, so options is null
+        let chrom =
+          options && options.ensemblStyle
+            ? locus.chr.replace("chr", "")
+            : locus.chr;
+        if (chrom === "M") {
+          chrom = "MT";
+        }
+        return this.getDataForLocus(chrom, locus.start, locus.end);
       });
+
+      const dataForEachLocus = await Promise.all(promises);
+      if (options && options.ensemblStyle) {
+        loci.forEach((locus, index) => {
+          dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+        });
+      }
+
+      return _.flatten(dataForEachLocus);
+    } catch (error) {
+      return {
+        error: true,
+        message: `Failed to fetch data: ${error.message}`,
+      };
     }
-    console.log(dataForEachLocus, "got HERE@");
-    return _.flatten(dataForEachLocus);
   };
 
   /**

@@ -64,7 +64,7 @@ export const textFetchFunction: { [key: string]: any } = {
   },
 };
 
-function getTextData(regionData: any) {
+async function getTextData(regionData: any) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
     if (regionData.trackModel.type === "longrange") {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
@@ -85,7 +85,7 @@ function getTextData(regionData: any) {
 
   let fetchInstance = cachedLocalFetchInstance[`${regionData.trackModel.id}`];
 
-  return fetchInstance.getData(regionData.nav);
+  return await fetchInstance.getData(regionData.nav);
 }
 
 async function getLocalData(regionData: any, trackType: string) {
@@ -108,10 +108,9 @@ async function getLocalData(regionData: any, trackType: string) {
   //     regionData.trackModel.options
   //   );
   // }
-  let returnStatus = await fetchInstance.getData(
+
+  return await fetchInstance.getData(
     regionData.nav,
     regionData.trackModel.options
   );
-
-  return returnStatus;
 }

@@ -8,6 +8,7 @@ import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import React from "react";
 import JSON5 from "json5";
 import TrackModel from "@eg/tracks/src/models/TrackModel";
+import { readFileAsText } from "@eg/tracks/src/models/util";
 
 export default function LocalTracks() {
   return (
@@ -115,8 +116,7 @@ function AddLocalTracks() {
     }
 
     const fileList = Array.from(files);
-    console.log(trackState.type);
-    console.log(ONE_TRACK_FILE_LIST.includes(trackState.type.toLowerCase()));
+
     if (ONE_TRACK_FILE_LIST.includes(trackState.type.toLowerCase())) {
       tracks = fileList.map(
         (file: any) =>
@@ -133,12 +133,29 @@ function AddLocalTracks() {
           })
       );
     } else {
-      console.log(trackState.type, "HUHUH");
       let indexSuffix = trackState.indexSuffix;
-      if (
-        fileList[0].name.replace(indexSuffix, "") !==
-        fileList[1].name.replace(indexSuffix, "")
-      ) {
+
+      // Create a map to store files without suffix as keys and corresponding file objects as values
+      const fileMap = new Map();
+
+      fileList.forEach((file) => {
+        const nameWithoutSuffix = file.name.replace(indexSuffix, "");
+
+        if (!fileMap.has(nameWithoutSuffix)) {
+          // Initialize an array for this name without suffix
+          fileMap.set(nameWithoutSuffix, []);
+        }
+
+        // Add the current file object to the array
+        fileMap.get(nameWithoutSuffix).push(file);
+      });
+      console.log(fileMap);
+      // Filter the map to keep only entries with more than one file object
+      const matchingFiles = Array.from(fileMap.values()).filter(
+        (fileArray) => fileArray.length > 1
+      );
+
+      if (matchingFiles.length === 0) {
         setTrackState((prev) => ({
           ...prev,
           msg: "Please select both track and index files",
@@ -146,20 +163,48 @@ function AddLocalTracks() {
         return null;
       }
 
-      tracks = [
-        new TrackModel({
-          type: trackState.type,
-          url: "",
-          fileObj: fileList[0],
-          name: fileList[0].name,
-          label: fileList[0].name,
-          files: fileList,
-          id: crypto.randomUUID(),
-          options: trackState.options ? trackState.options : {},
-        }),
-      ];
+      matchingFiles.map((item) => {
+        tracks.push(
+          new TrackModel({
+            type: trackState.type,
+            url: "",
+            fileObj: item[0],
+            name: item[0].name,
+            label: item[0].name,
+            files: item,
+            id: crypto.randomUUID(),
+            options: trackState.options ? trackState.options : {},
+          })
+        );
+      });
+
+      //__________________________________________________________________________
+
+      // if (
+      //   fileList[0].name.replace(indexSuffix, "") !==
+      //   fileList[1].name.replace(indexSuffix, "")
+      // ) {
+      //   setTrackState((prev) => ({
+      //     ...prev,
+      //     msg: "Please select both track and index files",
+      //   }));
+      //   return null;
+      // }
+
+      // tracks = [
+      //   new TrackModel({
+      //     type: trackState.type,
+      //     url: "",
+      //     fileObj: fileList[1],
+      //     name: fileList[0].name,
+      //     label: fileList[0].name,
+      //     files: fileList,
+      //     id: crypto.randomUUID(),
+      //     options: trackState.options ? trackState.options : {},
+      //   }),
+      // ];
     }
-    console.log(trackState);
+
     // TODO: Create track models and add them
     dispatch(
       updateCurrentSession({
@@ -345,17 +390,105 @@ function ConfigureTrack({ onOptionsChange }: ConfigureTrackProps) {
 // MARK: - Add Local Hub
 
 function AddLocalHub() {
-  const handleFileChange = (files: FileList | null) => {
-    if (!files) return;
+  const session = useAppSelector(selectCurrentSession);
+  const dispatch = useAppDispatch();
+  const handleFileChange = async (files: FileList | null | Array<any>) => {
+    if (!files) {
+      return null;
+    }
+    let fileList: Array<any> = [];
+    let hubFile: any;
+    if (files instanceof FileList) {
+      const hubFileKey: any = Object.keys(files).find(
+        (key) => files[key].name === "hub.config.json"
+      );
 
-    const fileList = Array.from(files);
-    const hubFile = fileList.find((f) => f.name === "hub.config.json");
-    if (!hubFile) {
-      // Show error
-      return;
+      if (!hubFileKey) {
+        return null;
+      }
+      hubFile = files[hubFileKey];
+      fileList = Object.entries(files).map(([key, value]) => {
+        if (key !== "length" && key !== "hub.config.json") {
+          return value;
+        }
+      });
+    } else {
+      fileList = Array.from(files as any);
+      hubFile = fileList.find((f: any) => f.name === "hub.config.json");
     }
 
-    // TODO: Process hub files
+    const tracks: TrackModel[] = [];
+
+    if (!hubFile) {
+      console.error("Aborting, cannot find `hub.config.json` file");
+      return null;
+    }
+
+    const idxFiles: any = fileList.filter(
+      (f: any) => f.name.endsWith(".tbi") || f.name.endsWith(".bai")
+    );
+    const idxHash: Record<string, File> = {};
+    const fileHash: Record<string, File> = {};
+
+    idxFiles.forEach((item) => {
+      idxHash[item.name] = item;
+    });
+
+    for (const file of fileList) {
+      const fileName = file.name;
+      if (
+        fileName.startsWith(".") ||
+        fileName.endsWith(".tbi") ||
+        fileName.endsWith(".bai") ||
+        fileName === "hub.config.json"
+      ) {
+        continue;
+      }
+      fileHash[fileName] = file;
+    }
+
+    const hubContent: any = await readFileAsText(hubFile);
+    const json = JSON5.parse(hubContent);
+
+    for (const item of json) {
+      if (fileHash.hasOwnProperty(item.filename)) {
+        const trackType = item.type.toLowerCase();
+        const indexSuffix = trackType === "bam" ? ".bai" : ".tbi";
+        const files = ONE_TRACK_FILE_LIST.includes(trackType)
+          ? null
+          : [fileHash[item.filename], idxHash[item.filename + indexSuffix]];
+        const track = new TrackModel({
+          type: trackType,
+          url: null,
+          fileObj: fileHash[item.filename],
+          name: item.name || item.filename,
+          label: item.label || item.name || item.filename,
+          files: files || undefined,
+          options: item.options || {},
+          metadata: item.metadata || {},
+        });
+        tracks.push(track);
+      } else {
+        console.warn(
+          `Skipping ${item.filename} not found in 'hub.config.json'`
+        );
+      }
+    }
+
+    if (tracks.length > 0) {
+      dispatch(
+        updateCurrentSession({
+          tracks: [...session!.tracks, ...tracks],
+        })
+      );
+    } else {
+      console.error(
+        "No local tracks could be found, please check your files and configuration"
+      );
+      return null;
+    }
+
+    //_________________________________________________________________________________________________________________
   };
 
   return (
@@ -364,6 +497,7 @@ function AddLocalHub() {
         <h3 className="text-lg font-semibold mb-4">
           Choose a folder containing hub.config.json:
         </h3>
+
         <input
           type="file"
           className="w-full p-2 border rounded"

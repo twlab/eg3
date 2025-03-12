@@ -195,7 +195,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     throttle((x, y) => {
       horizontalLineRef.current.style.top = `${y}px`;
       verticalLineRef.current.style.left = `${x}px`;
-    }, 40)
+    }, 50)
   ).current;
   const startingBpArr = useRef<Array<any>>([]);
   // new track sections are added as the user moves left (lower regions) and right (higher region)

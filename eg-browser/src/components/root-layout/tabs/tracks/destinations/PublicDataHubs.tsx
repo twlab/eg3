@@ -79,7 +79,7 @@ export default function PublicDataHubs() {
       const updatedHubs = genomeConfig!.publicHubList!.map((h) =>
         h.url === hub.url ? { ...h, isLoaded: true } : h
       );
-      console.log(tracks, publicTracksTool);
+
       dispatch(addPublicTracksPool([...publicTracksTool, ...tracks]));
       const tracksToShow = tracks.filter((track: any) => track.showOnHubLoad);
       if (tracksToShow.length > 0) {
