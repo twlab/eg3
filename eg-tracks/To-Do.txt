@@ -1,0 +1,22 @@
+To-Do, 3/12/2025
+1. public and custom track facets (in progress)
+2. local tracks  (in progress)
+3. text local tracks
+4. check remote track for bugs and fix
+5. region set view
+6. gene plot
+7. scatter plot
+8. screen shot
+9. dynamic record
+10. fetch sequence
+
+
+______________________
+11. implement g3d
+    - get g3d working (finish)
+    - display with tabs below the tracks OR next to the element
+______________________
+12. after sending - work on npm
+    - supports custom genome and datahub with tracks
+    - worker will only work if it purely just scripts no imports/ recreate worker into fetch functions 
+    - got test npm working, use its config (finish)

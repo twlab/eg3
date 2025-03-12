@@ -44,6 +44,13 @@
   color: red;
   background-color: whitesmoke;
 }
+
+.horizontal-line,
+.vertical-line {
+  position: absolute;
+  will-change: transform; /* Hint to the browser for optimization */
+}
+
 .horizontal-line {
   position: absolute;
   width: 100%;
