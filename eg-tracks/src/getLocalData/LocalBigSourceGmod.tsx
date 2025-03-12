@@ -31,23 +31,29 @@ class LocalBigSourceGmod {
    * @override
    */
   async getData(loci, options) {
-    const promises = loci.map((locus) => {
-      let chrom = options.ensemblStyle
-        ? locus.chr.replace("chr", "")
-        : locus.chr;
-      if (chrom === "M") {
-        chrom = "MT";
-      }
-      return this.bw.getFeatures(chrom, locus.start, locus.end);
-    });
+    try {
+      const promises = loci.map((locus) => {
+        let chrom = options.ensemblStyle
+          ? locus.chr.replace("chr", "")
+          : locus.chr;
+        if (chrom === "M") {
+          chrom = "MT";
+        }
+        return this.bw.getFeatures(chrom, locus.start, locus.end);
+      });
 
-    const dataForEachLocus = await Promise.all(promises);
-    loci.forEach((locus, index) => {
-      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-    });
-    const combinedData = _.flatten(dataForEachLocus);
-    // console.log(combinedData);
-    return combinedData;
+      const dataForEachLocus = await Promise.all(promises);
+
+      loci.forEach((locus, index) => {
+        dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
+      });
+
+      const combinedData = _.flatten(dataForEachLocus);
+
+      return combinedData;
+    } catch (error) {
+      return { error: true, message: `Failed to fetch data: ${error.message}` };
+    }
   }
 }
 

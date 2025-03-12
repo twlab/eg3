@@ -48,6 +48,7 @@ class LocalTabixSource {
    */
   getData = async (loci, options) => {
     // let promises = loci.map(this.getDataForLocus);
+    console.log(loci, options, "got HERE1");
     const promises = loci.map((locus) => {
       // graph container uses this source directly w/o initial track, so options is null
       let chrom =
@@ -59,12 +60,14 @@ class LocalTabixSource {
       }
       return this.getDataForLocus(chrom, locus.start, locus.end);
     });
+    console.log(promises, "got HERE2");
     const dataForEachLocus = await Promise.all(promises);
     if (options && options.ensemblStyle) {
       loci.forEach((locus, index) => {
         dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
       });
     }
+    console.log(dataForEachLocus, "got HERE@");
     return _.flatten(dataForEachLocus);
   };
 

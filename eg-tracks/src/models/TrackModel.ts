@@ -38,13 +38,15 @@ interface ITrackModel {
   type?: string;
   filetype?: string;
   options: TrackOptions;
-  url: string;
+  url?: string;
   indexUrl?: string;
-  metadata: ITrackModelMetadata;
+  metadata?: ITrackModelMetadata;
   fileObj?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
   id: string | number;
+  label?: string;
+  files?: any;
 }
 
 /**

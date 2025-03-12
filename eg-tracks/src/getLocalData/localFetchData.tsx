@@ -88,7 +88,7 @@ function getTextData(regionData: any) {
   return fetchInstance.getData(regionData.nav);
 }
 
-function getLocalData(regionData: any, trackType: string) {
+async function getLocalData(regionData: any, trackType: string) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
     if (trackType === "big") {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
@@ -108,5 +108,10 @@ function getLocalData(regionData: any, trackType: string) {
   //     regionData.trackModel.options
   //   );
   // }
-  return fetchInstance.getData(regionData.nav, regionData.trackModel.options);
+  let returnStatus = await fetchInstance.getData(
+    regionData.nav,
+    regionData.trackModel.options
+  );
+
+  return returnStatus;
 }
