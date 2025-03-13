@@ -90,7 +90,7 @@ export default function PublicDataHubs() {
       setLoadedHubs((prev) => new Set([...prev, hub.url]));
     } catch (error) {
       console.error(error);
-      dispatch(addPublicTracksPool([...publicTracksPool]));
+      // dispatch(addPublicTracksPool([...publicTracksPool]));
     } finally {
       setLoadingHubs((prev) => {
         const next = new Set(prev);
@@ -122,7 +122,7 @@ export default function PublicDataHubs() {
                   : "bg-secondary hover:bg-purple-200"
               }`}
               onClick={() => loadHub(hub)}
-              disabled={isLoaded}
+              disabled={isLoaded || isLoading}
             >
               {isLoaded ? (
                 <CheckIcon className="size-4 text-green-700" />
