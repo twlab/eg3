@@ -29,6 +29,7 @@ export interface BrowserSession {
   highlights: IHighlightInterval[];
   metadataTerms: string[];
   trackModelId: number;
+  regionSets: Array<any>;
 }
 
 // MARK: - State
@@ -56,7 +57,7 @@ export const browserSlice = createSlice({
           id: trackModelId++,
           isSelected: false,
         })) || [];
-      console.log(initializedTracks);
+
       const nextSession: BrowserSession = {
         id: crypto.randomUUID(),
         createdAt: Date.now(),
@@ -69,6 +70,7 @@ export const browserSlice = createSlice({
         highlights: [],
         metadataTerms: [],
         trackModelId,
+        regionSets: [],
       };
 
       browserSessionAdapter.addOne(state.sessions, nextSession);

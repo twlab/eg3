@@ -34,6 +34,7 @@ export default function PublicDataHubs() {
   const [loadedHubs, setLoadedHubs] = useState<Set<string>>(new Set());
 
   const secondaryGenomes: Array<any> = [];
+
   const selectedGenomeName = currentSession!.genomeId;
 
   const selectedGenomeConfig = useMemo(() => {
@@ -173,7 +174,6 @@ export default function PublicDataHubs() {
       })
     );
   }
-  console.log(publicTracksPool);
   return (
     <div>
       {renderSearchBar()}

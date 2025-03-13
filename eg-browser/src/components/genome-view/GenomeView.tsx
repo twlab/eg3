@@ -16,7 +16,6 @@ export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenome();
-
   if (!currentSession || !genomeConfig) {
     return null;
   }

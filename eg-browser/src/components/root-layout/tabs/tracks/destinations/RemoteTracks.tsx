@@ -468,9 +468,7 @@ function AddDataHubs() {
         );
       }
       setIsLoading(false);
-      setError("");
-      console.log("HUHU1");
-      // onHubUpdated([], [...tracks], "custom");
+      setError(""); // onHubUpdated([], [...tracks], "custom");
     }
     dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));
   };
@@ -496,7 +494,6 @@ function AddDataHubs() {
               tracks: [...session!.tracks, ...tracks],
             })
           );
-          console.log("HUHU2");
         }
       }
       dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));

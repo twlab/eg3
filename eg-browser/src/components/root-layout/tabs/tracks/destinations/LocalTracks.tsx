@@ -64,7 +64,6 @@ const ONE_TRACK_FILE_LIST = [
 function AddLocalTracks() {
   const session = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
-  console.log(session);
   const [trackState, setTrackState] = React.useState<LocalTrackState>({
     type: "bigWig",
     assembly: session?.genomeId ?? "hg19",
@@ -149,7 +148,6 @@ function AddLocalTracks() {
         // Add the current file object to the array
         fileMap.get(nameWithoutSuffix).push(file);
       });
-      console.log(fileMap);
       // Filter the map to keep only entries with more than one file object
       const matchingFiles = Array.from(fileMap.values()).filter(
         (fileArray) => fileArray.length > 1

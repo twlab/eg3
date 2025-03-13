@@ -123,7 +123,7 @@ const mockSnpSearch = async (
     }
 
     const data = await response.json();
-    console.log(data, " herer1");
+
     return [
       {
         id: "0",

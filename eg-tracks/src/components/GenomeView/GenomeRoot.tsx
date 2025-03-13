@@ -34,11 +34,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // to see if genomeConfig we can check its session id because it will unique
   useEffect(() => {
     if (size.width > 0) {
-      console.log("did it reset here222?");
       let curGenome;
 
       if (!isInitial.current) {
-        console.log("did it reset hereasddsads3443343434aads?");
         curGenome = { ...currentGenomeConfig };
 
         curGenome["isInitial"] = isInitial.current;
@@ -48,7 +46,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome["sizeChange"] = true;
       } else {
-        console.log("did it reset hereasddsadsaads?");
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;
         curGenome["genomeID"] = uuidv4();
