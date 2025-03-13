@@ -24,7 +24,7 @@ import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import TrackModel from "@eg/tracks/src/models/TrackModel";
 export default function PublicDataHubs() {
   const genomeConfig = useCurrentGenome();
-  const publicTracksTool = useAppSelector(selectPublicTracksPool);
+  const publicTracksPool = useAppSelector(selectPublicTracksPool);
 
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
@@ -76,11 +76,7 @@ export default function PublicDataHubs() {
         hubBase
       );
 
-      const updatedHubs = genomeConfig!.publicHubList!.map((h) =>
-        h.url === hub.url ? { ...h, isLoaded: true } : h
-      );
-
-      dispatch(addPublicTracksPool([...publicTracksTool, ...tracks]));
+      dispatch(addPublicTracksPool([...publicTracksPool, ...tracks]));
       const tracksToShow = tracks.filter((track: any) => track.showOnHubLoad);
       if (tracksToShow.length > 0) {
         dispatch(
@@ -93,11 +89,8 @@ export default function PublicDataHubs() {
       setLoadedHubs((prev) => new Set([...prev, hub.url]));
     } catch (error) {
       console.error(error);
-      const updatedHubs = genomeConfig!.publicHubList!.map((h) =>
-        h.url === hub.url ? { ...h, error: true } : h
-      );
 
-      dispatch(addPublicTracksPool([...publicTracksTool]));
+      dispatch(addPublicTracksPool([...publicTracksPool]));
     }
   };
 
@@ -180,7 +173,7 @@ export default function PublicDataHubs() {
       })
     );
   }
-  console.log(publicTracksTool);
+  console.log(publicTracksPool);
   return (
     <div>
       {renderSearchBar()}
@@ -190,11 +183,11 @@ export default function PublicDataHubs() {
         )}
       </div>
 
-      {publicTracksTool.length > 0 && (
+      {publicTracksPool.length > 0 && (
         <div>
           <h2 className="text-base font-medium mb-4">Available Tracks</h2>
           <FacetTable
-            tracks={publicTracksTool}
+            tracks={publicTracksPool}
             addedTracks={currentSession!.tracks}
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}

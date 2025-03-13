@@ -5,10 +5,21 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   addTracks,
   selectCurrentSession,
+  updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import JSON5 from "json5";
 import { ITrackModel } from "@eg/tracks";
+import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
+import TrackModel, { mapUrl } from "@eg/tracks/src/models/TrackModel";
+import DataHubParser from "@eg/tracks/src/models/DataHubParser";
+import { HELP_LINKS, readFileAsText } from "@eg/tracks/src/models/util";
+import {
+  addCustomTracksPool,
+  selectCustomTracksPool,
+} from "@/lib/redux/slices/hubSlice";
+import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+import TracksTab from "../TracksTab";
 
 export default function RemoteTracks() {
   return (
@@ -53,14 +64,15 @@ interface TrackState {
 
 function AddTracks() {
   const dispatch = useAppDispatch();
+  const currentSession = useAppSelector(selectCurrentSession);
   const session = useAppSelector(selectCurrentSession);
-
+  const customTracksPool = useAppSelector(selectCustomTracksPool);
   const [trackState, setTrackState] = React.useState<TrackState>({
     type: TRACK_TYPES.Numerical[0],
     url: "",
     name: "",
     urlError: "",
-    metadata: { genome: session?.genome ?? "" },
+    metadata: { genome: session?.genomeId ?? "" },
     queryGenome: "",
   });
 
@@ -139,85 +151,128 @@ function AddTracks() {
       }
 
       if (track.type === "genomealign" || track.type === "bigchain") {
-        track.querygenome = trackState.queryGenome || session.genome;
+        track.querygenome = trackState.queryGenome || session.genomeId;
       }
 
+      dispatch(addCustomTracksPool([...customTracksPool, track]));
       dispatch(addTracks(track));
     }
   };
-
+  function onTracksAdded(tracks: TrackModel[]) {
+    dispatch(
+      updateCurrentSession({
+        tracks: [...currentSession!.tracks, ...tracks],
+      })
+    );
+  }
+  const addedTrackUrls = useMemo(
+    () =>
+      new Set(currentSession!.tracks.map((track) => track.url || track.name)),
+    [currentSession.tracks]
+  );
   return (
-    <div className="flex flex-col py-4">
-      <StepAccordion<AddTracksStep>
-        selectedItem={selectedStep}
-        onSelectedItemChange={handleStepChange}
-        items={[
-          {
-            label: "Track Type",
-            value: AddTracksStep.TRACK_TYPE,
-            valuePreview: trackState.type ? `${trackState.type}` : undefined,
-            component: (
-              <SelectTrackType
-                selectedType={trackState.type}
-                onTypeChange={handleTypeChange}
-              />
-            ),
-          },
-          {
-            label: "Track File URL",
-            value: AddTracksStep.TRACK_FILE_URL,
-            valuePreview: trackState.url ? `${trackState.url}` : undefined,
-            component: (
-              <TrackFileUrl
-                url={trackState.url}
-                indexUrl={trackState.indexUrl}
-                urlError={trackState.urlError}
-                showIndex={TYPES_NEED_INDEX.includes(
-                  trackState.type.toLowerCase()
-                )}
-                showQueryGenome={
-                  trackState.type === "genomealign" ||
-                  trackState.type === "bigchain"
-                }
-                queryGenome={trackState.queryGenome}
-                onUrlChange={handleUrlChange}
-                onIndexUrlChange={handleIndexUrlChange}
-                onQueryGenomeChange={handleQueryGenomeChange}
-              />
-            ),
-          },
-          {
-            label: "Track Label",
-            value: AddTracksStep.TRACK_LABEL,
-            valuePreview: trackState.name ? `${trackState.name}` : undefined,
-            component: (
-              <TrackLabel
-                name={trackState.name}
-                onNameChange={(name) =>
-                  setTrackState((prev) => ({ ...prev, name }))
-                }
-                onEnterPress={handleTrackLabelEnter}
-              />
-            ),
-          },
-          {
-            label: "Configure Track",
-            value: AddTracksStep.CONFIGURE_TRACK,
-            valuePreview: trackState.options ? "Configured" : undefined,
-            component: <ConfigureTrack onOptionsChange={handleOptionsChange} />,
-          },
-        ]}
-      />
-      <Button
-        active
-        onClick={handleSubmit}
-        style={{
-          width: "100%",
-          marginTop: "10px",
-        }}
-      >
-        Submit
-      </Button>
+    <div>
+      <div className="flex flex-col py-4">
+        <StepAccordion<AddTracksStep>
+          selectedItem={selectedStep}
+          onSelectedItemChange={handleStepChange}
+          items={[
+            {
+              label: "Track Type",
+              value: AddTracksStep.TRACK_TYPE,
+              valuePreview: trackState.type ? `${trackState.type}` : undefined,
+              component: (
+                <SelectTrackType
+                  selectedType={trackState.type}
+                  onTypeChange={handleTypeChange}
+                />
+              ),
+            },
+            {
+              label: "Track File URL",
+              value: AddTracksStep.TRACK_FILE_URL,
+              valuePreview: trackState.url ? `${trackState.url}` : undefined,
+              component: (
+                <TrackFileUrl
+                  url={trackState.url}
+                  indexUrl={trackState.indexUrl}
+                  urlError={trackState.urlError}
+                  showIndex={TYPES_NEED_INDEX.includes(
+                    trackState.type.toLowerCase()
+                  )}
+                  showQueryGenome={
+                    trackState.type === "genomealign" ||
+                    trackState.type === "bigchain"
+                  }
+                  queryGenome={trackState.queryGenome}
+                  onUrlChange={handleUrlChange}
+                  onIndexUrlChange={handleIndexUrlChange}
+                  onQueryGenomeChange={handleQueryGenomeChange}
+                />
+              ),
+            },
+            {
+              label: "Track Label",
+              value: AddTracksStep.TRACK_LABEL,
+              valuePreview: trackState.name ? `${trackState.name}` : undefined,
+              component: (
+                <TrackLabel
+                  name={trackState.name}
+                  onNameChange={(name) =>
+                    setTrackState((prev) => ({ ...prev, name }))
+                  }
+                  onEnterPress={handleTrackLabelEnter}
+                />
+              ),
+            },
+            {
+              label: "Configure Track",
+              value: AddTracksStep.CONFIGURE_TRACK,
+              valuePreview: trackState.options ? "Configured" : undefined,
+              component: (
+                <ConfigureTrack onOptionsChange={handleOptionsChange} />
+              ),
+            },
+          ]}
+        />
+        <Button
+          active
+          onClick={handleSubmit}
+          style={{
+            width: "100%",
+            marginTop: "10px",
+          }}
+        >
+          Submit
+        </Button>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", margin: "20px 0" }}>
+        <div
+          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
+        ></div>
+        <span style={{ margin: "0 10px", fontSize: "14px", color: "black" }}>
+          Custom Track Facet
+        </span>
+        <div
+          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
+        ></div>
+      </div>
+
+      {customTracksPool.length > 0 && (
+        <div>
+          <h2 className="text-base font-medium mb-4">Available Tracks</h2>
+          <FacetTable
+            tracks={customTracksPool}
+            addedTracks={currentSession!.tracks}
+            onTracksAdded={onTracksAdded}
+            publicTrackSets={undefined}
+            addedTrackSets={addedTrackUrls as Set<string>}
+            addTermToMetaSets={() => {}}
+            contentColorSetup={{ color: "#222", background: "white" }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -364,10 +419,240 @@ function ConfigureTrack({ onOptionsChange }: ConfigureTrackProps) {
 // MARK: - Add Data Hubs
 
 function AddDataHubs() {
+  const dispatch = useAppDispatch();
+  const session = useAppSelector(selectCurrentSession);
+  const [inputUrl, setInputUrl] = useState<any>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isHovered, setIsHovered] = useState(false);
+  const customTracksPool = useAppSelector(selectCustomTracksPool);
+  const currentSession = useAppSelector(selectCurrentSession);
+
+  const loadHub = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    setIsLoading(true);
+    let json;
+    try {
+      json = await new Json5Fetcher().get(mapUrl(inputUrl)!);
+      if (!Array.isArray(json)) {
+        setIsLoading(false);
+        setError("Error: data hub should be an array of JSON object.");
+        return;
+      }
+    } catch (error) {
+      setIsLoading(false);
+      setError("Cannot load the hub. Error: ");
+      return;
+    }
+
+    const lastSlashIndex = inputUrl.lastIndexOf("/");
+    const hubBase = inputUrl.substring(0, lastSlashIndex).trimEnd();
+    const parser = new DataHubParser();
+    const tracks = await parser.getTracksInHub(
+      json,
+      "Custom hub",
+      "",
+      false,
+      0,
+      hubBase
+    );
+
+    if (tracks) {
+      const tracksToShow = tracks.filter((track) => track.showOnHubLoad);
+      if (tracksToShow.length > 0) {
+        dispatch(
+          updateCurrentSession({
+            tracks: [...session!.tracks, ...tracksToShow],
+          })
+        );
+      }
+      setIsLoading(false);
+      setError("");
+      console.log("HUHU1");
+      // onHubUpdated([], [...tracks], "custom");
+    }
+    dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));
+  };
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const contents: any = await readFileAsText(file);
+      const json = JSON5.parse(contents);
+      const parser = new DataHubParser();
+
+      const tracks = parser.getTracksInHub(json, "Custom hub");
+
+      if (tracks) {
+        if (tracks.length > 0) {
+          dispatch(
+            updateCurrentSession({
+              tracks: [...session!.tracks, ...tracks],
+            })
+          );
+          console.log("HUHU2");
+        }
+      }
+      dispatch(addCustomTracksPool([...customTracksPool, ...tracks]));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const addedTrackUrls = useMemo(
+    () =>
+      new Set(currentSession!.tracks.map((track) => track.url || track.name)),
+    [currentSession.tracks]
+  );
+  function onTracksAdded(tracks: TrackModel[]) {
+    dispatch(
+      updateCurrentSession({
+        tracks: [...currentSession!.tracks, ...tracks],
+      })
+    );
+  }
   return (
-    <div>
-      <h1>Add Data Hubs</h1>
-    </div>
+    <>
+      <div>
+        {" "}
+        <form>
+          <div className="form-group">
+            <label>Remote hub URL</label>
+            <div style={{ fontStyle: "italic" }}>
+              <a
+                href={HELP_LINKS.datahub}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                data hub documentation
+              </a>
+            </div>
+            <input
+              placeholder="Enter URL..."
+              type="text"
+              style={{
+                width: "100%",
+                padding: "10px",
+                marginBottom: "20px",
+                fontSize: "1rem",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                transition: "border-color 0.3s",
+                outline: "none",
+              }}
+              className="form-control"
+              value={inputUrl}
+              onChange={(event) => setInputUrl(event.target.value)}
+              onFocus={(event) => (event.target.style.borderColor = "#007bff")}
+              onBlur={(event) => (event.target.style.borderColor = "#ccc")}
+            />
+            <button
+              onClick={loadHub}
+              disabled={isLoading || !inputUrl}
+              style={{
+                padding: "10px 20px",
+                fontSize: "1rem",
+                borderRadius: "4px",
+                border: "none",
+                color: "#fff",
+                backgroundColor: isLoading || !inputUrl ? "#6c757d" : "#28a745",
+                transition: "background-color 0.3s, border-color 0.3s",
+                cursor: isLoading || !inputUrl ? "not-allowed" : "pointer",
+              }}
+              className="btn"
+            >
+              Load from URL
+            </button>{" "}
+          </div>
+          <p style={{ color: "red" }}>{error}</p>
+        </form>
+        <br />
+        <div>
+          <div
+            style={{ display: "flex", alignItems: "center", margin: "20px 0" }}
+          >
+            <div
+              style={{ flex: 1, height: "1px", backgroundColor: "#ccc" }}
+            ></div>
+            <span style={{ margin: "0 10px", fontSize: "14px", color: "#666" }}>
+              or
+            </span>
+            <div
+              style={{ flex: 1, height: "1px", backgroundColor: "#ccc" }}
+            ></div>
+          </div>
+          <br />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+            }}
+          >
+            <input
+              type="file"
+              id="inputGroupFile01"
+              onChange={handleFileUpload}
+              style={{
+                display: "none",
+              }}
+            />
+            <label
+              htmlFor="inputGroupFile01"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              style={{
+                cursor: "pointer",
+                padding: "10px 20px",
+                border: isHovered
+                  ? " 2px solid  #87CEEB"
+                  : "2px solid  #007bff",
+                borderRadius: "4px",
+                backgroundColor: isHovered ? "#87CEEB" : "#007bff",
+
+                color: "#fff",
+                transition: "background-color 0.3s ease",
+                textAlign: "center",
+              }}
+            >
+              Choose Datahub File
+            </label>
+          </div>
+        </div>
+        <div
+          style={{ display: "flex", alignItems: "center", margin: "20px 0" }}
+        >
+          <div
+            style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
+          ></div>
+          <span style={{ margin: "0 10px", fontSize: "14px", color: "black" }}>
+            Custom Track Facet
+          </span>
+          <div
+            style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
+          ></div>
+        </div>
+        {customTracksPool.length > 0 && (
+          <div>
+            <h2 className="text-base font-medium mb-4">Available Tracks</h2>
+            <FacetTable
+              tracks={customTracksPool}
+              addedTracks={currentSession!.tracks}
+              onTracksAdded={onTracksAdded}
+              publicTrackSets={undefined}
+              addedTrackSets={addedTrackUrls as Set<string>}
+              addTermToMetaSets={() => {}}
+              contentColorSetup={{ color: "#222", background: "white" }}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

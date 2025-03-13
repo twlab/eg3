@@ -194,7 +194,13 @@ self.onmessage = async (event: MessageEvent) => {
           item.metadata.genome !== event.data.primaryGenName
         ) {
           curFetchNav =
-            genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord;
+            genomicFetchCoord[
+              `${
+                item.metadata.genome === ""
+                  ? event.data.primaryGenName
+                  : item.metadata.genome
+              }`
+            ].queryGenomicCoord;
         } else if (
           useFineModeNav ||
           item.type === "longrange" ||
@@ -253,24 +259,16 @@ self.onmessage = async (event: MessageEvent) => {
   async function fetchData(trackModel): Promise<Array<any>> {
     let responses: Array<any> = [];
     let curFetchNav;
+    const { genome } = trackModel.metadata;
 
-    if (
-      "genome" in trackModel.metadata &&
-      trackModel.metadata.genome !== undefined &&
-      trackModel.metadata.genome !== event.data.primaryGenName
-    ) {
-      curFetchNav =
-        genomicFetchCoord[`${trackModel.metadata.genome}`].queryGenomicCoord;
+    if (genome && genome !== "" && genome !== event.data.primaryGenName) {
+      curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
     } else if (
       trackModel.type === "longrange" ||
       trackModel.type === "biginteract"
     ) {
       curFetchNav = new Array(regionExpandLoci);
-    }
-    // else if (event.data.initial === 1) {
-    //   curFetchNav = initGenomicLoci;
-    // }
-    else {
+    } else {
       curFetchNav = new Array(genomicLoci);
     }
     // console.log(curFetchNav, genomicLoci);
@@ -303,6 +301,7 @@ self.onmessage = async (event: MessageEvent) => {
         }
       }
     } else if (!isLocalFetch) {
+      console.log(curFetchNav, genomicFetchCoord);
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
         try {
@@ -346,7 +345,6 @@ self.onmessage = async (event: MessageEvent) => {
         }
       }
     } else {
-      console.log(trackModel);
       responses.push({
         error: "Fetch failed: data source is not valid",
       });

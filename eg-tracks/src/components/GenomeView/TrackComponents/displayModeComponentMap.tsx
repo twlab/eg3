@@ -129,7 +129,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             display={"block"}
           >
             {placements.map(renderAnnotation)}
-            <line
+            {/* <line
               x1={width / 3}
               y1={0}
               x2={width / 3}
@@ -144,7 +144,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y2={height}
               stroke="black"
               strokeWidth={1}
-            />
+            /> */}
           </svg>
         );
       }
@@ -152,7 +152,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       return (
         <svg key={svgKey} width={width} height={height} display={"block"}>
           {placements.map(renderAnnotation)}
-          <line
+          {/* <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -167,7 +167,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          />
+          /> */}
         </svg>
       );
     }
