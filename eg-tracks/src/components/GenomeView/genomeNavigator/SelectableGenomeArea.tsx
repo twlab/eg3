@@ -20,8 +20,8 @@ interface SelectableGenomeAreaProps {
    * @param {number} start - context coordinate of the start of the new region
    * @param {number} end - context coordinate of the end of the new region
    */
-  onRegionSelected?(start: number, end: number, tool: number | string): void;
-  selectedTool: any
+  onRegionSelected?(start: number, end: number): void;
+  selectedTool: any;
 }
 
 /**
@@ -62,7 +62,7 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
     return this.getIsBaseSpanValid(this.getSelectedBases(xSpan));
   }
 
-  getBoxCaption(xSpan: OpenInterval): JSX.Element {
+  getBoxCaption(xSpan: OpenInterval) {
     const baseSpan = this.getSelectedBases(xSpan);
     return (
       <div className="SelectableArea-box-text-container">
@@ -77,11 +77,11 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
   handleAreaSelect(xSpan: OpenInterval) {
     const baseSpan = this.getSelectedBases(xSpan);
     if (this.getIsBaseSpanValid(baseSpan)) {
-      this.props.onRegionSelected!(baseSpan.start, baseSpan.end, this.props.selectedTool.title);
+      this.props.onRegionSelected!(baseSpan.start, baseSpan.end);
     }
   }
 
-  render(): JSX.Element {
+  render() {
     const { dragLimits, y, height, children } = this.props;
 
     return (
