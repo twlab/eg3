@@ -5,17 +5,23 @@ export default function DescriptiveNavigationLink({
     title,
     description,
     path,
+    onClick,
     params
 }: {
     title: string;
     description?: string;
-    path: string;
+    path?: string;
+    onClick?: () => void;
     params?: Record<string, string>;
 }) {
     const { push } = useNavigation();
 
     const handleClick = () => {
-        push({ path, params });
+        if (path) {
+            push({ path, params });
+        } else if (onClick) {
+            onClick();
+        }
     }
 
     return (

@@ -11,7 +11,7 @@ import Button from "../ui/button/Button";
 import EmptyView from "../ui/empty/EmptyView";
 import { IGenome } from "@eg/tracks";
 import Progress from "../ui/progress/Progress";
-import { createSessionWithGenome } from "@/lib/redux/slices/browserSlice";
+import { createSession } from "@/lib/redux/slices/browserSlice";
 
 type GroupedGenomes = {
     [key: string]: IGenome[];
@@ -117,7 +117,7 @@ function GenomeHubItem({
         setLoading(true);
         setTimeout(() => {
             // TODO: preload the genome
-            dispatch(createSessionWithGenome(genome));
+            dispatch(createSession({ genome }));
         }, 1000);
     }
 

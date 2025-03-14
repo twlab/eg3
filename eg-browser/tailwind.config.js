@@ -9,7 +9,8 @@ export default {
       colors: {
         'primary': '#5F6368',
         'secondary': '#E8DEF8',
-        'tint': '#75697A'
+        'tint': '#75697A',
+        'alert': '#307868'
       },
     },
   },

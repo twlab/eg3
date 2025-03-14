@@ -26,7 +26,6 @@ export default function GenomeView() {
   };
 
   const handleNewHighlight = (highlights: IHighlightInterval[]) => {
-    console.log(highlights, "new highlights");
     dispatch(updateCurrentSession({ highlights }));
   };
 
@@ -50,6 +49,7 @@ export default function GenomeView() {
   return (
     <div>
       <TrackContainerRepresentable
+        key={currentSession.id}
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
         genomeConfig={genomeConfig}

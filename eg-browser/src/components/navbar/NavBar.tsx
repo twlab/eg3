@@ -15,6 +15,8 @@ import {
 } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import InlineEditable from "../ui/input/InlineEditable";
+import { versionToLogoUrl } from "../genome-picker/genome-list";
+import classNames from "classnames";
 
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
@@ -26,18 +28,31 @@ export default function NavBar() {
 
   const genome = useCurrentGenome();
 
+  const genomeLogoUrl: string | null = genome?.name ? versionToLogoUrl[genome.name].croppedUrl ?? versionToLogoUrl[genome.name].logoUrl : null;
+  // const genomeLogoUrl: string | null = null;
+
   return (
-    <div className="w-screen flex flex-row justify-between items-center p-4 border-b border-gray-300 bg-white">
-      <div className="flex flex-row items-center gap-4 cursor-pointer">
+    <div className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white">
+      <div className="flex flex-row items-center gap-4 relative">
         <img
-          src={Logo}
+          src={genomeLogoUrl ?? Logo}
           alt="logo"
-          className="size-8"
-          onClick={() => dispatch(setSessionPanelOpen(!sessionPanelOpen))}
+          className={classNames(
+            'z-10',
+            'size-12',
+            currentSession ? 'cursor-pointer' : 'cursor-default',
+            sessionPanelOpen ? 'bg-secondary' : '',
+            genomeLogoUrl ? 'rounded-full p-1 outline outline-gray-200' : 'rounded-md p-2'
+          )}
+          onClick={() => {
+            if (currentSession) {
+              dispatch(setSessionPanelOpen(!sessionPanelOpen));
+            }
+          }}
         />
         {!isSmallScreen &&
           (currentSession ? (
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-2 z-10">
               {currentSession.title.length > 0 && genome?.name && (
                 <>
                   <p className="text-2xl text-primary font-medium">
@@ -71,7 +86,7 @@ export default function NavBar() {
           ))}
       </div>
       <AnimatePresence>
-        {currentSession !== null && (
+        {currentSession !== null ? (
           <motion.div
             className="flex flex-row items-center gap-4"
             style={{
@@ -136,6 +151,23 @@ export default function NavBar() {
               active={currentTab === "help"}
             >
               Help
+            </Button>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="flex flex-row items-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Button
+              onClick={() =>
+                window.open("https://epigenomegateway.wustl.edu/legacy/", "_blank")
+              }
+              active={currentTab === "tracks"}
+            >
+              Use EG2 Instead
             </Button>
           </motion.div>
         )}
