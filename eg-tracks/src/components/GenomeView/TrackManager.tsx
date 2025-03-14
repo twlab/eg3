@@ -27,6 +27,7 @@ import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChange
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "@eg/core/src/eg-lib/models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
+import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
@@ -99,6 +100,8 @@ interface TrackManagerProps {
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   onNewRegionSelect: (startbase: number, endbase: number) => void;
   tool: any;
+  viewRegion?: any;
+  showGenomeNav: boolean;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -113,6 +116,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   onNewRegionSelect,
   onTrackDeleted,
   tool,
+  viewRegion,
+  showGenomeNav,
 }) {
   //useRef to store data between states without re render the component
   const infiniteScrollWorker = useRef<Worker | null>(null);
@@ -402,7 +407,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (key === "displayMode") {
       let menuComponents: Array<any> = [];
       let optionsObjects: Array<any> = [];
-
+      const selectCount = Object.keys(selectedTracks.current).length;
+      let curTrackModel = null;
       for (const config in selectedTracks.current) {
         let curConfig = selectedTracks.current[config];
         curConfig.configOptions.displayMode = value;
@@ -413,6 +419,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         menuComponents.push(menuItems);
         optionsObjects.push(curConfig.configOptions);
+        if (selectCount === 1) {
+          curTrackModel = curConfig.trackModel;
+        }
       }
 
       const commonMenuComponents: Array<any> = _.intersection(
@@ -422,16 +431,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       let newUnique = uuidv4();
       let configMenuData = {
         key: newUnique,
-        trackIdx: selectedTracks.current.length,
+
         handleDelete,
         pageX: configMenuPos.current.left,
         pageY: configMenuPos.current.top,
         onConfigMenuClose: onConfigMenuClose,
-        selectLen: selectedTracks.current.length,
+        selectCount: Object.keys(selectedTracks.current).length,
         configOptions: optionsObjects,
         items: commonMenuComponents,
         onConfigChange,
         blockRef: block,
+        trackModel: curTrackModel,
       };
 
       setConfigMenu(configMenuData);
@@ -462,6 +472,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function renderTrackSpecificConfigMenu(x: number, y: number) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
+    const selectCount = Object.keys(selectedTracks.current).length;
+    let curTrackModel = null;
     for (const config in selectedTracks.current) {
       let curConfig = selectedTracks.current[config];
       const trackConfig = getTrackConfig(curConfig.trackModel);
@@ -469,21 +481,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curConfig.configOptions["trackId"] = config;
       menuComponents.push(menuItems);
       optionsObjects.push(curConfig.configOptions);
+      if (selectCount === 1) {
+        curTrackModel = curConfig.trackModel;
+      }
     }
+    console.log(selectCount);
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
     let newUnique = uuidv4();
     let configMenuData = {
       key: newUnique,
-      trackIdx: selectedTracks.current.length,
       handleDelete,
       pageX: x,
       pageY: y,
       onConfigMenuClose: onConfigMenuClose,
-      selectLen: Object.keys(selectedTracks.current).length,
+      selectCount: selectCount,
       configOptions: optionsObjects,
       items: commonMenuComponents,
       onConfigChange,
       blockRef: block,
+      trackModel: curTrackModel,
     };
 
     configMenuPos.current = { left: x, top: y };
@@ -1276,8 +1292,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function onRegionSelected(
     startbase: number,
     endbase: number,
-    toolTitle: number | string
+    toolTitle: number | string = "isJump"
   ) {
+    console.log(startbase, endbase, toolTitle);
     const newLength = endbase - startbase;
 
     if (newLength < MIN_VIEW_REGION_SIZE) {
@@ -1317,20 +1334,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function createHighlight(highlightArr: Array<any>) {
     let resHighlights: Array<any> = [];
-    let pixelPBase =
-      windowWidth /
-      (genomeConfig.defaultRegion.end - genomeConfig.defaultRegion.start);
+
+    const startBase = viewRegion._startBase;
+    const endBase = viewRegion._endBase;
+    let pixelPBase = windowWidth / (endBase - startBase);
     for (const curhighlight of highlightArr) {
       let highlightSide =
-        curhighlight.start - genomeConfig.defaultRegion.start <= 0
-          ? "right"
-          : "left";
+        curhighlight.start - startBase <= 0 ? "right" : "left";
 
-      let startHighlight =
-        (curhighlight.start - genomeConfig.defaultRegion.start) * pixelPBase;
+      let startHighlight = (curhighlight.start - startBase) * pixelPBase;
 
-      let endHighlight =
-        -(curhighlight.end - genomeConfig.defaultRegion.start) * pixelPBase;
+      let endHighlight = -(curhighlight.end - startBase) * pixelPBase;
       let highlightWidth = Math.abs(startHighlight + endHighlight);
 
       let curXPos = highlightSide === "right" ? startHighlight : endHighlight;
@@ -2015,7 +2029,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     let highlightElement = createHighlight(highlights);
-
+    console.log("HUHUHUHUHU", ...highlightElement);
     setHighLightElements([...highlightElement]);
   }, [highlights]);
   // MARK: [tracks]
@@ -2059,7 +2073,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             delete trackFetchedDataCache.current[key];
           }
         }
-        console.log(tracks);
+
         const newTrackComponents: Array<any> = [];
         let checkHasGenAlign = false;
         for (var i = 0; i < tracks.length; i++) {
@@ -2201,6 +2215,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [tracks]);
   return (
     <div>
+      {windowWidth > 0 && selectedRegion && showGenomeNav && (
+        <GenomeNavigator
+          selectedRegion={selectedRegion}
+          genomeConfig={genomeConfig}
+          windowWidth={windowWidth}
+          onRegionSelected={onRegionSelected}
+        />
+      )}
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
         <div className="flex flex-row py-10 items-center justify-center">
           <HighlightMenu
@@ -2385,7 +2407,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               >
                 {selectedTool && selectedTool.isSelected ? (
                   <SelectableGenomeArea
-                    selectableRegion={trackManagerState.current.viewRegion}
+                    selectableRegion={selectedRegion}
                     dragLimits={
                       new OpenInterval(legendWidth, windowWidth + legendWidth)
                     }

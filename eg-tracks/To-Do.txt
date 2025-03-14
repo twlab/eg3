@@ -3,14 +3,16 @@ To-Do, 3/12/2025
 2. local tracks  (finish)
 3. text local tracks   (finish)
 4. check remote track for bugs and fix (finish)
-5. region set view
+5. region set view 
 6. gene plot
 7. scatter plot
 8. screen shot
 9. dynamic record
 10. fetch sequence
 11. custom Track facets (finish)
-
+12. fix config menu (finish)
+13. fix facet bugs (finish)
+14. random tool bugs (finish)
 ______________________
 11. implement g3d
     - get g3d working (finish)

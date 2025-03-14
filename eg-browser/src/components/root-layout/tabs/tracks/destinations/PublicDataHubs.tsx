@@ -1,16 +1,13 @@
 import { useMemo, useState } from "react";
 import _ from "lodash";
-import CollectionView, {
-  ICollectionViewDataSource,
-} from "@/components/ui/collection/CollectionView";
+
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import { fetchDataHubTracks } from "@eg/core";
-import { ITrackModel } from "@eg/tracks";
+
 import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
 

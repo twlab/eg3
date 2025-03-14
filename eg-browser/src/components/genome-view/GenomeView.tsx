@@ -16,6 +16,7 @@ export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenome();
+  const selectedRegionSet = currentSession?.selectedRegionSet;
   if (!currentSession || !genomeConfig) {
     return null;
   }
@@ -68,8 +69,7 @@ export default function GenomeView() {
         }
         tool={tool}
         Toolbar={Toolbar}
-        onLoadComplete={undefined}
-        isGenomeViewLoaded={false}
+        selectedRegionSet={selectedRegionSet}
       />
     </div>
   );

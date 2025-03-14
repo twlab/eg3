@@ -28,6 +28,7 @@ export function TrackContainer(props: ITrackContainerState) {
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
       tool={props.tool}
+      selectedRegionSet={props.selectedRegionSet}
     />
   );
 }
@@ -54,6 +55,7 @@ export function TrackContainerRepresentable({
   userViewRegion,
   tool,
   Toolbar,
+  selectedRegionSet,
 }: ITrackContainerRepresentableProps) {
   // MARK: Genome Config
   const genomeConfig = useMemo(() => {
@@ -274,6 +276,7 @@ export function TrackContainerRepresentable({
         viewRegion={convertedViewRegion}
         userViewRegion={convertedUserViewRegion}
         tool={tool}
+        selectedRegionSet={selectedRegionSet}
       />
       {Toolbar ? (
         <div

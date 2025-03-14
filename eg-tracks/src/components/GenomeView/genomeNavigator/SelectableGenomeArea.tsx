@@ -20,7 +20,11 @@ interface SelectableGenomeAreaProps {
    * @param {number} start - context coordinate of the start of the new region
    * @param {number} end - context coordinate of the end of the new region
    */
-  onRegionSelected?(start: number, end: number): void;
+  onRegionSelected?(
+    start: number,
+    end: number,
+    selectedTool: number | string
+  ): void;
   selectedTool: any;
 }
 
@@ -77,7 +81,11 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
   handleAreaSelect(xSpan: OpenInterval) {
     const baseSpan = this.getSelectedBases(xSpan);
     if (this.getIsBaseSpanValid(baseSpan)) {
-      this.props.onRegionSelected!(baseSpan.start, baseSpan.end);
+      this.props.onRegionSelected!(
+        baseSpan.start,
+        baseSpan.end,
+        this.props.selectedTool ? this.props.selectedTool.title : "isJump"
+      );
     }
   }
 

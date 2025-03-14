@@ -38,7 +38,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   dragX,
   newDrawData,
   trackFetchedDataCache,
-  globalTrackState
+  globalTrackState,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -189,6 +189,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
+    console.log(updatedLegend.current);
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
 
@@ -213,8 +214,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-            trackFetchedDataCache.current[`${id}`].queryGenome
-          ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
       }
@@ -233,7 +234,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ...configOptions.current,
           ...trackModel.options,
         };
-
+        console.log(trackModel);
         updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,
@@ -246,19 +247,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       if (!cacheTrackData.useExpandedLoci) {
-
         let combinedData: any = [];
-        let hasError = false
+        let hasError = false;
         let currIdx = newDrawData.curDataIdx + 1;
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx].dataCache) {
-            continue
+            continue;
           }
-          if (cacheTrackData[currIdx].dataCache && "error" in cacheTrackData[currIdx].dataCache) {
-            hasError = true
-            combinedData.push(cacheTrackData[currIdx].dataCache.error)
+          if (
+            cacheTrackData[currIdx].dataCache &&
+            "error" in cacheTrackData[currIdx].dataCache
+          ) {
+            hasError = true;
+            combinedData.push(cacheTrackData[currIdx].dataCache.error);
+          } else {
+            combinedData.push(cacheTrackData[currIdx]);
           }
-          else { combinedData.push(cacheTrackData[currIdx]); }
 
           currIdx--;
         }
@@ -280,7 +284,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
         }
 
-
         if (!noData) {
           createSVGOrCanvas(trackState, combinedData, hasError, cacheDataIdx);
         }
@@ -295,11 +298,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   // MARK: [applyConfig]
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
-
       if (id in applyTrackConfigChange) {
-
         if ("type" in applyTrackConfigChange) {
-
           configOptions.current = {
             ...trackOptionMap[`${trackModel.type}`].defaultOptions,
             ...applyTrackConfigChange[`${id}`],
@@ -330,8 +330,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+                trackFetchedDataCache.current[`${id}`].queryGenome
+              ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
@@ -1179,15 +1179,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         trackState["viewWindow"] =
           updateSide.current === "right"
             ? new OpenInterval(
-              -(dragX! + (xPos.current + windowWidth)),
-              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-            )
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
             : new OpenInterval(
-              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-              windowWidth * 3 -
-              (dragX! - (xPos.current + windowWidth)) +
-              windowWidth
-            );
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
 
         genesArr = genesArr.map((item) => item.dataCache).flat(1);
         let drawOptions = { ...configOptions.current };
@@ -1221,47 +1221,49 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       handle();
     }
   }, [screenshotOpen]);
-  return <div
-    style={{
-      display: "flex",
-      height:
-        configOptions.current.displayMode === "full"
-          ? !fetchError.current
-            ? svgHeight.current + 2
-            : 40 + 2
-          : !fetchError.current
-            ? configOptions.current.height + 2 : 40 + 2,
-      position: "relative",
-    }}
-  >
-    {configOptions.current.displayMode === "full" ? (
-      <div
-        style={{
-          position: "absolute",
-          lineHeight: 0,
-          right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          left: updateSide.current === "right" ? `${xPos.current}px` : "",
-          backgroundColor: configOptions.current.backgroundColor,
-        }}
-      >
-        {svgComponents}
-      </div>
-    ) : (
-      <div
-        style={{
-          position: "absolute",
-          backgroundColor: configOptions.current.backgroundColor,
-          left: updateSide.current === "right" ? `${xPos.current}px` : "",
-          right: updateSide.current === "left" ? `${xPos.current}px` : "",
-        }}
-      >
-        {canvasComponents}
-      </div>
-    )}
-    {toolTipVisible ? toolTip : ""}
-    {legend}
-  </div>
-
+  return (
+    <div
+      style={{
+        display: "flex",
+        height:
+          configOptions.current.displayMode === "full"
+            ? !fetchError.current
+              ? svgHeight.current + 2
+              : 40 + 2
+            : !fetchError.current
+            ? configOptions.current.height + 2
+            : 40 + 2,
+        position: "relative",
+      }}
+    >
+      {configOptions.current.displayMode === "full" ? (
+        <div
+          style={{
+            position: "absolute",
+            lineHeight: 0,
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            backgroundColor: configOptions.current.backgroundColor,
+          }}
+        >
+          {svgComponents}
+        </div>
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            backgroundColor: configOptions.current.backgroundColor,
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+          }}
+        >
+          {canvasComponents}
+        </div>
+      )}
+      {toolTipVisible ? toolTip : ""}
+      {legend}
+    </div>
+  );
 });
 
 export default memo(TrackFactory);
