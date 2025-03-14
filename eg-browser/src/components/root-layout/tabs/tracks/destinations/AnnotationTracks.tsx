@@ -51,7 +51,7 @@ export default function AnnotationTracks() {
 
     track.metadata = {
       ...track.metadata,
-      genome: genomeConfig?.genome.getName(),
+      genome: session?.genomeId,
     };
 
     dispatch(

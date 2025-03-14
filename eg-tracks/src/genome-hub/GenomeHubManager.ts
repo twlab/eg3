@@ -2,49 +2,50 @@ import { IGenome, IGenomeHubSource } from "../types/genome-hub";
 import LocalGenomeRepository from "./LocalGenomeRepository";
 
 export default class GenomeHubManager {
-    private localGenomeRepository: IGenomeHubSource;
+  private localGenomeRepository: IGenomeHubSource;
 
-    private genomeCache: Map<string, IGenome> = new Map();
+  private genomeCache: Map<string, IGenome> = new Map();
 
-    private static instance: GenomeHubManager | null = null;
+  private static instance: GenomeHubManager | null = null;
 
-    private constructor() {
-        this.localGenomeRepository = new LocalGenomeRepository();
+  private constructor() {
+    this.localGenomeRepository = new LocalGenomeRepository();
+  }
+
+  static getInstance(): GenomeHubManager {
+    if (!this.instance) {
+      this.instance = new GenomeHubManager();
+    }
+    return this.instance;
+  }
+
+  async listCustomGenomes(): Promise<IGenome[]> {
+    return this.localGenomeRepository.listGenomes();
+  }
+
+  async getGenomeById(id: string): Promise<IGenome> {
+    if (this.genomeCache.has(id)) {
+      return this.genomeCache.get(id)!;
     }
 
-    static getInstance(): GenomeHubManager {
-        if (!this.instance) {
-            this.instance = new GenomeHubManager();
-        }
-        return this.instance;
-    }
+    const genome = await this.localGenomeRepository.getGenomeById(id);
 
-    async listCustomGenomes(): Promise<IGenome[]> {
-        return this.localGenomeRepository.listGenomes();
-    }
+    this.genomeCache.set(id, genome);
 
-    async getGenomeById(id: string): Promise<IGenome> {
-        if (this.genomeCache.has(id)) {
-            return this.genomeCache.get(id)!;
-        }
+    return genome;
+  }
 
-        const genome = await this.localGenomeRepository.getGenomeById(id);
+  isGenomeCached(id: string): boolean {
+    return this.genomeCache.has(id);
+  }
 
-        this.genomeCache.set(id, genome);
+  getGenomeFromCache(id: string): IGenome | undefined {
+    console.log(this.genomeCache);
+    return this.genomeCache.get(id);
+  }
 
-        return genome;
-    }
-
-    isGenomeCached(id: string): boolean {
-        return this.genomeCache.has(id);
-    }
-
-    getGenomeFromCache(id: string): IGenome | undefined {
-        return this.genomeCache.get(id);
-    }
-
-    async putGenome(genome: IGenome): Promise<void> {
-        this.localGenomeRepository.putGenome(genome);
-        this.genomeCache.set(genome.id, genome);
-    }
+  async putGenome(genome: IGenome): Promise<void> {
+    this.localGenomeRepository.putGenome(genome);
+    this.genomeCache.set(genome.id, genome);
+  }
 }

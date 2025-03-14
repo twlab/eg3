@@ -1,5 +1,5 @@
 import React from "react";
-import PropTypes from "prop-types";
+
 export const MIN_VIEW_REGION_SIZE = 5;
 import MainPane from "./MainPane";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
@@ -29,21 +29,6 @@ class GenomeNavigator extends React.Component<
   GenomeNavigatorProps,
   GenomeNavigatorState
 > {
-  static propTypes = {
-    /**
-     * The region that the tracks are displaying.
-     */
-    selectedRegion: PropTypes.instanceOf(DisplayedRegionModel).isRequired,
-
-    /**
-     * Called when the user selects a new region to display.  Has the signature
-     *     (newStart: number, newEnd: number): void
-     *         `newStart`: the nav context coordinate of the start of the selected interval
-     *         `newEnd`: the nav context coordinate of the end of the selected interval
-     */
-    onRegionSelected: PropTypes.func,
-  };
-
   static defaultProps = {
     onRegionSelected: () => undefined,
   };
@@ -51,7 +36,7 @@ class GenomeNavigator extends React.Component<
   /**
    * Binds functions, and also forks that view region that was passed via props.
    */
-  constructor(props) {
+  constructor(props: GenomeNavigatorProps) {
     super(props);
     this.state = {
       viewRegion: this._setInitialView(props.selectedRegion),
@@ -68,11 +53,14 @@ class GenomeNavigator extends React.Component<
    * @param {DisplayedRegionModel} selectedRegion - the currently selected region
    * @return {DisplayedRegionModel} the default view region for the genome navigator
    */
-  _setInitialView(selectedRegion) {
+  _setInitialView(selectedRegion: {
+    getNavigationContext: () => any;
+    getFeatureSegments: () => any[];
+  }) {
     const navContext = selectedRegion.getNavigationContext();
     const features = selectedRegion
       .getFeatureSegments()
-      .map((segment) => segment.feature);
+      .map((segment: { feature: any }) => segment.feature);
 
     const firstFeature = features[0];
     const lastFeature = features[features.length - 1];
@@ -113,7 +101,7 @@ class GenomeNavigator extends React.Component<
    * @param {string} methodName - the method to call on the model
    * @param {any[]} args - arguments to provide to the method
    */
-  _setModelState(methodName, args) {
+  _setModelState(methodName: string, args: any[]) {
     let regionCopy = this.state.viewRegion.clone();
     regionCopy[methodName].apply(regionCopy, args);
     if (regionCopy.getWidth() < MIN_VIEW_REGION_SIZE) {
@@ -129,7 +117,7 @@ class GenomeNavigator extends React.Component<
    * @param {number} [focusPoint] - focal point of the zoom
    * @see DisplayedRegionModel#zoom
    */
-  zoom(amount, focusPoint) {
+  zoom(amount: any, focusPoint: any) {
     this._setModelState("zoom", [amount, focusPoint]);
   }
 
@@ -140,7 +128,7 @@ class GenomeNavigator extends React.Component<
    * @param {number} newEnd - end nav context coordinate
    * @see DisplayedRegionModel#setRegion
    */
-  setNewView(newStart, newEnd) {
+  setNewView(newStart: any, newEnd: any) {
     this._setModelState("setRegion", [newStart, newEnd]);
   }
 
@@ -149,7 +137,7 @@ class GenomeNavigator extends React.Component<
    *
    * @param {React.SyntheticEvent} event - the event that react fired when the zoom slider was changed
    */
-  zoomSliderDragged(event) {
+  zoomSliderDragged(event: { target: { value: number } }) {
     let targetRegionSize = Math.exp(event.target.value);
     let proportion = targetRegionSize / this.state.viewRegion.getWidth();
     this._setModelState("zoom", [proportion]);

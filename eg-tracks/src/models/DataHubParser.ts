@@ -2,7 +2,7 @@ import TrackModel from "./TrackModel";
 import sampleDict from "./genomes/hg19/samples.json";
 import assayDict from "./genomes/hg19/assays.json";
 
-class HubParser {
+class DataHubParser {
   getTracksInHub(
     parsedJson,
     hubName,
@@ -54,4 +54,4 @@ class HubParser {
   }
 }
 
-export default HubParser;
+export default DataHubParser;

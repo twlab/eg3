@@ -44,10 +44,17 @@
   color: red;
   background-color: whitesmoke;
 }
+
+.horizontal-line,
+.vertical-line {
+  position: absolute;
+  will-change: transform; /* Hint to the browser for optimization */
+}
+
 .horizontal-line {
   position: absolute;
   width: 100%;
-  height: 2px;
+  height: 1px;
   z-index: 3;
   pointer-events: none;
   border-top: 1px dotted grey;
@@ -56,7 +63,7 @@
 .vertical-line {
   position: absolute;
   height: 100%;
-  width: 2px;
+  width: 1px;
   top: 0;
   border-left: 1px dotted grey;
   z-index: 3;

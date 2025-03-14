@@ -1,15 +1,15 @@
 # WashU Epigenome Browser
 
-*(3rd generation since 2024)*
+*(3rd generation since 2025)*
 
 ## History
 
-### current version since 2025
+### current generation since 2025
 
 * [Access the Browser](https://epigenomegateway.wustl.edu/browser/)
 * [AWS mirrow](https://epigenomegateway.org/browser/)
 * [Source code](https://github.com/twlab/eg3)
-* Documentation
+* [Documentation](https://epgg.github.io/)
 
 ### the 2nd generation since 2018
 

@@ -98,7 +98,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  console.log(event.data, " trigger fetch")
+  console.log(event.data, " trigger fetch");
   const primaryGenName = event.data.primaryGenName;
   const fetchResults: Array<any> = [];
   const genomicLoci = event.data.genomicLoci;
@@ -157,7 +157,7 @@ self.onmessage = async (event: MessageEvent) => {
           id: id,
           metadata: item.metadata,
           trackModel: item,
-          result: { error: "This track type is currently not support" }
+          result: { error: "This track type is currently not support" },
         });
       } else if (trackType in { hic: "", dynamichic: "" }) {
         fetchResults.push({
@@ -194,7 +194,13 @@ self.onmessage = async (event: MessageEvent) => {
           item.metadata.genome !== event.data.primaryGenName
         ) {
           curFetchNav =
-            genomicFetchCoord[`${item.metadata.genome}`].queryGenomicCoord;
+            genomicFetchCoord[
+              `${
+                item.metadata.genome === ""
+                  ? event.data.primaryGenName
+                  : item.metadata.genome
+              }`
+            ].queryGenomicCoord;
         } else if (
           useFineModeNav ||
           item.type === "longrange" ||
@@ -253,48 +259,49 @@ self.onmessage = async (event: MessageEvent) => {
   async function fetchData(trackModel): Promise<Array<any>> {
     let responses: Array<any> = [];
     let curFetchNav;
+    const { genome } = trackModel.metadata;
 
-    if (
-      "genome" in trackModel.metadata &&
-      trackModel.metadata.genome !== undefined &&
-      trackModel.metadata.genome !== event.data.primaryGenName
-    ) {
-      curFetchNav =
-        genomicFetchCoord[`${trackModel.metadata.genome}`].queryGenomicCoord;
+    if (genome && genome !== "" && genome !== event.data.primaryGenName) {
+      curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
     } else if (
       trackModel.type === "longrange" ||
       trackModel.type === "biginteract"
     ) {
       curFetchNav = new Array(regionExpandLoci);
-    }
-    // else if (event.data.initial === 1) {
-    //   curFetchNav = initGenomicLoci;
-    // }
-    else {
+    } else {
       curFetchNav = new Array(genomicLoci);
     }
     // console.log(curFetchNav, genomicLoci);
-    if (trackModel.fileObj !== "" && trackModel.url === "") {
+    const isLocalFetch = trackModel.fileObj instanceof File;
+    if (isLocalFetch && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
-        let curRespond;
-
-        curRespond = await Promise.all(
-          trackModel.isText
-            ? await textFetchFunction[trackModel.type]({
+        // Assuming getData is bounded to the right context.
+        const curRespond = trackModel.isText
+          ? await textFetchFunction[trackModel.type]({
               basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
               nav: curFetchNav[i],
               trackModel,
             })
-            : await localTrackFetchFunction[trackModel.type]({
+          : await localTrackFetchFunction[trackModel.type]({
               basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
               nav: curFetchNav[i],
               trackModel,
-            })
-        );
+            });
 
-        responses.push(_.flatten(curRespond));
+        if (
+          curRespond &&
+          typeof curRespond === "object" &&
+          curRespond.hasOwnProperty("error")
+        ) {
+          responses.push({
+            error: curRespond.message,
+          });
+        } else {
+          responses.push(curRespond);
+        }
       }
-    } else {
+    } else if (!isLocalFetch) {
+      console.log(curFetchNav, genomicFetchCoord);
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
         try {
@@ -325,16 +332,22 @@ self.onmessage = async (event: MessageEvent) => {
               }),
             ]);
           }
-
+          console.log(curRespond);
           responses.push(_.flatten(curRespond));
         } catch (error) {
           console.error(
             `Error fetching data for track model type ${trackModel.type}:`,
             error
           );
-          responses.push({ error: "Data fetch failed. Reload page or change view to retry" });
+          responses.push({
+            error: "Data fetch failed. Reload page or change view to retry",
+          });
         }
       }
+    } else {
+      responses.push({
+        error: "Fetch failed: data source is not valid",
+      });
     }
 
     return responses;
