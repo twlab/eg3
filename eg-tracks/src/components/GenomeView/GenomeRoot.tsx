@@ -38,17 +38,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
-      // if (!selectedRegionSet) {
+
       if (!isInitial.current) {
-        console.log("ASDASDASDDAS");
-        console.log(currentGenomeConfig);
-        const prevID = currentGenomeConfig.genomeID;
-        curGenome = { ...genomeConfig, genomeID: prevID };
-        curGenome["sizeChange"] = false;
-        // curGenome["isInitial"] = isInitial.current;
-        console.log(curGenome);
+        curGenome = { ...currentGenomeConfig };
+        curGenome["isInitial"] = isInitial.current;
+        curGenome.defaultRegion = new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
+        );
+        curGenome["sizeChange"] = true;
       } else {
-        console.log("ASDASDASDDAS22");
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;
         curGenome["genomeID"] = uuidv4();
@@ -60,70 +59,34 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome["bundleId"] = bundleId;
       }
       setCurrentGenomeConfig(curGenome);
-      // else {
-      //     let viewRegionSet: RegionSet;
-
-      //     if (typeof selectedRegionSet === "object") {
-      //       selectedRegionSet["genomeName"] =
-      //         selectedRegionSet["genome"]["_name"];
-      //       viewRegionSet = RegionSet.deserialize(selectedRegionSet);
-      //       if (!viewRegionSet["genome"]) {
-      //         viewRegionSet["genome"] = genomeConfig.genome;
-      //       }
-      //     } else {
-      //       viewRegionSet = selectedRegionSet;
-      //     }
-      //     const newRegionSetVisData = new DisplayedRegionModel(
-      //       viewRegionSet.makeNavContext()
-      //     );
-
-      //     if (!isInitial.current) {
-      //       curGenome = { ...currentGenomeConfig };
-
-      //       curGenome["isInitial"] = isInitial.current;
-      //       curGenome.defaultRegion = new OpenInterval(
-      //         newRegionSetVisData._startBase!,
-      //         newRegionSetVisData._endBase!
-      //       );
-      //       curGenome["regionSetView"] = [viewRegionSet];
-      //       curGenome["sizeChange"] = false;
-      //     } else {
-      //       curGenome = { ...genomeConfig };
-      //       curGenome["isInitial"] = isInitial.current;
-      //       curGenome["genomeID"] = uuidv4();
-      //       let bundleId = uuidv4();
-      //       curGenome.defaultRegion = new OpenInterval(
-      //         newRegionSetVisData._startBase!,
-      //         newRegionSetVisData._endBase!
-      //       );
-      //       curGenome["regionSetView"] = [viewRegionSet];
-
-      //       curGenome["bundleId"] = bundleId;
-      //     }
-      //     curGenome.navContext = newRegionSetVisData._navContext;
-      //   }
 
       isInitial.current = false;
     }
-  }, [size.width, selectedRegionSet]);
-  // useEffect(() => {
-  //   if (size.width > 0) {
-  //     let curGenome;
+  }, [size.width]);
+  useEffect(() => {
+    if (size.width > 0) {
+      let curGenome;
 
-  //     if (!isInitial.current) {
-  //       curGenome = { ...currentGenomeConfig };
-
-  //       curGenome["isInitial"] = isInitial.current;
-  //       curGenome.defaultRegion = new OpenInterval(
-  //         viewRegion._startBase!,
-  //         viewRegion._endBase!
-  //       );
-
-  //       curGenome["sizeChange"] = false;
-  //       setCurrentGenomeConfig(curGenome);
-  //     }
-  //   }
-  // }, [viewRegion]);
+      if (!isInitial.current) {
+        if (!selectedRegionSet) {
+          curGenome = { ...currentGenomeConfig };
+          curGenome["isInitial"] = isInitial.current;
+          curGenome.defaultRegion = new OpenInterval(
+            viewRegion._startBase!,
+            viewRegion._endBase!
+          );
+          curGenome["sizeChange"] = false;
+          setCurrentGenomeConfig(curGenome);
+        } else {
+          const prevID = currentGenomeConfig.genomeID;
+          curGenome = { ...genomeConfig, genomeID: prevID };
+          curGenome["sizeChange"] = false;
+          // curGenome["isInitial"] = isInitial.current;
+          setCurrentGenomeConfig(curGenome);
+        }
+      }
+    }
+  }, [viewRegion]);
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>

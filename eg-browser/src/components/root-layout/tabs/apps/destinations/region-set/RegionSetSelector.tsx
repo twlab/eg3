@@ -63,7 +63,6 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
     );
   };
   function onSetSelected(set: RegionSet) {
-    console.log(set);
     dispatch(
       updateCurrentSession({
         selectedRegionSet: set,
@@ -146,7 +145,6 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
       </div>
     );
   };
-  console.log(sets, indexBeingConfigured, sets[indexBeingConfigured]);
   return (
     <div>
       <h3>Select a gene/region set</h3>

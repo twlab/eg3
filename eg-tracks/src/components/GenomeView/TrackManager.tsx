@@ -119,7 +119,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   viewRegion,
   showGenomeNav,
 }) {
-  console.log(genomeConfig);
   //useRef to store data between states without re render the component
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
@@ -488,7 +487,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curTrackModel = curConfig.trackModel;
       }
     }
-    console.log(selectCount);
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
     let newUnique = uuidv4();
     let configMenuData = {
@@ -568,8 +566,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function onTrackUnSelect() {
-    console.log(configMenu);
-
     if (Object.keys(selectedTracks.current).length !== 0) {
       for (const key in selectedTracks.current) {
         selectedTracks.current[key].legendRef.current.style.backgroundColor =
@@ -1297,7 +1293,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     endbase: number,
     toolTitle: number | string = "isJump"
   ) {
-    console.log(startbase, endbase, toolTitle);
     const newLength = endbase - startbase;
 
     if (newLength < MIN_VIEW_REGION_SIZE) {
@@ -1612,7 +1607,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
       initTrackFetchCache(item.trackModel);
     });
-    console.log(newTrackComponents, genomeConfig, "got here viewRegion");
 
     fetchGenomeData(1, "right", dataIdx);
   }
@@ -2036,7 +2030,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     let highlightElement = createHighlight(highlights);
-    console.log("HUHUHUHUHU", ...highlightElement);
     setHighLightElements([...highlightElement]);
   }, [highlights]);
   // MARK: [tracks]

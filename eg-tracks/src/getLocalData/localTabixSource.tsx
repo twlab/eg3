@@ -25,7 +25,6 @@ class LocalTabixSource {
    */
 
   constructor(trackModel, dataLimit = 100000) {
-    console.log(trackModel);
     if (trackModel.files[0].name.length > trackModel.files[1].name.length) {
       this.blob = trackModel.files[1];
       this.indexBlob = trackModel.files[0];

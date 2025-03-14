@@ -189,7 +189,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    console.log(updatedLegend.current);
     setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
   }, [svgComponents, canvasComponents]);
 
@@ -234,7 +233,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           ...configOptions.current,
           ...trackModel.options,
         };
-        console.log(trackModel);
         updateGlobalTrackConfig({
           configOptions: configOptions.current,
           trackModel: trackModel,

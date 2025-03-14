@@ -1053,7 +1053,7 @@ export function getDisplayModeFunction(
         ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
       });
     }
-    if (!drawData.trackState.visRegion) console.log(drawData);
+
     let svgDATA = displayModeComponentMap.full({
       formattedData,
       trackState: drawData.trackState,

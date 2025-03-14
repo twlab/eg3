@@ -57,7 +57,6 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   function getRegionSetFromProps(
     props: RegionSetConfigProps
   ): RegionSet | null {
-    console.log(props);
     return props.set ? props.set : null;
   }
 

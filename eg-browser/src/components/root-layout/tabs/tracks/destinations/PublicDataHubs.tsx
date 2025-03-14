@@ -22,7 +22,6 @@ import TrackModel from "@eg/tracks/src/models/TrackModel";
 export default function PublicDataHubs() {
   const genomeConfig = useCurrentGenome();
   const publicTracksPool = useAppSelector(selectPublicTracksPool);
-  console.log(genomeConfig);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");

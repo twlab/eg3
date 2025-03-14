@@ -271,7 +271,6 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-    console.log(curFetchNav, genomicLoci);
     const isLocalFetch = trackModel.fileObj instanceof File;
     if (isLocalFetch && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {
@@ -301,7 +300,6 @@ self.onmessage = async (event: MessageEvent) => {
         }
       }
     } else if (!isLocalFetch) {
-      console.log(curFetchNav, genomicFetchCoord);
       for (let i = 0; i < curFetchNav.length; i++) {
         let curRespond;
         try {
@@ -332,7 +330,7 @@ self.onmessage = async (event: MessageEvent) => {
               }),
             ]);
           }
-          console.log(curRespond);
+
           responses.push(_.flatten(curRespond));
         } catch (error) {
           console.error(

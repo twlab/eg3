@@ -5,7 +5,7 @@ import {
   ITrackModel,
 } from "../types";
 import GenomeRoot from "@eg/tracks/src/components/GenomeView/GenomeRoot";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { TrackModel } from "../models/TrackModel";
 import NavigationContext from "../models/NavigationContext";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
@@ -59,10 +59,32 @@ export function TrackContainerRepresentable({
   Toolbar,
   selectedRegionSet,
 }: ITrackContainerRepresentableProps) {
+  const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
+  const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
   // MARK: Genome Config
-  const genomeConfig = useMemo(() => {
+
+  const startingGenomeConfig = useMemo(() => {
     return GenomeSerializer.deserialize(_genomeConfig);
   }, [_genomeConfig]);
+
+  const genomeConfig = useMemo(() => {
+    if (selectedRegionSet) {
+      const updatedGenomeConfig = { ...startingGenomeConfig };
+      lastUserViewRegion.current = null;
+      lastViewRegion.current = null;
+      const newVisData = new DisplayedRegionModel(
+        selectedRegionSet.makeNavContext()
+      );
+      updatedGenomeConfig.defaultRegion = new OpenInterval(
+        newVisData._startBase!,
+        newVisData._endBase!
+      );
+      updatedGenomeConfig.navContext = newVisData._navContext;
+      return updatedGenomeConfig;
+    } else {
+      return startingGenomeConfig;
+    }
+  }, [selectedRegionSet, startingGenomeConfig]);
 
   // MARK: Tracks
 
@@ -128,93 +150,29 @@ export function TrackContainerRepresentable({
 
   // MARK: View Region
 
-  const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
-  const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
   const convertedViewRegion = useMemo(() => {
     try {
-      let newRegion;
       if (lastViewRegion.current) {
-        if (!selectedRegionSet) {
-          const navContext = lastViewRegion.current.getNavigationContext();
-          const parsed = navContext.parse(viewRegion);
-          const { start, end } = parsed;
+        const navContext = lastViewRegion.current.getNavigationContext();
+        const parsed = navContext.parse(viewRegion);
+        const { start, end } = parsed;
 
-          newRegion = lastViewRegion.current.clone();
-          newRegion.setRegion(start, end);
-          console.log("SHOILD be here???????????????????????qhwy");
-          lastViewRegion.current = newRegion;
-        } else if (selectedRegionSet) {
-          let viewRegionSet: RegionSet;
-
-          if (typeof selectedRegionSet === "object") {
-            selectedRegionSet["name"] = selectedRegionSet["name"];
-            selectedRegionSet["genomeName"] =
-              selectedRegionSet["genome"]["_name"];
-            viewRegionSet = RegionSet.deserialize(selectedRegionSet);
-            if (!viewRegionSet["genome"]) {
-              viewRegionSet["genome"] = genomeConfig.genome;
-            }
-          } else {
-            viewRegionSet = selectedRegionSet;
-          }
-
-          newRegion = lastViewRegion.current.clone();
-          const newRegionSetVisData = new DisplayedRegionModel(
-            viewRegionSet.makeNavContext()
-          );
-          newRegion.setRegion(
-            newRegionSetVisData._startBase!,
-            newRegionSetVisData._endBase!
-          );
-
-          genomeConfig.defaultRegion = new OpenInterval(
-            newRegionSetVisData._startBase!,
-            newRegionSetVisData._endBase!
-          );
-          genomeConfig.navContext = newRegionSetVisData._navContext;
-          console.log("SHOILD be here", genomeConfig.navContext);
-          lastViewRegion.current = newRegion;
-        }
-
+        const newRegion = lastViewRegion.current.clone();
+        newRegion.setRegion(start, end);
+        lastViewRegion.current = newRegion;
         return newRegion;
       } else {
-        let startViewRegion;
-        if (!selectedRegionSet) {
-          const navContext = genomeConfig.navContext as NavigationContext;
-          startViewRegion = new DisplayedRegionModel(
-            navContext,
-            ...genomeConfig.defaultRegion
-          );
+        const navContext = genomeConfig.navContext as NavigationContext;
+        const startViewRegion = new DisplayedRegionModel(
+          navContext,
+          ...genomeConfig.defaultRegion
+        );
 
-          const parsed = navContext.parse(viewRegion);
-          const { start, end } = parsed;
+        const parsed = navContext.parse(viewRegion);
+        const { start, end } = parsed;
 
-          startViewRegion.setRegion(start, end);
-          lastViewRegion.current = startViewRegion;
-        } else {
-          let viewRegionSet: RegionSet;
-
-          if (typeof selectedRegionSet === "object") {
-            selectedRegionSet["name"] = selectedRegionSet["name"];
-            selectedRegionSet["genomeName"] =
-              selectedRegionSet["genome"]["_name"];
-            viewRegionSet = RegionSet.deserialize(selectedRegionSet);
-            if (!viewRegionSet["genome"]) {
-              viewRegionSet["genome"] = genomeConfig.genome;
-            }
-          } else {
-            viewRegionSet = selectedRegionSet;
-          }
-
-          startViewRegion = new DisplayedRegionModel(
-            viewRegionSet.makeNavContext()
-          );
-          genomeConfig.defaultRegion = new OpenInterval(
-            startViewRegion._startBase!,
-            startViewRegion._endBase!
-          );
-          genomeConfig.navContext = startViewRegion._navContext;
-        }
+        startViewRegion.setRegion(start, end);
+        lastViewRegion.current = startViewRegion;
         return startViewRegion;
       }
     } catch (e) {
@@ -227,79 +185,30 @@ export function TrackContainerRepresentable({
         )
       );
     }
-  }, [viewRegion, genomeConfig, selectedRegionSet]);
+  }, [viewRegion, genomeConfig]);
   const convertedUserViewRegion = useMemo(() => {
     try {
       if (lastUserViewRegion.current) {
-        let newRegion;
-        if (selectedRegionSet) {
-          const navContext = lastUserViewRegion.current.getNavigationContext();
-          const parsed = navContext.parse(userViewRegion!);
-          const { start, end } = parsed;
+        const navContext = lastUserViewRegion.current.getNavigationContext();
+        const parsed = navContext.parse(userViewRegion!);
+        const { start, end } = parsed;
 
-          const newRegion = lastUserViewRegion.current.clone();
-          newRegion.setRegion(start, end);
-          lastUserViewRegion.current = newRegion;
-        } else if (selectedRegionSet) {
-          let viewRegionSet: RegionSet;
-
-          if (typeof selectedRegionSet === "object") {
-            selectedRegionSet["name"] = selectedRegionSet["name"];
-            selectedRegionSet["genomeName"] =
-              selectedRegionSet["genome"]["_name"];
-            viewRegionSet = RegionSet.deserialize(selectedRegionSet);
-            if (!viewRegionSet["genome"]) {
-              viewRegionSet["genome"] = genomeConfig.genome;
-            }
-          } else {
-            viewRegionSet = selectedRegionSet;
-          }
-
-          newRegion = lastUserViewRegion.current.clone();
-          const newRegionSetVisData = new DisplayedRegionModel(
-            viewRegionSet.makeNavContext()
-          );
-          newRegion.setRegion(
-            newRegionSetVisData._startBase!,
-            newRegionSetVisData._endBase!
-          );
-
-          lastViewRegion.current = newRegion;
-        }
+        const newRegion = lastUserViewRegion.current.clone();
+        newRegion.setRegion(start, end);
+        lastUserViewRegion.current = newRegion;
         return newRegion;
       } else {
-        let startViewRegion;
-        if (!selectedRegionSet) {
-          const navContext = genomeConfig.navContext as NavigationContext;
-          startViewRegion = new DisplayedRegionModel(
-            navContext,
-            ...genomeConfig.defaultRegion
-          );
+        const navContext = genomeConfig.navContext as NavigationContext;
+        const startViewRegion = new DisplayedRegionModel(
+          navContext,
+          ...genomeConfig.defaultRegion
+        );
 
-          const parsed = navContext.parse(userViewRegion!);
-          const { start, end } = parsed;
+        const parsed = navContext.parse(userViewRegion!);
+        const { start, end } = parsed;
 
-          startViewRegion.setRegion(start, end);
-          lastUserViewRegion.current = startViewRegion;
-        } else {
-          let viewRegionSet: RegionSet;
-
-          if (typeof selectedRegionSet === "object") {
-            selectedRegionSet["name"] = selectedRegionSet["name"];
-            selectedRegionSet["genomeName"] =
-              selectedRegionSet["genome"]["_name"];
-            viewRegionSet = RegionSet.deserialize(selectedRegionSet);
-            if (!viewRegionSet["genome"]) {
-              viewRegionSet["genome"] = genomeConfig.genome;
-            }
-          } else {
-            viewRegionSet = selectedRegionSet;
-          }
-
-          startViewRegion = new DisplayedRegionModel(
-            viewRegionSet.makeNavContext()
-          );
-        }
+        startViewRegion.setRegion(start, end);
+        lastUserViewRegion.current = startViewRegion;
         return startViewRegion;
       }
     } catch (e) {
