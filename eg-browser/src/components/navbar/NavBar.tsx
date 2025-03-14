@@ -28,7 +28,7 @@ export default function NavBar() {
 
   const genome = useCurrentGenome();
 
-  const genomeLogoUrl: string | null = genome?.name ? versionToLogoUrl[genome.name].croppedUrl ?? versionToLogoUrl[genome.name].logoUrl : null;
+  const genomeLogoUrl: string | null = genome?.name ? versionToLogoUrl[genome.name]?.croppedUrl ?? versionToLogoUrl[genome.name]?.logoUrl : null;
   // const genomeLogoUrl: string | null = null;
 
   return (
@@ -42,7 +42,8 @@ export default function NavBar() {
             'size-12',
             currentSession ? 'cursor-pointer' : 'cursor-default',
             sessionPanelOpen ? 'bg-secondary' : '',
-            genomeLogoUrl ? 'rounded-full p-1 outline outline-gray-200' : 'rounded-md p-2'
+            genomeLogoUrl ? 'rounded-full p-1' : 'rounded-md p-2',
+            genomeLogoUrl && !sessionPanelOpen ? 'outline outline-gray-200' : ''
           )}
           onClick={() => {
             if (currentSession) {
@@ -163,11 +164,11 @@ export default function NavBar() {
           >
             <Button
               onClick={() =>
-                window.open("https://epigenomegateway.wustl.edu/legacy/", "_blank")
+                window.open("https://epigenomegateway.wustl.edu/browser2022/", "_blank")
               }
               active={currentTab === "tracks"}
             >
-              Use EG2 Instead
+              Use Legacy Browser
             </Button>
           </motion.div>
         )}

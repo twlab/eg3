@@ -10,12 +10,15 @@ import Toolbar from "./toolbar/Toolbar";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import { selectIsNavigatorVisible } from "@/lib/redux/slices/settingsSlice";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenome();
+  const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
+
   if (!currentSession || !genomeConfig) {
     return null;
   }
@@ -53,7 +56,7 @@ export default function GenomeView() {
         highlights={currentSession.highlights}
         genomeConfig={genomeConfig}
         legendWidth={120}
-        showGenomeNav={true}
+        showGenomeNav={isNavigatorVisible}
         onNewRegion={handleNewRegion}
         onNewHighlight={handleNewHighlight}
         onTrackSelected={handleTrackSelected}

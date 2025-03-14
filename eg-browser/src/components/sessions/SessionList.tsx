@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { BrowserSession, deleteSession, selectCurrentSessionId, selectSessions } from "@/lib/redux/slices/browserSlice";
+import { BrowserSession, clearAllSessions, deleteSession, selectCurrentSessionId, selectSessions } from "@/lib/redux/slices/browserSlice";
 import { ChevronRightIcon, PlusIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
@@ -9,6 +9,7 @@ import EmptyView from "../ui/empty/EmptyView";
 import useGenome from "@/lib/hooks/useGenome";
 import Button from "../ui/button/Button";
 import { useNavigation } from "../core-navigation/NavigationStack";
+import ClearAllButton from "./ClearAllButton";
 
 export default function SessionList({
     onSessionClick
@@ -30,8 +31,12 @@ export default function SessionList({
         });
     }, [sessions, sortPreference]);
 
+    const handleClearAll = () => {
+        dispatch(clearAllSessions());
+    }
+
     return (
-        <div className="flex flex-col gap-4 pt-1 h-full">
+        <div className="flex flex-col gap-4 py-1 h-full">
             <div className="flex flex-row gap-2 w-full justify-start items-center">
                 <Button
                     leftIcon={<PlusIcon className="w-4 h-4" />}
@@ -78,6 +83,7 @@ export default function SessionList({
                             />
                         </motion.div>
                     ))}
+                    <ClearAllButton onClearAll={handleClearAll} />
                 </AnimatePresence>
             )}
         </div>

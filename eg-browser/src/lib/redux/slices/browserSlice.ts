@@ -166,6 +166,10 @@ export const browserSlice = createSlice({
         }
       }
     },
+    clearAllSessions: (state) => {
+      browserSessionAdapter.removeAll(state.sessions);
+      state.currentSession = null;
+    },
   },
 });
 
@@ -176,6 +180,7 @@ export const {
   setCurrentSession,
   updateCurrentSession,
   addTracks,
+  clearAllSessions,
 } = browserSlice.actions;
 
 export const selectCurrentSessionId = (state: RootState) =>

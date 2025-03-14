@@ -27,6 +27,7 @@ import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChange
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "@eg/core/src/eg-lib/models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
+import { Tool } from "../../types";
 
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
@@ -2259,6 +2260,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
+                cursor: tool === Tool.Drag ? "pointer" :
+                  tool === Tool.Reorder ? "grab" :
+                    tool === Tool.Highlight ? "ew-resize" :
+                      tool === Tool.Zoom ? "zoom-in" : "default"
               }}
             >
               <div ref={horizontalLineRef} className="horizontal-line" />
