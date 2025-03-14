@@ -9,6 +9,8 @@ import {
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
+import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 
 interface RegionSetSelectorProps {
   genome: Genome;
@@ -20,14 +22,31 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
   selectedSet,
   onSetsChanged = () => undefined,
 }) => {
+  const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
   const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
+  const _genomeConfig = useCurrentGenome();
 
-  if (!currentSession) {
+  if (!currentSession || !_genomeConfig) {
     return "";
   }
-  const sets = currentSession?.regionSets;
-  const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
+  const genomeName = currentSession?.genomeId || "";
+  const genomeConfig = _genomeConfig
+    ? GenomeSerializer.deserialize(_genomeConfig)
+    : null;
+  const genome = genomeConfig?.genome || null;
+  if (!genome) {
+    return "";
+  }
+  const sets = currentSession?.regionSets.map((item) => {
+    if (typeof item === "object") {
+      const newRegionSet = RegionSet.deserialize(item);
+      newRegionSet["genome"] = genome;
+      return newRegionSet;
+    } else {
+      return item;
+    }
+  });
 
   const setConfigured = (newSet: RegionSet) => {
     if (indexBeingConfigured < 0 || indexBeingConfigured >= sets.length) {
@@ -121,7 +140,7 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
       </div>
     );
   };
-
+  console.log(sets, indexBeingConfigured, sets[indexBeingConfigured]);
   return (
     <div>
       <h3>Select a gene/region set</h3>
@@ -147,6 +166,7 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
       <RegionSetConfig
         set={sets[indexBeingConfigured]}
         onSetConfigured={setConfigured}
+        genome={genome}
       />
     </div>
   );
