@@ -30,7 +30,6 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
   if (!currentSession || !_genomeConfig) {
     return "";
   }
-  const genomeName = currentSession?.genomeId || "";
   const genomeConfig = _genomeConfig
     ? GenomeSerializer.deserialize(_genomeConfig)
     : null;
@@ -65,6 +64,11 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
   };
   function onSetSelected(set: RegionSet) {
     console.log(set);
+    dispatch(
+      updateCurrentSession({
+        selectedRegionSet: set,
+      })
+    );
   }
   const replaceSet = (index: number, replacement: RegionSet) => {
     const nextSets = sets.slice();

@@ -8,7 +8,7 @@ import Genome from "./Genome";
 /**
  * A RegionSet without methods.
  */
-interface IRegionSet {
+export interface IRegionSet {
   name: string;
   features: IFeature[];
   genomeName: string;
