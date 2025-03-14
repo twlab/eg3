@@ -470,7 +470,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
       if (updatedLegend) {
         updatedLegend.current = (
-          <TrackLegend height={svgHeight.current} trackModel={trackModel} />
+          <TrackLegend
+            height={svgHeight.current}
+            trackModel={trackModel}
+            label={trackModel.options.label}
+          />
         );
       }
 
@@ -518,7 +522,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
     //   );
     // }
     var height;
-
+    if (updatedLegend) {
+      // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
+      updatedLegend.current = (
+        <TrackLegend
+          height={height}
+          trackModel={trackModel}
+          label={trackModel.options.label}
+        />
+      );
+    }
     height =
       trackModel.type in { repeatmasker: "" }
         ? configOptions.height
@@ -533,11 +546,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     if (svgHeight) {
       svgHeight.current = height;
-    }
-    if (updatedLegend) {
-      updatedLegend.current = (
-        <TrackLegend height={height} trackModel={trackModel} />
-      );
     }
 
     return svgDATA;
@@ -1071,6 +1079,7 @@ export function getDisplayModeFunction(
         <TrackLegend
           height={drawData.configOptions.height}
           trackModel={drawData.trackModel}
+          label={drawData.trackModel.options.label}
         />
       );
       svgElements = drawDatas.map((item, index) =>
@@ -1143,6 +1152,7 @@ export function getDisplayModeFunction(
         <TrackLegend
           height={drawData.configOptions.height}
           trackModel={drawData.trackModel}
+          label={drawData.trackModel.options.label}
         />
       );
       const strand = result.plotStrand;

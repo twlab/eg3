@@ -1,16 +1,13 @@
 import { useMemo, useState } from "react";
 import _ from "lodash";
-import CollectionView, {
-  ICollectionViewDataSource,
-} from "@/components/ui/collection/CollectionView";
+
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import { fetchDataHubTracks } from "@eg/core";
-import { ITrackModel } from "@eg/tracks";
+
 import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
 
@@ -34,8 +31,10 @@ export default function PublicDataHubs() {
   const [loadedHubs, setLoadedHubs] = useState<Set<string>>(new Set());
 
   const secondaryGenomes: Array<any> = [];
-
-  const selectedGenomeName = currentSession!.genomeId;
+  let selectedGenomeName = null;
+  if (currentSession) {
+    selectedGenomeName = currentSession!.genomeId;
+  }
 
   const selectedGenomeConfig = useMemo(() => {
     if (selectedGenomeName && selectedGenomeName !== selectedGenomeName) {
@@ -60,8 +59,7 @@ export default function PublicDataHubs() {
 
   const loadHub = async (hub: any) => {
     const parser = new DataHubParser();
-    // setLoadingHubs((prev) => new Set([...prev, hub.url]));
-
+    setLoadingHubs((prev) => new Set([...prev, hub.url]));
     try {
       const json = await new Json5Fetcher().get(hub.url);
       const lastSlashIndex = hub.url.lastIndexOf("/");
@@ -76,7 +74,6 @@ export default function PublicDataHubs() {
         tracksStartIndex,
         hubBase
       );
-
       dispatch(addPublicTracksPool([...publicTracksPool, ...tracks]));
       const tracksToShow = tracks.filter((track: any) => track.showOnHubLoad);
       if (tracksToShow.length > 0) {
@@ -90,8 +87,13 @@ export default function PublicDataHubs() {
       setLoadedHubs((prev) => new Set([...prev, hub.url]));
     } catch (error) {
       console.error(error);
-
-      dispatch(addPublicTracksPool([...publicTracksPool]));
+      // dispatch(addPublicTracksPool([...publicTracksPool]));
+    } finally {
+      setLoadingHubs((prev) => {
+        const next = new Set(prev);
+        next.delete(hub.url);
+        return next;
+      });
     }
   };
 
@@ -117,7 +119,7 @@ export default function PublicDataHubs() {
                   : "bg-secondary hover:bg-purple-200"
               }`}
               onClick={() => loadHub(hub)}
-              disabled={isLoading}
+              disabled={isLoaded || isLoading}
             >
               {isLoaded ? (
                 <CheckIcon className="size-4 text-green-700" />

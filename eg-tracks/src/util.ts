@@ -1,6 +1,8 @@
 import { getGenomeConfig as getGenomeConfigFromAllGenomes } from "./models/genomes/allGenomes";
 import DisplayedRegionModel from "./models/DisplayedRegionModel";
 import DataHubParser from "./models/DataHubParser";
+import RegionSet from "@eg/core/src/eg-lib/models/RegionSet";
+import OpenInterval from "./models/OpenInterval";
 
 export function getGenomeDefaultState(genome: string) {
     const genomeConfig = getGenomeConfigFromAllGenomes(genome);
@@ -73,4 +75,29 @@ export async function fetchDataHubTracks(hub: any) {
 
 export function getGenomeConfig(genome: string) {
     return getGenomeConfigFromAllGenomes(genome);
+}
+
+export function restoreLegacyViewRegion(object: any, regionSetView: RegionSet | null) {
+    const getDisplayedRegion = () => {
+        const genomeConfig = getGenomeConfig(object.genomeName);
+        if (!genomeConfig) {
+            return null;
+        }
+
+        let viewInterval;
+        if (object.hasOwnProperty("viewInterval")) {
+            viewInterval = OpenInterval.deserialize(object.viewInterval);
+        } else {
+            viewInterval = genomeConfig.navContext.parse(object.displayRegion);
+        }
+        if (regionSetView) {
+            return new DisplayedRegionModel(regionSetView.makeNavContext(), ...viewInterval);
+        } else {
+            return new DisplayedRegionModel(genomeConfig.navContext, ...viewInterval);
+        }
+    }
+
+    const displayedRegion = getDisplayedRegion();
+
+    return displayedRegion?.currentRegionAsString();
 }

@@ -78,12 +78,16 @@ const defaultTracks = [
         name: "refGene",
         genome: "hg38",
     }),
+    // new TrackModel({
+    //     type: "geneAnnotation",
+    //     name: "gencodeV47",
+    //     genome: "hg38",
+    // }),
     new TrackModel({
         type: "geneAnnotation",
-        name: "gencodeV47",
+        name: "gencodeV39",
         genome: "hg38",
     }),
-
     // new TrackModel({
     //   type: "bigbed",
     //   name: "test bigbed",
@@ -97,11 +101,11 @@ const defaultTracks = [
     //   "showOnHubLoad": true
     // }),
 
-    // new TrackModel({
-    //   type: "repeatmasker",
-    //   name: "RepeatMasker",
-    //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-    // }),
+    new TrackModel({
+      type: "repeatmasker",
+      name: "RepeatMasker",
+      url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+    }),
 
     // new TrackModel({
     //   type: "snp",

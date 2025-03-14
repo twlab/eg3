@@ -1,17 +1,18 @@
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { createSession } from "@/lib/redux/slices/browserSlice";
 import { selectCustomGenomes, selectCustomGenomesLoadStatus } from "@/lib/redux/slices/genomeHubSlice";
-import { refreshLocalGenomes } from "@/lib/redux/thunk/genome-hub";
+import { clearAllGenomes, refreshLocalGenomes } from "@/lib/redux/thunk/genome-hub";
+import { IGenome } from "@eg/tracks";
 import { ChevronRightIcon } from "@heroicons/react/16/solid";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useNavigation } from "../core-navigation/NavigationStack";
+import ClearAllButton from "../sessions/ClearAllButton";
 import Button from "../ui/button/Button";
 import EmptyView from "../ui/empty/EmptyView";
-import { IGenome } from "@eg/tracks";
 import Progress from "../ui/progress/Progress";
-import { createSessionWithGenome } from "@/lib/redux/slices/browserSlice";
 
 type GroupedGenomes = {
     [key: string]: IGenome[];
@@ -60,7 +61,11 @@ export default function GenomeHubPanel() {
         if (customGenomesLoadStatus === "idle") {
             dispatch(refreshLocalGenomes());
         }
-    }, [dispatch, customGenomesLoadStatus]);
+}, [dispatch, customGenomesLoadStatus]);
+
+    const handleClearAll = () => {
+        dispatch(clearAllGenomes());
+    }
 
     return (
         <div className="flex flex-col pt-2 h-full">
@@ -117,7 +122,7 @@ function GenomeHubItem({
         setLoading(true);
         setTimeout(() => {
             // TODO: preload the genome
-            dispatch(createSessionWithGenome(genome));
+            dispatch(createSession({ genome }));
         }, 1000);
     }
 

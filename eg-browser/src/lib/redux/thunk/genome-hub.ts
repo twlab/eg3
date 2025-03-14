@@ -34,3 +34,14 @@ export const addCustomGenome = createAsyncThunk(
         thunkApi.dispatch(refreshLocalGenomes());
     }
 )
+
+
+export const clearAllGenomes = createAsyncThunk(
+    'genome-hub/clear-all',
+    async (_, thunkApi) => {
+        const genomeHubManager = GenomeHubManager.getInstance();
+        await genomeHubManager.deleteAllGenomes();
+
+        thunkApi.dispatch(refreshLocalGenomes());
+    }
+)

@@ -25,24 +25,18 @@ interface RegionSetConfigProps {
   set?: RegionSet;
   onSetConfigured?: (newSet: RegionSet) => void;
   onClose?: () => void;
+  genome: Genome;
 }
 
 const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   set: propSet,
   onSetConfigured,
+  genome,
 }) => {
   const currentSession = useAppSelector(selectCurrentSession);
-  const _genomeConfig = useCurrentGenome();
 
-  const genomeName = currentSession?.genomeId || ""; // Default an empty string if currentSession is null
-  const genomeConfig = _genomeConfig
-    ? GenomeSerializer.deserialize(_genomeConfig)
-    : null;
-  const genome = genomeConfig?.genome || null;
+  const [regionSet, setRegionSet] = useState<RegionSet | null>(null);
 
-  const [regionSet, setRegionSet] = useState<RegionSet | null>(
-    getRegionSetFromProps({ set: propSet, genome })
-  );
   const [newRegionName, setNewRegionName] = useState("");
   const [newRegionLocus, setNewRegionLocus] = useState("");
   const [newRegionError, setNewRegionError] = useState<Error | null>(null);
@@ -52,14 +46,18 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
   // Ensure hooks are not called conditionally
   useEffect(() => {
-    if (!currentSession || !_genomeConfig) {
+    if (!currentSession || !genome) {
       return;
     }
-  }, [currentSession, _genomeConfig]);
-
+  }, [currentSession, genome]);
+  useEffect(() => {
+    const initRegionSet = getRegionSetFromProps({ set: propSet, genome });
+    setRegionSet(initRegionSet);
+  }, [propSet]);
   function getRegionSetFromProps(
     props: RegionSetConfigProps
   ): RegionSet | null {
+    console.log(props);
     return props.set ? props.set : null;
   }
 
@@ -98,7 +96,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
             return new Feature(symbol, locus, "+"); // coordinates default have + as strand
           }
         } catch (error) {}
-        return getSymbolRegions(genomeName, symbol);
+        return getSymbolRegions(genome.getName(), symbol);
       })
     );
 
@@ -267,10 +265,6 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   const cancelPressed = () => {
     setRegionSet(getRegionSetFromProps({ set: propSet, genome }));
   };
-
-  if (!currentSession || !genome) {
-    return null; // Render nothing if data is not available
-  }
 
   return (
     <div>

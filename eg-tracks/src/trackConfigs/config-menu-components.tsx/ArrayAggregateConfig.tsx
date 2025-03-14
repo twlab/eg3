@@ -1,3 +1,4 @@
+import React from "react";
 import SelectConfig from "./SelectConfig";
 import { ArrayAggregatorTypes } from "@eg/core/src/eg-lib/models/FeatureAggregator";
 

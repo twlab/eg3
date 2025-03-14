@@ -4,6 +4,7 @@ import {
   setNavigationTab,
   selectSessionPanelOpen,
   selectExpandNavigationTab,
+  setSessionPanelOpen,
 } from "../../lib/redux/slices/navigationSlice";
 import GenomePicker from "../genome-picker/GenomePicker";
 import GenomeView from "../genome-view/GenomeView";
@@ -18,10 +19,14 @@ import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import { selectCurrentSessionId } from "@/lib/redux/slices/browserSlice";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "../sessions/SessionPanel";
+import GoogleAnalytics from "./GoogleAnalytics";
+import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 
 const CURL_RADIUS = 15;
 
 export default function RootLayout() {
+  useBrowserInitialization();
+
   const isSmallScreen = useSmallScreen();
 
   const dispatch = useAppDispatch();
@@ -43,6 +48,7 @@ export default function RootLayout() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-black">
+      <GoogleAnalytics />
       <motion.div
         className="flex flex-col h-full"
         animate={{
@@ -95,9 +101,7 @@ export default function RootLayout() {
                 ? "blur(5px) brightness(0.7)"
                 : "blur(0px) brightness(1)",
             }}
-            style={{
-              pointerEvents: sessionPanelOpen ? "none" : "auto",
-            }}
+            onClick={sessionPanelOpen ? () => dispatch(setSessionPanelOpen(false)) : undefined}
           >
             {/* MARK: - Genome View */}
             <motion.div
@@ -116,6 +120,9 @@ export default function RootLayout() {
                   : "blur(0px) brightness(1)",
                 translateX: expandNavigationTab ? 50 : 0,
                 width: !showRightTab ? "100vw" : "75vw",
+              }}
+              style={{
+                pointerEvents: sessionPanelOpen ? "none" : "auto",
               }}
             >
               <AnimatePresence mode="wait">
@@ -139,7 +146,7 @@ export default function RootLayout() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    style={{ width: contentWidth, height: contentHeight}}
+                    style={{ width: contentWidth, height: contentHeight }}
                   >
                     <GenomePicker />
                   </motion.div>

@@ -115,7 +115,7 @@ function AddLocalTracks() {
     }
 
     const fileList = Array.from(files);
-
+    console.log(fileList);
     if (ONE_TRACK_FILE_LIST.includes(trackState.type.toLowerCase())) {
       tracks = fileList.map(
         (file: any) =>

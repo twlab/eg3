@@ -10,6 +10,8 @@ import GoLive from "./destinations/GoLive";
 import Screenshot from "./destinations/Screenshot";
 import DynamicRecord from "./destinations/DynamicRecord";
 import FetchSequence from "./destinations/FetchSequence";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { setSessionPanelOpen } from "@/lib/redux/slices/navigationSlice";
 import RegionSetSelector from "./destinations/region-set/RegionSetSelector";
 
 export default function AppsTab() {
@@ -75,11 +77,10 @@ export default function AppsTab() {
     []
   );
 
+  const dispatch = useAppDispatch();
+
   return (
-    <NavigationStack
-      destinations={destinations}
-      rootOptions={{ title: "Apps" }}
-    >
+    <NavigationStack destinations={destinations} rootOptions={{ title: 'Apps' }}>
       <div className="flex flex-col gap-4">
         <DescriptiveNavigationLink
           path="region-set-view"
@@ -97,9 +98,9 @@ export default function AppsTab() {
           description="Generate scatter plots for genomic data analysis"
         />
         <DescriptiveNavigationLink
-          path="session"
           title="Session"
           description="Manage and share your browser sessions"
+          onClick={() => dispatch(setSessionPanelOpen(true))}
         />
         <DescriptiveNavigationLink
           path="go-live"
