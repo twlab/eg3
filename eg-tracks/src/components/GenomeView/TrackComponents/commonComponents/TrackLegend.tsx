@@ -25,6 +25,7 @@ interface TrackLegendProps {
   noShiftFirstAxisLabel?: boolean;
   selectedRegion?: DisplayedRegionModel; // the region for viewing, without expansion
   axisLegend?: any;
+  label?: string;
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
@@ -167,10 +168,12 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       trackViewRegion,
       trackWidth,
       selectedRegion,
+      label,
     } = this.props;
     if (height <= 0) {
       return null;
     }
+    console.log(label);
     const axisHeight = axisScaleReverse ? height * 0.5 : height;
     const divStyle = Object.assign(
       {
@@ -202,7 +205,6 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       );
     }
 
-    const label = trackModel.getDisplayLabel();
     let plotLegend = false;
     let chromLabel = "";
     if (trackModel.type === "ruler") {
@@ -248,13 +250,13 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       );
     }
     return (
-      <div style={divStyle} title={label}>
-        <div className="TrackLegend-wrap">
+      <div style={divStyle}>
+        <div className="TrackLegend-wrap" title={trackModel.options.label}>
           <p
             className="TrackLegend-label"
             style={{ ...pStyle, wordWrap: "break-word", whiteSpace: "normal" }}
           >
-            {label}
+            {trackModel.options.label}
           </p>
           <div
             style={{ display: "flex", alignItems: "center", fontSize: "12px" }}

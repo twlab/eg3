@@ -1,16 +1,12 @@
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
-import {
-  GenomeCoordinate,
-  IHighlightInterval,
-  ITrackModel,
-  TrackContainerRepresentable,
-} from "@eg/tracks";
-import Toolbar from "./toolbar/Toolbar";
-import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import { selectTool } from "@/lib/redux/slices/utilitySlice";
 import { selectIsNavigatorVisible } from "@/lib/redux/slices/settingsSlice";
+import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import { GenomeCoordinate, IHighlightInterval, ITrackModel, TrackContainerRepresentable } from "@eg/tracks";
+
+import Toolbar from "./toolbar/Toolbar";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
@@ -19,6 +15,7 @@ export default function GenomeView() {
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
 
+  const selectedRegionSet = currentSession?.selectedRegionSet;
   if (!currentSession || !genomeConfig) {
     return null;
   }
@@ -71,8 +68,7 @@ export default function GenomeView() {
         }
         tool={tool}
         Toolbar={Toolbar}
-        onLoadComplete={undefined}
-        isGenomeViewLoaded={false}
+        selectedRegionSet={selectedRegionSet}
       />
     </div>
   );

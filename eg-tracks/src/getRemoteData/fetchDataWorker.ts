@@ -271,7 +271,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
-    // console.log(curFetchNav, genomicLoci);
+    console.log(curFetchNav, genomicLoci);
     const isLocalFetch = trackModel.fileObj instanceof File;
     if (isLocalFetch && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {

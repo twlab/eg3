@@ -12,6 +12,7 @@ import {
 } from "@reduxjs/toolkit";
 
 import { RootState } from "../store";
+import RegionSet from "@eg/tracks/src/models/RegionSet";
 
 export type uuid = string;
 
@@ -30,6 +31,7 @@ export interface BrowserSession {
   metadataTerms: string[];
   trackModelId: number;
   regionSets: Array<any>;
+  selectedRegionSet: RegionSet | null;
 }
 
 // MARK: - State
@@ -78,6 +80,7 @@ export const browserSlice = createSlice({
         metadataTerms: [],
         trackModelId,
         regionSets: [],
+        selectedRegionSet: null,
       };
 
       browserSessionAdapter.addOne(state.sessions, nextSession);
