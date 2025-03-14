@@ -63,7 +63,9 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
       })
     );
   };
-  function onSetSelected(set: RegionSet) {}
+  function onSetSelected(set: RegionSet) {
+    console.log(set);
+  }
   const replaceSet = (index: number, replacement: RegionSet) => {
     const nextSets = sets.slice();
     nextSets[index] = replacement;
