@@ -37,94 +37,93 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // to see if genomeConfig we can check its session id because it will unique
   useEffect(() => {
     if (size.width > 0) {
-      console.log(selectedRegionSet);
       let curGenome;
-      if (!selectedRegionSet) {
-        if (!isInitial.current) {
-          curGenome = { ...currentGenomeConfig };
-
-          curGenome["isInitial"] = isInitial.current;
-          curGenome.defaultRegion = new OpenInterval(
-            userViewRegion._startBase!,
-            userViewRegion._endBase!
-          );
-          curGenome["sizeChange"] = true;
-        } else {
-          curGenome = { ...genomeConfig };
-          curGenome["isInitial"] = isInitial.current;
-          curGenome["genomeID"] = uuidv4();
-          let bundleId = uuidv4();
-          curGenome.defaultRegion = new OpenInterval(
-            userViewRegion._startBase!,
-            userViewRegion._endBase!
-          );
-          curGenome["bundleId"] = bundleId;
-        }
+      // if (!selectedRegionSet) {
+      if (!isInitial.current) {
+        console.log("ASDASDASDDAS");
+        console.log(currentGenomeConfig);
+        const prevID = currentGenomeConfig.genomeID;
+        curGenome = { ...genomeConfig, genomeID: prevID };
+        curGenome["sizeChange"] = false;
+        // curGenome["isInitial"] = isInitial.current;
+        console.log(curGenome);
       } else {
-        let viewRegionSet: RegionSet;
-        console.log(curGenome, "jere1");
-        if (typeof selectedRegionSet === "object") {
-          selectedRegionSet["genomeName"] =
-            selectedRegionSet["genome"]["_name"];
-          viewRegionSet = RegionSet.deserialize(selectedRegionSet);
-          if (!viewRegionSet["genome"]) {
-            viewRegionSet["genome"] = genomeConfig.genome;
-          }
-        } else {
-          console.log(curGenome, "jere3");
-          viewRegionSet = selectedRegionSet;
-        }
-        const newRegionSetVisData = new DisplayedRegionModel(
-          viewRegionSet.makeNavContext()
+        console.log("ASDASDASDDAS22");
+        curGenome = { ...genomeConfig };
+        curGenome["isInitial"] = isInitial.current;
+        curGenome["genomeID"] = uuidv4();
+        let bundleId = uuidv4();
+        curGenome.defaultRegion = new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
         );
-        if (!isInitial.current) {
-          curGenome = { ...currentGenomeConfig };
-
-          curGenome["isInitial"] = isInitial.current;
-          curGenome.defaultRegion = new OpenInterval(
-            newRegionSetVisData._startBase!,
-            newRegionSetVisData._endBase!
-          );
-          curGenome["regionSetView"] = [viewRegionSet];
-          curGenome["sizeChange"] = false;
-          console.log(curGenome, "jere2");
-        } else {
-          curGenome = { ...genomeConfig };
-          curGenome["isInitial"] = isInitial.current;
-          curGenome["genomeID"] = uuidv4();
-          let bundleId = uuidv4();
-          curGenome.defaultRegion = new OpenInterval(
-            newRegionSetVisData._startBase!,
-            newRegionSetVisData._endBase!
-          );
-          curGenome["regionSetView"] = [viewRegionSet];
-
-          curGenome["bundleId"] = bundleId;
-        }
-        curGenome.navContext = newRegionSetVisData._navContext;
+        curGenome["bundleId"] = bundleId;
       }
-
       setCurrentGenomeConfig(curGenome);
+      // else {
+      //     let viewRegionSet: RegionSet;
+
+      //     if (typeof selectedRegionSet === "object") {
+      //       selectedRegionSet["genomeName"] =
+      //         selectedRegionSet["genome"]["_name"];
+      //       viewRegionSet = RegionSet.deserialize(selectedRegionSet);
+      //       if (!viewRegionSet["genome"]) {
+      //         viewRegionSet["genome"] = genomeConfig.genome;
+      //       }
+      //     } else {
+      //       viewRegionSet = selectedRegionSet;
+      //     }
+      //     const newRegionSetVisData = new DisplayedRegionModel(
+      //       viewRegionSet.makeNavContext()
+      //     );
+
+      //     if (!isInitial.current) {
+      //       curGenome = { ...currentGenomeConfig };
+
+      //       curGenome["isInitial"] = isInitial.current;
+      //       curGenome.defaultRegion = new OpenInterval(
+      //         newRegionSetVisData._startBase!,
+      //         newRegionSetVisData._endBase!
+      //       );
+      //       curGenome["regionSetView"] = [viewRegionSet];
+      //       curGenome["sizeChange"] = false;
+      //     } else {
+      //       curGenome = { ...genomeConfig };
+      //       curGenome["isInitial"] = isInitial.current;
+      //       curGenome["genomeID"] = uuidv4();
+      //       let bundleId = uuidv4();
+      //       curGenome.defaultRegion = new OpenInterval(
+      //         newRegionSetVisData._startBase!,
+      //         newRegionSetVisData._endBase!
+      //       );
+      //       curGenome["regionSetView"] = [viewRegionSet];
+
+      //       curGenome["bundleId"] = bundleId;
+      //     }
+      //     curGenome.navContext = newRegionSetVisData._navContext;
+      //   }
+
       isInitial.current = false;
     }
   }, [size.width, selectedRegionSet]);
-  useEffect(() => {
-    if (size.width > 0) {
-      let curGenome;
+  // useEffect(() => {
+  //   if (size.width > 0) {
+  //     let curGenome;
 
-      if (!isInitial.current) {
-        console.log("did it reset here?", viewRegion);
-        curGenome = { ...currentGenomeConfig };
-        curGenome["isInitial"] = isInitial.current;
-        curGenome.defaultRegion = new OpenInterval(
-          viewRegion._startBase!,
-          viewRegion._endBase!
-        );
-        curGenome["sizeChange"] = false;
-        setCurrentGenomeConfig(curGenome);
-      }
-    }
-  }, [viewRegion]);
+  //     if (!isInitial.current) {
+  //       curGenome = { ...currentGenomeConfig };
+
+  //       curGenome["isInitial"] = isInitial.current;
+  //       curGenome.defaultRegion = new OpenInterval(
+  //         viewRegion._startBase!,
+  //         viewRegion._endBase!
+  //       );
+
+  //       curGenome["sizeChange"] = false;
+  //       setCurrentGenomeConfig(curGenome);
+  //     }
+  //   }
+  // }, [viewRegion]);
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>

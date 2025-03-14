@@ -1,5 +1,5 @@
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+import TrackModel from "../models/TrackModel";
 import { IGenome } from "./genome-hub";
 import RegionSet, { IRegionSet } from "../models/RegionSet";
 

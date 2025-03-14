@@ -11,8 +11,8 @@ import GenomicCoordinates from "./GenomicCoordinates";
 import {
   FeatureAggregator,
   DefaultAggregators,
-} from "@eg/core/src/eg-lib/models/FeatureAggregator";
-import { ScaleChoices } from "@eg/core/src/eg-lib/models/ScaleChoices";
+} from "../../../../../models/FeatureAggregator";
+import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import { PixiScene } from "./PixiScene";
 
 export const DEFAULT_OPTIONS = {

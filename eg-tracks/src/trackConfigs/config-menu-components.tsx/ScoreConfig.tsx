@@ -1,7 +1,7 @@
 import React from "react";
 import SelectConfig from "./SelectConfig";
 import NumberConfig from "./NumberConfig";
-import { ScaleChoices } from "@eg/core/src/eg-lib/models/ScaleChoices";
+import { ScaleChoices } from "../../models/ScaleChoices";
 
 /**
  * A context menu item that configures interaction track score scale.

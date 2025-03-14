@@ -1,5 +1,5 @@
 import React from "react";
-import Snp from "@eg/core/src/eg-lib/models/Snp";
+import Snp from "../../../models/Snp";
 import "../commonComponents/HoverToolTips/Tooltip.css";
 
 interface SnpDetailProps {

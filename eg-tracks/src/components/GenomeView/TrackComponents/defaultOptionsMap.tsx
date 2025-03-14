@@ -18,12 +18,12 @@ import BedAnnotation, {
 } from "./bedComponents/BedAnnotation";
 
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+import OpenInterval from "../../../models/OpenInterval";
 import { AnnotationDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import Feature from "../../../models/Feature";
-import { DefaultAggregators } from "@eg/core/src/eg-lib/models/FeatureAggregator";
+import { DefaultAggregators } from "../../../models/FeatureAggregator";
 
-import { Fiber, JasparFeature } from "@eg/core/src/eg-lib/models/Feature";
+import { Fiber, JasparFeature } from "../../../models/Feature";
 
 const ROW_VERTICAL_PADDING = 5;
 

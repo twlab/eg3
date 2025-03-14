@@ -5,11 +5,11 @@ import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
 import Track, { PropsFromTrackContainer } from "../commonComponents/Track";
 
-import { Fiber } from "@eg/core/src/eg-lib/models/Feature";
-import { PlacedFeatureGroup } from "@eg/core/src/eg-lib/models/FeatureArranger";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
-import { FeaturePlacer } from "@eg/core/src/eg-lib/models/getXSpan/FeaturePlacer";
+import { Fiber } from "../../../../models/Feature";
+import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
+import OpenInterval from "../../../../models/OpenInterval";
+import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
+import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
 import TrackLegend from "../commonComponents/TrackLegend";
 import DesignRenderer, {
   RenderTypes,

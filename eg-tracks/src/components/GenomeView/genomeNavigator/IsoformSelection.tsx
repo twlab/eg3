@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { StandaloneGeneAnnotation } from "./StandaloneGeneAnnotation";
 
-import Gene from "@eg/core/src/eg-lib/models/Gene";
-import Genome from "@eg/core/src/eg-lib/models/Genome";
-import LinearDrawingModel from "@eg/core/src/eg-lib/models/LinearDrawingModel";
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
-import NavigationContext from "@eg/core/src/eg-lib/models/NavigationContext";
+import Gene from "../../../models/Gene";
+import Genome from "../../../models/Genome";
+import LinearDrawingModel from "../../../models/LinearDrawingModel";
+import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+import NavigationContext from "../../../models/NavigationContext";
 import { AWS_API } from "./GeneSearchBoxBase";
 
 import "./IsoformSelection.css";

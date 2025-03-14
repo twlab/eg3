@@ -37,7 +37,8 @@ class RegionSet {
     public name = "",
     public features: Feature[] = [],
     public genome: Genome,
-    public flankingStrategy: FlankingStrategy
+    public flankingStrategy: FlankingStrategy,
+    public genomeName: string = ""
   ) {
     this.name = name;
     this.features = features;

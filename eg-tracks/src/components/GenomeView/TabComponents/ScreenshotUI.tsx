@@ -3,7 +3,7 @@ import _ from "lodash";
 
 import withAutoDimensions from "./withAutoDimensions";
 import HighlightRegion, { getHighlightedXs } from "./HighlightRegion";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+import OpenInterval from "../../../models/OpenInterval";
 import { GroupedTrackManager } from "./GroupedTrackManager";
 import {
   displayModeComponentMap,

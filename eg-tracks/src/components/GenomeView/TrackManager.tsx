@@ -11,7 +11,7 @@ import NavigationContext from "../../models/NavigationContext";
 import { HicSource } from "../../getRemoteData/hicSource";
 import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import TrackModel from "../../models/TrackModel";
 import _, { throttle } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
@@ -25,7 +25,7 @@ import { TrackState } from "./TrackComponents/CommonTrackStateChangeFunctions.ts
 import TrackRegionController from "./genomeNavigator/TrackRegionController";
 import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
-import { GenomeConfig } from "@eg/core/src/eg-lib/models/genomes/GenomeConfig";
+import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
@@ -119,6 +119,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   viewRegion,
   showGenomeNav,
 }) {
+  console.log(genomeConfig);
   //useRef to store data between states without re render the component
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
@@ -351,7 +352,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
-
+    if (curBp > genomeConfig.navContext._totalBases || curBp < 0) {
+      return;
+    }
     trackManagerState.current.viewRegion._startBase = curBp;
     trackManagerState.current.viewRegion._endBase =
       curBp + bpRegionSize.current;
@@ -1417,29 +1420,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // fetchInstances.current = {};
     // isMouseInsideRef.current = false;
     // globalTrackConfig.current = {};
-    // trackManagerState.current = {
-    //   bundleId: "",
-    //   customTracksPool: [],
-    //   darkTheme: false,
-    //   genomeName: genomeConfig ? genomeConfig.genome.getName() : "",
-    //   highlights: [],
-    //   isShowingNavigator: true,
-    //   layout: {
-    //     global: {},
-    //     layout: {},
-    //     borders: [],
-    //   },
-    //   metadataTerms: [],
-    //   regionSetView: null,
-    //   regionSets: [],
-    //   viewRegion: new DisplayedRegionModel(
-    //     genomeConfig.navContext,
-    //     genomeConfig.defaultRegion.start,
-    //     genomeConfig.defaultRegion.end
-    //   ),
-    //   trackLegendWidth: legendWidth,
-    //   tracks: tracks.length > 0 ? tracks : genomeConfig.defaultTracks,
-    // };
+    trackManagerState.current = {
+      bundleId: "",
+      customTracksPool: [],
+      darkTheme: false,
+      genomeName: genomeConfig ? genomeConfig.genome.getName() : "",
+      highlights: [],
+      isShowingNavigator: true,
+      layout: {
+        global: {},
+        layout: {},
+        borders: [],
+      },
+      metadataTerms: [],
+      regionSetView: null,
+      regionSets: [],
+      viewRegion: new DisplayedRegionModel(
+        genomeConfig.navContext,
+        genomeConfig.defaultRegion.start,
+        genomeConfig.defaultRegion.end
+      ),
+      trackLegendWidth: legendWidth,
+      tracks: tracks.length > 0 ? tracks : genomeConfig.defaultTracks,
+    };
 
     configMenuPos.current = {};
     lastDragX.current = 0;
@@ -1502,25 +1505,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
           new HicSource(trackManagerState.current.tracks[i].url);
       } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
-        trackManagerState.current.tracks[i].tracks?.map((_item, index) => {
-          fetchInstances.current[
-            `${trackManagerState.current.tracks[i].id}` +
-              "subtrack" +
-              `${index}`
-          ] = new HicSource(
-            trackManagerState.current.tracks[i].tracks![index].url
-          );
-        });
+        trackManagerState.current.tracks[i].tracks?.map(
+          (_item: any, index: string | number) => {
+            fetchInstances.current[
+              `${trackManagerState.current.tracks[i].id}` +
+                "subtrack" +
+                `${index}`
+            ] = new HicSource(
+              trackManagerState.current.tracks[i].tracks![index].url
+            );
+          }
+        );
       } else if (
         trackManagerState.current.tracks[i].type in
         { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
       ) {
-        trackManagerState.current.tracks[i].tracks?.map((trackModel, index) => {
-          trackModel.id =
-            `${trackManagerState.current.tracks[i].id}` +
-            "subtrack" +
-            `${index}`;
-        });
+        trackManagerState.current.tracks[i].tracks?.map(
+          (trackModel: { id: string }, index: any) => {
+            trackModel.id =
+              `${trackManagerState.current.tracks[i].id}` +
+              "subtrack" +
+              `${index}`;
+          }
+        );
       } else if (trackManagerState.current.tracks[i].type === "bam") {
         fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
           new BamSource(trackManagerState.current.tracks[i].url);

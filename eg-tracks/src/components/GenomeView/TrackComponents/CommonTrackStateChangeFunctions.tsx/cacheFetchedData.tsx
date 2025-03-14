@@ -1,6 +1,6 @@
 // import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import {
   removeDuplicates,
   removeDuplicatesWithoutId,

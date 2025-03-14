@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useContext } from "react";
 import _ from "lodash";
 
-import NavigationContext from "@eg/core/src/eg-lib/models/NavigationContext";
-import Genome from "@eg/core/src/eg-lib/models/Genome";
-import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
+import NavigationContext from "../../../models/NavigationContext";
+
+import ChromosomeInterval from "../../../models/ChromosomeInterval";
 
 const DEBOUNCE_INTERVAL = 250;
 const SNP_ENDPOINTS = {

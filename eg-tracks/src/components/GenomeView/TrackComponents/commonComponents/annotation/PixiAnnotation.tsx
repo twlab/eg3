@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import * as PIXI from "pixi.js";
-import { colorString2number } from "@eg/core/src/eg-lib/models/util";
+import { colorString2number } from "../../../../../models/util";
 
 export const TOP_PADDING = 2;
 export const ROW_VERTICAL_PADDING = 2;

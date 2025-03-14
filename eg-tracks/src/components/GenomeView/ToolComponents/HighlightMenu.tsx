@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReactModal from "react-modal";
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import ColorPicker from "../../../trackConfigs/config-menu-components.tsx/ColorPicker";
 import "./HighlightMenu.css";
 
@@ -29,7 +29,7 @@ interface HighlightMenuProps {
   highlights: HighlightInterval[];
   viewRegion: DisplayedRegionModel;
   showHighlightMenuModal: boolean;
-  onNewRegion: (start: number, end: number, toolTitle: number | string,) => void;
+  onNewRegion: (start: number, end: number, toolTitle: number | string) => void;
   onSetHighlights: any;
   selectedTool: any;
 }
@@ -40,7 +40,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   showHighlightMenuModal,
   onNewRegion,
   onSetHighlights,
-  selectedTool
+  selectedTool,
 }) => {
   const handleHighlightIntervalUpdate = (
     doDelete: boolean,
@@ -66,7 +66,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
     if (selectedTool.title === 12) {
       setShowModal(true);
     }
-  }, [selectedTool])
+  }, [selectedTool]);
   const handleViewRegionJump = (interval: HighlightInterval): void => {
     const { start, end } = interval;
     onNewRegion(start, end, "isJump");
@@ -102,7 +102,6 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
 
   return (
     <>
-
       <ReactModal
         isOpen={showModal}
         onRequestClose={handleCloseModal}
@@ -117,7 +116,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
           <h5 style={{ margin: 15 }}>Highlights</h5>
           {highlights.length ? (
             <div style={{ paddingBottom: "5px" }}>
-              <button onClick={() => { }}>Remove all</button>
+              <button onClick={() => {}}>Remove all</button>
             </div>
           ) : null}
           <div
@@ -208,8 +207,9 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             color={interval.color}
             disableAlpha={false}
             onChange={(color: any) => {
-              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b
-                }, ${0.15})`;
+              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${
+                color.rgb.b
+              }, ${0.15})`;
               const newInterval = new HighlightInterval(
                 interval.start,
                 interval.end,

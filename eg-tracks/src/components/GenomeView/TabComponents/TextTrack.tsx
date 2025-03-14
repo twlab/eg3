@@ -1,8 +1,8 @@
 import { useState } from "react";
 import JSON5 from "json5";
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import TrackModel from "../../../models/TrackModel";
 import TrackOptionsUI from "./TrackOptionsUI";
-import { HELP_LINKS } from "@eg/core/src/eg-lib/models/util";
+import { HELP_LINKS } from "../../../models/util";
 
 import "./TextTrack.css";
 

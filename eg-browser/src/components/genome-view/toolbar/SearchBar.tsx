@@ -25,8 +25,8 @@ import { debounce } from "lodash";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import OutsideClickDetector from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 import IsoformSelection from "@eg/tracks/src/components/GenomeView/genomeNavigator/IsoformSelection";
-import Gene from "@eg/core/src/eg-lib/models/Gene";
-import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
+import Gene from "@eg/tracks/src/models/Gene";
+import ChromosomeInterval from "@eg/tracks/src/models/ChromosomeInterval";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
 const SNP_ENDPOINTS: any = {

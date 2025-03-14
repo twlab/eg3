@@ -8,7 +8,7 @@ import {
 } from "../config-menu-components.tsx/ColorConfig";
 import HeightConfig from "../config-menu-components.tsx/HeightConfig";
 import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
-import TrackModel from "../../models/TrackModel";
+
 import AggregateConfig from "./AggregateConfig";
 import SmoothConfig from "../config-menu-components.tsx/SmoothConfig";
 import EnsemblStyleConfig from "../config-menu-components.tsx/EnsemblStyleConfig";

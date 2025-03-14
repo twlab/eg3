@@ -8,7 +8,7 @@ import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+import OpenInterval from "../../../models/OpenInterval";
 import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
 import SnpDetail from "./SnpComponents/SnpDetail";
 import JasparDetail from "./commonComponents/annotation/JasparDetail";

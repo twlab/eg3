@@ -1,4 +1,3 @@
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
 import {
   PrimaryColorConfig,
   SecondaryColorConfig,

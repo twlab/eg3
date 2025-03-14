@@ -1,5 +1,5 @@
 import SelectConfig from "./SelectConfig";
-import { LogChoices } from "@eg/core/src/eg-lib/models/LogChoices";
+import { LogChoices } from "../../models/LogChoices";
 /**
  * A context menu item that configures track log-scaling on the y-axis.
  *

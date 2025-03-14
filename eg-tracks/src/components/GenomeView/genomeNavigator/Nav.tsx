@@ -1,13 +1,11 @@
 import React, { useState, useCallback, FC, useEffect } from "react";
 import ReactModal from "react-modal";
-import { treeOfLife } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
 
 import AnnotationTrackUI from "../TabComponents/AnnotationTrackUI";
 import _ from "lodash";
-import { getSpeciesInfo } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
+import { getSpeciesInfo } from "../../../models/genomes/allGenomes";
 import TrackRegionController from "./TrackRegionController";
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
-
+import TrackModel from "../../../models/TrackModel";
 // import CustomTrackAdder from "../TabComponents/CustomTrackAdder";
 
 import "./Nav.css";
@@ -17,7 +15,7 @@ import { TrackState } from "../TrackComponents/CommonTrackStateChangeFunctions.t
 import RegionSetSelector from "../TabComponents/RegionSetSelector/RegionSetSelector";
 import Geneplot from "../TabComponents/Geneplot/Geneplot";
 import ScatterPlot from "../TabComponents/Geneplot/ScatterPlot";
-import ShareUI from "../TabComponents/ShareUI";
+
 import { HotKeyInfo } from "../TabComponents/HotKeyInfo";
 import { TrackUpload } from "../TabComponents/TrackUpload";
 import TextTrack from "../TabComponents/TextTrack";
@@ -538,28 +536,7 @@ const Nav: FC<NavProps> = ({
             >
               📨Share
             </button>
-            <div className={`dropdown-menu ${share ? "show" : "hide"}`}>
-              <ModalMenuItem
-                itemLabel="Share"
-                isOpen={share}
-                onOpen={() => setOpenModal("Share")}
-                onClose={() => setShare(false)}
-                hasDropDown={false}
-                style={{
-                  content: {
-                    right: "unset",
-                    bottom: "unset",
-                    overflow: "visible",
-                    padding: "5px",
-                    zIndex: 5,
-                    color: modalfg,
-                    background: modalbg,
-                  },
-                }}
-              >
-                <ShareUI browser={state} color={modalfg} background={modalbg} />
-              </ModalMenuItem>
-            </div>
+            <div className={`dropdown-menu ${share ? "show" : "hide"}`}></div>
           </div>
 
           <div className="dropdown" style={{ marginLeft: "10px" }}>

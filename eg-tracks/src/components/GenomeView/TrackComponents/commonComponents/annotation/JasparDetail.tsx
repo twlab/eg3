@@ -1,6 +1,6 @@
 import React from "react";
 import "../HoverToolTips/Tooltip.css";
-import { JasparFeature } from "@eg/core/src/eg-lib/models/Feature";
+import { JasparFeature } from "../../../models/Feature";
 
 interface JasparDetailProps {
   feature: JasparFeature;
