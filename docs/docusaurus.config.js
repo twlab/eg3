@@ -10,7 +10,7 @@ import { themes as prismThemes } from "prism-react-renderer";
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-    title: "WashU Epigenome Browser",
+    title: "WashU Epigenome Browser Documentation",
     tagline: "WashU Epigenome Browser Documentation",
     favicon: "img/favicon.ico",
 
@@ -43,8 +43,7 @@ const config = {
                     sidebarPath: "./sidebars.js",
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
-                    editUrl:
-                        "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
+                    editUrl: "https://github.com/twlab/eg3/tree/development/docs/docs/",
                 },
                 blog: false,
                 theme: {
@@ -58,12 +57,12 @@ const config = {
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
             // Replace with your project's social card
-            image: "img/docusaurus-social-card.jpg",
+            image: "img/home/eg.png",
             navbar: {
                 title: "WashU Epigenome Browser Documentation",
                 logo: {
                     alt: "WashU Epigenome Browser Logo",
-                    src: "img/logo.svg",
+                    src: "img/logo.png",
                 },
                 items: [
                     // {
@@ -79,7 +78,7 @@ const config = {
                         position: "right",
                     },
                     {
-                        href: "https://github.com/facebook/docusaurus",
+                        href: "https://github.com/twlab/eg3/",
                         label: "GitHub",
                         position: "right",
                     },
@@ -91,39 +90,43 @@ const config = {
                     {
                         title: "Docs",
                         items: [
-                            // {
-                            //     label: "Tutorial",
-                            //     to: "/docs/intro",
-                            // },
+                            {
+                                label: "Tracks",
+                                to: "/category/tracks",
+                            },
+                            {
+                                label: "Datahub",
+                                to: "/category/datahub",
+                            },
                         ],
                     },
                     {
                         title: "Community",
                         items: [
                             {
-                                label: "Stack Overflow",
-                                href: "https://stackoverflow.com/questions/tagged/docusaurus",
-                            },
-                            {
                                 label: "Discord",
-                                href: "https://discordapp.com/invite/docusaurus",
+                                href: "https://discord.gg/Mvngzxa9",
                             },
                             {
                                 label: "X",
-                                href: "https://x.com/docusaurus",
+                                href: "https://x.com/wuepgg",
+                            },
+                            {
+                                label: "YouTube",
+                                href: "https://www.youtube.com/@epgg",
                             },
                         ],
                     },
                     {
                         title: "More",
                         items: [
-                            // {
-                            //     label: "Blog",
-                            //     to: "/blog",
-                            // },
+                            {
+                                label: "Contact",
+                                to: "/contact",
+                            },
                             {
                                 label: "GitHub",
-                                href: "https://github.com/facebook/docusaurus",
+                                href: "https://github.com/twlab/eg3",
                             },
                         ],
                     },

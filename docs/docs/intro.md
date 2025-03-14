@@ -3,13 +3,19 @@ slug: /
 sidebar_position: 1
 ---
 
-# WashU Epigenome Browser
+# Introduction
 
 ![eg logo](/img/home/eg.png)
 
-The basic usage of a genome browser is to load a genome assembly, load annotation and publicly available data tracks, then load your own data if possible through Remote track or Local track function.
+*Gateway to the epigenome. (Art by **Ting Wang**)*
 
-This documentation walks you through the usage of 2025 updated WashU Epigenome Browser.
+The **basic usage** of the **WashU Epigenome Browser** involves the following steps:  
+
+1. **Load a genome assembly** – Users can select from a variety of preloaded genome assemblies or upload their own custom genome using the **Genome Hub** feature.  
+2. **Load annotations and public data tracks** – The Browser provides access to publicly available datasets from major consortia like **ENCODE, 4DN, Roadmap Epigenomics, and IHEC**, allowing users to integrate rich annotation tracks.  
+3. **Load user data** – Users can visualize their own data through the **Remote Track** function (by providing a URL to a hosted file) or the **Local Track** function (by uploading files directly from their computer).  
+
+This documentation provides a step-by-step guide to using the **2025 updated WashU Epigenome Browser**.
 
 ## History
 
