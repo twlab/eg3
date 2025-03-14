@@ -47,6 +47,7 @@ interface ITrackModel {
   id: string | number;
   label?: string;
   files?: any;
+  details?: any;
 }
 
 /**
@@ -82,6 +83,7 @@ export class TrackModel {
   apiConfig?: any;
   queryEndpoint?: QueryEndpoint;
   legendWidth?: any;
+  details?: any;
   constructor(plainObject: ITrackModel) {
     const data = {
       ...plainObject,
@@ -144,7 +146,7 @@ export class TrackModel {
    *
    * @return {number} this object's id
    */
-  getId(): number {
+  getId(): number | string {
     return this.id;
   }
 

@@ -83,18 +83,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {size.width > 0 &&
-            userViewRegion &&
-            showGenomeNav &&
-            currentGenomeConfig && (
-              <GenomeNavigator
-                selectedRegion={userViewRegion}
-                genomeConfig={currentGenomeConfig}
-                windowWidth={size.width}
-                onRegionSelected={onNewRegionSelect}
-              />
-            )}
-
           {currentGenomeConfig && (
             <TrackManager
               key={currentGenomeConfig.genomeID}
@@ -110,6 +98,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               onTrackSelected={onTrackSelected}
               onTrackDeleted={onTrackDeleted}
               tool={tool}
+              viewRegion={viewRegion}
+              showGenomeNav={showGenomeNav}
             />
           )}
         </div>
