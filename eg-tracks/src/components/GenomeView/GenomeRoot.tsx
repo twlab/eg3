@@ -40,7 +40,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       let curGenome;
 
       if (!isInitial.current) {
-        curGenome = { ...currentGenomeConfig };
+        curGenome = { ...genomeConfig };
+        curGenome = genomeConfig;
         curGenome["isInitial"] = isInitial.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
@@ -48,13 +49,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome["sizeChange"] = true;
       } else {
-        curGenome = { ...genomeConfig };
+        curGenome = genomeConfig;
         curGenome["isInitial"] = isInitial.current;
         curGenome["genomeID"] = uuidv4();
         let bundleId = uuidv4();
         curGenome.defaultRegion = new OpenInterval(
-          userViewRegion._startBase!,
-          userViewRegion._endBase!
+          viewRegion._startBase!,
+          viewRegion._endBase!
         );
         curGenome["bundleId"] = bundleId;
       }
@@ -66,24 +67,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
-
+      console.log("HERE@@@");
       if (!isInitial.current) {
-        if (!selectedRegionSet) {
-          curGenome = { ...currentGenomeConfig };
-          curGenome["isInitial"] = isInitial.current;
-          curGenome.defaultRegion = new OpenInterval(
-            viewRegion._startBase!,
-            viewRegion._endBase!
-          );
-          curGenome["sizeChange"] = false;
-          setCurrentGenomeConfig(curGenome);
-        } else {
-          const prevID = currentGenomeConfig.genomeID;
-          curGenome = { ...genomeConfig, genomeID: prevID };
-          curGenome["sizeChange"] = false;
-          // curGenome["isInitial"] = isInitial.current;
-          setCurrentGenomeConfig(curGenome);
-        }
+        curGenome = { ...genomeConfig };
+        curGenome["isInitial"] = isInitial.current;
+        curGenome.defaultRegion = new OpenInterval(
+          viewRegion._startBase!,
+          viewRegion._endBase!
+        );
+        curGenome["sizeChange"] = false;
+        setCurrentGenomeConfig(curGenome);
       }
     }
   }, [viewRegion]);

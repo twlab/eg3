@@ -21,7 +21,9 @@ export default function GenomeView() {
     return null;
   }
 
-  const handleNewRegion = (coordinate: GenomeCoordinate) => {
+  const handleNewRegion = (
+    coordinate: GenomeCoordinate | { [key: string]: any }
+  ) => {
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
   };
 
@@ -42,7 +44,9 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ tracks }));
   };
 
-  const handleNewRegionSelect = (coordinate: GenomeCoordinate) => {
+  const handleNewRegionSelect = (
+    coordinate: GenomeCoordinate | { [key: string]: any }
+  ) => {
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
     dispatch(updateCurrentSession({ viewRegion: coordinate }));
   };

@@ -23,8 +23,8 @@ export interface BrowserSession {
 
   title: string;
   genomeId: uuid;
-  viewRegion: GenomeCoordinate;
-  userViewRegion: null | GenomeCoordinate;
+  viewRegion: GenomeCoordinate | { [key: string]: any };
+  userViewRegion: null | GenomeCoordinate | { [key: string]: any };
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];
@@ -52,6 +52,7 @@ export const browserSlice = createSlice({
 
       const { defaultRegion: viewRegion, defaultTracks: tracks } = genome;
       const userViewRegion = viewRegion;
+      console.log(userViewRegion);
       let trackModelId = 0;
       const initializedTracks =
         tracks?.map((track) => ({
@@ -65,8 +66,8 @@ export const browserSlice = createSlice({
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
-        viewRegion: viewRegion as GenomeCoordinate,
-        userViewRegion: userViewRegion as GenomeCoordinate,
+        viewRegion,
+        userViewRegion,
         tracks: initializedTracks,
         genomeId: genome.id,
         highlights: [],

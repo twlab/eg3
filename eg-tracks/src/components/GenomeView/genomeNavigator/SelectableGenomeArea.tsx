@@ -79,6 +79,7 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
   }
 
   handleAreaSelect(xSpan: OpenInterval) {
+    console.log(this.props);
     const baseSpan = this.getSelectedBases(xSpan);
     if (this.getIsBaseSpanValid(baseSpan)) {
       this.props.onRegionSelected!(

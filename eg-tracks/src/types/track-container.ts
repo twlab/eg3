@@ -32,14 +32,16 @@ export interface ITrackContainerRepresentableProps {
   genomeConfig: IGenome;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (coordinate: GenomeCoordinate) => void;
+  onNewRegion: (coordinate: GenomeCoordinate | { [key: string]: any }) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: ITrackModel[]) => void;
   onTrackDeleted: (currenTracks: ITrackModel[]) => void;
   onTrackAdded: (trackModels: ITrackModel[]) => void;
-  onNewRegionSelect: (coordinate: GenomeCoordinate) => void;
-  viewRegion: GenomeCoordinate;
-  userViewRegion: null | GenomeCoordinate;
+  onNewRegionSelect: (
+    coordinate: GenomeCoordinate | { [key: string]: any }
+  ) => void;
+  viewRegion: GenomeCoordinate | any;
+  userViewRegion: null | GenomeCoordinate | any;
   tool: Tool | null;
   Toolbar?: any;
   selectedRegionSet: any;

@@ -119,6 +119,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   viewRegion,
   showGenomeNav,
 }) {
+  console.log(selectedRegion, genomeConfig);
   //useRef to store data between states without re render the component
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
@@ -1314,6 +1315,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
+      console.log(startbase, endbase);
       onNewRegionSelect(startbase, endbase);
     }
     // adding new highlight region

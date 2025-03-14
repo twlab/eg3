@@ -1,23 +1,23 @@
 export interface IGenome {
-    id: uuid;
-    name: string;
-    group?: string;
-    chromosomes: { name: string; length: number }[];
-    cytobands: any;
-    defaultRegion?: string;
-    defaultTracks?: any[];
-    publicHubList?: any[];
-    publicHubData?: any;
-    annotationTracks?: any;
-    twoBitURL?: string;
+  id: uuid;
+  name: string;
+  group?: string;
+  chromosomes: { name: string; length: number }[];
+  cytobands: any;
+  defaultRegion?: any;
+  defaultTracks?: any[];
+  publicHubList?: any[];
+  publicHubData?: any;
+  annotationTracks?: any;
+  twoBitURL?: string;
 }
 
 export interface IGenomeHubSource {
-    listGenomes(): Promise<IGenome[]>;
+  listGenomes(): Promise<IGenome[]>;
 
-    getGenomeById(id: uuid): Promise<IGenome>;
+  getGenomeById(id: uuid): Promise<IGenome>;
 
-    putGenome(genome: IGenome): Promise<uuid>;
+  putGenome(genome: IGenome): Promise<uuid>;
 }
 
 type uuid = string;
