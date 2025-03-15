@@ -4,12 +4,17 @@ import {
   GenomeCoordinate,
   IHighlightInterval,
   ITrackModel,
+  NavCoord,
   TrackContainerRepresentable,
 } from "@eg/tracks";
 import Toolbar from "./toolbar/Toolbar";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import {
+  selectScreenShotOpen,
+  updateScreenShotData,
+} from "@/lib/redux/slices/hubSlice";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
@@ -17,13 +22,14 @@ export default function GenomeView() {
   const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenome();
   const selectedRegionSet = currentSession?.selectedRegionSet;
+  const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
   if (!currentSession || !genomeConfig) {
     return null;
   }
-
-  const handleNewRegion = (
-    coordinate: GenomeCoordinate | { [key: string]: any }
-  ) => {
+  const setScreenshotData = (screenShotData: { [key: string]: any }) => {
+    dispatch(updateScreenShotData(screenShotData));
+  };
+  const handleNewRegion = (coordinate: NavCoord) => {
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
   };
 
@@ -44,9 +50,7 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ tracks }));
   };
 
-  const handleNewRegionSelect = (
-    coordinate: GenomeCoordinate | { [key: string]: any }
-  ) => {
+  const handleNewRegionSelect = (coordinate: NavCoord) => {
     dispatch(updateCurrentSession({ userViewRegion: coordinate }));
     dispatch(updateCurrentSession({ viewRegion: coordinate }));
   };
@@ -74,6 +78,8 @@ export default function GenomeView() {
         tool={tool}
         Toolbar={Toolbar}
         selectedRegionSet={selectedRegionSet}
+        setScreenshotData={setScreenshotData}
+        isScreenShotOpen={isScreenShotOpen}
       />
     </div>
   );

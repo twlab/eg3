@@ -79,21 +79,21 @@ class GenomeNavigator extends React.Component<
    */
 
   //commented out because cause zoom glitch with new GenomeContext update
-  // UNSAFE_componentWillReceiveProps(nextProps) {
-  //   const thisNavContext = this.state.viewRegion.getNavigationContext();
-  //   const nextNavContext = nextProps.selectedRegion.getNavigationContext();
-  //   if (thisNavContext !== nextNavContext) {
-  //     this.setState({ viewRegion: new DisplayedRegionModel(nextNavContext) });
-  //   }
-  //   if (
-  //     this.props.selectedRegion.getGenomeIntervals()[0].chr !==
-  //     nextProps.selectedRegion.getGenomeIntervals()[0].chr
-  //   ) {
-  //     this.setState({
-  //       viewRegion: this._setInitialView(nextProps.selectedRegion),
-  //     });
-  //   }
-  // }
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const thisNavContext = this.state.viewRegion.getNavigationContext();
+    const nextNavContext = nextProps.selectedRegion.getNavigationContext();
+    if (thisNavContext !== nextNavContext) {
+      this.setState({ viewRegion: new DisplayedRegionModel(nextNavContext) });
+    }
+    if (
+      this.props.selectedRegion.getGenomeIntervals()[0].chr !==
+      nextProps.selectedRegion.getGenomeIntervals()[0].chr
+    ) {
+      this.setState({
+        viewRegion: this._setInitialView(nextProps.selectedRegion),
+      });
+    }
+  }
 
   /**
    * Copies this.state.viewRegion, mutates it by calling `methodName` with `args`, and then calls this.setState().

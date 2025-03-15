@@ -508,19 +508,19 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType
     );
 
-    // if (configOptions.forceSvg) {
-    //   placeFeatureData.placements = placeFeatureData.placements.filter(
-    //     (feature) => {
-    //       const curXSpan = feature.xSpan;
+    if (configOptions.forceSvg) {
+      placeFeatureData.placements = placeFeatureData.placements.filter(
+        (feature) => {
+          const curXSpan = feature.xSpan;
 
-    //       return !(
-    //         curXSpan.end <
-    //           trackState.viewWindow.start + trackState.visWidth / 3 ||
-    //         curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
-    //       );
-    //     }
-    //   );
-    // }
+          return !(
+            curXSpan.end <
+              trackState.viewWindow.start + trackState.visWidth / 3 ||
+            curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
+          );
+        }
+      );
+    }
     var height;
     if (updatedLegend) {
       // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
@@ -916,7 +916,7 @@ export function getDisplayModeFunction(
     function getNumLegend(legend: ReactNode) {
       drawData.updatedLegend.current = legend;
     }
-
+    console.log(drawData.trackState);
     let canvasElements = (
       <RulerComponent
         viewRegion={objToInstanceAlign(drawData.trackState.visRegion)}

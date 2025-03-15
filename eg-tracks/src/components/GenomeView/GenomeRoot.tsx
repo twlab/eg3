@@ -28,7 +28,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tool,
   viewRegion,
   userViewRegion,
-  selectedRegionSet,
+  setScreenshotData,
+  isScreenShotOpen,
 }) {
   const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
@@ -41,7 +42,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
       if (!isInitial.current) {
         curGenome = { ...genomeConfig };
-        curGenome = genomeConfig;
+
         curGenome["isInitial"] = isInitial.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
@@ -67,7 +68,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
-      console.log("HERE@@@");
       if (!isInitial.current) {
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;
@@ -102,6 +102,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               tool={tool}
               viewRegion={viewRegion}
               showGenomeNav={showGenomeNav}
+              setScreenshotData={setScreenshotData}
+              isScreenShotOpen={isScreenShotOpen}
             />
           )}
         </div>

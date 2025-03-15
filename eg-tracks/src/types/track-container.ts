@@ -1,7 +1,6 @@
-import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import TrackModel from "../models/TrackModel";
 import { IGenome } from "./genome-hub";
-import RegionSet, { IRegionSet } from "../models/RegionSet";
 
 // add the same props that were being passed into TrackContainer.tsx
 export interface ITrackContainerState {
@@ -10,41 +9,43 @@ export interface ITrackContainerState {
   genomeConfig?: any;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (startbase: number, endbase: number) => void;
+  onNewRegion: (start: number, end: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   onTrackAdded: (trackModels: TrackModel[]) => void;
-  onNewRegionSelect: (
-    startbase: number,
-    endbase: number,
-    highlightSearch?: boolean
-  ) => void;
+  onNewRegionSelect: (start: number, end: number) => void;
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
   selectedRegionSet: any;
+  setScreenshotData: any;
+  isScreenShotOpen: boolean;
 }
-
+export interface NavCoord {
+  start: number;
+  end: number;
+  // GenomeCoordinate: GenomeCoordinate;
+}
 export interface ITrackContainerRepresentableProps {
   tracks: ITrackModel[];
   highlights: IHighlightInterval[];
   genomeConfig: IGenome;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (coordinate: GenomeCoordinate | { [key: string]: any }) => void;
+  onNewRegion: (coordinate: NavCoord) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: ITrackModel[]) => void;
   onTrackDeleted: (currenTracks: ITrackModel[]) => void;
   onTrackAdded: (trackModels: ITrackModel[]) => void;
-  onNewRegionSelect: (
-    coordinate: GenomeCoordinate | { [key: string]: any }
-  ) => void;
-  viewRegion: GenomeCoordinate | any;
-  userViewRegion: null | GenomeCoordinate | any;
+  onNewRegionSelect: (coordinate: NavCoord) => void;
+  viewRegion: NavCoord;
+  userViewRegion: NavCoord | null;
   tool: Tool | null;
   Toolbar?: any;
   selectedRegionSet: any;
+  setScreenshotData: any;
+  isScreenShotOpen: boolean;
 }
 
 // MARK: Track Model

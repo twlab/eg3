@@ -30,6 +30,8 @@ export function TrackContainer(props: ITrackContainerState) {
       userViewRegion={props.userViewRegion}
       tool={props.tool}
       selectedRegionSet={props.selectedRegionSet}
+      setScreenshotData={props.setScreenshotData}
+      isScreenShotOpen={props.isScreenShotOpen}
     />
   );
 }
@@ -57,6 +59,8 @@ export function TrackContainerRepresentable({
   tool,
   Toolbar,
   selectedRegionSet,
+  setScreenshotData,
+  isScreenShotOpen,
 }: ITrackContainerRepresentableProps) {
   const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
   const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
@@ -139,7 +143,7 @@ export function TrackContainerRepresentable({
         const newRegion = lastViewRegion.current.clone();
         newRegion.setRegion(start, end);
         lastViewRegion.current = newRegion;
-        console.log(lastUserViewRegion, newRegion);
+
         return newRegion;
       } else {
         const navContext = genomeConfig.navContext as NavigationContext;
@@ -154,7 +158,7 @@ export function TrackContainerRepresentable({
       }
     } catch (e) {
       console.error(e);
-      console.log(lastViewRegion.current);
+
       return (
         lastViewRegion.current ||
         new DisplayedRegionModel(
@@ -167,8 +171,8 @@ export function TrackContainerRepresentable({
   const convertedUserViewRegion = useMemo(() => {
     try {
       if (lastUserViewRegion.current) {
-        const start = userViewRegion.start;
-        const end = userViewRegion.end;
+        const start = userViewRegion ? userViewRegion.start : viewRegion.start;
+        const end = userViewRegion ? userViewRegion.end : viewRegion.end;
         const newRegion = lastUserViewRegion.current.clone();
         newRegion.setRegion(start, end);
         lastUserViewRegion.current = newRegion;
@@ -180,10 +184,6 @@ export function TrackContainerRepresentable({
           ...genomeConfig.defaultRegion
         );
 
-        const start = userViewRegion.start;
-        const end = userViewRegion.end;
-        console.log(start, end);
-        startViewRegion.setRegion(start, end);
         lastUserViewRegion.current = startViewRegion;
         return startViewRegion;
       }
@@ -229,23 +229,10 @@ export function TrackContainerRepresentable({
 
   const handleNewRegionSelect = useCallback(
     (startbase: number, endbase: number, highlightSearch: boolean = false) => {
-      console.log("HJERE2", lastViewRegion.current, genomeConfig);
-      // if (lastViewRegion.current || selectedRegionSet) {
-      //   console.log("HJERE3", lastViewRegion.current);
-      //   const newRegion = lastViewRegion.current
-      //     ? lastUserViewRegion.current
-      //     : new DisplayedRegionModel(
-      //         genomeConfig.navContext,
-      //         startbase,
-      //         endbase
-      //       )
-      //         .clone()
-      //         .setRegion(startbase, endbase);
-      //   onNewRegionSelect(
-      //     newRegion!.currentRegionAsString() as GenomeCoordinate
-      //   );
-      // }
-      onNewRegionSelect({ start: startbase, end: endbase });
+      onNewRegionSelect({
+        start: startbase,
+        end: endbase,
+      });
       if (highlightSearch) {
         const newHightlight = {
           start: startbase,
@@ -262,8 +249,6 @@ export function TrackContainerRepresentable({
   );
   useEffect(() => {
     if (selectedRegionSet && genomeConfig) {
-      console.log("HUHUHUh");
-
       lastUserViewRegion.current = null;
       lastViewRegion.current = null;
       const newVisData: any = new DisplayedRegionModel(
@@ -275,7 +260,6 @@ export function TrackContainerRepresentable({
       );
       genomeConfig.navContext = newVisData._navContext;
       handleNewRegionSelect(newVisData._startBase, newVisData._endBase);
-      // If necessary, you can set updatedGenomeConfig to state or pass it somewhere.
     }
   }, [selectedRegionSet]);
   return (
@@ -296,6 +280,8 @@ export function TrackContainerRepresentable({
         userViewRegion={convertedUserViewRegion}
         tool={tool}
         selectedRegionSet={selectedRegionSet}
+        setScreenshotData={setScreenshotData}
+        isScreenShotOpen={isScreenShotOpen}
       />
       {Toolbar ? (
         <div
