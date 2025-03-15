@@ -355,12 +355,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
-    if (curBp > genomeConfig.navContext._totalBases || curBp < 0) {
+
+    if (curBp > genomeConfig.navContext._totalBases || curBp <= 0) {
       return;
     }
     trackManagerState.current.viewRegion._startBase = curBp;
     trackManagerState.current.viewRegion._endBase =
       curBp + bpRegionSize.current;
+
     onNewRegion(curBp, curBp + bpRegionSize.current);
 
     bpX.current = curBp;
@@ -1332,8 +1334,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function createHighlight(highlightArr: Array<any>) {
     let resHighlights: Array<any> = [];
 
-    const startBase = viewRegion._startBase;
-    const endBase = viewRegion._endBase;
+    const startBase = genomeConfig.defaultRegion.start;
+    const endBase = genomeConfig.defaultRegion.end;
     let pixelPBase = windowWidth / (endBase - startBase);
     for (const curhighlight of highlightArr) {
       let highlightSide =
@@ -1809,8 +1811,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (genomeConfig.isInitial) {
       console.log(windowWidth, "oldWindow");
       prevWindowWidth.current = windowWidth;
-
-      trackManagerState.current.bundleId = genomeConfig.bundleId;
 
       trackManagerState.current.tracks.map(
         (items: { type: string }, _index: any) => {

@@ -916,7 +916,7 @@ export function getDisplayModeFunction(
     function getNumLegend(legend: ReactNode) {
       drawData.updatedLegend.current = legend;
     }
-    console.log(drawData.trackState);
+
     let canvasElements = (
       <RulerComponent
         viewRegion={objToInstanceAlign(drawData.trackState.visRegion)}

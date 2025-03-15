@@ -1,10 +1,8 @@
-import { getGenomeDefaultState } from "@eg/core";
 import {
   GenomeCoordinate,
   IGenome,
   IHighlightInterval,
   ITrackModel,
-  NavCoord,
 } from "@eg/tracks";
 import {
   createEntityAdapter,
@@ -24,8 +22,8 @@ export interface BrowserSession {
 
   title: string;
   genomeId: uuid;
-  viewRegion: NavCoord;
-  userViewRegion: null | NavCoord;
+  viewRegion: GenomeCoordinate;
+  userViewRegion: { start: number; end: number } | null;
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];
@@ -52,7 +50,6 @@ export const browserSlice = createSlice({
       const genome = action.payload;
 
       const { defaultRegion: viewRegion, defaultTracks: tracks } = genome;
-      const userViewRegion = viewRegion;
 
       let trackModelId = 0;
       const initializedTracks =
@@ -68,7 +65,7 @@ export const browserSlice = createSlice({
         updatedAt: Date.now(),
         title: "",
         viewRegion,
-        userViewRegion,
+        userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
         highlights: [],

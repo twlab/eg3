@@ -1,16 +1,12 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
-import { v4 as uuidv4 } from "uuid";
 import { ITrackContainerState } from "../../types";
 import "./track.css";
 // import { chrType } from "../../localdata/genomename";
 // import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
-
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-import DisplayedRegionModel from "../../models/DisplayedRegionModel";
-import RegionSet from "../../models/RegionSet";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
@@ -34,15 +30,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
+  const trackManagerId = useRef<null | string>(null);
   // TO-DO need to set initial.current back to true when genomeConfig changes
   // to see if genomeConfig we can check its session id because it will unique
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
 
-      if (!isInitial.current) {
+      if (!isInitial.current && trackManagerId.current) {
         curGenome = { ...genomeConfig };
-
+        curGenome["genomeID"] = trackManagerId.current;
         curGenome["isInitial"] = isInitial.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
@@ -50,15 +47,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome["sizeChange"] = true;
       } else {
+        trackManagerId.current = crypto.randomUUID();
         curGenome = genomeConfig;
         curGenome["isInitial"] = isInitial.current;
-        curGenome["genomeID"] = uuidv4();
-        let bundleId = uuidv4();
+        curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
-          viewRegion._startBase!,
-          viewRegion._endBase!
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
         );
-        curGenome["bundleId"] = bundleId;
       }
       setCurrentGenomeConfig(curGenome);
 
@@ -68,12 +64,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
-      if (!isInitial.current) {
+      if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;
+        curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
-          viewRegion._startBase!,
-          viewRegion._endBase!
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
         );
         curGenome["sizeChange"] = false;
         setCurrentGenomeConfig(curGenome);

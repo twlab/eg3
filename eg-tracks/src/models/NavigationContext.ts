@@ -270,13 +270,35 @@ class NavigationContext {
    * @throws {RangeError} when parsing an interval outside of the context or something otherwise nonsensical
    */
   parse(str: string): OpenInterval {
-    const feature = this._features.find((feature) => feature.getName() === str);
+    // if (str.split(`:`).length === 3) {
+    //   /**
+    //    * Support for multi-chr viewRegion str inputs, assuming form: "chra:b-chrc:d"
+    //    */
+    //   const segments = str.split("-");
+    //   const start1 = Number(segments[0].split(`:`)[1]);
+    //   const end1 = Number(segments[1].split(`:`)[1]);
+
+    //   // const miniIntStart = `${segments[0]}-${start1 + 4}`;
+    //   // const miniIntEnd = `chr${endChr}:${end1 - 4}-${end1}`;
+    //   // const startInt = ChromosomeInterval.parse(miniIntStart);
+    //   // const endInt = ChromosomeInterval.parse(miniIntEnd);
+    //   // const contextCoordsStart = this.convertGenomeIntervalToBases(startInt)[0];
+    //   // const contextCoordsEnd = this.convertGenomeIntervalToBases(endInt)[0];
+    //   // start = contextCoordsStart.start;
+    //   // end = contextCoordsEnd.end;
+    // }
+
+    //______________________________________________________
+    const feature = this._features.find((feature) => {
+      return feature.getName() === str;
+    });
 
     if (feature) {
       const contextCoords = this.convertFeatureSegmentToContextCoordinates(
         new FeatureSegment(feature)
       );
       const center = 0.5 * (contextCoords.start + contextCoords.end);
+
       // This is safe because of setRegion in DisplayedRegionModel
       return new OpenInterval(center - 3, center + 3);
     }
@@ -291,48 +313,50 @@ class NavigationContext {
   }
   // below is the version from Vincent
   // parse(str: string): OpenInterval {
-  //     const feature = this._features.find(feature => feature.getName() === str);
-  //     if (feature) {
-  //         const contextCoords = this.convertFeatureSegmentToContextCoordinates(new FeatureSegment(feature));
-  //         const center = 0.5 * (contextCoords.start + contextCoords.end);
-  //         // This is safe because of setRegion in DisplayedRegionModel
-  //         return new OpenInterval(center - 3, center + 3);
-  //     }
+  //   const feature = this._features.find((feature) => feature.getName() === str);
+  //   if (feature) {
+  //     const contextCoords = this.convertFeatureSegmentToContextCoordinates(
+  //       new FeatureSegment(feature)
+  //     );
+  //     const center = 0.5 * (contextCoords.start + contextCoords.end);
+  //     // This is safe because of setRegion in DisplayedRegionModel
+  //     return new OpenInterval(center - 3, center + 3);
+  //   }
 
-  //     let start, end;
-  //     if (str.split(`:`).length === 3) {
-  //         /**
-  //          * Support for multi-chr viewRegion str inputs, assuming form: "chra:b-chrc:d"
-  //          */
-  //         const segments = str.split('-');
-  //         const start1 = Number(segments[0].split(`:`)[1]);
-  //         const end1 = Number(segments[1].split(`:`)[1]);
-  //         const endChr = Number(segments[1].split(`:`)[0].split(`r`)[1]);
-  //         const miniIntStart = `${segments[0]}-${start1 + 4}`;
-  //         const miniIntEnd = `chr${endChr}:${end1 - 4}-${end1}`;
-  //         const startInt = ChromosomeInterval.parse(miniIntStart);
-  //         const endInt = ChromosomeInterval.parse(miniIntEnd);
-  //         const contextCoordsStart = this.convertGenomeIntervalToBases(startInt)[0];
-  //         const contextCoordsEnd = this.convertGenomeIntervalToBases(endInt)[0];
-  //         start = contextCoordsStart.start;
-  //         end = contextCoordsEnd.end;
-  //     } else if (str.split(`:`).length === 2) {
-  //         const locus = ChromosomeInterval.parse(str);
-  //         const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
-  //         start = contextCoords.start;
-  //         end = contextCoords.end;
-  //     } else {
-  //         throw new RangeError('Interval of incorrect formatting');
-  //     }
+  //   let start, end;
+  //   if (str.split(`:`).length === 3) {
+  //     /**
+  //      * Support for multi-chr viewRegion str inputs, assuming form: "chra:b-chrc:d"
+  //      */
+  //     const segments = str.split("-");
+  //     const start1 = Number(segments[0].split(`:`)[1]);
+  //     const end1 = Number(segments[1].split(`:`)[1]);
+  //     const endChr = Number(segments[1].split(`:`)[0].split(`r`)[1]);
+  //     const miniIntStart = `${segments[0]}-${start1 + 4}`;
+  //     const miniIntEnd = `chr${endChr}:${end1 - 4}-${end1}`;
+  //     const startInt = ChromosomeInterval.parse(miniIntStart);
+  //     const endInt = ChromosomeInterval.parse(miniIntEnd);
+  //     const contextCoordsStart = this.convertGenomeIntervalToBases(startInt)[0];
+  //     const contextCoordsEnd = this.convertGenomeIntervalToBases(endInt)[0];
+  //     start = contextCoordsStart.start;
+  //     end = contextCoordsEnd.end;
+  //   } else if (str.split(`:`).length === 2) {
+  //     const locus = ChromosomeInterval.parse(str);
+  //     const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
+  //     start = contextCoords.start;
+  //     end = contextCoords.end;
+  //   } else {
+  //     throw new RangeError("Interval of incorrect formatting");
+  //   }
 
-  //     // creates open interval based on the start of the first chr segment and the end of the last chr segment
-  //     // can assume no gaps
-  //     const contextCoords = new OpenInterval(start, end);
-  //     if (!contextCoords) {
-  //         throw new RangeError('Location unavailable in this context');
-  //     } else {
-  //         return contextCoords;
-  //     }
+  //   // creates open interval based on the start of the first chr segment and the end of the last chr segment
+  //   // can assume no gaps
+  //   const contextCoords = new OpenInterval(start, end);
+  //   if (!contextCoords) {
+  //     throw new RangeError("Location unavailable in this context");
+  //   } else {
+  //     return contextCoords;
+  //   }
   // }
 
   /**

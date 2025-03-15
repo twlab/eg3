@@ -9,12 +9,16 @@ export interface ITrackContainerState {
   genomeConfig?: any;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (start: number, end: number) => void;
+  onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
   onTrackAdded: (trackModels: TrackModel[]) => void;
-  onNewRegionSelect: (start: number, end: number) => void;
+  onNewRegionSelect: (
+    startbase: number,
+    endbase: number,
+    highlightSearch?: boolean
+  ) => void;
   viewRegion: DisplayedRegionModel;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
@@ -22,25 +26,25 @@ export interface ITrackContainerState {
   setScreenshotData: any;
   isScreenShotOpen: boolean;
 }
-export interface NavCoord {
-  start: number;
-  end: number;
-  // GenomeCoordinate: GenomeCoordinate;
-}
+
 export interface ITrackContainerRepresentableProps {
   tracks: ITrackModel[];
   highlights: IHighlightInterval[];
   genomeConfig: IGenome;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (coordinate: NavCoord) => void;
+  onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: ITrackModel[]) => void;
   onTrackDeleted: (currenTracks: ITrackModel[]) => void;
   onTrackAdded: (trackModels: ITrackModel[]) => void;
-  onNewRegionSelect: (coordinate: NavCoord) => void;
-  viewRegion: NavCoord;
-  userViewRegion: NavCoord | null;
+  onNewRegionSelect: (
+    startbase: number,
+    endbase: number,
+    coordinate: GenomeCoordinate
+  ) => void;
+  viewRegion: GenomeCoordinate;
+  userViewRegion: { start: number; end: number } | null;
   tool: Tool | null;
   Toolbar?: any;
   selectedRegionSet: any;

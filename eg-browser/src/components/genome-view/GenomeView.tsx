@@ -4,7 +4,6 @@ import {
   GenomeCoordinate,
   IHighlightInterval,
   ITrackModel,
-  NavCoord,
   TrackContainerRepresentable,
 } from "@eg/tracks";
 import Toolbar from "./toolbar/Toolbar";
@@ -26,11 +25,9 @@ export default function GenomeView() {
   if (!currentSession || !genomeConfig) {
     return null;
   }
+  console.log(currentSession);
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
-  };
-  const handleNewRegion = (coordinate: NavCoord) => {
-    dispatch(updateCurrentSession({ userViewRegion: coordinate }));
   };
 
   const handleNewHighlight = (highlights: IHighlightInterval[]) => {
@@ -49,9 +46,23 @@ export default function GenomeView() {
   const handleTrackAdded = (tracks: ITrackModel[]) => {
     dispatch(updateCurrentSession({ tracks }));
   };
-
-  const handleNewRegionSelect = (coordinate: NavCoord) => {
-    dispatch(updateCurrentSession({ userViewRegion: coordinate }));
+  const handleNewRegion = (startbase: number, endbase: number) => {
+    dispatch(
+      updateCurrentSession({
+        userViewRegion: { start: startbase, end: endbase },
+      })
+    );
+  };
+  const handleNewRegionSelect = (
+    startbase: number,
+    endbase: number,
+    coordinate: GenomeCoordinate
+  ) => {
+    dispatch(
+      updateCurrentSession({
+        userViewRegion: { start: startbase, end: endbase },
+      })
+    );
     dispatch(updateCurrentSession({ viewRegion: coordinate }));
   };
 
@@ -70,11 +81,7 @@ export default function GenomeView() {
         onTrackAdded={handleTrackAdded}
         onNewRegionSelect={handleNewRegionSelect}
         viewRegion={currentSession.viewRegion}
-        userViewRegion={
-          currentSession.userViewRegion
-            ? currentSession.userViewRegion
-            : currentSession.viewRegion
-        }
+        userViewRegion={currentSession.userViewRegion}
         tool={tool}
         Toolbar={Toolbar}
         selectedRegionSet={selectedRegionSet}

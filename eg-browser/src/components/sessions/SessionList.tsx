@@ -141,7 +141,7 @@ function SessionListItem({
       >
         <div className="flex flex-col gap-2 pt-2 border-t border-primary">
           <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
-          {/* <p>View region: {session.viewRegion}</p> */}
+          <p>View region: {session.viewRegion}</p>
           <p>Active tracks: {session.tracks.length}</p>
           <p>Highlights: {session.highlights.length}</p>
           {session.metadataTerms.length > 0 && (
