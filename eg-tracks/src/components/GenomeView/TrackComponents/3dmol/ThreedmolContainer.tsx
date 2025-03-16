@@ -1207,7 +1207,8 @@ class ThreedmolContainer extends React.Component<
     this.viewer.zoomTo();
     this.viewer.render();
     // this.viewer.zoom(1.2, 1000);
-
+    const zoomFactor = 1.1;
+    this.viewer.zoom(1.2, 1000);
     // console.log(this.viewer, this.model)
     // element.style.border='1px red solid';
     // element2.style.border='1px black solid';

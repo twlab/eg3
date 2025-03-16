@@ -90,7 +90,7 @@ export function bpNavToGenNav(bpNaletr: Array<any>, genome: GenomeConfig) {
 interface TrackManagerProps {
   windowWidth: number;
   legendWidth: number;
-  selectedRegion?: any;
+  userViewRegion?: any;
   genomeConfig: any;
   highlights: Array<any>;
   tracks: Array<TrackModel>;
@@ -109,7 +109,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
   legendWidth,
   genomeConfig,
-  selectedRegion,
+  userViewRegion,
   highlights,
   tracks,
   onNewRegion,
@@ -1486,9 +1486,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     maxBp.current = rightStartCoord.current;
     minBp.current = leftStartCoord.current;
 
-    let newTrackComponents: Array<any> = [];
-
-    let track3dIdx = 0;
+    const newTrackComponents: Array<any> = [];
+    const newG3dComponents: Array<any> = [];
 
     // loop through trackmanager checking to see if the track is already created else if create a new one with default valuies
     for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
@@ -1546,56 +1545,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       } else {
         isThereG3dTrack.current = true;
-        let newG3dComponent: Array<any> = [];
-        const uniqueKeyG3d = uuidv4();
-        trackManagerState.current.tracks[i]["id"] = uniqueKeyG3d;
-        newG3dComponent.push({
-          trackIdx: track3dIdx,
-          id: uniqueKeyG3d,
+
+        newG3dComponents.push({
+          id: trackManagerState.current.tracks[i].id,
           component: ThreedmolContainer,
 
           trackModel: trackManagerState.current.tracks[i],
         });
-        setG3dTrackComponents([...newG3dComponent]);
-        track3dIdx++;
       }
-
-      continue;
-      // }
-
-      // in case of initial creation of trackmanager then we create new track components
-      // else {
-      //   if (trackManagerState.current.tracks[i].type !== "g3d") {
-      //     const newPosRef = createRef();
-      //     const newLegendRef = createRef();
-
-      //     trackManagerState.current.tracks[i]["legendWidth"] = legendWidth;
-
-      //     newTrackComponents.push({
-      //       trackIdx: i,
-      //       id: trackManagerState.current.tracks[i].id,
-      //       component: TrackFactory,
-      //       posRef: newPosRef,
-      //       legendRef: newLegendRef,
-      //       trackModel: trackManagerState.current.tracks[i],
-      //       hasAllRegionData: false,
-      //     });
-      //   } else {
-      //     isThereG3dTrack.current = true;
-      //     let newG3dComponent: Array<any> = [];
-      //     const uniqueKeyG3d = uuidv4();
-      //     trackManagerState.current.tracks[i]["id"] = uniqueKeyG3d;
-      //     newG3dComponent.push({
-      //       trackIdx: track3dIdx,
-      //       id: uniqueKeyG3d,
-      //       component: ThreedmolContainer,
-
-      //       trackModel: trackManagerState.current.tracks[i],
-      //     });
-      //     setG3dTrackComponents([...newG3dComponent]);
-      //     track3dIdx++;
-      //   }
-      // }
+    }
+    console.log(newG3dComponents);
+    if (newG3dComponents.length > 0) {
+      setG3dTrackComponents(newG3dComponents);
     }
 
     setTrackComponents(newTrackComponents);
@@ -2194,9 +2155,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [tracks]);
   return (
     <div>
-      {windowWidth > 0 && selectedRegion && showGenomeNav && (
+      {windowWidth > 0 && userViewRegion && showGenomeNav && (
         <GenomeNavigator
-          selectedRegion={selectedRegion}
+          selectedRegion={userViewRegion}
           genomeConfig={genomeConfig}
           windowWidth={windowWidth}
           onRegionSelected={onRegionSelected}
@@ -2206,16 +2167,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <div className="flex flex-row py-10 items-center justify-center">
           <HighlightMenu
             highlights={highlightElements}
-            viewRegion={trackManagerState.current.viewRegion}
+            viewRegion={userViewRegion}
             showHighlightMenuModal={true}
             onNewRegion={onRegionSelected}
             onSetHighlights={getHighlightState}
             selectedTool={selectedTool}
           />
 
-          {selectedRegion && (
+          {userViewRegion && (
             <TrackRegionController
-              selectedRegion={selectedRegion}
+              selectedRegion={userViewRegion}
               onRegionSelected={(start: number, end: number) =>
                 onRegionSelected(start, end, "isJump")
               }
@@ -2387,7 +2348,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               >
                 {selectedTool && selectedTool.isSelected ? (
                   <SelectableGenomeArea
-                    selectableRegion={selectedRegion}
+                    selectableRegion={userViewRegion}
                     dragLimits={
                       new OpenInterval(legendWidth, windowWidth + legendWidth)
                     }
@@ -2432,8 +2393,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ref={g3dRect}
         style={{
           display: "flex",
-          width: `${1200}px`,
+          width: `${windowWidth}px`,
           backgroundColor: "blue",
+          WebkitBackfaceVisibility: "hidden",
+
+          WebkitPerspective: `${windowWidth + legendWidth}px`,
+          backfaceVisibility: "hidden",
+          perspective: `${windowWidth + legendWidth}px`,
         }}
       >
         {g3dtrackComponents.map((item, index) => {
@@ -2444,10 +2410,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             return (
               <Component
                 key={item.id}
-                tracks={genomeConfig.defaultTracks}
+                tracks={tracks}
                 g3dtrack={item.trackModel}
                 viewRegion={trackManagerState.current.viewRegion}
-                width={rectInfo.width}
+                width={rectInfo.width / 2}
                 height={rectInfo.height}
                 x={rectInfo.x}
                 y={rectInfo.y}

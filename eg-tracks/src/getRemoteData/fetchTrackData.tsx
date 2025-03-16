@@ -22,7 +22,7 @@ export const trackFetchFunction: { [key: string]: any } = {
     return await genRefResponse.json();
   },
   snp: async function snpFetch(regionData: any) {
-    const SNP_REGION_API = {
+    const SNP_REGION_API: { [key: string]: any } = {
       hg19: "https://grch37.rest.ensembl.org/overlap/region/human",
       hg38: "https://rest.ensembl.org/overlap/region/human",
     };

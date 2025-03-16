@@ -202,7 +202,6 @@ function AddLocalTracks() {
       // ];
     }
 
-    // TODO: Create track models and add them
     dispatch(
       updateCurrentSession({
         tracks: [...session!.tracks, ...tracks],

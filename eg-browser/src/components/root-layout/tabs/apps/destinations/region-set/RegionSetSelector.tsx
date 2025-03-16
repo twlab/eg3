@@ -99,7 +99,7 @@ const RegionSetSelector: React.FC = ({}) => {
     if (selectedRegionSet) {
       isBackingView = set.id === selectedRegionSet.id;
     }
-    console.log(isBackingView, set, selectedRegionSet);
+
     const numRegions = set.features.length;
     const name = set.name || `Unnamed set of ${numRegions} region(s)`;
     const text = `${name} (${numRegions} regions)`;
