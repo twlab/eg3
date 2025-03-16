@@ -2153,6 +2153,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
   }, [tracks]);
+  console.log(showGenomeNav, windowWidth, userViewRegion);
   return (
     <div>
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
