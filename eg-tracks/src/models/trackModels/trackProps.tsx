@@ -17,7 +17,7 @@ export interface TrackProps {
   visData?: ViewExpansion;
   trackManagerId: string;
   trackComponents: any;
-
+  isScreenShotOpen: boolean;
   newDrawData: any;
   trackModel?: any;
   dataIdx: number;

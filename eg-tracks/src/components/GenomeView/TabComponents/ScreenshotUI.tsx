@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import _ from "lodash";
-
+import ReactModal from "react-modal";
 import withAutoDimensions from "./withAutoDimensions";
 import HighlightRegion, { getHighlightedXs } from "./HighlightRegion";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+import OpenInterval from "../../../models/OpenInterval";
 import { GroupedTrackManager } from "./GroupedTrackManager";
 import {
   displayModeComponentMap,
   getDisplayModeFunction,
 } from "../TrackComponents/displayModeComponentMap";
+
 interface Highlight {
   start: number;
   end: number;
@@ -26,6 +27,8 @@ interface Props {
   trackData: any;
   metadataTerms: any;
   viewRegion: any;
+  isOpen: any;
+  handleCloseModal: any;
 }
 
 const ScreenshotUI: React.FC<Props> = (props) => {
@@ -292,7 +295,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       )
       .map((trackModel, index) => {
         const id = trackModel.id;
-        console.log(trackData[`${id}`].trackLegend);
+
         const trackLegendHtml = trackData[`${id}`].trackLegend;
         return (
           <div key={index} className="Track" style={{ display: "flex" }}>
@@ -308,36 +311,59 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   const trackContents = makeSvgTrackElements();
 
   return (
-    <div>
-      <p>
-        Please wait for the following browser view to finish loading, <br />
-        then click the Download button below to download the browser view as an
-        SVG file.
-      </p>
-      <div className="font-italic">
-        <strong>Download SVG</strong> is recommended.
-      </div>
-      <button
-        className="btn btn-primary btn-sm"
-        style={{ marginBottom: "2ch" }}
-        onClick={downloadSvg}
-        disabled={buttonDisabled === "disabled"}
+    <ReactModal
+      isOpen={props.isOpen}
+      contentLabel="Gene & Region search"
+      ariaHideApp={false}
+      onRequestClose={props.handleCloseModal}
+      shouldCloseOnOverlayClick={true}
+    >
+      <span
+        className="text-right"
+        style={{
+          cursor: "pointer",
+          color: "red",
+          fontSize: "2em",
+          position: "absolute",
+          top: "-5px",
+          right: "15px",
+          zIndex: 5,
+        }}
+        onClick={props.handleCloseModal}
       >
-        ⬇ Download SVG
-      </button>{" "}
-      <button
-        className="btn btn-success btn-sm"
-        style={{ marginBottom: "2ch" }}
-        onClick={downloadPdf}
-        disabled={buttonDisabled === "disabled"}
-      >
-        ⬇ Download PDF
-      </button>
-      <div id="screenshotContainer" style={{ display }}>
-        {trackContents}
-      </div>
-      <div id="pdfContainer"></div>
-    </div>
+        ×
+      </span>
+      <div>
+        <p>
+          Please wait for the following browser view to finish loading, <br />
+          then click the Download button below to download the browser view as
+          an SVG file.
+        </p>
+        <div className="font-italic">
+          <strong>Download SVG</strong> is recommended.
+        </div>
+        <button
+          className="btn btn-primary btn-sm"
+          style={{ marginBottom: "2ch" }}
+          onClick={downloadSvg}
+          disabled={buttonDisabled === "disabled"}
+        >
+          ⬇ Download SVG
+        </button>{" "}
+        <button
+          className="btn btn-success btn-sm"
+          style={{ marginBottom: "2ch" }}
+          onClick={downloadPdf}
+          disabled={buttonDisabled === "disabled"}
+        >
+          ⬇ Download PDF
+        </button>
+        <div id="screenshotContainer" style={{ display }}>
+          {trackContents}
+        </div>
+        <div id="pdfContainer"></div>
+      </div>{" "}
+    </ReactModal>
   );
 };
 

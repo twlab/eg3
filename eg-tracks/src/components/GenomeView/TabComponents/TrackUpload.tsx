@@ -1,8 +1,8 @@
 import React, { Component, CSSProperties } from "react";
 import PropTypes from "prop-types";
 import JSON5 from "json5";
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
-import { readFileAsText, HELP_LINKS } from "@eg/core/src/eg-lib/models/util";
+import TrackModel from "../../../models/TrackModel";
+import { readFileAsText, HELP_LINKS } from "../../../models/util";
 import TrackOptionsUI from "./TrackOptionsUI";
 
 export const TYPES_DESC = {

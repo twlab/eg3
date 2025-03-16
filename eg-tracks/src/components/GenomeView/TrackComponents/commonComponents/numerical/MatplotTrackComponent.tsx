@@ -278,7 +278,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
 
   render() {
     const { xToValue, height, width, forceSvg, viewWindow } = this.props;
-    console.log;
+
     return xToValue.length === 0 ? (
       <div
         style={{

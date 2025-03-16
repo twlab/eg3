@@ -48,7 +48,6 @@ export function getConfigChangeData({
     }
   }
 
-  console.log(newIntanceTrackState);
   newIntanceTrackState["recreate"] = true;
   createSVGOrCanvas(
     newIntanceTrackState,

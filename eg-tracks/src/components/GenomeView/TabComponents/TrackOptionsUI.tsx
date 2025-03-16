@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent } from "react";
-import { HELP_LINKS } from "@eg/core/src/eg-lib/models/util";
+import { HELP_LINKS } from "../../../models/util";
 // import {Controlled as CodeMirror} from 'react-codemirror2';
 // import 'codemirror/mode/javascript/javascript';
 // import 'codemirror/lib/codemirror.css';

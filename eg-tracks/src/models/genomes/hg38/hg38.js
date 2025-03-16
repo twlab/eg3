@@ -136,14 +136,14 @@ const defaultTracks = [
     //   },
     // }),
 
-    // new TrackModel({
-    //   type: "bigwig",
-    //   name: "example bigwig",
-    //   url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    //   options: {
-    //     color: "blue",
-    //   },
-    // }),
+    new TrackModel({
+      type: "bigwig",
+      name: "example bigwig",
+      url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+      options: {
+        color: "blue",
+      },
+    }),
     // new TrackModel({
     //   type: "bed",
     //   name: "mm10 bed",

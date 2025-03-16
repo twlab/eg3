@@ -2,9 +2,9 @@ import React from "react";
 import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import BackgroundedText from "../geneAnnotationTrackComponents/BackgroundedText";
-import Snp from "@eg/core/src/eg-lib/models/Snp";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
-import { getContrastingColor } from "@eg/core/src/eg-lib/models/util";
+import Snp from "../../../../models/Snp";
+import OpenInterval from "../../../../models/OpenInterval";
+import { getContrastingColor } from "../../../../models/util";
 
 const HEIGHT = 9;
 

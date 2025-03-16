@@ -2,7 +2,7 @@ import _ from "lodash";
 import { TabixIndexedFile } from "@gmod/tabix";
 import { BlobFile } from "generic-filehandle";
 
-import { ensureMaxListLength } from "@eg/core/src/eg-lib/models/util";
+import { ensureMaxListLength } from "../models/util";
 // import ChromosomeInterval from "../../model/interval/ChromosomeInterval";
 
 /**
@@ -25,7 +25,6 @@ class LocalTabixSource {
    */
 
   constructor(trackModel, dataLimit = 100000) {
-    console.log(trackModel);
     if (trackModel.files[0].name.length > trackModel.files[1].name.length) {
       this.blob = trackModel.files[1];
       this.indexBlob = trackModel.files[0];

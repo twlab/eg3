@@ -58,7 +58,6 @@ export function trackGlobalState({
 
     globalTrackState.current["rightIdx"]--;
   } else {
-    console.log("ASDASDASDASDASDASDASDASDASD", trackState);
     let newTrackState = {
       ...trackState,
       initial: 0,

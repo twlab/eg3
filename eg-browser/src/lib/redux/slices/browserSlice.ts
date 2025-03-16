@@ -1,4 +1,3 @@
-import { getGenomeDefaultState } from "@eg/core";
 import {
   GenomeCoordinate,
   IGenome,
@@ -24,7 +23,7 @@ export interface BrowserSession {
   title: string;
   genomeId: uuid;
   viewRegion: GenomeCoordinate;
-  userViewRegion: null | GenomeCoordinate;
+  userViewRegion: { start: number; end: number } | null;
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];
@@ -47,17 +46,16 @@ export const browserSlice = createSlice({
     sessions: browserSessionAdapter.getInitialState(),
   },
   reducers: {
-    createSession: (state, action: PayloadAction<{
-      genome: IGenome,
-      viewRegion?: GenomeCoordinate,
-    }>) => {
+    createSession: (
+      state,
+      action: PayloadAction<{
+        genome: IGenome;
+        viewRegion?: GenomeCoordinate;
+      }>
+    ) => {
       const { genome, viewRegion: overrideViewRegion } = action.payload;
 
-      const { defaultRegion, defaultTracks: tracks } = genome;
-
-      const viewRegion = overrideViewRegion || defaultRegion;
-
-      const userViewRegion = viewRegion;
+      const { defaultRegion: viewRegion, defaultTracks: tracks } = genome;
 
       let trackModelId = 0;
       const initializedTracks =
@@ -72,8 +70,8 @@ export const browserSlice = createSlice({
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
-        viewRegion: viewRegion as GenomeCoordinate,
-        userViewRegion: userViewRegion as GenomeCoordinate,
+        viewRegion,
+        userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
         highlights: [],

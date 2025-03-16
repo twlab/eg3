@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback, FC, KeyboardEvent } from "react";
 import ReactModal from "react-modal";
-import DisplayedRegionModel from "@eg/core/src/eg-lib/models/DisplayedRegionModel";
+import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import GeneSearchBox from "./GeneSearchBox";
 import { HighlightInterval } from "../ToolComponents/HighlightMenu";
 import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
-import Genome from "@eg/core/src/eg-lib/models/Genome";
+import Genome from "../../../models/Genome";
 import SnpSearch from "../SnpSearch";
 
 const MODAL_STYLE = {

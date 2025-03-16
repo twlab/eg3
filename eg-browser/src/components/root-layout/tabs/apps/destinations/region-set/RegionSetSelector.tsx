@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import RegionSetConfig from "./RegionSetConfig";
 
 import RegionSet from "@eg/tracks/src/models/RegionSet";
-import Genome from "@eg/tracks/src/models/Genome";
+
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,
@@ -12,21 +12,12 @@ import {
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 
-interface RegionSetSelectorProps {
-  genome: Genome;
-  selectedSet?: RegionSet;
-  onSetsChanged?: (newSets: RegionSet[]) => void;
-}
-
-const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
-  selectedSet,
-  onSetsChanged = () => undefined,
-}) => {
+const RegionSetSelector: React.FC = ({}) => {
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
   const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
   const _genomeConfig = useCurrentGenome();
-
+  const selectedRegionSet = currentSession?.selectedRegionSet;
   if (!currentSession || !_genomeConfig) {
     return "";
   }
@@ -41,6 +32,7 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
     if (typeof item === "object") {
       const newRegionSet = RegionSet.deserialize(item);
       newRegionSet["genome"] = genome;
+      newRegionSet["id"] = item.id;
       return newRegionSet;
     } else {
       return item;
@@ -56,22 +48,29 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
   };
 
   const addSet = (newSet: RegionSet) => {
+    newSet["id"] = crypto.randomUUID();
     dispatch(
       updateCurrentSession({
         regionSets: [...currentSession?.regionSets, newSet],
       })
     );
   };
-  function onSetSelected(set: RegionSet) {
-    console.log(set);
+  function onSetSelected(set: RegionSet | null) {
     dispatch(
       updateCurrentSession({
         selectedRegionSet: set,
       })
     );
   }
+  function onSetsChanged(newSets: Array<RegionSet>) {
+    dispatch(
+      updateCurrentSession({
+        regionSets: newSets,
+      })
+    );
+  }
   const replaceSet = (index: number, replacement: RegionSet) => {
-    const nextSets = sets.slice();
+    const nextSets: Array<any> = sets.slice();
     nextSets[index] = replacement;
     onSetsChanged(nextSets);
     handleSetChangeSideEffects(index, replacement);
@@ -90,14 +89,17 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
     newSet: RegionSet | null
   ) => {
     const oldSet = sets[changedIndex];
-    if (oldSet === selectedSet) {
+    if (oldSet === selectedRegionSet) {
       onSetSelected(newSet);
     }
   };
 
   const renderItemForSet = (set: RegionSet, index: number) => {
-    const isBackingView = set === selectedSet;
-
+    let isBackingView = false;
+    if (selectedRegionSet) {
+      isBackingView = set.id === selectedRegionSet.id;
+    }
+    console.log(isBackingView, set, selectedRegionSet);
     const numRegions = set.features.length;
     const name = set.name || `Unnamed set of ${numRegions} region(s)`;
     const text = `${name} (${numRegions} regions)`;
@@ -146,11 +148,10 @@ const RegionSetSelector: React.FC<RegionSetSelectorProps> = ({
       </div>
     );
   };
-  console.log(sets, indexBeingConfigured, sets[indexBeingConfigured]);
   return (
     <div>
       <h3>Select a gene/region set</h3>
-      {selectedSet ? (
+      {selectedRegionSet ? (
         <button
           className="btn btn-sm btn-warning"
           onClick={() => onSetSelected(null)}

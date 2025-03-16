@@ -22,7 +22,6 @@ import TrackModel from "@eg/tracks/src/models/TrackModel";
 export default function PublicDataHubs() {
   const genomeConfig = useCurrentGenome();
   const publicTracksPool = useAppSelector(selectPublicTracksPool);
-
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");
@@ -164,11 +163,15 @@ export default function PublicDataHubs() {
     </div>
   );
 
-  const addedTrackUrls = useMemo(
-    () =>
-      new Set(currentSession!.tracks.map((track) => track.url || track.name)),
-    [currentSession.tracks]
-  );
+  const addedTrackUrls = useMemo(() => {
+    if (currentSession) {
+      return new Set(
+        currentSession!.tracks.map((track) => track.url || track.name)
+      );
+    } else {
+      return new Set();
+    }
+  }, [currentSession]);
   function onTracksAdded(tracks: TrackModel[]) {
     dispatch(
       updateCurrentSession({
@@ -185,7 +188,7 @@ export default function PublicDataHubs() {
         )}
       </div>
 
-      {publicTracksPool.length > 0 && (
+      {currentSession && publicTracksPool.length > 0 ? (
         <div>
           <h2 className="text-base font-medium mb-4">Available Tracks</h2>
           <FacetTable
@@ -198,6 +201,8 @@ export default function PublicDataHubs() {
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
+      ) : (
+        ""
       )}
     </div>
   );

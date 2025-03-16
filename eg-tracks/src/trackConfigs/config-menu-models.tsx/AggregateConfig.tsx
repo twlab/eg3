@@ -1,5 +1,5 @@
 import SelectConfig from "../config-menu-components.tsx/SelectConfig";
-import { AggregatorTypes } from "@eg/core/src/eg-lib/models/FeatureAggregator";
+import { AggregatorTypes } from "../../models/FeatureAggregator";
 
 /**
  * the options to control data aggregate for numerical track, default is mean

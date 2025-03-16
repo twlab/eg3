@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 
 import RegionSetConfig from "./RegionSetConfig";
 
-import RegionSet from "@eg/core/src/eg-lib/models/RegionSet";
-import Genome from "@eg/core/src/eg-lib/models/Genome";
+import RegionSet from "../../../models/RegionSet";
+import Genome from "../../../models/Genome";
 
 interface RegionSetSelectorProps {
   genome: Genome;

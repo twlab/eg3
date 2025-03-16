@@ -6,10 +6,10 @@ import {
   RenderTypes,
   DesignRenderer,
 } from "../commonComponents/art/DesignRenderer";
-import { LogChoices } from "@eg/core/src/eg-lib/models/LogChoices";
-import { DownsamplingChoices } from "@eg/core/src/eg-lib/models/DownsamplingChoices";
-import { FeatureAggregator } from "@eg/core/src/eg-lib/models/FeatureAggregator";
-import { ScaleChoices } from "@eg/core/src/eg-lib/models/ScaleChoices";
+import { LogChoices } from "../../../../models/LogChoices";
+import { DownsamplingChoices } from "../../../../models/DownsamplingChoices";
+import { FeatureAggregator } from "../../../../models/FeatureAggregator";
+import { ScaleChoices } from "../../../../models/ScaleChoices";
 
 type Options = {
   height: number;

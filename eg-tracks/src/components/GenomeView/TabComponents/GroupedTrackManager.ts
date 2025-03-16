@@ -1,9 +1,9 @@
 import _ from "lodash";
-import { ScaleChoices } from "@eg/core/src/eg-lib/models/ScaleChoices";
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import { ScaleChoices } from "../../../models/ScaleChoices";
+import TrackModel from "../../../models/TrackModel";
 
 import NumericalTrack from "../TrackComponents/commonComponents/numerical/NumericalTrack";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
+import OpenInterval from "../../../models/OpenInterval";
 import { NumericalAggregator } from "../TrackComponents/commonComponents/numerical/NumericalAggregator";
 
 export class GroupedTrackManager {

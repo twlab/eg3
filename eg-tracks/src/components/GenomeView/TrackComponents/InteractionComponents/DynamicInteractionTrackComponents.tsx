@@ -3,9 +3,9 @@ import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import { PixiHeatmap } from "./PixiHeatmap";
 import PixiArc from "./PixiArc";
-import { FeaturePlacer } from "@eg/core/src/eg-lib/models/getXSpan/FeaturePlacer";
+import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
 import { GenomeInteraction } from "../../../../getRemoteData/GenomeInteraction";
-import { ScaleChoices } from "@eg/core/src/eg-lib/models/ScaleChoices";
+import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { DynamicInteractionDisplayMode } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 
 interface DynamicInteractionTrackComponentsProps {

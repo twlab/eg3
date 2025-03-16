@@ -25,7 +25,7 @@ interface SelectableGenomeAreaProps {
     end: number,
     selectedTool: number | string
   ): void;
-  selectedTool: any;
+  selectedTool?: any;
 }
 
 /**

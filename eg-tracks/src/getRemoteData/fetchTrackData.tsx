@@ -7,20 +7,17 @@ import JasparSource from "./JasparSource";
 
 const AWS_API = "https://lambda.epigenomegateway.org/v3";
 let cachedFetchInstance: { [key: string]: any } = {};
-const trackFetchFunction: { [key: string]: any } = {
+export const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
-    let url = `${AWS_API}/${regionData.genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`
+    let url = `${AWS_API}/${regionData.genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
 
     if (regionData.genomeName === "canFam6") {
-      url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`
+      url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
     }
 
-    const genRefResponse = await fetch(
-      url,
-      {
-        method: "GET",
-      }
-    );
+    const genRefResponse = await fetch(url, {
+      method: "GET",
+    });
 
     return await genRefResponse.json();
   },
@@ -44,8 +41,9 @@ const trackFetchFunction: { [key: string]: any } = {
     };
 
     if (regionData.end - regionData.start <= 30000) {
-      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${regionData.end + "?content-type=application%2Fjson&feature=variation"
-        }`;
+      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
+        regionData.end + "?content-type=application%2Fjson&feature=variation"
+      }`;
 
       return fetch(url, { headers })
         .then((response) => {

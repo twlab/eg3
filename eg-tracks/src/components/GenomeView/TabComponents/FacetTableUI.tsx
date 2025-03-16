@@ -1,6 +1,6 @@
 import React from "react";
 import FacetTable from "./FacetTable";
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import TrackModel from "../../../models/TrackModel";
 
 interface FacetTableUIProps {
   publicTracksPool: TrackModel[];

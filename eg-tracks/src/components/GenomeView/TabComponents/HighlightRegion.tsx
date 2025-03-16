@@ -1,12 +1,12 @@
 import React from "react";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
-import LinearDrawingModel from "@eg/core/src/eg-lib/models/LinearDrawingModel";
+import OpenInterval from "../../../models/OpenInterval";
+import LinearDrawingModel from "../../../models/LinearDrawingModel";
 
-import { ViewExpansion } from "@eg/core/src/eg-lib/models/RegionExpander";
-import ChromosomeInterval from "@eg/core/src/eg-lib/models/ChromosomeInterval";
+import { ViewExpansion } from "../../../models/RegionExpander";
+import ChromosomeInterval from "../../../models/ChromosomeInterval";
 import { HighlightInterval } from "../ToolComponents/HighlightMenu";
 
-import TrackModel from "@eg/core/src/eg-lib/models/TrackModel";
+import TrackModel from "../../../models/TrackModel";
 import "./HighlightRegion.css";
 
 interface HighlightRegionProps {

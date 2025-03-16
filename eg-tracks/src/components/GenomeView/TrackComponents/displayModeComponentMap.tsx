@@ -48,7 +48,7 @@ import { GenomeInteraction } from "../../../getRemoteData/GenomeInteraction";
 import FiberTrackComponent from "./bedComponents/FiberTrackComponent";
 import FiberAnnotation from "./bedComponents/FiberAnnotation";
 import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotTrackComponent";
-import QBed from "@eg/core/src/eg-lib/models/QBed";
+import { QBedTrackConfig } from "../../../trackConfigs/config-menu-models.tsx/QBedTrackConfig";
 import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
 import { Model } from "flexlayout-react";
@@ -56,20 +56,20 @@ import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicIn
 import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
 
 import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
-import Snp from "@eg/core/src/eg-lib/models/Snp";
+import Snp from "../../../models/Snp";
 import SnpAnnotation from "./SnpComponents/SnpAnnotation";
-import { BamAlignment } from "@eg/core/src/eg-lib/models/BamAlignment";
+import { BamAlignment } from "../../../models/BamAlignment";
 import { BamAnnotation } from "./BamComponents/BamAnnotation";
-import ImageRecord from "@eg/core/src/eg-lib/models/ImageRecord";
+import ImageRecord from "../../../models/ImageRecord";
 
 import OmeroTrackComponents, {
   MAX_NUMBER_THUMBNAILS,
   THUMBNAIL_PADDING,
 } from "./imageTrackComponents/OmeroTrackComponents";
-import { initialLayout } from "@eg/core/src/eg-lib/models/layoutUtils";
+import { initialLayout } from "../../../models/layoutUtils";
 import _, { uniqueId } from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
-import { getGenomeConfig } from "@eg/core/src/eg-lib/models/genomes/allGenomes";
+import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
 import React from "react";
 
@@ -508,19 +508,19 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType
     );
 
-    // if (configOptions.forceSvg) {
-    //   placeFeatureData.placements = placeFeatureData.placements.filter(
-    //     (feature) => {
-    //       const curXSpan = feature.xSpan;
+    if (configOptions.forceSvg) {
+      placeFeatureData.placements = placeFeatureData.placements.filter(
+        (feature) => {
+          const curXSpan = feature.xSpan;
 
-    //       return !(
-    //         curXSpan.end <
-    //           trackState.viewWindow.start + trackState.visWidth / 3 ||
-    //         curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
-    //       );
-    //     }
-    //   );
-    // }
+          return !(
+            curXSpan.end <
+              trackState.viewWindow.start + trackState.visWidth / 3 ||
+            curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
+          );
+        }
+      );
+    }
     var height;
     if (updatedLegend) {
       // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
@@ -1053,7 +1053,7 @@ export function getDisplayModeFunction(
         ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
       });
     }
-    if (!drawData.trackState.visRegion) console.log(drawData);
+
     let svgDATA = displayModeComponentMap.full({
       formattedData,
       trackState: drawData.trackState,

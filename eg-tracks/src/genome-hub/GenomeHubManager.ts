@@ -40,7 +40,6 @@ export default class GenomeHubManager {
   }
 
   getGenomeFromCache(id: string): IGenome | undefined {
-    console.log(this.genomeCache);
     return this.genomeCache.get(id);
   }
 

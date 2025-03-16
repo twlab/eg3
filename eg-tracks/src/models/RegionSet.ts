@@ -13,6 +13,7 @@ export interface IRegionSet {
   features: IFeature[];
   genomeName: string;
   flankingStrategy: IFlankingStrategy;
+  id?: any;
 }
 
 /**
@@ -37,7 +38,9 @@ class RegionSet {
     public name = "",
     public features: Feature[] = [],
     public genome: Genome,
-    public flankingStrategy: FlankingStrategy
+    public flankingStrategy: FlankingStrategy,
+    public genomeName: string = "",
+    public id: any = ""
   ) {
     this.name = name;
     this.features = features;

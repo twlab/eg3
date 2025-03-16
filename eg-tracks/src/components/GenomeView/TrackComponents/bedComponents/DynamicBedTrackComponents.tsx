@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import memoizeOne from "memoize-one";
 import _ from "lodash";
-import FeatureArranger from "@eg/core/src/eg-lib/models/FeatureArranger";
+import FeatureArranger from "../../../../models/FeatureArranger";
 import { PixiAnnotation } from "../commonComponents/annotation/PixiAnnotation";
 
 export const TOP_PADDING = 2;

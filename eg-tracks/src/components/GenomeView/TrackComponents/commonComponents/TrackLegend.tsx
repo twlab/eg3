@@ -173,7 +173,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
     if (height <= 0) {
       return null;
     }
-    console.log(label);
+
     const axisHeight = axisScaleReverse ? height * 0.5 : height;
     const divStyle = Object.assign(
       {

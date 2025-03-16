@@ -1,8 +1,8 @@
 import GeneAnnotation from "../TrackComponents/geneAnnotationTrackComponents/GeneAnnotation";
-import Gene from "@eg/core/src/eg-lib/models/Gene";
-import { PlacedFeature } from "@eg/core/src/eg-lib/models/getXSpan/FeaturePlacer";
-import OpenInterval from "@eg/core/src/eg-lib/models/OpenInterval";
-import { FeatureSegment } from "@eg/core/src/eg-lib/models/FeatureSegment";
+import Gene from "../../../models/Gene";
+import { PlacedFeature } from "../../../models/getXSpan/FeaturePlacer";
+import OpenInterval from "../../../models/OpenInterval";
+import { FeatureSegment } from "../../../models/FeatureSegment";
 import { v4 as uuidv4 } from "uuid";
 interface StandaloneGeneAnnotationProps {
   gene: Gene;
