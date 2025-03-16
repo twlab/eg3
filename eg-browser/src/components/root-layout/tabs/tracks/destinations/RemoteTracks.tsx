@@ -63,10 +63,15 @@ interface TrackState {
 }
 
 function AddTracks() {
-  const dispatch = useAppDispatch();
-  const currentSession = useAppSelector(selectCurrentSession);
   const session = useAppSelector(selectCurrentSession);
   const customTracksPool = useAppSelector(selectCustomTracksPool);
+
+  const [selectedStep, setSelectedStep] = React.useState<AddTracksStep | null>(
+    AddTracksStep.TRACK_TYPE
+  );
+  const dispatch = useAppDispatch();
+  const currentSession = useAppSelector(selectCurrentSession);
+
   const [trackState, setTrackState] = React.useState<TrackState>({
     type: TRACK_TYPES.Numerical[0],
     url: "",
@@ -75,10 +80,6 @@ function AddTracks() {
     metadata: { genome: session?.genomeId ?? "" },
     queryGenome: "",
   });
-
-  const [selectedStep, setSelectedStep] = React.useState<AddTracksStep | null>(
-    AddTracksStep.TRACK_TYPE
-  );
 
   const handleStepChange = (step: AddTracksStep | null) => {
     setSelectedStep(step ?? AddTracksStep.TRACK_TYPE);
@@ -165,11 +166,17 @@ function AddTracks() {
       })
     );
   }
-  const addedTrackUrls = useMemo(
-    () =>
-      new Set(currentSession!.tracks.map((track) => track.url || track.name)),
-    [currentSession.tracks]
-  );
+
+  const addedTrackUrls = useMemo(() => {
+    if (currentSession) {
+      return new Set(
+        currentSession!.tracks.map((track) => track.url || track.name)
+      );
+    } else {
+      return new Set();
+    }
+  }, [currentSession]);
+
   return (
     <div>
       <div className="flex flex-col py-4">
@@ -259,7 +266,7 @@ function AddTracks() {
         ></div>
       </div>
 
-      {customTracksPool.length > 0 && (
+      {currentSession && customTracksPool.length > 0 ? (
         <div>
           <h2 className="text-base font-medium mb-4">Available Tracks</h2>
           <FacetTable
@@ -272,6 +279,8 @@ function AddTracks() {
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
+      ) : (
+        ""
       )}
     </div>
   );
@@ -501,11 +510,15 @@ function AddDataHubs() {
       console.error(error);
     }
   };
-  const addedTrackUrls = useMemo(
-    () =>
-      new Set(currentSession!.tracks.map((track) => track.url || track.name)),
-    [currentSession.tracks]
-  );
+  const addedTrackUrls = useMemo(() => {
+    if (currentSession) {
+      return new Set(
+        currentSession!.tracks.map((track) => track.url || track.name)
+      );
+    } else {
+      return new Set();
+    }
+  }, [currentSession]);
   function onTracksAdded(tracks: TrackModel[]) {
     dispatch(
       updateCurrentSession({
@@ -634,7 +647,7 @@ function AddDataHubs() {
             style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
           ></div>
         </div>
-        {customTracksPool.length > 0 && (
+        {currentSession && customTracksPool.length > 0 ? (
           <div>
             <h2 className="text-base font-medium mb-4">Available Tracks</h2>
             <FacetTable
@@ -647,6 +660,8 @@ function AddDataHubs() {
               contentColorSetup={{ color: "#222", background: "white" }}
             />
           </div>
+        ) : (
+          ""
         )}
       </div>
     </>
