@@ -18,6 +18,8 @@ export interface IGenomeHubSource {
   getGenomeById(id: uuid): Promise<IGenome>;
 
   putGenome(genome: IGenome): Promise<uuid>;
+
+  deleteAllGenomes(): Promise<void>;
 }
 
 type uuid = string;

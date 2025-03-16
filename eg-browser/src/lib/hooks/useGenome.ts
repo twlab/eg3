@@ -14,9 +14,15 @@ export default function useGenome(genomeId: string) {
   });
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    if (!genomeId) return;
-    if (genome?.id === genomeId) return;
+    useEffect(() => {
+        if (!genomeId) {
+            if (genome) {
+                setGenome(null);
+            }
+            return;
+        }
+
+        if (genome?.id === genomeId) return;
 
     const defaultGenome = getGenomeConfig(genomeId);
 

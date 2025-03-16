@@ -1,25 +1,29 @@
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { selectIsNavigatorVisible } from "@/lib/redux/slices/settingsSlice";
+import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import {
+  selectScreenShotOpen,
+  updateScreenShotData,
+} from "@/lib/redux/slices/hubSlice";
 import {
   GenomeCoordinate,
   IHighlightInterval,
   ITrackModel,
   TrackContainerRepresentable,
 } from "@eg/tracks";
+
 import Toolbar from "./toolbar/Toolbar";
-import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import { selectTool } from "@/lib/redux/slices/utilitySlice";
-import {
-  selectScreenShotOpen,
-  updateScreenShotData,
-} from "@/lib/redux/slices/hubSlice";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenome();
+  const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
+
   const selectedRegionSet = currentSession?.selectedRegionSet;
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
   if (!currentSession || !genomeConfig) {
@@ -31,7 +35,6 @@ export default function GenomeView() {
   };
 
   const handleNewHighlight = (highlights: IHighlightInterval[]) => {
-    console.log(highlights, "new highlights");
     dispatch(updateCurrentSession({ highlights }));
   };
 
@@ -69,11 +72,12 @@ export default function GenomeView() {
   return (
     <div>
       <TrackContainerRepresentable
+        key={currentSession.id}
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
         genomeConfig={genomeConfig}
         legendWidth={120}
-        showGenomeNav={true}
+        showGenomeNav={isNavigatorVisible}
         onNewRegion={handleNewRegion}
         onNewHighlight={handleNewHighlight}
         onTrackSelected={handleTrackSelected}

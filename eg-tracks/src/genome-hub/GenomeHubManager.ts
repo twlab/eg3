@@ -47,4 +47,9 @@ export default class GenomeHubManager {
     this.localGenomeRepository.putGenome(genome);
     this.genomeCache.set(genome.id, genome);
   }
+
+  async deleteAllGenomes(): Promise<void> {
+    await this.localGenomeRepository.deleteAllGenomes();
+    this.genomeCache.clear();
+  }
 }

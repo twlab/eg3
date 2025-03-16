@@ -1,6 +1,6 @@
 import useDebounce from '@/lib/hooks/useDebounce';
 import useSmallScreen from '@/lib/hooks/useSmallScreen';
-import { BrowserSession, createSessionWithGenome, selectSessions, setCurrentSession } from '@/lib/redux/slices/browserSlice';
+import { BrowserSession, createSession, selectSessions, setCurrentSession } from '@/lib/redux/slices/browserSlice';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { motion } from "framer-motion";
@@ -18,6 +18,7 @@ import AddCustomGenome from '../genome-hub/AddCustomGenome';
 import GenomeSchemaView from '../genome-hub/GenomeSchemaView';
 import { getGenomeConfig } from '@eg/tracks';
 import GenomeSerializer from '@eg/tracks/src/genome-hub/GenomeSerializer';
+import ImportSession from '../sessions/ImportSession';
 
 type GenomeName = string;
 type AssemblyName = string;
@@ -47,7 +48,9 @@ export default function GenomePicker() {
             const genomeConfig = getGenomeConfig(selectedPath[1]);
 
             timeout = setTimeout(() => {
-                dispatch(createSessionWithGenome(GenomeSerializer.serialize(genomeConfig)));
+                dispatch(createSession({
+                    genome: GenomeSerializer.serialize(genomeConfig)
+                }));
             }, 500);
         }
 
@@ -94,6 +97,13 @@ export default function GenomePicker() {
                                 path: "genome-schema",
                                 options: {
                                     title: "Genome Schema"
+                                }
+                            },
+                            {
+                                component: ImportSession,
+                                path: "import-session",
+                                options: {
+                                    title: "Import Session"
                                 }
                             }
                         ]}

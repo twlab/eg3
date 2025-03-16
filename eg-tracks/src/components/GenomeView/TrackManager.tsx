@@ -1,4 +1,5 @@
 import { createRef, memo, useEffect, useRef, useState } from "react";
+
 const requestAnimationFrame = window.requestAnimationFrame;
 const cancelAnimationFrame = window.cancelAnimationFrame;
 import DisplayedRegionModel from "../../models/DisplayedRegionModel";
@@ -27,6 +28,7 @@ import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChange
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
+import { Tool } from "../../types";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
@@ -2222,6 +2224,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
+                cursor: tool === Tool.Drag ? "pointer" :
+                  tool === Tool.Reorder ? "grab" :
+                    tool === Tool.Highlight ? "ew-resize" :
+                      tool === Tool.Zoom ? "zoom-in" : "default"
               }}
             >
               <div ref={horizontalLineRef} className="horizontal-line" />

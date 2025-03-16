@@ -46,8 +46,14 @@ export const browserSlice = createSlice({
     sessions: browserSessionAdapter.getInitialState(),
   },
   reducers: {
-    createSessionWithGenome: (state, action: PayloadAction<IGenome>) => {
-      const genome = action.payload;
+    createSession: (
+      state,
+      action: PayloadAction<{
+        genome: IGenome;
+        viewRegion?: GenomeCoordinate;
+      }>
+    ) => {
+      const { genome, viewRegion: overrideViewRegion } = action.payload;
 
       const { defaultRegion: viewRegion, defaultTracks: tracks } = genome;
 
@@ -161,16 +167,21 @@ export const browserSlice = createSlice({
         }
       }
     },
+    clearAllSessions: (state) => {
+      browserSessionAdapter.removeAll(state.sessions);
+      state.currentSession = null;
+    },
   },
 });
 
 export const {
-  createSessionWithGenome,
+  createSession,
   upsertSession,
   deleteSession,
   setCurrentSession,
   updateCurrentSession,
   addTracks,
+  clearAllSessions,
 } = browserSlice.actions;
 
 export const selectCurrentSessionId = (state: RootState) =>
