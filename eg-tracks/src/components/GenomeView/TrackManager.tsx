@@ -137,7 +137,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpRegionSize = useRef(0);
   const pixelPerBase = useRef(0);
   const block = useRef<HTMLInputElement>(null);
-  const g3dRect = useRef<HTMLInputElement>(null);
+
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
@@ -607,6 +607,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (id.includes(String(item.trackModel.id))) {
           delete selectedTracks.current[`${item.trackModel.id}`];
         }
+        return !id.includes(String(item.trackModel.id));
+      });
+    });
+    console.log(id);
+    setG3dTrackComponents((prevTracks) => {
+      console.log(
+        prevTracks,
+        prevTracks.filter((item, _index) => {
+          return !id.includes(String(item.trackModel.id));
+        })
+      );
+      return prevTracks.filter((item, _index) => {
         return !id.includes(String(item.trackModel.id));
       });
     });
@@ -2224,10 +2236,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
-                cursor: tool === Tool.Drag ? "pointer" :
-                  tool === Tool.Reorder ? "grab" :
-                    tool === Tool.Highlight ? "ew-resize" :
-                      tool === Tool.Zoom ? "zoom-in" : "default"
+                cursor:
+                  tool === Tool.Drag
+                    ? "pointer"
+                    : tool === Tool.Reorder
+                    ? "grab"
+                    : tool === Tool.Highlight
+                    ? "ew-resize"
+                    : tool === Tool.Zoom
+                    ? "zoom-in"
+                    : "default",
               }}
             >
               <div ref={horizontalLineRef} className="horizontal-line" />
@@ -2396,43 +2414,48 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ""
         )}
       </OutsideClickDetector>
-      <div
-        ref={g3dRect}
-        style={{
-          display: "flex",
-          width: `${windowWidth}px`,
-          backgroundColor: "blue",
-          WebkitBackfaceVisibility: "hidden",
 
-          WebkitPerspective: `${windowWidth + legendWidth}px`,
-          backfaceVisibility: "hidden",
-          perspective: `${windowWidth + legendWidth}px`,
-        }}
-      >
-        {g3dtrackComponents.map((item, index) => {
-          const rectInfo = g3dRect.current!.getBoundingClientRect();
+      {g3dtrackComponents.length > 0 ? (
+        <div
+          style={{
+            display: "flex",
 
-          let Component = item.component;
-          if (trackManagerState.current.viewRegion) {
-            return (
-              <Component
-                key={item.id}
-                tracks={tracks}
-                g3dtrack={item.trackModel}
-                viewRegion={trackManagerState.current.viewRegion}
-                width={rectInfo.width / 2}
-                height={rectInfo.height}
-                x={rectInfo.x}
-                y={rectInfo.y}
-                genomeConfig={genomeConfig}
-                geneFor3d={show3dGene}
-              />
-            );
-          } else {
-            return "";
-          }
-        })}
-      </div>
+            backgroundColor: "white",
+            WebkitBackfaceVisibility: "hidden",
+            WebkitPerspective: `${windowWidth + legendWidth}px`,
+            backfaceVisibility: "hidden",
+            perspective: `${windowWidth + legendWidth}px`,
+            border: "1px solid #d3d3d3",
+            borderRadius: "10px",
+            boxShadow: "0 2px 3px 0 rgba(0, 0, 0, 0.2)",
+            padding: "5px",
+            flexWrap: "wrap",
+          }}
+        >
+          {g3dtrackComponents.map((item, index) => {
+            let Component = item.component;
+            if (trackManagerState.current.viewRegion) {
+              return (
+                <div key={item.id} style={{ width: "50%" }}>
+                  <Component
+                    handleDelete={handleDelete}
+                    tracks={tracks}
+                    g3dtrack={item.trackModel}
+                    viewRegion={trackManagerState.current.viewRegion}
+                    width={(windowWidth + legendWidth) / 2}
+                    genomeConfig={genomeConfig}
+                    geneFor3d={show3dGene}
+                  />
+                </div>
+              );
+            } else {
+              return "";
+            }
+          })}
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 });

@@ -106,7 +106,12 @@ const defaultTracks = [
       "name": "example 3d track",
       "showOnHubLoad": true
     }),
-
+    new TrackModel({
+      "type": "g3d",
+      "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
+      "name": "example 3d track",
+      "showOnHubLoad": true
+    }),
     new TrackModel({
       type: "repeatmasker",
       name: "RepeatMasker",

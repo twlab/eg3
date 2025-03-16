@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { scaleLinear } from "d3-scale";
 import _ from "lodash";
 // import axios from "axios";
@@ -143,6 +143,7 @@ interface ComponentState {
   spinReverse: boolean;
 }
 interface ComponentProps {
+  handleDelete: any;
   onToggleSync3d?: any;
   sync3d?: any;
   tracks: TrackModel[];
@@ -3118,7 +3119,9 @@ class ThreedmolContainer extends React.Component<
   setMessage = (message) => {
     this.setState({ message });
   };
-
+  deleteTrack = (id) => {
+    this.props.handleDelete([id]);
+  };
   render() {
     const {
       legendMax,
@@ -3187,7 +3190,17 @@ class ThreedmolContainer extends React.Component<
       onSetSelected,
       selectedSet,
       genomeConfig,
+      handleDelete,
+      g3dtrack,
     } = this.props;
+    console.log(g3dtrack, handleDelete);
+    let deleteFunction;
+    if (handleDelete) {
+      deleteFunction = handleDelete;
+    } else {
+      deleteFunction = null;
+    }
+
     const bwTracks = tracks.filter((track) => {});
     return (
       <div id="threed-mol-container">
@@ -4082,6 +4095,18 @@ class ThreedmolContainer extends React.Component<
         <div style={{ position: "relative" }}>
           <div className="placement-container">
             <div className="text-left">
+              <div>
+                {deleteFunction ? (
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => deleteFunction([g3dtrack.id])}
+                  >
+                    Close tab
+                  </button>
+                ) : (
+                  ""
+                )}
+              </div>
               <div>
                 <button
                   className="btn btn-primary btn-sm"

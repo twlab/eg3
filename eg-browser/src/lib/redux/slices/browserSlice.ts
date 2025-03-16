@@ -61,7 +61,7 @@ export const browserSlice = createSlice({
       const initializedTracks =
         tracks?.map((track) => ({
           ...track,
-          id: trackModelId++,
+          id: crypto.randomUUID(),
           isSelected: false,
         })) || [];
 
@@ -106,7 +106,7 @@ export const browserSlice = createSlice({
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track)) {
-              (track as ITrackModel).id = session.trackModelId++;
+              (track as ITrackModel).id = crypto.randomUUID();
             }
             return track;
           });
@@ -132,7 +132,7 @@ export const browserSlice = createSlice({
             if (!("id" in track)) {
               return {
                 ...(track as object),
-                id: session.trackModelId++,
+                id: crypto.randomUUID(),
               } as ITrackModel;
             }
             return track;
