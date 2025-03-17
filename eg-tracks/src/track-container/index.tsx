@@ -12,6 +12,7 @@ import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import GenomeSerializer from "../genome-hub/GenomeSerializer";
 import OpenInterval from "../models/OpenInterval";
 import RegionSet from "../models/RegionSet";
+import { initial } from "lodash";
 
 export function TrackContainer(props: ITrackContainerState) {
   return (
@@ -65,6 +66,7 @@ export function TrackContainerRepresentable({
 }: ITrackContainerRepresentableProps) {
   const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
   const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
+  const isInitial = useRef(true);
   // MARK: Genome Config
 
   const genomeConfig = useMemo(() => {
@@ -209,7 +211,14 @@ export function TrackContainerRepresentable({
   }, [viewRegion, genomeConfig]);
   const convertedUserViewRegion = useMemo(() => {
     try {
-      if (lastUserViewRegion.current && userViewRegion) {
+      if (isInitial.current && userViewRegion) {
+        isInitial.current = false;
+        const start = userViewRegion.start;
+
+        const end = userViewRegion.end;
+
+        return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+      } else if (lastUserViewRegion.current && userViewRegion) {
         const start = userViewRegion.start;
 
         const end = userViewRegion.end;
