@@ -3193,7 +3193,7 @@ class ThreedmolContainer extends React.Component<
       handleDelete,
       g3dtrack,
     } = this.props;
-    console.log(g3dtrack, handleDelete);
+
     let deleteFunction;
     if (handleDelete) {
       deleteFunction = handleDelete;

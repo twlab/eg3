@@ -1568,7 +1568,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
       }
     }
-    console.log(newG3dComponents);
+
     if (newG3dComponents.length > 0) {
       setG3dTrackComponents(newG3dComponents);
     }
@@ -1660,7 +1660,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       Object.keys(screenshotDataObj.current).length === trackComponents.length
     ) {
       setScreenshotData({
-        tracks: trackManagerState.current.tracks,
+        tracks: trackManagerState.current.tracks.filter(
+          (trackModel) => trackModel.type !== "g3d"
+        ),
         componentData: screenshotDataObj.current,
         highlights: highlightElements,
       });
@@ -2029,20 +2031,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         const newTrackComponents: Array<any> = [];
+        const newG3dComponents: Array<any> = [];
         let checkHasGenAlign = false;
         for (let i = 0; i < tracks.length; i++) {
           const curTrackModel = tracks[i];
+
           let foundComp = false;
 
           // find tracks already in view
           for (let trackComponent of trackComponents) {
             if (trackComponent.trackModel.id === curTrackModel.id) {
-              newTrackComponents.push(trackComponent);
+              if (curTrackModel.type === "g3d") {
+                newG3dComponents.push(trackComponent);
+              } else {
+                newTrackComponents.push(trackComponent);
+              }
+
               foundComp = true;
             }
           }
           // if not in view this means that this is the new track that was added.
           if (!foundComp) {
+            if (curTrackModel.type === "g3d") {
+              newG3dComponents.push({
+                id: curTrackModel.id,
+                component: ThreedmolContainer,
+
+                trackModel: curTrackModel,
+              });
+              continue;
+            }
             if (curTrackModel.type === "genomealign") {
               checkHasGenAlign = true;
               if (basePerPixel.current < 10) {
@@ -2162,12 +2180,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           hasGenomeAlign.current = false;
         }
         trackManagerState.current.tracks = tracks;
-
+        setG3dTrackComponents(newG3dComponents);
         setTrackComponents(newTrackComponents);
       }
     }
   }, [tracks]);
-  console.log(showGenomeNav, windowWidth, userViewRegion);
+
   return (
     <div>
       {windowWidth > 0 && userViewRegion && showGenomeNav && (

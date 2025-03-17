@@ -97,6 +97,9 @@ export function TrackContainerRepresentable({
       }
       return newGenomeConfig;
     } else {
+      lastUserViewRegion.current = null;
+      lastViewRegion.current = null;
+
       return GenomeSerializer.deserialize(_genomeConfig);
     }
   }, [_genomeConfig, selectedRegionSet]);
@@ -206,17 +209,19 @@ export function TrackContainerRepresentable({
   }, [viewRegion, genomeConfig]);
   const convertedUserViewRegion = useMemo(() => {
     try {
-      if (userViewRegion) {
+      if (lastUserViewRegion.current && userViewRegion) {
         const start = userViewRegion.start;
 
         const end = userViewRegion.end;
 
         return new DisplayedRegionModel(genomeConfig.navContext, start, end);
       } else {
-        return new DisplayedRegionModel(
+        const newRegion = new DisplayedRegionModel(
           genomeConfig.navContext,
           ...genomeConfig.defaultRegion
         );
+        lastUserViewRegion.current = newRegion;
+        return newRegion;
       }
     } catch (e) {
       console.error(e);

@@ -80,7 +80,10 @@ export default function AppsTab() {
   const dispatch = useAppDispatch();
 
   return (
-    <NavigationStack destinations={destinations} rootOptions={{ title: 'Apps' }}>
+    <NavigationStack
+      destinations={destinations}
+      rootOptions={{ title: "Apps" }}
+    >
       <div className="flex flex-col gap-4">
         <DescriptiveNavigationLink
           path="region-set-view"
@@ -97,7 +100,7 @@ export default function AppsTab() {
           title="Scatter Plot"
           description="Generate scatter plots for genomic data analysis"
         />
-        <DescriptiveNavigationLink
+        {/* <DescriptiveNavigationLink
           title="Session"
           description="Manage and share your browser sessions"
           onClick={() => dispatch(setSessionPanelOpen(true))}
@@ -106,13 +109,13 @@ export default function AppsTab() {
           path="go-live"
           title="Go Live"
           description="Share your browser view in real-time with others"
-        />
+        /> */}
         <DescriptiveNavigationLink
           path="screenshot"
           title="Screenshot"
           description="Capture and export browser views as images"
         />
-        <DescriptiveNavigationLink
+        {/* <DescriptiveNavigationLink
           path="dynamic-record"
           title="Dynamic Record"
           description="Record and replay browser interactions"
@@ -121,7 +124,7 @@ export default function AppsTab() {
           path="fetch-sequence"
           title="Fetch Sequence"
           description="Retrieve and analyze genomic sequences"
-        />
+        /> */}
       </div>
     </NavigationStack>
   );

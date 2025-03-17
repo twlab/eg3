@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import PropTypes from "prop-types";
+
 import _ from "lodash";
 import ReactModal from "react-modal";
 import HubTrackTable from "./HubTrackTable";
 import TrackModel from "../../../models/TrackModel";
+import { ITrackModel } from "../../../types";
 import { variableIsObject } from "../../../models/util";
 import "./FacetTable.css";
 
@@ -12,9 +13,9 @@ const DEFAULT_COLUMN = "Assay";
 const UNUSED_META_KEY = "notused";
 
 type FacetTableProps = {
-  tracks: TrackModel[];
-  addedTracks: TrackModel[];
-  onTracksAdded?: (tracks: TrackModel[]) => void;
+  tracks: ITrackModel[];
+  addedTracks: ITrackModel[];
+  onTracksAdded?: (tracks: ITrackModel[]) => void;
   addTermToMetaSets: (keys: string[]) => void;
   addedTrackSets: Set<string>;
   publicTrackSets?: Set<string>;

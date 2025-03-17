@@ -1,6 +1,6 @@
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import { selectTool, setTool } from "@/lib/redux/slices/utilitySlice";
-import { GenomeCoordinate, IHighlightInterval, Tool } from "@eg/tracks";
+
 import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchBar from "./SearchBar";
+import { Tool } from "@eg/tracks";
 
 enum MagnifyingDirection {
   In,
@@ -79,20 +80,20 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           }}
           transition={{ duration: 0.2 }}
         >
-          <button
+          {/* <button
             onClick={() => handleToolClick(Tool.Drag)}
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
             <HandRaisedIcon className="size-6 text-gray-600" />
-          </button>
-          <button
+          </button> */}
+          {/* <button
             onClick={() => handleToolClick(Tool.Reorder)}
             className={getButtonClass(Tool.Reorder)}
             title="Reorder tracks"
           >
             <ArrowsUpDownIcon className="size-6 text-gray-600" />
-          </button>
+          </button> */}
           <button
             onClick={() => handleToolClick(Tool.Zoom)}
             className={getButtonClass(Tool.Zoom)}
@@ -322,10 +323,16 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           transition={{ duration: 0.2 }}
         >
           <div className="h-full border-r border-gray-400" />
-
-          <button className={getButtonClass()} title="Zoom in">
-            <ClockIcon className="size-6 text-gray-600" />
+          <button
+            onClick={() => handleToolClick(Tool.Drag)}
+            className={getButtonClass(Tool.Drag)}
+            title="Drag"
+          >
+            <HandRaisedIcon className="size-6 text-gray-600" />
           </button>
+          {/* <button className={getButtonClass()} title="Zoom in">
+            <ClockIcon className="size-6 text-gray-600" />
+          </button> */}
           <button
             className={getButtonClass()}
             onClick={() => handleToolClick(Tool.highlightMenu)}

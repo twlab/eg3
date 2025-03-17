@@ -89,12 +89,26 @@ const RegionSetSelector: React.FC = ({}) => {
     newSet: RegionSet | null
   ) => {
     const oldSet = sets[changedIndex];
-    if (oldSet === selectedRegionSet) {
-      onSetSelected(newSet);
+    if (selectedRegionSet) {
+      if (oldSet.id === selectedRegionSet.id) {
+        onSetSelected(newSet);
+      }
     }
   };
-
-  const renderItemForSet = (set: RegionSet, index: number) => {
+  const buttonStyle = {
+    padding: "8px 12px",
+    margin: "4px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    display: "inline-block",
+    disabled: {
+      backgroundColor: "#E1EBEE", // Lightened color for disabled buttons if necessary
+    },
+  };
+  const renderItemForSet = (set, index) => {
     let isBackingView = false;
     if (selectedRegionSet) {
       isBackingView = set.id === selectedRegionSet.id;
@@ -107,69 +121,124 @@ const RegionSetSelector: React.FC = ({}) => {
     let useSetButton;
     if (isBackingView) {
       useSetButton = (
-        <button className="btn btn-sm btn-info" disabled={true}>
+        <button
+          style={{
+            ...smallerButtonStyle,
+            backgroundColor: "#17a2b8",
+            cursor: "not-allowed",
+          }}
+          disabled={true}
+        >
           Is current view
         </button>
       );
     } else {
       useSetButton = (
         <button
-          className="btn btn-sm btn-success"
+          style={{ ...smallerButtonStyle, backgroundColor: "#28a745" }}
           onClick={() => onSetSelected(set)}
           disabled={numRegions <= 0}
         >
-          Enter region set view
+          Enter view
         </button>
       );
     }
 
     const deleteButton = (
       <button
-        className="btn btn-sm btn-danger"
+        style={{ ...smallerButtonStyle, backgroundColor: "#dc3545" }}
         onClick={() => deleteSet(index)}
       >
-        DELETE
+        Delete
       </button>
     );
 
     return (
       <div
         key={index}
-        style={{ backgroundColor: isBackingView ? "lightgreen" : undefined }}
+        style={{
+          backgroundColor: isBackingView ? "#d4edda" : "#fff",
+          border: "1px solid #ccc",
+          padding: "16px",
+          borderRadius: "8px",
+          marginBottom: "16px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        }}
       >
-        <button
-          title="Click to edit"
-          className="btn btn-link"
-          onClick={() => setIndexBeingConfigured(index)}
-        >
-          {text}
-        </button>{" "}
-        {useSetButton} {deleteButton}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <button
+            title="Click to edit"
+            style={{
+              background: "none",
+              border: "none",
+              color: "#007bff",
+              cursor: "pointer",
+              textAlign: "left",
+              paddingLeft: "0",
+              textDecoration: "underline",
+              marginBottom: "8px",
+            }}
+            onClick={() => setIndexBeingConfigured(index)}
+          >
+            {text}
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {useSetButton}
+            {deleteButton}
+          </div>
+        </div>
       </div>
     );
   };
+
+  const smallerButtonStyle = {
+    padding: "6px 8px",
+    fontSize: "12px",
+    margin: "4px",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+  };
   return (
-    <div>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        fontFamily: "Arial, sans-serif",
+        margin: "16px",
+      }}
+    >
       <h3>Select a gene/region set</h3>
       {selectedRegionSet ? (
         <button
-          className="btn btn-sm btn-warning"
+          style={{ ...buttonStyle, backgroundColor: "#FFC107" }}
           onClick={() => onSetSelected(null)}
         >
           Exit region set view
         </button>
-      ) : null}
+      ) : (
+        ""
+      )}
 
       {sets.length > 0
         ? sets.map((set, index) => renderItemForSet(set, index))
         : ""}
       <button
-        className="btn btn-sm btn-primary"
+        style={{ ...buttonStyle, backgroundColor: "#205781" }}
         onClick={() => setIndexBeingConfigured(sets.length)}
       >
         Add new set
       </button>
+      <div style={{ display: "flex", alignItems: "center", margin: "20px 0" }}>
+        <div
+          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
+        ></div>
 
+        <div
+          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
+        ></div>
+      </div>
       <RegionSetConfig
         set={sets[indexBeingConfigured]}
         onSetConfigured={setConfigured}

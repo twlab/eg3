@@ -166,18 +166,20 @@ export default function PublicDataHubs() {
   const addedTrackUrls = useMemo(() => {
     if (currentSession) {
       return new Set(
-        currentSession!.tracks.map((track) => track.url || track.name)
+        currentSession.tracks.map((track) => track.url || track.name)
       );
     } else {
       return new Set();
     }
   }, [currentSession]);
   function onTracksAdded(tracks: TrackModel[]) {
-    dispatch(
-      updateCurrentSession({
-        tracks: [...currentSession!.tracks, ...tracks],
-      })
-    );
+    if (currentSession) {
+      dispatch(
+        updateCurrentSession({
+          tracks: [...currentSession.tracks, ...tracks],
+        })
+      );
+    }
   }
   return (
     <div>

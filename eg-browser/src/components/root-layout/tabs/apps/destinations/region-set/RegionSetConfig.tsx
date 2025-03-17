@@ -264,18 +264,30 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   const cancelPressed = () => {
     setRegionSet(getRegionSetFromProps({ set: propSet, genome }));
   };
-
+  const buttonStyle = {
+    padding: "8px 12px",
+    margin: "4px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    display: "inline-block",
+    disabled: {
+      backgroundColor: "#E1EBEE", // Lightened color for disabled buttons if necessary
+    },
+  };
   return (
-    <div>
+    <div style={{ marginTop: "16px" }}>
       <h3>{propSet ? `Editing set: "${propSet.name}"` : "Create a new set"}</h3>
 
       {!regionSet && (
         <div>
           <h4>Enter a list of regions</h4>
-          <p>
+          <p style={{ lineHeight: "1.6" }}>
             Enter a list of gene names or coordinates to make a gene set one
             item per line. Gene names and coordinates can be mixed for input.
-            Coordinate string must be in the form of "chr1:345-678" fields can
+            Coordinate string must be in the form of "chr1:345-678". Fields can
             be joined by space/tab/comma/colon/hyphen.
           </p>
           <form onSubmit={handleAddList}>
@@ -285,16 +297,23 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                 onChange={handleListChange}
                 rows={10}
                 cols={40}
+                style={{
+                  width: "100%",
+                  marginBottom: "10px",
+                  padding: "8px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                }}
               />
             </label>
             <div>
               <input
-                className="btn btn-sm btn-primary"
+                style={{ ...buttonStyle, backgroundColor: "#205781" }}
                 type="submit"
                 value="Add"
               />{" "}
               <input
-                className="btn btn-sm btn-secondary"
+                style={{ ...buttonStyle, backgroundColor: "#6c757d" }}
                 type="reset"
                 value="Clear"
                 onClick={resetList}
@@ -309,35 +328,56 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
       {regionSet && regionSet.features.length > 0 && (
         <React.Fragment>
-          <label style={{ marginTop: "1ch" }}>
+          <label style={{ marginTop: "16px", display: "block" }}>
             1. Rename this set:{" "}
             <input
               type="text"
               placeholder="Set name"
               value={regionSet ? regionSet.name : "New set"}
               onChange={changeSetName}
+              style={{
+                padding: "8px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+              }}
             />
           </label>
 
-          <div>
+          <div style={{ marginTop: "16px" }}>
             <h6>2. Add one region or delete region(s) from the table below</h6>
-            <label>
-              New region name:{" "}
-              <input
-                type="text"
-                value={newRegionName}
-                onChange={(event) => setNewRegionName(event.target.value)}
-              />
-            </label>{" "}
-            <label>
-              New region locus:{" "}
-              <input
-                type="text"
-                value={newRegionLocus}
-                onChange={(event) => setNewRegionLocus(event.target.value)}
-              />
-            </label>{" "}
-            <button className="btn btn-sm btn-success" onClick={addRegion}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <label>
+                New region name:{" "}
+                <input
+                  type="text"
+                  value={newRegionName}
+                  onChange={(event) => setNewRegionName(event.target.value)}
+                  style={{
+                    marginRight: "8px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                  }}
+                />
+              </label>
+              <label>
+                New region locus:{" "}
+                <input
+                  type="text"
+                  value={newRegionLocus}
+                  onChange={(event) => setNewRegionLocus(event.target.value)}
+                  style={{
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                  }}
+                />
+              </label>
+            </div>
+            <button
+              style={{ ...buttonStyle, backgroundColor: "#28a745" }}
+              onClick={addRegion}
+            >
               Add new region
             </button>
             {newRegionError ? newRegionError.message : null}
@@ -345,7 +385,11 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
 
           <table
             {...getTableProps()}
-            className="table table-striped table-hover"
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginTop: "16px",
+            }}
           >
             <thead>
               {headerGroups.map((headerGroup) => (
@@ -353,9 +397,14 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                   {headerGroup.headers.map((column) => (
                     <th
                       {...column.getHeaderProps(column.getSortByToggleProps())}
+                      style={{
+                        borderBottom: "2px solid #E1EBEE",
+                        padding: "8px",
+                        textAlign: "left",
+                        backgroundColor: "#F8FAFB",
+                      }}
                     >
                       {column.render("Header")}
-                      {/* Add a sort direction indicator */}
                       <span>
                         {column.isSorted
                           ? column.isSortedDesc
@@ -375,7 +424,15 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                   <tr {...row.getRowProps()}>
                     {row.cells.map((cell) => {
                       return (
-                        <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
+                        <td
+                          {...cell.getCellProps()}
+                          style={{
+                            borderBottom: "1px solid #E1EBEE",
+                            padding: "8px",
+                          }}
+                        >
+                          {cell.render("Cell")}
+                        </td>
                       );
                     })}
                   </tr>
@@ -390,7 +447,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           />
 
           <div>
-            <label htmlFor="flip">
+            <label
+              htmlFor="flip"
+              style={{ display: "block", marginTop: "16px" }}
+            >
               No flip for regions on <span className="font-weight-bold">-</span>{" "}
               strand:
               <input
@@ -398,19 +458,20 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
                 name="flip"
                 id="flip"
                 onChange={handleFlipChange}
+                style={{ marginLeft: "8px" }}
               />
             </label>
           </div>
-          <div>
+
+          <div style={{ marginTop: "16px" }}>
             <button
-              className="btn btn-sm btn-success"
+              style={{ ...buttonStyle, backgroundColor: "#28a745" }}
               onClick={() => onSetConfigured(regionSet)}
-              // disabled={isSaveButtonDisabled()}
             >
               Add set & Save changes
             </button>{" "}
             <button
-              className="btn btn-sm btn-secondary"
+              style={{ ...buttonStyle, backgroundColor: "#6c757d" }}
               onClick={cancelPressed}
             >
               Cancel
