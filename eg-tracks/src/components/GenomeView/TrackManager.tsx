@@ -387,7 +387,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       isLoading.current = true;
       rightSectionSize.current.push(windowWidth);
-      console.log("trigger right");
 
       fetchGenomeData(0, "right", Math.ceil(dragX.current! / windowWidth));
     } else if (
@@ -395,7 +394,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       dragX.current > 0
     ) {
       isLoading.current = true;
-      console.log("trigger left");
+
       leftSectionSize.current.push(windowWidth);
       fetchGenomeData(0, "left", Math.ceil(dragX.current! / windowWidth));
     }
@@ -610,14 +609,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return !id.includes(String(item.trackModel.id));
       });
     });
-    console.log(id);
+
     setG3dTrackComponents((prevTracks) => {
-      console.log(
-        prevTracks,
-        prevTracks.filter((item, _index) => {
-          return !id.includes(String(item.trackModel.id));
-        })
-      );
       return prevTracks.filter((item, _index) => {
         return !id.includes(String(item.trackModel.id));
       });
@@ -951,23 +944,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               }
             }
-            console.log("cache deleted");
           }
 
-          console.log(
-            event.data.trackDataIdx,
-            trackFetchedDataCache.current,
-            { ...trackToDrawId, ...event.data.trackToDrawId },
-            globalTrackState.current,
-            event.data.trackToDrawId,
-            event.data.missingIdx,
-            "newFetchedData",
-            {
-              curDataIdx: event.data.trackDataIdx,
-              isInitial: event.data.initial,
-              trackToDrawId,
-            }
-          );
           isWorkerBusy.current = false;
           isLoading.current = false;
           // once we finish with a fetch we need to check if there are any more
@@ -1735,7 +1713,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      console.log("trackmanager terminate");
+      // console.log("trackmanager terminate");
     };
   }, []);
 
@@ -1786,7 +1764,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // and do not add to the StateArr.
 
     if (genomeConfig.isInitial) {
-      console.log(windowWidth, "oldWindow");
       prevWindowWidth.current = windowWidth;
 
       trackManagerState.current.tracks.map(
@@ -1829,14 +1806,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // refreshState();
       trackSizeChange();
       // initialConfig.current = true;
-      console.log(trackManagerState.current, genomeConfig, "sizeChangeCheck");
+
       // initializeTracks();
     } else {
       preload.current = true;
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
       refreshState();
       initializeTracks();
-      console.log(trackManagerState.current, genomeConfig, "viewRegioncheck");
     }
   }, [genomeConfig]);
 

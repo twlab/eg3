@@ -29,7 +29,7 @@ export default function GenomeView() {
   if (!currentSession || !genomeConfig) {
     return null;
   }
-  console.log(currentSession);
+
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
   };
