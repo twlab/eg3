@@ -13,7 +13,7 @@ import searchReducer from "./slices/searchSlice";
 const persistConfig = {
     key: "root",
     storage,
-    blacklist: ["navigation", "hub", "genomeHub"]
+    blacklist: ["navigation", "hub", "genomeHub", "utility"]
 };
 
 const rootReducer = combineReducers({
