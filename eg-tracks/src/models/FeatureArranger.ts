@@ -40,13 +40,13 @@ export class FeatureArranger {
     padding: number | PaddingFunc,
     sortItems: SortItemsOptions
   ): number {
-    if (sortItems === SortItemsOptions.NONE) {
-      groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
-    } else if (sortItems === SortItemsOptions.ASC) {
-      groups.sort((a, b) => a.feature.score - b.feature.score);
-    } else if (sortItems === SortItemsOptions.DESC) {
-      groups.sort((a, b) => b.feature.score - a.feature.score);
-    }
+    // if (sortItems === SortItemsOptions.NONE) {
+    //   groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    // } else if (sortItems === SortItemsOptions.ASC) {
+    //   groups.sort((a, b) => a.feature.score - b.feature.score);
+    // } else if (sortItems === SortItemsOptions.DESC) {
+    //   groups.sort((a, b) => b.feature.score - a.feature.score);
+    // }
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
     for (const group of groups) {
@@ -71,7 +71,7 @@ export class FeatureArranger {
   }
 
   _combineAdjacent(placements: PlacedFeature[]): PlacedFeatureGroup[] {
-    placements.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    // placements.sort((a, b) => a.xSpan.start - b.xSpan.start);
 
     const groups: PlacedFeatureGroup[] = [];
     let i = 0;
@@ -132,7 +132,7 @@ export class FeatureArranger {
     const visibleFeatures = features.filter(
       (feature) => drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
     );
-
+    console.log(visibleFeatures);
     const results: PlacedFeatureGroup[] = [];
     for (const feature of visibleFeatures) {
       const placements = FEATURE_PLACER.placeFeatures(

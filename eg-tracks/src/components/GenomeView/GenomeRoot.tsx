@@ -80,30 +80,29 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
-      <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {currentGenomeConfig && (
-            <TrackManager
-              key={currentGenomeConfig.genomeID}
-              tracks={tracks}
-              legendWidth={legendWidth}
-              windowWidth={size.width - legendWidth}
-              userViewRegion={userViewRegion}
-              highlights={highlights}
-              genomeConfig={currentGenomeConfig}
-              onNewRegion={onNewRegion}
-              onNewRegionSelect={onNewRegionSelect}
-              onNewHighlight={onNewHighlight}
-              onTrackSelected={onTrackSelected}
-              onTrackDeleted={onTrackDeleted}
-              tool={tool}
-              viewRegion={viewRegion}
-              showGenomeNav={showGenomeNav}
-              setScreenshotData={setScreenshotData}
-              isScreenShotOpen={isScreenShotOpen}
-            />
-          )}
-        </div>
+      <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {currentGenomeConfig && (
+          <TrackManager
+            key={currentGenomeConfig.genomeID}
+            tracks={tracks}
+            legendWidth={legendWidth}
+            windowWidth={size.width - legendWidth}
+            userViewRegion={userViewRegion}
+            highlights={highlights}
+            genomeConfig={currentGenomeConfig}
+            onNewRegion={onNewRegion}
+            onNewRegionSelect={onNewRegionSelect}
+            onNewHighlight={onNewHighlight}
+            onTrackSelected={onTrackSelected}
+            onTrackDeleted={onTrackDeleted}
+            tool={tool}
+            viewRegion={viewRegion}
+            showGenomeNav={showGenomeNav}
+            setScreenshotData={setScreenshotData}
+            isScreenShotOpen={isScreenShotOpen}
+          />
+        )}
       </div>
     </div>
   );

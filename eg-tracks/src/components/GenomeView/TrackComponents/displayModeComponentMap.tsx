@@ -26,7 +26,7 @@ import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
-import { v4 as uuidv4 } from "uuid";
+
 import { getContrastingColor, parseNumberString } from "../../../models/util";
 import { scaleLinear } from "d3-scale";
 
@@ -67,7 +67,7 @@ import OmeroTrackComponents, {
   THUMBNAIL_PADDING,
 } from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "../../../models/layoutUtils";
-import _, { uniqueId } from "lodash";
+import _ from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
@@ -114,7 +114,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.height
         );
       }
-      let svgKey = uuidv4();
+      let svgKey = crypto.randomUUID();
       if (configOptions.forceSvg) {
         let start = trackState.viewWindow.start + trackState.visWidth / 3;
 
@@ -941,7 +941,7 @@ export function getDisplayModeFunction(
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
       const filteredArray = removeDuplicates(drawData.genesArr, "id");
-
+      console.log(filteredArray);
       formattedData = filteredArray.map((record) => new Gene(record));
     } else if (drawData.trackModel.type === "refbed") {
       const filteredArray = removeDuplicates(drawData.genesArr, 7);
@@ -1102,7 +1102,7 @@ export function getDisplayModeFunction(
         let svgWidth = end - start;
         element = (
           <svg
-            key={uuidv4()}
+            key={crypto.randomUUID()}
             width={drawData.trackState.visWidth / 3}
             viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
             height={drawData.configOptions.height}
@@ -1134,7 +1134,7 @@ export function getDisplayModeFunction(
             </div>
 
             <svg
-              key={uuidv4()}
+              key={crypto.randomUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
               display={"block"}
