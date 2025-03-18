@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27195171-27202238");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -83,11 +83,11 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  //   new TrackModel({
+  //     type: "geneAnnotation",
+  //     name: "gencodeV39",
+  //     genome: "hg38",
+  //   }),
   // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",
@@ -146,14 +146,14 @@ const defaultTracks = [
   //   },
   // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  //   new TrackModel({
+  //     type: "bigwig",
+  //     name: "example bigwig",
+  //     url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //     options: {
+  //       color: "blue",
+  //     },
+  //   }),
   // new TrackModel({
   //   type: "bed",
   //   name: "mm10 bed",
@@ -357,14 +357,14 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  }),
+  //   new TrackModel({
+  //     name: "hg38tomm10",
+  //     label: "Query mouse mm10 to hg38 blastz",
+  //     type: "genomealign",
+  //     querygenome: "mm10",
+  //     filetype: "genomealign",
+  //     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  //   }),
   // new TrackModel({
   //   name: "hg38topantro5",
   //   label: "query Chimpanzee panTro5 to hg38 blastz",
