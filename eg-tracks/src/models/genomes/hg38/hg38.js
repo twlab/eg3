@@ -45,12 +45,12 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27195171-27202238");
 const defaultTracks = [
-    new TrackModel({
-        type: "ruler",
-        name: "Ruler",
-    }),
+    // new TrackModel({
+    //     type: "ruler",
+    //     name: "Ruler",
+    // }),
     //Normal Nav and ExpandedLoci: when nonprimaryGenome, has SVG AND CANVAS______________________
     // new TrackModel({
     //   type: "hi",
@@ -94,29 +94,29 @@ const defaultTracks = [
     //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
     // }),
 
-    new TrackModel({
-      "type": "g3d",
-      "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
-      "name": "example 3d track",
-      "showOnHubLoad": true
-    }),
-    new TrackModel({
-      "type": "g3d",
-      "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
-      "name": "example 3d track",
-      "showOnHubLoad": true
-    }),
-    new TrackModel({
-      "type": "g3d",
-      "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
-      "name": "example 3d track",
-      "showOnHubLoad": true
-    }),
-    new TrackModel({
-      type: "repeatmasker",
-      name: "RepeatMasker",
-      url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
-    }),
+    // new TrackModel({
+    //   "type": "g3d",
+    //   "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
+    //   "name": "example 3d track",
+    //   "showOnHubLoad": true
+    // }),
+    // new TrackModel({
+    //   "type": "g3d",
+    //   "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
+    //   "name": "example 3d track",
+    //   "showOnHubLoad": true
+    // }),
+    // new TrackModel({
+    //   "type": "g3d",
+    //   "url": "https://vizhub.wustl.edu/public/g3d/hg19/GSM3271347_gm12878_01.g3d",
+    //   "name": "example 3d track",
+    //   "showOnHubLoad": true
+    // }),
+    // new TrackModel({
+    //   type: "repeatmasker",
+    //   name: "RepeatMasker",
+    //   url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+    // }),
 
     // new TrackModel({
     //   type: "snp",
@@ -358,14 +358,14 @@ const defaultTracks = [
     //   genome: "hg38",
     // }),
 
-    // new TrackModel({
-    //   name: "hg38tomm10",
-    //   label: "Query mouse mm10 to hg38 blastz",
-    //   type: "genomealign",
-    //   querygenome: "mm10",
-    //   filetype: "genomealign",
-    //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-    // }),
+    new TrackModel({
+      name: "hg38tomm10",
+      label: "Query mouse mm10 to hg38 blastz",
+      type: "genomealign",
+      querygenome: "mm10",
+      filetype: "genomealign",
+      url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+    }),
     // new TrackModel({
     //   name: "hg38topantro5",
     //   label: "query Chimpanzee panTro5 to hg38 blastz",

@@ -36,6 +36,13 @@ export function trackGlobalState({
       side: "right",
       xDist: 0,
     };
+    let trackState3 = {
+      regionLoci: trackState.regionLoci[3],
+      initial: 0,
+      xDist: primaryVisData.viewWindow.start,
+      visData: trackState.initVisData[3],
+      side: "right",
+    };
 
     globalTrackState.current.trackStates[globalTrackState.current["leftIdx"]] =
       {
@@ -57,6 +64,10 @@ export function trackGlobalState({
       };
 
     globalTrackState.current["rightIdx"]--;
+    globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
+      {
+        trackState: trackState3,
+      };
   } else {
     let newTrackState = {
       ...trackState,

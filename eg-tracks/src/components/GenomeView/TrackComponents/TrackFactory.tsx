@@ -195,6 +195,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
+    console.log(newDrawData);
     if (
       "curDataIdx" in newDrawData &&
       newDrawData.curDataIdx === dataIdx &&
@@ -284,9 +285,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
+          console.log(trackState, combinedData, newDrawData, cacheDataIdx);
           createSVGOrCanvas(trackState, combinedData, hasError, cacheDataIdx);
         }
       } else {
+        console.log(trackState, newDrawData, cacheDataIdx);
         const combinedData = cacheTrackData[newDrawData.curDataIdx].dataCache;
 
         createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
