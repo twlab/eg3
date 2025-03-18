@@ -168,7 +168,7 @@ export default function NavBar() {
               }
               active={currentTab === "tracks"}
             >
-              Use Legacy Browser
+              Use Previous Version
             </Button>
           </motion.div>
         )}
