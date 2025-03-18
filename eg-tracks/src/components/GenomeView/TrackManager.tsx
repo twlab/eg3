@@ -1856,11 +1856,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const prevXDist =
         globalTrackState.current.trackStates[id].trackState.xDist;
 
-      // console.log(curTrackState);
-      // console.log(prevWindowWidth);
       const newXDist = (prevXDist / prevStateWindowWidth) * curWindowWidth;
       curTrackState.startWindow = curWindowWidth;
-      // curTrackState["visWidth"] = curWindowWidth * 3;
+      curTrackState["visWidth"] = curWindowWidth * 3;
       curTrackState.xDist = newXDist;
 
       if (curTrackState["visData"]) {
@@ -1870,10 +1868,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           curWindowWidth * 2
         );
       }
-      if (hasGenomeAlign.current) {
-        delete globalTrackState.current.trackStates[id].trackState
-          .genomicFetchCoord;
-      } else if (
+      if (
         "genomicFetchCoord" in
         globalTrackState.current.trackStates[id].trackState
       ) {
@@ -1923,6 +1918,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
       }
+
       const tmpArr = [...trackComponents];
       setTrackComponents(tmpArr);
     } else {
@@ -1936,7 +1932,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [dataIdx,tra]
 
   useEffect(() => {
-
     // if (
     //   (dataIdx < globalTrackState.current.leftIdx - 2 &&
     //     dataIdx > globalTrackState.current.rightIdx + 2) ||
@@ -1977,7 +1972,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //   }
     // }
     // console.log(trackToDrawId);
-    queueRegionToFetch(dataIdx);
+    if (trackComponents.length > 0) {
+      queueRegionToFetch(dataIdx);
+    }
     // if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
     //   setNewDrawData({
     //     curDataIdx: dataIdx,

@@ -1069,7 +1069,7 @@ export function getDisplayModeFunction(
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
-
+    // console.log(formattedData, "checkPrintTWEICE")
     return svgDATA;
   } else if (drawData.trackModel.type === "genomealign") {
     let result = drawData.genesArr;

@@ -1885,7 +1885,7 @@ class ThreedmolContainer extends React.Component<
       const bwData = await bw.getData(chrom, 0, this.chromHash[chrom], {
         scale: 1 / resolution,
       });
-      console.log(bwData);
+
       bwData.forEach((bw) => {
         const binkey = reg2bin(bw.start, bw.end).toString();
         if (!keeper.hasOwnProperty(binkey)) {
