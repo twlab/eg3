@@ -36,7 +36,7 @@ export class FeatureArranger {
    * @return {number} the number of rows assigned
    */
   _assignRows(
-    groups: PlacedFeatureGroup[],
+    groups: PlacedFeatureGroup[] | any,
     padding: number | PaddingFunc,
     sortItems: SortItemsOptions
   ): number {
@@ -132,18 +132,17 @@ export class FeatureArranger {
     const visibleFeatures = features.filter(
       (feature) => drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
     );
-    console.log(visibleFeatures);
+
     const results: PlacedFeatureGroup[] = [];
-    for (const feature of visibleFeatures) {
-      const placements = FEATURE_PLACER.placeFeatures(
-        [feature],
-        viewRegion,
-        width
-      );
 
-      results.push(...this._combineAdjacent(placements));
-    }
+    const placements = FEATURE_PLACER.placeFeatures(
+      visibleFeatures,
+      viewRegion,
+      width
+    );
 
+    results.push(...this._combineAdjacent(placements));
+    // console.log(results, placements);
     const numRowsAssigned = this._assignRows(results, padding, sortItems);
     return {
       placements: results,

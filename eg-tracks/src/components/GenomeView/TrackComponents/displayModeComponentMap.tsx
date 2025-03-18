@@ -71,6 +71,8 @@ import _ from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
+import QBed from "../../../models/QBed";
+
 import React from "react";
 
 enum BedColumnIndex {
@@ -629,8 +631,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        isLoading={false}
-        error={undefined}
+        // isLoading={false}
+        // error={undefined}
         unit={""}
       />
     );
