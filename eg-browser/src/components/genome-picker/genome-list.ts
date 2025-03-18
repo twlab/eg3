@@ -76,7 +76,7 @@ export const GENOME_LIST: Genome[] = [
         "name": "Dog",
         "logoUrl": "/default/dog.png",
         "croppedUrl": "/cropped/dog.jpeg",
-        "versions": ["canFam3", "canFam2"]
+        "versions": ["canFam6", "canFam3", "canFam2"]
     },
     {
         "name": "Mouse",
