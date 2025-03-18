@@ -1023,6 +1023,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             if (curTrackState.fetchAfterGenAlignTracks.length > 0)
               for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
+                dataForFetch["genomicFetchCoord"] =
+                  curTrackState.genomicFetchCoord;
+
                 dataForFetch["trackToDrawId"] = trackToDrawId;
                 enqueueMessage(dataForFetch);
               }
@@ -1837,6 +1840,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       refreshState();
       initializeTracks();
     }
+    onNewRegion(
+      genomeConfig.defaultRegion.start,
+      genomeConfig.defaultRegion.end
+    );
   }, [genomeConfig]);
 
   // MARK: trackSizeCha
@@ -2079,40 +2086,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   }
                 );
                 createGenomeAlignOnMessage();
-              }
-              for (const key in trackFetchedDataCache.current) {
-                const trackCache = trackFetchedDataCache.current[key];
-
-                for (const dataKey in trackCache) {
-                  if (isInteger(dataKey)) {
-                    const regionData = trackCache[dataKey];
-
-                    if (trackCache.trackType !== "genomealign") {
-                      if (
-                        "trackState" in regionData &&
-                        "genomicFetchCoord" in regionData.trackState
-                      ) {
-                        delete trackFetchedDataCache.current[key][dataKey]
-                          .trackState.genomicFetchCoord;
-                      }
-                    } else {
-                      delete trackFetchedDataCache.current[key][dataKey]
-                        .trackState.genomicFetchCoord;
-                      delete trackFetchedDataCache.current[key][dataKey]
-                        .dataCache;
-                    }
-                  }
-                }
-              }
-
-              for (const key in globalTrackState.current.trackStates) {
-                const regionTrackState =
-                  globalTrackState.current.trackStates[`${key}`].trackState;
-
-                if ("genomicFetchCoord" in regionTrackState) {
-                  delete globalTrackState.current.trackStates[`${key}`]
-                    .trackState.genomicFetchCoord;
-                }
               }
             }
             // for tracks like hic and bam where we create an  instance obj

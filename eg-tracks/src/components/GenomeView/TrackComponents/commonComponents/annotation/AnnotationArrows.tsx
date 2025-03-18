@@ -1,8 +1,7 @@
 import React from "react";
-import PropTypes from "prop-types";
 
 const ARROW_WIDTH = 5;
-const ARROW_SEPARATION = 12;
+const ARROW_SEPARATION = 16;
 
 /**
  * A series of evenly-spaced arrows on a horizontal axis.  Renders SVG elements.
@@ -24,19 +23,6 @@ interface ArrowProps {
   separation?: number;
 }
 class AnnotationArrows extends React.PureComponent<ArrowProps> {
-  static propTypes = {
-    startX: PropTypes.number.isRequired, // X location to start drawing arrows
-    endX: PropTypes.number.isRequired, // X location to stop drawing arrows
-    y: PropTypes.number, // y location to draw arrows
-    height: PropTypes.number.isRequired, // Height of arrows
-    isToRight: PropTypes.bool, // Arrow point direction.  If true, point right; otherwise, point left.
-    color: PropTypes.string, // Color of the arrows
-    /**
-     * Id for a clipPath element.  If valid, arrows will only appear in the clipPath's region.
-     */
-    clipId: PropTypes.string,
-    opacity: PropTypes.number,
-  };
   static defaultProps = {
     y: 0,
     opacity: 1,
