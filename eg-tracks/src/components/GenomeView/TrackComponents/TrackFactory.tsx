@@ -288,7 +288,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
       } else {
         const combinedData = cacheTrackData[newDrawData.curDataIdx].dataCache;
-
         createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
       }
     }

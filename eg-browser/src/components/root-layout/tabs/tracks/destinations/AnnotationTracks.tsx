@@ -47,7 +47,7 @@ export default function AnnotationTracks() {
   }, [genomeConfig]);
 
   const handleSelect = (item: ICollectionViewDataSource<any>) => {
-    const track = item.data;
+    const track = { ...item.data };
 
     track.metadata = {
       ...track.metadata,
