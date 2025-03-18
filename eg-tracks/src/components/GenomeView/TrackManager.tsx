@@ -889,7 +889,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ) => {
             trackToDrawId[`${item.id}`] = "";
             // need to await the function finishes for bam and hic that uses fetch instances
-            console.log(event.data);
+
             await createCache({
               trackState: curTrackState,
               result: item.result,
@@ -965,7 +965,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function createGenomeAlignOnMessage() {
     fetchGenomeAlignWorker.current!.onmessage = (event) => {
       const regionDrawIdx = event.data.navData.trackDataIdx;
-      console.log(event.data);
+
       const curTrackState = {
         ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
         primaryGenName: genomeConfig.genome.getName(),
@@ -1027,12 +1027,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 enqueueMessage(dataForFetch);
               }
             else {
-              console.log(
-                event.data,
-                curTrackState,
-                "whynot",
-                event.data.trackDataIdx
-              );
               setNewDrawData({
                 curDataIdx: curTrackState.trackDataIdx,
                 isInitial: 0,
@@ -1040,7 +1034,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               });
             }
           } else {
-            console.log(event.data, "HJERERERE2");
             enqueueMessage(curTrackState);
           }
         })
@@ -1123,7 +1116,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             curDataIdx in curTrackCache &&
             !("dataCache" in curTrackCache[curDataIdx])
           ) {
-            console.log(curTrackCache[curDataIdx], curDataIdx);
             let curTrackModel: any = trackManagerState.current.tracks.find(
               (trackModel: any) =>
                 trackModel.id === Number(key) || trackModel.id === key
@@ -1175,28 +1167,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // MARK: addGenAlign
         const curTrackState =
           globalTrackState.current.trackStates[curIdx].trackState;
-        console.log(
-          dataToFetchArr,
-          " JIJIHUUHUHUHU",
-          {
-            trackToFetch: genomeAlignTracks,
-            visData: curTrackState.visData
-              ? curTrackState.visData
-              : globalTrackState.current.trackStates[curIdx].trackState.visData,
-            genomicLoci: curTrackState.regionLoci,
-            primaryGenName: genomeConfig.genome.getName(),
-            trackModelArr: genomeAlignTracks,
-            regionExpandLoci: curTrackState.regionExpandLoci,
-            useFineModeNav: useFineModeNav.current,
-            windowWidth,
-            bpRegionSize: bpRegionSize.current,
-            fetchAfterGenAlignTracks: dataToFetchArr,
-            trackDataIdx: curIdx,
-            missingIdx: curIdx,
-          },
-          globalTrackState.current.trackStates[curIdx].trackState.visData,
-          curTrackState.visData
-        );
+
         enqueueGenomeAlignMessage({
           trackToFetch: genomeAlignTracks,
           visData: curTrackState.visData
@@ -1214,7 +1185,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           missingIdx: curIdx,
         });
       } else {
-        console.log(dataToFetchArr, "HUHUHUHU", idxArr);
         for (const dataToFetch of dataToFetchArr) {
           enqueueMessage(dataToFetch);
         }
@@ -1222,7 +1192,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
-      console.log("HUHUHUHU22222222222222", idxArr, trackToDrawId);
       setNewDrawData({
         curDataIdx: dataIdx,
         isInitial: 0,
@@ -1895,7 +1864,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curTrackState.xDist = newXDist;
 
       if (curTrackState["visData"]) {
-        console.log(curTrackState["visData"]);
         curTrackState.visData.visWidth = curWindowWidth * 3;
         curTrackState.visData.viewWindow = new OpenInterval(
           curWindowWidth,
@@ -1968,12 +1936,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [dataIdx,tra]
 
   useEffect(() => {
-    console.log(
-      dataIdx,
-      { ...trackFetchedDataCache.current },
-      globalTrackState.current,
-      "checkCache"
-    );
+
     // if (
     //   (dataIdx < globalTrackState.current.leftIdx - 2 &&
     //     dataIdx > globalTrackState.current.rightIdx + 2) ||
