@@ -109,7 +109,7 @@ self.onmessage = async (event: MessageEvent) => {
     : {};
   const useFineModeNav = event.data.useFineModeNav;
   let genomicFetchCoord;
-
+  console.log(event.data);
   if (event.data.genomicFetchCoord) {
     genomicFetchCoord = event.data.genomicFetchCoord;
   } else {
@@ -145,9 +145,11 @@ self.onmessage = async (event: MessageEvent) => {
       const id = item.id;
       let foundInvalidTrack = false;
       if (
-        (item.metadata.genome && !(item.metadata.genome in tmpQueryGenObj)) ||
+        (item.metadata.genome &&
+          !(item.metadata.genome in genomicFetchCoord)) ||
         !(item.type in componentMap)
       ) {
+        console.log(item.metadata, ge);
         foundInvalidTrack = true;
       }
       if (foundInvalidTrack) {
@@ -259,7 +261,7 @@ self.onmessage = async (event: MessageEvent) => {
     let responses: Array<any> = [];
     let curFetchNav;
     const { genome } = trackModel.metadata;
-
+    console.log(genome, trackModel);
     if (genome && genome !== "" && genome !== event.data.primaryGenName) {
       curFetchNav = genomicFetchCoord[genome].queryGenomicCoord;
     } else if (
@@ -270,6 +272,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
+    console.log(curFetchNav);
     const isLocalFetch = trackModel.fileObj instanceof File;
     if (isLocalFetch && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {

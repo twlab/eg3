@@ -4,6 +4,7 @@ import Fuse from "fuse.js";
 import _ from "lodash";
 import TrackSearchBox from "./TrackSearchBox";
 import TrackModel from "../../../models/TrackModel";
+
 const UNUSED_META_KEY = "notused";
 
 interface Props {
@@ -35,7 +36,7 @@ const HubTrackTable: React.FC<Props> = ({
     const fuseOptions: any = {
       shouldSort: true,
       threshold: 0.4,
-      location: 0,
+      location: 3,
       distance: 100,
       maxPatternLength: 32,
       minMatchCharLength: 2,
@@ -44,7 +45,7 @@ const HubTrackTable: React.FC<Props> = ({
     const fuseInstance = new Fuse(tracks, fuseOptions);
     setFuse(fuseInstance);
     setFilteredTracks(tracks);
-  }, [tracks]);
+  }, []);
 
   const handleSearchChange = useCallback(
     _.debounce((value: string) => {
@@ -170,6 +171,7 @@ const HubTrackTable: React.FC<Props> = ({
     useFilters,
     usePagination
   );
+
   const buttonStyle = {
     padding: "4px 8px",
     margin: "0 2px",
@@ -182,6 +184,7 @@ const HubTrackTable: React.FC<Props> = ({
       backgroundColor: "#ddd",
     },
   };
+
   return (
     <React.Fragment>
       <div
@@ -192,11 +195,9 @@ const HubTrackTable: React.FC<Props> = ({
         }}
       >
         <h1>Track Table</h1>
-
         <label htmlFor="searchTrack" style={{ marginBottom: "8px" }}>
           Search tracks
         </label>
-
         <input
           type="text"
           id="searchTrack"
@@ -210,14 +211,12 @@ const HubTrackTable: React.FC<Props> = ({
           value={searchText}
           onChange={handleSearchChangeRequest}
         />
-
         <small
           id="searchTrackHelp"
           style={{ color: "#6c757d", marginBottom: "16px" }}
         >
           Free text search over track labels and metadata.
         </small>
-
         <div style={{ textAlign: "right", marginBottom: "16px" }}>
           <button
             type="button"
@@ -234,7 +233,6 @@ const HubTrackTable: React.FC<Props> = ({
             Add all in page
           </button>
         </div>
-
         <table
           {...getTableProps()}
           style={{
@@ -271,7 +269,10 @@ const HubTrackTable: React.FC<Props> = ({
                     <td
                       {...cell.getCellProps()}
                       key={cell.column.id}
-                      style={{ borderBottom: "1px solid #ddd", padding: "8px" }}
+                      style={{
+                        borderBottom: "1px solid #ddd",
+                        padding: "8px",
+                      }}
                     >
                       {cell.render("Cell")}
                     </td>
@@ -281,7 +282,6 @@ const HubTrackTable: React.FC<Props> = ({
             })}
           </tbody>
         </table>
-
         <div style={{ textAlign: "center" }}>
           <button
             onClick={() => gotoPage(0)}
@@ -297,14 +297,12 @@ const HubTrackTable: React.FC<Props> = ({
           >
             {"<"}
           </button>
-
           <span style={{ margin: "0 8px" }}>
             Page{" "}
             <strong>
               {pageIndex + 1} of {pageOptions.length}
             </strong>
           </span>
-
           <button
             onClick={() => nextPage()}
             disabled={!canNextPage}
@@ -320,7 +318,6 @@ const HubTrackTable: React.FC<Props> = ({
             Last
             {" >>"}
           </button>
-
           <span style={{ margin: "0 8px" }}>
             | Go to page:
             <input
@@ -339,7 +336,6 @@ const HubTrackTable: React.FC<Props> = ({
               }}
             />
           </span>
-
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
