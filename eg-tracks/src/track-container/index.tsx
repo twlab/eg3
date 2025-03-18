@@ -66,7 +66,8 @@ export function TrackContainerRepresentable({
 }: ITrackContainerRepresentableProps) {
   const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
   const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
-  const isInitial = useRef(true);
+  const lastSelectedSet = useRef<RegionSet | null>(selectedRegionSet);
+
   // MARK: Genome Config
 
   const genomeConfig = useMemo(() => {
@@ -198,7 +199,7 @@ export function TrackContainerRepresentable({
         return startViewRegion;
       }
     } catch (e) {
-      console.error(e);
+      // console.error(e);
 
       return (
         lastViewRegion.current ||
@@ -209,27 +210,53 @@ export function TrackContainerRepresentable({
       );
     }
   }, [viewRegion, genomeConfig]);
+
+  const areObjectsEqual = (obj1: any, obj2: any): boolean => {
+    if (obj1 === obj2) return true;
+
+    if (obj1 === null || obj2 === null) return false;
+
+    if (typeof obj1 !== "object" || typeof obj2 !== "object") return false;
+
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    if (keys1.length !== keys2.length) return false;
+
+    for (let key of keys1) {
+      if (!keys2.includes(key) || !areObjectsEqual(obj1[key], obj2[key])) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const convertedUserViewRegion = useMemo(() => {
     try {
-      if (isInitial.current && userViewRegion) {
-        isInitial.current = false;
-        const start = userViewRegion.start;
+      if (areObjectsEqual(lastSelectedSet.current, selectedRegionSet)) {
+        if (userViewRegion) {
+          const start = userViewRegion.start;
 
-        const end = userViewRegion.end;
+          const end = userViewRegion.end;
 
-        return new DisplayedRegionModel(genomeConfig.navContext, start, end);
-      } else if (lastUserViewRegion.current && userViewRegion) {
-        const start = userViewRegion.start;
-
-        const end = userViewRegion.end;
-
-        return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+          return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+        } else {
+          const newRegion = new DisplayedRegionModel(
+            genomeConfig.navContext,
+            ...genomeConfig.defaultRegion
+          );
+          lastUserViewRegion.current = newRegion;
+          return newRegion;
+        }
       } else {
+        // when there is a new displayModel from regionSet, or we exit out of region we use new defaultRegion startings point
         const newRegion = new DisplayedRegionModel(
           genomeConfig.navContext,
           ...genomeConfig.defaultRegion
         );
         lastUserViewRegion.current = newRegion;
+        lastSelectedSet.current = selectedRegionSet;
         return newRegion;
       }
     } catch (e) {
