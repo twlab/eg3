@@ -83,11 +83,11 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  //   new TrackModel({
+  //     type: "geneAnnotation",
+  //     name: "gencodeV39",
+  //     genome: "hg38",
+  //   }),
   // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",
@@ -146,14 +146,14 @@ const defaultTracks = [
   //   },
   // }),
 
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  //   new TrackModel({
+  //     type: "bigwig",
+  //     name: "example bigwig",
+  //     url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  //     options: {
+  //       color: "blue",
+  //     },
+  //   }),
   // new TrackModel({
   //   type: "bed",
   //   name: "mm10 bed",
