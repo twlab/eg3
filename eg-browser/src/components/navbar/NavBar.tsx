@@ -35,7 +35,7 @@ export default function NavBar() {
     <div className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white">
       <div className="flex flex-row items-center gap-4 relative">
         <img
-          src={genomeLogoUrl ?? Logo}
+          src={import.meta.env.BASE_URL + (genomeLogoUrl ?? Logo)}
           alt="logo"
           className={classNames(
             'z-10',
