@@ -36,17 +36,17 @@ export class FeatureArranger {
    * @return {number} the number of rows assigned
    */
   _assignRows(
-    groups: PlacedFeatureGroup[],
+    groups: PlacedFeatureGroup[] | any,
     padding: number | PaddingFunc,
     sortItems: SortItemsOptions
   ): number {
-    if (sortItems === SortItemsOptions.NONE) {
-      groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
-    } else if (sortItems === SortItemsOptions.ASC) {
-      groups.sort((a, b) => a.feature.score - b.feature.score);
-    } else if (sortItems === SortItemsOptions.DESC) {
-      groups.sort((a, b) => b.feature.score - a.feature.score);
-    }
+    // if (sortItems === SortItemsOptions.NONE) {
+    //   groups.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    // } else if (sortItems === SortItemsOptions.ASC) {
+    //   groups.sort((a, b) => a.feature.score - b.feature.score);
+    // } else if (sortItems === SortItemsOptions.DESC) {
+    //   groups.sort((a, b) => b.feature.score - a.feature.score);
+    // }
     const maxXsForRows: number[] = [];
     const isConstPadding = typeof padding === "number";
     for (const group of groups) {
@@ -71,7 +71,7 @@ export class FeatureArranger {
   }
 
   _combineAdjacent(placements: PlacedFeature[]): PlacedFeatureGroup[] {
-    placements.sort((a, b) => a.xSpan.start - b.xSpan.start);
+    // placements.sort((a, b) => a.xSpan.start - b.xSpan.start);
 
     const groups: PlacedFeatureGroup[] = [];
     let i = 0;
@@ -134,16 +134,15 @@ export class FeatureArranger {
     );
 
     const results: PlacedFeatureGroup[] = [];
-    for (const feature of visibleFeatures) {
-      const placements = FEATURE_PLACER.placeFeatures(
-        [feature],
-        viewRegion,
-        width
-      );
 
-      results.push(...this._combineAdjacent(placements));
-    }
+    const placements = FEATURE_PLACER.placeFeatures(
+      visibleFeatures,
+      viewRegion,
+      width
+    );
 
+    results.push(...this._combineAdjacent(placements));
+    // console.log(results, placements);
     const numRowsAssigned = this._assignRows(results, padding, sortItems);
     return {
       placements: results,

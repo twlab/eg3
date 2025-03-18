@@ -374,7 +374,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // useState letiable that changes so we save some computation instead of using
     // another useState
 
-    setDataIdx(Math.ceil(dragX.current! / windowWidth));
     if (dragX.current > 0 && side.current === "right") {
       side.current = "left";
     } else if (dragX.current <= 0 && side.current === "left") {
@@ -398,6 +397,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       leftSectionSize.current.push(windowWidth);
       fetchGenomeData(0, "left", Math.ceil(dragX.current! / windowWidth));
     }
+    setDataIdx(Math.ceil(dragX.current! / windowWidth));
   }
 
   // MARK: GloCONFIG
@@ -657,6 +657,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         start: maxBp.current,
         end: maxBp.current + bpRegionSize.current,
       });
+      initBpLoci.push({
+        start: maxBp.current + bpRegionSize.current,
+        end: maxBp.current + bpRegionSize.current * 2,
+      });
       startingBpArr.current = [
         minBp.current - bpRegionSize.current,
         minBp.current,
@@ -842,9 +846,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       globalTrackState: globalTrackState,
     });
     // sent the navigation to fetch the data from server
-    try {
-      queueRegionToFetch(initial ? 0 : dataIdx);
-    } catch {}
+    // try {
+    //   queueRegionToFetch(initial ? 0 : dataIdx);
+    // } catch {}
   }
   // MARK: onmessInfin
   function createInfiniteOnMessage() {
@@ -992,6 +996,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               ? curTrackState.missingIdx
               : curTrackState.trackDataIdx
           ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
+
           globalTrackState.current.trackStates[
             curTrackState.missingIdx
               ? curTrackState.missingIdx
@@ -1015,9 +1020,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             for (const key in trackFetchedDataCache.current) {
               trackToDrawId[key] = "";
             }
-            for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
-              dataForFetch["trackToDrawId"] = trackToDrawId;
-              enqueueMessage(dataForFetch);
+
+            if (curTrackState.fetchAfterGenAlignTracks.length > 0)
+              for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
+                dataForFetch["trackToDrawId"] = trackToDrawId;
+                enqueueMessage(dataForFetch);
+              }
+            else {
+              setNewDrawData({
+                curDataIdx: curTrackState.trackDataIdx,
+                isInitial: 0,
+                trackToDrawId,
+              });
             }
           } else {
             enqueueMessage(curTrackState);
@@ -1092,8 +1106,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const curTrackCache = trackFetchedDataCache.current[key];
 
           if (
-            curTrackCache.trackType in trackUsingExpandedLoci &&
-            curDataIdx !== curIdx
+            (curTrackCache.trackType in trackUsingExpandedLoci &&
+              curDataIdx !== curIdx) ||
+            curTrackCache.trackType === "genomealign"
           ) {
             continue;
           }
@@ -1174,6 +1189,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           enqueueMessage(dataToFetch);
         }
       }
+    }
+
+    if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
+      setNewDrawData({
+        curDataIdx: dataIdx,
+        isInitial: 0,
+        trackToDrawId,
+      });
     }
   }
 
@@ -1833,12 +1856,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const prevXDist =
         globalTrackState.current.trackStates[id].trackState.xDist;
 
-      // console.log(curTrackState);
-      // console.log(prevWindowWidth);
       const newXDist = (prevXDist / prevStateWindowWidth) * curWindowWidth;
       curTrackState.startWindow = curWindowWidth;
       curTrackState["visWidth"] = curWindowWidth * 3;
       curTrackState.xDist = newXDist;
+
+      if (curTrackState["visData"]) {
+        curTrackState.visData.visWidth = curWindowWidth * 3;
+        curTrackState.visData.viewWindow = new OpenInterval(
+          curWindowWidth,
+          curWindowWidth * 2
+        );
+      }
       if (
         "genomicFetchCoord" in
         globalTrackState.current.trackStates[id].trackState
@@ -1881,26 +1910,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       for (const key in trackFetchedDataCache.current) {
         const trackCache = trackFetchedDataCache.current[key];
 
-        for (const dataKey in trackCache) {
-          if (isInteger(dataKey)) {
-            const regionData = trackCache[dataKey];
-
-            if (trackCache.trackType !== "genomealign") {
-              if (
-                "trackState" in regionData &&
-                "genomicFetchCoord" in regionData.trackState
-              ) {
-                delete trackFetchedDataCache.current[key][dataKey].trackState
-                  .genomicFetchCoord;
-              }
-            } else {
-              delete trackFetchedDataCache.current[key][dataKey].trackState
-                .genomicFetchCoord;
+        if (trackCache.trackType === "genomealign") {
+          for (const dataKey in trackCache) {
+            if (isInteger(dataKey)) {
               delete trackFetchedDataCache.current[key][dataKey].dataCache;
             }
           }
         }
       }
+
       const tmpArr = [...trackComponents];
       setTrackComponents(tmpArr);
     } else {
@@ -1914,50 +1932,57 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [dataIdx,tra]
 
   useEffect(() => {
-    if (useCacheData.current || needToFetchAddTrack.current) {
-      const trackToDrawId: { [key: string]: any } = {};
-      const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
-      const curIdx = dataIdx;
-      let needToFetchGenAlign = false;
-      for (const [key, curTrackCache] of Object.entries(
-        trackFetchedDataCache.current
-      )) {
-        let hasAllRegionData = true;
+    // if (
+    //   (dataIdx < globalTrackState.current.leftIdx - 2 &&
+    //     dataIdx > globalTrackState.current.rightIdx + 2) ||
+    //   needToFetchAddTrack.current
+    // ) {
+    // console.log("WUT");
+    // const trackToDrawId: { [key: string]: any } = {};
+    // const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
+    // const curIdx = dataIdx;
+    // let needToFetchGenAlign = false;
+    // for (const [key, curTrackCache] of Object.entries(
+    //   trackFetchedDataCache.current
+    // )) {
+    //   let hasAllRegionData = true;
 
-        for (const idx of idxArr) {
-          if (idx in curTrackCache) {
-            if (
-              curTrackCache.trackType in trackUsingExpandedLoci &&
-              idx !== curIdx
-            ) {
-              continue;
-            }
-            const isGenomeAlignTrack =
-              curTrackCache.trackType === "genomealign";
-            const dataCacheKeyMissing = !("dataCache" in curTrackCache[idx]);
+    //   for (const idx of idxArr) {
+    //     if (idx in curTrackCache) {
+    //       if (
+    //         curTrackCache.trackType in trackUsingExpandedLoci &&
+    //         idx !== curIdx
+    //       ) {
+    //         continue;
+    //       }
+    //       const isGenomeAlignTrack = curTrackCache.trackType === "genomealign";
+    //       const dataCacheKeyMissing = !("dataCache" in curTrackCache[idx]);
 
-            if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
-              needToFetchGenAlign = true;
-              hasAllRegionData = false;
-            } else if (dataCacheKeyMissing) {
-              hasAllRegionData = false;
-            }
-          }
-        }
+    //       if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
+    //         needToFetchGenAlign = true;
+    //         hasAllRegionData = false;
+    //       } else if (dataCacheKeyMissing) {
+    //         hasAllRegionData = false;
+    //       }
+    //     }
+    //   }
 
-        if (hasAllRegionData) {
-          trackToDrawId[key] = "";
-        }
-      }
-      queueRegionToFetch(curIdx);
-      if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
-        setNewDrawData({
-          curDataIdx: dataIdx,
-          isInitial: 0,
-          trackToDrawId,
-        });
-      }
-    } else if (dataIdx !== 0) useCacheData.current = true;
+    //   if (hasAllRegionData) {
+    //     trackToDrawId[key] = "";
+    //   }
+    // }
+    // console.log(trackToDrawId);
+    if (trackComponents.length > 0) {
+      queueRegionToFetch(dataIdx);
+    }
+    // if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
+    //   setNewDrawData({
+    //     curDataIdx: dataIdx,
+    //     isInitial: 0,
+    //     trackToDrawId,
+    //   });
+    // }
+    // } else if (dataIdx !== 0) useCacheData.current = true;
   }, [dataIdx, trackComponents]);
 
   useEffect(() => {
@@ -2221,12 +2246,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               // height: "2000px",
               overflowX: "hidden",
               overflowY: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+
+              WebkitPerspective: `${windowWidth + legendWidth}px`,
+              backfaceVisibility: "hidden",
+              perspective: `${windowWidth + legendWidth}px`,
             }}
           >
             <div
               onMouseDown={handleMouseDown}
               ref={block}
               style={{
+                WebkitBackfaceVisibility: "hidden",
+
+                WebkitPerspective: `${windowWidth + legendWidth}px`,
+                backfaceVisibility: "hidden",
+                perspective: `${windowWidth + legendWidth}px`,
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
@@ -2259,6 +2294,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       backgroundColor: "#F2F2F2",
                       width: `${windowWidth + legendWidth}px`,
                       outline: "1px solid Dodgerblue",
+                      WebkitBackfaceVisibility: "hidden",
+
+                      WebkitPerspective: `${windowWidth + legendWidth}px`,
+                      backfaceVisibility: "hidden",
+                      perspective: `${windowWidth + legendWidth}px`,
                     }}
                   >
                     <div

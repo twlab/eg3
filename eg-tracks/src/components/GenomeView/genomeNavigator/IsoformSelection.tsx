@@ -141,7 +141,6 @@ const IsoformSelection: React.FC<IsoformSelectionProps> = ({
           key={gene.dbRecord._id}
           className="IsoformSelection-item-simple"
           onClick={() => {
-            console.log(gene);
             onGeneSelected(gene);
           }}
           style={{

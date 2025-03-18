@@ -26,7 +26,7 @@ import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
-import { v4 as uuidv4 } from "uuid";
+
 import { getContrastingColor, parseNumberString } from "../../../models/util";
 import { scaleLinear } from "d3-scale";
 
@@ -67,10 +67,12 @@ import OmeroTrackComponents, {
   THUMBNAIL_PADDING,
 } from "./imageTrackComponents/OmeroTrackComponents";
 import { initialLayout } from "../../../models/layoutUtils";
-import _, { uniqueId } from "lodash";
+import _ from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
 import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
+import QBed from "../../../models/QBed";
+
 import React from "react";
 
 enum BedColumnIndex {
@@ -114,7 +116,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.height
         );
       }
-      let svgKey = uuidv4();
+      let svgKey = crypto.randomUUID();
       if (configOptions.forceSvg) {
         let start = trackState.viewWindow.start + trackState.visWidth / 3;
 
@@ -629,8 +631,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
-        isLoading={false}
-        error={undefined}
+        // isLoading={false}
+        // error={undefined}
         unit={""}
       />
     );
@@ -1067,7 +1069,7 @@ export function getDisplayModeFunction(
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
-
+    // console.log(formattedData, "checkPrintTWEICE")
     return svgDATA;
   } else if (drawData.trackModel.type === "genomealign") {
     let result = drawData.genesArr;
@@ -1102,7 +1104,7 @@ export function getDisplayModeFunction(
         let svgWidth = end - start;
         element = (
           <svg
-            key={uuidv4()}
+            key={crypto.randomUUID()}
             width={drawData.trackState.visWidth / 3}
             viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
             height={drawData.configOptions.height}
@@ -1134,7 +1136,7 @@ export function getDisplayModeFunction(
             </div>
 
             <svg
-              key={uuidv4()}
+              key={crypto.randomUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
               display={"block"}
