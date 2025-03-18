@@ -183,7 +183,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
           record.start,
           record.end
         );
-        return new NumericalFeature("", newChrInt).withValue(record.score);
+        return new NumericalFeature("", newChrInt).withValue(
+          record.score ? record.score : record["3"]
+        );
       });
     });
 
@@ -201,7 +203,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
         ...lefts.slice(0, -1).map((x) => x + step),
         feature.locus.end,
       ];
+
       const bins = _.unzip([lefts, rights]);
+
       return groupDataToBins(data[idx], bins, rights);
     });
 
@@ -210,6 +214,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     );
     const featureNames = flankedFeatures.map((feature) => feature.getName());
     const plotData = _.zip(...adjusted);
+
     const boxData = plotData.map((d, i) => ({
       y: d,
       type: "box",
@@ -252,6 +257,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       Math.min(_.sortedIndex(rights, d.locus.end), bins.length - 1)
     );
     let results = Array.from({ length: bins.length }, () => 0);
+
     data.forEach(
       (d, i) => (results[indexes[i]] += d.locus.getLength() * d.value)
     );
@@ -263,7 +269,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
 
   const getSetByName = (name) => {
-    return sets.find((set) => set.name === name);
+    const curSet = sets.find((set) => set.name === name);
+    curSet.genome = genome;
+    return curSet;
   };
 
   const handleSetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
