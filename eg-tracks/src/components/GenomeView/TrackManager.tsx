@@ -1023,8 +1023,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             if (curTrackState.fetchAfterGenAlignTracks.length > 0)
               for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
-                console.log(dataForFetch, curTrackState);
-
                 dataForFetch["genomicFetchCoord"] =
                   curTrackState.genomicFetchCoord;
 
@@ -1842,6 +1840,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       refreshState();
       initializeTracks();
     }
+    onNewRegion(
+      genomeConfig.defaultRegion.start,
+      genomeConfig.defaultRegion.end
+    );
   }, [genomeConfig]);
 
   // MARK: trackSizeCha
