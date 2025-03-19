@@ -923,8 +923,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const browserMemorySize: { [key: string]: any } = window.performance;
 
           if (
+            browserMemorySize["memory"] &&
             browserMemorySize["memory"].usedJSHeapSize >
-            browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+              browserMemorySize["memory"].jsHeapSizeLimit * 0.7
           ) {
             for (const key in trackFetchedDataCache.current) {
               const curTrack = trackFetchedDataCache.current[key];
