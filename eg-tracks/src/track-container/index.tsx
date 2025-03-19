@@ -386,7 +386,7 @@ export function TrackContainerRepresentable({
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
       />
-      {Toolbar ? (
+      {/* {Toolbar ? (
         <div
           style={{
             position: "fixed",
@@ -404,7 +404,7 @@ export function TrackContainerRepresentable({
         </div>
       ) : (
         ""
-      )}
+      )} */}
     </div>
   );
 }
