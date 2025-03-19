@@ -418,6 +418,21 @@ const Geneplot: React.FC<GeneplotProps> = () => {
         onRequestClose={handleCloseModal}
         shouldCloseOnOverlayClick={true}
       >
+        {" "}
+        <span
+          className="text-right"
+          style={{
+            cursor: "pointer",
+            color: "red",
+            fontSize: "2em",
+            position: "absolute",
+            top: "-5px",
+            right: "15px",
+          }}
+          onClick={handleCloseModal}
+        >
+          ×
+        </span>
         <div style={{}}>
           <div style={styles.container}>
             <p style={styles.lead}>1. Choose a region set</p>

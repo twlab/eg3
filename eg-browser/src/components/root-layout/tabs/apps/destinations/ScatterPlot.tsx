@@ -323,8 +323,8 @@ const ScatterPlot: React.FC = () => {
 
   const renderMarkerSizeInput = () => {
     return (
-      <label>
-        Marker size:{" "}
+      <label style={styles.inputBox}>
+        Marker size:
         <input
           type="number"
           id="markerSize"
@@ -333,6 +333,7 @@ const ScatterPlot: React.FC = () => {
           max="100"
           value={markerSize}
           onChange={handleMarkerChangeRequest}
+          style={styles.input}
         />
       </label>
     );
@@ -347,6 +348,17 @@ const ScatterPlot: React.FC = () => {
       borderRadius: "10px",
       boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
     },
+    inputBox: {
+      display: "flex",
+      alignItems: "center",
+      margin: "10px 0",
+    },
+    input: {
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      padding: "5px",
+      width: "60px",
+    },
     lead: {
       fontSize: "1.25rem",
       marginBottom: "1rem",
@@ -357,7 +369,7 @@ const ScatterPlot: React.FC = () => {
     },
     configContainer: {
       display: "flex",
-      justifyContent: "space-between",
+
       alignItems: "center",
       marginBottom: "1rem",
     },
@@ -386,7 +398,6 @@ const ScatterPlot: React.FC = () => {
         </div>
       ) : currentSession ? (
         <>
-          {" "}
           <button
             style={{
               width: "100%",
@@ -414,6 +425,21 @@ const ScatterPlot: React.FC = () => {
             onRequestClose={handleCloseModal}
             shouldCloseOnOverlayClick={true}
           >
+            {" "}
+            <span
+              className="text-right"
+              style={{
+                cursor: "pointer",
+                color: "red",
+                fontSize: "2em",
+                position: "absolute",
+                top: "-5px",
+                right: "15px",
+              }}
+              onClick={handleCloseModal}
+            >
+              ×
+            </span>
             <div style={styles.container}>
               <p style={styles.lead}>1. Choose a region set</p>
               <div>{renderRegionList()}</div>
