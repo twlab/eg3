@@ -1,5 +1,3 @@
-import { NavigationComponentProps } from "@/components/core-navigation/NavigationStack";
-
 import { useEffect, useState } from "react";
 import ScreenshotUI from "@eg/tracks/src/components/GenomeView/TabComponents/ScreenshotUI";
 import {
@@ -12,6 +10,7 @@ export default function Screenshot() {
   const screenShotData = useAppSelector(selectScreenShotData);
   const [showModal, setShowModal] = useState(false);
   const dispatch = useAppDispatch();
+
   function handleCloseModal() {
     setShowModal(false);
   }

@@ -1054,6 +1054,7 @@ export function getDisplayModeFunction(
           rest[2]
         ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
       });
+      console.log(formattedData);
     }
 
     let svgDATA = displayModeComponentMap.full({
