@@ -28,7 +28,7 @@ export default function HelpTab() {
                 <ExternalLink
                     title="Discord Server"
                     description="Join our Discord server for real-time discussions and support"
-                    href="https://discord.gg/Mvngzxa9"
+                    href="https://discord.gg/2PHxAEJFf7"
                 />
                 <ExternalLink
                     title="Google Groups"
