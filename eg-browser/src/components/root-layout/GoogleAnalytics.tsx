@@ -10,7 +10,7 @@ declare global {
     }
 }
 
-const GOOGLE_ANALYTICS_ID: string | null = 'G-EXAMPLE123456';
+const GOOGLE_ANALYTICS_ID: string | null = window.location.origin === 'https://epigenomegateway.wustl.edu' ? 'G-KSVNDZFZSM' : null;
 
 export default function GoogleAnalytics() {
     const dispatch = useAppDispatch();

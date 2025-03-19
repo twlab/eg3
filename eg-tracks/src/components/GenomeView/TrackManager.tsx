@@ -920,35 +920,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             trackToDrawId: newTmpDrawId,
           });
 
-          const browserMemorySize: { [key: string]: any } = window.performance;
+          // const browserMemorySize: { [key: string]: any } = window.performance;
 
-          if (
-            browserMemorySize["memory"].usedJSHeapSize >
-            browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-          ) {
-            for (const key in trackFetchedDataCache.current) {
-              const curTrack = trackFetchedDataCache.current[key];
+          // if (
+          //   browserMemorySize["memory"].usedJSHeapSize >
+          //   browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+          // ) {
+          //   for (const key in trackFetchedDataCache.current) {
+          //     const curTrack = trackFetchedDataCache.current[key];
 
-              for (const cacheDataIdx in curTrack) {
-                if (
-                  curTrack.trackType in trackUsingExpandedLoci &&
-                  isInteger(cacheDataIdx)
-                ) {
-                  if (Number(cacheDataIdx) !== regionDrawIdx) {
-                    delete trackFetchedDataCache.current[key][cacheDataIdx]
-                      .dataCache;
-                    if (
-                      "records" in
-                      trackFetchedDataCache.current[key][cacheDataIdx]
-                    ) {
-                      delete trackFetchedDataCache.current[key][cacheDataIdx]
-                        .records;
-                    }
-                  }
-                }
-              }
-            }
-          }
+          //     for (const cacheDataIdx in curTrack) {
+          //       if (
+          //         curTrack.trackType in trackUsingExpandedLoci &&
+          //         isInteger(cacheDataIdx)
+          //       ) {
+          //         if (Number(cacheDataIdx) !== regionDrawIdx) {
+          //           delete trackFetchedDataCache.current[key][cacheDataIdx]
+          //             .dataCache;
+          //           if (
+          //             "records" in
+          //             trackFetchedDataCache.current[key][cacheDataIdx]
+          //           ) {
+          //             delete trackFetchedDataCache.current[key][cacheDataIdx]
+          //               .records;
+          //           }
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
 
           isWorkerBusy.current = false;
           isLoading.current = false;
