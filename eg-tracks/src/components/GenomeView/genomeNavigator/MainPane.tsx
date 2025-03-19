@@ -20,6 +20,7 @@ const SVG_HEIGHT = 100;
 const CHROMOSOME_Y = 10;
 const SELECTED_BOX_Y = 10;
 const RULER_Y = CHROMOSOME_Y + 30;
+const X_OFFSET = 20;
 
 const SELECT_BOX_Y = "5px";
 const SELECT_BOX_HEIGHT = "60px";
@@ -165,15 +166,17 @@ class MainPane extends React.Component<GenomeViewerProps> {
               viewRegion={viewRegion}
               width={containerWidth}
               y={CHROMOSOME_Y}
+              x={X_OFFSET}
             />
 
-            <Ruler viewRegion={viewRegion} width={containerWidth} y={RULER_Y} />
+            <Ruler viewRegion={viewRegion} width={containerWidth} y={RULER_Y} x={X_OFFSET} />
             <SelectedRegionBox
               width={containerWidth}
               viewRegion={viewRegion}
               selectedRegion={selectedRegion}
               onNewViewRequested={onNewViewRequested}
               y={SELECTED_BOX_Y}
+              x={X_OFFSET}
             />
           </svg>
         </SelectableGenomeArea>
