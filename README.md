@@ -81,4 +81,4 @@
 
 ## Community
 
-* Talk to us? Welcome to join our [Discord server](https://discord.gg/Mvngzxa9) for some discussion.
+* Talk to us? Welcome to join our [Discord server](https://discord.gg/2PHxAEJFf7) for some discussion.

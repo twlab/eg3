@@ -51,8 +51,8 @@ function ConfigMenuComponent(props: any) {
                           menuData.selectCount > 1
                             ? menuData.selectCount + " tracks selected"
                             : menuData.trackModel.options.label
-                            ? menuData.trackModel.options.label
-                            : "(unnamed track)"
+                              ? menuData.trackModel.options.label
+                              : "(unnamed track)"
                         }
                         numTracks={menuData.selectCount}
                       />

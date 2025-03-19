@@ -38,6 +38,7 @@ import papAnu2 from "./papAnu2/papAnu2";
 import oryCun2 from "./oryCun2/oryCun2";
 import canFam2 from "./canFam2/canFam2";
 import canFam3 from "./canFam3/canFam3";
+import canFam6 from "./canFam6/canFam6";
 import monDom5 from "./monDom5/monDom5";
 import calJac3 from "./calJac3/calJac3";
 import calJac4 from "./calJac4/calJac4";
@@ -97,6 +98,7 @@ export const allGenomes = [
   oryCun2,
   canFam3,
   canFam2,
+  canFam6,
   monDom5,
   calJac3,
   AraTha1,

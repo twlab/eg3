@@ -2161,6 +2161,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [tracks]);
 
+  useEffect(() => {
+    const toolbarContainer = document.getElementById('toolbar-container');
+    if (toolbarContainer) {
+      toolbarContainer.style.visibility = configMenu ? 'hidden' : 'visible';
+    }
+  }, [configMenu]);
+
   return (
     <div>
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
@@ -2180,11 +2187,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             onNewRegion={onRegionSelected}
             onSetHighlights={getHighlightState}
             selectedTool={selectedTool}
-          />
-          <Toolbar
-            highlights={highlights}
-            onNewHighlight={onNewHighlight}
-            onNewRegionSelect={onNewRegionSelect}
           />
           {userViewRegion && (
             <TrackRegionController

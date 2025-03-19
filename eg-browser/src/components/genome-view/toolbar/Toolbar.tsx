@@ -52,7 +52,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
 
   return (
     <motion.div
-      className="bg-white/80 backdrop-blur-md flex p-1 m-1.5"
+      className="bg-white/80 backdrop-blur-md flex flex-col p-1 m-1.5 border border-gray-secondary rounded-md"
       animate={{
         gap: isSearchFocused ? 0 : "0.5rem",
       }}
