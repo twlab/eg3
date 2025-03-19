@@ -28,6 +28,8 @@ interface ToolbarProps {
     end: number,
     highlightSearch?: boolean
   ) => void;
+  highlights: Array<any>;
+  onNewHighlight: (highlightState: Array<any>) => void;
 }
 const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
   const tool = useAppSelector(selectTool);
@@ -37,9 +39,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
     useState<MagnifyingDirection | null>(null);
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `p-1.5 ${tool === buttonTool ? "bg-secondary" : ""} ${
-      tool !== buttonTool ? "hover:bg-gray-200" : ""
-    } rounded-md`;
+    return `p-1.5 ${tool === buttonTool ? "bg-secondary" : ""} ${tool !== buttonTool ? "hover:bg-gray-200" : ""
+      } rounded-md`;
   };
   const handleToolClick = (selectedTool: Tool): any => {
     if (tool === selectedTool) {
@@ -51,7 +52,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
 
   return (
     <motion.div
-      className="bg-white/80 backdrop-blur-md flex flex-col p-1.5 mb-4 border-gray-300 border rounded-xl shadow-md"
+      className="bg-white/80 backdrop-blur-md flex flex-col p-1 m-1.5 border border-gray-secondary rounded-md"
       animate={{
         gap: isSearchFocused ? 0 : "0.5rem",
       }}
@@ -143,14 +144,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
               hoveredMagnifyingDirection === MagnifyingDirection.Out
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0
-                : 1,
+                  ? 0
+                  : 1,
             scale:
               hoveredMagnifyingDirection === MagnifyingDirection.Out
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0.95
-                : 1,
+                  ? 0.95
+                  : 1,
           }}
           transition={{ duration: 0.2 }}
           onMouseEnter={() =>
@@ -161,10 +162,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             className={
               getButtonClass() +
-              ` relative rounded-none ${
-                hoveredMagnifyingDirection === MagnifyingDirection.Out
-                  ? "z-20"
-                  : ""
+              ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.Out
+                ? "z-20"
+                : ""
               }`
             }
             title="Zoom out"
@@ -220,14 +220,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
               hoveredMagnifyingDirection === MagnifyingDirection.In
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0
-                : 1,
+                  ? 0
+                  : 1,
             scale:
               hoveredMagnifyingDirection === MagnifyingDirection.In
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0.95
-                : 1,
+                  ? 0.95
+                  : 1,
           }}
           transition={{ duration: 0.2 }}
           onMouseEnter={() =>
@@ -238,10 +238,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             className={
               getButtonClass() +
-              ` relative rounded-none ${
-                hoveredMagnifyingDirection === MagnifyingDirection.In
-                  ? "z-20"
-                  : ""
+              ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.In
+                ? "z-20"
+                : ""
               }`
             }
             title="Zoom in"

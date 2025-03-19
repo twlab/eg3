@@ -582,7 +582,7 @@ export default function SearchBar({
       >
         <AnimatePresence>
           {isSearchFocused &&
-          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute bottom-full left-0 right-0 bg-white rounded-lg shadow-lg mb-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: 10, height: 0 }}
@@ -598,7 +598,7 @@ export default function SearchBar({
         </AnimatePresence>
 
         <div className="flex flex-row items-center">
-          <div className="flex flex-row items-center px-2 py-2 w-full">
+          <div className="flex flex-row items-center px-2 py-2 pb-3.5 w-full">
             {activeCommand ? (
               <div className="flex items-center bg-secondary px-2 py-1 rounded-lg -ml-1">
                 <span className="text-sm text-tint">/{activeCommand}</span>

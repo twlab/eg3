@@ -108,6 +108,7 @@ export class FeaturePlacer {
             navContext,
             contextLocation
           );
+
           placements.push({
             feature,
             visiblePart,

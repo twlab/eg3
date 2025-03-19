@@ -98,7 +98,6 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  console.log(event.data, " trigger fetch");
   const primaryGenName = event.data.primaryGenName;
   const fetchResults: Array<any> = [];
   const genomicLoci = event.data.genomicLoci;
@@ -146,7 +145,8 @@ self.onmessage = async (event: MessageEvent) => {
       const id = item.id;
       let foundInvalidTrack = false;
       if (
-        (item.metadata.genome && !(item.metadata.genome in tmpQueryGenObj)) ||
+        (item.metadata.genome &&
+          !(item.metadata.genome in genomicFetchCoord)) ||
         !(item.type in componentMap)
       ) {
         foundInvalidTrack = true;
@@ -271,6 +271,7 @@ self.onmessage = async (event: MessageEvent) => {
     } else {
       curFetchNav = new Array(genomicLoci);
     }
+
     const isLocalFetch = trackModel.fileObj instanceof File;
     if (isLocalFetch && trackModel.url === "") {
       for (let i = 0; i < curFetchNav.length; i++) {

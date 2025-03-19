@@ -12,7 +12,7 @@ import { NumericalFeature } from "@eg/tracks/src/models/Feature";
 import { NUMERICAL_TRACK_TYPES } from "./GenePlot";
 import { getGenomeConfig } from "@eg/tracks";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
-
+import ReactModal from "react-modal";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
@@ -27,6 +27,9 @@ const ScatterPlot: React.FC = () => {
   const [layout, setLayout] = useState<any>({});
   const [markerColor, setMarkerColor] = useState("blue");
   const [markerSize, setMarkerSize] = useState(12);
+  const [showModal, setShowModal] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+
   const currentSession = useAppSelector(selectCurrentSession);
   const _genomeConfig = useCurrentGenome();
   const genomeConfig = _genomeConfig
@@ -69,6 +72,12 @@ const ScatterPlot: React.FC = () => {
     };
   }, []);
 
+  function handleCloseModal() {
+    setShowModal(false);
+  }
+  function handleOpenModal() {
+    setShowModal(true);
+  }
   const renderRegionList = () => {
     const setList = sets.map((item, index) => (
       <option key={index} value={item.name}>
@@ -168,7 +177,9 @@ const ScatterPlot: React.FC = () => {
           record.start,
           record.end
         );
-        return new NumericalFeature("", newChrInt).withValue(record.score);
+        return new NumericalFeature("", newChrInt).withValue(
+          record.score ? record.score : record["3"]
+        );
       });
     });
 
@@ -264,6 +275,8 @@ const ScatterPlot: React.FC = () => {
   };
 
   const getSetByName = (name: string) => {
+    const curSet = sets.find((set) => set.name === name);
+    curSet.genome = genome;
     return sets.find((set) => set.name === name);
   };
 
@@ -310,8 +323,8 @@ const ScatterPlot: React.FC = () => {
 
   const renderMarkerSizeInput = () => {
     return (
-      <label>
-        Marker size:{" "}
+      <label style={styles.inputBox}>
+        Marker size:
         <input
           type="number"
           id="markerSize"
@@ -320,9 +333,58 @@ const ScatterPlot: React.FC = () => {
           max="100"
           value={markerSize}
           onChange={handleMarkerChangeRequest}
+          style={styles.input}
         />
       </label>
     );
+  };
+  const styles = {
+    container: {
+      color: "#333",
+
+      margin: "0 auto",
+      padding: "20px",
+      backgroundColor: "#fdfdfd",
+      borderRadius: "10px",
+      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+    },
+    inputBox: {
+      display: "flex",
+      alignItems: "center",
+      margin: "10px 0",
+    },
+    input: {
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      padding: "5px",
+      width: "60px",
+    },
+    lead: {
+      fontSize: "1.25rem",
+      marginBottom: "1rem",
+    },
+    link: {
+      color: "#1a73e8",
+      textDecoration: "none",
+    },
+    configContainer: {
+      display: "flex",
+
+      alignItems: "center",
+      marginBottom: "1rem",
+    },
+    buttonContainer: {
+      display: "flex",
+      alignItems: "center",
+    },
+    button: {
+      backgroundColor: "#28a745",
+      color: "#fff",
+      padding: "1px 10px",
+      border: "none",
+      borderRadius: "5px",
+      cursor: "pointer",
+    },
   };
 
   return (
@@ -336,39 +398,86 @@ const ScatterPlot: React.FC = () => {
         </div>
       ) : currentSession ? (
         <>
-          <p className="lead">1. Choose a region set</p>
-          <div>{renderRegionList()}</div>
-          <p className="lead">
-            2. Choose a{" "}
-            <a
-              href={HELP_LINKS.numerical}
-              target="_blank"
-              rel="noopener noreferrer"
+          <button
+            style={{
+              width: "100%",
+              marginTop: "10px",
+              color: isHovered ? "white" : "black",
+              backgroundColor: isHovered ? "#C7D9DD" : "#ADB2D4",
+              transition: "all 0.3s ease",
+              cursor: "pointer",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "20px",
+              outline: "none",
+              fontSize: "16px",
+            }}
+            onClick={handleOpenModal}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            Open scatterplot menu
+          </button>
+          <ReactModal
+            isOpen={showModal}
+            contentLabel="Gene & Region search"
+            ariaHideApp={false}
+            onRequestClose={handleCloseModal}
+            shouldCloseOnOverlayClick={true}
+          >
+            {" "}
+            <span
+              className="text-right"
+              style={{
+                cursor: "pointer",
+                color: "red",
+                fontSize: "2em",
+                position: "absolute",
+                top: "-5px",
+                right: "15px",
+              }}
+              onClick={handleCloseModal}
             >
-              numerical track
-            </a>{" "}
-            for X-axis:
-          </p>
-          <div>{renderTrackXList()}</div>
-          <p className="lead">3. Choose a numerical track for Y-axis:</p>
-          <div>{renderTrackYList()}</div>
-          <p className="lead">4. Plot configuration:</p>
-          <div>
-            {renderMarkerColorPicker()}
-            {renderMarkerSizeInput()}
-          </div>
-          <div>
-            <button
-              onClick={getScatterPlotData}
-              className="btn btn-sm btn-success"
-            >
-              Plot
-            </button>{" "}
-            {plotMsg}
-          </div>
-          <div>
-            <Plot data={[data]} layout={layout} />
-          </div>
+              ×
+            </span>
+            <div style={styles.container}>
+              <p style={styles.lead}>1. Choose a region set</p>
+              <div>{renderRegionList()}</div>
+
+              <p style={styles.lead}>
+                2. Choose a{" "}
+                <a
+                  href={HELP_LINKS.numerical}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.link}
+                >
+                  numerical track
+                </a>{" "}
+                for X-axis:
+              </p>
+              <div>{renderTrackXList()}</div>
+
+              <p style={styles.lead}>3. Choose a numerical track for Y-axis:</p>
+              <div>{renderTrackYList()}</div>
+
+              <p style={styles.lead}>4. Plot configuration:</p>
+              <div style={styles.configContainer}>
+                {renderMarkerColorPicker()}
+                {renderMarkerSizeInput()}
+              </div>
+
+              <div style={styles.buttonContainer}>
+                <button onClick={getScatterPlotData} style={styles.button}>
+                  Plot
+                </button>{" "}
+                <span>{plotMsg}</span>
+              </div>
+            </div>
+            <div>
+              <Plot data={[data]} layout={layout} />
+            </div>
+          </ReactModal>
         </>
       ) : (
         ""
