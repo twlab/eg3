@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import _ from "lodash";
 // import RegionSetSelector from "../RegionSetSelector";
 import { getTrackConfig } from "@eg/tracks/src/trackConfigs/config-menu-models.tsx/getTrackConfig";
-
+import ReactModal from "react-modal";
 import { COLORS } from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/MetadataIndicator";
 import { HELP_LINKS } from "@eg/tracks/src/models/util";
 import ColorPicker from "@eg/tracks/src/trackConfigs/config-menu-components.tsx/ColorPicker";
@@ -42,7 +42,14 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   const [data, setData] = useState<{ [key: string]: any }>({});
   const [showlegend, setShowLegend] = useState(false);
   const [boxColor, setBoxColor] = useState("rgb(214,12,140)");
-
+  const [showModal, setShowModal] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+  function handleCloseModal() {
+    setShowModal(false);
+  }
+  function handleOpenModal() {
+    setShowModal(true);
+  }
   useEffect(() => {
     const debouncedChangeBoxColor = _.debounce(changeBoxColor, 250);
     return () => {
@@ -250,6 +257,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       heatmap: heatmapData,
     });
     setPlotMsg("");
+    handleOpenModal();
   };
 
   const groupDataToBins = (data, bins, rights) => {
@@ -344,38 +352,129 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     responsive: true,
     modeBarButtonsToRemove: ["select2d", "lasso2d", "toggleSpikelines"],
   };
+  const styles = {
+    container: {
+      color: "#333",
 
+      margin: "0 auto",
+      padding: "20px",
+      backgroundColor: "#fdfdfd",
+      borderRadius: "10px",
+      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+    },
+    lead: {
+      fontSize: "1.25rem",
+      marginBottom: "1rem",
+    },
+    link: {
+      color: "#1a73e8",
+      textDecoration: "none",
+    },
+    configContainer: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "1rem",
+    },
+    buttonContainer: {
+      display: "flex",
+      alignItems: "center",
+    },
+    button: {
+      backgroundColor: "#28a745",
+      color: "#fff",
+      padding: "2px 20px",
+      border: "none",
+      borderRadius: "5px",
+      cursor: "pointer",
+    },
+  };
   return (
     <div>
-      <p className="lead">1. Choose a region set</p>
-      <div>{renderRegionList()}</div>
-      <p className="lead">
-        2. Choose a{" "}
-        <a
-          href={HELP_LINKS.numerical}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          numerical track
-        </a>
-        :
-      </p>
-      <div>{renderTrackList()}</div>
-      <p className="lead">3. Choose a plot type:</p>
-      <div>
-        {renderPlotTypes()} {renderDataPoints()}{" "}
-        {plotType === "box" && renderBoxColorPicker()}
-      </div>
-      <div className="font-italic">{PLOT_TYPE_DESC[plotType]}</div>
-      <div>
-        <button onClick={getPlotData} className="btn btn-sm btn-success">
-          Plot
-        </button>{" "}
-        {plotMsg}
-      </div>
-      <div>
-        <Plot data={data[plotType]} layout={layout} config={config} />
-      </div>
+      <button
+        style={{
+          width: "100%",
+          marginTop: "10px",
+          color: isHovered ? "white" : "black",
+          backgroundColor: isHovered ? "#C7D9DD" : "#ADB2D4",
+          transition: "all 0.3s ease",
+          cursor: "pointer",
+          border: "none",
+          padding: "10px 20px",
+          borderRadius: "20px",
+          outline: "none",
+          fontSize: "16px",
+        }}
+        onClick={handleOpenModal}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        Open geneplot menu
+      </button>
+      <ReactModal
+        isOpen={showModal}
+        contentLabel="Gene & Region search"
+        ariaHideApp={false}
+        onRequestClose={handleCloseModal}
+        shouldCloseOnOverlayClick={true}
+      >
+        <div style={{}}>
+          <div style={styles.container}>
+            <p style={styles.lead}>1. Choose a region set</p>
+            <div>{renderRegionList()}</div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <p style={styles.lead}>
+                2. Choose a
+                <a
+                  href={HELP_LINKS.numerical}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    textDecoration: "underline",
+                    color: "#007bff",
+                  }}
+                >
+                  {" "}
+                  numerical track
+                </a>
+                :
+              </p>
+              <div>{renderTrackList()}</div>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <p style={styles.lead}>3. Choose a plot type:</p>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {renderPlotTypes()}
+                {renderDataPoints()}
+                {plotType === "box" &&
+                  Object.keys(data).length > 0 &&
+                  renderBoxColorPicker()}
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontStyle: "italic",
+                marginTop: "10px",
+              }}
+            >
+              {PLOT_TYPE_DESC[plotType]}
+            </div>
+
+            <div style={styles.buttonContainer}>
+              <button style={styles.button} onClick={getPlotData}>
+                Plot
+              </button>
+              <div style={{ marginLeft: "10px" }}>{plotMsg}</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <Plot data={data[plotType]} layout={layout} config={config} />
+        </div>
+      </ReactModal>
     </div>
   );
 };
