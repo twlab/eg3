@@ -31,6 +31,7 @@ import { niceBpCount } from "../../models/util";
 import { Tool } from "../../types";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import Toolbar from "@/components/genome-view/toolbar/Toolbar";
+import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
 
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
@@ -49,6 +50,15 @@ function sumArray(numbers: Array<any>) {
   return total;
 }
 const MIN_VIEW_REGION_SIZE = 5;
+function getMockItems() {
+  return createRange(50, (index) => ({ id: index + 1 }));
+}
+export function createRange<T>(
+  length: number,
+  initializer: (index: number) => T
+): T[] {
+  return [...new Array(length)].map((_, index) => initializer(index));
+}
 
 export function objToInstanceAlign(alignment: { [key: string]: any }) {
   let visRegionFeatures: Feature[] = [];
@@ -138,7 +148,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpRegionSize = useRef(0);
   const pixelPerBase = useRef(0);
   const block = useRef<HTMLInputElement>(null);
-
+  const [items, setItems] = useState(getMockItems);
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
@@ -1665,9 +1675,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       Object.keys(screenshotDataObj.current).length === trackComponents.length
     ) {
       setScreenshotData({
-        tracks: trackManagerState.current.tracks.filter(
-          (trackModel) => trackModel.type !== "g3d"
-        ),
+        tracks: [],
         componentData: screenshotDataObj.current,
         highlights: highlightElements,
       });
@@ -2171,6 +2179,61 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           onRegionSelected={onRegionSelected}
         />
       )}
+      {/* <div>
+        <SortableList
+          items={trackComponents}
+          onChange={setTrackComponents}
+          renderItem={(item) => (
+            <SortableList.Item id={item.id}>
+              <div
+                key={item.id}
+                style={{
+                  display: "flex",
+                  width: windowWidth,
+                }}
+              >
+                <div
+                  style={{
+                    width: legendWidth,
+                    backgroundColor: "white",
+                    position: "relative",
+                  }}
+                  ref={item.legendRef}
+                ></div>
+                <div ref={item.posRef}>
+                  <item.component
+                    id={item.trackModel.id}
+                    trackModel={item.trackModel}
+                    bpRegionSize={bpRegionSize.current}
+                    useFineModeNav={useFineModeNav.current}
+                    basePerPixel={basePerPixel.current}
+                    side={side.current}
+                    windowWidth={windowWidth}
+                    genomeConfig={genomeConfig}
+                    dataIdx={dataIdx}
+                    // trackIdx={index}
+                    trackManagerRef={block}
+                    setShow3dGene={setShow3dGene}
+                    isThereG3dTrack={isThereG3dTrack.current}
+                    legendRef={item.legendRef}
+                    updateGlobalTrackConfig={updateGlobalTrackConfig}
+                    applyTrackConfigChange={applyTrackConfigChange}
+                    dragX={dragX.current}
+                    signalTrackLoadComplete={signalTrackLoadComplete}
+                    sentScreenshotData={sentScreenshotData}
+                    newDrawData={newDrawData}
+                    trackFetchedDataCache={trackFetchedDataCache}
+                    globalTrackState={globalTrackState}
+                    isScreenShotOpen={isScreenShotOpen}
+                  />
+                </div>
+              </div>
+
+              <SortableList.DragHandle />
+            </SortableList.Item>
+          )}
+        />
+      </div> */}
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
         <div className="flex flex-row py-10 items-center justify-center">
           <HighlightMenu
@@ -2257,7 +2320,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             >
               <div ref={horizontalLineRef} className="horizontal-line" />
               <div ref={verticalLineRef} className="vertical-line" />
-
               {trackComponents.map((item, index) => {
                 let Component = item.component;
 
