@@ -124,6 +124,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         let svgWidth = end - start;
         return (
           <svg
+            style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
             key={svgKey}
             width={width / 3}
             viewBox={`${start} 0 ${svgWidth} ${height}`}
@@ -152,7 +153,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
 
       return (
-        <svg key={svgKey} width={width} height={height} display={"block"}>
+        <svg
+          style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
+          key={svgKey}
+          width={width}
+          height={height}
+          display={"block"}
+        >
           {placements.map(renderAnnotation)}
           {/* <line
             x1={width / 3}
@@ -1105,6 +1112,7 @@ export function getDisplayModeFunction(
         let svgWidth = end - start;
         element = (
           <svg
+            style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
             key={crypto.randomUUID()}
             width={drawData.trackState.visWidth / 3}
             viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
@@ -1137,6 +1145,7 @@ export function getDisplayModeFunction(
             </div>
 
             <svg
+              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={crypto.randomUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
@@ -1196,6 +1205,7 @@ export function getDisplayModeFunction(
         let svgWidth = end - start;
         element = (
           <svg
+            style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
             width={drawData.trackState.visWidth / 3}
             viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
             height={drawData.configOptions.height}
@@ -1227,6 +1237,7 @@ export function getDisplayModeFunction(
             </div>
 
             <svg
+              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
               display={"block"}
