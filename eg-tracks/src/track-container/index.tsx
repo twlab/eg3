@@ -60,8 +60,10 @@ export function TrackContainerRepresentable({
   tool,
   Toolbar,
   selectedRegionSet,
+
   setScreenshotData,
   isScreenShotOpen,
+  overrideViewRegion,
 }: ITrackContainerRepresentableProps) {
   const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
   const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
@@ -104,7 +106,7 @@ export function TrackContainerRepresentable({
 
       return GenomeSerializer.deserialize(_genomeConfig);
     }
-  }, [_genomeConfig, selectedRegionSet]);
+  }, [_genomeConfig, selectedRegionSet, overrideViewRegion]);
 
   // MARK: Tracks
 
@@ -190,15 +192,10 @@ export function TrackContainerRepresentable({
           ...genomeConfig.defaultRegion
         );
 
-        // const parsed = navContext.parse(viewRegion);
-        // let { start, end } = parsed;
-        // console.log(start, end);
-        // if (userViewRegion) {
-        //   console.log(userViewRegion);
-        //   console.log(viewRegion);
-        // }
-        // console.log(userViewRegion);
-        // startViewRegion.setRegion(start, end);
+        const parsed = navContext.parse(viewRegion);
+        let { start, end } = parsed;
+
+        startViewRegion.setRegion(start, end);
         lastViewRegion.current = startViewRegion;
         return startViewRegion;
       }
@@ -246,22 +243,74 @@ export function TrackContainerRepresentable({
 
           return new DisplayedRegionModel(genomeConfig.navContext, start, end);
         } else {
+          if (overrideViewRegion) {
+            try {
+              const navContext = genomeConfig.navContext as NavigationContext;
+
+              const parsed = navContext.parse(overrideViewRegion);
+              let { start, end } = parsed;
+              const newRegion = new DisplayedRegionModel(
+                genomeConfig.navContext,
+                start,
+                end
+              );
+
+              lastUserViewRegion.current = newRegion;
+              return newRegion;
+            } catch (e) {
+              const newRegion = new DisplayedRegionModel(
+                genomeConfig.navContext,
+                ...genomeConfig.defaultRegion
+              );
+              lastUserViewRegion.current = newRegion;
+              lastSelectedSet.current = selectedRegionSet;
+              return newRegion;
+            }
+          } else {
+            const newRegion = new DisplayedRegionModel(
+              genomeConfig.navContext,
+              ...genomeConfig.defaultRegion
+            );
+            lastUserViewRegion.current = newRegion;
+            lastSelectedSet.current = selectedRegionSet;
+            return newRegion;
+          }
+        }
+      } else {
+        // when there is a new displayModel from regionSet, or we exit out of region we use new defaultRegion startings point
+
+        if (overrideViewRegion) {
+          try {
+            const navContext = genomeConfig.navContext as NavigationContext;
+
+            const parsed = navContext.parse(overrideViewRegion);
+            let { start, end } = parsed;
+            const newRegion = new DisplayedRegionModel(
+              genomeConfig.navContext,
+              start,
+              end
+            );
+
+            lastUserViewRegion.current = newRegion;
+            return newRegion;
+          } catch (e) {
+            const newRegion = new DisplayedRegionModel(
+              genomeConfig.navContext,
+              ...genomeConfig.defaultRegion
+            );
+            lastUserViewRegion.current = newRegion;
+            lastSelectedSet.current = selectedRegionSet;
+            return newRegion;
+          }
+        } else {
           const newRegion = new DisplayedRegionModel(
             genomeConfig.navContext,
             ...genomeConfig.defaultRegion
           );
           lastUserViewRegion.current = newRegion;
+          lastSelectedSet.current = selectedRegionSet;
           return newRegion;
         }
-      } else {
-        // when there is a new displayModel from regionSet, or we exit out of region we use new defaultRegion startings point
-        const newRegion = new DisplayedRegionModel(
-          genomeConfig.navContext,
-          ...genomeConfig.defaultRegion
-        );
-        lastUserViewRegion.current = newRegion;
-        lastSelectedSet.current = selectedRegionSet;
-        return newRegion;
       }
     } catch (e) {
       console.error(e);
@@ -270,7 +319,7 @@ export function TrackContainerRepresentable({
         ...genomeConfig.defaultRegion
       );
     }
-  }, [userViewRegion, genomeConfig]);
+  }, [userViewRegion, genomeConfig, overrideViewRegion]);
 
   const handleTrackSelected = useCallback(
     (selectedTracks: TrackModel[]) => {

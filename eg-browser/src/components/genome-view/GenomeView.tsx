@@ -23,13 +23,12 @@ export default function GenomeView() {
   const tool = useAppSelector(selectTool);
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
-
-  const selectedRegionSet = currentSession?.selectedRegionSet;
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
   if (!currentSession || !genomeConfig) {
     return null;
   }
-
+  const selectedRegionSet = currentSession?.selectedRegionSet;
+  const overrideViewRegion = currentSession?.overrideViewRegion;
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
   };
@@ -91,6 +90,7 @@ export default function GenomeView() {
         selectedRegionSet={selectedRegionSet}
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
+        overrideViewRegion={overrideViewRegion}
       />
     </div>
   );
