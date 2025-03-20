@@ -21,7 +21,7 @@ const Collapsible: React.FC<CollapsibleProps> = ({ trigger, children }) => {
   }, [isOpen]);
 
   const buttonStyle: CSSProperties = {
-    backgroundColor: "#f9f9f9",
+    // backgroundColor: "#f9f9f9",
     cursor: "pointer",
     padding: "6px",
     border: "none",
@@ -33,14 +33,14 @@ const Collapsible: React.FC<CollapsibleProps> = ({ trigger, children }) => {
 
   const buttonHoverStyle: CSSProperties = {
     ...buttonStyle,
-    backgroundColor: "#e0e0e0",
+    // backgroundColor: "#e0e0e0",
   };
 
   const contentStyle: CSSProperties = {
     maxHeight: height,
     overflow: "hidden",
     transition: "max-height 0.3s ease",
-    backgroundColor: "white",
+    // backgroundColor: "white",
     // padding: "0 18px",
   };
 

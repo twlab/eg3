@@ -108,7 +108,7 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
 
   return (
     <div className="bg tool-element font-mono pl-2">
-      <button className="btn btn-secondary underline" onClick={handleOpenModal}>
+      <button className="underline" onClick={handleOpenModal}>
         {coordinates}
       </button>
       <ReactModal

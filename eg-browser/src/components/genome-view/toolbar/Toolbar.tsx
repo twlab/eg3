@@ -2,16 +2,14 @@ import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import { selectTool, setTool } from "@/lib/redux/slices/utilitySlice";
 
 import {
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
-  ArrowsUpDownIcon,
-  BookOpenIcon,
-  ClockIcon,
+  BoltIcon,
+  LightBulbIcon,
   HandRaisedIcon,
-  MagnifyingGlassIcon,
   MagnifyingGlassMinusIcon,
   MagnifyingGlassPlusIcon,
-  PaintBrushIcon,
+  ArrowLeftCircleIcon,
+  ArrowRightCircleIcon,
+  ArrowsUpDownIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -96,19 +94,20 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <ArrowsUpDownIcon className="size-6 text-gray-600" />
           </button> */}
           <button
-            onClick={() => handleToolClick(Tool.Zoom)}
-            className={getButtonClass(Tool.Zoom)}
-            title="Zoom out"
+            onClick={() => handleToolClick(Tool.Drag)}
+            className={getButtonClass(Tool.Drag)}
+            title="Drag"
           >
-            <MagnifyingGlassIcon className="size-6 text-gray-600" />
+            <HandRaisedIcon className="size-6 text-gray-600" />
           </button>
           <button
-            onClick={() => handleToolClick(Tool.Highlight)}
-            className={getButtonClass(Tool.Highlight)}
-            title="Highlight region"
+            onClick={() => handleToolClick(Tool.Zoom)}
+            className={getButtonClass(Tool.Zoom)}
+            title="Zoom in"
           >
-            <PaintBrushIcon className="size-6 text-gray-600" />
+            <span className="size-6 text-gray-600">⬚🔍+</span>
           </button>
+
 
           <div className="h-full border-r border-gray-400" />
         </motion.div>
@@ -134,7 +133,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.PanLeft)}
             title="Pan Left"
           >
-            <ChevronDoubleLeftIcon className="size-6 text-gray-600" />
+            <ArrowLeftCircleIcon className="size-6 text-gray-600" />
           </button>
         </motion.div>
         <motion.div
@@ -301,7 +300,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.PanRight)}
             title="Pan Right"
           >
-            <ChevronDoubleRightIcon className="size-6 text-gray-600" />
+            <ArrowRightCircleIcon className="size-6 text-gray-600" />
           </button>
         </motion.div>
         <motion.div
@@ -322,22 +321,22 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           transition={{ duration: 0.2 }}
         >
           <div className="h-full border-r border-gray-400" />
-          <button
-            onClick={() => handleToolClick(Tool.Drag)}
-            className={getButtonClass(Tool.Drag)}
-            title="Drag"
-          >
-            <HandRaisedIcon className="size-6 text-gray-600" />
-          </button>
           {/* <button className={getButtonClass()} title="Zoom in">
             <ClockIcon className="size-6 text-gray-600" />
           </button> */}
+          <button
+            onClick={() => handleToolClick(Tool.Highlight)}
+            className={getButtonClass(Tool.Highlight)}
+            title="Highlight regions"
+          >
+            <BoltIcon className="size-6 text-gray-600" />
+          </button>
           <button
             className={getButtonClass()}
             onClick={() => handleToolClick(Tool.highlightMenu)}
             title="Highlight Menu"
           >
-            <BookOpenIcon className="size-6 text-gray-600" />
+            <LightBulbIcon className="size-6 text-gray-600" />
           </button>
         </motion.div>
       </motion.div>

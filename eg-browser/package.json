@@ -8,6 +8,8 @@
         "build": "vite build",
         "build2": "tsc -b && vite build",
         "lint": "eslint .",
+        "deploy": "aws s3 sync ./dist/ s3://epigenomegateway.org/browser/ --delete",
+        "postdeploy": "aws cloudfront create-invalidation --distribution-id E3E258KR33918Y --paths \"/*\"",
         "preview": "vite preview"
     },
     "dependencies": {
