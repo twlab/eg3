@@ -2260,7 +2260,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               display: "flex",
               //makes components align right or right when we switch sides
 
-              border: "2px solid #BCCCDC",
               flexDirection: "row",
               // full windowwidth will make canvas only loop 0-windowidth
               // the last value will have no data.
@@ -2270,22 +2269,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               // height: "2000px",
               overflowX: "hidden",
               overflowY: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-
-              WebkitPerspective: `${windowWidth + legendWidth}px`,
-              backfaceVisibility: "hidden",
-              perspective: `${windowWidth + legendWidth}px`,
             }}
           >
             <div
               onMouseDown={handleMouseDown}
               ref={block}
               style={{
-                WebkitBackfaceVisibility: "hidden",
-
-                WebkitPerspective: `${windowWidth + legendWidth}px`,
-                backfaceVisibility: "hidden",
-                perspective: `${windowWidth + legendWidth}px`,
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
@@ -2319,22 +2308,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     // height: "2000px",
                     overflowX: "hidden",
                     overflowY: "hidden",
-                    WebkitBackfaceVisibility: "hidden",
-
-                    WebkitPerspective: `${windowWidth + legendWidth}px`,
-                    backfaceVisibility: "hidden",
-                    perspective: `${windowWidth + legendWidth}px`,
                   }}
                 >
                   <div
                     onMouseDown={handleMouseDown}
                     ref={block}
                     style={{
-                      WebkitBackfaceVisibility: "hidden",
-
-                      WebkitPerspective: `${windowWidth + legendWidth}px`,
-                      backfaceVisibility: "hidden",
-                      perspective: `${windowWidth + legendWidth}px`,
                       display: "flex",
                       flexDirection: "column",
                       position: "relative",
@@ -2350,8 +2329,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                           : "default",
                     }}
                   >
-                    <div ref={horizontalLineRef} className="horizontal-line" />
-                    <div ref={verticalLineRef} className="vertical-line" />
                     <SortableList
                       items={trackComponents}
                       onChange={handleReorder}
