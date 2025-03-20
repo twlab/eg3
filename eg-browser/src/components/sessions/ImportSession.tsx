@@ -88,7 +88,7 @@ export default function ImportSession() {
                     leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
                     onClick={() => {
                         const link = document.createElement('a');
-                        link.href = '/example_session.json';
+                        link.href = import.meta.env.BASE_URL + '/example_session.json';
                         link.download = 'example_session.json';
                         link.click();
                     }}

@@ -183,7 +183,9 @@ const ScatterPlot: React.FC = () => {
       });
     });
 
-    const dataX = dataXall.map((all) => _.meanBy(all, "value"));
+    const dataX = dataXall.map((all: any) =>
+      _.meanBy(all, (item) => Number(item.value))
+    );
 
     const rawDataY = await Promise.all(
       flankedFeatures.map((item, index) =>
@@ -199,6 +201,7 @@ const ScatterPlot: React.FC = () => {
         })
       )
     );
+
     let dataYall = rawDataY.map((item, index) => {
       return item.map((record) => {
         let newChrInt = new ChromosomeInterval(
@@ -206,12 +209,15 @@ const ScatterPlot: React.FC = () => {
           record.start,
           record.end
         );
-        return new NumericalFeature("", newChrInt).withValue(record.score);
+        return new NumericalFeature("", newChrInt).withValue(
+          record.score ? record.score : record["3"]
+        );
       });
     });
 
-    const dataY = dataYall.map((all) => _.meanBy(all, "value"));
-
+    const dataY = dataYall.map((all: any) =>
+      _.meanBy(all, (item) => Number(item.value))
+    );
     const featureNames = flankedFeatures.map((feature) => feature.getName());
     const pcor = pcorr(dataX, dataY);
 

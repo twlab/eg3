@@ -40,7 +40,7 @@ export default function AddCustomGenome() {
                     leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
                     onClick={() => {
                         const link = document.createElement('a');
-                        link.href = '/example_hg19.json';
+                        link.href = import.meta.env.BASE_URL + '/example_hg19.json';
                         link.download = 'example_hg19.json';
                         link.click();
                     }}

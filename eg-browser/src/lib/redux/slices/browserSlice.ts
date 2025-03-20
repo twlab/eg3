@@ -51,26 +51,31 @@ export const browserSlice = createSlice({
       action: PayloadAction<{
         genome: IGenome;
         viewRegion?: GenomeCoordinate;
+        additionalTracks?: ITrackModel[];
       }>
     ) => {
-      const { genome, viewRegion: overrideViewRegion } = action.payload;
+      const { genome, viewRegion: overrideViewRegion, additionalTracks = [] } = action.payload;
 
-      const { defaultRegion: viewRegion, defaultTracks: tracks } = genome;
+      const { defaultRegion, defaultTracks: tracks = [] } = genome;
+
+      let allTracks = [...tracks, ...additionalTracks];
 
       let trackModelId = 0;
       const initializedTracks =
-        tracks?.map((track) => ({
+        allTracks?.map((track) => ({
           ...track,
           id: crypto.randomUUID(),
           isSelected: false,
         })) || [];
+
+      console.log(initializedTracks);
 
       const nextSession: BrowserSession = {
         id: crypto.randomUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
-        viewRegion,
+        viewRegion: overrideViewRegion ?? defaultRegion,
         userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
