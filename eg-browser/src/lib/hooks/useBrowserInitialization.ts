@@ -6,15 +6,7 @@ import { GenomeCoordinate } from "@eg/tracks";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import { addSessionsFromBundleId, importOneSession } from "../redux/thunk/session";
 
-function decompressString(compressed: string): string {
-    const dec = compressed.replace(/\./g, '+').replace(/_/g, '/').replace(/-/g, '=');
-    const binary = atob(dec);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-    return new TextDecoder().decode(bytes);
-}
+const IDEMPOTENCY_STORAGE_KEY = '_eg-query-idempotency-key'
 
 export default function useBrowserInitialization() {
     const dispatch = useAppDispatch();
@@ -27,6 +19,15 @@ export default function useBrowserInitialization() {
         const bundleId = searchParams.get("bundleId");
         const blob = searchParams.get("blob");
         const sessionFile = searchParams.get("sessionFile");
+        const idempotencyToken = searchParams.get("idempotencyToken");
+
+        if (idempotencyToken) {
+            const currentIdempotencyToken = localStorage.getItem(IDEMPOTENCY_STORAGE_KEY);
+
+            if (currentIdempotencyToken === idempotencyToken) {
+                return;
+            }
+        }
 
         if (sessionFile) {
             (async () => {
@@ -34,11 +35,7 @@ export default function useBrowserInitialization() {
 
                 dispatch(importOneSession({ session: file, navigatingToSession: true }));
 
-                searchParams.delete("sessionFile");
-                const newUrl = searchParams.toString()
-                    ? `${window.location.pathname}?${searchParams.toString()}`
-                    : window.location.pathname;
-                window.history.replaceState({}, "", newUrl);
+                generateAndSetIdempotencyToken();
             })();
         }
 
@@ -52,11 +49,7 @@ export default function useBrowserInitialization() {
                 dispatch(upsertSession(sessionData));
                 dispatch(setCurrentSession(sessionData.id));
 
-                searchParams.delete("blob");
-                const newUrl = searchParams.toString()
-                    ? `${window.location.pathname}?${searchParams.toString()}`
-                    : window.location.pathname;
-                window.history.replaceState({}, "", newUrl);
+                generateAndSetIdempotencyToken();
             } catch (error) {
                 console.error("Failed to process blob data:", error);
             }
@@ -66,11 +59,7 @@ export default function useBrowserInitialization() {
             dispatch(addSessionsFromBundleId(bundleId))
                 .catch(error => console.error("Failed to import bundle:", error))
                 .finally(() => {
-                    searchParams.delete("bundleId");
-                    const newUrl = searchParams.toString()
-                        ? `${window.location.pathname}?${searchParams.toString()}`
-                        : window.location.pathname;
-                    window.history.replaceState({}, "", newUrl);
+                    generateAndSetIdempotencyToken();
                 });
         }
 
@@ -104,12 +93,31 @@ export default function useBrowserInitialization() {
                         additionalTracks,
                     }));
 
-                    searchParams.delete("genome");
-                    searchParams.delete("hub");
-                    searchParams.delete("position");
-                    window.history.replaceState({}, "", window.location.pathname);
+                    generateAndSetIdempotencyToken();
                 }
             })();
         }
     }, []);
+}
+
+function decompressString(compressed: string): string {
+    const dec = compressed.replace(/\./g, '+').replace(/_/g, '/').replace(/-/g, '=');
+    const binary = atob(dec);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+}
+
+function generateAndSetIdempotencyToken() {
+    const idempotencyToken = crypto.randomUUID();
+    localStorage.setItem(IDEMPOTENCY_STORAGE_KEY, idempotencyToken);
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("idempotencyToken", idempotencyToken);
+    const newUrl = searchParams.toString()
+        ? `${window.location.pathname}?${searchParams.toString()}`
+        : window.location.pathname;
+    window.history.replaceState({}, "", newUrl);
+    return idempotencyToken;
 }
