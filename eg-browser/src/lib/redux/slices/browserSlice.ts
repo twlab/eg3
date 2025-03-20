@@ -68,8 +68,6 @@ export const browserSlice = createSlice({
           isSelected: false,
         })) || [];
 
-      console.log(initializedTracks);
-
       const nextSession: BrowserSession = {
         id: crypto.randomUUID(),
         createdAt: Date.now(),
