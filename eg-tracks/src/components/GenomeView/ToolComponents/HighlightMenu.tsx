@@ -116,7 +116,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
           <h5 style={{ margin: 15 }}>Highlights</h5>
           {highlights.length ? (
             <div style={{ paddingBottom: "5px" }}>
-              <button onClick={() => { }}>Remove all</button>
+              <button onClick={() => {}}>Remove all</button>
             </div>
           ) : null}
           <div
@@ -207,8 +207,9 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             color={interval.color}
             disableAlpha={false}
             onChange={(color: any) => {
-              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b
-                }, ${0.15})`;
+              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${
+                color.rgb.b
+              }, ${0.15})`;
               const newInterval = new HighlightInterval(
                 interval.start,
                 interval.end,

@@ -54,7 +54,11 @@ export const browserSlice = createSlice({
         additionalTracks?: ITrackModel[];
       }>
     ) => {
-      const { genome, viewRegion: overrideViewRegion, additionalTracks = [] } = action.payload;
+      const {
+        genome,
+        viewRegion: overrideViewRegion,
+        additionalTracks = [],
+      } = action.payload;
 
       const { defaultRegion, defaultTracks: tracks = [] } = genome;
 
@@ -114,6 +118,7 @@ export const browserSlice = createSlice({
             return track;
           });
         }
+        console.log(changes);
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {

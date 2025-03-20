@@ -11,7 +11,7 @@ import {
 } from "../TrackComponents/displayModeComponentMap";
 import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
 import TrackLegend from "../TrackComponents/commonComponents/TrackLegend";
-
+import { objToInstanceAlign } from "../TrackManager";
 interface Highlight {
   start: number;
   end: number;
@@ -313,12 +313,22 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         });
         let newTrackLegend = null;
-        if (createSVGData.configOptions.displayMode === "full") {
+        if (
+          createSVGData.configOptions.displayMode === "full" ||
+          trackModel.type === "ruler"
+        ) {
+          console.log(createSVGData.trackState);
           newTrackLegend = (
             <TrackLegend
               height={createSVGData.configOptions.height}
               trackModel={trackModel}
               label={trackModel.options.label}
+              trackViewRegion={objToInstanceAlign(
+                createSVGData.trackState.visData.visRegion
+              )}
+              selectedRegion={objToInstanceAlign(
+                createSVGData.trackState.visData.viewWindowRegion
+              )}
             />
           );
         }

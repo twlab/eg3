@@ -5,14 +5,15 @@ import {
   ITrackModel,
 } from "../types";
 import GenomeRoot from "@eg/tracks/src/components/GenomeView/GenomeRoot";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { TrackModel } from "../models/TrackModel";
 import NavigationContext from "../models/NavigationContext";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import GenomeSerializer from "../genome-hub/GenomeSerializer";
 import OpenInterval from "../models/OpenInterval";
 import RegionSet from "../models/RegionSet";
-import { initial } from "lodash";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { setTool } from "@/lib/redux/slices/utilitySlice";
 
 export function TrackContainer(props: ITrackContainerState) {
   return (
@@ -67,7 +68,7 @@ export function TrackContainerRepresentable({
   const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
   const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
   const lastSelectedSet = useRef<RegionSet | null>(selectedRegionSet);
-
+  const dispatch = useAppDispatch();
   // MARK: Genome Config
 
   const genomeConfig = useMemo(() => {
@@ -190,17 +191,22 @@ export function TrackContainerRepresentable({
           navContext,
           ...genomeConfig.defaultRegion
         );
-
-        const parsed = navContext.parse(viewRegion);
-        const { start, end } = parsed;
-
-        startViewRegion.setRegion(start, end);
+        dispatch(setTool(0));
+        // const parsed = navContext.parse(viewRegion);
+        // let { start, end } = parsed;
+        // console.log(start, end);
+        // if (userViewRegion) {
+        //   console.log(userViewRegion);
+        //   console.log(viewRegion);
+        // }
+        // console.log(userViewRegion);
+        // startViewRegion.setRegion(start, end);
         lastViewRegion.current = startViewRegion;
         return startViewRegion;
       }
     } catch (e) {
       // console.error(e);
-
+      dispatch(setTool(0));
       return (
         lastViewRegion.current ||
         new DisplayedRegionModel(
@@ -242,6 +248,8 @@ export function TrackContainerRepresentable({
 
           return new DisplayedRegionModel(genomeConfig.navContext, start, end);
         } else {
+          dispatch(setTool(0));
+
           const newRegion = new DisplayedRegionModel(
             genomeConfig.navContext,
             ...genomeConfig.defaultRegion
@@ -250,6 +258,7 @@ export function TrackContainerRepresentable({
           return newRegion;
         }
       } else {
+        dispatch(setTool(0));
         // when there is a new displayModel from regionSet, or we exit out of region we use new defaultRegion startings point
         const newRegion = new DisplayedRegionModel(
           genomeConfig.navContext,
