@@ -419,26 +419,35 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 
-        let result = await getDisplayModeFunction({
-          genomeName: genomeConfig.genome.getName(),
-          genesArr: combinedData,
-          trackState,
-          windowWidth,
-          configOptions: drawOptions,
-          renderTooltip,
-          svgHeight,
-          updatedLegend,
-          trackModel,
-          getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
-          getHeight,
-          ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
-        });
+        // let result = await getDisplayModeFunction({
+        //   genomeName: genomeConfig.genome.getName(),
+        //   genesArr: combinedData,
+        //   trackState,
+        //   windowWidth,
+        //   configOptions: drawOptions,
+        //   renderTooltip,
+        //   svgHeight,
+        //   updatedLegend,
+        //   trackModel,
+        //   getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
+        //   getHeight,
+        //   ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
+        // });
 
         sentScreenshotData({
-          component: result,
+          fetchData: {
+            genomeName: genomeConfig.genome.getName(),
+            genesArr: combinedData,
+            trackState,
+            windowWidth,
+            configOptions: drawOptions,
+            svgHeight:
+              configOptions.current.displayMode === "full"
+                ? svgHeight.current
+                : configOptions.current.height,
+            trackModel,
+          },
           trackId: id,
-          trackState: trackState,
-          trackLegend: updatedLegend.current,
         });
       }
 

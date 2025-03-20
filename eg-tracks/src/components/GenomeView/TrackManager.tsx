@@ -32,7 +32,7 @@ import { Tool } from "../../types";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import Toolbar from "@/components/genome-view/toolbar/Toolbar";
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-
+import { convertTrackModelToITrackModel } from "./utils";
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
   "7": { factor: 2, text: "1×", title: "Zoom out 1-fold (Alt+O)" },
@@ -1677,10 +1677,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       Object.keys(screenshotDataObj.current).length === trackComponents.length
     ) {
+      const curTracks = trackManagerState.current.tracks.filter(
+        (trackModel) => trackModel.type !== "g3d"
+      );
+
+      const convertedITrackModel = curTracks.map((item) =>
+        convertTrackModelToITrackModel(item)
+      );
+
       setScreenshotData({
-        tracks: [],
-        componentData: screenshotDataObj.current,
+        tracks: convertedITrackModel,
+        trackData: screenshotDataObj.current,
         highlights: highlightElements,
+        windowWidth,
       });
       screenshotDataObj.current = {};
     }

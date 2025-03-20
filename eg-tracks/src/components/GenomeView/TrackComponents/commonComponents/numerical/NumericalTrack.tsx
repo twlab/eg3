@@ -221,7 +221,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   if (getNumLegend) {
     getNumLegend(legend);
   }
-
+  console.log(legend);
   const visualizer = hasReverse ? (
     <React.Fragment>
       <div
@@ -249,6 +249,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           ""
         )}
       </div>
+      {forceSvg ? legend : ""}
       <ValuePlot
         xToValue={xToValue}
         scales={scales}
@@ -300,17 +301,20 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           ""
         )}
       </div>
-      <ValuePlot
-        xToValue={xToValue}
-        scales={scales}
-        height={scales.zeroLine}
-        color={color}
-        colorOut={colorAboveMax}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-        width={width}
-        viewWindow={props.viewWindow}
-      />
+      <div style={{ display: "flex" }}>
+        {forceSvg ? legend : ""}
+        <ValuePlot
+          xToValue={xToValue}
+          scales={scales}
+          height={scales.zeroLine}
+          color={color}
+          colorOut={colorAboveMax}
+          isDrawingBars={isDrawingBars}
+          forceSvg={forceSvg}
+          width={width}
+          viewWindow={props.viewWindow}
+        />
+      </div>
     </React.Fragment>
   );
 
