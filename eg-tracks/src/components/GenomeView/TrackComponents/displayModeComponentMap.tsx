@@ -90,7 +90,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     getGenePadding,
-    getHeight,
+
     ROW_HEIGHT,
     onHideTooltip = undefined,
   }) {
@@ -194,7 +194,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -219,7 +219,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -254,7 +254,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -279,7 +279,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onHideTooltip}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -364,7 +364,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
           return (
             <TranslatableG
-              onClick={(event) => renderTooltip(event, feature)}
+              onClick={(event) => {
+                if (renderTooltip) {
+                  renderTooltip(event, feature);
+                }
+              }}
               key={i}
             >
               {mainBody}
@@ -396,7 +400,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -422,7 +426,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -441,7 +445,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -505,6 +509,22 @@ export const displayModeComponentMap: { [key: string]: any } = {
         />
       );
     }
+
+    function getHeight(numRows: number): number {
+      let rowHeight = ROW_HEIGHT;
+      let options = configOptions;
+      let rowsToDraw = Math.min(numRows, options.maxRows);
+      if (options.hideMinimalItems) {
+        rowsToDraw -= 1;
+      }
+      if (rowsToDraw < 1) {
+        rowsToDraw = 1;
+      }
+
+      return trackModel.type === "modbed"
+        ? (rowsToDraw + 1) * rowHeight + 2
+        : rowsToDraw * rowHeight + TOP_PADDING;
+    }
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
@@ -530,7 +550,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
         }
       );
     }
-    var height;
+    let height;
+
+    height =
+      trackModel.type in { repeatmasker: "" }
+        ? configOptions.height
+        : getHeight(placeFeatureData.numRowsAssigned);
+
     if (updatedLegend) {
       // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
       updatedLegend.current = (
@@ -541,10 +567,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         />
       );
     }
-    height =
-      trackModel.type in { repeatmasker: "" }
-        ? configOptions.height
-        : getHeight(placeFeatureData.numRowsAssigned);
 
     var svgDATA = createFullVisualizer(
       placeFeatureData.placements,
@@ -569,7 +591,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        if (updatedLegend) {
+          updatedLegend.current = legend;
+        }
+      }
     }
 
     let canvasElements = (
@@ -600,7 +626,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        if (updatedLegend) {
+          updatedLegend.current = legend;
+        }
+      }
     }
     let canvasElements = (
       <QBedTrackComponents
@@ -627,7 +657,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        if (updatedLegend) {
+          updatedLegend.current = legend;
+        }
+      }
     }
     let canvasElements = (
       <BoxplotTrackComponents
@@ -655,7 +689,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        updatedLegend.current = legend;
+      }
     }
 
     let canvasElements = (
@@ -752,7 +788,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        updatedLegend.current = legend;
+      }
     }
     let canvasElements = (
       <DynamicplotTrackComponent
@@ -789,7 +827,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       FIBER_DENSITY_CUTOFF_LENGTH
     ) {
       function getNumLegend(legend: ReactNode) {
-        updatedLegend.current = legend;
+        if (updatedLegend) {
+          updatedLegend.current = legend;
+        }
       }
       let canvasElements = (
         <FiberTrackComponent
@@ -834,7 +874,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        updatedLegend.current = legend;
+      }
     }
 
     let canvasElements = (
@@ -862,7 +904,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        updatedLegend.current = legend;
+      }
     }
 
     let canvasElements = (
@@ -892,7 +936,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     basesByPixel,
   }) {
     function getNumLegend(legend: ReactNode) {
-      updatedLegend.current = legend;
+      if (updatedLegend) {
+        updatedLegend.current = legend;
+      }
     }
 
     let canvasElements = (
@@ -923,7 +969,9 @@ export function getDisplayModeFunction(
 ) {
   if (drawData.trackModel.type === "ruler") {
     function getNumLegend(legend: ReactNode) {
-      drawData.updatedLegend.current = legend;
+      if (drawData.updatedLegend) {
+        drawData.updatedLegend.current = legend;
+      }
     }
 
     let canvasElements = (
@@ -1061,7 +1109,6 @@ export function getDisplayModeFunction(
           rest[2]
         ).withJaspar(Number.parseInt(rest[1], 10), rest[0]);
       });
-      console.log(formattedData);
     }
 
     let svgDATA = displayModeComponentMap.full({
