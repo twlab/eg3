@@ -114,7 +114,7 @@ export default function GenomePicker() {
                                 {
                                     label: "Sessions",
                                     value: "sessions",
-                                    component: <SessionList onSessionClick={handleSessionClick} />
+                                    component: <SessionList onSessionClick={handleSessionClick} showImportSessionButton />
                                 },
                                 {
                                     label: "Genomes",

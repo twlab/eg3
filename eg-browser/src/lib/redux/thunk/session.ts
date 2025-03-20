@@ -1,11 +1,17 @@
 import { GenomeCoordinate, ITrackModel, restoreLegacyViewRegion } from "@eg/tracks";
-import { upsertSession } from "../slices/browserSlice";
+import { selectCurrentSessionId, setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
 
 export const importOneSession = createAsyncThunk(
     'session/importOneSession',
-    async (session: any, thunkApi) => {
+    async ({
+        session,
+        navigatingToSession = false,
+    }: {
+        session: any,
+        navigatingToSession?: boolean,
+    }, thunkApi) => {
         if (session.genomeName) {
             let parsedViewRegion = restoreLegacyViewRegion(session, null) as GenomeCoordinate | null;
 
@@ -51,20 +57,26 @@ export const importOneSession = createAsyncThunk(
         session.id = crypto.randomUUID();
 
         thunkApi.dispatch(upsertSession(session));
+
+        if (navigatingToSession) {
+            thunkApi.dispatch(setCurrentSession(session.id));
+        }
     }
 );
 
 export const addSessionsFromBundleId = createAsyncThunk(
     'session/addSessionsFromBundleId',
     async (sessionId: string, thunkApi) => {
-        
+
         const response = await fetch(`https://eg-session.firebaseio.com/sessions/${sessionId}.json`).then(r => r.json() as Promise<ISessionBundle>);
 
         const sessions = Object.values(response.sessionsInBundle).map(session => session.state);
 
         for (const session of sessions) {
-            thunkApi.dispatch(importOneSession(session));
+            thunkApi.dispatch(importOneSession({ session }));
         }
+
+        thunkApi.dispatch(setCurrentSession(null));
     }
 );
 
