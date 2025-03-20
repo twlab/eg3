@@ -626,6 +626,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return !id.includes(String(item.trackModel.id));
       });
     });
+    if (id.length > 0) {
+      onConfigMenuClose();
+    }
   }
   // MARK: FETCHGEN
   // FUNCTION TO FETCH DATA AND CHANGE STATE TO INDICATE THERE ARE NEW DATA AFTER GETTING NAV COORD TELLING THE each TRACK
@@ -2171,14 +2174,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   return (
     <div>
-      {windowWidth > 0 && userViewRegion && showGenomeNav && (
-        <GenomeNavigator
-          selectedRegion={userViewRegion}
-          genomeConfig={genomeConfig}
-          windowWidth={windowWidth}
-          onRegionSelected={onRegionSelected}
-        />
-      )}
       {/* <div>
         <SortableList
           items={trackComponents}
