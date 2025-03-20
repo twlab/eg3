@@ -10,8 +10,6 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon,
   ArrowsUpDownIcon,
-  PaintBrushIcon,
-  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,9 +37,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
     useState<MagnifyingDirection | null>(null);
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `p-1.5 ${tool === buttonTool ? "bg-secondary" : ""} ${
-      tool !== buttonTool ? "hover:bg-gray-200" : ""
-    } rounded-md`;
+    return `p-1.5 ${tool === buttonTool ? "bg-secondary" : ""} ${tool !== buttonTool ? "hover:bg-gray-200" : ""
+      } rounded-md`;
   };
   const handleToolClick = (selectedTool: Tool): any => {
     if (tool === selectedTool) {
@@ -93,17 +90,20 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             onClick={() => handleToolClick(Tool.Zoom)}
             className={getButtonClass(Tool.Zoom)}
-            title="Zoom out"
+            title="Zoom-in"
           >
-            <MagnifyingGlassIcon className="size-6 text-gray-600" />
+            <span className="size-6 text-gray-600">
+              ⬚🔍+
+            </span>
           </button>
           <button
-            onClick={() => handleToolClick(Tool.Highlight)}
-            className={getButtonClass(Tool.Highlight)}
-            title="Highlight region"
+            onClick={() => handleToolClick(Tool.Reorder)}
+            className={getButtonClass(Tool.Reorder)}
+            title="Re-order"
           >
-            <PaintBrushIcon className="size-6 text-gray-600" />
+            <ArrowsUpDownIcon className="size-6 text-gray-600" />
           </button>
+
 
           <div className="h-full border-r border-gray-400" />
         </motion.div>
@@ -127,7 +127,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             onClick={() => handleToolClick(Tool.PanLeft)}
             className={getButtonClass(Tool.PanLeft)}
-            title="Pan Left"
+            title="Pan left"
           >
             <ArrowLeftCircleIcon className="size-6 text-gray-600" />
           </button>
@@ -139,14 +139,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
               hoveredMagnifyingDirection === MagnifyingDirection.Out
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0
-                : 1,
+                  ? 0
+                  : 1,
             scale:
               hoveredMagnifyingDirection === MagnifyingDirection.Out
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0.95
-                : 1,
+                  ? 0.95
+                  : 1,
           }}
           transition={{ duration: 0.2 }}
           onMouseEnter={() =>
@@ -157,10 +157,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             className={
               getButtonClass() +
-              ` relative rounded-none ${
-                hoveredMagnifyingDirection === MagnifyingDirection.Out
-                  ? "z-20"
-                  : ""
+              ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.Out
+                ? "z-20"
+                : ""
               }`
             }
             title="Zoom out"
@@ -216,14 +215,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
               hoveredMagnifyingDirection === MagnifyingDirection.In
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0
-                : 1,
+                  ? 0
+                  : 1,
             scale:
               hoveredMagnifyingDirection === MagnifyingDirection.In
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                ? 0.95
-                : 1,
+                  ? 0.95
+                  : 1,
           }}
           transition={{ duration: 0.2 }}
           onMouseEnter={() =>
@@ -234,10 +233,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             className={
               getButtonClass() +
-              ` relative rounded-none ${
-                hoveredMagnifyingDirection === MagnifyingDirection.In
-                  ? "z-20"
-                  : ""
+              ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.In
+                ? "z-20"
+                : ""
               }`
             }
             title="Zoom in"
@@ -296,7 +294,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             onClick={() => handleToolClick(Tool.PanRight)}
             className={getButtonClass(Tool.PanRight)}
-            title="Pan Right"
+            title="Pan right"
           >
             <ArrowRightCircleIcon className="size-6 text-gray-600" />
           </button>
@@ -330,16 +328,16 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <ClockIcon className="size-6 text-gray-600" />
           </button> */}
           <button
-            onClick={() => handleToolClick(Tool.Reorder)}
-            className={getButtonClass(Tool.Reorder)}
-            title="Reorder tracks"
+            onClick={() => handleToolClick(Tool.Highlight)}
+            className={getButtonClass(Tool.Highlight)}
+            title="Highlight"
           >
-            <ArrowsUpDownIcon className="size-6 text-gray-600" />
+            <BoltIcon className="size-6 text-gray-600" />
           </button>
           <button
             className={getButtonClass()}
             onClick={() => handleToolClick(Tool.highlightMenu)}
-            title="Highlight Menu"
+            title="Highlight list"
           >
             <LightBulbIcon className="size-6 text-gray-600" />
           </button>

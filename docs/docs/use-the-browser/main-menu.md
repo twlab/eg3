@@ -42,21 +42,41 @@ Tracks are grouped into different groups and can be added to the browser. The tr
 
 ### Adding a custom track or data hub
 
-Users can also submit their own track as a custom track. For example, say we have a bigWig track located at `https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig` . From the Tracks menu choose Custom tracks and a custom track interface will pop up. Fill in the track type, label, and URL before clicking the green Submit button:
+Users can also submit their own track as a custom track. For example, say we have a bigWig track located at `https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig` . From the Tracks menu choose `Remote Tracks` and a remote track interface will pop up. Fill in the track type, label, and URL before clicking the green Submit button:
 
-Adding a custom data hub is similar to the steps above. For example, say you have a hub located at `https://vizhub.wustl.edu/public/tmp/a.json` . From the Tracks menu choose Custom tracks, switch to the Add custom data hub tab, paste the URL of your hub, and then click the green Load From URL button. from URL.
+![image](./img/t26.png)
 
-The tracks within the custom hub can then be added from the generated facet table.
+![image](./img/t27.png)
 
-Note
+The added remote track:
 
-Tracks from custom hubs are hidden by default as users may submit a hub contains hundreds of tracks. Users should add tracks that they want from the facet table.
+![image](./img/t28.png)
+
+Adding a remote data hub is similar to the steps above. For example, say you have a hub located at `https://vizhub.wustl.edu/public/tmp/a.json` . From the Tracks menu choose Remote Tracks, switch to the Add remote data hub tab, paste the URL of your hub, and then click the green Load From URL button. from URL.
+
+![image](./img/t29.png)
+
+The tracks within the remote hub can then be added from the generated facet table.
+
+![image](./img/t30.png)
+
+Click the `0/2` button will bring the interface to add the tracks in the remote hub:
+
+![image](./img/t31.png)
+
+:::info note
+
+Tracks from remote hubs are hidden by default as users may submit a hub contains hundreds of tracks. Users should add tracks that they want from the facet table.
+
+:::
 
 You can also load a local data hub file in JSON format from your computer using the file upload interface, right below the URL submit hub interface.
 
 ### Track Customization
 
-Tracks can be customized in a multitude of manners.
+Tracks can be customized in a multitude of manners. Most of the customizations are done through the context menu of tracks by right clicking the track.
+
+![image](./img/tc1.png)
 
 #### Selecting Tracks
 
