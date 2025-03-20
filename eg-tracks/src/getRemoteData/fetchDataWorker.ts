@@ -122,21 +122,9 @@ self.onmessage = async (event: MessageEvent) => {
     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
       event.data.visData;
   }
-  const tmpQueryGenObj: { [key: string]: any } = {};
-  tmpQueryGenObj[`${primaryGenName}`] = "";
-  let genomeAlignTracks = trackDefaults.filter((items, index) => {
-    return items.type === "genomealign";
-  });
-  genomeAlignTracks.map((items, index) => {
-    if (items.querygenome) {
-      tmpQueryGenObj[`${items.querygenome}`] = "";
-    } else if (items.metadata && items.metadata.genome) {
-      tmpQueryGenObj[`${items.metadata.genome}`] = "";
-    }
-  });
 
   let leftOverTrackModels = trackDefaults.filter((items, index) => {
-    return items.type !== "genomealign";
+    return items && items.type !== "genomealign";
   });
 
   await Promise.all(

@@ -607,6 +607,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return !id.includes(String(item.id));
       }
     );
+
     onTrackDeleted([...trackManagerState.current.tracks]);
     // let newStateObj = createNewTrackState(trackManagerState.current, {});
 
@@ -1152,8 +1153,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               curDataIdx in globalTrackState.current.trackStates
                 ? globalTrackState.current.trackStates[curDataIdx].trackState
                 : "";
-
-            trackToFetch.push(curTrackModel);
+            if (curTrackModel) trackToFetch.push(curTrackModel);
           }
         }
 
@@ -1355,7 +1355,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         } ||
       toolTitle === "isJump"
     ) {
-      console.log("JHERER");
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
 
@@ -1363,7 +1362,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
     // adding new highlight region
     else if (toolTitle === 2) {
-      console.log("JHERER2");
       let newHightlight = {
         start: startbase,
         end: endbase,
@@ -1638,7 +1636,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               const newSelectedTool = toolSelect(tool);
               return newSelectedTool;
             } else {
-              console.log(tool);
               return {
                 isSelected: false,
                 title: 0,
@@ -1802,7 +1799,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!genomeConfig.isInitial) {
-      console.log(tool);
       setSelectedTool((prevState) => {
         if (tool === null || tool === 0) {
           const newSelectedTool = toolSelect(prevState.title);

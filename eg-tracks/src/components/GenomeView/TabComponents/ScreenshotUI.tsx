@@ -107,7 +107,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       const yoffset = trackHeight > 20 ? 24 : 14;
 
       const trackLabelText = ele.children[0].textContent;
-      console.log(ele.children);
+
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
         labelSvg.setAttributeNS(null, "x", x + 4 + "");
@@ -122,7 +122,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       const chrLabelText = ele.children[0].querySelector(
         ".TrackLegend-chrLabel"
       );
-      console.log(chrLabelText);
+
       // if (chrLabelText) {
       //   const labelSvg = document.createElementNS(xmlns, "text");
       //   labelSvg.setAttributeNS(null, "x", x + 15 + "");
@@ -317,7 +317,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           createSVGData.configOptions.displayMode === "full" ||
           trackModel.type === "ruler"
         ) {
-          console.log(createSVGData.trackState);
           newTrackLegend = (
             <TrackLegend
               height={createSVGData.configOptions.height}

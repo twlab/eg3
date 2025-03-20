@@ -62,10 +62,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }
   }, [size.width]);
   useEffect(() => {
-    console.log("SADASD2");
     if (size.width > 0) {
       let curGenome;
-      console.log("SADASD2");
+
       if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = isInitial.current;

@@ -118,7 +118,7 @@ export const browserSlice = createSlice({
             return track;
           });
         }
-        console.log(changes);
+
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
