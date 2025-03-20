@@ -39,8 +39,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
     useState<MagnifyingDirection | null>(null);
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `p-1.5 ${tool === buttonTool ? "bg-secondary" : ""} ${tool !== buttonTool ? "hover:bg-gray-200" : ""
-      } rounded-md`;
+    return `p-1.5 ${tool === buttonTool ? "bg-secondary" : ""} ${
+      tool !== buttonTool ? "hover:bg-gray-200" : ""
+    } rounded-md`;
   };
   const handleToolClick = (selectedTool: Tool): any => {
     if (tool === selectedTool) {
@@ -81,20 +82,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           }}
           transition={{ duration: 0.2 }}
         >
-          {/* <button
+          <button
             onClick={() => handleToolClick(Tool.Drag)}
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
             <HandRaisedIcon className="size-6 text-gray-600" />
-          </button> */}
-          {/* <button
-            onClick={() => handleToolClick(Tool.Reorder)}
-            className={getButtonClass(Tool.Reorder)}
-            title="Reorder tracks"
-          >
-            <ArrowsUpDownIcon className="size-6 text-gray-600" />
-          </button> */}
+          </button>
+
           <button
             onClick={() => handleToolClick(Tool.Zoom)}
             className={getButtonClass(Tool.Zoom)}
@@ -144,14 +139,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
               hoveredMagnifyingDirection === MagnifyingDirection.Out
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                  ? 0
-                  : 1,
+                ? 0
+                : 1,
             scale:
               hoveredMagnifyingDirection === MagnifyingDirection.Out
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                  ? 0.95
-                  : 1,
+                ? 0.95
+                : 1,
           }}
           transition={{ duration: 0.2 }}
           onMouseEnter={() =>
@@ -162,9 +157,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             className={
               getButtonClass() +
-              ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.Out
-                ? "z-20"
-                : ""
+              ` relative rounded-none ${
+                hoveredMagnifyingDirection === MagnifyingDirection.Out
+                  ? "z-20"
+                  : ""
               }`
             }
             title="Zoom out"
@@ -220,14 +216,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
               hoveredMagnifyingDirection === MagnifyingDirection.In
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                  ? 0
-                  : 1,
+                ? 0
+                : 1,
             scale:
               hoveredMagnifyingDirection === MagnifyingDirection.In
                 ? 1
                 : hoveredMagnifyingDirection !== null
-                  ? 0.95
-                  : 1,
+                ? 0.95
+                : 1,
           }}
           transition={{ duration: 0.2 }}
           onMouseEnter={() =>
@@ -238,9 +234,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             className={
               getButtonClass() +
-              ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.In
-                ? "z-20"
-                : ""
+              ` relative rounded-none ${
+                hoveredMagnifyingDirection === MagnifyingDirection.In
+                  ? "z-20"
+                  : ""
               }`
             }
             title="Zoom in"
@@ -322,16 +319,23 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           transition={{ duration: 0.2 }}
         >
           <div className="h-full border-r border-gray-400" />
-          <button
+          {/* <button
             onClick={() => handleToolClick(Tool.Drag)}
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
             <HandRaisedIcon className="size-6 text-gray-600" />
-          </button>
+          </button> */}
           {/* <button className={getButtonClass()} title="Zoom in">
             <ClockIcon className="size-6 text-gray-600" />
           </button> */}
+          <button
+            onClick={() => handleToolClick(Tool.Reorder)}
+            className={getButtonClass(Tool.Reorder)}
+            title="Reorder tracks"
+          >
+            <ArrowsUpDownIcon className="size-6 text-gray-600" />
+          </button>
           <button
             className={getButtonClass()}
             onClick={() => handleToolClick(Tool.highlightMenu)}

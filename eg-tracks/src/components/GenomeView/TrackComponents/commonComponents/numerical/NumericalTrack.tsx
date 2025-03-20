@@ -221,7 +221,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   if (getNumLegend) {
     getNumLegend(legend);
   }
-  console.log(legend);
+
   const visualizer = hasReverse ? (
     <React.Fragment>
       <div

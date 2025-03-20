@@ -41,6 +41,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackFetchedDataCache,
   globalTrackState,
   isScreenShotOpen,
+  posRef,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -1273,47 +1274,70 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height:
-          configOptions.current.displayMode === "full"
-            ? !fetchError.current
-              ? svgHeight.current + 2
-              : 40 + 2
-            : !fetchError.current
-            ? configOptions.current.height + 2
-            : 40 + 2,
-        position: "relative",
-      }}
-    >
-      {configOptions.current.displayMode === "full" ? (
-        <div
-          style={{
-            position: "absolute",
-            lineHeight: 0,
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            backgroundColor: configOptions.current.backgroundColor,
-          }}
-        >
-          {svgComponents}
-        </div>
-      ) : (
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
-      )}
-      {toolTipVisible ? toolTip : ""}
-      {legend}
-    </div>
+    <>
+      {/* <div
+        style={{
+          zIndex: 10,
+          width: 120,
+          backgroundColor: "white",
+          position: "relative",
+        }}
+      >
+        {legend}
+      </div> */}
+      <div
+        // ref={posRef}
+        style={{
+          display: "flex",
+          height:
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current + 2
+                : 40 + 2
+              : !fetchError.current
+              ? configOptions.current.height + 2
+              : 40 + 2,
+          position: "relative",
+        }}
+      >
+        {configOptions.current.displayMode === "full" ? (
+          <div
+            style={{
+              position: "absolute",
+              lineHeight: 0,
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              backgroundColor: configOptions.current.backgroundColor,
+              WebkitBackfaceVisibility: "hidden",
+
+              WebkitPerspective: `${windowWidth + 120}px`,
+              backfaceVisibility: "hidden",
+              perspective: `${windowWidth + 120}px`,
+            }}
+          >
+            {svgComponents}
+          </div>
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              backgroundColor: configOptions.current.backgroundColor,
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
+              WebkitBackfaceVisibility: "hidden",
+
+              WebkitPerspective: `${windowWidth + 120}px`,
+              backfaceVisibility: "hidden",
+              perspective: `${windowWidth + 120}px`,
+            }}
+          >
+            {canvasComponents}
+          </div>
+        )}
+        {toolTipVisible ? toolTip : ""}
+        {legend}
+      </div>
+    </>
   );
 });
 

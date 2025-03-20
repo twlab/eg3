@@ -29,7 +29,6 @@
     "@types/lodash": "^4.17.6",
     "@types/pako": "^2.0.3",
     "3dmol": "^2.4.0",
-    "ajv": "^8.17.1",
     "array-smooth": "^1.0.0",
     "color-rgba": "^3.0.0",
     "d3": "^7.9.0",
@@ -41,7 +40,6 @@
     "isomorphic-fetch": "^3.0.0",
     "jquery": "^3.7.1",
     "json5": "^2.2.3",
-    "jspdf": "^3.0.1",
     "lodash": "^4.17.21",
     "memoize-one": "^6.0.0",
     "pako": "^2.1.0",
@@ -62,7 +60,6 @@
     "react-popper": "^2.3.0",
     "react-table": "^7.8.0",
     "styled-components": "^6.1.16",
-    "svg2pdf": "^1.1.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import type { CSSProperties, PropsWithChildren } from "react";
 import type {
   DraggableSyntheticListeners,
@@ -11,6 +17,9 @@ import "./SortableItem.css";
 
 interface Props {
   id: UniqueIdentifier;
+  onMouseDown?: React.MouseEventHandler<HTMLDivElement>;
+  onContextMenu?: React.MouseEventHandler<HTMLDivElement>;
+  selectedTool: any;
 }
 
 interface Context {
@@ -25,7 +34,14 @@ const SortableItemContext = createContext<Context>({
   ref() {},
 });
 
-export function SortableItem({ children, id }: PropsWithChildren<Props>) {
+export function SortableItem({
+  children,
+  id,
+  onMouseDown,
+  onContextMenu,
+  selectedTool,
+}: PropsWithChildren<Props>) {
+  const [disableDnD, setDisableDnD] = useState(true);
   const {
     attributes,
     isDragging,
@@ -34,7 +50,7 @@ export function SortableItem({ children, id }: PropsWithChildren<Props>) {
     setActivatorNodeRef,
     transform,
     transition,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled: disableDnD });
   const context = useMemo(
     () => ({
       attributes,
@@ -49,23 +65,38 @@ export function SortableItem({ children, id }: PropsWithChildren<Props>) {
     transition,
   };
 
+  const handleMouseDown = (event) => {
+    if (onMouseDown) {
+      onMouseDown(event);
+    }
+  };
+
+  const handleContextMenu = (event) => {
+    event.preventDefault();
+    if (onContextMenu) {
+      onContextMenu(event);
+    }
+  };
+  useEffect(() => {
+    if (!(selectedTool.title === 1 && selectedTool.isSelected)) {
+      setDisableDnD(true);
+    } else {
+      setDisableDnD(false);
+    }
+  }, [selectedTool]);
   return (
     <SortableItemContext.Provider value={context}>
-      <li className="SortableItem" ref={setNodeRef} style={style}>
+      <li
+        className="SortableItem"
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        onMouseDown={handleMouseDown}
+        onContextMenu={handleContextMenu}
+      >
         {children}
       </li>
     </SortableItemContext.Provider>
-  );
-}
-
-export function DragHandle() {
-  const { attributes, listeners, ref } = useContext(SortableItemContext);
-
-  return (
-    <button className="DragHandle" {...attributes} {...listeners} ref={ref}>
-      <svg viewBox="0 0 20 20" width="12">
-        <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
-      </svg>
-    </button>
   );
 }
