@@ -23,7 +23,16 @@ import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 
 const CURL_RADIUS = 15;
+import * as firebase from "firebase/app";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
+  authDomain: "chadeg3-83548.firebaseapp.com",
+  databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
+  storageBucket: "chadeg3-83548.firebasestorage.app",
+};
+
+firebase.initializeApp(firebaseConfig);
 export default function RootLayout() {
   useBrowserInitialization();
 
@@ -83,7 +92,7 @@ export default function RootLayout() {
               >
                 <div
                   className="flex flex-col"
-                  style={{ height: contentHeight, }}
+                  style={{ height: contentHeight }}
                 >
                   <SessionPanel />
                 </div>
@@ -101,7 +110,11 @@ export default function RootLayout() {
                 ? "blur(5px) brightness(0.7)"
                 : "blur(0px) brightness(1)",
             }}
-            onClick={sessionPanelOpen ? () => dispatch(setSessionPanelOpen(false)) : undefined}
+            onClick={
+              sessionPanelOpen
+                ? () => dispatch(setSessionPanelOpen(false))
+                : undefined
+            }
           >
             {/* MARK: - Genome View */}
             <motion.div

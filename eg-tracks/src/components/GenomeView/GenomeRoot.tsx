@@ -33,6 +33,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const trackManagerId = useRef<null | string>(null);
   // TO-DO need to set initial.current back to true when genomeConfig changes
   // to see if genomeConfig we can check its session id because it will unique
+
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;

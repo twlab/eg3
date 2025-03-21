@@ -2075,6 +2075,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (
         !arraysHaveSameTrackModels(tracks, trackManagerState.current.tracks)
       ) {
+        console.log(tracks, "TRACKS IN VIEW");
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
           newTrackId[`${trackModel.id}`] = {};

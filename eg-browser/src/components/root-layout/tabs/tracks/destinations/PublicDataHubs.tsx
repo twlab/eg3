@@ -13,7 +13,9 @@ import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
 
 import {
   addPublicTracksPool,
+  selectLoadedPublicHub,
   selectPublicTracksPool,
+  updateLoadedPublicHub,
 } from "@/lib/redux/slices/hubSlice";
 import DataHubParser from "@eg/tracks/src/models/DataHubParser";
 import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
@@ -21,13 +23,12 @@ import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import TrackModel from "@eg/tracks/src/models/TrackModel";
 export default function PublicDataHubs() {
   const genomeConfig = useCurrentGenome();
+  const loadedPublicHub = useAppSelector(selectLoadedPublicHub);
   const publicTracksPool = useAppSelector(selectPublicTracksPool);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingHubs, setLoadingHubs] = useState<Set<string>>(new Set());
-
-  const [loadedHubs, setLoadedHubs] = useState<Set<string>>(new Set());
 
   const secondaryGenomes: Array<any> = [];
   let selectedGenomeName = null;
@@ -41,6 +42,7 @@ export default function PublicDataHubs() {
         (g) => g.genome.getName() === selectedGenomeName
       );
     }
+
     return genomeConfig;
   }, [secondaryGenomes, selectedGenomeName, genomeConfig]);
 
@@ -59,6 +61,7 @@ export default function PublicDataHubs() {
   const loadHub = async (hub: any) => {
     const parser = new DataHubParser();
     setLoadingHubs((prev) => new Set([...prev, hub.url]));
+
     try {
       const json = await new Json5Fetcher().get(hub.url);
       const lastSlashIndex = hub.url.lastIndexOf("/");
@@ -82,8 +85,7 @@ export default function PublicDataHubs() {
           })
         );
       }
-
-      setLoadedHubs((prev) => new Set([...prev, hub.url]));
+      dispatch(updateLoadedPublicHub(new Set([...loadedPublicHub, hub.url])));
     } catch (error) {
       console.error(error);
       // dispatch(addPublicTracksPool([...publicTracksPool]));
@@ -98,7 +100,7 @@ export default function PublicDataHubs() {
 
   const renderHubItem = (hub: any) => {
     const isLoading = loadingHubs.has(hub.url);
-    const isLoaded = loadedHubs.has(hub.url);
+    const isLoaded = loadedPublicHub.has(hub.url);
 
     return (
       <div key={hub.url} className="flex items-center justify-between py-1">

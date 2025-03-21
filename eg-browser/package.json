@@ -20,6 +20,7 @@
         "@types/uuid": "^10.0.0",
         "autoprefixer": "^10.4.20",
         "classnames": "^2.5.1",
+        "firebase": "^11.5.0",
         "framer-motion": "^11.11.17",
         "lodash": "^4.17.21",
         "postcss": "^8.4.49",

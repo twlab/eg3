@@ -10,6 +10,7 @@ import {
 } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
+import { resetState } from "../slices/hubSlice";
 
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",
@@ -69,8 +70,7 @@ export const importOneSession = createAsyncThunk(
     if (!session.updatedAt) session.updatedAt = Date.now();
 
     session.id = crypto.randomUUID();
-
-    thunkApi.dispatch(upsertSession(session));
+    thunkApi.thunkApi.dispatch(upsertSession(session));
 
     if (navigatingToSession) {
       thunkApi.dispatch(setCurrentSession(session.id));
