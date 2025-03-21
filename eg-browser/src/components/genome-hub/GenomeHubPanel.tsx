@@ -13,6 +13,7 @@ import ClearAllButton from "../sessions/ClearAllButton";
 import Button from "../ui/button/Button";
 import EmptyView from "../ui/empty/EmptyView";
 import Progress from "../ui/progress/Progress";
+import GenomeHubManager from "@eg/tracks/src/genome-hub/GenomeHubManager";
 
 type GroupedGenomes = {
     [key: string]: IGenome[];
@@ -62,10 +63,6 @@ export default function GenomeHubPanel() {
             dispatch(refreshLocalGenomes());
         }
 }, [dispatch, customGenomesLoadStatus]);
-
-    const handleClearAll = () => {
-        dispatch(clearAllGenomes());
-    }
 
     return (
         <div className="flex flex-col pt-2 h-full">
@@ -118,12 +115,14 @@ function GenomeHubItem({
     const [isHovered, setIsHovered] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const handleClick = () => {
+    const handleClick = async () => {
         setLoading(true);
-        setTimeout(() => {
-            // TODO: preload the genome
-            dispatch(createSession({ genome }));
-        }, 1000);
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        await GenomeHubManager.getInstance().preloadGenome(genome.id);
+
+        dispatch(createSession({ genome }));
     }
 
     const shouldExpand = isHovered && !loading;

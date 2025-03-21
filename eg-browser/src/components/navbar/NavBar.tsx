@@ -1,22 +1,17 @@
-import Logo from "../../assets/logo.png";
-import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
-import {
-  selectNavigationTab,
-  selectSessionPanelOpen,
-  setNavigationTab,
-  setSessionPanelOpen,
-} from "../../lib/redux/slices/navigationSlice";
-import Button from "../ui/button/Button";
-import { motion, AnimatePresence } from "framer-motion";
-import useSmallScreen from "../../lib/hooks/useSmallScreen";
-import {
-  selectCurrentSession,
-  updateCurrentSession,
-} from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import InlineEditable from "../ui/input/InlineEditable";
-import { versionToLogoUrl } from "../genome-picker/genome-list";
+import { selectCurrentSession, updateCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from "@heroicons/react/24/outline";
 import classNames from "classnames";
+import { AnimatePresence, motion } from "framer-motion";
+
+import Logo from "../../assets/logo.png";
+import useSmallScreen from "../../lib/hooks/useSmallScreen";
+import { useAppDispatch, useAppSelector, useUndoRedo } from "../../lib/redux/hooks";
+import { selectNavigationTab, selectSessionPanelOpen, setNavigationTab, setSessionPanelOpen } from "../../lib/redux/slices/navigationSlice";
+import { versionToLogoUrl } from "../genome-picker/genome-list";
+import Button from "../ui/button/Button";
+import IconButton from "../ui/button/IconButton";
+import InlineEditable from "../ui/input/InlineEditable";
 
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
@@ -25,6 +20,8 @@ export default function NavBar() {
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
+
+  const { undo, redo, canUndo, canRedo } = useUndoRedo();
 
   const genome = useCurrentGenome();
 
@@ -101,6 +98,23 @@ export default function NavBar() {
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
           >
+            <IconButton
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo"
+              className={!canUndo ? "opacity-50 cursor-not-allowed" : ""}
+            >
+              <ArrowUturnLeftIcon className="h-5 w-5" />
+            </IconButton>
+            <IconButton
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo"
+              className={!canRedo ? "opacity-50 cursor-not-allowed" : ""}
+            >
+              <ArrowUturnRightIcon className="h-5 w-5" />
+            </IconButton>
+
             <Button
               onClick={() =>
                 dispatch(

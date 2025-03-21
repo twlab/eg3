@@ -9,7 +9,11 @@ interface ElementGeometry {
     bottom: number;
 }
 
-export function useElementGeometry() {
+export function useElementGeometry({
+    shouldRespondToResize = true,
+}: {
+    shouldRespondToResize?: boolean;
+} = {}) {
     const [ref, setRef] = useState<HTMLElement | null>(null);
     const [geometry, setGeometry] = useState<ElementGeometry>({
         width: 0,
@@ -37,14 +41,19 @@ export function useElementGeometry() {
     useEffect(() => {
         if (!ref) return;
 
-        const resizeObserver = new ResizeObserver(handleResize);
-        resizeObserver.observe(ref);
+        let resizeObserver: ResizeObserver | null = null;
+
+        if (shouldRespondToResize) {
+            resizeObserver = new ResizeObserver(handleResize);
+            resizeObserver.observe(ref);
+        }
+
         handleResize();
 
         return () => {
-            resizeObserver.disconnect();
+            resizeObserver?.disconnect();
         };
-    }, [ref, handleResize]);
+    }, [ref, handleResize, shouldRespondToResize]);
 
     return { ref: setRef, ...geometry };
 }

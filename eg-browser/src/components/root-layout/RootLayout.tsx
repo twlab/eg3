@@ -16,11 +16,12 @@ import HelpTab from "./tabs/HelpTab";
 import ShareTab from "./tabs/ShareTab";
 import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
-import { selectCurrentSessionId } from "@/lib/redux/slices/browserSlice";
+import { selectCurrentSessionId, setCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
+import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 
 const CURL_RADIUS = 15;
 
@@ -45,6 +46,10 @@ export default function RootLayout() {
     width: contentWidth,
     height: contentHeight,
   } = useElementGeometry();
+
+  const handleGoHome = () => {
+    dispatch(setCurrentSession(null));
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col bg-black">
@@ -136,7 +141,9 @@ export default function RootLayout() {
                     transition={{ duration: 0.3 }}
                     style={{ width: contentWidth, height: contentHeight }}
                   >
-                    <GenomeView />
+                    <GenomeErrorBoundary onGoHome={handleGoHome}>
+                      <GenomeView />
+                    </GenomeErrorBoundary>
                   </motion.div>
                 ) : (
                   <motion.div

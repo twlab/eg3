@@ -39,5 +39,6 @@ export default function useGenome(genomeId: string) {
         });
     }
   }, [genomeId]);
+
   return { genome, error };
 }

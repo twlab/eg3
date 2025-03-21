@@ -5,4 +5,4 @@ export default function Session() {
             <p>Session placeholder component</p>
         </div>
     );
-} 
+}

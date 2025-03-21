@@ -27,8 +27,6 @@ export const addCustomGenome = createAsyncThunk(
         const jsonFile = await file.text();
         const genomeData = JSON.parse(jsonFile);
 
-        genomeData.id = crypto.randomUUID();
-
         await genomeHubManager.putGenome(genomeData);
 
         thunkApi.dispatch(refreshLocalGenomes());

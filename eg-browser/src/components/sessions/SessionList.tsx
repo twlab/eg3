@@ -5,6 +5,7 @@ import {
   deleteSession,
   selectCurrentSessionId,
   selectSessions,
+  upsertSession,
 } from "@/lib/redux/slices/browserSlice";
 import {
   ChevronRightIcon,
@@ -160,6 +161,17 @@ function SessionListItem({
     URL.revokeObjectURL(url);
   };
 
+  const handleDuplicate = (event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    const newSession = {
+      ...session,
+      id: crypto.randomUUID(),
+    }
+
+    dispatch(upsertSession(newSession));
+  };
+
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!isConfirmingDelete) {
@@ -242,7 +254,7 @@ function SessionListItem({
               </div>
             </div>
           )}
-          <div className="flex flex-row items-center justify-between gap-2">
+          <div className="flex flex-col items-stretch gap-2">
             {allowDelete && (
               <Button
                 backgroundColor={isConfirmingDelete ? "alert" : "tint"}
@@ -263,6 +275,13 @@ function SessionListItem({
               style={{ flex: 1 }}
             >
               Export
+            </Button>
+            <Button
+              backgroundColor="tint"
+              onClick={handleDuplicate}
+              style={{ flex: 1 }}
+            >
+              Duplicate
             </Button>
           </div>
         </div>

@@ -54,7 +54,7 @@ export default class GenomeSerializer {
         };
     }
 
-    static validate(object: any): boolean {
-        return validateGenomeData(object).valid;
+    static validateGenomeObject(object: any) {
+        return validateGenomeData(object);
     }
 }

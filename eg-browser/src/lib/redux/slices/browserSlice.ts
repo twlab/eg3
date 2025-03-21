@@ -191,17 +191,20 @@ export const {
 } = browserSlice.actions;
 
 export const selectCurrentSessionId = (state: RootState) =>
-  state.browser.currentSession;
+  state.browser.present.currentSession;
 
 const browserSessionSelectors = browserSessionAdapter.getSelectors(
-  (state: RootState) => state.browser.sessions
+  (state: RootState) => state.browser.present.sessions
 );
 
 export const selectCurrentSession = (state: RootState) =>
-  state.browser.currentSession
-    ? browserSessionSelectors.selectById(state, state.browser.currentSession)
+  state.browser.present.currentSession
+    ? browserSessionSelectors.selectById(state, state.browser.present.currentSession)
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;
+
+export const selectCanUndo = (state: RootState) => state.browser.past.length > 0;
+export const selectCanRedo = (state: RootState) => state.browser.future.length > 0;
 
 export default browserSlice.reducer;
