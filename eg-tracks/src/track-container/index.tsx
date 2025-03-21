@@ -174,7 +174,15 @@ export function TrackContainerRepresentable({
 
   const convertedViewRegion = useMemo(() => {
     try {
-      if (lastViewRegion.current) {
+      if (!viewRegion) {
+        if (userViewRegion) {
+          const start = userViewRegion.start;
+
+          const end = userViewRegion.end;
+
+          return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+        }
+      } else if (lastViewRegion.current) {
         const navContext = lastViewRegion.current.getNavigationContext();
 
         const parsed = navContext.parse(viewRegion);
@@ -192,11 +200,11 @@ export function TrackContainerRepresentable({
           ...genomeConfig.defaultRegion
         );
 
-        const parsed = navContext.parse(viewRegion);
-        let { start, end } = parsed;
+        // const parsed = navContext.parse(viewRegion);
+        // let { start, end } = parsed;
 
-        startViewRegion.setRegion(start, end);
-        lastViewRegion.current = startViewRegion;
+        // startViewRegion.setRegion(start, end);
+        // lastViewRegion.current = startViewRegion;
         return startViewRegion;
       }
     } catch (e) {

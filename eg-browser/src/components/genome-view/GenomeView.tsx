@@ -29,6 +29,7 @@ export default function GenomeView() {
   }
   const selectedRegionSet = currentSession?.selectedRegionSet;
   const overrideViewRegion = currentSession?.overrideViewRegion;
+  const viewRegion = currentSession?.viewRegion;
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
   };
@@ -60,12 +61,16 @@ export default function GenomeView() {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => {
+    let currCoordinate: GenomeCoordinate | null = coordinate;
+    if (coordinate === viewRegion) {
+      currCoordinate = null;
+    }
     dispatch(
       updateCurrentSession({
         userViewRegion: { start: startbase, end: endbase },
       })
     );
-    dispatch(updateCurrentSession({ viewRegion: coordinate }));
+    dispatch(updateCurrentSession({ viewRegion: currCoordinate }));
   };
 
   return (
@@ -83,7 +88,7 @@ export default function GenomeView() {
         onTrackDeleted={handleTrackDeleted}
         onTrackAdded={handleTrackAdded}
         onNewRegionSelect={handleNewRegionSelect}
-        viewRegion={currentSession.viewRegion}
+        viewRegion={viewRegion}
         userViewRegion={currentSession.userViewRegion}
         tool={tool}
         Toolbar={Toolbar}

@@ -43,7 +43,7 @@ export interface ITrackContainerRepresentableProps {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => void;
-  viewRegion: GenomeCoordinate;
+  viewRegion: GenomeCoordinate | null;
   userViewRegion: { start: number; end: number } | null;
   tool: Tool | null;
   Toolbar?: any;

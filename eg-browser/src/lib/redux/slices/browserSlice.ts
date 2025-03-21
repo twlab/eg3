@@ -22,13 +22,12 @@ export interface BrowserSession {
 
   title: string;
   genomeId: uuid;
-  viewRegion: GenomeCoordinate;
+  viewRegion: GenomeCoordinate | null;
   userViewRegion: { start: number; end: number } | null;
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];
   metadataTerms: string[];
-  trackModelId: number;
   regionSets: Array<any>;
   selectedRegionSet: RegionSet | null;
   overrideViewRegion: GenomeCoordinate | null;
@@ -65,7 +64,6 @@ export const browserSlice = createSlice({
 
       let allTracks = [...tracks, ...additionalTracks];
 
-      let trackModelId = 0;
       const initializedTracks =
         allTracks?.map((track) => ({
           ...track,
@@ -85,7 +83,6 @@ export const browserSlice = createSlice({
         genomeId: genome.id,
         highlights: [],
         metadataTerms: [],
-        trackModelId,
         regionSets: [],
         selectedRegionSet: null,
       };
@@ -110,7 +107,6 @@ export const browserSlice = createSlice({
       action: PayloadAction<Partial<BrowserSession>>
     ) => {
       if (state.currentSession) {
-        const session = state.sessions.entities[state.currentSession];
         const changes = { ...action.payload };
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
