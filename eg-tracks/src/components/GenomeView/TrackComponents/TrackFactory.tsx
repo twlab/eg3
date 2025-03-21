@@ -191,7 +191,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
+    setLegend(updatedLegend.current);
   }, [svgComponents, canvasComponents]);
 
   // MARK:[newDrawDat
@@ -1275,18 +1275,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   return (
     <>
-      {/* <div
+      <div
         style={{
           zIndex: 10,
           width: 120,
-          backgroundColor: "white",
+
+          backgroundColor: trackModel.isSelected ? "#F6DED8" : "white",
           position: "relative",
         }}
       >
         {legend}
-      </div> */}
+      </div>
       <div
-        // ref={posRef}
+        ref={posRef}
         style={{
           display: "flex",
           height:
@@ -1298,6 +1299,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               ? configOptions.current.height + 2
               : 40 + 2,
           position: "relative",
+          width: "100px",
         }}
       >
         {configOptions.current.displayMode === "full" ? (
@@ -1335,7 +1337,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           </div>
         )}
         {toolTipVisible ? toolTip : ""}
-        {legend}
+        {/* {legend} */}
       </div>
     </>
   );
