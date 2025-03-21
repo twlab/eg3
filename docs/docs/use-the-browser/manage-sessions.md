@@ -8,7 +8,7 @@ Sessions are used to quickly restore the view last time or be shared to collabor
 
 ![image](./img/s1.png)
 
-Mouse over the session will show more detailed information about this session:
+Mouse over the session will show more detailed information about this session. Session can be Deleted, Exported for download as a JSON file or be duplicated as a copy.
 
 ![image](./img/s2.png)
 
