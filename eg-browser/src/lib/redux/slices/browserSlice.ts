@@ -138,7 +138,7 @@ export const browserSlice = createSlice({
             : [action.payload];
 
           const tracksWithIds = newTracks.map((track) => {
-            if (!("id" in track)) {
+            if (!("id" in track) || !track["id"]) {
               return {
                 ...(track as object),
                 id: crypto.randomUUID(),

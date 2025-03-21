@@ -45,7 +45,7 @@ export default function ImportSession() {
         const mappedTracks = session.tracks.map((track: any) => {
           return {
             ...track,
-
+            id: crypto.randomUUID(),
             genome: session.genomeName,
             isSelected: false,
           } satisfies ITrackModel;
