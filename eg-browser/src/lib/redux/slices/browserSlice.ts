@@ -148,7 +148,7 @@ export const browserSlice = createSlice({
             id: state.currentSession,
             changes: {
               tracks: [...session.tracks, ...tracksWithIds],
-              trackModelId: session.trackModelId,
+
               updatedAt: Date.now(),
             },
           });
