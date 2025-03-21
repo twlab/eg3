@@ -19,7 +19,7 @@ export interface ITrackContainerState {
     endbase: number,
     highlightSearch?: boolean
   ) => void;
-  viewRegion: DisplayedRegionModel;
+  viewRegion: DisplayedRegionModel | undefined;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
   selectedRegionSet: any;

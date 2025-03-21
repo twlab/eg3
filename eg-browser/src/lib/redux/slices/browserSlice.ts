@@ -19,7 +19,7 @@ export interface BrowserSession {
   id: uuid;
   createdAt: number;
   updatedAt: number;
-
+  bundleId: string | null; // stays null until the user save their current session, load session, or get sessions from Url param
   title: string;
   genomeId: uuid;
   viewRegion: GenomeCoordinate | null;
@@ -54,6 +54,7 @@ export const browserSlice = createSlice({
         additionalTracks?: ITrackModel[];
       }>
     ) => {
+      //TO DO url param to also get bundleId and get it here as a property for initial startup
       const {
         genome,
         viewRegion: overrideViewRegion,
@@ -70,17 +71,19 @@ export const browserSlice = createSlice({
           id: crypto.randomUUID(),
           isSelected: false,
         })) || [];
-
+      console.log("HEREREREREREREREREERE,", genome.id);
       const nextSession: BrowserSession = {
         id: crypto.randomUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
+        bundleId: null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
+
         highlights: [],
         metadataTerms: [],
         regionSets: [],
@@ -110,13 +113,13 @@ export const browserSlice = createSlice({
         const changes = { ...action.payload };
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
-            if (!("id" in track)) {
+            if (!("id" in track) || !track["id"]) {
               (track as ITrackModel).id = crypto.randomUUID();
             }
             return track;
           });
         }
-
+        console.log(changes);
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
@@ -143,7 +146,7 @@ export const browserSlice = createSlice({
             }
             return track;
           });
-
+          console.log([...session.tracks, ...tracksWithIds]);
           browserSessionAdapter.updateOne(state.sessions, {
             id: state.currentSession,
             changes: {

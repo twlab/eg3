@@ -30,7 +30,7 @@ import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
 import { Tool } from "../../types";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
-import Toolbar from "@/components/genome-view/toolbar/Toolbar";
+
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
 import { convertTrackModelToITrackModel } from "./utils";
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
@@ -847,22 +847,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       regionExpandLoci: regionExpandLoci,
       initVisData: initial
         ? initExpandBpLoci.map((item, index) => {
-          return {
-            visRegion: new DisplayedRegionModel(
-              genomeConfig.navContext,
-              item.start,
-              item.end
-            ),
-            viewWindowRegion: new DisplayedRegionModel(
-              genomeConfig.navContext,
-              initBpLoci[index].start,
-              initBpLoci[index].endS
-            ),
-            visWidth: windowWidth * 3,
+            return {
+              visRegion: new DisplayedRegionModel(
+                genomeConfig.navContext,
+                item.start,
+                item.end
+              ),
+              viewWindowRegion: new DisplayedRegionModel(
+                genomeConfig.navContext,
+                initBpLoci[index].start,
+                initBpLoci[index].endS
+              ),
+              visWidth: windowWidth * 3,
 
-            viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
-          };
-        })
+              viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+            };
+          })
         : "",
     };
 
@@ -950,7 +950,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           if (
             browserMemorySize["memory"] &&
             browserMemorySize["memory"].usedJSHeapSize >
-            browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+              browserMemorySize["memory"].jsHeapSizeLimit * 0.7
           ) {
             for (const key in trackFetchedDataCache.current) {
               const curTrack = trackFetchedDataCache.current[key];
@@ -1165,15 +1165,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             visData: trackState.visData
               ? trackState.visData
               : trackState.genomicFetchCoord
-                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
-                : "",
+              ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+              : "",
             genomicLoci: trackState.regionLoci,
             visRegion: trackState.visRegion
               ? trackState.visRegion
               : trackState.genomicFetchCoord
-                ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
+              ? trackState.genomicFetchCoord[`${genName}`].primaryVisData
                   .visRegion
-                : "",
+              : "",
             regionExpandLoci: trackState.regionExpandLoci,
             useFineModeNav: useFineModeNav.current,
             windowWidth,
@@ -1254,8 +1254,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           .primaryVisData;
       let visRegion = !cacheTrackData.usePrimaryNav
         ? trackState.genomicFetchCoord[
-          trackFetchedDataCache.current[`${fetchRes.id}`].queryGenome
-        ].queryRegion
+            trackFetchedDataCache.current[`${fetchRes.id}`].queryGenome
+          ].queryRegion
         : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
 
@@ -1347,12 +1347,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       String(toolTitle) in zoomFactors ||
       String(toolTitle) in
-      {
-        "3": "",
-        "4": "",
-        "5": "",
-        "12": "",
-      } ||
+        {
+          "3": "",
+          "4": "",
+          "5": "",
+          "12": "",
+        } ||
       toolTitle === "isJump"
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
@@ -1420,8 +1420,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       "querygenome" in initTrackModel && initTrackModel.querygenome
         ? initTrackModel.querygenome
         : "genome" in initTrackModel.metadata && initTrackModel.metadata.genome
-          ? initTrackModel.metadata.genome
-          : genomeConfig.genome.getName();
+        ? initTrackModel.metadata.genome
+        : genomeConfig.genome.getName();
 
     const queryGenome =
       trackFetchedDataCache.current[`${initTrackModel.id}`]["queryGenome"];
@@ -1430,7 +1430,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     trackFetchedDataCache.current[`${initTrackModel.id}`]["useExpandedLoci"] =
       initTrackModel.type in trackUsingExpandedLoci ||
-        queryGenome !== genomeConfig.genome.getName()
+      queryGenome !== genomeConfig.genome.getName()
         ? true
         : false;
 
@@ -1547,8 +1547,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           (_item: any, index: string | number) => {
             fetchInstances.current[
               `${trackManagerState.current.tracks[i].id}` +
-              "subtrack" +
-              `${index}`
+                "subtrack" +
+                `${index}`
             ] = new HicSource(
               trackManagerState.current.tracks[i].tracks![index].url
             );
@@ -2285,12 +2285,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   tool === Tool.Drag
                     ? "pointer"
                     : tool === Tool.Reorder
-                      ? "move"
-                      : tool === Tool.Highlight
-                        ? "ew-resize"
-                        : tool === Tool.Zoom
-                          ? "zoom-in"
-                          : "default",
+                    ? "move"
+                    : tool === Tool.Highlight
+                    ? "ew-resize"
+                    : tool === Tool.Zoom
+                    ? "zoom-in"
+                    : "default",
               }}
             >
               <div ref={horizontalLineRef} className="horizontal-line" />
@@ -2324,12 +2324,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         tool === Tool.Drag
                           ? "pointer"
                           : tool === Tool.Reorder
-                            ? "move"
-                            : tool === Tool.Highlight
-                              ? "ew-resize"
-                              : tool === Tool.Zoom
-                                ? "zoom-in"
-                                : "default",
+                          ? "move"
+                          : tool === Tool.Highlight
+                          ? "ew-resize"
+                          : tool === Tool.Zoom
+                          ? "zoom-in"
+                          : "default",
                     }}
                   >
                     <SortableList
@@ -2415,47 +2415,47 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
                                 {highlightElements.length > 0
                                   ? highlightElements.map((item, index) => {
-                                    if (item.display) {
-                                      return (
-                                        <div
-                                          key={index}
-                                          style={{
-                                            display: "flex",
-                                            height: "100%",
-                                          }}
-                                        >
+                                      if (item.display) {
+                                        return (
                                           <div
+                                            key={index}
                                             style={{
                                               display: "flex",
-                                              position: "relative",
                                               height: "100%",
                                             }}
                                           >
                                             <div
-                                              key={index}
                                               style={{
-                                                position: "absolute",
-                                                backgroundColor: item.color,
-
-                                                top: "0",
+                                                display: "flex",
+                                                position: "relative",
                                                 height: "100%",
-                                                left:
-                                                  item.side === "right"
-                                                    ? `${item.xPos}px`
-                                                    : "",
-                                                right:
-                                                  item.side === "left"
-                                                    ? `${item.xPos}px`
-                                                    : "",
-                                                width: item.width,
-                                                pointerEvents: "none", // This makes the highlighted area non-interactive
                                               }}
-                                            ></div>
+                                            >
+                                              <div
+                                                key={index}
+                                                style={{
+                                                  position: "absolute",
+                                                  backgroundColor: item.color,
+
+                                                  top: "0",
+                                                  height: "100%",
+                                                  left:
+                                                    item.side === "right"
+                                                      ? `${item.xPos}px`
+                                                      : "",
+                                                  right:
+                                                    item.side === "left"
+                                                      ? `${item.xPos}px`
+                                                      : "",
+                                                  width: item.width,
+                                                  pointerEvents: "none", // This makes the highlighted area non-interactive
+                                                }}
+                                              ></div>
+                                            </div>
                                           </div>
-                                        </div>
-                                      );
-                                    }
-                                  })
+                                        );
+                                      }
+                                    })
                                   : ""}
                               </div>
                             </div>
@@ -2473,8 +2473,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       }}
                     >
                       {selectedTool &&
-                        selectedTool.isSelected &&
-                        selectedTool.title !== 1 ? (
+                      selectedTool.isSelected &&
+                      selectedTool.title !== 1 ? (
                         <SelectableGenomeArea
                           selectableRegion={userViewRegion}
                           dragLimits={

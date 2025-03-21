@@ -47,6 +47,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome["sizeChange"] = true;
       } else {
+        console.log("HERRERR");
         trackManagerId.current = crypto.randomUUID();
         curGenome = genomeConfig;
         curGenome["isInitial"] = isInitial.current;
