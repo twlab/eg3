@@ -32,7 +32,7 @@ import { Tool } from "../../types";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-import { convertTrackModelToITrackModel } from "./utils";
+
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
   "7": { factor: 2, text: "1×", title: "Zoom out 1-fold (Alt+O)" },
@@ -1823,6 +1823,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // and do not add to the StateArr.
 
     if (genomeConfig.isInitial) {
+      console.log("HJERE1");
       prevWindowWidth.current = windowWidth;
 
       trackManagerState.current.tracks.map(
@@ -1861,6 +1862,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         setInitialStart("workerReady");
       }
     } else if (genomeConfig.sizeChange) {
+      console.log("HJERE2");
       preload.current = true;
       // refreshState();
       trackSizeChange();
@@ -1868,6 +1870,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // initializeTracks();
     } else {
+      console.log("HJERE32333");
       preload.current = true;
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
       refreshState();

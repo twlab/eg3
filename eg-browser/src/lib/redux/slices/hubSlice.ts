@@ -10,8 +10,12 @@ export const hubSlice = createSlice({
     screenshotData: {} as { [key: string]: any },
     screenShotOpen: false as boolean,
     loadedPublicHub: new Set(),
-    bundle: { bundle: null, currentId: null, sessionInBundle: null } as {
-      bundle: string | null;
+    bundle: {
+      bundleId: crypto.randomUUID(),
+      currentId: null,
+      sessionInBundle: null,
+    } as {
+      bundleId: string;
       currentId: string | null;
       sessionInBundle: { [key: string]: any } | null;
     },
@@ -29,10 +33,11 @@ export const hubSlice = createSlice({
     ) => {
       state.screenshotData = action.payload;
     },
+
     updateBundle: (
       state,
       action: PayloadAction<{
-        bundle: string | null;
+        bundleId: string;
         currentId: string | null;
         sessionInBundle: { [key: string]: any } | null;
       }>
@@ -52,6 +57,11 @@ export const hubSlice = createSlice({
       state.screenshotData = {};
       state.screenShotOpen = false;
       state.loadedPublicHub = new Set();
+      state.bundle = {
+        bundleId: crypto.randomUUID(),
+        currentId: null,
+        sessionInBundle: null,
+      };
     },
   },
 });

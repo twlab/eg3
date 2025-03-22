@@ -12,6 +12,7 @@ import {
 
 import { RootState } from "../store";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
+import { BundleProps } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
 
 export type uuid = string;
 
@@ -71,7 +72,7 @@ export const browserSlice = createSlice({
           id: crypto.randomUUID(),
           isSelected: false,
         })) || [];
-      console.log("HEREREREREREREREREERE,", genome.id);
+
       const nextSession: BrowserSession = {
         id: crypto.randomUUID(),
         createdAt: Date.now(),
@@ -111,6 +112,7 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
+        console.log(changes);
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
@@ -119,7 +121,7 @@ export const browserSlice = createSlice({
             return track;
           });
         }
-        console.log(changes);
+
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
@@ -146,7 +148,7 @@ export const browserSlice = createSlice({
             }
             return track;
           });
-          console.log([...session.tracks, ...tracksWithIds]);
+
           browserSessionAdapter.updateOne(state.sessions, {
             id: state.currentSession,
             changes: {

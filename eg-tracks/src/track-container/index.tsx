@@ -106,12 +106,11 @@ export function TrackContainerRepresentable({
 
       return GenomeSerializer.deserialize(_genomeConfig);
     }
-  }, [_genomeConfig, selectedRegionSet, overrideViewRegion]);
+  }, [_genomeConfig, selectedRegionSet]);
 
   // MARK: Tracks
 
   const trackCache = useRef(new Map<string, TrackModel>());
-
   const convertTrackModelToITrackModel = useCallback(
     (track: TrackModel): ITrackModel => ({
       name: track.name,

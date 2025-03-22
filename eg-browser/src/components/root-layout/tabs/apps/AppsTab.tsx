@@ -100,12 +100,13 @@ export default function AppsTab() {
           title="Scatter Plot"
           description="Generate scatter plots for genomic data analysis"
         />
-        {/* <DescriptiveNavigationLink
+        <DescriptiveNavigationLink
+          path="session"
           title="Session"
           description="Manage and share your browser sessions"
-          onClick={() => dispatch(setSessionPanelOpen(true))}
+          // onClick={() => dispatch(setSessionPanelOpen(true))}
         />
-        <DescriptiveNavigationLink
+        {/* <DescriptiveNavigationLink
           path="go-live"
           title="Go Live"
           description="Share your browser view in real-time with others"

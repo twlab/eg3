@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent } from "react";
-import { v4 as uuidv4 } from "uuid";
+
 import JSZip from "jszip";
 import _ from "lodash";
 
@@ -13,7 +13,8 @@ import { getGenomeConfig } from "../../../models/genomes/allGenomes";
 import OpenInterval from "../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { HighlightInterval } from "../ToolComponents/HighlightMenu";
-export interface TrackState {
+import { ITrackModel } from "../../../types";
+export interface BundleProps {
   bundleId: string;
   customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
   darkTheme: boolean;
@@ -24,9 +25,9 @@ export interface TrackState {
   metadataTerms: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
   regionSetView: any | null; // use appropriate type if you know it
   regionSets: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
-  viewRegion: DisplayedRegionModel;
+  viewRegion: DisplayedRegionModel | null;
   trackLegendWidth: number;
-  tracks: Array<TrackModel>;
+  tracks: Array<TrackModel> | Array<ITrackModel>;
 }
 
 interface SessionBundle {
@@ -49,35 +50,93 @@ interface HasBundleId {
 interface SessionUIProps extends HasBundleId {
   onRestoreSession: (session: object) => void;
   onRetrieveBundle: (newBundle: any) => void;
+  updateBundle: (bundle: any) => void;
   withGenomePicker?: boolean;
-  state?: TrackState;
-  curBundle?: any;
-  addSessionState: any;
+  state?: BundleProps;
+  curBundle: any;
 }
+
+export const onRetrieveSession = async (retrieveId: string) => {
+  if (retrieveId.length === 0) {
+    console.log("Session bundle Id cannot be empty.", "error", 2000);
+    return null;
+  }
+  console.log(retrieveId, "ID CHECKING if fetch works");
+  const dbRef = ref(getDatabase());
+  try {
+    const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
+    if (snapshot.exists()) {
+      let res = snapshot.val();
+      for (let curId in res.sessionsInBundle) {
+        if (res.sessionsInBundle.hasOwnProperty(curId)) {
+          let object = res.sessionsInBundle[curId].state;
+          console.log(object, "return RESULT");
+
+          const regionSets = object.regionSets
+            ? object.regionSets.map(RegionSet.deserialize)
+            : [];
+          const regionSetView = regionSets[object.regionSetViewIndex] || null;
+
+          // Create the newBundle object based on the existing object.
+          let newBundle = {
+            genomeName: object.genomeName,
+            viewRegion: new DisplayedRegionModel(
+              getGenomeConfig(object.genomeName).navContext,
+              object.viewRegion._startBase,
+              object.viewRegion._endBase
+            ),
+
+            tracks: object.tracks.map((data) => TrackModel.deserialize(data)),
+            metadataTerms: object.metadataTerms || [],
+            regionSets,
+            regionSetView,
+            trackLegendWidth: object.trackLegendWidth || 120,
+            bundleId: object.bundleId,
+            isShowingNavigator: object.isShowingNavigator,
+            isShowingVR: object.isShowingVR,
+            layout: object.layout || {},
+            highlights: object.highlights || [],
+            darkTheme: object.darkTheme || false,
+          };
+          console.log(newBundle, "ORGANIZED BUNDLE BACK TO STATE");
+          // Replace the state key with the newBundle in the session.
+          res.sessionsInBundle[curId].state = newBundle;
+        }
+      }
+      console.log(res, "NOT UNDEFINED");
+      return res;
+    } else {
+      console.log("No data available");
+      return null;
+    }
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
 
 const SessionUI: React.FC<SessionUIProps> = ({
   onRestoreSession,
   onRetrieveBundle,
   withGenomePicker,
+  updateBundle,
   state,
   curBundle,
-  addSessionState,
+  bundleId,
 }) => {
   const [newSessionLabel, setNewSessionLabel] = useState<string>(getFunName());
   const [retrieveId, setRetrieveId] = useState<string>("");
-  const [lastBundleId, setLastBundleId] = useState<string>(
-    curBundle.currentId !== "none" ? state!.bundleId : "none"
-  );
+  const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
   const [sortSession, setSortSession] = useState<string>("date"); // or label
 
   const saveSession = async () => {
     const newSessionObj = {
       label: newSessionLabel,
       date: Date.now(),
-      state: state, // Replace with actual state
+      state: state,
     };
-    console.log(newSessionObj);
-    const sessionId = uuidv4();
+
+    const sessionId = crypto.randomUUID();
 
     let newBundle = {
       bundleId: curBundle.bundleId,
@@ -87,8 +146,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
         [sessionId]: newSessionObj,
       },
     };
-    addSessionState(newBundle);
-
+    updateBundle(newBundle);
     const db = getDatabase();
     try {
       await set(
@@ -273,155 +331,206 @@ const SessionUI: React.FC<SessionUIProps> = ({
       return new DisplayedRegionModel(genomeConfig.navContext, ...viewInterval);
     }
   }
-  const retrieveSession = () => {
-    if (retrieveId.length === 0) {
-      console.log("Session bundle Id cannot be empty.", "error", 2000);
-      return null;
-    }
-    console.log(retrieveId, "ID CHECKING if fetcj works");
-    const dbRef = ref(getDatabase());
-    get(child(dbRef, `sessions/${retrieveId}`))
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          let res = snapshot.val();
-          for (let curId in res.sessionsInBundle) {
-            if (res.sessionsInBundle.hasOwnProperty(curId)) {
-              let object = res.sessionsInBundle[curId].state;
-              console.log(object, "return RESULT");
 
-              const regionSets = object.regionSets
-                ? object.regionSets.map(RegionSet.deserialize)
-                : [];
-              const regionSetView =
-                regionSets[object.regionSetViewIndex] || null;
-
-              // Create the newBundle object based on the existing object.
-              let newBundle = {
-                genomeName: object.genomeName,
-                viewRegion: new DisplayedRegionModel(
-                  getGenomeConfig(object.genomeName).navContext,
-                  object.viewRegion._startBase,
-                  object.viewRegion._endBase
-                ),
-
-                tracks: object.tracks.map((data) =>
-                  TrackModel.deserialize(data)
-                ),
-                metadataTerms: object.metadataTerms || [],
-                regionSets,
-                regionSetView,
-                trackLegendWidth: object.trackLegendWidth || 120,
-                bundleId: object.bundleId,
-                isShowingNavigator: object.isShowingNavigator,
-                isShowingVR: object.isShowingVR,
-                layout: object.layout || {},
-                highlights: object.highlights || [],
-                darkTheme: object.darkTheme || false,
-              };
-              console.log(newBundle, "ORGANiZED BUNDLE BAK TO STATE");
-              // Replace the state key with the newBundle in the session.
-              res.sessionsInBundle[curId].state = newBundle;
-            }
-          }
-          onRetrieveBundle(res);
-        } else {
-          console.log("No data available");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  const retrieveSession = async (retrieveId: string) => {
+    const bundleRes = await onRetrieveSession(retrieveId);
+    console.log(bundleRes);
+    onRetrieveBundle(bundleRes);
+  };
+  const styles = {
+    container: {
+      padding: "20px",
+      display: withGenomePicker ? "flex" : "block",
+      flexDirection: withGenomePicker ? "column" : "unset",
+      alignItems: withGenomePicker ? "center" : "unset",
+    },
+    inputContainer: {
+      marginBottom: "1rem",
+    },
+    label: {
+      display: "flex",
+      gap: "0.5rem",
+      alignItems: "center",
+    },
+    input: {
+      padding: "10px",
+      border: "1px solid #ccc",
+      borderRadius: "5px",
+      width: "400px",
+      color: "#4B5563",
+    },
+    button: {
+      backgroundColor: "#5BA4CF",
+      color: "white",
+      padding: "10px 20px",
+      borderRadius: "5px",
+      cursor: "pointer",
+      transition: "background-color 0.2s",
+    },
+    buttonHover: {
+      backgroundColor: "#4A93BE",
+    },
+    uploadContainer: {
+      display: "flex",
+      alignItems: "center",
+      gap: "0.5rem",
+      marginTop: "1rem",
+    },
+    uploadButtonContainer: {
+      position: "relative",
+    },
+    uploadButton: {
+      backgroundColor: "#5CB85C",
+      color: "white",
+      padding: "10px 20px",
+      borderRadius: "5px",
+      cursor: "pointer",
+      transition: "background-color 0.2s",
+    },
+    uploadInput: {
+      position: "absolute",
+      inset: 0,
+      opacity: 0,
+      cursor: "pointer",
+    },
+    additionalActions: {
+      flexDirection: "column",
+      gap: "0.5rem",
+    },
+    actionButton: {
+      padding: "10px 20px",
+      borderRadius: "5px",
+      color: "white",
+      cursor: "pointer",
+    },
+    disclaimer: {
+      marginTop: "1rem",
+      maxWidth: "600px",
+      fontStyle: "italic",
+    },
+    emphasis: {
+      fontWeight: "bold",
+    },
+    link: {
+      color: "#3B82F6",
+      textDecoration: "none",
+      transition: "color 0.2s",
+    },
+    linkHover: {
+      color: "#1D4ED8",
+    },
   };
 
   return (
-    <div
-      className={`p-5 ${
-        withGenomePicker ? "flex flex-col items-center" : "block"
-      }`}
-    >
-      <div className="mb-4">
-        <label className="flex gap-2 items-center">
+    <div style={styles.container}>
+      <div style={styles.inputContainer}>
+        <label style={styles.label}>
           <input
             type="text"
-            className="px-3 py-2 border rounded-md w-[400px] text-gray-600 placeholder-gray-400"
+            style={styles.input}
             placeholder="Session bundle Id"
             value={retrieveId}
             onChange={(e) => setRetrieveId(e.target.value.trim())}
           />
           <button
-            className="bg-[#5BA4CF] text-white px-6 py-2 rounded-md hover:bg-[#4A93BE]"
-            onClick={retrieveSession}
+            style={styles.button}
+            onMouseOver={(e) =>
+              (e.target.style.backgroundColor =
+                styles.buttonHover.backgroundColor)
+            }
+            onMouseOut={(e) =>
+              (e.target.style.backgroundColor = styles.button.backgroundColor)
+            }
+            onClick={() => retrieveSession(retrieveId)}
           >
             Retrieve
           </button>
         </label>
-
-        <div className="mt-4 flex items-center gap-2">
+        <div style={styles.uploadContainer}>
           <span>Or use a session file:</span>
-          <div className="relative">
-            <button className="bg-[#5CB85C] text-white px-6 py-2 rounded-md hover:bg-[#4CA84C]">
+          <div style={styles.uploadButtonContainer}>
+            <button
+              style={styles.uploadButton}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#4CA84C")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#5CB85C")}
+            >
               Upload
             </button>
             <input
               type="file"
-              className="absolute inset-0 opacity-0 cursor-pointer"
+              style={styles.uploadInput}
               onChange={uploadSession}
             />
           </div>
         </div>
       </div>
-
       {!withGenomePicker && (
         <>
-          <div className="mb-4">
-            <p className="flex items-center gap-2 mb-4">
+          <div style={styles.inputContainer}>
+            <p style={styles.label}>
               Session bundle Id: {curBundle.bundleId}
               <CopyToClip value={curBundle.bundleId} />
             </p>
-
-            <label className="flex flex-col items-start gap-2">
+            <label
+              style={{
+                ...styles.label,
+                flexDirection: "column",
+                alignItems: "start",
+              }}
+            >
               Name your session:
               <input
                 type="text"
                 value={newSessionLabel}
-                className="px-3 py-2 border rounded-md flex-1"
+                style={{ ...styles.input, width: "auto", flex: "1" }}
                 onChange={(e) => setNewSessionLabel(e.target.value.trim())}
               />
               <span>or use a</span>
               <button
                 type="button"
-                className="bg-[#F0AD4E] text-white px-4 py-2 rounded-md hover:bg-[#EC971F]"
+                style={{ ...styles.button, backgroundColor: "#F0AD4E" }}
+                onMouseOver={(e) =>
+                  (e.target.style.backgroundColor = "#EC971F")
+                }
+                onMouseOut={(e) =>
+                  (e.target.style.backgroundColor =
+                    styles.button.backgroundColor)
+                }
                 onClick={() => setNewSessionLabel(getFunName())}
               >
                 Random name
               </button>
             </label>
           </div>
-
-          <div className="flex flex-col gap-2">
+          <div style={styles.additionalActions}>
             <button
-              className="bg-[#4285F4] text-white px-6 py-2 rounded-md hover:bg-[#3367D6]"
+              style={{ ...styles.actionButton, backgroundColor: "#4285F4" }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#3367D6")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#4285F4")}
               onClick={saveSession}
             >
               Save session
             </button>
-
             <button
-              className="bg-[#5CB85C] text-white px-6 py-2 rounded-md hover:bg-[#4CA84C]"
+              style={{ ...styles.actionButton, backgroundColor: "#5CB85C" }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#4CA84C")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#5CB85C")}
               onClick={downloadAsSession}
             >
               Download current session
             </button>
-
             <button
-              className="bg-[#5BA4CF] text-white px-6 py-2 rounded-md hover:bg-[#4A93BE]"
+              style={{ ...styles.actionButton, backgroundColor: "#5BA4CF" }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#4A93BE")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#5BA4CF")}
               onClick={downloadAsHub}
             >
               Download as datahub
             </button>
-
             <button
-              className="bg-[#F0AD4E] text-white px-6 py-2 rounded-md hover:bg-[#EC971F]"
+              style={{ ...styles.actionButton, backgroundColor: "#F0AD4E" }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#EC971F")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#F0AD4E")}
               onClick={downloadWholeBundle}
             >
               Download whole bundle
@@ -429,19 +538,19 @@ const SessionUI: React.FC<SessionUIProps> = ({
           </div>
         </>
       )}
-
       {renderSavedSessions()}
-
-      <div className="mt-4 max-w-[600px] italic">
-        Disclaimer: please use <span className="font-bold">sessionFile</span> or{" "}
-        <span className="font-bold">hub</span> URL for publishing using the
+      <div style={styles.disclaimer}>
+        Disclaimer: please use <span style={styles.emphasis}>sessionFile</span>{" "}
+        or <span style={styles.emphasis}>hub</span> URL for publishing using the
         Browser. Session id is supposed to be shared with trusted people only.
         Please check our docs for{" "}
         <a
           href={HELP_LINKS.publish}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500 hover:text-blue-700"
+          style={styles.link}
+          onMouseOver={(e) => (e.target.style.color = styles.linkHover.color)}
+          onMouseOut={(e) => (e.target.style.color = styles.link.color)}
         >
           Publish with the browser
         </a>
