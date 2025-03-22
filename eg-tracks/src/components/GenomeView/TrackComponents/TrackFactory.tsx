@@ -42,6 +42,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   globalTrackState,
   isScreenShotOpen,
   posRef,
+  highlightElements,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -1274,14 +1275,20 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   };
 
   return (
-    <>
+    <div
+      style={{
+        zIndex: 1,
+        display: "flex",
+      }}
+    >
       <div
         style={{
           zIndex: 10,
           width: 120,
-
-          backgroundColor: trackModel.isSelected ? "#F6DED8" : "white",
-          position: "relative",
+          backgroundColor: trackModel.isSelected
+            ? "rgb(250, 214, 214)"
+            : "white",
+          position: "absolute", // Change to absolute
         }}
       >
         {legend}
@@ -1293,13 +1300,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           height:
             configOptions.current.displayMode === "full"
               ? !fetchError.current
-                ? svgHeight.current + 2
-                : 40 + 2
+                ? svgHeight.current
+                : 40
               : !fetchError.current
-              ? configOptions.current.height + 2
-              : 40 + 2,
-          position: "relative",
-          width: "100px",
+              ? configOptions.current.height
+              : 40,
+          position: "relative", // Ensure this parent div is relatively positioned
         }}
       >
         {configOptions.current.displayMode === "full" ? (
@@ -1311,10 +1317,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               left: updateSide.current === "right" ? `${xPos.current}px` : "",
               backgroundColor: configOptions.current.backgroundColor,
               WebkitBackfaceVisibility: "hidden",
-
-              WebkitPerspective: `${windowWidth + 120}px`,
+              WebkitPerspective: `${windowWidth}px`,
               backfaceVisibility: "hidden",
-              perspective: `${windowWidth + 120}px`,
+              perspective: `${windowWidth}px`,
             }}
           >
             {svgComponents}
@@ -1327,19 +1332,48 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               left: updateSide.current === "right" ? `${xPos.current}px` : "",
               right: updateSide.current === "left" ? `${xPos.current}px` : "",
               WebkitBackfaceVisibility: "hidden",
-
-              WebkitPerspective: `${windowWidth + 120}px`,
+              WebkitPerspective: `${windowWidth}px`,
               backfaceVisibility: "hidden",
-              perspective: `${windowWidth + 120}px`,
+              perspective: `${windowWidth}px`,
             }}
           >
             {canvasComponents}
           </div>
         )}
         {toolTipVisible ? toolTip : ""}
-        {/* {legend} */}
+
+        {highlightElements.length > 0
+          ? highlightElements.map((item, index) => {
+              if (item.display) {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      position: "relative",
+                      height: "100%",
+                    }}
+                  >
+                    <div
+                      key={index}
+                      style={{
+                        position: "absolute",
+                        backgroundColor: item.color,
+                        top: "0",
+                        height: "100%",
+                        left: item.side === "right" ? `${item.xPos}px` : "",
+                        right: item.side === "left" ? `${item.xPos}px` : "",
+                        width: item.width,
+                        pointerEvents: "none", // This makes the highlighted area non-interactive
+                      }}
+                    ></div>
+                  </div>
+                );
+              }
+            })
+          : ""}
       </div>
-    </>
+    </div>
   );
 });
 

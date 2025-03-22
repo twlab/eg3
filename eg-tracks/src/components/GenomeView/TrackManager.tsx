@@ -2252,26 +2252,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [configMenu]);
 
-  const keyframes = `
-    @keyframes borderPulse {
-      0% {
-        border: 3px solid lightcoral;
-      }
-      50% {
-        border: 3px solid darkred;
-      }
-      100% {
-        border: 3px solid lightcoral;
-      }
-    }
-  `;
   return (
     <div>
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
         <GenomeNavigator
           selectedRegion={userViewRegion}
           genomeConfig={genomeConfig}
-          windowWidth={windowWidth + legendWidth}
+          windowWidth={windowWidth}
           onRegionSelected={onRegionSelected}
         />
       )}
@@ -2307,230 +2294,154 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           </p>
         </div>
 
-        <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            //makes components align right or right when we switch sides
+
+            flexDirection: "row",
+            // full windowwidth will make canvas only loop 0-windowidth
+            // the last value will have no data.
+            // so we have to subtract from the size of the canvas
+            border: "2px solid #BCCCDC",
+            width: `${windowWidth}px`,
+            // width: `${fullWindowWidth / 2}px`,
+            // height: "2000px",
+            overflowX: "hidden",
+            overflowY: "hidden",
+          }}
+        >
           <div
+            onMouseDown={handleMouseDown}
+            ref={block}
             style={{
               display: "flex",
-              //makes components align right or right when we switch sides
-
-              flexDirection: "row",
-              // full windowwidth will make canvas only loop 0-windowidth
-              // the last value will have no data.
-              // so we have to subtract from the size of the canvas
-              width: `${windowWidth + legendWidth}px`,
-              // width: `${fullWindowWidth / 2}px`,
-              // height: "2000px",
-              overflowX: "hidden",
-              overflowY: "hidden",
+              flexDirection: "column",
+              position: "relative",
+              cursor:
+                tool === Tool.Drag
+                  ? "pointer"
+                  : tool === Tool.Reorder
+                  ? "move"
+                  : tool === Tool.Highlight
+                  ? "ew-resize"
+                  : tool === Tool.Zoom
+                  ? "zoom-in"
+                  : "default",
             }}
           >
+            <div ref={horizontalLineRef} className="horizontal-line" />
+            <div ref={verticalLineRef} className="vertical-line" />
+
             <div
-              onMouseDown={handleMouseDown}
-              ref={block}
               style={{
                 display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                cursor:
-                  tool === Tool.Drag
-                    ? "pointer"
-                    : tool === Tool.Reorder
-                    ? "move"
-                    : tool === Tool.Highlight
-                    ? "ew-resize"
-                    : tool === Tool.Zoom
-                    ? "zoom-in"
-                    : "default",
+                //makes components align right or right when we switch sides
+
+                flexDirection: "row",
+                // full windowwidth will make canvas only loop 0-windowidth
+                // the last value will have no data.
+                // so we have to subtract from the size of the canvas
+                width: `${windowWidth}px`,
+                // width: `${fullWindowWidth / 2}px`,
+                // height: "2000px",
+                overflowX: "hidden",
+                overflowY: "hidden",
               }}
             >
-              <div ref={horizontalLineRef} className="horizontal-line" />
-              <div ref={verticalLineRef} className="vertical-line" />
-              <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    //makes components align right or right when we switch sides
-
-                    border: "2px solid #BCCCDC",
-                    flexDirection: "row",
-                    // full windowwidth will make canvas only loop 0-windowidth
-                    // the last value will have no data.
-                    // so we have to subtract from the size of the canvas
-                    width: `${windowWidth + legendWidth}px`,
-                    // width: `${fullWindowWidth / 2}px`,
-                    // height: "2000px",
-                    overflowX: "hidden",
-                    overflowY: "hidden",
-                  }}
-                >
-                  <SortableList
-                    items={trackComponents}
-                    onChange={handleReorder}
-                    renderItem={(item) => (
-                      <SortableList.Item
-                        id={item.id}
-                        onMouseDown={(event) => handleShiftSelect(event, item)}
-                        onContextMenu={(event) => handleRightClick(event, item)}
-                        selectedTool={selectedTool}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-
-                            backgroundColor: "#F2F2F2",
-                            width: `${windowWidth + legendWidth}px`,
-                            outline: "1px solid Dodgerblue",
-                            animation: "borderPulse 1s infinite",
-                          }}
-                        >
-                          {/* <div
-                            style={{
-                              zIndex: 10,
-                              width: legendWidth,
-                              backgroundColor: "white",
-                              position: "relative",
-                            }}
-                            ref={item.legendRef}
-                          ></div> */}
-                          <div
-                            key={item.id}
-                            style={{
-                              display: "flex",
-
-                              backgroundColor: "#F2F2F2",
-                              width: `${windowWidth + legendWidth}px`,
-                              outline: "1px solid Dodgerblue",
-                            }}
-                          >
-                            <div
-                              // ref={item.posRef}
-                              style={{
-                                zIndex: 1,
-                                display: "flex",
-                              }}
-                            >
-                              <item.component
-                                id={item.trackModel.id}
-                                trackModel={item.trackModel}
-                                posRef={item.posRef}
-                                bpRegionSize={bpRegionSize.current}
-                                useFineModeNav={useFineModeNav.current}
-                                basePerPixel={basePerPixel.current}
-                                side={side.current}
-                                windowWidth={windowWidth}
-                                genomeConfig={genomeConfig}
-                                dataIdx={dataIdx}
-                                trackManagerRef={block}
-                                setShow3dGene={setShow3dGene}
-                                isThereG3dTrack={isThereG3dTrack.current}
-                                legendRef={item.legendRef}
-                                updateGlobalTrackConfig={
-                                  updateGlobalTrackConfig
-                                }
-                                applyTrackConfigChange={applyTrackConfigChange}
-                                dragX={dragX.current}
-                                signalTrackLoadComplete={
-                                  signalTrackLoadComplete
-                                }
-                                sentScreenshotData={sentScreenshotData}
-                                newDrawData={newDrawData}
-                                trackFetchedDataCache={trackFetchedDataCache}
-                                globalTrackState={globalTrackState}
-                                isScreenShotOpen={isScreenShotOpen}
-                              />
-
-                              {highlightElements.length > 0
-                                ? highlightElements.map((item, index) => {
-                                    if (item.display) {
-                                      return (
-                                        <div
-                                          key={index}
-                                          style={{
-                                            display: "flex",
-                                            height: "100%",
-                                          }}
-                                        >
-                                          <div
-                                            style={{
-                                              display: "flex",
-                                              position: "relative",
-                                              height: "100%",
-                                            }}
-                                          >
-                                            <div
-                                              key={index}
-                                              style={{
-                                                position: "absolute",
-                                                backgroundColor: item.color,
-
-                                                top: "0",
-                                                height: "100%",
-                                                left:
-                                                  item.side === "right"
-                                                    ? `${item.xPos}px`
-                                                    : "",
-                                                right:
-                                                  item.side === "left"
-                                                    ? `${item.xPos}px`
-                                                    : "",
-                                                width: item.width,
-                                                pointerEvents: "none", // This makes the highlighted area non-interactive
-                                              }}
-                                            ></div>
-                                          </div>
-                                        </div>
-                                      );
-                                    }
-                                  })
-                                : ""}
-                            </div>
-                          </div>
-                        </div>
-                      </SortableList.Item>
-                    )}
-                  />
-
-                  <div
-                    style={{
-                      display: "flex",
-                      position: "absolute",
-                      width: `${windowWidth + legendWidth}px`,
-                      zIndex: 10,
-                    }}
+              <SortableList
+                items={trackComponents}
+                onChange={handleReorder}
+                renderItem={(item) => (
+                  <SortableList.Item
+                    id={item.id}
+                    onMouseDown={(event) => handleShiftSelect(event, item)}
+                    onContextMenu={(event) => handleRightClick(event, item)}
+                    selectedTool={selectedTool}
                   >
-                    {selectedTool &&
-                    selectedTool.isSelected &&
-                    selectedTool.title !== 1 ? (
-                      <SelectableGenomeArea
-                        selectableRegion={userViewRegion}
-                        dragLimits={
-                          new OpenInterval(
-                            legendWidth,
-                            windowWidth + legendWidth
-                          )
-                        }
-                        onRegionSelected={onRegionSelected}
-                        selectedTool={selectedTool}
-                      >
-                        <div
-                          style={{
-                            height: block.current
-                              ? block.current?.getBoundingClientRect().height
-                              : 0,
-                            zIndex: 3,
-                            width: `${windowWidth + legendWidth}px`,
-                          }}
-                        ></div>
-                      </SelectableGenomeArea>
-                    ) : (
-                      ""
-                    )}
-                  </div>
-                </div>
+                    <div
+                      key={item.id}
+                      style={{
+                        display: "flex",
+                        backgroundColor: "#F2F2F2",
+                        width: `${windowWidth}px`,
+                        borderTop: item.trackModel.isSelected
+                          ? ""
+                          : "1px solid Dodgerblue",
+                        borderBottom: item.trackModel.isSelected
+                          ? ""
+                          : "1px solid Dodgerblue",
+                      }}
+                      className={
+                        item.trackModel.isSelected ? "animatedBorder" : ""
+                      }
+                    >
+                      <item.component
+                        id={item.trackModel.id}
+                        trackModel={item.trackModel}
+                        posRef={item.posRef}
+                        bpRegionSize={bpRegionSize.current}
+                        useFineModeNav={useFineModeNav.current}
+                        basePerPixel={basePerPixel.current}
+                        side={side.current}
+                        windowWidth={windowWidth}
+                        genomeConfig={genomeConfig}
+                        dataIdx={dataIdx}
+                        trackManagerRef={block}
+                        setShow3dGene={setShow3dGene}
+                        isThereG3dTrack={isThereG3dTrack.current}
+                        legendRef={item.legendRef}
+                        updateGlobalTrackConfig={updateGlobalTrackConfig}
+                        applyTrackConfigChange={applyTrackConfigChange}
+                        dragX={dragX.current}
+                        signalTrackLoadComplete={signalTrackLoadComplete}
+                        sentScreenshotData={sentScreenshotData}
+                        newDrawData={newDrawData}
+                        trackFetchedDataCache={trackFetchedDataCache}
+                        globalTrackState={globalTrackState}
+                        isScreenShotOpen={isScreenShotOpen}
+                        highlightElements={highlightElements}
+                      />
+                    </div>
+                  </SortableList.Item>
+                )}
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  position: "absolute",
+                  width: `${windowWidth}px`,
+                  zIndex: 10,
+                }}
+              >
+                {selectedTool &&
+                selectedTool.isSelected &&
+                selectedTool.title !== 1 ? (
+                  <SelectableGenomeArea
+                    selectableRegion={userViewRegion}
+                    dragLimits={new OpenInterval(0, windowWidth)}
+                    onRegionSelected={onRegionSelected}
+                    selectedTool={selectedTool}
+                  >
+                    <div
+                      style={{
+                        height: block.current
+                          ? block.current?.getBoundingClientRect().height
+                          : 0,
+                        zIndex: 3,
+                        width: `${windowWidth}px`,
+                      }}
+                    ></div>
+                  </SelectableGenomeArea>
+                ) : (
+                  ""
+                )}
               </div>
             </div>
           </div>
         </div>
+
         {configMenu ? (
           <div
             style={{
@@ -2556,9 +2467,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             backgroundColor: "white",
             WebkitBackfaceVisibility: "hidden",
-            WebkitPerspective: `${windowWidth + legendWidth}px`,
+            WebkitPerspective: `${windowWidth}px`,
             backfaceVisibility: "hidden",
-            perspective: `${windowWidth + legendWidth}px`,
+            perspective: `${windowWidth}px`,
             border: "1px solid #d3d3d3",
             borderRadius: "10px",
             boxShadow: "0 2px 3px 0 rgba(0, 0, 0, 0.2)",
@@ -2576,7 +2487,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     tracks={tracks}
                     g3dtrack={item.trackModel}
                     viewRegion={trackManagerState.current.viewRegion}
-                    width={(windowWidth + legendWidth) / 2}
+                    width={windowWidth / 2}
                     genomeConfig={genomeConfig}
                     geneFor3d={show3dGene}
                   />
