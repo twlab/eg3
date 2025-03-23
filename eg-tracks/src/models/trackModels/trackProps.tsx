@@ -7,6 +7,7 @@ export interface TrackProps {
   bpRegionSize: number;
   basePerPixel: number;
   side: string;
+  highlightElements: any;
   windowWidth: number;
   handleDelete: (trackIndex: number) => void;
   globalTrackState: any;

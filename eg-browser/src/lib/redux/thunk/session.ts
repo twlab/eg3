@@ -3,13 +3,11 @@ import {
   ITrackModel,
   restoreLegacyViewRegion,
 } from "@eg/tracks";
-import {
-  selectCurrentSessionId,
-  setCurrentSession,
-  upsertSession,
-} from "../slices/browserSlice";
+import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
+import { onRetrieveSession } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
+import { updateBundle } from "../slices/hubSlice";
 
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",
@@ -69,8 +67,7 @@ export const importOneSession = createAsyncThunk(
     if (!session.updatedAt) session.updatedAt = Date.now();
 
     session.id = crypto.randomUUID();
-
-    thunkApi.dispatch(upsertSession(session));
+    thunkApi.thunkApi.dispatch(upsertSession(session));
 
     if (navigatingToSession) {
       thunkApi.dispatch(setCurrentSession(session.id));
@@ -97,6 +94,23 @@ export const addSessionsFromBundleId = createAsyncThunk(
   }
 );
 
+export const fetchBundle = createAsyncThunk(
+  "bundle/fetchBundle",
+  async (bundleId: string, thunkApi) => {
+    if (bundleId) {
+      try {
+        const retrieveId = bundleId;
+        const resBundle = await onRetrieveSession(retrieveId);
+        console.log(resBundle, retrieveId);
+        if (resBundle) {
+          thunkApi.dispatch(updateBundle(resBundle));
+        }
+      } catch (e) {
+        // console.error(e);
+      }
+    }
+  }
+);
 interface ISessionBundle {
   bundleId: string;
   currentId: string;

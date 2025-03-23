@@ -4,8 +4,12 @@ import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectIsNavigatorVisible } from "@/lib/redux/slices/settingsSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
+import { onRetrieveSession } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
 import {
+  resetState,
+  selectBundle,
   selectScreenShotOpen,
+  updateBundle,
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
 import {
@@ -16,6 +20,8 @@ import {
 } from "@eg/tracks";
 
 import Toolbar from "./toolbar/Toolbar";
+import { useRef } from "react";
+import { fetchBundle } from "../../lib/redux/thunk/session";
 
 import { RootState } from "../../lib/redux/store";
 
@@ -28,15 +34,29 @@ export default function GenomeView() {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
 
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
+  const lastSessionId = useRef<null | string>(null);
+
   const currentState = useAppSelector((state: RootState) => state);
   console.log(currentState.browser);
   if (!currentSession || !genomeConfig) {
     return null;
   }
+  // const bundleId = currentSession.bundleId;
+  const bundleId = currentSession.bundleId;
+
+  const sessionId = currentSession.id;
+  if (lastSessionId.current !== sessionId) {
+    dispatch(resetState());
+    lastSessionId.current = sessionId;
+    if (bundleId) {
+      dispatch(fetchBundle(bundleId));
+    }
+  }
   const genomeName = currentSession.genomeId;
   const selectedRegionSet = currentSession?.selectedRegionSet;
   const overrideViewRegion = currentSession?.overrideViewRegion;
   const viewRegion = currentSession?.viewRegion;
+
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
   };

@@ -1,3 +1,4 @@
+import { BundleProps } from "../components/GenomeView/TabComponents/SessionUI";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import TrackModel from "../models/TrackModel";
 import { IGenome } from "./genome-hub";
@@ -19,7 +20,7 @@ export interface ITrackContainerState {
     endbase: number,
     highlightSearch?: boolean
   ) => void;
-  viewRegion: DisplayedRegionModel;
+  viewRegion: DisplayedRegionModel | undefined;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
   selectedRegionSet: any;

@@ -12,6 +12,7 @@ import {
 
 import { RootState } from "../store";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
+import { BundleProps } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
 
 export type uuid = string;
 
@@ -19,7 +20,7 @@ export interface BrowserSession {
   id: uuid;
   createdAt: number;
   updatedAt: number;
-
+  bundleId: string | null; // stays null until the user save their current session, load session, or get sessions from Url param
   title: string;
   genomeId: uuid;
   viewRegion: GenomeCoordinate | null;
@@ -54,6 +55,7 @@ export const browserSlice = createSlice({
         additionalTracks?: ITrackModel[];
       }>
     ) => {
+      //TO DO url param to also get bundleId and get it here as a property for initial startup
       const {
         genome,
         viewRegion: overrideViewRegion,
@@ -76,11 +78,13 @@ export const browserSlice = createSlice({
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
+        bundleId: null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
+
         highlights: [],
         metadataTerms: [],
         regionSets: [],
@@ -108,6 +112,7 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
+        console.log(changes);
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {

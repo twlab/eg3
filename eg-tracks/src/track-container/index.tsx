@@ -79,7 +79,6 @@ export function TrackContainerRepresentable({
   // MARK: Tracks
 
   const trackCache = useRef(new Map<string, TrackModel>());
-
   const convertTrackModelToITrackModel = useCallback(
     (track: TrackModel): ITrackModel => ({
       name: track.name,

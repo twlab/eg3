@@ -30,9 +30,9 @@ import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
 import { Tool } from "../../types";
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
-import Toolbar from "@/components/genome-view/toolbar/Toolbar";
+
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-import { convertTrackModelToITrackModel } from "./utils";
+
 const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
   "7": { factor: 2, text: "1×", title: "Zoom out 1-fold (Alt+O)" },
@@ -530,7 +530,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (!selectedTracks.current[`${trackDetails.trackModel.id}`]) {
         selectedTracks.current[`${trackDetails.trackModel.id}`] =
           globalTrackConfig.current[`${trackDetails.trackModel.id}`];
-        trackDetails.legendRef.current.style.backgroundColor = "lightblue";
+        // trackDetails.legendRef.current.style.backgroundColor = "lightblue";
 
         trackManagerState.current.tracks.map((trackModel) => {
           if (trackModel.id === trackDetails.trackModel.id) {
@@ -538,7 +538,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         });
       } else if (trackDetails.trackModel.id in selectedTracks.current) {
-        trackDetails.legendRef.current.style.backgroundColor = "white";
+        // trackDetails.legendRef.current.style.backgroundColor = "white";
         delete selectedTracks.current[`${trackDetails.trackModel.id}`];
         trackManagerState.current.tracks.map((trackModel) => {
           if (trackModel.id === trackDetails.trackModel.id) {
@@ -570,7 +570,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // let newStateObj = createNewTrackState(trackManagerState.current, {});
 
       //addGlobalState(newStateObj);
-      trackDetails.legendRef.current.style.backgroundColor = "lightblue";
+      // trackDetails.legendRef.current.style.backgroundColor = "lightblue";
 
       selectedTracks.current[`${trackDetails.trackModel.id}`] =
         globalTrackConfig.current[`${trackDetails.trackModel.id}`];
@@ -586,8 +586,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function onTrackUnSelect() {
     if (Object.keys(selectedTracks.current).length !== 0) {
       for (const key in selectedTracks.current) {
-        selectedTracks.current[key].legendRef.current.style.backgroundColor =
-          "white";
+        // selectedTracks.current[key].legendRef.current.style.backgroundColor =
+        //   "white";
       }
 
       trackManagerState.current.tracks.map((trackModel) => {
@@ -613,20 +613,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     //addGlobalState(newStateObj);
 
-    setTrackComponents((prevTracks) => {
-      return prevTracks.filter((item, _index) => {
-        if (id.includes(String(item.trackModel.id))) {
-          delete selectedTracks.current[`${item.trackModel.id}`];
-        }
-        return !id.includes(String(item.trackModel.id));
-      });
-    });
+    // setTrackComponents((prevTracks) => {
+    //   return prevTracks.filter((item, _index) => {
+    //     if (id.includes(String(item.trackModel.id))) {
+    //       delete selectedTracks.current[`${item.trackModel.id}`];
+    //     }
+    //     return !id.includes(String(item.trackModel.id));
+    //   });
+    // });
 
-    setG3dTrackComponents((prevTracks) => {
-      return prevTracks.filter((item, _index) => {
-        return !id.includes(String(item.trackModel.id));
-      });
-    });
+    // setG3dTrackComponents((prevTracks) => {
+    //   return prevTracks.filter((item, _index) => {
+    //     return !id.includes(String(item.trackModel.id));
+    //   });
+    // });
     if (id.length > 0) {
       onConfigMenuClose();
     }
@@ -638,12 +638,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   //_________________________________________________________________________________________________________________________________
   function handleReorder(order: Array<any>) {
-    setTrackComponents(order);
     const newOrder: Array<any> = [];
     for (const item of order) {
       newOrder.push(item.trackModel);
     }
     trackManagerState.current.tracks = _.cloneDeep(newOrder);
+    console.log(trackManagerState.current.tracks, newOrder);
     onTrackSelected(trackManagerState.current.tracks);
   }
 
@@ -1656,7 +1656,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (!(key in isSelected)) {
               for (const component of trackComponents) {
                 if (component.id === key) {
-                  component.legendRef.current.style.backgroundColor = "white";
+                  // component.legendRef.current.style.backgroundColor = "white";
                   delete selectedTracks.current[key];
                 }
               }
@@ -1668,8 +1668,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             } else {
               for (const component of trackComponents) {
                 if (component.id === key) {
-                  component.legendRef.current.style.backgroundColor =
-                    "lightblue";
+                  // component.legendRef.current.style.backgroundColor =
+                  //   "lightblue";
                   selectedTracks.current[key!] =
                     globalTrackConfig.current[key!];
                 }
@@ -1823,6 +1823,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // and do not add to the StateArr.
 
     if (genomeConfig.isInitial) {
+      console.log("HJERE1");
       prevWindowWidth.current = windowWidth;
 
       trackManagerState.current.tracks.map(
@@ -1861,6 +1862,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         setInitialStart("workerReady");
       }
     } else if (genomeConfig.sizeChange) {
+      console.log("HJERE2");
       preload.current = true;
       // refreshState();
       trackSizeChange();
@@ -1868,6 +1870,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // initializeTracks();
     } else {
+      console.log("HJERE32333");
       preload.current = true;
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
       refreshState();
@@ -2073,8 +2076,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (!genomeConfig.isInitial) {
       if (
-        !arraysHaveSameTrackModels(tracks, trackManagerState.current.tracks)
+        !arraysHaveSameTrackModels(tracks, [
+          ...trackComponents.map((item) => item.trackModel),
+          ...g3dtrackComponents.map((item) => item.trackModel),
+        ])
       ) {
+        console.log(tracks, "TRACKS IN VIEW");
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
           newTrackId[`${trackModel.id}`] = {};
@@ -2202,8 +2209,41 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           hasGenomeAlign.current = false;
         }
         trackManagerState.current.tracks = tracks;
+
         setG3dTrackComponents(newG3dComponents);
         setTrackComponents(newTrackComponents);
+      } else {
+        const newTrackComponents: Array<any> = [];
+        const newG3dComponents: Array<any> = [];
+        let needToToUpdate = false;
+
+        for (let i = 0; i < tracks.length; i++) {
+          const curTrackModel = tracks[i];
+
+          // find tracks already in view
+          for (let j = 0; j < trackComponents.length; j++) {
+            const trackComponent = trackComponents[j];
+            if (trackComponent.trackModel.id === curTrackModel.id) {
+              if (
+                trackComponent.trackModel.isSelected !==
+                  curTrackModel.isSelected ||
+                i !== j
+              ) {
+                trackComponent.trackModel.isSelected = curTrackModel.isSelected;
+                needToToUpdate = true;
+              }
+              if (curTrackModel.type === "g3d") {
+                newG3dComponents.push(trackComponent);
+              } else {
+                newTrackComponents.push(trackComponent);
+              }
+            }
+          }
+        }
+        if (needToToUpdate) {
+          setTrackComponents(newTrackComponents);
+          setG3dTrackComponents(newG3dComponents);
+        }
       }
     }
   }, [tracks]);
@@ -2221,7 +2261,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <GenomeNavigator
           selectedRegion={userViewRegion}
           genomeConfig={genomeConfig}
-          windowWidth={windowWidth + legendWidth}
+          windowWidth={windowWidth}
           onRegionSelected={onRegionSelected}
         />
       )}
@@ -2257,255 +2297,154 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           </p>
         </div>
 
-        <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            //makes components align right or right when we switch sides
+
+            flexDirection: "row",
+            // full windowwidth will make canvas only loop 0-windowidth
+            // the last value will have no data.
+            // so we have to subtract from the size of the canvas
+            border: "2px solid #BCCCDC",
+            width: `${windowWidth}px`,
+            // width: `${fullWindowWidth / 2}px`,
+            // height: "2000px",
+            overflowX: "hidden",
+            overflowY: "hidden",
+          }}
+        >
           <div
+            onMouseDown={handleMouseDown}
+            ref={block}
             style={{
               display: "flex",
-              //makes components align right or right when we switch sides
-
-              flexDirection: "row",
-              // full windowwidth will make canvas only loop 0-windowidth
-              // the last value will have no data.
-              // so we have to subtract from the size of the canvas
-              width: `${windowWidth + legendWidth}px`,
-              // width: `${fullWindowWidth / 2}px`,
-              // height: "2000px",
-              overflowX: "hidden",
-              overflowY: "hidden",
+              flexDirection: "column",
+              position: "relative",
+              cursor:
+                tool === Tool.Drag
+                  ? "pointer"
+                  : tool === Tool.Reorder
+                  ? "move"
+                  : tool === Tool.Highlight
+                  ? "ew-resize"
+                  : tool === Tool.Zoom
+                  ? "zoom-in"
+                  : "default",
             }}
           >
+            <div ref={horizontalLineRef} className="horizontal-line" />
+            <div ref={verticalLineRef} className="vertical-line" />
+
             <div
-              onMouseDown={handleMouseDown}
-              ref={block}
               style={{
                 display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                cursor:
-                  tool === Tool.Drag
-                    ? "pointer"
-                    : tool === Tool.Reorder
-                    ? "move"
-                    : tool === Tool.Highlight
-                    ? "ew-resize"
-                    : tool === Tool.Zoom
-                    ? "zoom-in"
-                    : "default",
+                //makes components align right or right when we switch sides
+
+                flexDirection: "row",
+                // full windowwidth will make canvas only loop 0-windowidth
+                // the last value will have no data.
+                // so we have to subtract from the size of the canvas
+                width: `${windowWidth}px`,
+                // width: `${fullWindowWidth / 2}px`,
+                // height: "2000px",
+                overflowX: "hidden",
+                overflowY: "hidden",
               }}
             >
-              <div ref={horizontalLineRef} className="horizontal-line" />
-              <div ref={verticalLineRef} className="vertical-line" />
-              <div style={{ display: "flex", position: "relative", zIndex: 1 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    //makes components align right or right when we switch sides
-
-                    border: "2px solid #BCCCDC",
-                    flexDirection: "row",
-                    // full windowwidth will make canvas only loop 0-windowidth
-                    // the last value will have no data.
-                    // so we have to subtract from the size of the canvas
-                    width: `${windowWidth + legendWidth}px`,
-                    // width: `${fullWindowWidth / 2}px`,
-                    // height: "2000px",
-                    overflowX: "hidden",
-                    overflowY: "hidden",
-                  }}
-                >
-                  <div
-                    onMouseDown={handleMouseDown}
-                    ref={block}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      position: "relative",
-                      cursor:
-                        tool === Tool.Drag
-                          ? "pointer"
-                          : tool === Tool.Reorder
-                          ? "move"
-                          : tool === Tool.Highlight
-                          ? "ew-resize"
-                          : tool === Tool.Zoom
-                          ? "zoom-in"
-                          : "default",
-                    }}
+              <SortableList
+                items={trackComponents}
+                onChange={handleReorder}
+                renderItem={(item) => (
+                  <SortableList.Item
+                    id={item.id}
+                    onMouseDown={(event) => handleShiftSelect(event, item)}
+                    onContextMenu={(event) => handleRightClick(event, item)}
+                    selectedTool={selectedTool}
                   >
-                    <SortableList
-                      items={trackComponents}
-                      onChange={handleReorder}
-                      renderItem={(item) => (
-                        <SortableList.Item
-                          id={item.id}
-                          onMouseDown={(event) =>
-                            handleShiftSelect(event, item)
-                          }
-                          onContextMenu={(event) =>
-                            handleRightClick(event, item)
-                          }
-                          selectedTool={selectedTool}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-
-                              backgroundColor: "#F2F2F2",
-                              width: `${windowWidth + legendWidth}px`,
-                              outline: "1px solid Dodgerblue",
-                            }}
-                          >
-                            <div
-                              style={{
-                                zIndex: 10,
-                                width: legendWidth,
-                                backgroundColor: "white",
-                                position: "relative",
-                              }}
-                              ref={item.legendRef}
-                            ></div>
-                            <div
-                              key={item.id}
-                              style={{
-                                display: "flex",
-
-                                backgroundColor: "#F2F2F2",
-                                width: `${windowWidth + legendWidth}px`,
-                                outline: "1px solid Dodgerblue",
-                              }}
-                            >
-                              <div
-                                ref={item.posRef}
-                                style={{
-                                  zIndex: 1,
-                                  display: "flex",
-                                }}
-                              >
-                                <item.component
-                                  id={item.trackModel.id}
-                                  trackModel={item.trackModel}
-                                  posRef={item.posRef}
-                                  bpRegionSize={bpRegionSize.current}
-                                  useFineModeNav={useFineModeNav.current}
-                                  basePerPixel={basePerPixel.current}
-                                  side={side.current}
-                                  windowWidth={windowWidth}
-                                  genomeConfig={genomeConfig}
-                                  dataIdx={dataIdx}
-                                  trackManagerRef={block}
-                                  setShow3dGene={setShow3dGene}
-                                  isThereG3dTrack={isThereG3dTrack.current}
-                                  legendRef={item.legendRef}
-                                  updateGlobalTrackConfig={
-                                    updateGlobalTrackConfig
-                                  }
-                                  applyTrackConfigChange={
-                                    applyTrackConfigChange
-                                  }
-                                  dragX={dragX.current}
-                                  signalTrackLoadComplete={
-                                    signalTrackLoadComplete
-                                  }
-                                  sentScreenshotData={sentScreenshotData}
-                                  newDrawData={newDrawData}
-                                  trackFetchedDataCache={trackFetchedDataCache}
-                                  globalTrackState={globalTrackState}
-                                  isScreenShotOpen={isScreenShotOpen}
-                                />
-
-                                {highlightElements.length > 0
-                                  ? highlightElements.map((item, index) => {
-                                      if (item.display) {
-                                        return (
-                                          <div
-                                            key={index}
-                                            style={{
-                                              display: "flex",
-                                              height: "100%",
-                                            }}
-                                          >
-                                            <div
-                                              style={{
-                                                display: "flex",
-                                                position: "relative",
-                                                height: "100%",
-                                              }}
-                                            >
-                                              <div
-                                                key={index}
-                                                style={{
-                                                  position: "absolute",
-                                                  backgroundColor: item.color,
-
-                                                  top: "0",
-                                                  height: "100%",
-                                                  left:
-                                                    item.side === "right"
-                                                      ? `${item.xPos}px`
-                                                      : "",
-                                                  right:
-                                                    item.side === "left"
-                                                      ? `${item.xPos}px`
-                                                      : "",
-                                                  width: item.width,
-                                                  pointerEvents: "none", // This makes the highlighted area non-interactive
-                                                }}
-                                              ></div>
-                                            </div>
-                                          </div>
-                                        );
-                                      }
-                                    })
-                                  : ""}
-                              </div>
-                            </div>
-                          </div>
-                        </SortableList.Item>
-                      )}
-                    />
-
                     <div
+                      key={item.id}
                       style={{
                         display: "flex",
-                        position: "absolute",
-                        width: `${windowWidth + legendWidth}px`,
-                        zIndex: 10,
+                        backgroundColor: "#F2F2F2",
+                        width: `${windowWidth}px`,
+                        borderTop: item.trackModel.isSelected
+                          ? ""
+                          : "1px solid Dodgerblue",
+                        borderBottom: item.trackModel.isSelected
+                          ? ""
+                          : "1px solid Dodgerblue",
                       }}
+                      className={
+                        item.trackModel.isSelected ? "animatedBorder" : ""
+                      }
                     >
-                      {selectedTool &&
-                      selectedTool.isSelected &&
-                      selectedTool.title !== 1 ? (
-                        <SelectableGenomeArea
-                          selectableRegion={userViewRegion}
-                          dragLimits={
-                            new OpenInterval(
-                              legendWidth,
-                              windowWidth + legendWidth
-                            )
-                          }
-                          onRegionSelected={onRegionSelected}
-                          selectedTool={selectedTool}
-                        >
-                          <div
-                            style={{
-                              height: block.current
-                                ? block.current?.getBoundingClientRect().height
-                                : 0,
-                              zIndex: 3,
-                              width: `${windowWidth + legendWidth}px`,
-                            }}
-                          ></div>
-                        </SelectableGenomeArea>
-                      ) : (
-                        ""
-                      )}
+                      <item.component
+                        id={item.trackModel.id}
+                        trackModel={item.trackModel}
+                        posRef={item.posRef}
+                        bpRegionSize={bpRegionSize.current}
+                        useFineModeNav={useFineModeNav.current}
+                        basePerPixel={basePerPixel.current}
+                        side={side.current}
+                        windowWidth={windowWidth}
+                        genomeConfig={genomeConfig}
+                        dataIdx={dataIdx}
+                        trackManagerRef={block}
+                        setShow3dGene={setShow3dGene}
+                        isThereG3dTrack={isThereG3dTrack.current}
+                        legendRef={item.legendRef}
+                        updateGlobalTrackConfig={updateGlobalTrackConfig}
+                        applyTrackConfigChange={applyTrackConfigChange}
+                        dragX={dragX.current}
+                        signalTrackLoadComplete={signalTrackLoadComplete}
+                        sentScreenshotData={sentScreenshotData}
+                        newDrawData={newDrawData}
+                        trackFetchedDataCache={trackFetchedDataCache}
+                        globalTrackState={globalTrackState}
+                        isScreenShotOpen={isScreenShotOpen}
+                        highlightElements={highlightElements}
+                      />
                     </div>
-                  </div>
-                </div>
+                  </SortableList.Item>
+                )}
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  position: "absolute",
+                  width: `${windowWidth}px`,
+                  zIndex: 10,
+                }}
+              >
+                {selectedTool &&
+                selectedTool.isSelected &&
+                selectedTool.title !== 1 ? (
+                  <SelectableGenomeArea
+                    selectableRegion={userViewRegion}
+                    dragLimits={new OpenInterval(0, windowWidth)}
+                    onRegionSelected={onRegionSelected}
+                    selectedTool={selectedTool}
+                  >
+                    <div
+                      style={{
+                        height: block.current
+                          ? block.current?.getBoundingClientRect().height
+                          : 0,
+                        zIndex: 3,
+                        width: `${windowWidth}px`,
+                      }}
+                    ></div>
+                  </SelectableGenomeArea>
+                ) : (
+                  ""
+                )}
               </div>
             </div>
           </div>
         </div>
+
         {configMenu ? (
           <div
             style={{
@@ -2531,9 +2470,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             backgroundColor: "white",
             WebkitBackfaceVisibility: "hidden",
-            WebkitPerspective: `${windowWidth + legendWidth}px`,
+            WebkitPerspective: `${windowWidth}px`,
             backfaceVisibility: "hidden",
-            perspective: `${windowWidth + legendWidth}px`,
+            perspective: `${windowWidth}px`,
             border: "1px solid #d3d3d3",
             borderRadius: "10px",
             boxShadow: "0 2px 3px 0 rgba(0, 0, 0, 0.2)",
@@ -2551,7 +2490,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     tracks={tracks}
                     g3dtrack={item.trackModel}
                     viewRegion={trackManagerState.current.viewRegion}
-                    width={(windowWidth + legendWidth) / 2}
+                    width={windowWidth / 2}
                     genomeConfig={genomeConfig}
                     geneFor3d={show3dGene}
                   />

@@ -32,6 +32,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const trackManagerId = useRef<null | string>(null);
   // TO-DO need to set initial.current back to true when genomeConfig changes
   // to see if genomeConfig we can check its session id because it will unique
+
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -46,6 +47,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome["sizeChange"] = true;
       } else {
+        console.log("HERRERR");
         trackManagerId.current = crypto.randomUUID();
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = true;
@@ -109,7 +111,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width - legendWidth}
+            windowWidth={size.width}
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={currentGenomeConfig}
