@@ -11,6 +11,7 @@ import {
 } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
 const RegionSetSelector: React.FC = ({}) => {
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
@@ -56,9 +57,21 @@ const RegionSetSelector: React.FC = ({}) => {
     );
   };
   function onSetSelected(set: RegionSet | null) {
+    let start;
+    let end;
+    if (set) {
+      const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
+      start = newVisData._startBase;
+      end = newVisData._endBase;
+    } else {
+      start = genomeConfig?.defaultRegion.start;
+      end = genomeConfig?.defaultRegion.end;
+    }
+
     dispatch(
       updateCurrentSession({
         selectedRegionSet: set,
+        userViewRegion: { start, end },
       })
     );
   }

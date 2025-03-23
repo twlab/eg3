@@ -30,6 +30,7 @@ export interface ITrackContainerState {
 
 export interface ITrackContainerRepresentableProps {
   tracks: ITrackModel[];
+  genomeName: string;
   highlights: IHighlightInterval[];
   genomeConfig: IGenome;
   legendWidth: number;

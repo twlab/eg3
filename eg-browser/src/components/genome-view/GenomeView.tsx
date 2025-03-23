@@ -26,13 +26,14 @@ export default function GenomeView() {
 
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
+
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
   const currentState = useAppSelector((state: RootState) => state);
   console.log(currentState.browser);
   if (!currentSession || !genomeConfig) {
     return null;
   }
-
+  const genomeName = currentSession.genomeId;
   const selectedRegionSet = currentSession?.selectedRegionSet;
   const overrideViewRegion = currentSession?.overrideViewRegion;
   const viewRegion = currentSession?.viewRegion;
@@ -71,18 +72,20 @@ export default function GenomeView() {
     if (coordinate === viewRegion) {
       currCoordinate = null;
     }
+
     dispatch(
       updateCurrentSession({
+        viewRegion: currCoordinate,
         userViewRegion: { start: startbase, end: endbase },
       })
     );
-    dispatch(updateCurrentSession({ viewRegion: currCoordinate }));
   };
 
   return (
     <div>
       <TrackContainerRepresentable
         key={currentSession.id}
+        genomeName={genomeName ? genomeName : "hg38"}
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
         genomeConfig={genomeConfig}

@@ -27,7 +27,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   setScreenshotData,
   isScreenShotOpen,
 }) {
-  const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
@@ -37,10 +36,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     if (size.width > 0) {
       let curGenome;
 
-      if (!isInitial.current && trackManagerId.current) {
+      if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
         curGenome["genomeID"] = trackManagerId.current;
-        curGenome["isInitial"] = isInitial.current;
+        curGenome["isInitial"] = false;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
@@ -48,8 +47,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome["sizeChange"] = true;
       } else {
         trackManagerId.current = crypto.randomUUID();
-        curGenome = genomeConfig;
-        curGenome["isInitial"] = isInitial.current;
+        curGenome = { ...genomeConfig };
+        curGenome["isInitial"] = true;
         curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
@@ -57,8 +56,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
       }
       setCurrentGenomeConfig(curGenome);
-
-      isInitial.current = false;
     }
   }, [size.width]);
   useEffect(() => {
@@ -67,12 +64,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
       if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
-        curGenome["isInitial"] = isInitial.current;
+        curGenome["isInitial"] = false;
         curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
+        curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = false;
         setCurrentGenomeConfig(curGenome);
       }
@@ -88,12 +86,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         currentState.browser.index !== currentState.browser.limit - 1
       ) {
         curGenome = { ...genomeConfig };
-        curGenome["isInitial"] = isInitial.current;
+        curGenome["isInitial"] = false;
         curGenome["genomeID"] = trackManagerId.current;
+
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
+        curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = false;
         setCurrentGenomeConfig(curGenome);
       }
