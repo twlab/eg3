@@ -33,6 +33,7 @@ export function TrackContainer(props: ITrackContainerState) {
       selectedRegionSet={props.selectedRegionSet}
       setScreenshotData={props.setScreenshotData}
       isScreenShotOpen={props.isScreenShotOpen}
+      currentState={props.currentState}
     />
   );
 }
@@ -64,6 +65,7 @@ export function TrackContainerRepresentable({
   setScreenshotData,
   isScreenShotOpen,
   overrideViewRegion,
+  currentState,
 }: ITrackContainerRepresentableProps) {
   const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
   const lastUserViewRegion = useRef<DisplayedRegionModel | null>(null);
@@ -174,6 +176,7 @@ export function TrackContainerRepresentable({
 
   const convertedViewRegion = useMemo(() => {
     try {
+      console.log(viewRegion, "ASDASD");
       if (!viewRegion) {
         if (userViewRegion) {
           const start = userViewRegion.start;
@@ -243,6 +246,7 @@ export function TrackContainerRepresentable({
 
   const convertedUserViewRegion = useMemo(() => {
     try {
+      console.log(userViewRegion);
       if (areObjectsEqual(lastSelectedSet.current, selectedRegionSet)) {
         if (userViewRegion) {
           const start = userViewRegion.start;
@@ -446,6 +450,7 @@ export function TrackContainerRepresentable({
         selectedRegionSet={selectedRegionSet}
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
+        currentState={currentState}
       />
       {Toolbar ? (
         <div

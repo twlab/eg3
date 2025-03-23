@@ -17,16 +17,22 @@ import {
 
 import Toolbar from "./toolbar/Toolbar";
 
+import { RootState } from "../../lib/redux/store";
+
 export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
+
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
+  const currentState = useAppSelector((state: RootState) => state);
+  console.log(currentState.browser);
   if (!currentSession || !genomeConfig) {
     return null;
   }
+
   const selectedRegionSet = currentSession?.selectedRegionSet;
   const overrideViewRegion = currentSession?.overrideViewRegion;
   const viewRegion = currentSession?.viewRegion;
@@ -96,6 +102,7 @@ export default function GenomeView() {
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
         overrideViewRegion={overrideViewRegion}
+        currentState={currentState}
       />
     </div>
   );

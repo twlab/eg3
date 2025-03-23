@@ -116,7 +116,7 @@ export const browserSlice = createSlice({
             return track;
           });
         }
-
+        console.log(changes);
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
@@ -199,12 +199,17 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
-    ? browserSessionSelectors.selectById(state, state.browser.present.currentSession)
+    ? browserSessionSelectors.selectById(
+        state,
+        state.browser.present.currentSession
+      )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;
 
-export const selectCanUndo = (state: RootState) => state.browser.past.length > 0;
-export const selectCanRedo = (state: RootState) => state.browser.future.length > 0;
+export const selectCanUndo = (state: RootState) =>
+  state.browser.past.length > 0;
+export const selectCanRedo = (state: RootState) =>
+  state.browser.future.length > 0;
 
 export default browserSlice.reducer;

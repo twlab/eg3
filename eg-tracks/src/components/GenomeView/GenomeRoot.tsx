@@ -20,7 +20,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   onTrackSelected,
   onTrackDeleted,
   onNewRegionSelect,
-
+  currentState,
   tool,
   viewRegion,
   userViewRegion,
@@ -78,6 +78,27 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     }
   }, [viewRegion]);
+
+  useEffect(() => {
+    if (size.width > 0) {
+      let curGenome;
+
+      if (
+        trackManagerId.current &&
+        currentState.browser.index !== currentState.browser.limit - 1
+      ) {
+        curGenome = { ...genomeConfig };
+        curGenome["isInitial"] = isInitial.current;
+        curGenome["genomeID"] = trackManagerId.current;
+        curGenome.defaultRegion = new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
+        );
+        curGenome["sizeChange"] = false;
+        setCurrentGenomeConfig(curGenome);
+      }
+    }
+  }, [userViewRegion]);
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
