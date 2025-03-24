@@ -30,6 +30,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
+  const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 })
   // TO-DO need to set initial.current back to true when genomeConfig changes
   // to see if genomeConfig we can check its session id because it will unique
 
@@ -47,7 +48,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome["sizeChange"] = true;
       } else {
-        console.log("HERRERR");
+
         trackManagerId.current = crypto.randomUUID();
         curGenome = { ...genomeConfig };
         curGenome["isInitial"] = true;
@@ -62,10 +63,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [size.width]);
   useEffect(() => {
     if (size.width > 0) {
-      let curGenome;
+
 
       if (trackManagerId.current) {
-        curGenome = { ...genomeConfig };
+        const curGenome = { ...genomeConfig };
         curGenome["isInitial"] = false;
         curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
@@ -81,24 +82,30 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   useEffect(() => {
     if (size.width > 0) {
-      let curGenome;
-
       if (
         trackManagerId.current &&
         currentState.browser.index !== currentState.browser.limit - 1
       ) {
-        curGenome = { ...genomeConfig };
-        curGenome["isInitial"] = false;
-        curGenome["genomeID"] = trackManagerId.current;
+        if (genomeConfig.genomeName !== prevViewRegion.current.genomeName ||
+          userViewRegion._startBase !== prevViewRegion.current.start ||
+          userViewRegion._endBase !== prevViewRegion.current.end) {
+          const curGenome = { ...genomeConfig };
+          curGenome["isInitial"] = false;
+          curGenome["genomeID"] = trackManagerId.current;
 
-        curGenome.defaultRegion = new OpenInterval(
-          userViewRegion._startBase!,
-          userViewRegion._endBase!
-        );
-        curGenome.navContext = userViewRegion._navContext;
-        curGenome["sizeChange"] = false;
-        setCurrentGenomeConfig(curGenome);
+          curGenome.defaultRegion = new OpenInterval(
+            userViewRegion._startBase!,
+            userViewRegion._endBase!
+          );
+          curGenome.navContext = userViewRegion._navContext;
+          curGenome["sizeChange"] = false;
+          setCurrentGenomeConfig(curGenome);
+        }
+
       }
+      prevViewRegion.current.genomeName = genomeConfig.genomeName;
+      prevViewRegion.current.start = userViewRegion._startBase!;
+      prevViewRegion.current.end = userViewRegion._endBase!;
     }
   }, [userViewRegion]);
 

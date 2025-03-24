@@ -98,6 +98,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
+  console.log(event.data)
   const primaryGenName = event.data.primaryGenName;
   const fetchResults: Array<any> = [];
   const genomicLoci = event.data.genomicLoci;
@@ -183,10 +184,9 @@ self.onmessage = async (event: MessageEvent) => {
         ) {
           curFetchNav =
             genomicFetchCoord[
-              `${
-                item.metadata.genome === ""
-                  ? event.data.primaryGenName
-                  : item.metadata.genome
+              `${item.metadata.genome === ""
+                ? event.data.primaryGenName
+                : item.metadata.genome
               }`
             ].queryGenomicCoord;
         } else if (
@@ -266,15 +266,15 @@ self.onmessage = async (event: MessageEvent) => {
         // Assuming getData is bounded to the right context.
         const curRespond = trackModel.isText
           ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+            basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+            nav: curFetchNav[i],
+            trackModel,
+          })
           : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            });
+            basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+            nav: curFetchNav[i],
+            trackModel,
+          });
 
         if (
           curRespond &&

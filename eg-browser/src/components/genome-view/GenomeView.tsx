@@ -4,12 +4,9 @@ import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectIsNavigatorVisible } from "@/lib/redux/slices/settingsSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
-import { onRetrieveSession } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
 import {
   resetState,
-  selectBundle,
   selectScreenShotOpen,
-  updateBundle,
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
 import {

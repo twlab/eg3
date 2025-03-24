@@ -187,26 +187,6 @@ export function TrackContainerRepresentable({
     }
   }, [viewRegion, genomeConfig, selectedRegionSet]);
 
-  const areObjectsEqual = (obj1: any, obj2: any): boolean => {
-    if (obj1 === obj2) return true;
-
-    if (obj1 === null || obj2 === null) return false;
-
-    if (typeof obj1 !== "object" || typeof obj2 !== "object") return false;
-
-    const keys1 = Object.keys(obj1);
-    const keys2 = Object.keys(obj2);
-
-    if (keys1.length !== keys2.length) return false;
-
-    for (let key of keys1) {
-      if (!keys2.includes(key) || !areObjectsEqual(obj1[key], obj2[key])) {
-        return false;
-      }
-    }
-
-    return true;
-  };
 
   const convertedUserViewRegion = useMemo(() => {
     try {
@@ -259,7 +239,7 @@ export function TrackContainerRepresentable({
         ...genomeConfig.defaultRegion
       );
     }
-  }, [userViewRegion, genomeConfig, overrideViewRegion, selectedRegionSet]);
+  }, [userViewRegion, _genomeConfig, overrideViewRegion, selectedRegionSet]);
 
   const handleTrackSelected = useCallback(
     (selectedTracks: TrackModel[]) => {
@@ -327,37 +307,7 @@ export function TrackContainerRepresentable({
     [lastViewRegion, onNewRegionSelect]
   );
 
-  // useEffect(() => {
-  //   if (selectedRegionSet && genomeConfig && lastUserViewRegion.current) {
-  //     if (typeof selectedRegionSet === "object") {
-  //       const newRegionSet = RegionSet.deserialize(selectedRegionSet);
-  //       newRegionSet.genome = genomeConfig.genome;
-  //       newRegionSet.genomeName = genomeConfig.genome.getName();
 
-  //       const newVisData: any = new DisplayedRegionModel(
-  //         newRegionSet.makeNavContext()
-  //       );
-  //       genomeConfig.defaultRegion = new OpenInterval(
-  //         newVisData._startBase,
-  //         newVisData._endBase
-  //       );
-  //       genomeConfig.navContext = newVisData._navContext;
-  //       handleNewRegionSelect(newVisData._startBase, newVisData._endBase);
-  //     } else {
-  //       lastUserViewRegion.current = null;
-  //       lastViewRegion.current = null;
-  //       const newVisData: any = new DisplayedRegionModel(
-  //         selectedRegionSet.makeNavContext()
-  //       );
-  //       genomeConfig.defaultRegion = new OpenInterval(
-  //         newVisData._startBase,
-  //         newVisData._endBase
-  //       );
-  //       genomeConfig.navContext = newVisData._navContext;
-  //       handleNewRegionSelect(newVisData._startBase, newVisData._endBase);
-  //     }
-  //   }
-  // }, [selectedRegionSet]);
   return (
     <div>
       <TrackContainer
