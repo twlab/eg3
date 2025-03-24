@@ -61,7 +61,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
     console.log("Session bundle Id cannot be empty.", "error", 2000);
     return null;
   }
-  console.log(retrieveId, "ID CHECKING if fetch works");
+
   const dbRef = ref(getDatabase());
   try {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
@@ -70,7 +70,6 @@ export const onRetrieveSession = async (retrieveId: string) => {
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
-          console.log(object, "return RESULT");
 
           const regionSets = object.regionSets
             ? object.regionSets.map(RegionSet.deserialize)
@@ -98,15 +97,14 @@ export const onRetrieveSession = async (retrieveId: string) => {
             highlights: object.highlights || [],
             darkTheme: object.darkTheme || false,
           };
-          console.log(newBundle, "ORGANIZED BUNDLE BACK TO STATE");
+
           // Replace the state key with the newBundle in the session.
           res.sessionsInBundle[curId].state = newBundle;
         }
       }
-      console.log(res, "NOT UNDEFINED");
+
       return res;
     } else {
-      console.log("No data available");
       return null;
     }
   } catch (error) {
@@ -334,7 +332,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
 
   const retrieveSession = async (retrieveId: string) => {
     const bundleRes = await onRetrieveSession(retrieveId);
-    console.log(bundleRes);
+
     onRetrieveBundle(bundleRes);
   };
   const styles = {

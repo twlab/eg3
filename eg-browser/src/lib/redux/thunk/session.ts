@@ -101,7 +101,7 @@ export const fetchBundle = createAsyncThunk(
       try {
         const retrieveId = bundleId;
         const resBundle = await onRetrieveSession(retrieveId);
-        console.log(resBundle, retrieveId);
+
         if (resBundle) {
           thunkApi.dispatch(updateBundle(resBundle));
         }

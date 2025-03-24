@@ -87,7 +87,6 @@ const Session: React.FC = () => {
 
   //set the bundleid for this session to the retreive id and bundle to new bundle
   function onRetrieveBundle(newBundle: any) {
-    console.log(newBundle, "SADDASADSDAASD");
     dispatch(updateBundle(newBundle));
     dispatch(
       updateCurrentSession({
@@ -98,7 +97,6 @@ const Session: React.FC = () => {
 
   //add or delete session from bundle
   function onUpdateBundle(bundle: any) {
-    console.log(bundle);
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId }));
   }

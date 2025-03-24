@@ -112,7 +112,7 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
-        console.log(changes);
+
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
@@ -121,7 +121,7 @@ export const browserSlice = createSlice({
             return track;
           });
         }
-        console.log(changes);
+
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {

@@ -34,7 +34,7 @@ export default function GenomeView() {
   const lastSessionId = useRef<null | string>(null);
 
   const currentState = useAppSelector((state: RootState) => state);
-  console.log(currentState.browser);
+
   if (!currentSession || !genomeConfig) {
     return null;
   }
