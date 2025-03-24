@@ -1,7 +1,7 @@
 import { getGenomeConfig as getGenomeConfigFromAllGenomes } from "./models/genomes/allGenomes";
 import DisplayedRegionModel from "./models/DisplayedRegionModel";
 import DataHubParser from "./models/DataHubParser";
-import RegionSet from "@eg/core/src/eg-lib/models/RegionSet";
+import RegionSet from "./models/RegionSet";
 import OpenInterval from "./models/OpenInterval";
 
 export function getGenomeDefaultState(genome: string) {

@@ -60,10 +60,12 @@ export default function ImportSession() {
           title: "",
           viewRegion:
             parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
-          userViewRegion: {
-            start: parsedViewRegion._startBase,
-            end: parsedViewRegion._endBase,
-          },
+          userViewRegion: session.viewInterval
+            ? {
+                start: parsedViewRegion._startBase,
+                end: parsedViewRegion._endBase,
+              }
+            : null,
           tracks: mappedTracks,
           highlights: session.highlights,
           metadataTerms: session.metadataTerms,
