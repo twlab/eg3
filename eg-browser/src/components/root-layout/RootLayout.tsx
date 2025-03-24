@@ -16,7 +16,10 @@ import HelpTab from "./tabs/HelpTab";
 import ShareTab from "./tabs/ShareTab";
 import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
-import { selectCurrentSessionId, setCurrentSession } from "@/lib/redux/slices/browserSlice";
+import {
+  selectCurrentSessionId,
+  setCurrentSession,
+} from "@/lib/redux/slices/browserSlice";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
@@ -32,7 +35,12 @@ const firebaseConfig = {
   databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
   storageBucket: "chadeg3-83548.firebasestorage.app",
 };
-
+// const firebaseConfig = {
+//   apiKey: process.env.REACT_APP_FIREBASE_KEY,
+//   authDomain: process.env.REACT_APP_FIREBASE_DOMAIN,
+//   databaseURL: process.env.REACT_APP_FIREBASE_DATABASE,
+//   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+// };
 firebase.initializeApp(firebaseConfig);
 export default function RootLayout() {
   useBrowserInitialization();
@@ -58,7 +66,7 @@ export default function RootLayout() {
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
-  }
+  };
 
   return (
     <div className="h-screen w-screen flex flex-col bg-black">
