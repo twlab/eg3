@@ -2040,8 +2040,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [dataIdx, trackComponents]);
 
   useEffect(() => {
-    let highlightElement = createHighlight(highlights);
-    setHighLightElements([...highlightElement]);
+    if (highlights) {
+      let highlightElement = createHighlight(highlights);
+      setHighLightElements([...highlightElement]);
+    }
   }, [highlights]);
   // MARK: [tracks]
   //TO DO ADD FUNCTIONALITY TO ADD BAM TRACK

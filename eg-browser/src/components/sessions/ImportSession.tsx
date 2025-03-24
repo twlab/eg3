@@ -11,6 +11,7 @@ import {
   restoreLegacyViewRegion,
 } from "@eg/tracks";
 import { addSessionsFromBundleId } from "@/lib/redux/thunk/session";
+import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
 export default function ImportSession() {
   const dispatch = useAppDispatch();
@@ -34,7 +35,7 @@ export default function ImportSession() {
         let parsedViewRegion = restoreLegacyViewRegion(
           session,
           null
-        ) as GenomeCoordinate | null;
+        ) as DisplayedRegionModel | null;
 
         if (!parsedViewRegion) {
           throw new Error(
@@ -57,8 +58,12 @@ export default function ImportSession() {
           createdAt: Date.now(),
           updatedAt: Date.now(),
           title: "",
-          viewRegion: parsedViewRegion,
-          userViewRegion: parsedViewRegion,
+          viewRegion:
+            parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
+          userViewRegion: {
+            start: parsedViewRegion._startBase,
+            end: parsedViewRegion._endBase,
+          },
           tracks: mappedTracks,
           highlights: session.highlights,
           metadataTerms: session.metadataTerms,

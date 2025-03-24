@@ -141,6 +141,7 @@ export function TrackContainerRepresentable({
 
   const convertedViewRegion = useMemo(() => {
     try {
+      console.log(viewRegion);
       if (!viewRegion) {
         if (userViewRegion) {
           const start = userViewRegion.start;
@@ -186,7 +187,6 @@ export function TrackContainerRepresentable({
       );
     }
   }, [viewRegion, genomeConfig, selectedRegionSet]);
-
 
   const convertedUserViewRegion = useMemo(() => {
     try {
@@ -306,7 +306,6 @@ export function TrackContainerRepresentable({
     },
     [lastViewRegion, onNewRegionSelect]
   );
-
 
   return (
     <div>
