@@ -61,12 +61,14 @@ export const onRetrieveSession = async (retrieveId: string) => {
     console.log("Session bundle Id cannot be empty.", "error", 2000);
     return null;
   }
-
+  console.log(retrieveId);
   const dbRef = ref(getDatabase());
   try {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
+    console.log(snapshot);
     if (snapshot.exists()) {
       let res = snapshot.val();
+      console.log(res);
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
@@ -81,8 +83,8 @@ export const onRetrieveSession = async (retrieveId: string) => {
             genomeName: object.genomeName,
             viewRegion: new DisplayedRegionModel(
               getGenomeConfig(object.genomeName).navContext,
-              object.viewRegion._startBase,
-              object.viewRegion._endBase
+              object.viewInterval.start,
+              object.viewInterval.end
             ),
 
             tracks: object.tracks.map((data) => TrackModel.deserialize(data)),
@@ -331,8 +333,9 @@ const SessionUI: React.FC<SessionUIProps> = ({
   }
 
   const retrieveSession = async (retrieveId: string) => {
+    console.log(retrieveId);
     const bundleRes = await onRetrieveSession(retrieveId);
-
+    console.log(bundleRes);
     onRetrieveBundle(bundleRes);
   };
   const styles = {

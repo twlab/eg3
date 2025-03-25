@@ -62,7 +62,7 @@ const Session: React.FC = () => {
   function onRestoreSession(bundle: any) {
     const curSessionId = bundle.currentId;
     const sessionBundle = bundle.sessionsInBundle[`${curSessionId}`].state;
-
+    console.log(sessionBundle);
     const session = {
       genomeId: sessionBundle.genomeName,
       createdAt: Date.now(),

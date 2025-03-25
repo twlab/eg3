@@ -29,18 +29,19 @@ import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
-  authDomain: "chadeg3-83548.firebaseapp.com",
-  databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
-  storageBucket: "chadeg3-83548.firebasestorage.app",
-};
 // const firebaseConfig = {
-//   apiKey: process.env.REACT_APP_FIREBASE_KEY,
-//   authDomain: process.env.REACT_APP_FIREBASE_DOMAIN,
-//   databaseURL: process.env.REACT_APP_FIREBASE_DATABASE,
-//   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+//   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
+//   authDomain: "chadeg3-83548.firebaseapp.com",
+//   databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
+//   storageBucket: "chadeg3-83548.firebasestorage.app",
 // };
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+};
+console.log(process.env.REACT_APP_FIREBASE_KEY);
 firebase.initializeApp(firebaseConfig);
 export default function RootLayout() {
   useBrowserInitialization();
