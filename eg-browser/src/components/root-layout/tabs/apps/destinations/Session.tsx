@@ -62,7 +62,7 @@ const Session: React.FC = () => {
   function onRestoreSession(bundle: any) {
     const curSessionId = bundle.currentId;
     const sessionBundle = bundle.sessionsInBundle[`${curSessionId}`].state;
-    console.log(sessionBundle);
+
     const session = {
       genomeId: sessionBundle.genomeName,
       createdAt: Date.now(),
@@ -100,7 +100,7 @@ const Session: React.FC = () => {
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId }));
   }
-  return curUserState ? (
+  return (
     <SessionUI
       onRestoreSession={onRestoreSession}
       onRetrieveBundle={onRetrieveBundle}
@@ -109,8 +109,6 @@ const Session: React.FC = () => {
       curBundle={bundle}
       state={curUserState}
     />
-  ) : (
-    ""
   );
 };
 
