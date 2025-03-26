@@ -35,6 +35,11 @@ export default class GenomeHubManager {
     return genome;
   }
 
+  async preloadGenome(id: string): Promise<void> {
+    const genome = await this.getGenomeById(id);
+    this.genomeCache.set(id, genome);
+  }
+
   isGenomeCached(id: string): boolean {
     return this.genomeCache.has(id);
   }

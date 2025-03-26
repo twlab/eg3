@@ -8,7 +8,7 @@ export default function HelpTab() {
                 <ExternalLink
                     title="Documentation"
                     description="Read our comprehensive documentation and user guides"
-                    href="https://epigenomegateway.readthedocs.io/"
+                    href="https://epgg.github.io/"
                 />
                 <ExternalLink
                     title="GitHub Repository"

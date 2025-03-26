@@ -12,6 +12,7 @@ import {
 
 import { RootState } from "../store";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
+import { BundleProps } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
 
 export type uuid = string;
 
@@ -19,18 +20,18 @@ export interface BrowserSession {
   id: uuid;
   createdAt: number;
   updatedAt: number;
-
+  bundleId: string | null; // stays null until the user save their current session, load session, or get sessions from Url param
   title: string;
   genomeId: uuid;
-  viewRegion: GenomeCoordinate;
+  viewRegion: GenomeCoordinate | null;
   userViewRegion: { start: number; end: number } | null;
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];
   metadataTerms: string[];
-  trackModelId: number;
   regionSets: Array<any>;
   selectedRegionSet: RegionSet | null;
+  overrideViewRegion: GenomeCoordinate | null;
 }
 
 // MARK: - State
@@ -51,15 +52,22 @@ export const browserSlice = createSlice({
       action: PayloadAction<{
         genome: IGenome;
         viewRegion?: GenomeCoordinate;
+        additionalTracks?: ITrackModel[];
       }>
     ) => {
-      const { genome, viewRegion: overrideViewRegion } = action.payload;
+      //TO DO url param to also get bundleId and get it here as a property for initial startup
+      const {
+        genome,
+        viewRegion: overrideViewRegion,
+        additionalTracks = [],
+      } = action.payload;
 
-      const { defaultRegion: viewRegion, defaultTracks: tracks } = genome;
+      const { defaultRegion, defaultTracks: tracks = [] } = genome;
 
-      let trackModelId = 0;
+      let allTracks = [...tracks, ...additionalTracks];
+
       const initializedTracks =
-        tracks?.map((track) => ({
+        allTracks?.map((track) => ({
           ...track,
           id: crypto.randomUUID(),
           isSelected: false,
@@ -70,13 +78,15 @@ export const browserSlice = createSlice({
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
-        viewRegion,
+        bundleId: null,
+        viewRegion: overrideViewRegion ?? defaultRegion,
+        overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
+
         highlights: [],
         metadataTerms: [],
-        trackModelId,
         regionSets: [],
         selectedRegionSet: null,
       };
@@ -101,16 +111,17 @@ export const browserSlice = createSlice({
       action: PayloadAction<Partial<BrowserSession>>
     ) => {
       if (state.currentSession) {
-        const session = state.sessions.entities[state.currentSession];
         const changes = { ...action.payload };
+
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
-            if (!("id" in track)) {
+            if (!("id" in track) || !track["id"]) {
               (track as ITrackModel).id = crypto.randomUUID();
             }
             return track;
           });
         }
+
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
@@ -129,7 +140,7 @@ export const browserSlice = createSlice({
             : [action.payload];
 
           const tracksWithIds = newTracks.map((track) => {
-            if (!("id" in track)) {
+            if (!("id" in track) || !track["id"]) {
               return {
                 ...(track as object),
                 id: crypto.randomUUID(),
@@ -142,7 +153,7 @@ export const browserSlice = createSlice({
             id: state.currentSession,
             changes: {
               tracks: [...session.tracks, ...tracksWithIds],
-              trackModelId: session.trackModelId,
+
               updatedAt: Date.now(),
             },
           });
@@ -185,17 +196,25 @@ export const {
 } = browserSlice.actions;
 
 export const selectCurrentSessionId = (state: RootState) =>
-  state.browser.currentSession;
+  state.browser.present.currentSession;
 
 const browserSessionSelectors = browserSessionAdapter.getSelectors(
-  (state: RootState) => state.browser.sessions
+  (state: RootState) => state.browser.present.sessions
 );
 
 export const selectCurrentSession = (state: RootState) =>
-  state.browser.currentSession
-    ? browserSessionSelectors.selectById(state, state.browser.currentSession)
+  state.browser.present.currentSession
+    ? browserSessionSelectors.selectById(
+        state,
+        state.browser.present.currentSession
+      )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;
+
+export const selectCanUndo = (state: RootState) =>
+  state.browser.past.length > 0;
+export const selectCanRedo = (state: RootState) =>
+  state.browser.future.length > 0;
 
 export default browserSlice.reducer;

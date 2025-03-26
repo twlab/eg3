@@ -20,36 +20,38 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   onTrackSelected,
   onTrackDeleted,
   onNewRegionSelect,
-
+  currentState,
   tool,
   viewRegion,
   userViewRegion,
   setScreenshotData,
   isScreenShotOpen,
 }) {
-  const isInitial = useRef(true);
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
+  const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 })
   // TO-DO need to set initial.current back to true when genomeConfig changes
   // to see if genomeConfig we can check its session id because it will unique
+
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
 
-      if (!isInitial.current && trackManagerId.current) {
+      if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
         curGenome["genomeID"] = trackManagerId.current;
-        curGenome["isInitial"] = isInitial.current;
+        curGenome["isInitial"] = false;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
         curGenome["sizeChange"] = true;
       } else {
+
         trackManagerId.current = crypto.randomUUID();
-        curGenome = genomeConfig;
-        curGenome["isInitial"] = isInitial.current;
+        curGenome = { ...genomeConfig };
+        curGenome["isInitial"] = true;
         curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
@@ -57,26 +59,55 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
       }
       setCurrentGenomeConfig(curGenome);
-
-      isInitial.current = false;
     }
   }, [size.width]);
   useEffect(() => {
     if (size.width > 0) {
-      let curGenome;
+
+
       if (trackManagerId.current) {
-        curGenome = { ...genomeConfig };
-        curGenome["isInitial"] = isInitial.current;
+        const curGenome = { ...genomeConfig };
+        curGenome["isInitial"] = false;
         curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
+        curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = false;
         setCurrentGenomeConfig(curGenome);
       }
     }
   }, [viewRegion]);
+
+  useEffect(() => {
+    if (size.width > 0) {
+      if (
+        trackManagerId.current &&
+        currentState.browser.index !== currentState.browser.limit - 1
+      ) {
+        if (genomeConfig.genomeName !== prevViewRegion.current.genomeName ||
+          userViewRegion._startBase !== prevViewRegion.current.start ||
+          userViewRegion._endBase !== prevViewRegion.current.end) {
+          const curGenome = { ...genomeConfig };
+          curGenome["isInitial"] = false;
+          curGenome["genomeID"] = trackManagerId.current;
+
+          curGenome.defaultRegion = new OpenInterval(
+            userViewRegion._startBase!,
+            userViewRegion._endBase!
+          );
+          curGenome.navContext = userViewRegion._navContext;
+          curGenome["sizeChange"] = false;
+          setCurrentGenomeConfig(curGenome);
+        }
+
+      }
+      prevViewRegion.current.genomeName = genomeConfig.genomeName;
+      prevViewRegion.current.start = userViewRegion._startBase!;
+      prevViewRegion.current.end = userViewRegion._endBase!;
+    }
+  }, [userViewRegion]);
 
   return (
     <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
@@ -87,7 +118,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width - legendWidth}
+            windowWidth={size.width}
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={currentGenomeConfig}

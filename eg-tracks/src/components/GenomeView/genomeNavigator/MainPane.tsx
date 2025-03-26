@@ -155,7 +155,7 @@ class MainPane extends React.Component<GenomeViewerProps> {
           onRegionSelected={onRegionSelected}
         >
           <svg
-            width="100%"
+            width={containerWidth}
             height={SVG_HEIGHT}
             onContextMenu={(event) => event.preventDefault()}
             style={{ border: "1px solid black" }}
@@ -166,17 +166,22 @@ class MainPane extends React.Component<GenomeViewerProps> {
               viewRegion={viewRegion}
               width={containerWidth}
               y={CHROMOSOME_Y}
-              x={X_OFFSET}
+              x={0}
             />
 
-            <Ruler viewRegion={viewRegion} width={containerWidth} y={RULER_Y} x={X_OFFSET} />
+            <Ruler
+              viewRegion={viewRegion}
+              width={containerWidth}
+              y={RULER_Y}
+              x={0}
+            />
             <SelectedRegionBox
               width={containerWidth}
               viewRegion={viewRegion}
               selectedRegion={selectedRegion}
               onNewViewRequested={onNewViewRequested}
               y={SELECTED_BOX_Y}
-              x={X_OFFSET}
+              x={0}
             />
           </svg>
         </SelectableGenomeArea>

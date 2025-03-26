@@ -2,16 +2,14 @@ import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import { selectTool, setTool } from "@/lib/redux/slices/utilitySlice";
 
 import {
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
-  ArrowsUpDownIcon,
-  BookOpenIcon,
-  ClockIcon,
+  BoltIcon,
+  LightBulbIcon,
   HandRaisedIcon,
-  MagnifyingGlassIcon,
   MagnifyingGlassMinusIcon,
   MagnifyingGlassPlusIcon,
-  PaintBrushIcon,
+  ArrowLeftCircleIcon,
+  ArrowRightCircleIcon,
+  ArrowsUpDownIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -81,34 +79,31 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           }}
           transition={{ duration: 0.2 }}
         >
-          {/* <button
+          <button
             onClick={() => handleToolClick(Tool.Drag)}
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
             <HandRaisedIcon className="size-6 text-gray-600" />
-          </button> */}
-          {/* <button
-            onClick={() => handleToolClick(Tool.Reorder)}
-            className={getButtonClass(Tool.Reorder)}
-            title="Reorder tracks"
-          >
-            <ArrowsUpDownIcon className="size-6 text-gray-600" />
-          </button> */}
+          </button>
+
           <button
             onClick={() => handleToolClick(Tool.Zoom)}
             className={getButtonClass(Tool.Zoom)}
-            title="Zoom out"
+            title="Zoom-in"
           >
-            <MagnifyingGlassIcon className="size-6 text-gray-600" />
+            <span className="size-6 text-gray-600">
+              ⬚🔍+
+            </span>
           </button>
           <button
-            onClick={() => handleToolClick(Tool.Highlight)}
-            className={getButtonClass(Tool.Highlight)}
-            title="Highlight region"
+            onClick={() => handleToolClick(Tool.Reorder)}
+            className={getButtonClass(Tool.Reorder)}
+            title="Re-order"
           >
-            <PaintBrushIcon className="size-6 text-gray-600" />
+            <ArrowsUpDownIcon className="size-6 text-gray-600" />
           </button>
+
 
           <div className="h-full border-r border-gray-400" />
         </motion.div>
@@ -132,9 +127,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             onClick={() => handleToolClick(Tool.PanLeft)}
             className={getButtonClass(Tool.PanLeft)}
-            title="Pan Left"
+            title="Pan left"
           >
-            <ChevronDoubleLeftIcon className="size-6 text-gray-600" />
+            <ArrowLeftCircleIcon className="size-6 text-gray-600" />
           </button>
         </motion.div>
         <motion.div
@@ -299,9 +294,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           <button
             onClick={() => handleToolClick(Tool.PanRight)}
             className={getButtonClass(Tool.PanRight)}
-            title="Pan Right"
+            title="Pan right"
           >
-            <ChevronDoubleRightIcon className="size-6 text-gray-600" />
+            <ArrowRightCircleIcon className="size-6 text-gray-600" />
           </button>
         </motion.div>
         <motion.div
@@ -322,22 +317,29 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           transition={{ duration: 0.2 }}
         >
           <div className="h-full border-r border-gray-400" />
-          <button
+          {/* <button
             onClick={() => handleToolClick(Tool.Drag)}
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
             <HandRaisedIcon className="size-6 text-gray-600" />
-          </button>
+          </button> */}
           {/* <button className={getButtonClass()} title="Zoom in">
             <ClockIcon className="size-6 text-gray-600" />
           </button> */}
           <button
+            onClick={() => handleToolClick(Tool.Highlight)}
+            className={getButtonClass(Tool.Highlight)}
+            title="Highlight"
+          >
+            <BoltIcon className="size-6 text-gray-600" />
+          </button>
+          <button
             className={getButtonClass()}
             onClick={() => handleToolClick(Tool.highlightMenu)}
-            title="Highlight Menu"
+            title="Highlight list"
           >
-            <BookOpenIcon className="size-6 text-gray-600" />
+            <LightBulbIcon className="size-6 text-gray-600" />
           </button>
         </motion.div>
       </motion.div>

@@ -1,3 +1,4 @@
+import { BundleProps } from "../components/GenomeView/TabComponents/SessionUI";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import TrackModel from "../models/TrackModel";
 import { IGenome } from "./genome-hub";
@@ -19,16 +20,18 @@ export interface ITrackContainerState {
     endbase: number,
     highlightSearch?: boolean
   ) => void;
-  viewRegion: DisplayedRegionModel;
+  viewRegion: DisplayedRegionModel | undefined;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
   selectedRegionSet: any;
   setScreenshotData: any;
   isScreenShotOpen: boolean;
+  currentState: any;
 }
 
 export interface ITrackContainerRepresentableProps {
   tracks: ITrackModel[];
+  genomeName: string;
   highlights: IHighlightInterval[];
   genomeConfig: IGenome;
   legendWidth: number;
@@ -43,13 +46,15 @@ export interface ITrackContainerRepresentableProps {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => void;
-  viewRegion: GenomeCoordinate;
+  viewRegion: GenomeCoordinate | null;
   userViewRegion: { start: number; end: number } | null;
   tool: Tool | null;
   Toolbar?: any;
   selectedRegionSet: any;
   setScreenshotData: any;
   isScreenShotOpen: boolean;
+  overrideViewRegion: GenomeCoordinate | null;
+  currentState: any;
 }
 
 // MARK: Track Model

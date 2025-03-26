@@ -232,7 +232,14 @@ export default function SearchBar({
   onNewRegionSelect,
 }: SearchBarProps) {
   const { ref: searchContainerRef, height: searchHeight } =
-    useElementGeometry();
+    useElementGeometry({ shouldRespondToResize: false });
+
+  const currentGenome = useCurrentGenome();
+
+  const snpSearchEnabled = useMemo(() => {
+    return currentGenome?.id === 'hg19' || currentGenome?.id === 'hg38';
+  }, [currentGenome]);
+
   const highlightSearch = useRef(false);
   const [activeCommand, setActiveCommand] = useState<CommandType | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);

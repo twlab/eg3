@@ -5,6 +5,7 @@ import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { selectIsNavigatorVisible } from "@/lib/redux/slices/settingsSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
 import {
+  resetState,
   selectScreenShotOpen,
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
@@ -16,19 +17,42 @@ import {
 } from "@eg/tracks";
 
 import Toolbar from "./toolbar/Toolbar";
+import { useRef } from "react";
+import { fetchBundle } from "../../lib/redux/thunk/session";
+
+import { RootState } from "../../lib/redux/store";
 
 export default function GenomeView() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const tool = useAppSelector(selectTool);
+
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
 
-  const selectedRegionSet = currentSession?.selectedRegionSet;
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
+  const lastSessionId = useRef<null | string>(null);
+
+  const currentState = useAppSelector((state: RootState) => state);
+
   if (!currentSession || !genomeConfig) {
     return null;
   }
+  // const bundleId = currentSession.bundleId;
+  const bundleId = currentSession.bundleId;
+
+  const sessionId = currentSession.id;
+  if (lastSessionId.current !== sessionId) {
+    dispatch(resetState());
+    lastSessionId.current = sessionId;
+    if (bundleId) {
+      dispatch(fetchBundle(bundleId));
+    }
+  }
+  const genomeName = currentSession.genomeId;
+  const selectedRegionSet = currentSession?.selectedRegionSet;
+  const overrideViewRegion = currentSession?.overrideViewRegion;
+  const viewRegion = currentSession?.viewRegion;
 
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
@@ -61,18 +85,24 @@ export default function GenomeView() {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => {
+    let currCoordinate: GenomeCoordinate | null = coordinate;
+    if (coordinate === viewRegion) {
+      currCoordinate = null;
+    }
+
     dispatch(
       updateCurrentSession({
+        viewRegion: currCoordinate,
         userViewRegion: { start: startbase, end: endbase },
       })
     );
-    dispatch(updateCurrentSession({ viewRegion: coordinate }));
   };
 
   return (
     <div>
       <TrackContainerRepresentable
         key={currentSession.id}
+        genomeName={genomeName ? genomeName : "hg38"}
         tracks={currentSession.tracks}
         highlights={currentSession.highlights}
         genomeConfig={genomeConfig}
@@ -84,13 +114,15 @@ export default function GenomeView() {
         onTrackDeleted={handleTrackDeleted}
         onTrackAdded={handleTrackAdded}
         onNewRegionSelect={handleNewRegionSelect}
-        viewRegion={currentSession.viewRegion}
+        viewRegion={viewRegion}
         userViewRegion={currentSession.userViewRegion}
         tool={tool}
         Toolbar={Toolbar}
         selectedRegionSet={selectedRegionSet}
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
+        overrideViewRegion={overrideViewRegion}
+        currentState={currentState}
       />
     </div>
   );

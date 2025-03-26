@@ -98,6 +98,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
+  console.log(event.data)
   const primaryGenName = event.data.primaryGenName;
   const fetchResults: Array<any> = [];
   const genomicLoci = event.data.genomicLoci;
@@ -122,21 +123,9 @@ self.onmessage = async (event: MessageEvent) => {
     genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
       event.data.visData;
   }
-  const tmpQueryGenObj: { [key: string]: any } = {};
-  tmpQueryGenObj[`${primaryGenName}`] = "";
-  let genomeAlignTracks = trackDefaults.filter((items, index) => {
-    return items.type === "genomealign";
-  });
-  genomeAlignTracks.map((items, index) => {
-    if (items.querygenome) {
-      tmpQueryGenObj[`${items.querygenome}`] = "";
-    } else if (items.metadata && items.metadata.genome) {
-      tmpQueryGenObj[`${items.metadata.genome}`] = "";
-    }
-  });
 
   let leftOverTrackModels = trackDefaults.filter((items, index) => {
-    return items.type !== "genomealign";
+    return items && items.type !== "genomealign";
   });
 
   await Promise.all(
@@ -195,10 +184,9 @@ self.onmessage = async (event: MessageEvent) => {
         ) {
           curFetchNav =
             genomicFetchCoord[
-              `${
-                item.metadata.genome === ""
-                  ? event.data.primaryGenName
-                  : item.metadata.genome
+              `${item.metadata.genome === ""
+                ? event.data.primaryGenName
+                : item.metadata.genome
               }`
             ].queryGenomicCoord;
         } else if (
@@ -278,15 +266,15 @@ self.onmessage = async (event: MessageEvent) => {
         // Assuming getData is bounded to the right context.
         const curRespond = trackModel.isText
           ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+            basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+            nav: curFetchNav[i],
+            trackModel,
+          })
           : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            });
+            basesPerPixel: event.data.bpRegionSize / event.data.windowWidth,
+            nav: curFetchNav[i],
+            trackModel,
+          });
 
         if (
           curRespond &&

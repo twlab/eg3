@@ -16,14 +16,32 @@ import HelpTab from "./tabs/HelpTab";
 import ShareTab from "./tabs/ShareTab";
 import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
-import { selectCurrentSessionId } from "@/lib/redux/slices/browserSlice";
+import {
+  selectCurrentSessionId,
+  setCurrentSession,
+} from "@/lib/redux/slices/browserSlice";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
+import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 
 const CURL_RADIUS = 15;
+import * as firebase from "firebase/app";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
+  authDomain: "chadeg3-83548.firebaseapp.com",
+  databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
+  storageBucket: "chadeg3-83548.firebasestorage.app",
+};
+// const firebaseConfig = {
+//   apiKey: process.env.REACT_APP_FIREBASE_KEY,
+//   authDomain: process.env.REACT_APP_FIREBASE_DOMAIN,
+//   databaseURL: process.env.REACT_APP_FIREBASE_DATABASE,
+//   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+// };
+firebase.initializeApp(firebaseConfig);
 export default function RootLayout() {
   useBrowserInitialization();
 
@@ -45,6 +63,10 @@ export default function RootLayout() {
     width: contentWidth,
     height: contentHeight,
   } = useElementGeometry();
+
+  const handleGoHome = () => {
+    dispatch(setCurrentSession(null));
+  };
 
   return (
     <div className="h-screen w-screen flex flex-col bg-black">
@@ -83,7 +105,7 @@ export default function RootLayout() {
               >
                 <div
                   className="flex flex-col"
-                  style={{ height: contentHeight, }}
+                  style={{ height: contentHeight }}
                 >
                   <SessionPanel />
                 </div>
@@ -101,7 +123,11 @@ export default function RootLayout() {
                 ? "blur(5px) brightness(0.7)"
                 : "blur(0px) brightness(1)",
             }}
-            onClick={sessionPanelOpen ? () => dispatch(setSessionPanelOpen(false)) : undefined}
+            onClick={
+              sessionPanelOpen
+                ? () => dispatch(setSessionPanelOpen(false))
+                : undefined
+            }
           >
             {/* MARK: - Genome View */}
             <motion.div
@@ -136,7 +162,9 @@ export default function RootLayout() {
                     transition={{ duration: 0.3 }}
                     style={{ width: contentWidth, height: contentHeight }}
                   >
-                    <GenomeView />
+                    <GenomeErrorBoundary onGoHome={handleGoHome}>
+                      <GenomeView />
+                    </GenomeErrorBoundary>
                   </motion.div>
                 ) : (
                   <motion.div

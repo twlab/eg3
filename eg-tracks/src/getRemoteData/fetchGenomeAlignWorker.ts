@@ -72,6 +72,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
+
   const regionExpandLoci = event.data.regionExpandLoci;
   const trackToFetch = event.data.trackToFetch;
   const genomicLoci = event.data.genomicLoci;
@@ -99,7 +100,7 @@ self.onmessage = async (event: MessageEvent) => {
 
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
-    let result: Array<any> = [];
+
     for (let feature of event.data.visData.visRegion._navContext._features) {
       let newChr = new ChromosomeInterval(
         feature.locus.chr,

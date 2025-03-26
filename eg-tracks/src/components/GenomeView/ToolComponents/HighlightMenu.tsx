@@ -89,7 +89,7 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   ) : (
     <div style={{ textAlign: "center", marginTop: 100, color: "#3c4043" }}>
       <img
-        src="https://epigenomegateway.wustl.edu/browser/favicon-144.png"
+        src="/browser/img/favicon-144.png"
         alt="Browser Icon"
         style={{ height: 125, width: "auto", marginLeft: 20, marginRight: 20 }}
       />

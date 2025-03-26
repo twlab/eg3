@@ -11,7 +11,6 @@ import Screenshot from "./destinations/Screenshot";
 import DynamicRecord from "./destinations/DynamicRecord";
 import FetchSequence from "./destinations/FetchSequence";
 import { useAppDispatch } from "@/lib/redux/hooks";
-import { setSessionPanelOpen } from "@/lib/redux/slices/navigationSlice";
 import RegionSetSelector from "./destinations/region-set/RegionSetSelector";
 
 export default function AppsTab() {
@@ -100,12 +99,13 @@ export default function AppsTab() {
           title="Scatter Plot"
           description="Generate scatter plots for genomic data analysis"
         />
-        {/* <DescriptiveNavigationLink
+        <DescriptiveNavigationLink
+          path="session"
           title="Session"
           description="Manage and share your browser sessions"
-          onClick={() => dispatch(setSessionPanelOpen(true))}
+          // onClick={() => dispatch(setSessionPanelOpen(true))}
         />
-        <DescriptiveNavigationLink
+        {/* <DescriptiveNavigationLink
           path="go-live"
           title="Go Live"
           description="Share your browser view in real-time with others"
@@ -124,6 +124,11 @@ export default function AppsTab() {
           path="fetch-sequence"
           title="Fetch Sequence"
           description="Retrieve and analyze genomic sequences"
+        /> */}
+        {/* <DescriptiveNavigationLink
+          path="session"
+          title="Session"
+          description="Manage and share your browser sessions"
         /> */}
       </div>
     </NavigationStack>

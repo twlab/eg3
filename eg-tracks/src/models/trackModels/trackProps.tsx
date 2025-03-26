@@ -7,6 +7,7 @@ export interface TrackProps {
   bpRegionSize: number;
   basePerPixel: number;
   side: string;
+  highlightElements: any;
   windowWidth: number;
   handleDelete: (trackIndex: number) => void;
   globalTrackState: any;
@@ -29,7 +30,7 @@ export interface TrackProps {
   isThereG3dTrack: boolean;
   signalTrackLoadComplete?: any;
   legendRef: any;
-
+  posRef: any;
   updateGlobalTrackConfig: any;
   sentScreenshotData: any;
   applyTrackConfigChange: any;

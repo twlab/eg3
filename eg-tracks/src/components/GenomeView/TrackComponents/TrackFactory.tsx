@@ -41,6 +41,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackFetchedDataCache,
   globalTrackState,
   isScreenShotOpen,
+  posRef,
+  highlightElements,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -190,7 +192,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    setLegend(ReactDOM.createPortal(updatedLegend.current, legendRef.current));
+    setLegend(updatedLegend.current);
   }, [svgComponents, canvasComponents]);
 
   // MARK:[newDrawDat
@@ -419,26 +421,35 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 
-        let result = await getDisplayModeFunction({
-          genomeName: genomeConfig.genome.getName(),
-          genesArr: combinedData,
-          trackState,
-          windowWidth,
-          configOptions: drawOptions,
-          renderTooltip,
-          svgHeight,
-          updatedLegend,
-          trackModel,
-          getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
-          getHeight,
-          ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
-        });
+        // let result = await getDisplayModeFunction({
+        //   genomeName: genomeConfig.genome.getName(),
+        //   genesArr: combinedData,
+        //   trackState,
+        //   windowWidth,
+        //   configOptions: drawOptions,
+        //   renderTooltip,
+        //   svgHeight,
+        //   updatedLegend,
+        //   trackModel,
+        //   getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
+        //   getHeight,
+        //   ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
+        // });
 
         sentScreenshotData({
-          component: result,
+          fetchData: {
+            genomeName: genomeConfig.genome.getName(),
+            genesArr: combinedData,
+            trackState,
+            windowWidth,
+            configOptions: drawOptions,
+            svgHeight:
+              configOptions.current.displayMode === "full"
+                ? svgHeight.current
+                : configOptions.current.height,
+            trackModel,
+          },
           trackId: id,
-          trackState: trackState,
-          trackLegend: updatedLegend.current,
         });
       }
 
@@ -1266,44 +1277,102 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   return (
     <div
       style={{
+        zIndex: 1,
         display: "flex",
-        height:
-          configOptions.current.displayMode === "full"
-            ? !fetchError.current
-              ? svgHeight.current + 2
-              : 40 + 2
-            : !fetchError.current
-            ? configOptions.current.height + 2
-            : 40 + 2,
-        position: "relative",
       }}
     >
-      {configOptions.current.displayMode === "full" ? (
-        <div
-          style={{
-            position: "absolute",
-            lineHeight: 0,
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            backgroundColor: configOptions.current.backgroundColor,
-          }}
-        >
-          {svgComponents}
-        </div>
-      ) : (
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: configOptions.current.backgroundColor,
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-          }}
-        >
-          {canvasComponents}
-        </div>
-      )}
-      {toolTipVisible ? toolTip : ""}
-      {legend}
+      <div
+        style={{
+          zIndex: 10,
+          width: 120,
+          backgroundColor: trackModel.isSelected
+            ? "rgb(250, 214, 214)"
+            : "white",
+          position: "absolute", // Change to absolute
+        }}
+      >
+        {legend}
+      </div>
+      <div
+        ref={posRef}
+        style={{
+          display: "flex",
+          height:
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
+              : 40,
+          position: "relative", // Ensure this parent div is relatively positioned
+        }}
+      >
+        {configOptions.current.displayMode === "full" ? (
+          <div
+            style={{
+              position: "absolute",
+              lineHeight: 0,
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              backgroundColor: configOptions.current.backgroundColor,
+              WebkitBackfaceVisibility: "hidden",
+              WebkitPerspective: `${windowWidth}px`,
+              backfaceVisibility: "hidden",
+              perspective: `${windowWidth}px`,
+            }}
+          >
+            {svgComponents}
+          </div>
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              backgroundColor: configOptions.current.backgroundColor,
+              left: updateSide.current === "right" ? `${xPos.current}px` : "",
+              right: updateSide.current === "left" ? `${xPos.current}px` : "",
+              WebkitBackfaceVisibility: "hidden",
+              WebkitPerspective: `${windowWidth}px`,
+              backfaceVisibility: "hidden",
+              perspective: `${windowWidth}px`,
+            }}
+          >
+            {canvasComponents}
+          </div>
+        )}
+        {toolTipVisible ? toolTip : ""}
+
+        {highlightElements.length > 0
+          ? highlightElements.map((item, index) => {
+              if (item.display) {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      position: "relative",
+                      height: "100%",
+                    }}
+                  >
+                    <div
+                      key={index}
+                      style={{
+                        position: "absolute",
+                        backgroundColor: item.color,
+                        top: "0",
+                        height: "100%",
+                        left: item.side === "right" ? `${item.xPos}px` : "",
+                        right: item.side === "left" ? `${item.xPos}px` : "",
+                        width: item.width,
+                        pointerEvents: "none", // This makes the highlighted area non-interactive
+                      }}
+                    ></div>
+                  </div>
+                );
+              }
+            })
+          : ""}
+      </div>
     </div>
   );
 });

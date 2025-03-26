@@ -1,8 +1,8 @@
-// import Ajv from 'ajv';
+import Ajv from 'ajv';
 
 export const genomeDataSchema = {
     type: 'object',
-    required: ['name', 'id', 'chromosomes'],
+    required: ['name', 'id', 'chromosomes', 'defaultRegion'],
     properties: {
         id: { type: 'string' },
         name: { type: 'string' },
@@ -102,22 +102,21 @@ export const genomeDataSchema = {
             }
         },
         twoBitURL: { type: 'string' }
-    }
+    },
+    additionalProperties: false
 };
 
 export function validateGenomeData(data: any) {
+    const ajv = new Ajv({ allErrors: true });
+    const validate = ajv.compile(genomeDataSchema);
+    const valid = validate(data);
+
+    if (!valid) {
+        return {
+            valid: false,
+            errors: validate.errors
+        };
+    }
 
     return { valid: true };
-    // const ajv = new Ajv({ allErrors: true });
-    // const validate = ajv.compile(genomeDataSchema);
-    // const valid = validate(data);
-
-    // if (!valid) {
-    //     return {
-    //         valid: false,
-    //         errors: validate.errors
-    //     };
-    // }
-
-    // return { valid: true };
 }

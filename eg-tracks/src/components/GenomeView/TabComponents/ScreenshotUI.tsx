@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import _ from "lodash";
 import ReactModal from "react-modal";
 import withAutoDimensions from "./withAutoDimensions";
@@ -9,7 +9,9 @@ import {
   displayModeComponentMap,
   getDisplayModeFunction,
 } from "../TrackComponents/displayModeComponentMap";
-
+import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
+import TrackLegend from "../TrackComponents/commonComponents/TrackLegend";
+import { objToInstanceAlign } from "../TrackManager";
 interface Highlight {
   start: number;
   end: number;
@@ -26,19 +28,20 @@ interface Props {
   tracks: any[];
   trackData: any;
   metadataTerms: any;
-  viewRegion: any;
+  viewRegion?: any;
   isOpen: any;
   handleCloseModal: any;
+  windowWidth: number;
 }
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("block");
   const [buttonDisabled, setButtonDisabled] = useState<string>("");
-
-  const svgDataURL = (svg: SVGElement) => {
-    const svgAsXML = new XMLSerializer().serializeToString(svg);
-    return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
-  };
+  const [svgView, setSvgView] = useState<any>(<div></div>);
+  // const svgDataURL = (svg: SVGElement) => {
+  //   const svgAsXML = new XMLSerializer().serializeToString(svg);
+  //   return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
+  // };
 
   const prepareSvg = () => {
     const { highlights, needClip, legendWidth, primaryView, darkTheme } = props;
@@ -51,7 +54,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     const boxHeight = tracks.reduce(
       (acc, cur) => acc + cur.clientHeight,
-      11 * tracks.length
+      tracks.length
     );
     const boxWidth = tracks[0].clientWidth;
     const xmlns = "http://www.w3.org/2000/svg";
@@ -59,14 +62,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     // svgElem.setAttributeNS(
     //   null,
     //   "viewBox",
-    //   "0 0 " + boxWidth + " " + boxHeight
+    //   "0 0 " + boxWidth -10 + " " + (boxHeight - 5)
     // );
     //add the width of the track and tracklegend to to correctly view all the svg
-    svgElem.setAttributeNS(
-      null,
-      "width",
-      props.trackData[`${0}`].trackState.visWidth / 3 + 120 + ""
-    );
+    svgElem.setAttributeNS(null, "width", props.windowWidth + 120 + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
     svgElem.style.display = "block";
@@ -107,8 +106,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       const trackHeight = ele.children[1].clientHeight + 3;
       const yoffset = trackHeight > 20 ? 24 : 14;
 
-      const trackLabelText =
-        ele.children[0].querySelector(".TrackLegend-label").textContent;
+      const trackLabelText = ele.children[0].textContent;
+
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
         labelSvg.setAttributeNS(null, "x", x + 4 + "");
@@ -122,17 +121,18 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
       const chrLabelText = ele.children[0].querySelector(
         ".TrackLegend-chrLabel"
-      ).textContent;
-      if (chrLabelText) {
-        const labelSvg = document.createElementNS(xmlns, "text");
-        labelSvg.setAttributeNS(null, "x", x + 15 + "");
-        labelSvg.setAttributeNS(null, "y", y + 35 + "");
-        labelSvg.setAttributeNS(null, "font-size", "12px");
-        const textNode = document.createTextNode(chrLabelText);
-        labelSvg.setAttribute("class", "svg-text-bg");
-        labelSvg.appendChild(textNode);
-        svgElemg.appendChild(labelSvg);
-      }
+      );
+
+      // if (chrLabelText) {
+      //   const labelSvg = document.createElementNS(xmlns, "text");
+      //   labelSvg.setAttributeNS(null, "x", x + 15 + "");
+      //   labelSvg.setAttributeNS(null, "y", y + 35 + "");
+      //   labelSvg.setAttributeNS(null, "font-size", "12px");
+      //   const textNode = document.createTextNode(chrLabelText);
+      //   labelSvg.setAttribute("class", "svg-text-bg");
+      //   labelSvg.appendChild(textNode);
+      //   svgElemg.appendChild(labelSvg);
+      // }
       const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
       if (trackLegendAxisSvgs.length > 0) {
         const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
@@ -250,38 +250,43 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     }
   };
 
-  const downloadPdf = () => {
-    const svgContent = prepareSvg();
-    const tracks = Array.from(
-      document
-        .querySelector("#screenshotContainer")
-        ?.querySelectorAll(".Track") ?? []
-    );
-    const boxHeight = tracks.reduce(
-      (acc, cur) => acc + cur.clientHeight,
-      11 * tracks.length
-    );
-    const boxWidth = tracks[1].clientWidth;
-    // create a new jsPDF instance
-    const pdf = new (window as any).jsPDF("l", "px", [boxWidth, boxHeight]);
-    const pdfContainer = document.getElementById("pdfContainer");
-    if (pdfContainer) {
-      pdfContainer.innerHTML = svgContent;
-    }
-    // render the svg element
-    (window as any).svg2pdf(pdfContainer?.firstElementChild, pdf, {
-      xOffset: 0,
-      yOffset: 0,
-      scale: 1,
-    });
-    // get the data URI
-    pdf.save(new Date().toISOString() + "_eg.pdf");
-    setDisplay("none");
-    setButtonDisabled("disabled");
-  };
+  // const downloadPdf = () => {
+  //   const svgContent = prepareSvg();
+  //   const tracks = Array.from(
+  //     document
+  //       .querySelector("#screenshotContainer")
+  //       ?.querySelectorAll(".Track") ?? []
+  //   );
+  //   const boxHeight = tracks.reduce(
+  //     (acc, cur) => acc + cur.clientHeight,
+  //     11 * tracks.length
+  //   );
+  //   const boxWidth = tracks[1].clientWidth;
+  //   // create a new jsPDF instance
+  //   // Create a new jsPDF instance
+  //   const pdf = new jsPDF("landscape", "px", [boxWidth, boxHeight]);
+
+  //   // Create a temporary PDF container
+  //   const pdfContainer = document.createElement("div");
+  //   document.body.appendChild(pdfContainer);
+  //   pdfContainer.innerHTML = svgContent;
+
+  //   // Use svg2pdf to render the SVG into the PDF instance
+  //   svg2pdf(pdfContainer.querySelector("svg"), pdf, {
+  //     xOffset: 0,
+  //     yOffset: 0,
+  //     scale: 1,
+  //   });
+
+  //   // get the data URI
+  //   pdf.save(new Date().toISOString() + "_eg.pdf");
+  //   setDisplay("none");
+  //   setButtonDisabled("disabled");
+  // };
 
   const makeSvgTrackElements = () => {
     const { tracks, trackData } = props;
+
     document.documentElement.style.setProperty("--bg-color", "white");
     document.documentElement.style.setProperty("--font-color", "#222");
 
@@ -295,12 +300,42 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       )
       .map((trackModel, index) => {
         const id = trackModel.id;
+        const createSVGData = trackData[`${id}`].fetchData;
+        let svgResult = getDisplayModeFunction({
+          genomeName: createSVGData.genomeName,
+          genesArr: createSVGData.genesArr,
+          trackState: createSVGData.trackState,
+          windowWidth: createSVGData.windowWidth + 120,
+          configOptions: createSVGData.configOptions,
 
-        const trackLegendHtml = trackData[`${id}`].trackLegend;
+          trackModel,
+          getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
+          ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
+        });
+        let newTrackLegend = null;
+        if (
+          createSVGData.configOptions.displayMode === "full" ||
+          trackModel.type === "ruler"
+        ) {
+          newTrackLegend = (
+            <TrackLegend
+              height={createSVGData.configOptions.height}
+              trackModel={trackModel}
+              label={trackModel.options.label}
+              trackViewRegion={objToInstanceAlign(
+                createSVGData.trackState.visData.visRegion
+              )}
+              selectedRegion={objToInstanceAlign(
+                createSVGData.trackState.visData.viewWindowRegion
+              )}
+            />
+          );
+        }
+
         return (
           <div key={index} className="Track" style={{ display: "flex" }}>
-            <div>{trackData[`${id}`].trackLegend}</div>
-            <div>{trackData[`${id}`].component}</div>
+            {newTrackLegend ? newTrackLegend : ""}
+            {svgResult}
           </div>
         );
       });
@@ -308,62 +343,69 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     return trackSvgElements;
   };
 
-  const trackContents = makeSvgTrackElements();
+  useEffect(() => {
+    if (props.trackData && Object.keys(props.trackData).length > 0) {
+      setSvgView(makeSvgTrackElements());
+    }
+  }, [props.trackData]);
 
   return (
-    <ReactModal
-      isOpen={props.isOpen}
-      contentLabel="Gene & Region search"
-      ariaHideApp={false}
-      onRequestClose={props.handleCloseModal}
-      shouldCloseOnOverlayClick={true}
-    >
-      <span
-        className="text-right"
-        style={{
-          cursor: "pointer",
-          color: "red",
-          fontSize: "2em",
-          position: "absolute",
-          top: "-5px",
-          right: "15px",
-          zIndex: 5,
-        }}
-        onClick={props.handleCloseModal}
+    <>
+      {" "}
+      <ReactModal
+        isOpen={props.isOpen}
+        contentLabel="Gene & Region search"
+        ariaHideApp={false}
+        onRequestClose={props.handleCloseModal}
+        shouldCloseOnOverlayClick={true}
       >
-        ×
-      </span>
-      <div>
-        <p>
-          Please wait for the following browser view to finish loading, <br />
-          then click the Download button below to download the browser view as
-          an SVG file.
-        </p>
-        <div className="font-italic">
-          <strong>Download SVG</strong> is recommended.
-        </div>
-        <button
-          className="btn btn-primary btn-sm"
-          style={{ marginBottom: "2ch" }}
-          onClick={downloadSvg}
-          disabled={buttonDisabled === "disabled"}
+        <span
+          className="text-right"
+          style={{
+            cursor: "pointer",
+            color: "red",
+            fontSize: "2em",
+            position: "absolute",
+            top: "-5px",
+            right: "15px",
+            zIndex: 5,
+          }}
+          onClick={props.handleCloseModal}
         >
-          ⬇ Download SVG
-        </button>{" "}
-        <button
-          className="btn btn-success btn-sm"
-          style={{ marginBottom: "2ch" }}
-          onClick={downloadPdf}
-          disabled={buttonDisabled === "disabled"}
-        >
-          ⬇ Download PDF
-        </button>
-        <div id="screenshotContainer" style={{ display }}>
-          {trackContents}
-        </div>
-        <div id="pdfContainer"></div>
-      </div>{" "}
-    </ReactModal>
+          ×
+        </span>
+        <div>
+          <p>
+            Please wait for the following browser view to finish loading, <br />
+            then click the Download button below to download the browser view as
+            an SVG file.
+          </p>
+          <div className="font-italic">
+            <strong>Download SVG</strong> is recommended.
+          </div>
+          <button
+            className="btn btn-primary btn-sm"
+            style={{ marginBottom: "2ch" }}
+            onClick={downloadSvg}
+            // disabled={buttonDisabled === "disabled"}
+          >
+            ⬇ Download SVG
+          </button>{" "}
+          {/* <button
+            className="btn btn-success btn-sm"
+            style={{ marginBottom: "2ch" }}
+            onClick={downloadPdf}
+            // disabled={buttonDisabled === "disabled"}
+          >
+            ⬇ Download PDF
+          </button> */}
+          <div id="screenshotContainer" style={{ display }}>
+            {svgView}
+          </div>
+          <div id="pdfContainer"></div>
+        </div>{" "}
+      </ReactModal>
+    </>
   );
 };
 

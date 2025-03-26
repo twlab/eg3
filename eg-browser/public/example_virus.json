@@ -1,0 +1,11 @@
+{
+    "name": "SARS-CoV-2",
+    "id": "99389cf3-fc05-4964-8093-fec156ab5526",
+    "defaultRegion": "NC_045512.2:1-29903",
+    "chromosomes": [
+        {
+            "name": "NC_045512.2",
+            "length": 30000
+        }
+    ]
+}

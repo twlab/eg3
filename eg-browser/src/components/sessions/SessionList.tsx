@@ -5,6 +5,7 @@ import {
   deleteSession,
   selectCurrentSessionId,
   selectSessions,
+  upsertSession,
 } from "@/lib/redux/slices/browserSlice";
 import {
   ChevronRightIcon,
@@ -26,8 +27,10 @@ import ClearAllButton from "./ClearAllButton";
 
 export default function SessionList({
   onSessionClick,
+  showImportSessionButton = false,
 }: {
   onSessionClick: (session: BrowserSession) => void;
+  showImportSessionButton?: boolean;
 }) {
   const dispatch = useAppDispatch();
   const sessions = useAppSelector(selectSessions);
@@ -50,19 +53,21 @@ export default function SessionList({
 
   return (
     <div className="flex flex-col gap-4 py-1 h-full">
-      <div className="flex flex-row gap-2 w-full justify-start items-center">
-        <Button
-          leftIcon={<PlusIcon className="w-4 h-4" />}
-          active
-          onClick={() => {
-            navigation.push({
-              path: "import-session",
-            });
-          }}
-        >
-          Import Session
-        </Button>
-      </div>
+      {showImportSessionButton && (
+        <div className="flex flex-row gap-2 w-full justify-start items-center">
+          <Button
+            leftIcon={<PlusIcon className="w-4 h-4" />}
+            active
+            onClick={() => {
+              navigation.push({
+                path: "import-session",
+              });
+            }}
+          >
+            Import Session
+          </Button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <p>Sort by last updated</p>
         <Switch
@@ -156,6 +161,17 @@ function SessionListItem({
     URL.revokeObjectURL(url);
   };
 
+  const handleDuplicate = (event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    const newSession = {
+      ...session,
+      id: crypto.randomUUID(),
+    };
+
+    dispatch(upsertSession(newSession));
+  };
+
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!isConfirmingDelete) {
@@ -222,7 +238,7 @@ function SessionListItem({
           <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
           <p>View region: {session.viewRegion}</p>
           <p>Active tracks: {session.tracks.length}</p>
-          <p>Highlights: {session.highlights.length}</p>
+          {/* <p>Highlights: {session.highlights.length}</p> */}
           {session.metadataTerms.length > 0 && (
             <div>
               <p>Metadata terms:</p>
@@ -238,7 +254,7 @@ function SessionListItem({
               </div>
             </div>
           )}
-          <div className="flex flex-row items-center justify-between gap-2">
+          <div className="flex flex-col items-stretch gap-2">
             {allowDelete && (
               <Button
                 backgroundColor={isConfirmingDelete ? "alert" : "tint"}
@@ -259,6 +275,13 @@ function SessionListItem({
               style={{ flex: 1 }}
             >
               Export
+            </Button>
+            <Button
+              backgroundColor="tint"
+              onClick={handleDuplicate}
+              style={{ flex: 1 }}
+            >
+              Duplicate
             </Button>
           </div>
         </div>

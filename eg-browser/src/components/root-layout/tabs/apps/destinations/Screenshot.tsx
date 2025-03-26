@@ -2,30 +2,27 @@ import { useEffect, useState } from "react";
 import ScreenshotUI from "@eg/tracks/src/components/GenomeView/TabComponents/ScreenshotUI";
 import {
   selectScreenShotData,
+  selectScreenShotOpen,
+  updateScreenShotData,
   updateScreenShotOpen,
 } from "@/lib/redux/slices/hubSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 
 export default function Screenshot() {
   const screenShotData = useAppSelector(selectScreenShotData);
+  const isOpen = useAppSelector(selectScreenShotOpen);
   const [showModal, setShowModal] = useState(false);
   const dispatch = useAppDispatch();
 
   function handleCloseModal() {
-    setShowModal(false);
+    // dispatch(updateScreenShotOpen(false));
+    dispatch(updateScreenShotData({}));
+    dispatch(updateScreenShotOpen(false));
   }
-  //   useEffect(() => {
-  //     if (Object.keys(screenShotData).length > 0) {
-  //       console.log(screenShotData);
-  //     }
-  //   }, [screenShotData]);
 
   useEffect(() => {
     dispatch(updateScreenShotOpen(true));
     setShowModal(true);
-    return () => {
-      dispatch(updateScreenShotOpen(false));
-    };
   }, []);
 
   return Object.keys(screenShotData).length > 0 ? (
@@ -36,11 +33,12 @@ export default function Screenshot() {
       primaryView={screenShotData.primaryView}
       darkTheme={false}
       tracks={screenShotData.tracks}
-      trackData={screenShotData.componentData}
+      trackData={screenShotData.trackData}
       metadataTerms={[]}
-      viewRegion={screenShotData.viewRegion}
+      // viewRegion={screenShotData.viewRegion}
       handleCloseModal={handleCloseModal}
       isOpen={showModal}
+      windowWidth={screenShotData.windowWidth}
     />
   ) : (
     ""
