@@ -21,10 +21,15 @@ import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
 
 import { RootState } from "../../lib/redux/store";
-import { useSelector } from "react-redux";
 
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
+  let currentState = null;
+  if (currentSession) {
+    currentState = useAppSelector((state: RootState) => {
+      return { ...state.browser };
+    });
+  }
 
   const dispatch = useAppDispatch();
 
@@ -46,18 +51,7 @@ export default function GenomeView() {
     }
   }
 
-
-
-  let currentState;
-  if (currentSession) {
-    currentState = useSelector((state: RootState) => state);
-  }
-
   // const bundleId = currentSession.bundleId;
-
-
-
-
 
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
@@ -92,7 +86,6 @@ export default function GenomeView() {
   ) => {
     let currCoordinate: GenomeCoordinate | null = coordinate;
 
-
     dispatch(
       updateCurrentSession({
         viewRegion: currCoordinate,
@@ -101,32 +94,34 @@ export default function GenomeView() {
     );
   };
 
-  return (currentSession && genomeConfig ? <div>
-    < TrackContainerRepresentable
-      key={currentSession.id}
-      genomeName={currentSession?.genomeId ? currentSession?.genomeId : "hg38"}
-      tracks={currentSession.tracks}
-      highlights={currentSession.highlights}
-      genomeConfig={genomeConfig}
-      legendWidth={120}
-      showGenomeNav={isNavigatorVisible}
-      onNewRegion={handleNewRegion}
-      onNewHighlight={handleNewHighlight}
-      onTrackSelected={handleTrackSelected}
-      onTrackDeleted={handleTrackDeleted}
-      onTrackAdded={handleTrackAdded}
-      onNewRegionSelect={handleNewRegionSelect}
-      viewRegion={currentSession?.viewRegion}
-      userViewRegion={currentSession.userViewRegion}
-      tool={tool}
-      Toolbar={Toolbar}
-      selectedRegionSet={currentSession?.selectedRegionSet}
-      setScreenshotData={setScreenshotData}
-      isScreenShotOpen={isScreenShotOpen}
-      overrideViewRegion={currentSession?.overrideViewRegion}
-      currentState={currentState}
-    />
-  </div >
-    : null
-  );
+  return currentSession && genomeConfig ? (
+    <div>
+      <TrackContainerRepresentable
+        key={currentSession.id}
+        genomeName={
+          currentSession?.genomeId ? currentSession?.genomeId : "hg38"
+        }
+        tracks={currentSession.tracks}
+        highlights={currentSession.highlights}
+        genomeConfig={genomeConfig}
+        legendWidth={120}
+        showGenomeNav={isNavigatorVisible}
+        onNewRegion={handleNewRegion}
+        onNewHighlight={handleNewHighlight}
+        onTrackSelected={handleTrackSelected}
+        onTrackDeleted={handleTrackDeleted}
+        onTrackAdded={handleTrackAdded}
+        onNewRegionSelect={handleNewRegionSelect}
+        viewRegion={currentSession?.viewRegion}
+        userViewRegion={currentSession.userViewRegion}
+        tool={tool}
+        Toolbar={Toolbar}
+        selectedRegionSet={currentSession?.selectedRegionSet}
+        setScreenshotData={setScreenshotData}
+        isScreenShotOpen={isScreenShotOpen}
+        overrideViewRegion={currentSession?.overrideViewRegion}
+        currentState={currentState}
+      />
+    </div>
+  ) : null;
 }

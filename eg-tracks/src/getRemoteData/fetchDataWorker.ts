@@ -98,6 +98,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
+  console.log(event.data);
   const objectPromises = event.data.map(async (dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
     const initial = dataItem.initial;
@@ -123,10 +124,13 @@ self.onmessage = async (event: MessageEvent) => {
         regionExpandLoci,
         initGenomicLoci,
       };
-      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] = dataItem.visData;
+      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
+        dataItem.visData;
     }
 
-    let leftOverTrackModels = trackDefaults.filter((items) => items && items.type !== "genomealign");
+    let leftOverTrackModels = trackDefaults.filter(
+      (items) => items && items.type !== "genomealign"
+    );
 
     await Promise.all(
       leftOverTrackModels.map(async (item) => {
@@ -134,7 +138,8 @@ self.onmessage = async (event: MessageEvent) => {
         const id = item.id;
         let foundInvalidTrack = false;
         if (
-          (item.metadata.genome && !(item.metadata.genome in genomicFetchCoord)) ||
+          (item.metadata.genome &&
+            !(item.metadata.genome in genomicFetchCoord)) ||
           !(item.type in componentMap)
         ) {
           foundInvalidTrack = true;
@@ -181,7 +186,11 @@ self.onmessage = async (event: MessageEvent) => {
           ) {
             curFetchNav =
               genomicFetchCoord[
-                `${item.metadata.genome === "" ? primaryGenName : item.metadata.genome}`
+                `${
+                  item.metadata.genome === ""
+                    ? primaryGenName
+                    : item.metadata.genome
+                }`
               ].queryGenomicCoord;
           } else if (
             useFineModeNav ||
@@ -211,7 +220,9 @@ self.onmessage = async (event: MessageEvent) => {
           }
         ) {
           let tmpResults = await Promise.all(
-            item.tracks.map(async (trackItem) => (await fetchData(trackItem)).flat(1))
+            item.tracks.map(async (trackItem) =>
+              (await fetchData(trackItem)).flat(1)
+            )
           );
 
           fetchResults.push({
@@ -255,15 +266,15 @@ self.onmessage = async (event: MessageEvent) => {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            });
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              });
 
           if (
             curRespond &&
@@ -311,7 +322,10 @@ self.onmessage = async (event: MessageEvent) => {
 
             responses.push(_.flatten(curRespond));
           } catch (error) {
-            console.error(`Error fetching data for track model type ${trackModel.type}:`, error);
+            console.error(
+              `Error fetching data for track model type ${trackModel.type}:`,
+              error
+            );
             responses.push({
               error: "Data fetch failed. Reload page or change view to retry",
             });

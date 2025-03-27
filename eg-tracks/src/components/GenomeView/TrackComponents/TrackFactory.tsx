@@ -81,12 +81,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
   // MARK: CREATESVG
-  function createSVGOrCanvas(
-    trackState,
-    genesArr,
-    isError,
-    cacheDataIdx
-  ) {
+  function createSVGOrCanvas(trackState, genesArr, isError, cacheDataIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
@@ -198,13 +193,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   // MARK:[newDrawDat
   useEffect(() => {
     if (
-
       newDrawData.trackToDrawId &&
       id in newDrawData.trackToDrawId &&
       dataIdx in trackFetchedDataCache.current[`${id}`] &&
       dataIdx in globalTrackState.current.trackStates
     ) {
-      console.log("newDrawData", newDrawData, "why");
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
@@ -216,8 +209,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-            trackFetchedDataCache.current[`${id}`].queryGenome
-          ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
       }
@@ -289,7 +282,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           createSVGOrCanvas(trackState, combinedData, hasError, dataIdx);
         }
       } else {
-        const combinedData = cacheTrackData[dataIdx] ? cacheTrackData[dataIdx].dataCache : null;
+        const combinedData = cacheTrackData[dataIdx]
+          ? cacheTrackData[dataIdx].dataCache
+          : null;
         if (combinedData) {
           createSVGOrCanvas(trackState, combinedData, false, dataIdx);
         }
@@ -318,7 +313,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackModel: trackModel,
           id: id,
           trackIdx: trackIdx,
-
         });
         let cacheDataIdx = dataIdx;
         let cacheTrackData = trackFetchedDataCache.current[`${id}`];
@@ -332,8 +326,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+                trackFetchedDataCache.current[`${id}`].queryGenome
+              ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
@@ -403,23 +397,23 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+                trackFetchedDataCache.current[`${id}`].queryGenome
+              ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
         trackState["viewWindow"] =
           updateSide.current === "right"
             ? new OpenInterval(
-              -(dragX! + (xPos.current + windowWidth)),
-              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-            )
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
             : new OpenInterval(
-              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-              windowWidth * 3 -
-              (dragX! - (xPos.current + windowWidth)) +
-              windowWidth
-            );
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 
@@ -1279,7 +1273,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   return (
     <div
       style={{
-
         display: "flex",
       }}
     >
@@ -1290,7 +1283,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           backgroundColor: trackModel.isSelected
             ? "rgb(250, 214, 214)"
             : "white",
-
         }}
       >
         {legend}
@@ -1305,13 +1297,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? svgHeight.current
                 : 40
               : !fetchError.current
-                ? configOptions.current.height
-                : 40,
+              ? configOptions.current.height
+              : 40,
           position: "relative",
-
         }}
       >
-
         <div
           style={{
             position: "absolute",
@@ -1325,41 +1315,42 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             perspective: `${windowWidth + 120}px`,
           }}
         >
-          {configOptions.current.displayMode === "full" ? svgComponents : canvasComponents}
+          {configOptions.current.displayMode === "full"
+            ? svgComponents
+            : canvasComponents}
         </div>
-
 
         {toolTipVisible ? toolTip : ""}
 
         {highlightElements.length > 0
           ? highlightElements.map((item, index) => {
-            if (item.display) {
-              return (
-                <div
-                  key={index}
-                  style={{
-                    display: "flex",
-                    position: "relative",
-                    height: "100%",
-                  }}
-                >
+              if (item.display) {
+                return (
                   <div
                     key={index}
                     style={{
-                      position: "absolute",
-                      backgroundColor: item.color,
-                      top: "0",
+                      display: "flex",
+                      position: "relative",
                       height: "100%",
-                      left: item.side === "right" ? `${item.xPos}px` : "",
-                      right: item.side === "left" ? `${item.xPos}px` : "",
-                      width: item.width,
-                      pointerEvents: "none", // This makes the highlighted area non-interactive
                     }}
-                  ></div>
-                </div>
-              );
-            }
-          })
+                  >
+                    <div
+                      key={index}
+                      style={{
+                        position: "absolute",
+                        backgroundColor: item.color,
+                        top: "0",
+                        height: "100%",
+                        left: item.side === "right" ? `${item.xPos}px` : "",
+                        right: item.side === "left" ? `${item.xPos}px` : "",
+                        width: item.width,
+                        pointerEvents: "none", // This makes the highlighted area non-interactive
+                      }}
+                    ></div>
+                  </div>
+                );
+              }
+            })
           : ""}
       </div>
     </div>
