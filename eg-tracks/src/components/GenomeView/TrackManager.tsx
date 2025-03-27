@@ -883,7 +883,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: onmessInfin
   function createInfiniteOnMessage() {
     infiniteScrollWorker.current!.onmessage = (event) => {
-      console.log(event.data)
+
       // Process each object in the array individually
       Promise.all(
         event.data.map(async (dataItem) => {
@@ -1967,6 +1967,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setTrackComponents(tmpArr);
       queueRegionToFetch(dataIdx);
     } else {
+      const tmpArr = [...trackComponents];
+      setTrackComponents(tmpArr);
       setNewDrawData({
         curDataIdx: dataIdx,
         isInitial: 0,
