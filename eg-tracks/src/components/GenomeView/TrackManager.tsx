@@ -1520,7 +1520,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackFetchedDataCache.current = {};
     setHighLightElements([...highlightElement]);
 
-    setDataIdx(0);
+    setDataIdx(null);
 
     setConfigMenu(null);
     setApplyTrackConfigChange({});
@@ -1875,6 +1875,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // initializeTracks();
     } else {
       preload.current = true;
+      console.log("HERER")
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
       refreshState();
       initializeTracks();

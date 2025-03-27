@@ -70,7 +70,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
 
       if (trackManagerId.current) {
-
+        console.log("HUH")
         const curGenome = { ...genomeConfig };
         curGenome["isInitial"] = false;
         curGenome["genomeID"] = trackManagerId.current;

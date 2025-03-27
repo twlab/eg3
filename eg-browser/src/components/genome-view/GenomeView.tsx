@@ -21,10 +21,13 @@ import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
 
 import { RootState } from "../../lib/redux/store";
+import { useSelector } from "react-redux";
 
 export default function GenomeView() {
-  const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
+
+  const dispatch = useAppDispatch();
+
   const tool = useAppSelector(selectTool);
 
   const genomeConfig = useCurrentGenome();
@@ -32,16 +35,9 @@ export default function GenomeView() {
 
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
   const lastSessionId = useRef<null | string>(null);
+  const bundleId = currentSession ? currentSession.bundleId : null;
 
-  const currentState = useAppSelector((state: RootState) => state);
-
-  if (!currentSession || !genomeConfig) {
-    return null;
-  }
-  // const bundleId = currentSession.bundleId;
-  const bundleId = currentSession.bundleId;
-
-  const sessionId = currentSession.id;
+  const sessionId = currentSession ? currentSession.id : null;
   if (lastSessionId.current !== sessionId) {
     dispatch(resetState());
     lastSessionId.current = sessionId;
@@ -49,10 +45,19 @@ export default function GenomeView() {
       dispatch(fetchBundle(bundleId));
     }
   }
-  const genomeName = currentSession.genomeId;
-  const selectedRegionSet = currentSession?.selectedRegionSet;
-  const overrideViewRegion = currentSession?.overrideViewRegion;
-  const viewRegion = currentSession?.viewRegion;
+
+
+
+  let currentState;
+  if (currentSession) {
+    currentState = useSelector((state: RootState) => state);
+  }
+
+  // const bundleId = currentSession.bundleId;
+
+
+
+
 
   const setScreenshotData = (screenShotData: { [key: string]: any }) => {
     dispatch(updateScreenShotData(screenShotData));
@@ -86,9 +91,7 @@ export default function GenomeView() {
     coordinate: GenomeCoordinate
   ) => {
     let currCoordinate: GenomeCoordinate | null = coordinate;
-    if (coordinate === viewRegion) {
-      currCoordinate = null;
-    }
+
 
     dispatch(
       updateCurrentSession({
@@ -98,32 +101,32 @@ export default function GenomeView() {
     );
   };
 
-  return (
-    <div>
-      <TrackContainerRepresentable
-        key={currentSession.id}
-        genomeName={genomeName ? genomeName : "hg38"}
-        tracks={currentSession.tracks}
-        highlights={currentSession.highlights}
-        genomeConfig={genomeConfig}
-        legendWidth={120}
-        showGenomeNav={isNavigatorVisible}
-        onNewRegion={handleNewRegion}
-        onNewHighlight={handleNewHighlight}
-        onTrackSelected={handleTrackSelected}
-        onTrackDeleted={handleTrackDeleted}
-        onTrackAdded={handleTrackAdded}
-        onNewRegionSelect={handleNewRegionSelect}
-        viewRegion={viewRegion}
-        userViewRegion={currentSession.userViewRegion}
-        tool={tool}
-        Toolbar={Toolbar}
-        selectedRegionSet={selectedRegionSet}
-        setScreenshotData={setScreenshotData}
-        isScreenShotOpen={isScreenShotOpen}
-        overrideViewRegion={overrideViewRegion}
-        currentState={currentState}
-      />
-    </div>
+  return (currentSession && genomeConfig ? <div>
+    < TrackContainerRepresentable
+      key={currentSession.id}
+      genomeName={currentSession?.genomeId ? currentSession?.genomeId : "hg38"}
+      tracks={currentSession.tracks}
+      highlights={currentSession.highlights}
+      genomeConfig={genomeConfig}
+      legendWidth={120}
+      showGenomeNav={isNavigatorVisible}
+      onNewRegion={handleNewRegion}
+      onNewHighlight={handleNewHighlight}
+      onTrackSelected={handleTrackSelected}
+      onTrackDeleted={handleTrackDeleted}
+      onTrackAdded={handleTrackAdded}
+      onNewRegionSelect={handleNewRegionSelect}
+      viewRegion={currentSession?.viewRegion}
+      userViewRegion={currentSession.userViewRegion}
+      tool={tool}
+      Toolbar={Toolbar}
+      selectedRegionSet={currentSession?.selectedRegionSet}
+      setScreenshotData={setScreenshotData}
+      isScreenShotOpen={isScreenShotOpen}
+      overrideViewRegion={currentSession?.overrideViewRegion}
+      currentState={currentState}
+    />
+  </div >
+    : null
   );
 }
