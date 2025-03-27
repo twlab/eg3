@@ -1128,11 +1128,15 @@ export function getDisplayModeFunction(
     return svgDATA;
   } else if (drawData.trackModel.type === "genomealign") {
     let result = drawData.genesArr;
+    if (!result) {
+      return null
+    }
     let svgElements;
     if (drawData.svgHeight) {
       drawData.svgHeight.current = drawData.configOptions.height;
     }
     if (drawData.basesByPixel <= 10) {
+
       const drawDatas = result.drawData as PlacedAlignment[];
       drawData.updatedLegend.current = (
         <TrackLegend
@@ -1205,7 +1209,7 @@ export function getDisplayModeFunction(
           </React.Fragment>
         );
       }
-      drawData.genesArr.records = "";
+
       return element;
     } else {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
@@ -1296,7 +1300,7 @@ export function getDisplayModeFunction(
           </React.Fragment>
         );
       }
-      drawData.genesArr.records = "";
+
       return element;
     }
   } else if (drawData.trackModel.type === "matplot") {

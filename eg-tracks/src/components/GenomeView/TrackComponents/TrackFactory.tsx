@@ -100,7 +100,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           height: 40,
           backgroundColor: "#F37199",
           textAlign: "center",
-          lineHeight: "40px", // Centering vertically by matching the line height to the height of the div
+          lineHeight: "40px",
         }}
       >
         {genesArr[0]}
@@ -129,7 +129,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       updateSide.current = side;
 
       if (configOptions.current.displayMode === "full") {
-
         setSvgComponents(res);
         // if (!(cacheDataIdx in displayCache.current["full"])) {
         //   displayCache.current["full"][cacheDataIdx] = res;
@@ -287,12 +286,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
-          console.log("WHHYYYTRIGGER222", newDrawData, combinedData)
           createSVGOrCanvas(trackState, combinedData, hasError, cacheDataIdx);
         }
       } else {
         const combinedData = cacheTrackData[newDrawData.curDataIdx].dataCache;
-        createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
+        if (combinedData) {
+          createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
+        }
       }
     }
   }, [newDrawData]);
@@ -1279,7 +1279,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   return (
     <div
       style={{
-        zIndex: 1,
+
         display: "flex",
       }}
     >
@@ -1290,7 +1290,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           backgroundColor: trackModel.isSelected
             ? "rgb(250, 214, 214)"
             : "white",
-          display: "flex"
+
         }}
       >
         {legend}
@@ -1307,41 +1307,28 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : !fetchError.current
                 ? configOptions.current.height
                 : 40,
-          position: "relative", // Ensure this parent div is relatively positioned
+          position: "relative",
+
         }}
       >
-        {configOptions.current.displayMode === "full" ? (
-          <div
-            style={{
-              position: "absolute",
-              lineHeight: 0,
-              right: updateSide.current === "left" ? `${xPos.current}px` : "",
-              left: updateSide.current === "right" ? `${xPos.current}px` : "",
-              backgroundColor: configOptions.current.backgroundColor,
-              WebkitBackfaceVisibility: "hidden",
-              WebkitPerspective: `${windowWidth}px`,
-              backfaceVisibility: "hidden",
-              perspective: `${windowWidth}px`,
-            }}
-          >
-            {svgComponents}
-          </div>
-        ) : (
-          <div
-            style={{
-              position: "absolute",
-              backgroundColor: configOptions.current.backgroundColor,
-              left: updateSide.current === "right" ? `${xPos.current}px` : "",
-              right: updateSide.current === "left" ? `${xPos.current}px` : "",
-              WebkitBackfaceVisibility: "hidden",
-              WebkitPerspective: `${windowWidth}px`,
-              backfaceVisibility: "hidden",
-              perspective: `${windowWidth}px`,
-            }}
-          >
-            {canvasComponents}
-          </div>
-        )}
+
+        <div
+          style={{
+            position: "absolute",
+            lineHeight: 0,
+            right: updateSide.current === "left" ? `${xPos.current}px` : "",
+            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            backgroundColor: configOptions.current.backgroundColor,
+            WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+            WebkitPerspective: `${windowWidth + 120}px`,
+            backfaceVisibility: "hidden",
+            perspective: `${windowWidth + 120}px`,
+          }}
+        >
+          {configOptions.current.displayMode === "full" ? svgComponents : canvasComponents}
+        </div>
+
+
         {toolTipVisible ? toolTip : ""}
 
         {highlightElements.length > 0
