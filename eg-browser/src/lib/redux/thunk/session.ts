@@ -8,6 +8,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
 import { onRetrieveSession } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
 import { updateBundle } from "../slices/hubSlice";
+import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",
@@ -21,11 +22,12 @@ export const importOneSession = createAsyncThunk(
     },
     thunkApi
   ) => {
+
     if (session.genomeName) {
       let parsedViewRegion = restoreLegacyViewRegion(
         session,
         null
-      ) as GenomeCoordinate | null;
+      ) as DisplayedRegionModel | null;
 
       if (!parsedViewRegion) {
         throw new Error(
@@ -48,12 +50,18 @@ export const importOneSession = createAsyncThunk(
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
-        viewRegion: parsedViewRegion,
-        userViewRegion: parsedViewRegion,
+        viewRegion:
+          parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
+        userViewRegion: session.viewInterval
+          ? {
+            start: parsedViewRegion._startBase,
+            end: parsedViewRegion._endBase,
+          }
+          : null,
         tracks: mappedTracks,
         highlights: session.highlights ?? [],
         metadataTerms: session.metadataTerms ?? [],
-
+        bundleId: session.bundleId ? session.bundleId : null,
         regionSets: [],
       } satisfies BrowserSession;
     }
@@ -67,9 +75,11 @@ export const importOneSession = createAsyncThunk(
     if (!session.updatedAt) session.updatedAt = Date.now();
 
     session.id = crypto.randomUUID();
-    thunkApi.thunkApi.dispatch(upsertSession(session));
+
+    thunkApi.dispatch(upsertSession(session));
 
     if (navigatingToSession) {
+
       thunkApi.dispatch(setCurrentSession(session.id));
     }
   }

@@ -48,21 +48,21 @@ const Session: React.FC = () => {
       tracks,
       viewRegion: userViewRegion
         ? new DisplayedRegionModel(
-            genomeConfig.navContext,
-            userViewRegion?.start,
-            userViewRegion?.end
-          )
+          genomeConfig.navContext,
+          userViewRegion?.start,
+          userViewRegion?.end
+        )
         : new DisplayedRegionModel(
-            genomeConfig.navContext,
-            ...genomeConfig.defaultRegion
-          ),
+          genomeConfig.navContext,
+          ...genomeConfig.defaultRegion
+        ),
     };
   }
   //provide data to genomeTracks to new current bundle session
   function onRestoreSession(bundle: any) {
     const curSessionId = bundle.currentId;
     const sessionBundle = bundle.sessionsInBundle[`${curSessionId}`].state;
-    console.log(sessionBundle);
+
     const session = {
       genomeId: sessionBundle.genomeName,
       createdAt: Date.now(),

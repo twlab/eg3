@@ -81,7 +81,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
   // MARK: CREATESVG
-  async function createSVGOrCanvas(
+  function createSVGOrCanvas(
     trackState,
     genesArr,
     isError,
@@ -106,7 +106,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         {genesArr[0]}
       </div>
     ) : (
-      await getDisplayModeFunction({
+      getDisplayModeFunction({
         basesByPixel: basePerPixel,
         genesArr,
         genomeName: genomeConfig.genome.getName(),
@@ -129,6 +129,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       updateSide.current = side;
 
       if (configOptions.current.displayMode === "full") {
+
         setSvgComponents(res);
         // if (!(cacheDataIdx in displayCache.current["full"])) {
         //   displayCache.current["full"][cacheDataIdx] = res;
@@ -286,6 +287,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
+          console.log("WHHYYYTRIGGER222", newDrawData, combinedData)
           createSVGOrCanvas(trackState, combinedData, hasError, cacheDataIdx);
         }
       } else {

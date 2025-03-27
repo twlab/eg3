@@ -41,7 +41,7 @@ const firebaseConfig = {
   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
 };
-console.log(process.env.REACT_APP_FIREBASE_KEY);
+
 firebase.initializeApp(firebaseConfig);
 export default function RootLayout() {
   useBrowserInitialization();

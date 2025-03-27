@@ -40,7 +40,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       let curGenome;
 
       if (trackManagerId.current) {
-        console.log(genomeConfig, userViewRegion)
+
         curGenome = { ...genomeConfig };
         curGenome["genomeID"] = trackManagerId.current;
         curGenome["isInitial"] = false;
@@ -51,7 +51,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome.navContext = userViewRegion._navContext
         curGenome["sizeChange"] = true;
       } else {
-        console.log(genomeConfig, userViewRegion)
+
         trackManagerId.current = crypto.randomUUID();
         curGenome = { ...genomeConfig };
         curGenome.navContext = userViewRegion._navContext
@@ -70,7 +70,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
 
       if (trackManagerId.current) {
-        console.log(genomeConfig, userViewRegion)
+
         const curGenome = { ...genomeConfig };
         curGenome["isInitial"] = false;
         curGenome["genomeID"] = trackManagerId.current;
@@ -94,7 +94,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         if (genomeConfig.genomeName !== prevViewRegion.current.genomeName ||
           userViewRegion._startBase !== prevViewRegion.current.start ||
           userViewRegion._endBase !== prevViewRegion.current.end) {
-          console.log(genomeConfig, userViewRegion)
+
           const curGenome = { ...genomeConfig };
           curGenome["isInitial"] = false;
           curGenome["genomeID"] = trackManagerId.current;

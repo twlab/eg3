@@ -65,7 +65,7 @@ export const browserSlice = createSlice({
       const { defaultRegion, defaultTracks: tracks = [] } = genome;
 
       let allTracks = [...tracks, ...additionalTracks];
-      console.log(allTracks)
+
       const initializedTracks =
         allTracks?.map((track) => ({
           ...track,
