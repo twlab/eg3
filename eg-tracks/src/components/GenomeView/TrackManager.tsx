@@ -530,26 +530,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   function handleShiftSelect(e: any, trackDetails: { [key: string]: any }) {
     if (e.shiftKey) {
-      if (!selectedTracks.current[`${trackDetails.trackModel.id}`]) {
-        selectedTracks.current[`${trackDetails.trackModel.id}`] =
-          globalTrackConfig.current[`${trackDetails.trackModel.id}`];
-        // trackDetails.legendRef.current.style.backgroundColor = "lightblue";
+      const trackId = trackDetails.trackModel.id;
+      const isSelected = !!selectedTracks.current[trackId]; // Double negative to force a boolean type
 
-        trackManagerState.current.tracks.map((trackModel) => {
-          if (trackModel.id === trackDetails.trackModel.id) {
-            trackModel.isSelected = true;
-          }
-        });
-      } else if (trackDetails.trackModel.id in selectedTracks.current) {
-        // trackDetails.legendRef.current.style.backgroundColor = "white";
-        delete selectedTracks.current[`${trackDetails.trackModel.id}`];
-        trackManagerState.current.tracks.map((trackModel) => {
-          if (trackModel.id === trackDetails.trackModel.id) {
-            trackModel.isSelected = false;
-          }
-        });
+      if (!isSelected) {
+        selectedTracks.current[trackId] = globalTrackConfig.current[trackId];
+      } else {
+        selectedTracks.current[trackId] = null;
       }
-      onTrackSelected([...trackManagerState.current.tracks]);
+
+      const newTracks = trackManagerState.current.tracks.map((trackModel) => {
+        if (trackModel.id === trackId) {
+          return new TrackModel({
+            ...trackModel,
+            isSelected: !isSelected,
+          });
+        }
+        return trackModel;
+      });
+
+      console.log(newTracks);
+      onTrackSelected(newTracks);
+
 
       if (configMenu && Object.keys(selectedTracks.current).length > 0) {
         renderTrackSpecificConfigMenu(e.pageX, e.pageY);
@@ -881,7 +883,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: onmessInfin
   function createInfiniteOnMessage() {
     infiniteScrollWorker.current!.onmessage = (event) => {
-
+      console.log(event.data)
       // Process each object in the array individually
       Promise.all(
         event.data.map(async (dataItem) => {
@@ -961,7 +963,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       )
         .then((drawData) => {
           // Merge all trackToDrawId into a newTmpDrawId
-
+          console.log(drawData)
           // Set the new draw data
           setNewDrawData({
             curDataIdx: drawData[0].trackDataIdx,
@@ -1052,13 +1054,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 dataForFetch["trackToDrawId"] = trackToDrawId;
 
               }
-
+              console.log(curTrackState.fetchAfterGenAlignTracks)
               enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
 
             }
 
             else {
-
               setNewDrawData({
                 curDataIdx: curTrackState.trackDataIdx,
                 isInitial: 0,
@@ -1159,7 +1160,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 ? globalTrackState.current.trackStates[curDataIdx].trackState
                 : "";
             if (curTrackModel) {
-              trackFetchedDataCache.current[key][curDataIdx].dataCache = null;
+              trackFetchedDataCache.current[key]["dataCache"] = null;
               trackToFetch.push(curTrackModel)
             };
           }
@@ -1227,7 +1228,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
-
       setNewDrawData({
         curDataIdx: dataIdx,
         isInitial: 0,
@@ -1965,8 +1965,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       const tmpArr = [...trackComponents];
       setTrackComponents(tmpArr);
+      queueRegionToFetch(dataIdx);
     } else {
-
       setNewDrawData({
         curDataIdx: dataIdx,
         isInitial: 0,
@@ -2018,7 +2018,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //   }
     // }
     // console.log(trackToDrawId);
-    if (trackComponents.length > 0) {
+    if (initialStart === "workerReady") {
       queueRegionToFetch(dataIdx);
     }
     // if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
@@ -2029,7 +2029,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     //   });
     // }
     // } else if (dataIdx !== 0) useCacheData.current = true;
-  }, [dataIdx, trackComponents]);
+  }, [dataIdx, initialStart]);
 
   useEffect(() => {
     if (highlights) {
@@ -2219,8 +2219,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         setG3dTrackComponents(newG3dComponents);
         setTrackComponents(newTrackComponents);
+        queueRegionToFetch(dataIdx);
       } else {
-
         const newTrackComponents: Array<any> = [];
         const newG3dComponents: Array<any> = [];
         let needToToUpdate = false;
@@ -2249,7 +2249,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         if (needToToUpdate) {
-          trackManagerState.current.tracks = tracks;
           setTrackComponents(newTrackComponents);
           setG3dTrackComponents(newG3dComponents);
         }

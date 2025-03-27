@@ -33,7 +33,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   id,
   setShow3dGene,
   isThereG3dTrack,
-  legendRef,
+
   applyTrackConfigChange,
   sentScreenshotData,
   dragX,
@@ -198,16 +198,16 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   // MARK:[newDrawDat
   useEffect(() => {
     if (
-      "curDataIdx" in newDrawData &&
-      newDrawData.curDataIdx === dataIdx &&
+
+      newDrawData.trackToDrawId &&
       id in newDrawData.trackToDrawId &&
-      newDrawData.curDataIdx in trackFetchedDataCache.current[`${id}`] &&
-      newDrawData.curDataIdx in globalTrackState.current.trackStates
+      dataIdx in trackFetchedDataCache.current[`${id}`] &&
+      dataIdx in globalTrackState.current.trackStates
     ) {
-      let cacheDataIdx = newDrawData.curDataIdx;
+      console.log("newDrawData", newDrawData, "why");
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
-        ...globalTrackState.current.trackStates[cacheDataIdx].trackState,
+        ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
 
       if (cacheTrackData.trackType !== "genomealign") {
@@ -241,7 +241,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackModel: trackModel,
           id: id,
           trackIdx: trackIdx,
-          legendRef: legendRef,
+
           usePrimaryNav: cacheTrackData.usePrimaryNav,
         });
         initTrackStart.current = false;
@@ -250,9 +250,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (!cacheTrackData.useExpandedLoci) {
         let combinedData: any = [];
         let hasError = false;
-        let currIdx = newDrawData.curDataIdx + 1;
+        let currIdx = dataIdx + 1;
         for (let i = 0; i < 3; i++) {
-          if (!cacheTrackData[currIdx].dataCache) {
+          if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
             continue;
           }
           if (
@@ -275,7 +275,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           } else {
             combinedData = combinedData
               .map((item) => {
-                if (item && "dataCache" in item) {
+                if (item && "dataCache" in item && item.dataCache) {
                   return item.dataCache;
                 } else {
                   noData = true;
@@ -286,12 +286,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
-          createSVGOrCanvas(trackState, combinedData, hasError, cacheDataIdx);
+          createSVGOrCanvas(trackState, combinedData, hasError, dataIdx);
         }
       } else {
-        const combinedData = cacheTrackData[newDrawData.curDataIdx].dataCache;
+        const combinedData = cacheTrackData[dataIdx] ? cacheTrackData[dataIdx].dataCache : null;
         if (combinedData) {
-          createSVGOrCanvas(trackState, combinedData, false, cacheDataIdx);
+          createSVGOrCanvas(trackState, combinedData, false, dataIdx);
         }
       }
     }
@@ -318,7 +318,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           trackModel: trackModel,
           id: id,
           trackIdx: trackIdx,
-          legendRef: legendRef,
+
         });
         let cacheDataIdx = dataIdx;
         let cacheTrackData = trackFetchedDataCache.current[`${id}`];
