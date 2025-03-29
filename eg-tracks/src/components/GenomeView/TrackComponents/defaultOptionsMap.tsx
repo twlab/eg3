@@ -123,7 +123,7 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultOmeroTrack,
       ...defaultNumericalTrack,
       aggregateMethod: DefaultAggregators.types.IMAGECOUNT,
-      displayMode: "density",
+
     },
     getGenePadding: function getGenePadding(gene) {
       return gene.getName().length * 9;
@@ -234,7 +234,7 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultMethylc,
-      displayMode: "density",
+
     },
   },
   dynseq: {
@@ -247,7 +247,7 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultBoxplotTrack,
-      displayMode: "density",
+
     },
   },
   qbed: {
@@ -255,12 +255,12 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultQBedTrack,
     },
-    displayMode: "density",
+
   },
   bedgraph: {
     defaultOptions: {
       ...defaultNumericalTrack,
-      displayMode: "density",
+
     },
   },
   // interaction track
@@ -296,7 +296,7 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultDynamic,
-      displayMode: "density",
+
     },
   },
   // dynamic both nav
@@ -304,7 +304,7 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultMatplot,
-      displayMode: "density",
+
       forceSvg: false,
     },
   },
@@ -322,7 +322,7 @@ export const trackOptionMap: { [key: string]: any } = {
       useDynamicColors: false,
       backgroundColor: "white",
       arrayAggregateMethod: "MEAN",
-      displayMode: "density",
+
     },
   },
   dynamicbed: {
@@ -338,20 +338,20 @@ export const trackOptionMap: { [key: string]: any } = {
       dynamicColors: [],
       useDynamicColors: false,
       backgroundColor: "white",
-      displayMode: "density",
+
     },
   },
   dynamicplot: {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultDynamic,
-      displayMode: "density",
+
     },
   },
   error: {
     defaultOptions: {
       ...defaultNumericalTrack,
-      displayMode: "density",
+
     },
   },
 };

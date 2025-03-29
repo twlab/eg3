@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
@@ -33,7 +33,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   id,
   setShow3dGene,
   isThereG3dTrack,
-
+  viewWindow,
   applyTrackConfigChange,
   sentScreenshotData,
   dragX,
@@ -86,7 +86,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (isError) {
       fetchError.current = true;
     }
-    trackState["viewWindow"] = new OpenInterval(0, trackState.visWidth);
+
+    trackState["viewWindow"] = trackState.visData ? trackState.visData.viewWindow : new OpenInterval(0, trackState.visWidth);
 
     let res = fetchError.current ? (
       <div
@@ -209,8 +210,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+            trackFetchedDataCache.current[`${id}`].queryGenome
+          ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
       }
@@ -296,17 +297,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {
-        if ("type" in applyTrackConfigChange) {
-          configOptions.current = {
-            ...trackOptionMap[`${trackModel.type}`].defaultOptions,
-            ...applyTrackConfigChange[`${id}`],
-          };
-        } else {
-          configOptions.current = {
-            ...configOptions.current,
-            ...applyTrackConfigChange[`${id}`],
-          };
-        }
+
+        configOptions.current = {
+          ...configOptions.current,
+          ...applyTrackConfigChange[`${id}`],
+        };
+
 
         updateGlobalTrackConfig({
           configOptions: configOptions.current,
@@ -326,8 +322,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
@@ -343,7 +339,38 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
     }
   }, [applyTrackConfigChange]);
+  useEffect(() => {
 
+    // getConfigChangeData(
+    //   useFineOrSecondaryParentNav.current,
+    //   fetchedDataCache.current,
+    //   dataIdx,
+    //   createSVGOrCanvas,
+    //   "none"
+    // );
+    if (canvasComponents) {
+
+      console.log(viewWindow)
+      function getNumLegend(legend: ReactNode) {
+        if (updatedLegend) {
+
+          updatedLegend.current = legend;
+          console.log(updatedLegend.current)
+        }
+      }
+      let newCanvasComponent = React.cloneElement(
+        canvasComponents,
+        { viewWindow: viewWindow, getNumLegend: getNumLegend },
+      );
+      setCanvasComponents(newCanvasComponent)
+      // setCanvasComponents(
+      //   <div>
+      //     <ReactComp options={tmpObj} />
+      //   </div>
+      // );
+
+    }
+  }, [viewWindow]);
   useEffect(() => {
     if (isScreenShotOpen) {
       async function handle() {
@@ -397,23 +424,23 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
         trackState["viewWindow"] =
           updateSide.current === "right"
             ? new OpenInterval(
-                -(dragX! + (xPos.current + windowWidth)),
-                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-              )
+              -(dragX! + (xPos.current + windowWidth)),
+              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+            )
             : new OpenInterval(
-                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-                windowWidth * 3 -
-                  (dragX! - (xPos.current + windowWidth)) +
-                  windowWidth
-              );
+              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+              windowWidth * 3 -
+              (dragX! - (xPos.current + windowWidth)) +
+              windowWidth
+            );
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 
@@ -1297,8 +1324,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? svgHeight.current
                 : 40
               : !fetchError.current
-              ? configOptions.current.height
-              : 40,
+                ? configOptions.current.height
+                : 40,
           position: "relative",
         }}
       >
@@ -1324,33 +1351,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         {highlightElements.length > 0
           ? highlightElements.map((item, index) => {
-              if (item.display) {
-                return (
+            if (item.display) {
+              return (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    position: "relative",
+                    height: "100%",
+                  }}
+                >
                   <div
                     key={index}
                     style={{
-                      display: "flex",
-                      position: "relative",
+                      position: "absolute",
+                      backgroundColor: item.color,
+                      top: "0",
                       height: "100%",
+                      left: item.side === "right" ? `${item.xPos}px` : "",
+                      right: item.side === "left" ? `${item.xPos}px` : "",
+                      width: item.width,
+                      pointerEvents: "none", // This makes the highlighted area non-interactive
                     }}
-                  >
-                    <div
-                      key={index}
-                      style={{
-                        position: "absolute",
-                        backgroundColor: item.color,
-                        top: "0",
-                        height: "100%",
-                        left: item.side === "right" ? `${item.xPos}px` : "",
-                        right: item.side === "left" ? `${item.xPos}px` : "",
-                        width: item.width,
-                        pointerEvents: "none", // This makes the highlighted area non-interactive
-                      }}
-                    ></div>
-                  </div>
-                );
-              }
-            })
+                  ></div>
+                </div>
+              );
+            }
+          })
           : ""}
       </div>
     </div>

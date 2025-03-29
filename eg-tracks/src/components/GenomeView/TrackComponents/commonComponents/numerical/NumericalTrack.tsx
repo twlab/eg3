@@ -113,8 +113,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-              )
+              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+            )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -198,7 +198,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const getEffectiveDisplayMode = () => {
     const { displayMode, height } = options;
-    if (displayMode === NumericalDisplayModes.AUTO) {
+    if (displayMode === NumericalDisplayModes.AUTO || displayMode === "density") {
       return height < AUTO_HEATMAP_THRESHOLD
         ? NumericalDisplayModes.HEATMAP
         : NumericalDisplayModes.BAR;
