@@ -590,6 +590,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    groupScale
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -613,6 +614,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
+        groupScale={groupScale}
       />
     );
     return canvasElements;
@@ -1519,6 +1521,7 @@ export function getDisplayModeFunction(
       configOptions: newConfigOptions,
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
+      groupScale: drawData.groupScale,
     });
 
     return canvasElements;

@@ -18,6 +18,7 @@ const ARROW_SIZE = 16;
 const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
+import { groups } from "d3";
 
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
@@ -33,7 +34,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   id,
   setShow3dGene,
   isThereG3dTrack,
-  viewWindow,
+  viewWindowConfigChange,
   applyTrackConfigChange,
   sentScreenshotData,
   dragX,
@@ -117,6 +118,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
         getHeight,
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
+        groupScale: trackState.groupScale,
       })
     );
 
@@ -339,6 +341,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
     }
   }, [applyTrackConfigChange]);
+
+  // MARK: [viewWindowConfigChange]
+
+
+
   useEffect(() => {
 
     // getConfigChangeData(
@@ -348,29 +355,62 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     //   createSVGOrCanvas,
     //   "none"
     // );
-    if (canvasComponents) {
+    console.log(viewWindowConfigChange)
 
-      console.log(viewWindow)
-      function getNumLegend(legend: ReactNode) {
-        if (updatedLegend) {
-
-          updatedLegend.current = legend;
-          console.log(updatedLegend.current)
-        }
+    let trackState = _.cloneDeep(
+      globalTrackState.current.trackStates[dataIdx].trackState
+    );
+    let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+    let curIdx = dataIdx + 1;
+    let noData = false
+    for (let i = 0; i < 3; i++) {
+      if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
+        noData = true
       }
-      let newCanvasComponent = React.cloneElement(
-        canvasComponents,
-        { viewWindow: viewWindow, getNumLegend: getNumLegend },
-      );
-      setCanvasComponents(newCanvasComponent)
-      // setCanvasComponents(
-      //   <div>
-      //     <ReactComp options={tmpObj} />
-      //   </div>
-      // );
-
+      if (
+        cacheTrackData[curIdx].dataCache &&
+        "error" in cacheTrackData[curIdx].dataCache
+      ) {
+        fetchError.current = true;
+      } else {
+        fetchError.current = false;
+      }
+      curIdx--;
     }
-  }, [viewWindow]);
+    if (!noData) {
+      if (cacheTrackData.trackType !== "genomealign") {
+        const primaryVisData =
+          trackState.genomicFetchCoord[trackState.primaryGenName]
+            .primaryVisData;
+        let visRegion = !cacheTrackData.usePrimaryNav
+          ? trackState.genomicFetchCoord[
+            trackFetchedDataCache.current[`${id}`].queryGenome
+          ].queryRegion
+          : primaryVisData.visRegion;
+        trackState["visRegion"] = visRegion;
+      }
+      trackState.viewWindow = viewWindowConfigChange.viewWindow
+      trackState["groupScale"] = viewWindowConfigChange.groupScale;
+
+
+      getConfigChangeData({
+        fetchedDataCache: trackFetchedDataCache.current[`${id}`],
+        dataIdx,
+        trackState,
+        usePrimaryNav: trackFetchedDataCache.current[`${id}`].usePrimaryNav,
+        createSVGOrCanvas,
+        trackType: trackModel.type,
+      });
+    }
+
+    // setCanvasComponents(
+    //   <div>
+    //     <ReactComp options={tmpObj} />
+    //   </div>
+    // );
+
+
+  }, [viewWindowConfigChange]);
   useEffect(() => {
     if (isScreenShotOpen) {
       async function handle() {

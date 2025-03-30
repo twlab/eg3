@@ -67,6 +67,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     options,
     forceSvg,
     getNumLegend,
+    groupScale
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
@@ -91,6 +92,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         max,
         xValues2: Array<any> = [];
       if (groupScale) {
+
         if (trackModel.options.hasOwnProperty("group")) {
           gscale = groupScale[trackModel.options.group];
         }

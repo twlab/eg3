@@ -35,5 +35,5 @@ export interface TrackProps {
   sentScreenshotData: any;
   applyTrackConfigChange: any;
   containerRef: any;
-  viewWindow?: DisplayedRegionModel;
+  viewWindowConfigChange?: any;
 }

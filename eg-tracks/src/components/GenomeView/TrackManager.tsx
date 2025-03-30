@@ -23,15 +23,18 @@ import OutsideClickDetector from "./TrackComponents/commonComponents/OutsideClic
 import { getTrackConfig } from "../../trackConfigs/config-menu-models.tsx/getTrackConfig";
 import { TrackState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import TrackRegionController from "./genomeNavigator/TrackRegionController";
-import { trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import { getDeDupeArrMatPlot, trackUsingExpandedLoci } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 import { trackGlobalState } from "./TrackComponents/CommonTrackStateChangeFunctions.tsx/trackGlobalState";
 import { GenomeConfig } from "../../models/genomes/GenomeConfig";
 import { niceBpCount } from "../../models/util";
 import { ITrackModel, Tool } from "../../types";
+import { GroupedTrackManager } from "./TrackComponents/GroupedTrackManager";
+
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
 import { formatDataByType, twoDataTypeTracks } from "./TrackComponents/displayModeComponentMap";
+const groupManager = new GroupedTrackManager();
 export const convertTrackModelToITrackModel = (
   track: TrackModel
 ): ITrackModel => ({
@@ -225,6 +228,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }, 50)
   ).current;
   const startingBpArr = useRef<Array<any>>([]);
+  const viewWindowConfigData = useRef<{ viewWindow: OpenInterval, groupScale: any, dataIdx: number } | null>(null);
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [newDrawData, setNewDrawData] = useState<{ [key: string]: any }>({});
@@ -238,13 +242,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     isSelected: false,
     title: "none",
   });
-  const [viewWindow, setViewWindow] = useState<OpenInterval | null>(null);
+
   const [dataIdx, setDataIdx] = useState(0);
   const [highlightElements, setHighLightElements] = useState<Array<any>>([]);
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any } | null>(
     null
   );
-
+  const [viewWindowConfigChange, setViewWindowConfigChange] = useState<null | { [key: string]: any }>(null);
   const [applyTrackConfigChange, setApplyTrackConfigChange] = useState<{
     [key: string]: any;
   }>({});
@@ -389,17 +393,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // after the state changes, we put this here so it changes with other
     // useState letiable that changes so we save some computation instead of using
     // another useState
-    const viewWindow =
-      side.current === "right"
-        ? new OpenInterval(
-          -((dragX.current % windowWidth) + -windowWidth),
-          -((dragX.current % windowWidth) + -windowWidth) + windowWidth
-        )
-        : new OpenInterval(
-          windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
-          windowWidth * 3 - ((dragX.current % windowWidth))
-        );
-    setViewWindow(viewWindow);
+    const curDataIdx = Math.ceil(dragX.current / windowWidth);
+    const curViewWindow = side.current === "right"
+      ? new OpenInterval(
+        -((dragX.current % windowWidth) + -windowWidth),
+        -((dragX.current % windowWidth) + -windowWidth) + windowWidth
+      )
+      : new OpenInterval(
+        windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
+        windowWidth * 3 - ((dragX.current % windowWidth))
+      )
+    setDataIdx((prevState) => {
+      if (prevState === curDataIdx) {
+        viewWindowConfigData.current = {
+          viewWindow: curViewWindow, groupScale: null, dataIdx: curDataIdx
+        }
+      }
+      return curDataIdx
+    });
+
+
+
+
+
     if (dragX.current > 0 && side.current === "right") {
       side.current = "left";
     } else if (dragX.current <= 0 && side.current === "left") {
@@ -412,15 +428,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       rightSectionSize.current.push(windowWidth);
 
-      fetchGenomeData(0, "right", viewWindow);
+      fetchGenomeData(0, "right", curViewWindow);
     } else if (
       dragX.current >= sumArray(leftSectionSize.current) &&
       dragX.current > 0
     ) {
       leftSectionSize.current.push(windowWidth);
-      fetchGenomeData(0, "left", viewWindow);
+      fetchGenomeData(0, "left", curViewWindow);
     }
-    setDataIdx(Math.ceil(dragX.current! / windowWidth));
+
 
 
 
@@ -1341,7 +1357,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // - we just need to set a visRegion, visRegion is used to draw components we have to set it for the newly fetched data
       // - we also set the datacache with its trackModel Id and missingIdx datacoord to store.
       // - we don't use cacheFetchedData because we don't want to update the rightIdx / leftIdx cause both have latest info already.
-      console.log()
+
       trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
         "dataCache"
       ] = (fetchRes.trackType in twoDataTypeTracks) ? result : formatDataByType(result, fetchRes.trackType);
@@ -1901,6 +1917,67 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [genomeConfig]);
 
   // MARK: trackSizeCha
+
+
+
+  function getWindowViewConfig(
+  ) {
+    const trackDataObj: { [key: string]: any } = {};
+
+    for (let key in trackFetchedDataCache.current) {
+      let combinedData: any = [];
+      let hasError = false;
+      let currIdx = dataIdx + 1;
+      const cacheTrackData = trackFetchedDataCache.current[key];
+
+      for (let i = 0; i < 3; i++) {
+        if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
+          continue;
+        }
+        if (cacheTrackData[currIdx].dataCache && "error" in cacheTrackData[currIdx].dataCache) {
+          hasError = true;
+          combinedData.push(cacheTrackData[currIdx].dataCache.error);
+        } else {
+          combinedData.push(cacheTrackData[currIdx]);
+        }
+        currIdx--;
+      }
+
+      let noData = false;
+      if (!hasError) {
+        if (cacheTrackData.trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
+          combinedData = getDeDupeArrMatPlot(combinedData, false);
+        } else {
+          combinedData = combinedData.map((item) => {
+            if (item && "dataCache" in item && item.dataCache) {
+              return item.dataCache;
+            } else {
+              noData = true;
+            }
+          }).flat(1);
+        }
+      }
+
+      if (!noData) {
+        const trackState = { ...globalTrackState.current.trackStates[dataIdx].trackState };
+        let visRegion;
+        let primaryVisData;
+
+        if (cacheTrackData.trackType !== "genomealign") {
+          primaryVisData = trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
+          visRegion = !cacheTrackData.usePrimaryNav
+            ? trackState.genomicFetchCoord[trackFetchedDataCache.current[key].queryGenome].queryRegion
+            : primaryVisData.visRegion;
+
+          trackDataObj[key] = { data: combinedData, visRegion: visRegion, visWidth: primaryVisData.visWidth };
+        }
+      }
+    }
+
+    const groupScale = groupManager.getGroupScale(tracks, trackDataObj, windowWidth * 3, viewWindowConfigData.current.viewWindow);
+    return { viewWindow: viewWindowConfigData.current.viewWindow, groupScale: groupScale }
+
+  }
   function trackSizeChange() {
     const trackToDrawId: { [key: string]: any } = {};
     for (const cacheKey in trackFetchedDataCache.current) {
@@ -2145,7 +2222,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               foundComp = true;
             }
           }
-          // if not in view this means that this is the new track that was added.
+          // if not in view this means that this iAs the new track that was added.
           if (!foundComp) {
             if (curTrackModel.type === "g3d") {
               newG3dComponents.push({
@@ -2289,8 +2366,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [configMenu]);
   useEffect(() => {
-    if (viewWindow) { }
-  }, [viewWindow]);
+    if (viewWindowConfigData.current) {
+      if (dataIdx === viewWindowConfigData.current.dataIdx) {
+        setViewWindowConfigChange(getWindowViewConfig())
+      }
+    }
+  }, [viewWindowConfigData.current]);
   return (
     <div>
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
@@ -2440,7 +2521,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         globalTrackState={globalTrackState}
                         isScreenShotOpen={isScreenShotOpen}
                         highlightElements={highlightElements}
-                        viewWindow={viewWindow}
+                        viewWindowConfigChange={viewWindowConfigChange}
                       />
                     </div>
                   </SortableList.Item>
