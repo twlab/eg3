@@ -22,6 +22,7 @@ import { groups, scaleLinear } from "d3";
 import TrackLegend from "./commonComponents/TrackLegend";
 import { ScaleChoices } from "../../../models/ScaleChoices";
 import { NumericalDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { isNumericalTrack } from "./GroupedTrackManager";
 const AUTO_HEATMAP_THRESHOLD = 21;
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
@@ -85,13 +86,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
   // MARK: CREATESVG
-  function createSVGOrCanvas(trackState, genesArr, isError, cacheDataIdx, xvalues = null) {
+  function createSVGOrCanvas(trackState, genesArr, isError, cacheDataIdx) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
     }
 
-    trackState["viewWindow"] = trackState.visData ? trackState.visData.viewWindow : new OpenInterval(0, trackState.visWidth);
+    trackState["viewWindow"] = isNumericalTrack(trackModel) ? trackState.viewWindow : new OpenInterval(0, trackState.visWidth);
 
     let res = fetchError.current ? (
       <div
@@ -121,7 +122,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
         getHeight,
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
-        groupScale: trackState.groupScale, xvalues
+        groupScale: trackState.groupScale,
       })
     );
 
@@ -197,7 +198,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (yMin >= yMax) {
       console.log("Y-axis min must less than max", "error", 2000);
     }
-    console.log(viewWindow)
+
     let gscale: any = {},
       min,
       max,
@@ -309,38 +310,38 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   useEffect(() => {
 
-    if (canvasComponents && trackFetchedDataCache.current[id][dataIdx]["xvalues"]) {
-      console.log(trackFetchedDataCache.current[id][dataIdx])
-      const [xToValue, xToValue2, hasReverse] = trackFetchedDataCache.current[id][dataIdx]["xvalues"];
-      const curGroupScale = globalTrackState.current.trackStates[dataIdx].trackState.groupScale
-      const scales = computeScales(xToValue, xToValue2, configOptions.current.height, curGroupScale);
-      const { displayMode, height } = configOptions.current;
-      const getEffectiveDisplayMode = () => {
+    // if (canvasComponents && trackFetchedDataCache.current[id][dataIdx]["xvalues"]) {
+    //   const [xToValue, xToValue2, hasReverse] = trackFetchedDataCache.current[id][dataIdx]["xvalues"];
+    //   const curGroupScale = globalTrackState.current.trackStates[dataIdx].trackState.groupScale
+    //   const scales = computeScales(xToValue, xToValue2, configOptions.current.height, curGroupScale);
+    //   const { displayMode, height } = configOptions.current;
+    //   const getEffectiveDisplayMode = () => {
 
-        if (displayMode === NumericalDisplayModes.AUTO || displayMode === "density") {
-          return height < AUTO_HEATMAP_THRESHOLD
-            ? NumericalDisplayModes.HEATMAP
-            : NumericalDisplayModes.BAR;
-        } else {
-          return displayMode;
-        }
-      };
+    //     if (displayMode === NumericalDisplayModes.AUTO || displayMode === "density") {
+    //       return height < AUTO_HEATMAP_THRESHOLD
+    //         ? NumericalDisplayModes.HEATMAP
+    //         : NumericalDisplayModes.BAR;
+    //     } else {
+    //       return displayMode;
+    //     }
+    //   };
 
-      let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
+    //   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
-      const legend = (
-        <TrackLegend
-          trackModel={trackModel}
-          height={height}
-          axisScale={isDrawingBars ? scales.axisScale : undefined}
-          axisLegend={undefined}
-        />
-      );
-      setLegend(legend);
-    }
-    else {
+    //   const legend = (
+    //     <TrackLegend
+    //       trackModel={trackModel}
+    //       height={height}
+    //       axisScale={isDrawingBars ? scales.axisScale : undefined}
+    //       axisLegend={undefined}
+    //     />
+    //   );
+    //   setLegend(legend);
+    // }
+    // else {
+    if (svgComponents || canvasComponents)
       setLegend(updatedLegend.current)
-    }
+    // }
   }, [svgComponents, canvasComponents]);
 
   // MARK:[newDrawDat
@@ -432,9 +433,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
-          trackState["groupScale"] = globalTrackState.current.groupScale;
 
-          createSVGOrCanvas(trackState, combinedData, hasError, dataIdx, cacheTrackData.xvalues);
+          trackState["groupScale"] = globalTrackState.current.trackStates[dataIdx].trackState["groupScale"];
+          console.log(trackState)
+          createSVGOrCanvas(trackState, combinedData, hasError, dataIdx);
         }
       } else {
         const combinedData = cacheTrackData[dataIdx]
@@ -509,61 +511,61 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   //   // );
 
   //   if (viewWindowConfigChange && id in viewWindowConfigChange.trackToDrawId) {
-  //     {
-  //       let trackState = _.cloneDeep(
-  //         globalTrackState.current.trackStates[dataIdx].trackState
-  //       );
-  //       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-  //       let curIdx = dataIdx + 1;
-  //       let noData = false
-  //       for (let i = 0; i < 3; i++) {
-  //         if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
-  //           noData = true
-  //         }
-  //         if (
-  //           cacheTrackData[curIdx].dataCache &&
-  //           "error" in cacheTrackData[curIdx].dataCache
-  //         ) {
-  //           fetchError.current = true;
-  //         } else {
-  //           fetchError.current = false;
-  //         }
-  //         curIdx--;
+  //     console.log(viewWindowConfigChange)
+  //     let trackState = _.cloneDeep(
+  //       globalTrackState.current.trackStates[dataIdx].trackState
+  //     );
+  //     let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+  //     let curIdx = dataIdx + 1;
+  //     let noData = false
+  //     for (let i = 0; i < 3; i++) {
+  //       if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
+  //         noData = true
   //       }
-  //       if (!noData) {
-  //         if (cacheTrackData.trackType !== "genomealign") {
-  //           const primaryVisData =
-  //             trackState.genomicFetchCoord[trackState.primaryGenName]
-  //               .primaryVisData;
-  //           let visRegion = !cacheTrackData.usePrimaryNav
-  //             ? trackState.genomicFetchCoord[
-  //               trackFetchedDataCache.current[`${id}`].queryGenome
-  //             ].queryRegion
-  //             : primaryVisData.visRegion;
-  //           trackState["visRegion"] = visRegion;
-  //         }
-  //         trackState.viewWindow = viewWindowConfigChange.viewWindow
-  //         trackState["groupScale"] = viewWindowConfigChange.groupScale;
-
-
-  //         getConfigChangeData({
-  //           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
-  //           dataIdx,
-  //           trackState,
-  //           usePrimaryNav: trackFetchedDataCache.current[`${id}`].usePrimaryNav,
-  //           createSVGOrCanvas,
-  //           trackType: trackModel.type,
-  //         });
+  //       if (
+  //         cacheTrackData[curIdx].dataCache &&
+  //         "error" in cacheTrackData[curIdx].dataCache
+  //       ) {
+  //         fetchError.current = true;
+  //       } else {
+  //         fetchError.current = false;
   //       }
+  //       curIdx--;
   //     }
-  //     // setCanvasComponents(
-  //     //   <div>
-  //     //     <ReactComp options={tmpObj} />
-  //     //   </div>
-  //     // );
+  //     if (!noData) {
+  //       if (cacheTrackData.trackType !== "genomealign") {
+  //         const primaryVisData =
+  //           trackState.genomicFetchCoord[trackState.primaryGenName]
+  //             .primaryVisData;
+  //         let visRegion = !cacheTrackData.usePrimaryNav
+  //           ? trackState.genomicFetchCoord[
+  //             trackFetchedDataCache.current[`${id}`].queryGenome
+  //           ].queryRegion
+  //           : primaryVisData.visRegion;
+  //         trackState["visRegion"] = visRegion;
+  //       }
+  //       trackState.viewWindow = viewWindowConfigChange.viewWindow
+  //       trackState["groupScale"] = viewWindowConfigChange.groupScale;
 
 
+  //       getConfigChangeData({
+  //         fetchedDataCache: trackFetchedDataCache.current[`${id}`],
+  //         dataIdx,
+  //         trackState,
+  //         usePrimaryNav: trackFetchedDataCache.current[`${id}`].usePrimaryNav,
+  //         createSVGOrCanvas,
+  //         trackType: trackModel.type,
+  //       });
+  //     }
   //   }
+  //   //   // setCanvasComponents(
+  //   //   //   <div>
+  //   //   //     <ReactComp options={tmpObj} />
+  //   //   //   </div>
+  //   //   // );
+
+
+  //   // }
   // }, [viewWindowConfigChange]);
   useEffect(() => {
     if (isScreenShotOpen) {

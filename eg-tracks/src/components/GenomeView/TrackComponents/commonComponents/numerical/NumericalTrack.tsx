@@ -77,8 +77,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const xvalues = xvaluesData ? xvaluesData : aggregator.xToValueMaker(data, viewRegion, width, options)
 
-  console.log(xvalues, "xvalues in numerical track")
-  const [xToValue, xToValue2, hasReverse] = xvalues;
+  console.log(xvalues, props.viewWindow, groupScale, "xvalues in numerical track")
+  let [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
@@ -211,18 +211,18 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
-  // const legend = (
-  //   <TrackLegend
-  //     trackModel={trackModel}
-  //     height={height}
-  //     axisScale={isDrawingBars ? scales.axisScale : undefined}
-  //     axisLegend={unit}
-  //   />
-  // );
+  const legend = (
+    <TrackLegend
+      trackModel={trackModel}
+      height={height}
+      axisScale={isDrawingBars ? scales.axisScale : undefined}
+      axisLegend={unit}
+    />
+  );
 
-  // if (getNumLegend) {
-  //   getNumLegend(legend);
-  // }
+  if (getNumLegend) {
+    getNumLegend(legend);
+  }
 
   const visualizer = hasReverse ? (
     <React.Fragment>
@@ -319,7 +319,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       </div>
     </React.Fragment>
   );
-
+  xvalues = []
   return visualizer;
 };
 interface ValueTrackProps {

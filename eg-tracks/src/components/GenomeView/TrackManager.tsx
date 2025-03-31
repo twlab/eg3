@@ -220,6 +220,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const globalTrackState = useRef<{ [key: string]: any }>({
     rightIdx: 0,
     leftIdx: 1,
+    viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
     trackStates: {},
   });
   const updateLinePosition = useRef(
@@ -243,7 +244,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     isSelected: false,
     title: "none",
   });
-
+  const [draw, setDraw] = useState<{ [key: string]: any }>({});
   const [dataIdx, setDataIdx] = useState(0);
   const [highlightElements, setHighLightElements] = useState<Array<any>>([]);
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any } | null>(
@@ -413,7 +414,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return curDataIdx
     });
 
-
+    globalTrackState.current.viewWindow = curViewWindow
 
 
 
@@ -698,8 +699,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const curViewWindow =
       selectedRegionSet &&
         bpRegionSize.current === genomeConfig.navContext._totalBases
-        ? viewWindow
-        : new OpenInterval(trackWindowWidth, trackWindowWidth * 2);
+        ? new OpenInterval(trackWindowWidth, trackWindowWidth * 2)
+        : new OpenInterval(trackWindowWidth, trackWindowWidth * 2)
     if (initial === 1) {
       initExpandBpLoci = [
         { start: minBp.current - bpRegionSize.current * 2, end: maxBp.current },
@@ -882,6 +883,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       regionLoci: regionLoci,
       visData: newVisData,
       regionExpandLoci: regionExpandLoci,
+      viewWindow: viewWindow,
       initVisData: initial
         ? initExpandBpLoci.map((item, index) => {
           return {
@@ -1953,10 +1955,33 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
 
 
+  function getReDrawViewWindow(
+    viewWindow, dataIdx
+  ) {
+    const trackDataObj: { [key: string]: any } = {};
+    const trackToDrawId: { [key: string]: any } = {};
+
+    for (let key in trackFetchedDataCache.current) {
+
+      if (trackFetchedDataCache.current[key][dataIdx]["xvalues"]) {
+        trackDataObj[key] = trackFetchedDataCache.current[key][dataIdx]["xvalues"]
+        trackToDrawId[key] = ""
+      }
+    } console.log("HERE1", trackDataObj)
+    if (!_.isEmpty(trackDataObj)) {
+      console.log("HERE23")
+      const groupScale = groupManager.getGroupScaleWithXvalues(tracks, trackDataObj, viewWindow)
+      globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] = groupScale
+      setViewWindowConfigChange({ dataIdx, viewWindow, groupScale, trackToDrawId })
+    }
+  }
+
+
+
   function getWindowViewConfig(
     viewWindow, dataIdx
   ) {
-    if (viewWindow && !globalTrackState.current.trackStates[dataIdx].trackState["groupScale"]) {
+    if (viewWindow) {
       const trackDataObj: { [key: string]: any } = {};
       const trackToDrawId: { [key: string]: any } = {};
       for (let key in trackFetchedDataCache.current) {
@@ -2015,6 +2040,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       const groupScale = groupManager.getGroupScale(tracks, trackDataObj, windowWidth * 3, viewWindow, dataIdx, trackFetchedDataCache);
+
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] = groupScale
 
     }
@@ -2406,18 +2432,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       toolbarContainer.style.visibility = configMenu ? "hidden" : "visible";
     }
   }, [configMenu]);
-  // useEffect(() => {
-  //   if (viewWindowConfigData.current) {
-  //     if (dataIdx === viewWindowConfigData.current.dataIdx) {
-  //       setViewWindowConfigChange(getWindowViewConfig(viewWindowConfigData.current.viewWindow, viewWindowConfigData.current.dataIdx));
-  //     }
-  //   }
-  // }, [viewWindowConfigData.current]);
   useEffect(() => {
-    console.log(newDrawData, dataIdx)
-    if (newDrawData.curDataIdx === dataIdx) {
+    if (viewWindowConfigData.current) {
+      if (dataIdx === viewWindowConfigData.current.dataIdx) {
 
-      getWindowViewConfig(new OpenInterval(0, windowWidth * 3), newDrawData.curDataIdx);
+        getReDrawViewWindow(viewWindowConfigData.current.viewWindow, viewWindowConfigData.current.dataIdx)
+
+      }
+    }
+  }, [viewWindowConfigData.current]);
+  useEffect(() => {
+
+    if (newDrawData.curDataIdx === dataIdx) {
+      console.log("HUHUHUHU", globalTrackState.current.viewWindow)
+      getWindowViewConfig(globalTrackState.current.viewWindow, newDrawData.curDataIdx);
+      setDraw({ ...newDrawData })
     }
   }, [newDrawData]);
   return (
@@ -2564,13 +2593,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         dragX={dragX.current}
                         signalTrackLoadComplete={signalTrackLoadComplete}
                         sentScreenshotData={sentScreenshotData}
-                        newDrawData={newDrawData}
+                        newDrawData={draw}
                         trackFetchedDataCache={trackFetchedDataCache}
                         globalTrackState={globalTrackState}
                         isScreenShotOpen={isScreenShotOpen}
                         highlightElements={highlightElements}
                         viewWindowConfigData={viewWindowConfigData.current}
-
+                        viewWindowConfigChange={viewWindowConfigChange}
                       />
                     </div>
                   </SortableList.Item>
