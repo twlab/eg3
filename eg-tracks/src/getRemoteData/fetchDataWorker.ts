@@ -98,7 +98,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  console.log(event.data);
+
   const objectPromises = event.data.map(async (dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
     const initial = dataItem.initial;
@@ -186,10 +186,9 @@ self.onmessage = async (event: MessageEvent) => {
           ) {
             curFetchNav =
               genomicFetchCoord[
-                `${
-                  item.metadata.genome === ""
-                    ? primaryGenName
-                    : item.metadata.genome
+                `${item.metadata.genome === ""
+                  ? primaryGenName
+                  : item.metadata.genome
                 }`
               ].queryGenomicCoord;
           } else if (
@@ -266,15 +265,15 @@ self.onmessage = async (event: MessageEvent) => {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            });
 
           if (
             curRespond &&

@@ -85,10 +85,10 @@ export default function GenomeView() {
     coordinate: GenomeCoordinate
   ) => {
     let currCoordinate: GenomeCoordinate | null = coordinate;
-
+    console.log("coordinate", coordinate);
     dispatch(
       updateCurrentSession({
-        viewRegion: currCoordinate,
+        viewRegion: { start: startbase, end: endbase, coordinate },
         userViewRegion: { start: startbase, end: endbase },
       })
     );

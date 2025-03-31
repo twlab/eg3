@@ -144,11 +144,7 @@ export class FeatureArranger {
     results.push(...this._combineAdjacent(placements));
     // console.log(results, placements);
     const numRowsAssigned = this._assignRows(results, padding, sortItems);
-    console.log({
-      placements: results,
-      numRowsAssigned,
-      numHidden: features.length - visibleFeatures.length,
-    })
+
     return {
       placements: results,
       numRowsAssigned,

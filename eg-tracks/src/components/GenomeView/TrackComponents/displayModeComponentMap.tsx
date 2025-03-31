@@ -590,7 +590,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
-    groupScale
+    groupScale, xvalues
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -607,7 +607,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewWindow={
           trackState.viewWindow
             ? trackState.viewWindow
-            : new OpenInterval(0, trackState.visWidth)
+            :
+            new OpenInterval(0, trackState.visWidth)
         }
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
@@ -615,6 +616,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         getNumLegend={getNumLegend}
         groupScale={groupScale}
+        xvaluesData={xvalues}
       />
     );
     return canvasElements;
@@ -1522,6 +1524,7 @@ export function getDisplayModeFunction(
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
       groupScale: drawData.groupScale,
+      xvalues: drawData.xvalues,
     });
 
     return canvasElements;

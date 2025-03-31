@@ -31,6 +31,7 @@ interface NumericalTrackProps {
   width?: any;
   forceSvg?: any;
   getNumLegend?: any;
+  xvaluesData: Array<any>
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -67,17 +68,16 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     options,
     forceSvg,
     getNumLegend,
-    groupScale
+    groupScale,
+    xvaluesData
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  const xvalues = useMemo(
-    () => aggregator.xToValueMaker(data, viewRegion, width, options),
-    [data, viewRegion, width, options]
-  );
+  const xvalues = xvaluesData ? xvaluesData : aggregator.xToValueMaker(data, viewRegion, width, options)
 
+  console.log(xvalues, "xvalues in numerical track")
   const [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
@@ -86,7 +86,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       if (yMin >= yMax) {
         console.log("Y-axis min must less than max", "error", 2000);
       }
-      const { trackModel, groupScale } = props;
+
       let gscale: any = {},
         min,
         max,
@@ -211,18 +211,18 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
-  const legend = (
-    <TrackLegend
-      trackModel={trackModel}
-      height={height}
-      axisScale={isDrawingBars ? scales.axisScale : undefined}
-      axisLegend={unit}
-    />
-  );
+  // const legend = (
+  //   <TrackLegend
+  //     trackModel={trackModel}
+  //     height={height}
+  //     axisScale={isDrawingBars ? scales.axisScale : undefined}
+  //     axisLegend={unit}
+  //   />
+  // );
 
-  if (getNumLegend) {
-    getNumLegend(legend);
-  }
+  // if (getNumLegend) {
+  //   getNumLegend(legend);
+  // }
 
   const visualizer = hasReverse ? (
     <React.Fragment>
