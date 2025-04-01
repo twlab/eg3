@@ -7,14 +7,14 @@ body {
 }
 
 .btn {
-    @apply bg-transparent  text-blue-700  px-1 border border-blue-500  rounded
+    @apply bg-transparent text-blue-700 px-1 border border-blue-500 rounded
 }
 
 /* .btn:hover {
     @apply bg-blue-500 text-white border-transparent;
 } */
 
-.TrackContextMenu-body button, select, input{
+.TrackContextMenu-body button, select, input {
     @apply btn
 }
 

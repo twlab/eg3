@@ -111,7 +111,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [userViewRegion]);
 
   return (
-    <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
+    <div data-theme={"light"} style={{ paddingLeft: "10px", paddingRight: "10px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && (

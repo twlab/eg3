@@ -396,7 +396,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // useState letiable that changes so we save some computation instead of using
     // another useState
     const curDataIdx = Math.ceil(dragX.current / windowWidth);
-    const curViewWindow = side.current === "right"
+    let curViewWindow = side.current === "right"
       ? new OpenInterval(
         -((dragX.current % windowWidth) + -windowWidth),
         -((dragX.current % windowWidth) + -windowWidth) + windowWidth
@@ -405,6 +405,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
         windowWidth * 3 - ((dragX.current % windowWidth))
       )
+
+    const genomeName = genomeConfig.genome.getName()
+    if (useFineModeNav.current && globalTrackState.current.trackStates[curDataIdx].trackState.genomicFetchCoord) {
+      let trackState = {
+        ...globalTrackState.current.trackStates[curDataIdx].trackState,
+      };
+
+      const primaryVisData =
+        trackState.genomicFetchCoord[genomeName]
+          .primaryVisData;
+      const startViewWindow = primaryVisData.viewWindow
+      const tmpCur = new OpenInterval(curViewWindow.start, curViewWindow.end)
+      const start = (tmpCur.start - windowWidth) + startViewWindow.start
+      const end = (tmpCur.end - windowWidth * 2) + (startViewWindow.end - (windowWidth - startViewWindow.start))
+      curViewWindow = new OpenInterval(start, end)
+
+    }
+
+
     setDataIdx((prevState) => {
       if (prevState === curDataIdx) {
         viewWindowConfigData.current = {
@@ -2055,6 +2074,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (viewWindow) {
       const trackDataObj: { [key: string]: any } = {};
       const trackToDrawId: { [key: string]: any } = {};
+      let primaryVisData;
       for (let key in trackFetchedDataCache.current) {
         const cacheTrackData = trackFetchedDataCache.current[key];
         // methylc: "" qbed: "" , dynseq: "",,
@@ -2095,13 +2115,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           const trackState = { ...globalTrackState.current.trackStates[dataIdx].trackState };
           let visRegion;
-          let primaryVisData;
+
 
           if (cacheTrackData.trackType !== "genomealign") {
             primaryVisData = trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
             visRegion = !cacheTrackData.usePrimaryNav
               ? trackState.genomicFetchCoord[trackFetchedDataCache.current[key].queryGenome].queryRegion
               : primaryVisData.visRegion;
+
+            if (typeof visRegion === "object") {
+              visRegion = objToInstanceAlign(visRegion)
+            }
 
             trackDataObj[key] = { data: combinedData, visRegion: visRegion, visWidth: primaryVisData.visWidth };
           }
@@ -2111,7 +2135,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
 
-      const groupScale = groupManager.getGroupScale(tracks, trackDataObj, windowWidth * 3, viewWindow, dataIdx, trackFetchedDataCache);
+      const groupScale = groupManager.getGroupScale(tracks, trackDataObj, viewWindow.start * 3, viewWindow, dataIdx, trackFetchedDataCache);
 
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] = groupScale
 
@@ -2357,7 +2381,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (viewWindowConfigData.current) {
       if (dataIdx === viewWindowConfigData.current.dataIdx) {
-
+        console.log(viewWindowConfigData.current)
         getReDrawViewWindow(viewWindowConfigData.current.viewWindow, viewWindowConfigData.current.dataIdx)
 
       }
@@ -2366,8 +2390,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
 
     if (newDrawData.curDataIdx === dataIdx) {
-      getWindowViewConfig(globalTrackState.current.viewWindow, newDrawData.curDataIdx);
+
+      let curViewWindow
+      if (newDrawData.curDataIdx === dataIdx) {
+
+        const genomeName = genomeConfig.genome.getName()
+        let trackState = {
+          ...globalTrackState.current.trackStates[newDrawData.curDataIdx].trackState,
+        };
+        console.log(trackState.genomicFetchCoord[genomeName])
+        const primaryVisData =
+          trackState.genomicFetchCoord[genomeName]
+            .primaryVisData;
+        curViewWindow = primaryVisData.viewWindow
+
+      }
+      else {
+        curViewWindow = globalTrackState.current.viewWindow
+      }
+      console.log(curViewWindow, globalTrackState.current.viewWindow)
+      getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
       setDraw({ ...newDrawData })
+
     }
   }, [newDrawData]);
   return (

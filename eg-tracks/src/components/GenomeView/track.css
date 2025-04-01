@@ -9,31 +9,36 @@
   --light-fg-color: #222;
   --light-bg-color: white;
 }
+
 @keyframes borderPulse {
   0% {
     border-top: 1px solid red;
     border-bottom: 1px solid red;
   }
+
   50% {
     border-top: 1px solid lightcoral;
     border-bottom: 1px solid lightcoral;
   }
+
   100% {
     border-top: 1px solid white;
     border-bottom: 1px solid white;
   }
 }
+
 .animatedBorder {
   animation: borderPulse 2s infinite;
 }
+
 .App {
   margin-bottom: 30px;
 }
 
-.dense-button {
+/* .dense-button {
   padding: 2px 4px;
   line-height: 1;
-}
+} */
 
 .nav-link {
   user-select: none;
@@ -64,7 +69,8 @@
 .horizontal-line,
 .vertical-line {
   position: absolute;
-  will-change: transform; /* Hint to the browser for optimization */
+  will-change: transform;
+  /* Hint to the browser for optimization */
 }
 
 .horizontal-line {
@@ -85,20 +91,24 @@
   z-index: 3;
   pointer-events: none;
 }
+
 .btn-dense {
   margin-right: 2px !important;
   margin-bottom: 0 !important;
 }
+
 [data-theme="dark"] {
   --font-color: var(--dark-fg-color);
   --bg-color: var(--dark-bg-color);
   /* --link-color: #3bd1ff; */
 }
+
 [data-theme="light"] {
   --font-color: var(--light-fg-color);
   --bg-color: var(--light-bg-color);
   /* --link-color: #3f51b5; */
 }
+
 .bg {
   background-color: var(--bg-color);
   color: var(--font-color);
