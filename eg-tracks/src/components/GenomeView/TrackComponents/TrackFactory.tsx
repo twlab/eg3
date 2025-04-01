@@ -192,156 +192,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   function onClose() {
     setToolTipVisible(false);
   }
-  function computeScales(xToValue: any[], xToValue2: any[], height: number, groupScale = null) {
-    const { yScale, yMin, yMax } = configOptions.current;
-    const viewWindow = viewWindowConfigData ? viewWindowConfigData.viewWindow : new OpenInterval(windowWidth, windowWidth * 2)
-    if (yMin >= yMax) {
-      console.log("Y-axis min must less than max", "error", 2000);
-    }
 
-    let gscale: any = {},
-      min,
-      max,
-      xValues2: Array<any> = [];
-    if (groupScale) {
-
-      if (trackModel.options.hasOwnProperty("group")) {
-        gscale = groupScale[trackModel.options.group];
-      }
-    }
-    if (!_.isEmpty(gscale)) {
-      max = _.max(Object.values(gscale.max));
-      min = _.min(Object.values(gscale.min));
-    } else {
-      const visibleValues = xToValue.slice(
-        viewWindow.start,
-        viewWindow.end
-      );
-      // TO- DO implement when dragX changes then the legend also changings with viewWindow values
-      // const visibleValues = xToValue.slice(
-      //   props.viewWindow.start + props.width / 3,
-      //   props.viewWindow.end - props.width / 3
-      // );
-      max = _.max(visibleValues) || 1;
-      xValues2 = xToValue2.filter((x) => x);
-      min =
-        (xValues2.length
-          ? _.min(
-            xToValue2.slice(viewWindow.start, viewWindow.end)
-          )
-          : 0) || 0;
-      const maxBoth = Math.max(Math.abs(max), Math.abs(min));
-      max = maxBoth;
-      min = xValues2.length ? -maxBoth : 0;
-      if (yScale === ScaleChoices.FIXED) {
-        max = yMax ? yMax : max;
-        min = yMin !== undefined ? yMin : min;
-      }
-    }
-    if (min > max) {
-      console.log("Y-axis min should less than Y-axis max", "warning", 5000);
-      min = 0;
-    }
-
-    const zeroLine =
-      min < 0
-        ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-        : height;
-
-    if (
-      xValues2.length &&
-      (yScale === ScaleChoices.AUTO ||
-        (yScale === ScaleChoices.FIXED && yMin < 0))
-    ) {
-      return {
-        axisScale: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height - TOP_PADDING])
-          .clamp(true),
-        valueToY: scaleLinear()
-          .domain([max, 0])
-          .range([TOP_PADDING, zeroLine])
-          .clamp(true),
-        valueToYReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, height - zeroLine - TOP_PADDING])
-          .clamp(true),
-        valueToOpacity: scaleLinear()
-          .domain([0, max])
-          .range([0, 1])
-          .clamp(true),
-        valueToOpacityReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, 1])
-          .clamp(true),
-        min,
-        max,
-        zeroLine,
-      };
-    } else {
-      return {
-        axisScale: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height])
-          .clamp(true),
-        valueToY: scaleLinear()
-          .domain([max, min])
-          .range([TOP_PADDING, height])
-          .clamp(true),
-        valueToOpacity: scaleLinear()
-          .domain([min, max])
-          .range([0, 1])
-          .clamp(true),
-        valueToYReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, height - zeroLine - TOP_PADDING])
-          .clamp(true),
-        valueToOpacityReverse: scaleLinear()
-          .domain([0, min])
-          .range([0, 1])
-          .clamp(true),
-        min,
-        max,
-        zeroLine,
-      };
-    }
-  }
 
 
   useEffect(() => {
-
-    // if (canvasComponents && trackFetchedDataCache.current[id][dataIdx]["xvalues"]) {
-    //   const [xToValue, xToValue2, hasReverse] = trackFetchedDataCache.current[id][dataIdx]["xvalues"];
-    //   const curGroupScale = globalTrackState.current.trackStates[dataIdx].trackState.groupScale
-    //   const scales = computeScales(xToValue, xToValue2, configOptions.current.height, curGroupScale);
-    //   const { displayMode, height } = configOptions.current;
-    //   const getEffectiveDisplayMode = () => {
-
-    //     if (displayMode === NumericalDisplayModes.AUTO || displayMode === "density") {
-    //       return height < AUTO_HEATMAP_THRESHOLD
-    //         ? NumericalDisplayModes.HEATMAP
-    //         : NumericalDisplayModes.BAR;
-    //     } else {
-    //       return displayMode;
-    //     }
-    //   };
-
-    //   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
-
-    //   const legend = (
-    //     <TrackLegend
-    //       trackModel={trackModel}
-    //       height={height}
-    //       axisScale={isDrawingBars ? scales.axisScale : undefined}
-    //       axisLegend={undefined}
-    //     />
-    //   );
-    //   setLegend(legend);
-    // }
-    // else {
     if (svgComponents || canvasComponents)
       setLegend(updatedLegend.current)
-    // }
+
   }, [svgComponents, canvasComponents]);
 
   // MARK:[newDrawDat
@@ -435,7 +292,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         if (!noData) {
 
           trackState["groupScale"] = globalTrackState.current.trackStates[dataIdx].trackState["groupScale"];
-          console.log(trackState)
           createSVGOrCanvas(trackState, combinedData, hasError, dataIdx);
         }
       } else {
@@ -500,73 +356,67 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
 
 
-  // useEffect(() => {
+  useEffect(() => {
 
-  //   // getConfigChangeData(
-  //   //   useFineOrSecondaryParentNav.current,
-  //   //   fetchedDataCache.current,
-  //   //   dataIdx,
-  //   //   createSVGOrCanvas,
-  //   //   "none"
-  //   // );
-
-  //   if (viewWindowConfigChange && id in viewWindowConfigChange.trackToDrawId) {
-  //     console.log(viewWindowConfigChange)
-  //     let trackState = _.cloneDeep(
-  //       globalTrackState.current.trackStates[dataIdx].trackState
-  //     );
-  //     let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-  //     let curIdx = dataIdx + 1;
-  //     let noData = false
-  //     for (let i = 0; i < 3; i++) {
-  //       if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
-  //         noData = true
-  //       }
-  //       if (
-  //         cacheTrackData[curIdx].dataCache &&
-  //         "error" in cacheTrackData[curIdx].dataCache
-  //       ) {
-  //         fetchError.current = true;
-  //       } else {
-  //         fetchError.current = false;
-  //       }
-  //       curIdx--;
-  //     }
-  //     if (!noData) {
-  //       if (cacheTrackData.trackType !== "genomealign") {
-  //         const primaryVisData =
-  //           trackState.genomicFetchCoord[trackState.primaryGenName]
-  //             .primaryVisData;
-  //         let visRegion = !cacheTrackData.usePrimaryNav
-  //           ? trackState.genomicFetchCoord[
-  //             trackFetchedDataCache.current[`${id}`].queryGenome
-  //           ].queryRegion
-  //           : primaryVisData.visRegion;
-  //         trackState["visRegion"] = visRegion;
-  //       }
-  //       trackState.viewWindow = viewWindowConfigChange.viewWindow
-  //       trackState["groupScale"] = viewWindowConfigChange.groupScale;
+    if (viewWindowConfigChange && id in viewWindowConfigChange.trackToDrawId) {
+      let trackState = _.cloneDeep(
+        globalTrackState.current.trackStates[dataIdx].trackState
+      );
+      let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+      let curIdx = dataIdx + 1;
+      let noData = false
+      for (let i = 0; i < 3; i++) {
+        if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
+          noData = true
+        }
+        if (
+          cacheTrackData[curIdx].dataCache &&
+          "error" in cacheTrackData[curIdx].dataCache
+        ) {
+          fetchError.current = true;
+        } else {
+          fetchError.current = false;
+        }
+        curIdx--;
+      }
+      if (!noData) {
+        if (cacheTrackData.trackType !== "genomealign") {
+          const primaryVisData =
+            trackState.genomicFetchCoord[trackState.primaryGenName]
+              .primaryVisData;
+          let visRegion = !cacheTrackData.usePrimaryNav
+            ? trackState.genomicFetchCoord[
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
+            : primaryVisData.visRegion;
+          trackState["visRegion"] = visRegion;
+        }
+        trackState.viewWindow = viewWindowConfigChange.viewWindow
+        trackState["groupScale"] = viewWindowConfigChange.groupScale;
 
 
-  //       getConfigChangeData({
-  //         fetchedDataCache: trackFetchedDataCache.current[`${id}`],
-  //         dataIdx,
-  //         trackState,
-  //         usePrimaryNav: trackFetchedDataCache.current[`${id}`].usePrimaryNav,
-  //         createSVGOrCanvas,
-  //         trackType: trackModel.type,
-  //       });
-  //     }
-  //   }
-  //   //   // setCanvasComponents(
-  //   //   //   <div>
-  //   //   //     <ReactComp options={tmpObj} />
-  //   //   //   </div>
-  //   //   // );
+        getConfigChangeData({
+          fetchedDataCache: trackFetchedDataCache.current[`${id}`],
+          dataIdx,
+          trackState,
+          usePrimaryNav: trackFetchedDataCache.current[`${id}`].usePrimaryNav,
+          createSVGOrCanvas,
+          trackType: trackModel.type,
+        });
+      }
+    }
+    //   // setCanvasComponents(
+    //   //   <div>
+    //   //     <ReactComp options={tmpObj} />
+    //   //   </div>
+    //   // );
 
 
-  //   // }
-  // }, [viewWindowConfigChange]);
+    // }
+  }, [viewWindowConfigChange]);
+
+
+  // MARK: Screenshot
   useEffect(() => {
     if (isScreenShotOpen) {
       async function handle() {

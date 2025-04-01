@@ -1002,39 +1002,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         })
       )
         .then((drawData) => {
-          // Merge all trackToDrawId into a newTmpDrawId
-
-          // Set the new draw data
-          // globalTrackState.current.groupScale = getWindowViewConfig()
-
-
-          // const viewIdx = [regionDrawIdx - 1, regionDrawIdx, regionDrawIdx + 1];
-
-          // for (const key in trackFetchedDataCache.current) {
-          //   const curTrack = trackFetchedDataCache.current[key];
-          //   for (let idx of viewIdx) {
-          //     for (const cacheDataIdx in curTrack) {
-          //       if (
-          //         curTrack.trackType in trackUsingExpandedLoci &&
-          //         isInteger(cacheDataIdx)
-          //       ) {
-          //         if (Number(cacheDataIdx) !== regionDrawIdx) {
-          //           delete trackFetchedDataCache.current[key][cacheDataIdx]
-          //             .dataCache;
-          //           if (
-          //             "records" in
-          //             trackFetchedDataCache.current[key][cacheDataIdx]
-          //           ) {
-          //             delete trackFetchedDataCache.current[key][cacheDataIdx]
-          //               .records;
-          //           }
-          //         }
-          //       }
-          //     }
-          //   }
-          // }
-
-
 
           setNewDrawData({
             curDataIdx: drawData[0].trackDataIdx,
@@ -1955,96 +1922,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
 
 
-  function getReDrawViewWindow(
-    viewWindow, dataIdx
-  ) {
-    const trackDataObj: { [key: string]: any } = {};
-    const trackToDrawId: { [key: string]: any } = {};
-
-    for (let key in trackFetchedDataCache.current) {
-
-      if (trackFetchedDataCache.current[key][dataIdx]["xvalues"]) {
-        trackDataObj[key] = trackFetchedDataCache.current[key][dataIdx]["xvalues"]
-        trackToDrawId[key] = ""
-      }
-    } console.log("HERE1", trackDataObj)
-    if (!_.isEmpty(trackDataObj)) {
-      console.log("HERE23")
-      const groupScale = groupManager.getGroupScaleWithXvalues(tracks, trackDataObj, viewWindow)
-      globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] = groupScale
-      setViewWindowConfigChange({ dataIdx, viewWindow, groupScale, trackToDrawId })
-    }
-  }
-
-
-
-  function getWindowViewConfig(
-    viewWindow, dataIdx
-  ) {
-    if (viewWindow) {
-      const trackDataObj: { [key: string]: any } = {};
-      const trackToDrawId: { [key: string]: any } = {};
-      for (let key in trackFetchedDataCache.current) {
-        const cacheTrackData = trackFetchedDataCache.current[key];
-        if (!("group" in cacheTrackData.trackModel.options)) {
-          continue
-        }
-        let combinedData: any = [];
-
-        let currIdx = dataIdx + 1;
-
-        let noData = false;
-        for (let i = 0; i < 3; i++) {
-          if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache || "error" in cacheTrackData[currIdx].dataCache) {
-            noData = true
-            break;
-          }
-          else {
-            combinedData.push(cacheTrackData[currIdx]);
-          }
-          currIdx--;
-        }
-
-        if (!noData) {
-          if (cacheTrackData.trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
-            combinedData = getDeDupeArrMatPlot(combinedData, false);
-          } else {
-            combinedData = combinedData.map((item) => {
-              if (item && "dataCache" in item && item.dataCache) {
-                return item.dataCache;
-              } else {
-                noData = true;
-              }
-            }).flat(1);
-          }
-        }
-
-        if (!noData) {
-
-          const trackState = { ...globalTrackState.current.trackStates[dataIdx].trackState };
-          let visRegion;
-          let primaryVisData;
-
-          if (cacheTrackData.trackType !== "genomealign") {
-            primaryVisData = trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
-            visRegion = !cacheTrackData.usePrimaryNav
-              ? trackState.genomicFetchCoord[trackFetchedDataCache.current[key].queryGenome].queryRegion
-              : primaryVisData.visRegion;
-
-            trackDataObj[key] = { data: combinedData, visRegion: visRegion, visWidth: primaryVisData.visWidth };
-          }
-        }
-        if (!noData) {
-          trackToDrawId[key] = "";
-        }
-      }
-
-      const groupScale = groupManager.getGroupScale(tracks, trackDataObj, windowWidth * 3, viewWindow, dataIdx, trackFetchedDataCache);
-
-      globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] = groupScale
-
-    }
-  }
   function trackSizeChange() {
     const trackToDrawId: { [key: string]: any } = {};
     for (const cacheKey in trackFetchedDataCache.current) {
@@ -2146,61 +2023,105 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     }
   }
+  // MARK: viewWindowConfig
+  function getReDrawViewWindow(
+    viewWindow, dataIdx
+  ) {
+    const trackDataObj: { [key: string]: any } = {};
+    const trackToDrawId: { [key: string]: any } = {};
+    let groupScale: { [groupId: number]: { scale: TrackModel; min: {}; max: {}; } } | null = null;
+    for (let key in trackFetchedDataCache.current) {
+
+      if (trackFetchedDataCache.current[key][dataIdx]["xvalues"]) {
+        trackDataObj[key] = trackFetchedDataCache.current[key][dataIdx]["xvalues"]
+        trackToDrawId[key] = ""
+      }
+    }
+    if (!_.isEmpty(trackDataObj)) {
+
+      groupScale = groupManager.getGroupScaleWithXvalues(tracks, trackDataObj, viewWindow)
+      globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] = groupScale
+
+    }
+
+    setViewWindowConfigChange({ dataIdx, viewWindow, groupScale, trackToDrawId })
+  }
+
+
+
+  function getWindowViewConfig(
+    viewWindow, dataIdx
+  ) {
+    if (viewWindow) {
+      const trackDataObj: { [key: string]: any } = {};
+      const trackToDrawId: { [key: string]: any } = {};
+      for (let key in trackFetchedDataCache.current) {
+        const cacheTrackData = trackFetchedDataCache.current[key];
+        // methylc: "" qbed: "" , dynseq: "",,
+        if (!(cacheTrackData.trackType in { "bigwig": "", "bedgraph": "" })) {
+          continue
+        }
+        let combinedData: any = [];
+
+        let currIdx = dataIdx + 1;
+
+        let noData = false;
+        for (let i = 0; i < 3; i++) {
+          if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache || "error" in cacheTrackData[currIdx].dataCache) {
+            noData = true
+            break;
+          }
+          else {
+            combinedData.push(cacheTrackData[currIdx]);
+          }
+          currIdx--;
+        }
+
+        if (!noData) {
+          if (cacheTrackData.trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
+            combinedData = getDeDupeArrMatPlot(combinedData, false);
+          } else {
+            combinedData = combinedData.map((item) => {
+              if (item && "dataCache" in item && item.dataCache) {
+                return item.dataCache;
+              } else {
+                noData = true;
+              }
+            }).flat(1);
+          }
+        }
+
+        if (!noData) {
+
+          const trackState = { ...globalTrackState.current.trackStates[dataIdx].trackState };
+          let visRegion;
+          let primaryVisData;
+
+          if (cacheTrackData.trackType !== "genomealign") {
+            primaryVisData = trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
+            visRegion = !cacheTrackData.usePrimaryNav
+              ? trackState.genomicFetchCoord[trackFetchedDataCache.current[key].queryGenome].queryRegion
+              : primaryVisData.visRegion;
+
+            trackDataObj[key] = { data: combinedData, visRegion: visRegion, visWidth: primaryVisData.visWidth };
+          }
+        }
+        if (!noData) {
+          trackToDrawId[key] = "";
+        }
+      }
+
+      const groupScale = groupManager.getGroupScale(tracks, trackDataObj, windowWidth * 3, viewWindow, dataIdx, trackFetchedDataCache);
+
+      globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] = groupScale
+
+    }
+  }
+
   // MARK: [dataIdx,tra]
 
   useEffect(() => {
-
-    // if (
-    //   (dataIdx < globalTrackState.current.leftIdx - 2 &&
-    //     dataIdx > globalTrackState.current.rightIdx + 2) ||
-    //   needToFetchAddTrack.current
-    // ) {
-    // console.log("WUT");
-    // const trackToDrawId: { [key: string]: any } = {};
-    // const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
-    // const curIdx = dataIdx;
-    // let needToFetchGenAlign = false;
-    // for (const [key, curTrackCache] of Object.entries(
-    //   trackFetchedDataCache.current
-    // )) {
-    //   let hasAllRegionData = true;
-
-    //   for (const idx of idxArr) {
-    //     if (idx in curTrackCache) {
-    //       if (
-    //         curTrackCache.trackType in trackUsingExpandedLoci &&
-    //         idx !== curIdx
-    //       ) {
-    //         continue;
-    //       }
-    //       const isGenomeAlignTrack = curTrackCache.trackType === "genomealign";
-    //       const dataCacheKeyMissing = !("dataCache" in curTrackCache[idx]);
-
-    //       if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
-    //         needToFetchGenAlign = true;
-    //         hasAllRegionData = false;
-    //       } else if (dataCacheKeyMissing) {
-    //         hasAllRegionData = false;
-    //       }
-    //     }
-    //   }
-
-    //   if (hasAllRegionData) {
-    //     trackToDrawId[key] = "";
-    //   }
-    // }
-    // console.log(trackToDrawId);
-
     queueRegionToFetch(dataIdx);
-
-    // if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
-    //   setNewDrawData({
-    //     curDataIdx: dataIdx,
-    //     isInitial: 0,
-    //     trackToDrawId,
-    //   });
-    // }
-    // } else if (dataIdx !== 0) useCacheData.current = true;
   }, [dataIdx]);
 
   useEffect(() => {
@@ -2209,8 +2130,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setHighLightElements([...highlightElement]);
     }
   }, [highlights]);
+
   // MARK: [tracks]
-  //TO DO ADD FUNCTIONALITY TO ADD BAM TRACK
+
   function isInteger(str: string): boolean {
     const num = Number(str);
 
@@ -2444,7 +2366,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
 
     if (newDrawData.curDataIdx === dataIdx) {
-      console.log("HUHUHUHU", globalTrackState.current.viewWindow)
       getWindowViewConfig(globalTrackState.current.viewWindow, newDrawData.curDataIdx);
       setDraw({ ...newDrawData })
     }

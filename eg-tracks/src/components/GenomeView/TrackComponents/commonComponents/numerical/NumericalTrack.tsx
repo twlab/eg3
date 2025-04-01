@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from "react";
-import PropTypes from "prop-types";
+import React, { useCallback, useMemo } from "react";
+
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import memoizeOne from "memoize-one";
@@ -13,7 +13,7 @@ import { NumericalDisplayModes } from "../../../../../trackConfigs/config-menu-m
 import { DefaultAggregators } from "../../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
-import Feature from "../../../../../models/Feature";
+
 
 import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
@@ -75,9 +75,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  const xvalues = xvaluesData ? xvaluesData : aggregator.xToValueMaker(data, viewRegion, width, options)
+  let xvalues = xvaluesData ? xvaluesData : aggregator.xToValueMaker(data, viewRegion, width, options)
 
-  console.log(xvalues, props.viewWindow, groupScale, "xvalues in numerical track")
   let [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
@@ -333,45 +332,23 @@ interface ValueTrackProps {
   width: any;
   viewWindow: any;
 }
-export class ValuePlot extends React.PureComponent<ValueTrackProps> {
-  static propTypes = {
-    xToValue: PropTypes.array.isRequired,
-    scales: PropTypes.object.isRequired,
-    height: PropTypes.number.isRequired,
-    color: PropTypes.string,
-    isDrawingBars: PropTypes.bool,
-    width: PropTypes.any,
-  };
-
-  constructor(props) {
-    super(props);
-    this.renderPixel = this.renderPixel.bind(this);
-  }
-
-  /**
-   * Gets an element to draw for a data record.
-   *
-   * @param {number} value
-   * @param {number} x
-   * @return {JSX.Element} bar element to render
-   */
-  renderPixel(value, x) {
+const ValuePlot = (props) => {
+  const renderPixel = useCallback((value, x) => {
     if (!value || Number.isNaN(value)) {
       return null;
     }
-    const { isDrawingBars, scales, height, color, colorOut } = this.props;
-    const y =
-      value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
+    const { isDrawingBars, scales, height, color, colorOut } = props;
+    const y = value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
     let drawY = value > 0 ? y : 0;
     let drawHeight = value > 0 ? height - y : y;
+
     if (isDrawingBars) {
-      // const y = scales.valueToY(value);
-      // const drawHeight = height - y;
       if (drawHeight <= 0) {
         return null;
       }
       let tipY;
       if (value > scales.max || value < scales.min) {
+        const THRESHOLD_HEIGHT = 5; // Assuming you have a constant for this
         drawHeight -= THRESHOLD_HEIGHT;
         if (value > scales.max) {
           tipY = y;
@@ -382,7 +359,6 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
         return (
           <g key={x}>
             <rect
-              key={x}
               x={x}
               y={drawY}
               width={1}
@@ -390,7 +366,6 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
               fill={color}
             />
             <rect
-              key={x + "tip"}
               x={x}
               y={tipY}
               width={1}
@@ -412,11 +387,7 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
         );
       }
     } else {
-      // Assume HEATMAP
-      const opacity =
-        value > 0
-          ? scales.valueToOpacity(value)
-          : scales.valueToOpacityReverse(value);
+      const opacity = value > 0 ? scales.valueToOpacity(value) : scales.valueToOpacityReverse(value);
       return (
         <rect
           key={x}
@@ -429,32 +400,26 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
         />
       );
     }
-  }
+  }, [props.isDrawingBars, props.scales, props.height, props.color, props.colorOut]);
 
-  render() {
-    // console.log("render in valueplot");
-    const { xToValue, height, forceSvg, width, viewWindow } = this.props;
+  const { xToValue, height, forceSvg, width, viewWindow } = props;
 
-    return xToValue.length === 0 ? (
-      <div
-        style={{
-          width: width,
-          height: height,
-        }}
-      ></div>
-    ) : (
-      <DesignRenderer
-        type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-        width={xToValue.length}
-        height={height}
-        forceSvg={forceSvg}
-        viewWindow={viewWindow}
-      >
-        {this.props.xToValue.map(this.renderPixel)}
-      </DesignRenderer>
-    );
-  }
-}
+  return xToValue.length === 0 ? (
+    <div style={{ width: width, height: height }}></div>
+  ) : (
+    <DesignRenderer
+      type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+      width={xToValue.length}
+      height={height}
+      forceSvg={forceSvg}
+      viewWindow={viewWindow}
+      style={{ display: "block" }} // Added style property
+    >
+      {xToValue.map(renderPixel)}
+    </DesignRenderer>
+  );
+};
+
 
 export default NumericalTrack;
 // export default withLogPropChanges(withDefaultOptions(NumericalTrack));
