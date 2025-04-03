@@ -75,6 +75,8 @@ import QBed from "../../../models/QBed";
 
 import React from "react";
 import { format } from "path";
+import VcfAnnotation from "./VcfComponents/VcfAnnotation";
+import Vcf from "./VcfComponents/Vcf";
 
 enum BedColumnIndex {
   CATEGORY = 3,
@@ -234,6 +236,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getAnnotationElement(placedGroup, y, isLastRow, index),
       bed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
+      vcf: function renderAnnotation(placedGroup: PlacedFeatureGroup, y: number, isLastRow: boolean, index: number) {
+        return placedGroup.placedFeatures.map((placement, i) => (
+          <VcfAnnotation
+            key={i}
+            feature={placement.feature as Vcf}
+            xSpan={placement.xSpan}
+            y={y}
+            isMinimal={isLastRow}
+            height={this.props.options.rowHeight}
+            colorScale={this.scales}
+            onClick={renderTooltip}
+            alwaysDrawLabel={configOptions.alwaysDrawLabel}
+          />
+        ));
+      },
       jaspar: function getAnnotationElement(
         placedGroup,
         y,

@@ -8,13 +8,13 @@ import { AnnotationTrack } from "../commonComponents/annotation/AnnotationTrack"
 import VcfDetail from "./VcfDetail";
 import Tooltip from "../commonComponents/tooltip/Tooltip";
 import { withTooltip, TooltipCallbacks } from "../commonComponents/tooltip/withTooltip";
-import { PlacedFeatureGroup } from "../../../model/FeatureArranger";
-import OpenInterval from "model/interval/OpenInterval";
+import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
+import OpenInterval from "../../../../models/OpenInterval";
 import NumericalTrack from "../commonComponents/numerical/NumericalTrack";
-import { NumericalDisplayModes, VcfColorScaleKeys, VcfDisplayModes } from "model/DisplayModes";
-import { DefaultAggregators } from "model/FeatureAggregator";
-import DisplayedRegionModel from "model/DisplayedRegionModel";
-import Vcf from "model/Vcf";
+import { NumericalDisplayModes, VcfColorScaleKeys, VcfDisplayModes } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { DefaultAggregators } from "../../../../models/FeatureAggregator";
+import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
+import Vcf from "./Vcf";
 
 const ROW_VERTICAL_PADDING = 2;
 

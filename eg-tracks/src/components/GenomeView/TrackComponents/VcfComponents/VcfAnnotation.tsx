@@ -1,17 +1,29 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { TranslatableG } from "../../TranslatableG";
-import BackgroundedText from "../commonComponents/BackgroundedText";
-import OpenInterval from "../../../model/interval/OpenInterval";
-import { getContrastingColor } from "../../../util";
-import Vcf from "model/Vcf";
+import { TranslatableG } from "../geneAnnotationTrackComponents/TranslatableG";
+import BackgroundedText from "../geneAnnotationTrackComponents/BackgroundedText";
+import OpenInterval from "../../../../models/OpenInterval";
+import { getContrastingColor } from "../../../../models/util";
+import Vcf from "./Vcf";
 
 /**
  * Visualizer for VCF objects.
  *
  * @author Daofeng Li
  */
-class VcfAnnotation extends React.Component {
+interface Props {
+    feature: Vcf;
+    xSpan: OpenInterval;
+    y?: number;
+    height?: number;
+    colorScale: (qual: number) => string;
+    reverseStrandColor?: string;
+    isMinimal?: boolean;
+    alwaysDrawLabel?: boolean;
+    onClick?: (event: React.MouseEvent, feature: Vcf) => void;
+}
+
+class VcfAnnotation extends React.Component<Props> {
     static propTypes = {
         feature: PropTypes.instanceOf(Vcf).isRequired, // Feature to visualize
         xSpan: PropTypes.instanceOf(OpenInterval).isRequired, // x span the annotation will occupy
