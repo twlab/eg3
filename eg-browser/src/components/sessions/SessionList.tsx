@@ -238,7 +238,7 @@ function SessionListItem({
           <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
           <p>View region: {session.viewRegion}</p>
           <p>Active tracks: {session.tracks.length}</p>
-          {/* <p>Highlights: {session.highlights.length}</p> */}
+          <p>Highlights: {session.highlights ? session.highlights.length : 0}</p>
           {session.metadataTerms.length > 0 && (
             <div>
               <p>Metadata terms:</p>

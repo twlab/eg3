@@ -21,6 +21,7 @@ import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
 
 import { RootState } from "../../lib/redux/store";
+import { start } from "repl";
 
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
@@ -84,11 +85,14 @@ export default function GenomeView() {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => {
-    let currCoordinate: GenomeCoordinate | null = coordinate;
-    console.log("coordinate", coordinate);
+
+
+    if (coordinate === currentSession?.viewRegion) {
+      coordinate = `${coordinate}: "${startbase} - ${endbase}`
+    }
     dispatch(
       updateCurrentSession({
-        viewRegion: { start: startbase, end: endbase, coordinate },
+        viewRegion: coordinate,
         userViewRegion: { start: startbase, end: endbase },
       })
     );

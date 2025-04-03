@@ -133,7 +133,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             display={"block"}
           >
             {placements.map(renderAnnotation)}
-            <line
+            {/* <line
               x1={width / 3}
               y1={0}
               x2={width / 3}
@@ -148,7 +148,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y2={height}
               stroke="black"
               strokeWidth={1}
-            />
+            /> */}
           </svg>
         );
       }
@@ -162,7 +162,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           display={"block"}
         >
           {placements.map(renderAnnotation)}
-          <line
+          {/* <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -177,7 +177,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          />
+          /> */}
         </svg>
       );
     }
@@ -1824,11 +1824,14 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   // Add additional type-function mappings here
 };
 export function formatDataByType(genesArr: any[], type: string) {
+  if ("error" in genesArr) {
+    return genesArr
+  }
   const formatter = formatFunctions[type];
   if (formatter) {
     return formatter(genesArr);
   } else {
-    console.error(`No formatter available for type: ${type}`);
+
     return genesArr; // Fallback if no formatter is found
   }
 }

@@ -67,7 +67,7 @@ export default function ImportSession() {
             }
             : null,
           tracks: mappedTracks,
-          highlights: session.highlights,
+          highlights: session.highlights ? session.highlights : [],
           bundleId: session.bundleId ? session.bundleId : null,
           metadataTerms: session.metadataTerms,
 

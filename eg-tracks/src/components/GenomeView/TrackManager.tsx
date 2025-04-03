@@ -717,11 +717,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         bpRegionSize.current === genomeConfig.navContext._totalBases
         ? windowWidth / 3
         : windowWidth;
-    const curViewWindow =
-      selectedRegionSet &&
-        bpRegionSize.current === genomeConfig.navContext._totalBases
-        ? new OpenInterval(trackWindowWidth, trackWindowWidth * 2)
-        : new OpenInterval(trackWindowWidth, trackWindowWidth * 2)
+    const curViewWindow = selectedRegionSet &&
+      bpRegionSize.current === genomeConfig.navContext._totalBases ? new OpenInterval(0, trackWindowWidth) : new OpenInterval(trackWindowWidth, trackWindowWidth * 2)
     if (initial === 1) {
       initExpandBpLoci = [
         { start: minBp.current - bpRegionSize.current * 2, end: maxBp.current },
@@ -2206,6 +2203,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...g3dtrackComponents.map((item) => item.trackModel),
         ])
       ) {
+        console.log(tracks)
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
           newTrackId[`${trackModel.id}`] = {};
@@ -2380,12 +2378,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       toolbarContainer.style.visibility = configMenu ? "hidden" : "visible";
     }
   }, [configMenu]);
+  // MARK: viewWIndow useeffect
   useEffect(() => {
     if (viewWindowConfigData.current) {
       if (dataIdx === viewWindowConfigData.current.dataIdx) {
-
         getReDrawViewWindow(viewWindowConfigData.current.viewWindow, viewWindowConfigData.current.dataIdx)
-
       }
     }
   }, [viewWindowConfigData.current]);
@@ -2414,7 +2411,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       else {
         curViewWindow = globalTrackState.current.viewWindow
       }
-
+      console.log(trackFetchedDataCache.current, "fetcjData")
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
       setDraw({ ...newDrawData })
 
