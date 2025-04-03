@@ -143,7 +143,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       xPos.current = curXPos;
-      console.log(xPos.current)
+
     }
   }
   // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
@@ -360,7 +360,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
 
     if (viewWindowConfigChange && id in viewWindowConfigChange.trackToDrawId) {
-      console.log(viewWindowConfigChange)
+
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );

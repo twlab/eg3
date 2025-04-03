@@ -8,13 +8,12 @@ export function getTrackXOffset(
     resXPos = -trackState.startWindow;
   } else if (trackState.side === "right") {
     resXPos =
-      (Math.floor(-trackState.xDist / windowWidth) - 1) * windowWidth -
-      windowWidth +
+      ((Math.round(-trackState.xDist / windowWidth)) * windowWidth) -
+
       trackState.startWindow;
   } else if (trackState.side === "left") {
     resXPos =
-      (Math.floor(trackState.xDist / windowWidth) - 1) * windowWidth -
-      windowWidth +
+      ((Math.round(trackState.xDist / windowWidth) - 1) * windowWidth) -
       trackState.startWindow;
   }
   return resXPos;

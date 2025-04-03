@@ -417,9 +417,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           .primaryVisData;
       const startViewWindow = primaryVisData.viewWindow
       const tmpCur = new OpenInterval(curViewWindow.start, curViewWindow.end)
+      console.log(primaryVisData.viewWindow, primaryVisData.viewWindow.end - primaryVisData.viewWindow.start)
       const start = (tmpCur.start - windowWidth) + startViewWindow.start
-      const end = (tmpCur.end - windowWidth * 2) + (startViewWindow.end - (windowWidth - startViewWindow.start))
+      const end = start + windowWidth
       curViewWindow = new OpenInterval(start, end)
+
 
     }
 
@@ -2381,7 +2383,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   useEffect(() => {
     if (viewWindowConfigData.current) {
       if (dataIdx === viewWindowConfigData.current.dataIdx) {
-        console.log(viewWindowConfigData.current)
+
         getReDrawViewWindow(viewWindowConfigData.current.viewWindow, viewWindowConfigData.current.dataIdx)
 
       }
@@ -2392,23 +2394,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (newDrawData.curDataIdx === dataIdx) {
 
       let curViewWindow
-      if (newDrawData.curDataIdx === dataIdx) {
-
-        const genomeName = genomeConfig.genome.getName()
+      const genomeName = genomeConfig.genome.getName()
+      if (useFineModeNav.current && globalTrackState.current.trackStates[newDrawData.curDataIdx].trackState.genomicFetchCoord) {
         let trackState = {
           ...globalTrackState.current.trackStates[newDrawData.curDataIdx].trackState,
         };
-        console.log(trackState.genomicFetchCoord[genomeName])
+
         const primaryVisData =
           trackState.genomicFetchCoord[genomeName]
             .primaryVisData;
-        curViewWindow = primaryVisData.viewWindow
+        const startViewWindow = primaryVisData.viewWindow
+        const tmpCur = globalTrackState.current.viewWindow
+        const start = (tmpCur.start - windowWidth) + startViewWindow.start
+        const end = start + windowWidth
+        curViewWindow = new OpenInterval(start, end)
+
 
       }
       else {
         curViewWindow = globalTrackState.current.viewWindow
       }
-      console.log(curViewWindow, globalTrackState.current.viewWindow)
+
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
       setDraw({ ...newDrawData })
 
