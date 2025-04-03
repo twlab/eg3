@@ -9,7 +9,7 @@ interface GetConfigChangeDataParams {
     viewData: any[],
     isError: boolean,
     trackIndex: number,
-    xvalues: any,
+    xvalues: any
   ) => void;
   trackType: string;
   usePrimaryNav: boolean;
@@ -54,6 +54,7 @@ export function getConfigChangeData({
     newIntanceTrackState,
     viewData,
     newIntanceTrackState.isError,
-    dataIdx, fetchedDataCache[dataIdx!].xvalues
+    dataIdx,
+    fetchedDataCache[dataIdx].xvalues
   );
 }

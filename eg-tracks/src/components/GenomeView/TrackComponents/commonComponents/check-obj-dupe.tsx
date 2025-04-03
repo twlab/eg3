@@ -28,7 +28,7 @@ export function removeDuplicatesWithoutId(arr: DataObject[]): DataObject[] {
     if ("start" in item) {
       locus = item;
     } else {
-      locus = item.data;
+      locus = item.locus;
     }
 
     const key = `${locus.start}-${locus.end}`;

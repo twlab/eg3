@@ -1,6 +1,9 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import { removeDuplicates } from "./commonComponents/check-obj-dupe";
+import {
+  removeDuplicates,
+  removeDuplicatesWithoutId,
+} from "./commonComponents/check-obj-dupe";
 import Feature, {
   Fiber,
   JasparFeature,
@@ -77,6 +80,7 @@ import React from "react";
 import { format } from "path";
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
+import VcfTrack from "./VcfComponents/VcfTrack";
 
 enum BedColumnIndex {
   CATEGORY = 3,
@@ -93,9 +97,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     getGenePadding,
-
     ROW_HEIGHT,
     onHideTooltip = undefined,
+    scales,
   }) {
     function createFullVisualizer(
       placements,
@@ -135,7 +139,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             display={"block"}
           >
             {placements.map(renderAnnotation)}
-            {/* <line
+            <line
               x1={width / 3}
               y1={0}
               x2={width / 3}
@@ -150,7 +154,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y2={height}
               stroke="black"
               strokeWidth={1}
-            /> */}
+            />
           </svg>
         );
       }
@@ -164,7 +168,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           display={"block"}
         >
           {placements.map(renderAnnotation)}
-          {/* <line
+          <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -179,7 +183,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          /> */}
+          />
         </svg>
       );
     }
@@ -197,7 +201,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -222,7 +226,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -236,7 +240,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getAnnotationElement(placedGroup, y, isLastRow, index),
       bed: (placedGroup, y, isLastRow, index) =>
         getBedAnnotationElement(placedGroup, y, isLastRow, index),
-      vcf: function renderAnnotation(placedGroup: PlacedFeatureGroup, y: number, isLastRow: boolean, index: number) {
+      vcf: function renderAnnotation(
+        placedGroup: PlacedFeatureGroup,
+        y: number,
+        isLastRow: boolean,
+        index: number
+      ) {
         return placedGroup.placedFeatures.map((placement, i) => (
           <VcfAnnotation
             key={i}
@@ -244,8 +253,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             xSpan={placement.xSpan}
             y={y}
             isMinimal={isLastRow}
-            height={this.props.options.rowHeight}
-            colorScale={this.scales}
+            height={height}
+            colorScale={scales}
             onClick={renderTooltip}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
           />
@@ -272,7 +281,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -297,7 +306,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => { }}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onHideTooltip}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -418,7 +427,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => { }}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -444,7 +453,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -463,7 +472,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -483,8 +492,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-          imgCount -
-          THUMBNAIL_PADDING,
+            imgCount -
+            THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -522,7 +531,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => { }}
+          onSetImageInfo={() => {}}
           heightObj={heightObj}
         />
       );
@@ -562,7 +571,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
           return !(
             curXSpan.end <
-            trackState.viewWindow.start + trackState.visWidth / 3 ||
+              trackState.viewWindow.start + trackState.visWidth / 3 ||
             curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
           );
         }
@@ -607,7 +616,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
-    groupScale, xvalues
+    groupScale,
+    xvalues,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -624,8 +634,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewWindow={
           trackState.viewWindow
             ? trackState.viewWindow
-            :
-            new OpenInterval(0, trackState.visWidth)
+            : new OpenInterval(0, trackState.visWidth)
         }
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
@@ -638,7 +647,49 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+  vcf: function getVcf({
+    formattedData,
+    trackState,
+    getHeight,
+    configOptions,
+    renderTooltip,
+    svgHeight,
+    updatedLegend,
+    trackModel,
+    getGenePadding,
+    xvalues,
+  }) {
+    function getNumLegend(legend: ReactNode) {
+      if (updatedLegend) {
+        if (updatedLegend) {
+          updatedLegend.current = legend;
+        }
+      }
+    }
 
+    return (
+      <VcfTrack
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
+        viewRegion={objToInstanceAlign(trackState.visRegion)}
+        width={trackState.visWidth}
+        trackModel={trackModel}
+        getGenePadding={getGenePadding}
+        renderTooltip={renderTooltip}
+        svgHeight={svgHeight}
+        updatedLegend={updatedLegend}
+        data={formattedData}
+        trackState={trackState}
+        options={configOptions}
+        getHeight={getHeight}
+        xvaluesData={xvalues}
+        getNumLegend={getNumLegend}
+      />
+    );
+  },
   qbed: function getqbed({
     formattedData,
     trackState,
@@ -979,12 +1030,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
 
     return canvasElements;
-  }, ruler: function getRuler({
+  },
+  ruler: function getRuler({
     trackState,
     configOptions,
     updatedLegend,
     trackModel,
-    genomeName
+    genomeName,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -998,8 +1050,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         width={trackState.visWidth}
         trackModel={trackModel}
         selectedRegion={objToInstanceAlign(
-          trackState.genomicFetchCoord[`${genomeName}`]
-            .primaryVisData.viewWindowRegion
+          trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+            .viewWindowRegion
         )}
         viewWindow={trackState.viewWindow}
         getNumLegend={getNumLegend}
@@ -1007,18 +1059,18 @@ export const displayModeComponentMap: { [key: string]: any } = {
         options={configOptions}
       />
     );
-    return canvasElements
-  }, genomealign: function getGenomeAlign(drawData) {
+    return canvasElements;
+  },
+  genomealign: function getGenomeAlign(drawData) {
     let result = drawData.genesArr;
     if (!result) {
-      return null
+      return null;
     }
     let svgElements;
     if (drawData.svgHeight) {
       drawData.svgHeight.current = drawData.configOptions.height;
     }
     if (drawData.basesByPixel <= 10) {
-
       const drawDatas = result.drawData as PlacedAlignment[];
       drawData.updatedLegend.current = (
         <TrackLegend
@@ -1185,22 +1237,34 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
       return element;
     }
-  }
+  },
 };
 
-export function getDisplayModeFunction(
-  drawData: { [key: string]: any }
-) {
+export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   if (drawData.trackModel.type === "ruler") {
-
     return displayModeComponentMap["ruler"]({
       trackState: drawData.trackState,
       configOptions: drawData.configOptions,
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
-      genomeName: drawData.genomeName
+      genomeName: drawData.genomeName,
     });
+  } else if (drawData.trackModel.type === "vcf") {
+    let formattedData = drawData.genesArr;
 
+    return displayModeComponentMap["vcf"]({
+      formattedData,
+      trackState: drawData.trackState,
+      windowWidth: drawData.windowWidth,
+      configOptions: drawData.configOptions,
+      renderTooltip: drawData.renderTooltip,
+      svgHeight: drawData.svgHeight,
+      updatedLegend: drawData.updatedLegend,
+      trackModel: drawData.trackModel,
+      getGenePadding: drawData.getGenePadding,
+      getHeight: drawData.getHeight,
+      xvalues: drawData.xvalues,
+    });
   } else if (
     drawData.configOptions.displayMode === "full" &&
     drawData.trackModel.type !== "genomealign"
@@ -1244,8 +1308,8 @@ export function getDisplayModeFunction(
         );
       });
     } else if (drawData.trackModel.type === "categorical") {
-      const filteredArray = removeDuplicates(drawData.genesArr, "start", "end");
-      formattedData = filteredArray
+      const filteredArray = removeDuplicatesWithoutId(drawData.genesArr);
+      formattedData = filteredArray;
     } else if (drawData.trackModel.type === "bam") {
       const filteredArray = removeDuplicates(drawData.genesArr, "_id");
       formattedData = BamAlignment.makeBamAlignments(filteredArray);
@@ -1305,7 +1369,7 @@ export function getDisplayModeFunction(
     } else if (drawData.trackModel.type === "jaspar") {
       const filteredArray = removeDuplicates(drawData.genesArr, "matrixId");
 
-      formattedData = filteredArray
+      formattedData = filteredArray;
     }
 
     let svgDATA = displayModeComponentMap.full({
@@ -1326,7 +1390,7 @@ export function getDisplayModeFunction(
   } else if (drawData.trackModel.type === "genomealign") {
     return displayModeComponentMap.genomealign(drawData);
   } else if (drawData.trackModel.type === "matplot") {
-    let formattedData = drawData.genesArr
+    let formattedData = drawData.genesArr;
     let tmpObj = { ...drawData.configOptions };
     tmpObj.displayMode = "auto";
 
@@ -1341,8 +1405,7 @@ export function getDisplayModeFunction(
 
     return canvasElements;
   } else if (drawData.trackModel.type === "modbed") {
-    let formattedData = drawData.genesArr
-
+    let formattedData = drawData.genesArr;
 
     let elements = displayModeComponentMap.modbed({
       formattedData,
@@ -1366,7 +1429,6 @@ export function getDisplayModeFunction(
     let formattedData: any = [];
 
     formattedData = drawData.genesArr;
-
 
     let canvasElements = displayModeComponentMap.interaction({
       formattedData,
@@ -1394,9 +1456,7 @@ export function getDisplayModeFunction(
     drawData.trackModel.type in
     { dynamic: "", dynamicbed: "", dynamiclongrange: "" }
   ) {
-
-    const formattedData = drawData.genesArr
-
+    const formattedData = drawData.genesArr;
 
     let canvasElements = displayModeComponentMap[
       drawData.trackModel.type === "dynamiclongrange"
@@ -1416,7 +1476,7 @@ export function getDisplayModeFunction(
 
     return canvasElements;
   } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
-    let formattedData = drawData.genesArr
+    let formattedData = drawData.genesArr;
 
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
       formattedData,
@@ -1444,8 +1504,7 @@ export function getDisplayModeFunction(
 
     return canvasElements;
   } else if (drawData.trackModel.type === "dbedgraph") {
-
-    let formattedData = drawData.genesArr
+    let formattedData = drawData.genesArr;
 
     let canvasElements = displayModeComponentMap.dbedgraph({
       formattedData,
@@ -1458,7 +1517,7 @@ export function getDisplayModeFunction(
 
     return canvasElements;
   } else if (drawData.trackModel.type === "boxplot") {
-    let formattedData = drawData.genesArr
+    let formattedData = drawData.genesArr;
     let canvasElements = displayModeComponentMap.boxplot({
       formattedData,
       trackState: drawData.trackState,
@@ -1504,9 +1563,7 @@ export function getDisplayModeFunction(
       drawData.trackModel.type === "bedgraph" ||
       drawData.trackModel.filetype === "bedgraph"
     ) {
-
-      formattedData = drawData.genesArr
-
+      formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "snp") {
       formattedData = drawData.genesArr.map((record) => new Snp(record));
     } else if (drawData.trackModel.type === "bam") {
@@ -1516,9 +1573,8 @@ export function getDisplayModeFunction(
         (record) => new ImageRecord(record)
       );
     } else if (drawData.trackModel.type === "bigwig") {
-      formattedData = drawData.genesArr
-    }
-    else {
+      formattedData = drawData.genesArr;
+    } else {
       formattedData = drawData.genesArr.map((record) => {
         let newChrInt = new ChromosomeInterval(
           record.chr,
@@ -1578,12 +1634,12 @@ function formatRefBedData(genesArr: any[]) {
 function formatBedData(genesArr: any[]) {
   const filteredArray = removeDuplicates(genesArr, "start", "end");
   return filteredArray.map((record) => {
-    const newChrInt = new ChromosomeInterval(record.chr, record.start, record.end);
-    return new Feature(
-      newChrInt.toStringWithOther(newChrInt),
-      newChrInt,
-      ""
+    const newChrInt = new ChromosomeInterval(
+      record.chr,
+      record.start,
+      record.end
     );
+    return new Feature(newChrInt.toStringWithOther(newChrInt), newChrInt, "");
   });
 }
 function formatBamData(genesArr: any[]) {
@@ -1616,7 +1672,6 @@ function formatSnpData(genesArr: any[]) {
   return filteredArray.map((record) => new Snp(record));
 }
 function formatCategoricalData(genesArr: any[]) {
-
   const formattedData = genesArr.map(
     (record) =>
       new Feature(
@@ -1624,11 +1679,9 @@ function formatCategoricalData(genesArr: any[]) {
         new ChromosomeInterval(record.chr, record.start, record.end)
       )
   );
-  return formattedData
+  return formattedData;
 }
 function formatJasper(genesArr: any[]) {
-
-
   return genesArr.map((record) => {
     const rest = record.rest.split("\t");
     return new JasparFeature(
@@ -1647,7 +1700,8 @@ function formatModBedData(genesArr: any[]) {
     ).withFiber(parseNumberString(record[4]), record[6], record[7]);
   });
 }
-function formatBigWigData(genesArr: any[]) { //dynseq, boxplot track also
+function formatBigWigData(genesArr: any[]) {
+  //dynseq, boxplot track also
   return genesArr.map((record) => {
     const newChrInt = new ChromosomeInterval(
       record.chr,
@@ -1672,9 +1726,8 @@ function formatMatplotData(genesArr: any[]) {
       })
     );
   }
-  return formattedData
+  return formattedData;
 }
-
 
 function formatMethylcData(genesArr: any[]) {
   return genesArr.map((record) => new MethylCRecord(record));
@@ -1717,7 +1770,6 @@ function formatDynamicLongRange(genesArr: any[]) {
   return tempLongrangeData;
 }
 
-
 function formatqBedData(genesArr: any[]) {
   return genesArr.map((record) => new QBed(record));
 }
@@ -1748,11 +1800,7 @@ function formatBedgraph(genesArr: any[]) {
 function formatdBedGraph(genesArr: any[]) {
   const VALUE_COLUMN_INDEX = 3;
   let formattedData = genesArr.map((record) => {
-    const locus = new ChromosomeInterval(
-      record.chr,
-      record.start,
-      record.end
-    );
+    const locus = new ChromosomeInterval(record.chr, record.start, record.end);
     let parsedValue;
     try {
       parsedValue = JSON.parse(record[VALUE_COLUMN_INDEX]);
@@ -1762,14 +1810,15 @@ function formatdBedGraph(genesArr: any[]) {
     }
     return new NumericalArrayFeature("", locus).withValues(parsedValue);
   });
-  return formattedData
+  return formattedData;
+}
+function formatVcf(genesArr: any[]) {
+  return genesArr.map((record) => new Vcf(record));
 }
 function formatBigInteract(genesArr: any[]) {
   const formattedData: any = [];
   genesArr.map((record) => {
-    const regexMatch = record.rest.match(
-      /([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/
-    );
+    const regexMatch = record.rest.match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 
     if (regexMatch) {
       const fields = record.rest.split("\t");
@@ -1801,7 +1850,7 @@ function formatBigInteract(genesArr: any[]) {
       );
     }
   });
-  return formattedData
+  return formattedData;
 }
 
 export const twoDataTypeTracks = {
@@ -1813,7 +1862,7 @@ export const twoDataTypeTracks = {
   omeroidr: "",
   bam: "",
   snp: "",
-}
+};
 
 const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   geneannotation: formatGeneAnnotationData,
@@ -1838,17 +1887,17 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   bedgraph: formatBedgraph,
   dbedgraph: formatdBedGraph,
   biginteract: formatBigInteract,
+  vcf: formatVcf,
   // Add additional type-function mappings here
 };
 export function formatDataByType(genesArr: any[], type: string) {
   if ("error" in genesArr) {
-    return genesArr
+    return genesArr;
   }
   const formatter = formatFunctions[type];
   if (formatter) {
     return formatter(genesArr);
   } else {
-
     return genesArr; // Fallback if no formatter is found
   }
 }

@@ -14,7 +14,6 @@ import { DefaultAggregators } from "../../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
 
-
 import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
 // import { withLogPropChanges } from "components/withLogPropChanges";
@@ -31,7 +30,7 @@ interface NumericalTrackProps {
   width?: any;
   forceSvg?: any;
   getNumLegend?: any;
-  xvaluesData: Array<any>
+  xvaluesData: Array<any>;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -69,13 +68,15 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     forceSvg,
     getNumLegend,
     groupScale,
-    xvaluesData
+    xvaluesData,
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  let xvalues = xvaluesData ? xvaluesData : aggregator.xToValueMaker(data, viewRegion, width, options)
+  let xvalues = xvaluesData
+    ? xvaluesData
+    : aggregator.xToValueMaker(data, viewRegion, width, options);
 
   let [xToValue, xToValue2, hasReverse] = xvalues;
 
@@ -91,7 +92,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         max,
         xValues2: Array<any> = [];
       if (groupScale) {
-
         if (trackModel.options.hasOwnProperty("group")) {
           gscale = groupScale[trackModel.options.group];
         }
@@ -114,8 +114,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-            )
+                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+              )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -199,7 +199,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const getEffectiveDisplayMode = () => {
     const { displayMode, height } = options;
-    if (displayMode === NumericalDisplayModes.AUTO || displayMode === "density") {
+    if (
+      displayMode === NumericalDisplayModes.AUTO ||
+      displayMode === "density"
+    ) {
       return height < AUTO_HEATMAP_THRESHOLD
         ? NumericalDisplayModes.HEATMAP
         : NumericalDisplayModes.BAR;
@@ -318,7 +321,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       </div>
     </React.Fragment>
   );
-  xvalues = []
+  xvalues = [];
   return visualizer;
 };
 interface ValueTrackProps {
@@ -333,74 +336,87 @@ interface ValueTrackProps {
   viewWindow: any;
 }
 const ValuePlot = (props) => {
-  const renderPixel = useCallback((value, x) => {
-    if (!value || Number.isNaN(value)) {
-      return null;
-    }
-    const { isDrawingBars, scales, height, color, colorOut } = props;
-    const y = value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
-    let drawY = value > 0 ? y : 0;
-    let drawHeight = value > 0 ? height - y : y;
-
-    if (isDrawingBars) {
-      if (drawHeight <= 0) {
+  const renderPixel = useCallback(
+    (value, x) => {
+      if (!value || Number.isNaN(value)) {
         return null;
       }
-      let tipY;
-      if (value > scales.max || value < scales.min) {
-        const THRESHOLD_HEIGHT = 5; // Assuming you have a constant for this
-        drawHeight -= THRESHOLD_HEIGHT;
-        if (value > scales.max) {
-          tipY = y;
-          drawY += THRESHOLD_HEIGHT;
-        } else {
-          tipY = drawHeight;
+      const { isDrawingBars, scales, height, color, colorOut } = props;
+      const y =
+        value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
+      let drawY = value > 0 ? y : 0;
+      let drawHeight = value > 0 ? height - y : y;
+
+      if (isDrawingBars) {
+        if (drawHeight <= 0) {
+          return null;
         }
-        return (
-          <g key={x}>
+        let tipY;
+        if (value > scales.max || value < scales.min) {
+          const THRESHOLD_HEIGHT = 5; // Assuming you have a constant for this
+          drawHeight -= THRESHOLD_HEIGHT;
+          if (value > scales.max) {
+            tipY = y;
+            drawY += THRESHOLD_HEIGHT;
+          } else {
+            tipY = drawHeight;
+          }
+          return (
+            <g key={x}>
+              <rect
+                x={x}
+                y={drawY}
+                width={1}
+                height={drawHeight}
+                fill={color}
+              />
+              <rect
+                x={x}
+                y={tipY}
+                width={1}
+                height={THRESHOLD_HEIGHT}
+                fill={colorOut}
+              />
+            </g>
+          );
+        } else {
+          return (
             <rect
+              key={x}
               x={x}
               y={drawY}
               width={1}
               height={drawHeight}
               fill={color}
             />
-            <rect
-              x={x}
-              y={tipY}
-              width={1}
-              height={THRESHOLD_HEIGHT}
-              fill={colorOut}
-            />
-          </g>
-        );
+          );
+        }
       } else {
+        const opacity =
+          value > 0
+            ? scales.valueToOpacity(value)
+            : scales.valueToOpacityReverse(value);
         return (
           <rect
             key={x}
             x={x}
-            y={drawY}
+            y={0}
             width={1}
-            height={drawHeight}
+            height={height}
             fill={color}
+            fillOpacity={opacity}
           />
         );
       }
-    } else {
-      const opacity = value > 0 ? scales.valueToOpacity(value) : scales.valueToOpacityReverse(value);
-      return (
-        <rect
-          key={x}
-          x={x}
-          y={0}
-          width={1}
-          height={height}
-          fill={color}
-          fillOpacity={opacity}
-        />
-      );
-    }
-  }, [props.isDrawingBars, props.scales, props.height, props.color, props.colorOut]);
+    },
+    [
+      props.isDrawingBars,
+      props.scales,
+      props.height,
+      props.color,
+      props.colorOut,
+    ]
+  );
 
   const { xToValue, height, forceSvg, width, viewWindow } = props;
 
@@ -412,14 +428,13 @@ const ValuePlot = (props) => {
       width={xToValue.length}
       height={height}
       forceSvg={forceSvg}
-      viewWindow={viewWindow}
+      // viewWindow={viewWindow}
       style={{ display: "block" }} // Added style property
     >
       {xToValue.map(renderPixel)}
     </DesignRenderer>
   );
 };
-
 
 export default NumericalTrack;
 // export default withLogPropChanges(withDefaultOptions(NumericalTrack));

@@ -4,6 +4,7 @@ import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
 import RepeatSource from "./RepeatSource";
 
 import JasparSource from "./JasparSource";
+import VcfSource from "./VcfSource";
 
 const AWS_API = "https://lambda.epigenomegateway.org/v3";
 let cachedFetchInstance: { [key: string]: any } = {};
@@ -124,6 +125,9 @@ export const trackFetchFunction: { [key: string]: any } = {
   genomealign: function genomeAlignFetch(regionData: any) {
     return getRemoteData(regionData, "bedOrTabix");
   },
+  vcf: function vcfFetch(regionData: any) {
+    return getRemoteData(regionData, "vcf");
+  },
 };
 
 function getRemoteData(regionData: any, trackType: string) {
@@ -131,6 +135,10 @@ function getRemoteData(regionData: any, trackType: string) {
   } else {
     if (trackType === "bedOrTabix") {
       cachedFetchInstance[`${regionData.trackModel.id}`] = new TabixSource(
+        regionData.trackModel.url
+      );
+    } else if (trackType === "vcf") {
+      cachedFetchInstance[`${regionData.trackModel.id}`] = new VcfSource(
         regionData.trackModel.url
       );
     } else if (trackType === "big") {

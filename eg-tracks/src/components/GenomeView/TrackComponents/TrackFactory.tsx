@@ -23,6 +23,8 @@ import TrackLegend from "./commonComponents/TrackLegend";
 import { ScaleChoices } from "../../../models/ScaleChoices";
 import { NumericalDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import { isNumericalTrack } from "./GroupedTrackManager";
+import VcfDetail from "./VcfComponents/VcfDetail";
+import Vcf from "./VcfComponents/Vcf";
 const AUTO_HEATMAP_THRESHOLD = 21;
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
@@ -47,7 +49,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   globalTrackState,
   isScreenShotOpen,
   posRef,
-  highlightElements, viewWindowConfigData
+  highlightElements,
+  viewWindowConfigData,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -86,13 +89,21 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       : rowsToDraw * rowHeight + TOP_PADDING;
   }
   // MARK: CREATESVG
-  function createSVGOrCanvas(trackState, genesArr, isError, cacheDataIdx) {
+  function createSVGOrCanvas(
+    trackState,
+    genesArr,
+    isError,
+    cacheDataIdx,
+    xvalues = null
+  ) {
     let curXPos = getTrackXOffset(trackState, windowWidth);
     if (isError) {
       fetchError.current = true;
     }
 
-    trackState["viewWindow"] = isNumericalTrack(trackModel) ? trackState.viewWindow : new OpenInterval(0, trackState.visWidth);
+    trackState["viewWindow"] = isNumericalTrack(trackModel)
+      ? trackState.viewWindow
+      : new OpenInterval(0, trackState.visWidth);
 
     let res = fetchError.current ? (
       <div
@@ -123,6 +134,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getHeight,
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         groupScale: trackState.groupScale,
+        xvalues: xvalues,
       })
     );
 
@@ -143,7 +155,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       }
 
       xPos.current = curXPos;
-
     }
   }
   // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
@@ -194,12 +205,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     setToolTipVisible(false);
   }
 
-
-
   useEffect(() => {
-    if (svgComponents || canvasComponents)
-      setLegend(updatedLegend.current)
-
+    if (svgComponents || canvasComponents) setLegend(updatedLegend.current);
   }, [svgComponents, canvasComponents]);
 
   // MARK:[newDrawDat
@@ -221,8 +228,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-            trackFetchedDataCache.current[`${id}`].queryGenome
-          ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
       }
@@ -291,16 +298,41 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
 
         if (!noData) {
-
-          trackState["groupScale"] = globalTrackState.current.trackStates[dataIdx].trackState["groupScale"];
-          createSVGOrCanvas(trackState, combinedData, hasError, dataIdx);
+          if (newDrawData.viewWindow) {
+            trackState["viewWindow"] = newDrawData.viewWindow;
+          }
+          trackState["groupScale"] =
+            globalTrackState.current.trackStates[dataIdx].trackState[
+              "groupScale"
+            ];
+          createSVGOrCanvas(
+            trackState,
+            combinedData,
+            hasError,
+            dataIdx,
+            cacheTrackData[dataIdx].xvalues
+              ? cacheTrackData[dataIdx].xvalues
+              : null
+          );
         }
       } else {
         const combinedData = cacheTrackData[dataIdx]
           ? cacheTrackData[dataIdx].dataCache
           : null;
+
         if (combinedData) {
-          createSVGOrCanvas(trackState, combinedData, false, dataIdx);
+          if (newDrawData.viewWindow) {
+            trackState["viewWindow"] = newDrawData.viewWindow;
+          }
+          createSVGOrCanvas(
+            trackState,
+            combinedData,
+            false,
+            dataIdx,
+            cacheTrackData[dataIdx].xvalues
+              ? cacheTrackData[dataIdx].xvalues
+              : null
+          );
         }
       }
     }
@@ -310,12 +342,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
       if (id in applyTrackConfigChange) {
-
         configOptions.current = {
           ...configOptions.current,
           ...applyTrackConfigChange[`${id}`],
         };
-
 
         updateGlobalTrackConfig({
           configOptions: configOptions.current,
@@ -335,8 +365,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+                trackFetchedDataCache.current[`${id}`].queryGenome
+              ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
@@ -355,21 +385,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK: [viewWindowConfigChange]
 
-
-
   useEffect(() => {
-
     if (viewWindowConfigChange && id in viewWindowConfigChange.trackToDrawId) {
-
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let curIdx = dataIdx + 1;
-      let noData = false
+      let noData = false;
       for (let i = 0; i < 3; i++) {
         if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
-          noData = true
+          noData = true;
         }
         if (
           cacheTrackData[curIdx].dataCache &&
@@ -388,14 +414,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+                trackFetchedDataCache.current[`${id}`].queryGenome
+              ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
-        trackState.viewWindow = viewWindowConfigChange.viewWindow
+        trackState.viewWindow = viewWindowConfigChange.viewWindow;
         trackState["groupScale"] = viewWindowConfigChange.groupScale;
-
 
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
@@ -413,10 +438,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     //   //   </div>
     //   // );
 
-
     // }
   }, [viewWindowConfigChange]);
-
 
   // MARK: Screenshot
   useEffect(() => {
@@ -472,23 +495,23 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+                trackFetchedDataCache.current[`${id}`].queryGenome
+              ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
         trackState["viewWindow"] =
           updateSide.current === "right"
             ? new OpenInterval(
-              -(dragX! + (xPos.current + windowWidth)),
-              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-            )
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
             : new OpenInterval(
-              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-              windowWidth * 3 -
-              (dragX! - (xPos.current + windowWidth)) +
-              windowWidth
-            );
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 
@@ -1187,6 +1210,62 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         document.body
       );
     },
+    vcf: function VcfClickToolTip(vcf: any, pageX, pageY, name, onClose) {
+      return ReactDOM.createPortal(
+        <Manager>
+          <Reference>
+            {({ ref }) => (
+              <div
+                ref={ref}
+                style={{
+                  position: "absolute",
+                  left: pageX - 8 * 2,
+                  top: pageY,
+                }}
+              />
+            )}
+          </Reference>
+          <Popper
+            placement="bottom-start"
+            modifiers={[{ name: "flip", enabled: false }]}
+          >
+            {({ ref, style, placement, arrowProps }) => (
+              <div
+                ref={ref}
+                style={{
+                  ...style,
+
+                  zIndex: 1001,
+                }}
+                className="Tooltip"
+              >
+                <OutsideClickDetector onOutsideClick={onClose}>
+                  <VcfDetail vcf={vcf as Vcf} />
+                </OutsideClickDetector>
+                {ReactDOM.createPortal(
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />,
+                  document.body
+                )}
+              </div>
+            )}
+          </Popper>
+        </Manager>,
+        document.body
+      );
+    },
     jaspar: function JasparClickTooltip(
       feature: any,
       pageX,
@@ -1372,8 +1451,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? svgHeight.current
                 : 40
               : !fetchError.current
-                ? configOptions.current.height
-                : 40,
+              ? configOptions.current.height
+              : 40,
           position: "relative",
         }}
       >
@@ -1399,33 +1478,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         {highlightElements.length > 0
           ? highlightElements.map((item, index) => {
-            if (item.display) {
-              return (
-                <div
-                  key={index}
-                  style={{
-                    display: "flex",
-                    position: "relative",
-                    height: "100%",
-                  }}
-                >
+              if (item.display) {
+                return (
                   <div
                     key={index}
                     style={{
-                      position: "absolute",
-                      backgroundColor: item.color,
-                      top: "0",
+                      display: "flex",
+                      position: "relative",
                       height: "100%",
-                      left: item.side === "right" ? `${item.xPos}px` : "",
-                      right: item.side === "left" ? `${item.xPos}px` : "",
-                      width: item.width,
-                      pointerEvents: "none", // This makes the highlighted area non-interactive
                     }}
-                  ></div>
-                </div>
-              );
-            }
-          })
+                  >
+                    <div
+                      key={index}
+                      style={{
+                        position: "absolute",
+                        backgroundColor: item.color,
+                        top: "0",
+                        height: "100%",
+                        left: item.side === "right" ? `${item.xPos}px` : "",
+                        right: item.side === "left" ? `${item.xPos}px` : "",
+                        width: item.width,
+                        pointerEvents: "none", // This makes the highlighted area non-interactive
+                      }}
+                    ></div>
+                  </div>
+                );
+              }
+            })
           : ""}
       </div>
     </div>

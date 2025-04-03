@@ -48,14 +48,14 @@ const Session: React.FC = () => {
       tracks,
       viewRegion: userViewRegion
         ? new DisplayedRegionModel(
-          genomeConfig.navContext,
-          userViewRegion?.start,
-          userViewRegion?.end
-        )
+            genomeConfig.navContext,
+            userViewRegion?.start,
+            userViewRegion?.end
+          )
         : new DisplayedRegionModel(
-          genomeConfig.navContext,
-          ...genomeConfig.defaultRegion
-        ),
+            genomeConfig.navContext,
+            ...genomeConfig.defaultRegion
+          ),
     };
   }
   //provide data to genomeTracks to new current bundle session
@@ -87,12 +87,14 @@ const Session: React.FC = () => {
 
   //set the bundleid for this session to the retreive id and bundle to new bundle
   function onRetrieveBundle(newBundle: any) {
-    dispatch(updateBundle(newBundle));
-    dispatch(
-      updateCurrentSession({
-        bundleId: newBundle.bundleId,
-      })
-    );
+    if (newBundle && newBundle.bundleId) {
+      dispatch(updateBundle(newBundle));
+      dispatch(
+        updateCurrentSession({
+          bundleId: newBundle.bundleId,
+        })
+      );
+    }
   }
 
   //add or delete session from bundle
@@ -105,7 +107,7 @@ const Session: React.FC = () => {
       onRestoreSession={onRestoreSession}
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
-      bundleId={bundle.bundleId}
+      bundleId={bundle.bundleId ? bundle.bundleId : ""}
       curBundle={bundle}
       state={curUserState}
     />

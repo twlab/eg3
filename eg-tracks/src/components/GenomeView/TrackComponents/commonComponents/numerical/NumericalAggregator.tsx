@@ -27,6 +27,7 @@ export class NumericalAggregator {
   xToValueMaker(data, viewRegion, width, options) {
     const withDefaultOptions = Object.assign({}, DEFAULT_OPTIONS, options);
     const { aggregateMethod, smooth, yScale, yMin } = withDefaultOptions;
+
     let xToValue2BeforeSmooth,
       xToValue,
       xToValue2,

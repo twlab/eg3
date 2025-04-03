@@ -53,7 +53,7 @@ interface SessionUIProps extends HasBundleId {
   updateBundle: (bundle: any) => void;
   withGenomePicker?: boolean;
   state?: BundleProps;
-  cur: any;
+  curBundle: any;
 }
 
 export const onRetrieveSession = async (retrieveId: string) => {
@@ -61,14 +61,13 @@ export const onRetrieveSession = async (retrieveId: string) => {
     console.log("Session bundle Id cannot be empty.", "error", 2000);
     return null;
   }
-  console.log(retrieveId);
+
   const dbRef = ref(getDatabase());
   try {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
-    console.log(snapshot);
     if (snapshot.exists()) {
       let res = snapshot.val();
-      console.log(res);
+
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
@@ -79,12 +78,22 @@ export const onRetrieveSession = async (retrieveId: string) => {
           const regionSetView = regionSets[object.regionSetViewIndex] || null;
 
           // Create the newBundle object based on the existing object.
+          const genomeConfig = getGenomeConfig(object.genomeName);
+          let viewInterval;
+          if (object.viewInterval) {
+            viewInterval = object.viewInterval;
+          } else {
+            viewInterval = {
+              start: genomeConfig.defaultRegion.start,
+              end: genomeConfig.defaultRegion.end,
+            };
+          }
           let newBundle = {
             genomeName: object.genomeName,
             viewRegion: new DisplayedRegionModel(
-              getGenomeConfig(object.genomeName).navContext,
-              object.viewInterval.start,
-              object.viewInterval.end
+              genomeConfig.navContext,
+              viewInterval.start,
+              viewInterval.end
             ),
 
             tracks: object.tracks.map((data) => TrackModel.deserialize(data)),
@@ -135,8 +144,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
     const newSessionObj = {
       label: newSessionLabel,
       date: Date.now(),
-      state: state,
+      state: state ? state : {},
     };
+    newSessionObj.state["viewInterval"] =
+      state && state.viewRegion
+        ? state.viewRegion.getContextCoordinates().serialize()
+        : null;
 
     const sessionId = crypto.randomUUID();
 
