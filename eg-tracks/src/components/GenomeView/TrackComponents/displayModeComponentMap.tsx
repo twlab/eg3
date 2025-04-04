@@ -139,7 +139,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             display={"block"}
           >
             {placements.map(renderAnnotation)}
-            <line
+            {/* <line
               x1={width / 3}
               y1={0}
               x2={width / 3}
@@ -154,7 +154,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y2={height}
               stroke="black"
               strokeWidth={1}
-            />
+            /> */}
           </svg>
         );
       }
@@ -168,7 +168,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           display={"block"}
         >
           {placements.map(renderAnnotation)}
-          <line
+          {/* <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -183,7 +183,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          />
+          /> */}
         </svg>
       );
     }
@@ -201,7 +201,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => {}}
+          onClick={renderTooltip ? renderTooltip : () => { }}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -226,7 +226,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => {}}
+          onClick={renderTooltip ? renderTooltip : () => { }}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -281,7 +281,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -306,7 +306,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => {}}
+            renderTooltip={renderTooltip ? renderTooltip : () => { }}
             onHideTooltip={onHideTooltip}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -427,7 +427,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => {}}
+              onClick={renderTooltip ? renderTooltip : () => { }}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -453,7 +453,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -472,7 +472,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             options={configOptions}
           />
         ));
@@ -492,8 +492,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-            imgCount -
-            THUMBNAIL_PADDING,
+          imgCount -
+          THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -531,7 +531,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => {}}
+          onSetImageInfo={() => { }}
           heightObj={heightObj}
         />
       );
@@ -571,7 +571,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
           return !(
             curXSpan.end <
-              trackState.viewWindow.start + trackState.visWidth / 3 ||
+            trackState.viewWindow.start + trackState.visWidth / 3 ||
             curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
           );
         }
