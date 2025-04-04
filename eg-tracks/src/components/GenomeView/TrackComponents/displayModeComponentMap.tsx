@@ -81,6 +81,7 @@ import { format } from "path";
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 import VcfTrack from "./VcfComponents/VcfTrack";
+import { VcfColorScaleKeys } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 
 enum BedColumnIndex {
   CATEGORY = 3,
@@ -232,6 +233,31 @@ export const displayModeComponentMap: { [key: string]: any } = {
         />
       ));
     }
+    function computeColorScales(
+      data: Vcf[],
+      colorKey: string,
+      lowValueColor: any,
+      highValueColor: any
+    ) {
+      let values: any[];
+      if (colorKey === VcfColorScaleKeys.QUAL) {
+        values = data.map((v) => v.variant.QUAL);
+      } else if (colorKey === VcfColorScaleKeys.AF) {
+        values = data.map((v) => {
+          if (v.variant.INFO.hasOwnProperty("AF")) {
+            return v.variant.INFO.AF[0];
+          }
+          return 0;
+        });
+      } else {
+        values = [];
+      }
+      const colorScale = scaleLinear()
+        .domain([0, _.max(values)])
+        .range([lowValueColor, highValueColor])
+        .clamp(true);
+      return colorScale;
+    };
 
     const getAnnotationElementMap: { [key: string]: any } = {
       geneannotation: (placedGroup, y, isLastRow, index) =>
@@ -246,6 +272,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         isLastRow: boolean,
         index: number
       ) {
+
         return placedGroup.placedFeatures.map((placement, i) => (
           <VcfAnnotation
             key={i}
@@ -253,7 +280,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             xSpan={placement.xSpan}
             y={y}
             isMinimal={isLastRow}
-            height={height}
+            height={configOptions.rowHeight}
             colorScale={scales}
             onClick={renderTooltip}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}

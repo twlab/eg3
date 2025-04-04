@@ -100,7 +100,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (isError) {
       fetchError.current = true;
     }
-    console.log(trackState)
+
     trackState["viewWindow"] = isNumericalTrack(trackModel)
       ? trackState.viewWindow
       : new OpenInterval(0, trackState.visWidth);

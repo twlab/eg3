@@ -86,10 +86,10 @@ export default function GenomeView() {
     coordinate: GenomeCoordinate
   ) => {
 
-
     if (coordinate === currentSession?.viewRegion) {
       coordinate = `${coordinate}:${startbase}-${endbase}`
     }
+
     dispatch(
       updateCurrentSession({
         viewRegion: coordinate,

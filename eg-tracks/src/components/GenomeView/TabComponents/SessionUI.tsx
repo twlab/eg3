@@ -334,9 +334,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
     const contents = await readFileAsText(event.target.files![0]);
     onRestoreSession(JSON.parse(contents as string));
 
-    if (contents) {
-      console.log("Session uploaded and restored.", "success", 2000);
-    }
   };
   const setRandomLabel = () => {
     setNewSessionLabel(getFunName());
@@ -466,8 +463,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.buttonHover.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -524,8 +521,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                   (e.target.style.backgroundColor = "#EC971F")
                 }
                 onMouseOut={(e) =>
-                  (e.target.style.backgroundColor =
-                    styles.button.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.button.backgroundColor)
                 }
                 onClick={() => setNewSessionLabel(getFunName())}
               >

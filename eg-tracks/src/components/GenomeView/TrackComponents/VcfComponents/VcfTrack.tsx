@@ -121,6 +121,7 @@ class VcfTrack extends React.Component<VcfTrackProps> {
     isLastRow: boolean,
     index: number
   ) {
+
     return placedGroup.placedFeatures.map((placement, i) => (
       <VcfAnnotation
         key={i}
@@ -168,18 +169,19 @@ class VcfTrack extends React.Component<VcfTrackProps> {
             options={numericalOptions}
           />
         );
-      } else {
+      }
+      else {
         this.scales = this.computeColorScales(
           data,
           options.colorScaleKey,
           options.lowValueColor,
           options.highValueColor
         );
+
         return displayModeComponentMap["full"]({
           formattedData: data,
           trackState: trackState,
           windowWidth: width,
-
           configOptions: options,
           renderTooltip: renderTooltip,
           svgHeight: svgHeight,
@@ -191,7 +193,9 @@ class VcfTrack extends React.Component<VcfTrackProps> {
           scales: this.scales,
         });
       }
-    } else {
+    }
+
+    else {
       if (options.displayMode === VcfDisplayModes.DENSITY) {
         return (
           <NumericalTrack
@@ -200,18 +204,21 @@ class VcfTrack extends React.Component<VcfTrackProps> {
             options={numericalOptions}
           />
         );
-      } else {
+      }
+
+      else {
         this.scales = this.computeColorScales(
           data,
           options.colorScaleKey,
           options.lowValueColor,
           options.highValueColor
         );
+
+
         return displayModeComponentMap["full"]({
           formattedData: data,
           trackState: trackState,
           windowWidth: width,
-
           configOptions: options,
           renderTooltip: renderTooltip,
           svgHeight: svgHeight,
