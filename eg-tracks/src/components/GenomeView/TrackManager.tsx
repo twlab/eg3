@@ -491,17 +491,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const selectCount = Object.keys(selectedTracks.current).length;
       let curTrackModel = null;
       for (const config in selectedTracks.current) {
-        let curConfig = selectedTracks.current[config];
-        curConfig.configOptions.displayMode = value;
-        curConfig.trackModel.options = curConfig.configOptions;
-        curConfig.configOptions["trackId"] = config;
-        const trackConfig = getTrackConfig(curConfig.trackModel);
+        let trackModel = _.cloneDeep(trackManagerState.current.tracks.find((trackModel) => trackModel.id === config) || null);
+        trackModel.options = _.cloneDeep(globalTrackConfig.current[`${config}`].configOptions)
+        trackModel.options.displayMode = value
+        trackModel.options["trackId"] = config;
+        const trackConfig = getTrackConfig(trackModel);
         const menuItems = trackConfig.getMenuComponents();
 
         menuComponents.push(menuItems);
-        optionsObjects.push(curConfig.configOptions);
+        optionsObjects.push(trackModel.options);
         if (selectCount === 1) {
-          curTrackModel = curConfig.trackModel;
+          curTrackModel = trackModel;
+
         }
       }
 
@@ -527,18 +528,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       setConfigMenu(configMenuData);
     } else {
-      if (key === "label" && trackId) {
-        let curConfig = selectedTracks.current[trackId];
-        curConfig.configOptions[`${key}`] = value;
-        curConfig.trackModel.options = curConfig.configOptions;
-      }
-      else {
-        for (const config in selectedTracks.current) {
-          let curConfig = selectedTracks.current[config];
-          curConfig.configOptions[`${key}`] = value;
-          curConfig.trackModel.options = curConfig.configOptions;
-        }
-      }
+      // if (key === "label" && trackId) {
+      //   selectedTracks.current[trackId] = globalTrackConfig.current[`${trackId}`];
+      // }
+      // else {
+      //   for (const config in selectedTracks.current) {
+      //     selectedTracks.current[config] = globalTrackConfig.current[`${config}`];
+
+      //   }
+      // }
     }
     if (key === "label" && trackId) {
       trackManagerState.current.tracks.map((item) => {
@@ -569,7 +567,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newSelected[`${selected}`] = { [key]: value };
       }
     }
-    console.log(newSelected)
+
     setApplyTrackConfigChange(newSelected);
   }
 
@@ -579,14 +577,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const selectCount = Object.keys(selectedTracks.current).length;
     let curTrackModel = null;
     for (const config in selectedTracks.current) {
-      let curConfig = selectedTracks.current[config];
-      const trackConfig = getTrackConfig(curConfig.trackModel);
+
+      let trackModel = _.cloneDeep(trackManagerState.current.tracks.find((trackModel) => trackModel.id === config) || null);
+      trackModel.options = _.cloneDeep(globalTrackConfig.current[`${config}`].configOptions)
+      const trackConfig = getTrackConfig(trackModel);
+
       const menuItems = trackConfig.getMenuComponents();
-      curConfig.configOptions["trackId"] = config;
+      trackModel.options["trackId"] = config;
       menuComponents.push(menuItems);
-      optionsObjects.push(curConfig.configOptions);
+      optionsObjects.push(_.cloneDeep(trackModel.options));
+
+
       if (selectCount === 1) {
-        curTrackModel = curConfig.trackModel;
+        curTrackModel = trackModel;
+
       }
     }
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
@@ -610,27 +614,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     setConfigMenu(configMenuData);
   }
-  function handleShiftSelect(e: any, trackDetails: { [key: string]: any }) {
+  function handleShiftSelect(e: any, trackDetails: any) {
     if (e.shiftKey) {
-      const trackId = trackDetails.trackModel.id;
-      const isSelected = !!selectedTracks.current[trackId]; // Double negative to force a boolean type
+      const trackId = trackDetails;
+      let isSelected;
 
+      if (selectedTracks.current[trackId] === "") {
+
+        isSelected = false
+      }
+      else {
+
+        isSelected = true
+      }
+      console.log("HUUH", isSelected, selectedTracks.current[trackId], trackDetails, "shiftleftclick")
       if (!isSelected) {
-        selectedTracks.current[trackId] = globalTrackConfig.current[trackId];
+        delete selectedTracks.current[trackId];
+
       } else {
-        selectedTracks.current[trackId] = null;
+        selectedTracks.current[trackId] = "";
       }
 
       const newTracks = trackManagerState.current.tracks.map((trackModel) => {
         if (trackModel.id === trackId) {
           return new TrackModel({
             ...trackModel,
-            isSelected: !isSelected,
+            isSelected: isSelected,
           });
         }
         return trackModel;
       });
-
+      console.log(selectedTracks.current, trackManagerState.current.tracks, "shiftleftclick")
       onTrackSelected(newTracks);
 
       if (configMenu && Object.keys(selectedTracks.current).length > 0) {
@@ -652,13 +666,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           trackModel.isSelected = true;
         }
       });
-      // let newStateObj = createNewTrackState(trackManagerState.current, {});
-
-      //addGlobalState(newStateObj);
-      // trackDetails.legendRef.current.style.backgroundColor = "lightblue";
 
       selectedTracks.current[`${trackDetails.trackModel.id}`] =
-        globalTrackConfig.current[`${trackDetails.trackModel.id}`];
+        ""
       onTrackSelected([...trackManagerState.current.tracks]);
       renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackDetails.trackModel.id);
     }
@@ -725,10 +735,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function handleReorder(order: Array<any>) {
     const newOrder: Array<any> = [];
     for (const item of order) {
-      newOrder.push(item.trackModel);
+      newOrder.push(_.cloneDeep(item.trackModel));
     }
+
     trackManagerState.current.tracks = _.cloneDeep(newOrder);
-    onTrackSelected(trackManagerState.current.tracks);
+    console.log(newOrder, trackManagerState.current.tracks, "newOrder");
+    // console.log(trackManagerState.current.tracks, newOrder, "order")
+    onTrackSelected(_.cloneDeep(trackManagerState.current.tracks));
   }
 
   async function fetchGenomeData(
@@ -1763,7 +1776,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   // component.legendRef.current.style.backgroundColor =
                   //   "lightblue";
                   selectedTracks.current[key!] =
-                    globalTrackConfig.current[key!];
+                    ""
                 }
               }
             }
@@ -2411,7 +2424,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         for (let i = 0; i < tracks.length; i++) {
           const curTrackModel = tracks[i];
-
+          if (curTrackModel.id !== trackComponents[i].trackModel.id) {
+            needToToUpdate = true;
+          }
           // find tracks already in view
           for (let j = 0; j < trackComponents.length; j++) {
             const trackComponent = trackComponents[j];
@@ -2432,7 +2447,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           }
         }
+        console.log(selectedTracks.current, newTrackComponents, tracks, "tracksUpdate")
         if (needToToUpdate) {
+          trackManagerState.current.tracks = tracks
           setTrackComponents(newTrackComponents);
           setG3dTrackComponents(newG3dComponents);
         }
@@ -2587,11 +2604,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               <SortableList
                 items={trackComponents}
                 onChange={handleReorder}
-                selectedTracks={selectedTracks.current}
+
                 renderItem={(item) => (
                   <SortableList.Item
                     id={item.id}
-                    onMouseDown={(event) => handleShiftSelect(event, item)}
+                    onMouseDown={(event) => handleShiftSelect(event, item.id)}
                     onContextMenu={(event) => handleRightClick(event, item)}
                     selectedTool={selectedTool}
                   >

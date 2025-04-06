@@ -24,7 +24,7 @@ interface Props<T extends BaseItem> {
   items: T[];
   onChange(items: T[]): void;
   renderItem(item: T): ReactNode;
-  selectedTracks: any;
+  selectedTracks?: any;
 }
 
 export function SortableList<T extends BaseItem>({
@@ -45,11 +45,27 @@ export function SortableList<T extends BaseItem>({
       <DndContext
         sensors={sensors}
         onDragEnd={({ active, over }) => {
-          if (over && active.id !== over?.id) {
+          if (over && active.id !== over.id) {
             const activeIndex = items.findIndex(({ id }) => id === active.id);
             const overIndex = items.findIndex(({ id }) => id === over.id);
 
-            onChange(arrayMove(items, activeIndex, overIndex));
+            // Collect ids of items to be moved
+            const selectedItems = items.filter(item => item.trackModel.isSelected);
+            console.log(items, selectedItems)
+            if (selectedItems.length > 0) {
+              const nonSelectedItems = items.filter(item => !item.trackModel.isSelected);
+
+              const newItemsArray = [
+                ...nonSelectedItems.slice(0, overIndex),
+                ...selectedItems,
+                ...nonSelectedItems.slice(overIndex)
+              ];
+
+              onChange(newItemsArray);
+            } else {
+              onChange(arrayMove(items, activeIndex, overIndex));
+            }
+
           }
         }}
       >
