@@ -2,11 +2,10 @@ import React, { useState, useRef, useCallback, FC, KeyboardEvent } from "react";
 import ReactModal from "react-modal";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import GeneSearchBox from "./GeneSearchBox";
-import { HighlightInterval } from "../ToolComponents/HighlightMenu";
+
 import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import Genome from "../../../models/Genome";
-import SnpSearch from "../SnpSearch";
 
 const MODAL_STYLE = {
   content: {
@@ -37,7 +36,8 @@ interface TrackRegionControllerProps {
   onRegionSelected: (
     newStart: number,
     newEnd: number,
-    isHighlight?: boolean
+    toolTitle: number | string,
+    highlightSearch: boolean,
   ) => void;
 
   contentColorSetup: { color: string; background: string };
@@ -52,13 +52,9 @@ interface TrackRegionControllerProps {
 const TrackRegionController: FC<TrackRegionControllerProps> = ({
   selectedRegion,
   onRegionSelected,
-
   contentColorSetup,
   virusBrowserMode,
   genomeConfig,
-
-  addGlobalState,
-  trackManagerState,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [badInputMessage, setBadInputMessage] = useState("");
@@ -97,7 +93,7 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
     if (badInputMessage) {
       setBadInputMessage("");
     }
-    onRegionSelected(parsedRegion!.start, parsedRegion.end, doHighlight);
+    onRegionSelected(parsedRegion!.start, parsedRegion.end, "isJump", doHighlight);
 
     handleCloseModal();
   };

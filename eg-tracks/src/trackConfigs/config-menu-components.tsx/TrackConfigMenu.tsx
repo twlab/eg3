@@ -70,6 +70,7 @@ function ConfigMenuComponent(props: any) {
                               optionsObjects={menuData.configOptions}
                               defaultValue={defaultVal}
                               onOptionSet={menuData.onConfigChange}
+                              trackId={menuData.trackId}
                             />
                           );
                         }

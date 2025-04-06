@@ -126,7 +126,7 @@ interface TrackManagerProps {
   onNewHighlight: (highlightState: Array<any>) => void;
   onTrackSelected: (trackSelected: TrackModel[]) => void;
   onTrackDeleted: (currenTracks: TrackModel[]) => void;
-  onNewRegionSelect: (startbase: number, endbase: number) => void;
+  onNewRegionSelect: (startbase: number, endbase: number, highlightSearch: boolean) => void;
   tool: any;
   viewRegion?: any;
   showGenomeNav: boolean;
@@ -210,7 +210,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const frameID = useRef(0);
   const lastX = useRef(0);
   const dragX = useRef(0);
-  const isLoading = useRef(true);
   const hasGenomeAlign = useRef(false);
   const isToolSelected = useRef(false);
   const needToFetchAddTrack = useRef(false);
@@ -484,7 +483,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     globalTrackConfig.current[`${config.trackModel.id}`] = _.cloneDeep(config);
   }
 
-  function onConfigChange(key: string, value: string | number) {
+  function onConfigChange(key: string, value: string | number, trackId: string | null = null) {
+
     if (key === "displayMode") {
       let menuComponents: Array<any> = [];
       let optionsObjects: Array<any> = [];
@@ -527,30 +527,53 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       setConfigMenu(configMenuData);
     } else {
-      for (const config in selectedTracks.current) {
-        let curConfig = selectedTracks.current[config];
+      if (key === "label" && trackId) {
+        let curConfig = selectedTracks.current[trackId];
         curConfig.configOptions[`${key}`] = value;
         curConfig.trackModel.options = curConfig.configOptions;
       }
-    }
-
-    trackManagerState.current.tracks.map((item) => {
-      if (item.isSelected) {
-        let oldOption = _.cloneDeep(item.options);
-        let newVal = _.cloneDeep(value);
-        item.options = { ...oldOption, [key]: newVal };
+      else {
+        for (const config in selectedTracks.current) {
+          let curConfig = selectedTracks.current[config];
+          curConfig.configOptions[`${key}`] = value;
+          curConfig.trackModel.options = curConfig.configOptions;
+        }
       }
-    });
+    }
+    if (key === "label" && trackId) {
+      trackManagerState.current.tracks.map((item) => {
+        if (item.id === trackId) {
+          let oldOption = _.cloneDeep(item.options);
+          let newVal = _.cloneDeep(value);
+          item.options = { ...oldOption, [key]: newVal };
+        }
+      });
+    }
+    else {
+      trackManagerState.current.tracks.map((item) => {
+        if (item.isSelected) {
+          let oldOption = _.cloneDeep(item.options);
+          let newVal = _.cloneDeep(value);
+          item.options = { ...oldOption, [key]: newVal };
+        }
+      });
+    }
     onTrackSelected([...trackManagerState.current.tracks]);
 
     let newSelected: { [key: string]: any } = {};
-    for (const selected in selectedTracks.current) {
-      newSelected[`${selected}`] = { [key]: value };
+    if (key === "label" && trackId) {
+      newSelected[`${trackId}`] = { [key]: value };
     }
+    else {
+      for (const selected in selectedTracks.current) {
+        newSelected[`${selected}`] = { [key]: value };
+      }
+    }
+    console.log(newSelected)
     setApplyTrackConfigChange(newSelected);
   }
 
-  function renderTrackSpecificConfigMenu(x: number, y: number) {
+  function renderTrackSpecificConfigMenu(x: number, y: number, trackId: string) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
     const selectCount = Object.keys(selectedTracks.current).length;
@@ -580,6 +603,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onConfigChange,
       blockRef: block,
       trackModel: curTrackModel,
+      trackId: trackId,
     };
 
     configMenuPos.current = { left: x, top: y };
@@ -610,7 +634,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onTrackSelected(newTracks);
 
       if (configMenu && Object.keys(selectedTracks.current).length > 0) {
-        renderTrackSpecificConfigMenu(e.pageX, e.pageY);
+        renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackId);
       } else {
         setConfigMenu(null);
       }
@@ -620,7 +644,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     e.preventDefault();
 
     if (trackDetails.trackModel.id in selectedTracks.current) {
-      renderTrackSpecificConfigMenu(e.pageX, e.pageY);
+      renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackDetails.trackModel.id);
     } else {
       onTrackUnSelect();
       trackManagerState.current.tracks.map((trackModel) => {
@@ -636,7 +660,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       selectedTracks.current[`${trackDetails.trackModel.id}`] =
         globalTrackConfig.current[`${trackDetails.trackModel.id}`];
       onTrackSelected([...trackManagerState.current.tracks]);
-      renderTrackSpecificConfigMenu(e.pageX, e.pageY);
+      renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackDetails.trackModel.id);
     }
   }
 
@@ -1405,7 +1429,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function onRegionSelected(
     startbase: number,
     endbase: number,
-    toolTitle: number | string = "isJump"
+    toolTitle: number | string = "isJump",
+    highlightSearch: boolean = false
   ) {
     const newLength = endbase - startbase;
 
@@ -1429,8 +1454,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     ) {
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
-
-      onNewRegionSelect(startbase, endbase);
+      console.log(highlightSearch)
+      onNewRegionSelect(startbase, endbase, highlightSearch);
     }
     // adding new highlight region
     else if (toolTitle === 2) {
@@ -2174,7 +2199,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const groupScale = groupManager.getGroupScale(
         tracks,
         trackDataObj,
-        primaryVisData.visWidth,
+        primaryVisData && primaryVisData.visWidth ? primaryVisData.visWidth : windowWidth * 3,
         viewWindow,
         dataIdx,
         trackFetchedDataCache
@@ -2485,8 +2510,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           {userViewRegion && (
             <TrackRegionController
               selectedRegion={userViewRegion}
-              onRegionSelected={(start: number, end: number) =>
-                onRegionSelected(start, end, "isJump")
+              onRegionSelected={(start: number, end: number, title: number | string = "isJump", highlightSearch) =>
+                onRegionSelected(start, end, title, highlightSearch)
               }
               contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
               genomeConfig={genomeConfig}
@@ -2513,7 +2538,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             // full windowwidth will make canvas only loop 0-windowidth
             // the last value will have no data.
             // so we have to subtract from the size of the canvas
-            border: "2px solid #BCCCDC",
+            border: "1px solid #BCCCDC",
             width: `${windowWidth + 120}px`,
             // width: `${fullWindowWidth / 2}px`,
             // height: "2000px",
@@ -2562,6 +2587,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               <SortableList
                 items={trackComponents}
                 onChange={handleReorder}
+                selectedTracks={selectedTracks.current}
                 renderItem={(item) => (
                   <SortableList.Item
                     id={item.id}
@@ -2575,9 +2601,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         display: "flex",
                         backgroundColor: "#F2F2F2",
                         width: `${windowWidth + 120}px`,
-                        borderTop: item.trackModel.isSelected
-                          ? ""
-                          : "1px solid Dodgerblue",
+
                         borderBottom: item.trackModel.isSelected
                           ? ""
                           : "1px solid Dodgerblue",

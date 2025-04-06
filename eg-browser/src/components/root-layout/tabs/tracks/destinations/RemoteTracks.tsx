@@ -274,7 +274,7 @@ function AddTracks() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -655,7 +655,7 @@ function AddDataHubs() {
               onTracksAdded={onTracksAdded}
               publicTrackSets={undefined}
               addedTrackSets={addedTrackUrls as Set<string>}
-              addTermToMetaSets={() => {}}
+              addTermToMetaSets={() => { }}
               contentColorSetup={{ color: "#222", background: "white" }}
             />
           </div>

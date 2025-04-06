@@ -24,12 +24,14 @@ interface Props<T extends BaseItem> {
   items: T[];
   onChange(items: T[]): void;
   renderItem(item: T): ReactNode;
+  selectedTracks: any;
 }
 
 export function SortableList<T extends BaseItem>({
   items,
   onChange,
   renderItem,
+  selectedTracks
 }: Props<T>) {
   const pointerSensor = useSensor(PointerSensor);
   const keyboardSensor = useSensor(KeyboardSensor, {
