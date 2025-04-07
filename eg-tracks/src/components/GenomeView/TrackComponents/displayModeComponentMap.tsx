@@ -202,7 +202,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -227,7 +227,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -257,7 +257,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         .range([lowValueColor, highValueColor])
         .clamp(true);
       return colorScale;
-    };
+    }
 
     const getAnnotationElementMap: { [key: string]: any } = {
       geneannotation: (placedGroup, y, isLastRow, index) =>
@@ -272,7 +272,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         isLastRow: boolean,
         index: number
       ) {
-
         return placedGroup.placedFeatures.map((placement, i) => (
           <VcfAnnotation
             key={i}
@@ -308,7 +307,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -333,7 +332,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => { }}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onHideTooltip}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -454,7 +453,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => { }}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -480,7 +479,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -499,7 +498,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -519,8 +518,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-          imgCount -
-          THUMBNAIL_PADDING,
+            imgCount -
+            THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -540,7 +539,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
           <TrackLegend
             height={svgHeight.current}
             trackModel={trackModel}
-            label={trackModel.options.label}
+            label={
+              configOptions.label
+                ? configOptions.label
+                : trackModel.options.label
+                ? trackModel.options.label
+                : ""
+            }
           />
         );
       }
@@ -558,7 +563,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => { }}
+          onSetImageInfo={() => {}}
           heightObj={heightObj}
         />
       );
@@ -598,7 +603,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
           return !(
             curXSpan.end <
-            trackState.viewWindow.start + trackState.visWidth / 3 ||
+              trackState.viewWindow.start + trackState.visWidth / 3 ||
             curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
           );
         }
@@ -617,7 +622,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
         <TrackLegend
           height={height}
           trackModel={trackModel}
-          label={trackModel.options.label}
+          label={
+            configOptions.label
+              ? configOptions.label
+              : trackModel.options.label
+              ? trackModel.options.label
+              : ""
+          }
         />
       );
     }
@@ -1103,7 +1114,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
         <TrackLegend
           height={drawData.configOptions.height}
           trackModel={drawData.trackModel}
-          label={drawData.trackModel.options.label}
+          label={
+            drawData.configOptions.label
+              ? drawData.configOptions.label
+              : drawData.trackModel.options.label
+              ? drawData.trackModel.options.label
+              : ""
+          }
         />
       );
       svgElements = drawDatas.map((item, index) =>
@@ -1178,7 +1195,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
         <TrackLegend
           height={drawData.configOptions.height}
           trackModel={drawData.trackModel}
-          label={drawData.trackModel.options.label}
+          label={
+            drawData.configOptions.label
+              ? drawData.configOptions.label
+              : drawData.trackModel.options.label
+              ? drawData.trackModel.options.label
+              : ""
+          }
         />
       );
       const strand = result.plotStrand;
@@ -1879,7 +1902,32 @@ function formatBigInteract(genesArr: any[]) {
   });
   return formattedData;
 }
-
+function formatLongRange(genesArr: any[]) {
+  const formattedData: any = [];
+  genesArr.forEach((record) => {
+    const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
+    // console.log(regexMatch);
+    if (regexMatch) {
+      const chr = regexMatch[1];
+      const start = Number.parseInt(regexMatch[2], 10);
+      const end = Number.parseInt(regexMatch[3], 10);
+      // const score = Number.parseFloat(regexMatch[4]); // this also convert -2 to 2 as score
+      const score = Number.parseFloat(record[3].split(",")[1]);
+      const recordLocus1 = new ChromosomeInterval(
+        record.chr,
+        record.start,
+        record.end
+      );
+      const recordLocus2 = new ChromosomeInterval(chr, start, end);
+      formattedData.push(
+        new GenomeInteraction(recordLocus1, recordLocus2, score)
+      );
+    } else {
+      console.error(`${record[3]} not formated correctly in longrange track`);
+    }
+  });
+  return formattedData;
+}
 export const twoDataTypeTracks = {
   bigbed: "",
   geneannotation: "",
@@ -1915,6 +1963,7 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   dbedgraph: formatdBedGraph,
   biginteract: formatBigInteract,
   vcf: formatVcf,
+  longrange: formatLongRange,
   // Add additional type-function mappings here
 };
 export function formatDataByType(genesArr: any[], type: string) {

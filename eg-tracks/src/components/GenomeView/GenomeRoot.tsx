@@ -34,7 +34,22 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
   // TO-DO need to set initial.current back to true when genomeConfig changes
   // to see if genomeConfig we can check its session id because it will unique
-
+  const throttle = (callback, limit) => {
+    let timeoutId: any = null;
+    return (...args) => {
+      if (!timeoutId) {
+        callback(...args);
+        timeoutId = setTimeout(() => {
+          timeoutId = null;
+        }, limit);
+      }
+    };
+  };
+  const throttledSetConfig = useRef(
+    throttle((curGenome) => {
+      setCurrentGenomeConfig(curGenome);
+    }, 200)
+  );
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -101,7 +116,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           );
           curGenome.navContext = userViewRegion._navContext;
           curGenome["sizeChange"] = false;
-          setCurrentGenomeConfig(curGenome);
+
+          throttledSetConfig.current(curGenome);
         }
       }
       prevViewRegion.current.genomeName = genomeConfig.genomeName;

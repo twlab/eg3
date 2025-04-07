@@ -142,7 +142,7 @@ function AddTracks() {
         name: trackState.name,
         options: trackState.options ?? {},
         metadata: { genome: trackState.metadata.genome },
-        id: Date.now(),
+        id: crypto.randomUUID(),
         isSelected: false,
       };
 
@@ -274,7 +274,7 @@ function AddTracks() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -655,7 +655,7 @@ function AddDataHubs() {
               onTracksAdded={onTracksAdded}
               publicTrackSets={undefined}
               addedTrackSets={addedTrackUrls as Set<string>}
-              addTermToMetaSets={() => { }}
+              addTermToMetaSets={() => {}}
               contentColorSetup={{ color: "#222", background: "white" }}
             />
           </div>
