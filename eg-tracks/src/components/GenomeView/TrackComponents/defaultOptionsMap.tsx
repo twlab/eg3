@@ -50,9 +50,14 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultAnnotationTrack,
     },
-    getGenePadding: function getGenePadding(gene) {
-      return gene.getName().length * 9;
-      ``;
+    getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },

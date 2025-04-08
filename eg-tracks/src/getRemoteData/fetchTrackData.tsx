@@ -5,6 +5,7 @@ import RepeatSource from "./RepeatSource";
 
 import JasparSource from "./JasparSource";
 import VcfSource from "./VcfSource";
+import BigSourceWorker from "./BigSourceWorker";
 
 const AWS_API = "https://lambda.epigenomegateway.org/v3";
 let cachedFetchInstance: { [key: string]: any } = {};
@@ -89,7 +90,7 @@ export const trackFetchFunction: { [key: string]: any } = {
     return getRemoteData(regionData, "jaspar");
   },
   bigbed: async function bigbedFetch(regionData: any) {
-    return getRemoteData(regionData, "big");
+    return getRemoteData(regionData, "bigbed");
   },
   refbed: async function refbedFetch(regionData: any) {
     return getRemoteData(regionData, "bedOrTabix");
@@ -144,7 +145,14 @@ function getRemoteData(regionData: any, trackType: string) {
       cachedFetchInstance[`${regionData.trackModel.id}`] = new VcfSource(
         regionData.trackModel.url, indexUrl
       );
-    } else if (trackType === "big") {
+    }
+    else if (trackType === "bigbed") {
+
+      cachedFetchInstance[`${regionData.trackModel.id}`] = new BigSourceWorker(regionData.trackModel.url)
+
+    }
+
+    else if (trackType === "big") {
       cachedFetchInstance[`${regionData.trackModel.id}`] =
         new BigSourceWorkerGmod(regionData.trackModel.url);
     } else if (trackType === "repeat") {
@@ -159,13 +167,15 @@ function getRemoteData(regionData: any, trackType: string) {
   }
   let fetchInstance = cachedFetchInstance[`${regionData.trackModel.id}`];
 
-  if (trackType in { repeat: "", jaspar: "" }) {
+  if (trackType in { repeat: "", jaspar: "", bigbed: "" }) {
     return fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,
       regionData.trackModel.options
     );
   }
+
+
   return fetchInstance.getData(regionData.nav, regionData.trackModel.options);
 }
 

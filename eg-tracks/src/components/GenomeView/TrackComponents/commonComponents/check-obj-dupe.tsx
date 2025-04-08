@@ -27,7 +27,11 @@ export function removeDuplicatesWithoutId(arr: DataObject[]): DataObject[] {
     let locus;
     if ("start" in item) {
       locus = item;
-    } else {
+    }
+    else if ("max" in item) {
+      locus = { start: item.min, end: item.max };
+    }
+    else {
       locus = item.locus;
     }
 
