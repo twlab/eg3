@@ -63,6 +63,7 @@ export default function SessionList({
                 path: "import-session",
               });
             }}
+            style={{ color: "#5F6368" }}
           >
             Import Session
           </Button>
@@ -200,7 +201,7 @@ function SessionListItem({
       animate={{ height: isHovered ? "auto" : "auto" }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
-      <div className="flex flex-row justify-between items-center">
+      <div className="text-primary flex flex-row justify-between items-center">
         <div className="flex flex-col gap-2">
           {session.title.length > 0 ? (
             <>
@@ -236,11 +237,18 @@ function SessionListItem({
       >
         <div className="flex flex-col gap-2 pt-2 border-t border-primary">
           <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
-          <p>View region: {session.viewRegion && typeof session.viewRegion === "object" ?
-            session.viewRegion.coordinate : session.viewRegion ?
-              session.viewRegion : ""}</p>
+          <p>
+            View region:{" "}
+            {session.viewRegion && typeof session.viewRegion === "object"
+              ? session.viewRegion.coordinate
+              : session.viewRegion
+              ? session.viewRegion
+              : ""}
+          </p>
           <p>Active tracks: {session.tracks ? session.tracks.length : 0}</p>
-          <p>Highlights: {session.highlights ? session.highlights.length : 0}</p>
+          <p>
+            Highlights: {session.highlights ? session.highlights.length : 0}
+          </p>
           {session.metadataTerms.length > 0 && (
             <div>
               <p>Metadata terms:</p>

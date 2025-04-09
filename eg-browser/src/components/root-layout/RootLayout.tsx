@@ -25,7 +25,6 @@ import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
-
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
 
@@ -70,7 +69,10 @@ export default function RootLayout() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-black">
+    <div
+      className="h-screen w-screen flex flex-col bg-black"
+      data-theme={"dark"}
+    >
       <GoogleAnalytics />
       <motion.div
         className="flex flex-col h-full"
@@ -87,12 +89,14 @@ export default function RootLayout() {
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
-                className="h-full bg-white overflow-hidden absolute top-0 left-0 z-10"
+                className="h-full overflow-hidden absolute top-0 left-0 z-10"
                 key="navigation-tabs"
                 style={{
                   width: "25vw",
                   borderTopRightRadius: CURL_RADIUS,
                   borderBottomRightRadius: CURL_RADIUS,
+                  color: "var(--font-container-color)",
+                  backgroundColor: "var(--bg-container-color)",
                 }}
                 initial={{
                   translateX: "-100%",
@@ -132,7 +136,7 @@ export default function RootLayout() {
           >
             {/* MARK: - Genome View */}
             <motion.div
-              className="h-full border-r bg-white overflow-hidden"
+              className="h-full border-r overflow-hidden"
               initial={{
                 width: "100vw",
               }}
@@ -150,6 +154,7 @@ export default function RootLayout() {
               }}
               style={{
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
+                backgroundColor: "var(--bg-container-color)",
               }}
             >
               <AnimatePresence mode="wait">

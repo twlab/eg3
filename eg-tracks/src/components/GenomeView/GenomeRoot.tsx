@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
-import "./track.css";
+// import "./track.css";
 // import { chrType } from "../../localdata/genomename";
 // import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
@@ -127,10 +127,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [userViewRegion]);
 
   return (
-    <div
-      data-theme={"light"}
-      style={{ paddingLeft: "10px", paddingRight: "10px" }}
-    >
+    <div style={{ paddingLeft: "10px", paddingRight: "10px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && (

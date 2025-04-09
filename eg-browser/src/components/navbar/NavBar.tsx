@@ -1,13 +1,28 @@
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import { selectCurrentSession, updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import { ArrowUturnLeftIcon, ArrowUturnRightIcon } from "@heroicons/react/24/outline";
+import {
+  selectCurrentSession,
+  updateCurrentSession,
+} from "@/lib/redux/slices/browserSlice";
+import {
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
+} from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 
 import Logo from "../../assets/logo.png";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
-import { useAppDispatch, useAppSelector, useUndoRedo } from "../../lib/redux/hooks";
-import { selectNavigationTab, selectSessionPanelOpen, setNavigationTab, setSessionPanelOpen } from "../../lib/redux/slices/navigationSlice";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useUndoRedo,
+} from "../../lib/redux/hooks";
+import {
+  selectNavigationTab,
+  selectSessionPanelOpen,
+  setNavigationTab,
+  setSessionPanelOpen,
+} from "../../lib/redux/slices/navigationSlice";
 import { versionToLogoUrl } from "../genome-picker/genome-list";
 import Button from "../ui/button/Button";
 import IconButton from "../ui/button/IconButton";
@@ -25,22 +40,30 @@ export default function NavBar() {
 
   const genome = useCurrentGenome();
 
-  const genomeLogoUrl: string | null = genome?.name ? versionToLogoUrl[genome.name]?.croppedUrl ?? versionToLogoUrl[genome.name]?.logoUrl : null;
+  const genomeLogoUrl: string | null = genome?.name
+    ? versionToLogoUrl[genome.name]?.croppedUrl ??
+      versionToLogoUrl[genome.name]?.logoUrl
+    : null;
   // const genomeLogoUrl: string | null = null;
 
   return (
-    <div className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white">
+    <div
+      className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-30"
+      style={{
+        backgroundColor: "var(--bg-container-color)",
+      }}
+    >
       <div className="flex flex-row items-center gap-4 relative">
         <img
-          src={genomeLogoUrl ? (import.meta.env.BASE_URL + genomeLogoUrl) : Logo}
+          src={genomeLogoUrl ? import.meta.env.BASE_URL + genomeLogoUrl : Logo}
           alt="logo"
           className={classNames(
-            'z-10',
-            'size-12',
-            currentSession ? 'cursor-pointer' : 'cursor-default',
-            sessionPanelOpen ? 'bg-secondary' : '',
-            genomeLogoUrl ? 'rounded-full p-1' : 'rounded-md p-2',
-            genomeLogoUrl && !sessionPanelOpen ? 'outline outline-gray-200' : ''
+            "z-10",
+            "size-12",
+            currentSession ? "cursor-pointer" : "cursor-default",
+            sessionPanelOpen ? "bg-secondary" : "",
+            genomeLogoUrl ? "rounded-full p-1" : "rounded-md p-2",
+            genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : ""
           )}
           onClick={() => {
             if (currentSession) {
@@ -52,11 +75,21 @@ export default function NavBar() {
           (currentSession ? (
             <div className="flex flex-row items-center gap-2 z-10">
               {currentSession.title.length > 0 && genome?.name && (
+                //replaced text-primary with var font color
                 <>
-                  <p className="text-2xl text-primary font-medium">
+                  <p
+                    className="text-2xl  font-medium"
+                    style={{ color: "var(--font-container-color)" }}
+                  >
                     {genome?.name}
                   </p>
-                  <p className="text-2xl text-primary font-light">/</p>
+
+                  <p
+                    className="text-2xl y font-light"
+                    style={{ color: "var(--font-container-color)" }}
+                  >
+                    /
+                  </p>
                 </>
               )}
               <InlineEditable
@@ -68,8 +101,9 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl text-primary font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                  }`}
+                style={`text-2xl font-light border border-blue-500 px-2 ${
+                  currentSession.title.length > 0 ? "" : "font-medium"
+                }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -78,7 +112,10 @@ export default function NavBar() {
               />
             </div>
           ) : (
-            <h1 className="text-2xl text-primary font-light">
+            <h1
+              className="text-2xl font-light"
+              style={{ color: "var(--font-container-color)" }}
+            >
               <span className="font-medium">WashU </span> Epigenome Browser
             </h1>
           ))}
@@ -178,7 +215,10 @@ export default function NavBar() {
           >
             <Button
               onClick={() =>
-                window.open("https://epigenomegateway.wustl.edu/browser2022/", "_blank")
+                window.open(
+                  "https://epigenomegateway.wustl.edu/browser2022/",
+                  "_blank"
+                )
               }
               active={currentTab === "tracks"}
             >

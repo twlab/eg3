@@ -1,133 +1,156 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import NotFound from "./NotFound";
 import NavigationToolbar from "./NavigationToolbar";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface NavigationPathElement {
-    path: string,
-    params?: Record<string, string>;
+  path: string;
+  params?: Record<string, string>;
 }
 
 export type NavigationPath = NavigationPathElement[];
 
 export interface NavigationComponentProps {
-    params?: Record<string, string>;
+  params?: Record<string, string>;
 }
 
 export interface NavigationDestination {
-    path: string;
-    component: React.ComponentType<NavigationComponentProps>;
-    options?: NavigationDestinationOptions;
+  path: string;
+  component: React.ComponentType<NavigationComponentProps>;
+  options?: NavigationDestinationOptions;
 }
 
 export interface NavigationDestinationOptions {
-    title?: string;
-    trailing?: React.ReactNode;
+  title?: string;
+  trailing?: React.ReactNode;
 }
 
 interface NavigationStackContext {
-    path: NavigationPath;
-    setPath: (path: NavigationPath) => void;
+  path: NavigationPath;
+  setPath: (path: NavigationPath) => void;
 }
 
-const NavigationStackContext = createContext<NavigationStackContext | null>(null);
+const NavigationStackContext = createContext<NavigationStackContext | null>(
+  null
+);
 
 export function useNavigation() {
-    const context = useContext(NavigationStackContext);
+  const context = useContext(NavigationStackContext);
 
-    if (!context) {
-        throw new Error("useNavigation must be used within a NavigationStack");
-    }
+  if (!context) {
+    throw new Error("useNavigation must be used within a NavigationStack");
+  }
 
-    const push = useCallback((path: NavigationPathElement) => {
-        context?.setPath([...context.path, path]);
-    }, [context]);
+  const push = useCallback(
+    (path: NavigationPathElement) => {
+      context?.setPath([...context.path, path]);
+    },
+    [context]
+  );
 
-    const pop = useCallback(() => {
-        context?.setPath(context.path.slice(0, -1));
-    }, [context]);
+  const pop = useCallback(() => {
+    context?.setPath(context.path.slice(0, -1));
+  }, [context]);
 
-    const canGoBack = useMemo(() => context?.path.length > 0, [context?.path]);
+  const canGoBack = useMemo(() => context?.path.length > 0, [context?.path]);
 
-    return { push, pop, canGoBack };
+  return { push, pop, canGoBack };
 }
 
 const notFoundDestination: NavigationDestination = {
-    path: "*",
-    component: NotFound,
-    options: {
-        title: "Not Found"
-    }
+  path: "*",
+  component: NotFound,
+  options: {
+    title: "Not Found",
+  },
 };
 
 export default function NavigationStack({
-    children,
-    destinations = [],
-    rootOptions
+  children,
+  destinations = [],
+  rootOptions,
 }: {
-    children: React.ReactNode;
-    destinations?: NavigationDestination[];
-    rootOptions?: NavigationDestinationOptions;
+  children: React.ReactNode;
+  destinations?: NavigationDestination[];
+  rootOptions?: NavigationDestinationOptions;
 }) {
-    const { ref, width, height } = useElementGeometry();
+  const { ref, width, height } = useElementGeometry();
 
-    const [path, setPath] = useState<NavigationPath>([]);
+  const [path, setPath] = useState<NavigationPath>([]);
 
-    const destinationMap: Record<string, NavigationDestination> = useMemo(() =>
-        destinations.reduce((acc, destination) => {
-            acc[destination.path] = destination;
-            return acc;
-        }, {} as Record<string, NavigationDestination>),
-        [destinations]
-    );
+  const destinationMap: Record<string, NavigationDestination> = useMemo(
+    () =>
+      destinations.reduce((acc, destination) => {
+        acc[destination.path] = destination;
+        return acc;
+      }, {} as Record<string, NavigationDestination>),
+    [destinations]
+  );
 
-    const currentDestination = useMemo(() =>
-        path.length > 0
-            ? destinationMap[path[path.length - 1]?.path]
-            : null,
-        [destinationMap, path]
-    );
+  const currentDestination = useMemo(
+    () =>
+      path.length > 0 ? destinationMap[path[path.length - 1]?.path] : null,
+    [destinationMap, path]
+  );
 
-    const currentOptions = useMemo(() =>
-        path.length > 0
-            ? currentDestination?.options
-            : rootOptions,
-        [path.length, currentDestination?.options, rootOptions]
-    );
+  const currentOptions = useMemo(
+    () => (path.length > 0 ? currentDestination?.options : rootOptions),
+    [path.length, currentDestination?.options, rootOptions]
+  );
 
-    return (
-        <NavigationStackContext.Provider value={{ path, setPath }}>
-            <div className="flex flex-col h-full">
-                <NavigationToolbar options={currentOptions} />
-                <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
-                    <motion.div
-                        className="px-4 pb-4 absolute overflow-y-scroll bg-white"
-                        animate={{ x: path.length > 0 ? "-33%" : 0, opacity: path.length > 0 ? 0.3 : 1 }}
-                        style={{ width, height }}
-                    >
-                        {children}
-                    </motion.div>
-                    <AnimatePresence mode="popLayout">
-                        {path.map((element, idx) => {
-                            const destination = destinationMap[element.path] ?? notFoundDestination;
+  return (
+    <NavigationStackContext.Provider value={{ path, setPath }}>
+      <div
+        className="flex flex-col h-full"
+        style={{
+          backgroundColor: "var(--bg-container-color)",
+          color: "var(--font-container-color)",
+        }}
+      >
+        <NavigationToolbar options={currentOptions} />
+        <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
+          <motion.div
+            className="px-4 pb-4 absolute overflow-y-scroll"
+            animate={{
+              x: path.length > 0 ? "-33%" : 0,
+              opacity: path.length > 0 ? 0.3 : 1,
+            }}
+            style={{ width, height }}
+          >
+            {children}
+          </motion.div>
+          <AnimatePresence mode="popLayout">
+            {path.map((element, idx) => {
+              const destination =
+                destinationMap[element.path] ?? notFoundDestination;
 
-                            return (
-                                <motion.div
-                                    key={element.path}
-                                    className="px-4 pb-4 absolute overflow-y-scroll bg-white"
-                                    initial={{ x: "100%" }}
-                                    animate={{ x: idx === path.length - 1 ? 0 : "-33%" }}
-                                    exit={{ x: "100%" }}
-                                    style={{ width, height }}
-                                >
-                                    <destination.component params={element.params} />
-                                </motion.div>
-                            );
-                        })}
-                    </AnimatePresence>
-                </div>
-            </div>
-        </NavigationStackContext.Provider>
-    );
+              return (
+                <motion.div
+                  key={element.path}
+                  className="px-4 pb-4 absolute overflow-y-scroll"
+                  initial={{ x: "100%" }}
+                  animate={{ x: idx === path.length - 1 ? 0 : "-33%" }}
+                  exit={{ x: "100%" }}
+                  style={{
+                    width,
+                    height,
+                    backgroundColor: "var(--bg-container-color)",
+                  }}
+                >
+                  <destination.component params={element.params} />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      </div>
+    </NavigationStackContext.Provider>
+  );
 }

@@ -1,13 +1,11 @@
 :root {
-  backface-visibility: hidden;
-  perspective: 1000;
-  --colNum: 2;
-  -webkit-backface-visibility: hidden;
-  -webkit-perspective: 1000;
   --dark-fg-color: white;
-  --dark-bg-color: #222;
-  --light-fg-color: #222;
+  --dark-bg-color: black;
+  --dark-container-color: #2c2c2c;
+
+  --light-fg-color: black;
   --light-bg-color: white;
+  --light-container-color: white;
 }
 
 @keyframes borderPulse {
@@ -97,12 +95,14 @@
 [data-theme="dark"] {
   --font-color: var(--dark-fg-color);
   --bg-color: var(--dark-bg-color);
+  --bg-container-color: var(--dark-container-color);
   /* --link-color: #3bd1ff; */
 }
 
 [data-theme="light"] {
   --font-color: var(--light-fg-color);
   --bg-color: var(--light-bg-color);
+  --bg-container-color: var(--light-container-color);
   /* --link-color: #3f51b5; */
 }
 
