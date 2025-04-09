@@ -1082,7 +1082,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-
+    console.log(trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+      .viewWindowRegion)
     let canvasElements = (
       <RulerComponent
         viewRegion={objToInstanceAlign(trackState.visRegion)}

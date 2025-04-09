@@ -114,8 +114,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-              )
+              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+            )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -428,7 +428,7 @@ const ValuePlot = (props) => {
       width={xToValue.length}
       height={height}
       forceSvg={forceSvg}
-      // viewWindow={viewWindow}
+      viewWindow={viewWindow}
       style={{ display: "block" }} // Added style property
     >
       {xToValue.map(renderPixel)}

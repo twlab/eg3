@@ -308,7 +308,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             globalTrackState.current.trackStates[dataIdx].trackState[
             "groupScale"
             ];
-
+          console.log(trackState)
           createSVGOrCanvas(
             trackState,
             combinedData,
@@ -534,7 +534,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         //   getHeight,
         //   ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         // });
-
+        console.log(trackState)
         sentScreenshotData({
           fetchData: {
             genomeName: genomeConfig.genome.getName(),

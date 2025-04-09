@@ -301,6 +301,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       .map((trackModel, index) => {
         const id = trackModel.id;
         const createSVGData = trackData[`${id}`].fetchData;
+        console.log(createSVGData)
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
@@ -387,7 +388,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             className="btn btn-primary btn-sm"
             style={{ marginBottom: "2ch" }}
             onClick={downloadSvg}
-            // disabled={buttonDisabled === "disabled"}
+          // disabled={buttonDisabled === "disabled"}
           >
             ⬇ Download SVG
           </button>{" "}

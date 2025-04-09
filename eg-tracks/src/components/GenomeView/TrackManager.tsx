@@ -958,7 +958,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       newVisData;
 
     let curDragX = dragX.current;
-
+    console.log(newVisData)
     let newTrackState = {
       primaryGenName: genomeConfig.genome.getName(),
       initial: initial,
@@ -980,7 +980,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             viewWindowRegion: new DisplayedRegionModel(
               genomeConfig.navContext,
               initBpLoci[index].start,
-              initBpLoci[index].endS
+              initBpLoci[index].end
             ),
             visWidth: trackWindowWidth * 3,
 
