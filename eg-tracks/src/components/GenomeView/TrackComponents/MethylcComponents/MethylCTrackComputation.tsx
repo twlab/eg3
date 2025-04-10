@@ -189,11 +189,16 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       );
       tooltipY = height;
     } else {
+
       strandRenderers = (
         <React.Fragment>
-          {forceSvg ? legend : ""}
-          <StrandVisualizer {...childProps} strand="forward" />
-          <StrandVisualizer {...childProps} strand="reverse" />
+          <div style={{ display: "flex" }}>
+            {forceSvg ? legend : ""}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <StrandVisualizer {...childProps} strand="forward" />
+              <StrandVisualizer {...childProps} strand="reverse" />
+            </div>
+          </div>
         </React.Fragment>
       );
       tooltipY = height * 2;

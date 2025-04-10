@@ -120,13 +120,16 @@ class RulerComponent extends React.Component<RulerComponentProps> {
       this.props.getNumLegend(legend);
     }
     return (
-      <RulerVisualizer
-        genomeConfig={this.props.genomeConfig}
-        viewRegion={this.props.viewRegion}
-        viewWindow={this.props.viewWindow}
-        width={this.props.width}
-        options={this.props.options}
-      />
+      <div style={{ display: "flex" }}>
+        {this.props.options.forceSvg ? legend : ""}
+        <RulerVisualizer
+          genomeConfig={this.props.genomeConfig}
+          viewRegion={this.props.viewRegion}
+          viewWindow={this.props.viewWindow}
+          width={this.props.width}
+          options={this.props.options}
+        />
+      </div>
     );
   }
 }

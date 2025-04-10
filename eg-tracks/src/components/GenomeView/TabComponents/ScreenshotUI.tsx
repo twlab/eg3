@@ -59,11 +59,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const boxWidth = tracks[0].clientWidth;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    svgElem.setAttributeNS(
-      null,
-      "viewBox",
-      "0 0 " + boxWidth - 20 + " " + (boxHeight - 5)
-    );
+    svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
     //add the width of the track and tracklegend to to correctly view all the svg
     const width = props.windowWidth + 20 + 120;
     svgElem.setAttributeNS(null, "width", width + "");
@@ -314,11 +310,9 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         });
 
-        return (
-          <div key={index} className="Track" style={{ display: "flex" }}>
-            {svgResult}
-          </div>
-        );
+        return svgResult
+
+          ;
       });
 
     return trackSvgElements;
@@ -368,7 +362,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             className="btn btn-primary btn-sm"
             style={{ marginBottom: "2ch" }}
             onClick={downloadSvg}
-            // disabled={buttonDisabled === "disabled"}
+          // disabled={buttonDisabled === "disabled"}
           >
             ⬇ Download SVG
           </button>{" "}
