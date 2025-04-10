@@ -214,18 +214,27 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
   const legend = (
-    <TrackLegend
-      trackModel={trackModel}
-      height={height}
-      axisScale={isDrawingBars ? scales.axisScale : undefined}
-      axisLegend={unit}
-    />
+    <div
+      style={{
+        width: 120,
+        backgroundColor: trackModel.isSelected ? "#FFD0C7" : "var(--bg-color)",
+
+        color: trackModel.isSelected ? "black" : "var(--font-color)",
+      }}
+    >
+      <TrackLegend
+        trackModel={trackModel}
+        height={height}
+        axisScale={isDrawingBars ? scales.axisScale : undefined}
+        axisLegend={unit}
+      />
+    </div>
   );
 
   if (getNumLegend) {
     getNumLegend(legend);
   }
-  console.log(props.viewWindow);
+
   const visualizer = hasReverse ? (
     <React.Fragment>
       <div
