@@ -34,7 +34,7 @@ import { OmeroidrTrackConfig } from "./OmeroidrTrackConfig";
 import { DynseqTrackConfig } from "./DynseqTrackConfig";
 
 // import { RgbpeakTrackConfig } from "./RgbpeakTrackConfig";
-// import { VcfTrackConfig } from "./VcfTrackConfig";
+import { VcfTrackConfig } from "./VcfTrackConfig";
 import { BoxplotTrackConfig } from "./BoxplotTrackConfig";
 // import { BedcolorTrackConfig } from "./BedcolorTrackConfig";
 // import { Rmskv2TrackConfig } from "./Rmskv2TrackConfig";
@@ -76,7 +76,7 @@ export const TYPE_NAME_TO_CONFIG = {
   // protein: ProteinTrackConfig,
   // longrangecolor: LongRangeColorTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
-  // vcf: VcfTrackConfig,
+  vcf: VcfTrackConfig,
   // bedcolor: BedcolorTrackConfig,
   // rmskv2: Rmskv2TrackConfig, !
   // bigchain: GenomeAlignTrackConfig,

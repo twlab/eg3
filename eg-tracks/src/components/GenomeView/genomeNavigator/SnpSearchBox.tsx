@@ -14,10 +14,13 @@ const SNP_ENDPOINTS = {
 interface SnpSearchBoxProps {
   genomeConfig: any;
   navContext: NavigationContext;
-  onRegionSelected: (newStart: number, newEnd: number) => void;
+  onRegionSelected: (newStart: number,
+    newEnd: number,
+    toolTitle: number | string,
+    highlightSearch: boolean,) => void;
   handleCloseModal: () => void;
   onNewHighlight?: (start: number, end: number, text: string) => void;
-  doHighlight?: boolean;
+  doHighlight: boolean;
   color?: string;
   background?: string;
 }
@@ -111,7 +114,7 @@ const SnpSearchBox: React.FC<SnpSearchBoxProps> = ({
     const interval = navContext.convertGenomeIntervalToBases(chrInterval)[0];
 
     if (interval) {
-      onRegionSelected(interval.start, interval.end);
+      onRegionSelected(interval.start, interval.end, "isJump", doHighlight);
       handleCloseModal();
       if (doHighlight && onNewHighlight) {
         onNewHighlight(interval.start, interval.end, inputValue.trim());

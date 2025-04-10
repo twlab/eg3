@@ -13,7 +13,7 @@ import GenomeSerializer from "../genome-hub/GenomeSerializer";
 import OpenInterval, { IOpenInterval } from "../models/OpenInterval";
 import RegionSet from "../models/RegionSet";
 import { getGenomeConfig } from "../util";
-
+// adsdas
 export function TrackContainer(props: ITrackContainerState) {
   return (
     <GenomeRoot
@@ -111,6 +111,7 @@ export function TrackContainerRepresentable({
         queryEndpoint: track.queryEndpoint,
         querygenome: track.querygenome,
         id: track.id,
+        isSelected: track.isSelected,
       });
     };
 
@@ -141,7 +142,7 @@ export function TrackContainerRepresentable({
 
   const convertedViewRegion = useMemo(() => {
     try {
-      console.log(viewRegion);
+
       if (!viewRegion) {
         if (userViewRegion) {
           const start = userViewRegion.start;

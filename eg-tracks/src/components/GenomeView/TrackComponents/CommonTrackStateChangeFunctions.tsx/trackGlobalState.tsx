@@ -27,6 +27,7 @@ export function trackGlobalState({
       xDist: 0,
       startWindow: primaryVisData.viewWindow.start,
       visWidth: primaryVisData.visWidth,
+      viewWindow: trackState.viewWindow
     };
 
     let trackState2 = {
@@ -45,23 +46,23 @@ export function trackGlobalState({
     // };
 
     globalTrackState.current.trackStates[globalTrackState.current["leftIdx"]] =
-      {
-        trackState: trackState0,
-      };
+    {
+      trackState: trackState0,
+    };
 
     globalTrackState.current["leftIdx"]++;
 
     globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
-      {
-        trackState: trackState1,
-      };
+    {
+      trackState: trackState1,
+    };
 
     globalTrackState.current["rightIdx"]--;
 
     globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
-      {
-        trackState: trackState2,
-      };
+    {
+      trackState: trackState2,
+    };
 
     globalTrackState.current["rightIdx"]--;
     // globalTrackState.current.trackStates[globalTrackState.current["rightIdx"]] =
@@ -74,7 +75,7 @@ export function trackGlobalState({
       initial: 0,
       side: trackState.side,
       xDist: trackState.xDist,
-
+      viewWindow: trackState.viewWindow,
       startWindow: primaryVisData.viewWindow.start,
       visWidth: primaryVisData.visWidth,
     };

@@ -3,7 +3,7 @@ import React, { useState, ChangeEvent } from "react";
 import JSZip from "jszip";
 import _ from "lodash";
 
-import { child, get, getDatabase, ref, set } from "firebase/database";
+import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import { readFileAsText, HELP_LINKS } from "../../../models/util";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import "./SessionUI.css";
@@ -67,6 +67,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
     if (snapshot.exists()) {
       let res = snapshot.val();
+
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
@@ -77,12 +78,22 @@ export const onRetrieveSession = async (retrieveId: string) => {
           const regionSetView = regionSets[object.regionSetViewIndex] || null;
 
           // Create the newBundle object based on the existing object.
+          const genomeConfig = getGenomeConfig(object.genomeName);
+          let viewInterval;
+          if (object.viewInterval) {
+            viewInterval = object.viewInterval;
+          } else {
+            viewInterval = {
+              start: genomeConfig.defaultRegion.start,
+              end: genomeConfig.defaultRegion.end,
+            };
+          }
           let newBundle = {
             genomeName: object.genomeName,
             viewRegion: new DisplayedRegionModel(
-              getGenomeConfig(object.genomeName).navContext,
-              object.viewRegion._startBase,
-              object.viewRegion._endBase
+              genomeConfig.navContext,
+              viewInterval.start,
+              viewInterval.end
             ),
 
             tracks: object.tracks.map((data) => TrackModel.deserialize(data)),
@@ -126,29 +137,36 @@ const SessionUI: React.FC<SessionUIProps> = ({
   const [retrieveId, setRetrieveId] = useState<string>("");
   const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
   const [sortSession, setSortSession] = useState<string>("date"); // or label
-
+  const [bundle, setBundle] = useState<{ [key: string]: any }>(
+    curBundle ? curBundle : {}
+  );
   const saveSession = async () => {
     const newSessionObj = {
       label: newSessionLabel,
       date: Date.now(),
-      state: state,
+      state: state ? state : {},
     };
+    newSessionObj.state["viewInterval"] =
+      state && state.viewRegion
+        ? state.viewRegion.getContextCoordinates().serialize()
+        : null;
 
     const sessionId = crypto.randomUUID();
 
     let newBundle = {
-      bundleId: curBundle.bundleId,
+      bundleId: bundle.bundleId,
       currentId: sessionId,
       sessionsInBundle: {
-        ...curBundle.sessionsInBundle,
+        ...bundle.sessionsInBundle,
         [sessionId]: newSessionObj,
       },
     };
+    setBundle(newBundle);
     updateBundle(newBundle);
     const db = getDatabase();
     try {
       await set(
-        ref(db, `sessions/${curBundle.bundleId}`),
+        ref(db, `sessions/${bundle.bundleId}`),
         JSON.parse(JSON.stringify(newBundle))
       );
       setNewSessionLabel(getFunName());
@@ -159,7 +177,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
 
     setRandomLabel();
-    setLastBundleId(curBundle.bundleId);
+    setLastBundleId(bundle.bundleId);
   };
 
   const downloadSession = (asHub = false) => {
@@ -175,13 +193,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const downloadWholeBundle = () => {
-    const { sessionsInBundle, bundleId } = curBundle;
+    const { sessionsInBundle, bundleId } = bundle;
     if (_.isEmpty(sessionsInBundle)) {
       console.log("Session bundle is empty, skipping...", "error", 2000);
       return;
     }
     const zip = new JSZip();
-    const zipName = `${curBundle.bundleId}.zip`;
+    const zipName = `${bundle.bundleId}.zip`;
     Object.keys(sessionsInBundle).forEach((k) => {
       const session = sessionsInBundle[k];
       zip.file(
@@ -201,15 +219,16 @@ const SessionUI: React.FC<SessionUIProps> = ({
 
   const restoreSession = async (sessionId: string) => {
     const newBundle = {
-      ...curBundle,
+      ...bundle,
       currentId: sessionId,
     };
-    setLastBundleId(curBundle.bundleId);
+    setBundle(newBundle);
+    setLastBundleId(bundle.bundleId);
     onRestoreSession(newBundle);
     const db = getDatabase();
     try {
       await set(
-        ref(db, `sessions/${curBundle.bundleId}`),
+        ref(db, `sessions/${bundle.bundleId}`),
         JSON.parse(JSON.stringify(newBundle))
       );
 
@@ -223,18 +242,31 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const deleteSession = async (sessionId: string) => {
-    // Uncomment the following section if you're using a backend to store sessions
-    // try {
-    //   await firebase.remove(`sessions/${bundleId}/sessionsInBundle/${sessionId}`);
-    //   console.log("Session deleted.", "success", 2000);
-    // } catch (error) {
-    //   console.error(error);
-    //   console.log("Error while deleting session", "error", 2000);
-    // }
+    const db = getDatabase();
+    let newBundle = _.cloneDeep(bundle);
+    if (
+      newBundle &&
+      newBundle.sessionsInBundle &&
+      sessionId in newBundle.sessionsInBundle
+    ) {
+      delete newBundle.sessionsInBundle[`${sessionId}`];
+      setBundle(newBundle);
+    }
+
+    if (bundle)
+      try {
+        await remove(
+          ref(db, `sessions/${bundle.bundleId}/sessionsInBundle/${sessionId}`)
+        );
+        console.log("Session deleted.", "success", 2000);
+      } catch (error) {
+        console.error(error);
+        console.log("Error while deleting session", "error", 2000);
+      }
   };
 
   const renderSavedSessions = () => {
-    const sessions = Object.entries(curBundle.sessionsInBundle || {});
+    const sessions = Object.entries(bundle.sessionsInBundle || {});
     if (!sessions.length) {
       return null;
     }
@@ -250,7 +282,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       <li key={id}>
         <span style={{ marginRight: "1ch" }}>{session.label}</span>(
         {new Date(session.date).toLocaleString()})
-        {lastBundleId === curBundle.bundleId && id === curBundle.currentId ? (
+        {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
           <button className="SessionUI btn btn-secondary btn-sm" disabled>
             Restored
           </button>
@@ -301,9 +333,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   const uploadSession = async (event: ChangeEvent<HTMLInputElement>) => {
     const contents = await readFileAsText(event.target.files![0]);
     onRestoreSession(JSON.parse(contents as string));
-    if (!withGenomePicker) {
-      console.log("Session uploaded and restored.", "success", 2000);
-    }
+
   };
   const setRandomLabel = () => {
     setNewSessionLabel(getFunName());
@@ -332,7 +362,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
 
   const retrieveSession = async (retrieveId: string) => {
     const bundleRes = await onRetrieveSession(retrieveId);
-
+    setBundle(bundleRes);
     onRetrieveBundle(bundleRes);
   };
   const styles = {
@@ -433,8 +463,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.buttonHover.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -466,8 +496,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
         <>
           <div style={styles.inputContainer}>
             <p style={styles.label}>
-              Session bundle Id: {curBundle.bundleId}
-              <CopyToClip value={curBundle.bundleId} />
+              Session bundle Id: {bundle.bundleId}
+              <CopyToClip value={bundle.bundleId} />
             </p>
             <label
               style={{
@@ -491,8 +521,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                   (e.target.style.backgroundColor = "#EC971F")
                 }
                 onMouseOut={(e) =>
-                  (e.target.style.backgroundColor =
-                    styles.button.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.button.backgroundColor)
                 }
                 onClick={() => setNewSessionLabel(getFunName())}
               >

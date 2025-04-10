@@ -31,7 +31,7 @@ interface Context {
 const SortableItemContext = createContext<Context>({
   attributes: {},
   listeners: undefined,
-  ref() {},
+  ref() { },
 });
 
 export function SortableItem({

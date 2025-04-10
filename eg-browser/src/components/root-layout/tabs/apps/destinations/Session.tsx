@@ -87,12 +87,14 @@ const Session: React.FC = () => {
 
   //set the bundleid for this session to the retreive id and bundle to new bundle
   function onRetrieveBundle(newBundle: any) {
-    dispatch(updateBundle(newBundle));
-    dispatch(
-      updateCurrentSession({
-        bundleId: newBundle.bundleId,
-      })
-    );
+    if (newBundle && newBundle.bundleId) {
+      dispatch(updateBundle(newBundle));
+      dispatch(
+        updateCurrentSession({
+          bundleId: newBundle.bundleId,
+        })
+      );
+    }
   }
 
   //add or delete session from bundle
@@ -100,17 +102,15 @@ const Session: React.FC = () => {
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId }));
   }
-  return curUserState ? (
+  return (
     <SessionUI
       onRestoreSession={onRestoreSession}
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
-      bundleId={bundle.bundleId}
+      bundleId={bundle.bundleId ? bundle.bundleId : ""}
       curBundle={bundle}
       state={curUserState}
     />
-  ) : (
-    ""
   );
 };
 

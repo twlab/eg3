@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import PropTypes from "prop-types";
+
 import _ from "lodash";
 import aggregateOptions from "../config-menu-models.tsx/aggregateOptions";
-import { ITEM_PROP_TYPES } from "./TrackContextMenu";
-import { v4 as uuidv4 } from "uuid";
+
 import "./TrackContextMenu.css";
 interface SingleInputConfigProps {
   // Extend with ItemProps
@@ -15,6 +14,7 @@ interface SingleInputConfigProps {
   getInputElement?: any;
   optionsObjects?: any;
   onOptionSet?: any;
+  trackId?: any;
 }
 const DEBOUNCE_INTERVAL = 250;
 
@@ -27,6 +27,7 @@ const SingleInputConfig: React.FC<SingleInputConfigProps> = ({
   hasSetButton,
   getInputElement,
   onOptionSet,
+  trackId,
 }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -39,7 +40,7 @@ const SingleInputConfig: React.FC<SingleInputConfigProps> = ({
 
   const makeOptionSetRequest = _.debounce((newValue) => {
     if (onOptionSet) {
-      onOptionSet(optionName, newValue);
+      onOptionSet(optionName, newValue, trackId);
     }
   }, DEBOUNCE_INTERVAL);
 

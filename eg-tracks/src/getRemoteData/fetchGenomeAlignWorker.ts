@@ -72,7 +72,6 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-
   const regionExpandLoci = event.data.regionExpandLoci;
   const trackToFetch = event.data.trackToFetch;
   const genomicLoci = event.data.genomicLoci;
@@ -90,7 +89,6 @@ self.onmessage = async (event: MessageEvent) => {
     initGenomicLoci,
   };
   const genomeAlignTracks = trackToFetch;
-
 
   const fetchArrNav = [regionExpandLoci];
 
@@ -140,12 +138,12 @@ self.onmessage = async (event: MessageEvent) => {
 
     let viewWindowRegion = new DisplayedRegionModel(
       viewWindowRegionNavContext,
-      curVisData._startBase + event.data.bpRegionSize,
-      curVisData._endBase - event.data.bpRegionSize
+      event.data.visData.viewWindowRegion._startBase,
+      event.data.visData.viewWindowRegion._endBase
     );
 
     let visData: ViewExpansion = {
-      visWidth: event.data.windowWidth * 3,
+      visWidth: event.data.visData.visWidth,
 
       visRegion,
       viewWindow: new OpenInterval(
@@ -204,8 +202,9 @@ self.onmessage = async (event: MessageEvent) => {
               trackToDrawId[`${item.id}`] = "";
             } catch (error) {
               rawRecords = {
-                error: `Error processing genome align track with id ${item.id
-                  }: ${"Error"}`,
+                error: `Error processing genome align track with id ${
+                  item.id
+                }: ${"Error"}`,
               };
             }
           })
@@ -381,6 +380,12 @@ self.onmessage = async (event: MessageEvent) => {
       ...event.data,
       genomicFetchCoord,
       trackToDrawId,
+      regionSetStartBp:
+        event.data.visData.visRegion._endBase -
+          event.data.visData.visRegion._startBase ===
+        event.data.bpRegionSize
+          ? 0
+          : null,
     },
   });
 };

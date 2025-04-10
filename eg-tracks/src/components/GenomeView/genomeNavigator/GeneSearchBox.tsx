@@ -12,11 +12,12 @@ interface GeneSearchBoxProps {
   onRegionSelected: (
     newStart: number,
     newEnd: number,
-    isHighlight?: boolean
+    toolTitle: number | string,
+    highlightSearch: boolean,
   ) => void;
   handleCloseModal: () => void;
   onNewHighlight?: (newStart: number, newEnd: number, geneName: string) => void;
-  doHighlight?: boolean;
+  doHighlight: boolean;
   color: string;
   background: string;
   genomeConfig: Genome;
@@ -37,7 +38,7 @@ const GeneSearchBox: FC<GeneSearchBoxProps> = ({
       gene.getLocus()
     )[0];
     if (interval) {
-      onRegionSelected(interval.start, interval.end, doHighlight);
+      onRegionSelected(interval.start, interval.end, "isJump", doHighlight);
       handleCloseModal();
     } else {
       console.log(

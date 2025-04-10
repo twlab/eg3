@@ -4,6 +4,7 @@ import { ViewExpansion } from "../RegionExpander";
 export interface TrackProps {
   id: string;
   trackIdx: number;
+  viewWindowConfigData: any;
   bpRegionSize: number;
   basePerPixel: number;
   side: string;
@@ -35,5 +36,5 @@ export interface TrackProps {
   sentScreenshotData: any;
   applyTrackConfigChange: any;
   containerRef: any;
-  viewWindow?: DisplayedRegionModel;
+  viewWindowConfigChange?: any;
 }

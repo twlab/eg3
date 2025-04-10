@@ -46,6 +46,7 @@ const genome = new Genome("hg38", [
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
+
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -83,6 +84,12 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
+  // new TrackModel({
+  //   type: "vcf",
+  //   name: "testVcf",
+  //   genome: "hg38",
+  //   url: "https://wangftp.wustl.edu/~jmacias/SMaHT_HapMap_Truth_Set/SMaHT_MCGB_Graph_VCFs/9188e8.vcf.gz",
+  // }),
   //   new TrackModel({
   //     type: "geneAnnotation",
   //     name: "gencodeV39",
@@ -155,6 +162,15 @@ const defaultTracks = [
   //   },
   // }),
   // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
+
+  // new TrackModel({
   //   type: "bed",
   //   name: "mm10 bed",
   //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
@@ -196,14 +212,6 @@ const defaultTracks = [
   //       },
   //     },
   //   ],
-  // }),
-  // new TrackModel({
-  //   type: "bigwig",
-  //   name: "example bigwig",
-  //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
-  //   options: {
-  //     color: "blue",
-  //   },
   // }),
 
   // new TrackModel({
@@ -357,14 +365,14 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  //   new TrackModel({
-  //     name: "hg38tomm10",
-  //     label: "Query mouse mm10 to hg38 blastz",
-  //     type: "genomealign",
-  //     querygenome: "mm10",
-  //     filetype: "genomealign",
-  //     url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  //   }),
+  // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  // }),
   // new TrackModel({
   //   name: "hg38topantro5",
   //   label: "query Chimpanzee panTro5 to hg38 blastz",
@@ -442,6 +450,33 @@ const defaultTracks = [
   //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
   // }),
 ];
+// const defaultTracks = [
+//   new TrackModel({
+//     type: "ruler",
+//     name: "Ruler",
+//   }),
+//   new TrackModel({
+//     type: "geneAnnotation",
+//     name: "refGene",
+//     genome: "hg38",
+//   }),
+//   new TrackModel({
+//     type: "geneAnnotation",
+//     name: "gencodeV39",
+//     genome: "hg38",
+//   }),
+//   new TrackModel({
+//     type: "geneAnnotation",
+//     name: "MANE_select_1.0",
+//     label: "MANE selection v1.0",
+//     genome: "hg38",
+//   }),
+//   new TrackModel({
+//     type: "repeatmasker",
+//     name: "RepeatMasker",
+//     url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
+//   }),
+// ];
 
 const publicHubData = {
   "4D Nucleome Network":

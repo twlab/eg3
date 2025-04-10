@@ -142,7 +142,7 @@ function AddTracks() {
         name: trackState.name,
         options: trackState.options ?? {},
         metadata: { genome: trackState.metadata.genome },
-        id: Date.now(),
+        id: crypto.randomUUID(),
         isSelected: false,
       };
 

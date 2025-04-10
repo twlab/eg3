@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from "react";
-import PropTypes from "prop-types";
+import React, { useCallback, useMemo } from "react";
+
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 import memoizeOne from "memoize-one";
@@ -13,7 +13,6 @@ import { NumericalDisplayModes } from "../../../../../trackConfigs/config-menu-m
 import { DefaultAggregators } from "../../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import { NumericalAggregator } from "./NumericalAggregator";
-import Feature from "../../../../../models/Feature";
 
 import TrackLegend from "../TrackLegend";
 import HoverToolTip from "../HoverToolTips/HoverToolTip";
@@ -31,6 +30,7 @@ interface NumericalTrackProps {
   width?: any;
   forceSvg?: any;
   getNumLegend?: any;
+  xvaluesData: Array<any>;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -67,17 +67,18 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     options,
     forceSvg,
     getNumLegend,
+    groupScale,
+    xvaluesData,
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
   const aggregator = useMemo(() => new NumericalAggregator(), []);
 
-  const xvalues = useMemo(
-    () => aggregator.xToValueMaker(data, viewRegion, width, options),
-    [data, viewRegion, width, options]
-  );
+  let xvalues = xvaluesData
+    ? xvaluesData
+    : aggregator.xToValueMaker(data, viewRegion, width, options);
 
-  const [xToValue, xToValue2, hasReverse] = xvalues;
+  let [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
@@ -85,7 +86,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       if (yMin >= yMax) {
         console.log("Y-axis min must less than max", "error", 2000);
       }
-      const { trackModel, groupScale } = props;
+
       let gscale: any = {},
         min,
         max,
@@ -198,7 +199,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const getEffectiveDisplayMode = () => {
     const { displayMode, height } = options;
-    if (displayMode === NumericalDisplayModes.AUTO) {
+    if (
+      displayMode === NumericalDisplayModes.AUTO ||
+      displayMode === "density"
+    ) {
       return height < AUTO_HEATMAP_THRESHOLD
         ? NumericalDisplayModes.HEATMAP
         : NumericalDisplayModes.BAR;
@@ -317,7 +321,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       </div>
     </React.Fragment>
   );
-
+  xvalues = [];
   return visualizer;
 };
 interface ValueTrackProps {
@@ -331,54 +335,52 @@ interface ValueTrackProps {
   width: any;
   viewWindow: any;
 }
-export class ValuePlot extends React.PureComponent<ValueTrackProps> {
-  static propTypes = {
-    xToValue: PropTypes.array.isRequired,
-    scales: PropTypes.object.isRequired,
-    height: PropTypes.number.isRequired,
-    color: PropTypes.string,
-    isDrawingBars: PropTypes.bool,
-    width: PropTypes.any,
-  };
-
-  constructor(props) {
-    super(props);
-    this.renderPixel = this.renderPixel.bind(this);
-  }
-
-  /**
-   * Gets an element to draw for a data record.
-   *
-   * @param {number} value
-   * @param {number} x
-   * @return {JSX.Element} bar element to render
-   */
-  renderPixel(value, x) {
-    if (!value || Number.isNaN(value)) {
-      return null;
-    }
-    const { isDrawingBars, scales, height, color, colorOut } = this.props;
-    const y =
-      value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
-    let drawY = value > 0 ? y : 0;
-    let drawHeight = value > 0 ? height - y : y;
-    if (isDrawingBars) {
-      // const y = scales.valueToY(value);
-      // const drawHeight = height - y;
-      if (drawHeight <= 0) {
+const ValuePlot = (props) => {
+  const renderPixel = useCallback(
+    (value, x) => {
+      if (!value || Number.isNaN(value)) {
         return null;
       }
-      let tipY;
-      if (value > scales.max || value < scales.min) {
-        drawHeight -= THRESHOLD_HEIGHT;
-        if (value > scales.max) {
-          tipY = y;
-          drawY += THRESHOLD_HEIGHT;
-        } else {
-          tipY = drawHeight;
+      const { isDrawingBars, scales, height, color, colorOut } = props;
+      const y =
+        value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
+      let drawY = value > 0 ? y : 0;
+      let drawHeight = value > 0 ? height - y : y;
+
+      if (isDrawingBars) {
+        if (drawHeight <= 0) {
+          return null;
         }
-        return (
-          <g key={x}>
+        let tipY;
+        if (value > scales.max || value < scales.min) {
+          const THRESHOLD_HEIGHT = 5; // Assuming you have a constant for this
+          drawHeight -= THRESHOLD_HEIGHT;
+          if (value > scales.max) {
+            tipY = y;
+            drawY += THRESHOLD_HEIGHT;
+          } else {
+            tipY = drawHeight;
+          }
+          return (
+            <g key={x}>
+              <rect
+                x={x}
+                y={drawY}
+                width={1}
+                height={drawHeight}
+                fill={color}
+              />
+              <rect
+                x={x}
+                y={tipY}
+                width={1}
+                height={THRESHOLD_HEIGHT}
+                fill={colorOut}
+              />
+            </g>
+          );
+        } else {
+          return (
             <rect
               key={x}
               x={x}
@@ -387,72 +389,52 @@ export class ValuePlot extends React.PureComponent<ValueTrackProps> {
               height={drawHeight}
               fill={color}
             />
-            <rect
-              key={x + "tip"}
-              x={x}
-              y={tipY}
-              width={1}
-              height={THRESHOLD_HEIGHT}
-              fill={colorOut}
-            />
-          </g>
-        );
+          );
+        }
       } else {
+        const opacity =
+          value > 0
+            ? scales.valueToOpacity(value)
+            : scales.valueToOpacityReverse(value);
         return (
           <rect
             key={x}
             x={x}
-            y={drawY}
+            y={0}
             width={1}
-            height={drawHeight}
+            height={height}
             fill={color}
+            fillOpacity={opacity}
           />
         );
       }
-    } else {
-      // Assume HEATMAP
-      const opacity =
-        value > 0
-          ? scales.valueToOpacity(value)
-          : scales.valueToOpacityReverse(value);
-      return (
-        <rect
-          key={x}
-          x={x}
-          y={0}
-          width={1}
-          height={height}
-          fill={color}
-          fillOpacity={opacity}
-        />
-      );
-    }
-  }
+    },
+    [
+      props.isDrawingBars,
+      props.scales,
+      props.height,
+      props.color,
+      props.colorOut,
+    ]
+  );
 
-  render() {
-    // console.log("render in valueplot");
-    const { xToValue, height, forceSvg, width, viewWindow } = this.props;
+  const { xToValue, height, forceSvg, width, viewWindow } = props;
 
-    return xToValue.length === 0 ? (
-      <div
-        style={{
-          width: width,
-          height: height,
-        }}
-      ></div>
-    ) : (
-      <DesignRenderer
-        type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-        width={xToValue.length}
-        height={height}
-        forceSvg={forceSvg}
-        viewWindow={viewWindow}
-      >
-        {this.props.xToValue.map(this.renderPixel)}
-      </DesignRenderer>
-    );
-  }
-}
+  return xToValue.length === 0 ? (
+    <div style={{ width: width, height: height }}></div>
+  ) : (
+    <DesignRenderer
+      type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+      width={xToValue.length}
+      height={height}
+      forceSvg={forceSvg}
+      // viewWindow={viewWindow}
+      style={{ display: "block" }} // Added style property
+    >
+      {xToValue.map(renderPixel)}
+    </DesignRenderer>
+  );
+};
 
 export default NumericalTrack;
 // export default withLogPropChanges(withDefaultOptions(NumericalTrack));
