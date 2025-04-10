@@ -109,7 +109,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     );
   };
 
-
   const renderTrackList = () => {
     const trackList = tracks
       .filter((item) => NUMERICAL_TRACK_TYPES.includes(item.type))
@@ -162,7 +161,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
 
   const getPlotData = async () => {
-
     setPlotMsg("Loading...");
     const track = getTrackByName(trackName);
 
@@ -266,7 +264,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
 
   const groupDataToBins = (data, bins, rights) => {
-
     const indexes = data.map((d) =>
       Math.min(_.sortedIndex(rights, d.locus.end), bins.length - 1)
     );
@@ -327,7 +324,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       />
     );
   };
-
 
   const layout = {
     width: 900,
@@ -454,7 +450,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
             <div style={{ marginLeft: "-150px" }}>
               <Plot data={data[plotType]} layout={layout} config={config} />
             </div>
-
           </div>
         </>
       ) : null}

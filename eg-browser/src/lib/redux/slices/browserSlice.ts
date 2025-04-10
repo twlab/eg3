@@ -13,7 +13,6 @@ import {
 import { RootState } from "../store";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
 
-
 export type uuid = string;
 
 export interface BrowserSession {
@@ -78,7 +77,7 @@ export const browserSlice = createSlice({
         id: crypto.randomUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        title: "",
+        title: "Untitled Session",
         bundleId: null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
