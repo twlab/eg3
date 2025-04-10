@@ -235,7 +235,7 @@ export default function NavBar() {
                 )
               }
               active={currentTab === "tracks"}
-              style={{ color: "#5F6368" }}
+              style={{ color: "var(--font-tint-color)" }}
             >
               Use Previous Version
             </Button>

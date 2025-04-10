@@ -32,8 +32,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
-  // TO-DO need to set initial.current back to true when genomeConfig changes
-  // to see if genomeConfig we can check its session id because it will unique
+
   const throttle = (callback, limit) => {
     let timeoutId: any = null;
     return (...args) => {
@@ -128,7 +127,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [userViewRegion]);
 
   return (
-    <div style={{ paddingLeft: "10px", paddingRight: "10px" }}>
+    <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && (
@@ -136,7 +135,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width - legendWidth - 10}
+            windowWidth={size.width - legendWidth - 20}
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={currentGenomeConfig}
