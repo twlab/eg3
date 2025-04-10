@@ -45,6 +45,7 @@ export default function GenomeView() {
 
   const sessionId = currentSession ? currentSession.id : null;
   if (lastSessionId.current !== sessionId) {
+    console.log("ASDASDDASDASD")
     dispatch(resetState());
     lastSessionId.current = sessionId;
     if (bundleId) {
@@ -80,6 +81,7 @@ export default function GenomeView() {
       })
     );
   };
+
   const handleNewRegionSelect = (
     startbase: number,
     endbase: number,

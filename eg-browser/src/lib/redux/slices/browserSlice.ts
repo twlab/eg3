@@ -32,6 +32,7 @@ export interface BrowserSession {
   regionSets: Array<any>;
   selectedRegionSet: RegionSet | null;
   overrideViewRegion: GenomeCoordinate | null;
+  darkTheme: boolean
 }
 
 // MARK: - State

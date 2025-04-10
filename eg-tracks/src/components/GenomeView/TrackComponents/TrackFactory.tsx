@@ -520,21 +520,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
 
-        // let result = await getDisplayModeFunction({
-        //   genomeName: genomeConfig.genome.getName(),
-        //   genesArr: combinedData,
-        //   trackState,
-        //   windowWidth,
-        //   configOptions: drawOptions,
-        //   renderTooltip,
-        //   svgHeight,
-        //   updatedLegend,
-        //   trackModel,
-        //   getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
-        //   getHeight,
-        //   ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
-        // });
-        console.log(trackState)
         sentScreenshotData({
           fetchData: {
             genomeName: genomeConfig.genome.getName(),
@@ -1439,7 +1424,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         style={{
           zIndex: 10,
           width: 120,
-          backgroundColor: trackModel.isSelected ? "#FFD0C7" : "white",
+          backgroundColor: trackModel.isSelected ? "#FFD0C7" : "var(--bg-color)",
+
+          color: trackModel.isSelected ? "black" : "var(--font-color)",
         }}
       >
         {legend}

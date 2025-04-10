@@ -26,7 +26,7 @@ export default function DescriptiveNavigationLink({
 
     return (
         <div
-            className="flex flex-row gap-4 bg-secondary p-4 rounded-2xl justify-between items-center cursor-pointer"
+            className="text-primary flex flex-row gap-4 bg-secondary p-4 rounded-2xl justify-between items-center cursor-pointer"
             onClick={handleClick}
         >
             <div className="flex flex-col gap-2">

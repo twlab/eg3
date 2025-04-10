@@ -203,14 +203,15 @@ export default function GenomeSchemaView() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-4">
-            <p className="mb-4 text-gray-700">
+        <div className="max-w-4xl mx-auto p-4" style={{ color: "var(--font-color)" }}>
+            <p className="mb-4" >
                 This schema defines the structure for genomic data files. Fields marked with an asterisk (*) are required.
             </p>
 
             <div className="flex mb-4">
                 <Button
                     onClick={() => setShowExample(!showExample)}
+                    style={{ color: "#5F6368" }}
                     active
                 >
                     {showExample ? 'Hide Example' : 'Show Example'}
@@ -218,7 +219,7 @@ export default function GenomeSchemaView() {
             </div>
 
             {showExample && (
-                <div className="mb-6 p-4 bg-gray-100 rounded-lg">
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                     <h2 className="text-lg font-semibold mb-2">Example (minimal valid data):</h2>
                     <pre className="bg-white p-4 rounded overflow-auto text-sm">
                         {JSON.stringify(exampleData, null, 2)}
@@ -230,13 +231,13 @@ export default function GenomeSchemaView() {
                 <SchemaNode node={genomeDataSchema as any} name="Root" path="root" />
             </div>
 
-            <div className="mt-6 text-sm text-gray-600">
+            <div className="mt-6 text-sm text-gray-400">
                 <h3 className="text-lg font-semibold mb-2">Validation Tips:</h3>
                 <ul className="list-disc pl-6">
-                    <li className="mb-1">The <code className="bg-gray-100 px-1 py-0.5 rounded">genomeName</code>, <code className="bg-gray-100 px-1 py-0.5 rounded">chromosomes</code>, and <code className="bg-gray-100 px-1 py-0.5 rounded">cytobands</code> fields are required.</li>
-                    <li className="mb-1">Chromosome names should follow the pattern <code className="bg-gray-100 px-1 py-0.5 rounded">chr1</code>, <code className="bg-gray-100 px-1 py-0.5 rounded">chr2</code>, etc., with <code className="bg-gray-100 px-1 py-0.5 rounded">chrX</code>, <code className="bg-gray-100 px-1 py-0.5 rounded">chrY</code>, and <code className="bg-gray-100 px-1 py-0.5 rounded">chrM</code> also accepted.</li>
-                    <li className="mb-1">For chromosome positions, <code className="bg-gray-100 px-1 py-0.5 rounded">chromEnd</code> must be greater than <code className="bg-gray-100 px-1 py-0.5 rounded">chromStart</code>.</li>
-                    <li className="mb-1">The <code className="bg-gray-100 px-1 py-0.5 rounded">gieStain</code> field must be one of the predefined values: gneg, gpos25, gpos50, gpos75, gpos100, acen, gvar, or stalk.</li>
+                    <li className="mb-1">The <code className="bg-gray-50 px-1 py-0.5 rounded">genomeName</code>, <code className="bg-gray-50 px-1 py-0.5 rounded">chromosomes</code>, and <code className="bg-gray-50 px-1 py-0.5 rounded">cytobands</code> fields are required.</li>
+                    <li className="mb-1">Chromosome names should follow the pattern <code className="bg-gray-50 px-1 py-0.5 rounded">chr1</code>, <code className="bg-gray-50 px-1 py-0.5 rounded">chr2</code>, etc., with <code className="bg-gray-50 px-1 py-0.5 rounded">chrX</code>, <code className="bg-gray-50 px-1 py-0.5 rounded">chrY</code>, and <code className="bg-gray-50 px-1 py-0.5 rounded">chrM</code> also accepted.</li>
+                    <li className="mb-1">For chromosome positions, <code className="bg-gray-50 px-1 py-0.5 rounded">chromEnd</code> must be greater than <code className="bg-gray-50 px-1 py-0.5 rounded">chromStart</code>.</li>
+                    <li className="mb-1">The <code className="bg-gray-50 px-1 py-0.5 rounded">gieStain</code> field must be one of the predefined values: gneg, gpos25, gpos50, gpos75, gpos100, acen, gvar, or stalk.</li>
                 </ul>
             </div>
         </div>

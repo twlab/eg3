@@ -78,6 +78,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }
   }, [size.width]);
+
   useEffect(() => {
     if (size.width > 0) {
       if (trackManagerId.current) {

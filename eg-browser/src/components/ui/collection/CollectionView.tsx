@@ -71,7 +71,8 @@ export default function CollectionView<T>({
     const renderSearchBar = () => (
         <div
             ref={searchBarGeometry.ref}
-            className="sticky top-0 bg-white z-20 pb-2 flex items-center"
+            className="sticky top-0 z-20 pb-2 flex items-center"
+            style={{ backgroundColor: "var(--bg-container-color)" }}
         >
             <input
                 type="text"
@@ -120,8 +121,9 @@ export default function CollectionView<T>({
         <div key={group.name} className="mb-4 relative">
             {group.name && (
                 <h2
-                    className="text-base font-medium mb-1 sticky bg-white z-10 pb-1"
-                    style={{ top: `${searchBarGeometry.height}px` }}
+                    className="text-base font-medium mb-1 sticky z-10 pb-1"
+
+                    style={{ top: `${searchBarGeometry.height}px`, backgroundColor: "var(--bg-container-color)" }}
                 >
                     {group.name}
                 </h2>

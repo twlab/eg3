@@ -71,7 +71,7 @@ export default function RootLayout() {
   return (
     <div
       className="h-screen w-screen flex flex-col bg-black"
-      data-theme={"dark"}
+      data-theme={"light"}
     >
       <GoogleAnalytics />
       <motion.div
@@ -146,10 +146,13 @@ export default function RootLayout() {
                 borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
                 borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
                 scale: expandNavigationTab ? 0.95 : 1,
-                filter: expandNavigationTab
-                  ? "blur(5px) brightness(0.7)"
-                  : "blur(0px) brightness(1)",
-                translateX: expandNavigationTab ? 50 : 0,
+                // filter: expandNavigationTab
+                //   ? "blur(5px) brightness(0.7)"
+                //   : "blur(0px) brightness(1)",
+
+                filter:
+                  "blur(0px) brightness(1)",
+                // translateX: expandNavigationTab ? 50 : 0,
                 width: !showRightTab ? "100vw" : "75vw",
               }}
               style={{
@@ -192,7 +195,7 @@ export default function RootLayout() {
             <AnimatePresence mode="wait">
               {showRightTab && (
                 <motion.div
-                  className="h-full bg-white overflow-hidden z-10"
+                  className="h-full overflow-hidden z-10"
                   key="navigation-tabs"
                   initial={{
                     width: 0,
@@ -212,6 +215,7 @@ export default function RootLayout() {
                     borderTopLeftRadius: 0,
                     borderBottomLeftRadius: 0,
                   }}
+                  style={{ backgroundColor: "var(--bg-container-color)" }}
                 >
                   <div className="flex flex-col h-full">
                     <div className="flex-1 relative">

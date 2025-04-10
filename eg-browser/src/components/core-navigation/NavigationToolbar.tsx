@@ -13,9 +13,8 @@ export default function NavigationToolbar({
 
   return (
     <div
-      className={`${
-        navigationBarEmpty ? "h-4" : "p-4"
-      } flex flex-row justify-between items-center gap-2`}
+      className={`${navigationBarEmpty ? "h-4" : "p-4"
+        } flex flex-row justify-between items-center gap-2`}
     >
       {canGoBack && (
         <button
@@ -32,14 +31,14 @@ export default function NavigationToolbar({
       {options?.trailing
         ? options.trailing
         : canGoBack && (
-            <button
-              className="text-primary flex flex-row items-center invisible"
-              onClick={pop}
-            >
-              <ChevronLeftIcon className="size-6" />
-              Back
-            </button>
-          )}
+          <button
+            className="text-primary flex flex-row items-center invisible"
+            onClick={pop}
+          >
+            <ChevronLeftIcon className="size-6" />
+            Back
+          </button>
+        )}
     </div>
   );
 }

@@ -29,16 +29,19 @@ input {
 .table {
   @apply w-full border-collapse;
 }
+
 :root {
   --dark-fg-color: white;
   --dark-bg-color: black;
   --dark-container-color: #2c2c2c;
   --dark-container-fg-color: white;
+  --dark-fg-tint-color: #ffe6fd;
 
   --light-fg-color: black;
   --light-bg-color: white;
   --light-container-color: white;
   --light-container-fg-color: #5f6368;
+  --light-fg-tint-color: #75697A;
 }
 
 @keyframes borderPulse {
@@ -130,7 +133,8 @@ input {
   --bg-color: var(--dark-bg-color);
   --bg-container-color: var(--dark-container-color);
   --font-container-color: var(--dark-container-fg-color);
-  /* --link-color: #3bd1ff; */
+  --font-tint-color: var(--dark-fg-tint-color)
+    /* --link-color: #3bd1ff; */
 }
 
 [data-theme="light"] {
@@ -138,7 +142,8 @@ input {
   --bg-color: var(--light-bg-color);
   --bg-container-color: var(--light-container-color);
   --font-container-color: var(--light-container-fg-color);
-  /* --link-color: #3f51b5; */
+  --font-tint-color: var(--light-fg-tint-color)
+    /* --link-color: #3f51b5; */
 }
 
 .bg {

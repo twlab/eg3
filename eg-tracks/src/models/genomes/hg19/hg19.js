@@ -36,8 +36,8 @@ const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 const defaultTracks = [
     new TrackModel({
-      type: "ruler",
-      name: "Ruler",
+        type: "ruler",
+        name: "Ruler",
     }),
     // new TrackModel({
     //     type: "bigwig",
@@ -59,6 +59,12 @@ const defaultTracks = [
         options: {
             maxRows: 10,
         },
+    }),
+    new TrackModel({
+        type: "bigwig",
+        name: "TESt",
+        genome: "hg19",
+        url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig"
     }),
     new TrackModel({
         type: "repeatmasker",

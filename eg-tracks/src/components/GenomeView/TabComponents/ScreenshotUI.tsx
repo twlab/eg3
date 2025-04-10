@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import _ from "lodash";
 import ReactModal from "react-modal";
 import withAutoDimensions from "./withAutoDimensions";
@@ -287,8 +287,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   const makeSvgTrackElements = () => {
     const { tracks, trackData } = props;
 
-    document.documentElement.style.setProperty("--bg-color", "white");
-    document.documentElement.style.setProperty("--font-color", "#222");
+    document.documentElement.style.setProperty("var(--bg-color)", "white");
+    document.documentElement.style.setProperty("var(--font-color)", "#222");
 
     const trackSvgElements = tracks
       .filter(
@@ -301,19 +301,19 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       .map((trackModel, index) => {
         const id = trackModel.id;
         const createSVGData = trackData[`${id}`].fetchData;
-        console.log(createSVGData)
+        let newTrackLegend;
+
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
           trackState: createSVGData.trackState,
           windowWidth: createSVGData.windowWidth + 120,
           configOptions: createSVGData.configOptions,
-
           trackModel,
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         });
-        let newTrackLegend = null;
+
         if (
           createSVGData.configOptions.displayMode === "full" ||
           trackModel.type === "ruler"
@@ -334,9 +334,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         }
 
         return (
-          <div key={index} className="Track" style={{ display: "flex" }}>
+          <div key={index} style={{ display: "flex" }}>
             {newTrackLegend ? newTrackLegend : ""}
+
             {svgResult}
+
           </div>
         );
       });
@@ -352,47 +354,40 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
   return (
     <>
-      {" "}
-      <ReactModal
-        isOpen={props.isOpen}
-        contentLabel="Gene & Region search"
-        ariaHideApp={false}
-        onRequestClose={props.handleCloseModal}
-        shouldCloseOnOverlayClick={true}
+
+      <span
+        className="text-right"
+        style={{
+          cursor: "pointer",
+          color: "red",
+          fontSize: "2em",
+          position: "absolute",
+          top: "-5px",
+          right: "15px",
+          zIndex: 5,
+        }}
+        onClick={props.handleCloseModal}
       >
-        <span
-          className="text-right"
-          style={{
-            cursor: "pointer",
-            color: "red",
-            fontSize: "2em",
-            position: "absolute",
-            top: "-5px",
-            right: "15px",
-            zIndex: 5,
-          }}
-          onClick={props.handleCloseModal}
+        ×
+      </span>
+      <div style={{ display, backgroundColor: "var(--bg-color)" }}>
+        <p>
+          Please wait for the following browser view to finish loading, <br />
+          then click the Download button below to download the browser view as
+          an SVG file.
+        </p>
+        <div className="font-italic">
+          <strong>Download SVG</strong> is recommended.
+        </div>
+        <button
+          className="btn btn-primary btn-sm"
+          style={{ marginBottom: "2ch" }}
+          onClick={downloadSvg}
+        // disabled={buttonDisabled === "disabled"}
         >
-          ×
-        </span>
-        <div>
-          <p>
-            Please wait for the following browser view to finish loading, <br />
-            then click the Download button below to download the browser view as
-            an SVG file.
-          </p>
-          <div className="font-italic">
-            <strong>Download SVG</strong> is recommended.
-          </div>
-          <button
-            className="btn btn-primary btn-sm"
-            style={{ marginBottom: "2ch" }}
-            onClick={downloadSvg}
-          // disabled={buttonDisabled === "disabled"}
-          >
-            ⬇ Download SVG
-          </button>{" "}
-          {/* <button
+          ⬇ Download SVG
+        </button>{" "}
+        {/* <button
             className="btn btn-success btn-sm"
             style={{ marginBottom: "2ch" }}
             onClick={downloadPdf}
@@ -400,12 +395,12 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           >
             ⬇ Download PDF
           </button> */}
-          <div id="screenshotContainer" style={{ display }}>
-            {svgView}
-          </div>
-          <div id="pdfContainer"></div>
-        </div>{" "}
-      </ReactModal>
+        <div id="screenshotContainer" >
+          {svgView}
+        </div>
+        <div id="pdfContainer"></div>
+      </div>{" "}
+
     </>
   );
 };

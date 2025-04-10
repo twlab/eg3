@@ -148,6 +148,35 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       forceSvg: options.forceSvg,
       viewWindow: this.props.viewWindow,
     };
+
+    let legend = (
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ zIndex: 4 }}>
+          <TrackLegend
+            trackModel={trackModel}
+            height={options.height}
+            axisScale={this.scales.methylToY}
+            noShiftFirstAxisLabel={!options.isCombineStrands}
+          />
+        </div>
+        <div style={{ zIndex: 3 }}>
+          {!options.isCombineStrands && (
+            <ReverseStrandLegend
+              trackModel={trackModel}
+              height={options.height}
+              maxMethyl={options.maxMethyl}
+            />
+          )}
+        </div>
+      </div>
+    );
+    if (getNumLegend) { getNumLegend(legend) }
     let strandRenderers, tooltipY;
     if (isCombineStrands) {
       strandRenderers = <StrandVisualizer {...childProps} strand="combined" />;
@@ -199,34 +228,8 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       options.maxMethyl
     );
 
-    let legend = (
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div style={{ zIndex: 4 }}>
-          <TrackLegend
-            trackModel={trackModel}
-            height={options.height}
-            axisScale={this.scales.methylToY}
-            noShiftFirstAxisLabel={!options.isCombineStrands}
-          />
-        </div>
-        <div style={{ zIndex: 3 }}>
-          {!options.isCombineStrands && (
-            <ReverseStrandLegend
-              trackModel={trackModel}
-              height={options.height}
-              maxMethyl={options.maxMethyl}
-            />
-          )}
-        </div>
-      </div>
-    );
-    getNumLegend(legend);
+
+
     return this.renderVisualizer();
   }
 }

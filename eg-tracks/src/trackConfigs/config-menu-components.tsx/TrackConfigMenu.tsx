@@ -26,6 +26,8 @@ function ConfigMenuComponent(props: any) {
               left: menuData.pageX - leftMargin,
               // measured from bottom to top of the component
               top: menuData.pageY - blockPosData.height,
+              backgroundColor: "var(--bg-container-color)",
+              color: "var(--font-color)"
             }}
           >
             <Popper placement="right-end">
@@ -44,7 +46,7 @@ function ConfigMenuComponent(props: any) {
                   >
                     <div
                       className="TrackContextMenu-body"
-                      style={{ backgroundColor: "white" }}
+                      style={{ backgroundColor: "var(--bg-container-color)" }}
                     >
                       <MenuTitle
                         title={

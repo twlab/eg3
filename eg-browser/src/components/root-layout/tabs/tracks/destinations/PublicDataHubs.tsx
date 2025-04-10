@@ -114,11 +114,10 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${
-                isLoaded
-                  ? "bg-green-200 hover:bg-green-300"
-                  : "bg-secondary hover:bg-purple-200"
-              }`}
+              className={`size-6 rounded-md flex items-center justify-center ${isLoaded
+                ? "bg-green-200 hover:bg-green-300"
+                : "bg-secondary hover:bg-purple-200"
+                }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -139,7 +138,8 @@ export default function PublicDataHubs() {
   const renderSearchBar = () => (
     <div
       ref={searchBarGeometry.ref}
-      className="sticky top-0 bg-white z-20 pb-2"
+      className="sticky top-0 z-20 pb-2"
+      style={{ backgroundColor: "var(--bg-container-color)" }}
     >
       <input
         type="text"
@@ -154,8 +154,8 @@ export default function PublicDataHubs() {
   const renderHubGroup = (collection: string, hubs: any[]) => (
     <div key={collection} className="mb-4 relative">
       <h2
-        className="text-base font-medium mb-1 sticky bg-white z-10 py-2"
-        style={{ top: `${searchBarGeometry.height}px` }}
+        className="text-base font-medium mb-1 sticky z-10 py-2"
+        style={{ top: `${searchBarGeometry.height}px`, backgroundColor: "var(--bg-container-color)" }}
       >
         {collection}
       </h2>
@@ -201,7 +201,7 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>

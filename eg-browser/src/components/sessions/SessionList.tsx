@@ -235,15 +235,15 @@ function SessionListItem({
         transition={{ duration: 0.2 }}
         className="text-sm text-muted-foreground"
       >
-        <div className="flex flex-col gap-2 pt-2 border-t border-primary">
+        <div className="text-primary flex flex-col gap-2 pt-2 border-t border-primary">
           <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
           <p>
             View region:{" "}
             {session.viewRegion && typeof session.viewRegion === "object"
               ? session.viewRegion.coordinate
               : session.viewRegion
-              ? session.viewRegion
-              : ""}
+                ? session.viewRegion
+                : ""}
           </p>
           <p>Active tracks: {session.tracks ? session.tracks.length : 0}</p>
           <p>

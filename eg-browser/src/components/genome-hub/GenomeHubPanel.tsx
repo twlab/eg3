@@ -86,6 +86,7 @@ export default function GenomeHubPanel() {
               path: "add-custom-genome",
             });
           }}
+          style={{ color: "#5F6368" }}
         >
           Add Custom Genome
         </Button>
@@ -149,12 +150,12 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             Chromosomes:{" "}
             {genome.chromosomes.length > 0
               ? genome.chromosomes
-                  .slice(0, 3)
-                  .map((chr) => chr.name)
-                  .join(", ") +
-                (genome.chromosomes.length > 3
-                  ? ` +${genome.chromosomes.length - 3} more`
-                  : "")
+                .slice(0, 3)
+                .map((chr) => chr.name)
+                .join(", ") +
+              (genome.chromosomes.length > 3
+                ? ` +${genome.chromosomes.length - 3} more`
+                : "")
               : "None"}
           </p>
         </div>
