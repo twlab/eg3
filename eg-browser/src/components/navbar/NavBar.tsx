@@ -27,6 +27,11 @@ import { versionToLogoUrl } from "../genome-picker/genome-list";
 import Button from "../ui/button/Button";
 import IconButton from "../ui/button/IconButton";
 import InlineEditable from "../ui/input/InlineEditable";
+import Switch from "../ui/switch/Switch";
+import {
+  selectDarkTheme,
+  setDarkTheme,
+} from "@/lib/redux/slices/settingsSlice";
 
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
@@ -35,14 +40,14 @@ export default function NavBar() {
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
-
+  const darkTheme = useAppSelector(selectDarkTheme);
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
 
   const genome = useCurrentGenome();
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-    versionToLogoUrl[genome.name]?.logoUrl
+      versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
@@ -101,8 +106,9 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                  }`}
+                style={`text-2xl font-light border border-blue-500 px-2 ${
+                  currentSession.title.length > 0 ? "" : "font-medium"
+                }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -203,6 +209,15 @@ export default function NavBar() {
             >
               Help
             </Button>
+            <div className="flex flex-col gap-4 pt-4">
+              <div className="w-full flex items-center justify-between">
+                <Switch
+                  checked={darkTheme}
+                  onChange={(checked) => dispatch(setDarkTheme(checked))}
+                />
+              </div>
+              <div className="w-full h-[1px] bg-gray-200"></div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -224,6 +239,16 @@ export default function NavBar() {
             >
               Use Previous Version
             </Button>
+
+            <div className="flex flex-col gap-4 pt-4">
+              <div className="w-full flex items-center justify-between">
+                <Switch
+                  checked={darkTheme}
+                  onChange={(checked) => dispatch(setDarkTheme(checked))}
+                />
+              </div>
+              <div className="w-full h-[1px] bg-gray-200"></div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

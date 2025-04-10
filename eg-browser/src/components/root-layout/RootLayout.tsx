@@ -27,6 +27,7 @@ import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
+import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
 
 // const firebaseConfig = {
 //   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
@@ -52,7 +53,7 @@ export default function RootLayout() {
   const navigationTab = useAppSelector(selectNavigationTab);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
-
+  const darkTheme = useAppSelector(selectDarkTheme);
   const isNavigationTabEmpty = !sessionId || navigationTab === null;
 
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
@@ -71,7 +72,7 @@ export default function RootLayout() {
   return (
     <div
       className="h-screen w-screen flex flex-col bg-black"
-      data-theme={"light"}
+      data-theme={!darkTheme ? "light" : "dark"}
     >
       <GoogleAnalytics />
       <motion.div
@@ -150,8 +151,7 @@ export default function RootLayout() {
                 //   ? "blur(5px) brightness(0.7)"
                 //   : "blur(0px) brightness(1)",
 
-                filter:
-                  "blur(0px) brightness(1)",
+                filter: "blur(0px) brightness(1)",
                 // translateX: expandNavigationTab ? 50 : 0,
                 width: !showRightTab ? "100vw" : "75vw",
               }}
