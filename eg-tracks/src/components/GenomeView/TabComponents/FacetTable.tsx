@@ -495,7 +495,7 @@ const FacetTable: React.FC<FacetTableProps> = ({
   };
 
   if (!state.tracks.length) {
-    return <p>Loading</p>;
+    return <p>Table is empty, please add some tracks.</p>;
   } else {
     return (
       <div className="facet-container">

@@ -1,17 +1,12 @@
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import _ from "lodash";
-import ReactModal from "react-modal";
-import withAutoDimensions from "./withAutoDimensions";
-import HighlightRegion, { getHighlightedXs } from "./HighlightRegion";
 import OpenInterval from "../../../models/OpenInterval";
-import { GroupedTrackManager } from "./GroupedTrackManager";
-import {
-  displayModeComponentMap,
-  getDisplayModeFunction,
-} from "../TrackComponents/displayModeComponentMap";
-import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
+import { getHighlightedXs } from "./HighlightRegion";
 import TrackLegend from "../TrackComponents/commonComponents/TrackLegend";
 import { objToInstanceAlign } from "../TrackManager";
+import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
+import { getDisplayModeFunction } from "../TrackComponents/displayModeComponentMap";
+import { ClipLoader } from "react-spinners";
 interface Highlight {
   start: number;
   end: number;
@@ -29,23 +24,18 @@ interface Props {
   trackData: any;
   metadataTerms: any;
   viewRegion?: any;
-  isOpen: any;
-  handleCloseModal: any;
+  retakeScreenshot: any;
   windowWidth: number;
 }
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("block");
   const [buttonDisabled, setButtonDisabled] = useState<string>("");
-  const [svgView, setSvgView] = useState<any>(<div></div>);
-  // const svgDataURL = (svg: SVGElement) => {
-  //   const svgAsXML = new XMLSerializer().serializeToString(svg);
-  //   return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
-  // };
+  const [svgView, setSvgView] = useState<any>(null);
+  const [msg, setMsg] = useState<string>("");
 
   const prepareSvg = () => {
     const { highlights, needClip, legendWidth, primaryView, darkTheme } = props;
-
     const tracks: any = Array.from(
       document
         .querySelector("#screenshotContainer")
@@ -59,12 +49,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const boxWidth = tracks[0].clientWidth;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    // svgElem.setAttributeNS(
-    //   null,
-    //   "viewBox",
-    //   "0 0 " + boxWidth -10 + " " + (boxHeight - 5)
-    // );
-    //add the width of the track and tracklegend to to correctly view all the svg
     svgElem.setAttributeNS(null, "width", props.windowWidth + 120 + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
@@ -74,14 +58,14 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const bg = darkTheme ? "#222" : "white";
     const fg = darkTheme ? "white" : "#222";
     style.innerHTML = `:root { --bg-color: ${bg}; --font-color: ${fg}; } .svg-text-bg {
-            fill: var(--font-color);
-        }
-
-        .svg-line-bg {
-            stroke: var(--font-color);
-        }`;
+      fill: var(--font-color);
+    }
+    .svg-line-bg {
+      stroke: var(--font-color);
+    }`;
     defs.appendChild(style);
     svgElem.appendChild(defs);
+
     if (darkTheme) {
       const rect = document.createElementNS(xmlns, "rect");
       rect.setAttribute("id", "bgcover");
@@ -92,8 +76,9 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       rect.setAttribute("fill", "#222");
       svgElem.appendChild(rect);
     }
-    const svgElemg = document.createElementNS(xmlns, "g"); // for labels, separate lines etc
-    const svgElemg2 = document.createElementNS(xmlns, "g"); // for tracks contents
+
+    const svgElemg = document.createElementNS(xmlns, "g");
+    const svgElemg2 = document.createElementNS(xmlns, "g");
     const translateX = needClip ? -primaryView.viewWindow.start : 0;
     const clipDef = document.createElementNS(xmlns, "defs");
     const clipPath = document.createElementNS(xmlns, "clipPath");
@@ -101,6 +86,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     let clipWidth, clipHeight, clipX;
     let x = 0,
       y = 5;
+
     tracks.forEach((ele, idx) => {
       const legendWidth = 120;
       const trackHeight = ele.children[1].clientHeight + 3;
@@ -113,27 +99,12 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         labelSvg.setAttributeNS(null, "x", x + 4 + "");
         labelSvg.setAttributeNS(null, "y", y + yoffset + "");
         labelSvg.setAttributeNS(null, "font-size", "12px");
-        const textNode = document.createTextNode(trackLabelText);
         labelSvg.setAttribute("class", "svg-text-bg");
-        labelSvg.appendChild(textNode);
+        labelSvg.textContent = trackLabelText;
         svgElemg.appendChild(labelSvg);
       }
 
-      const chrLabelText = ele.children[0].querySelector(
-        ".TrackLegend-chrLabel"
-      );
-
-      // if (chrLabelText) {
-      //   const labelSvg = document.createElementNS(xmlns, "text");
-      //   labelSvg.setAttributeNS(null, "x", x + 15 + "");
-      //   labelSvg.setAttributeNS(null, "y", y + 35 + "");
-      //   labelSvg.setAttributeNS(null, "font-size", "12px");
-      //   const textNode = document.createTextNode(chrLabelText);
-      //   labelSvg.setAttribute("class", "svg-text-bg");
-      //   labelSvg.appendChild(textNode);
-      //   svgElemg.appendChild(labelSvg);
-      // }
-      const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
+      const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg");
       if (trackLegendAxisSvgs.length > 0) {
         const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
         trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
@@ -146,14 +117,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           svgElemg.appendChild(trackLegendAxisSvg);
         });
       }
-      // deal with track contents
-      const options = props.tracks[idx].options;
-      const eleSvgs = ele.querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
 
+      const options = props.tracks[idx].options;
+      const eleSvgs = ele.querySelectorAll("svg");
       const trackG = document.createElementNS(xmlns, "g");
       if (eleSvgs.length > 0) {
         x += legendWidth;
-        let yoff = 0; // when bi-directional numerical track is not symmetric, need a tempory variable to hold y offset
+        let yoff = 0;
         eleSvgs.forEach((eleSvg, idx2) => {
           eleSvg.setAttribute("id", "svg" + idx + idx2);
           eleSvg.setAttribute("x", x + "");
@@ -168,15 +138,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             rect.setAttribute("fill", options.backgroundColor);
             trackG.appendChild(rect);
           }
-          yoff += eleSvg.clientHeight; // do this before appendChild
+          yoff += eleSvg.clientHeight;
           trackG.appendChild(eleSvg);
         });
       }
       trackG.setAttributeNS(null, "transform", `translate(${translateX})`);
       svgElemg2.appendChild(trackG);
-      // metadata ?
       y += trackHeight;
-      // y += 1; //draw separare line
       const sepLine = document.createElementNS(xmlns, "line");
       sepLine.setAttribute("id", "line" + idx);
       sepLine.setAttribute("x1", "0");
@@ -185,10 +153,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       sepLine.setAttribute("y2", y + "");
       sepLine.setAttribute("stroke", "gray");
       svgElemg.appendChild(sepLine);
-      // y += 1;
       x = 0;
       clipX = legendWidth - 1;
     });
+
     clipHeight = boxHeight;
     clipWidth = boxWidth - clipX;
     const clipRect = document.createElementNS(xmlns, "rect");
@@ -205,7 +173,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     svgElem.appendChild(svgElemg);
     svgElem.appendChild(svgElemg2);
     svgElem.setAttribute("xmlns", xmlns);
-    // highlights
+
     const xS = highlights.map((h) =>
       getHighlightedXs(
         new OpenInterval(h.start, h.end),
@@ -237,8 +205,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     });
     const svgUrl = URL.createObjectURL(svgBlob);
     const dl = document.createElement("a");
-    document.body.appendChild(dl); // This line makes it work in Firefox.
-    //dl.setAttribute("href", this.svgDataURL(svgElem)); //chrome network error on svg > 1MB
+    document.body.appendChild(dl);
     dl.setAttribute("href", svgUrl);
     dl.setAttribute("download", new Date().toISOString() + "_eg.svg");
     dl.click();
@@ -250,47 +217,13 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     }
   };
 
-  // const downloadPdf = () => {
-  //   const svgContent = prepareSvg();
-  //   const tracks = Array.from(
-  //     document
-  //       .querySelector("#screenshotContainer")
-  //       ?.querySelectorAll(".Track") ?? []
-  //   );
-  //   const boxHeight = tracks.reduce(
-  //     (acc, cur) => acc + cur.clientHeight,
-  //     11 * tracks.length
-  //   );
-  //   const boxWidth = tracks[1].clientWidth;
-  //   // create a new jsPDF instance
-  //   // Create a new jsPDF instance
-  //   const pdf = new jsPDF("landscape", "px", [boxWidth, boxHeight]);
-
-  //   // Create a temporary PDF container
-  //   const pdfContainer = document.createElement("div");
-  //   document.body.appendChild(pdfContainer);
-  //   pdfContainer.innerHTML = svgContent;
-
-  //   // Use svg2pdf to render the SVG into the PDF instance
-  //   svg2pdf(pdfContainer.querySelector("svg"), pdf, {
-  //     xOffset: 0,
-  //     yOffset: 0,
-  //     scale: 1,
-  //   });
-
-  //   // get the data URI
-  //   pdf.save(new Date().toISOString() + "_eg.pdf");
-  //   setDisplay("none");
-  //   setButtonDisabled("disabled");
-  // };
-
-  const makeSvgTrackElements = () => {
+  const makeSvgTrackElements = async () => {
     const { tracks, trackData } = props;
 
     document.documentElement.style.setProperty("var(--bg-color)", "white");
     document.documentElement.style.setProperty("var(--font-color)", "#222");
 
-    const trackSvgElements = tracks
+    const trackSvgElements = await tracks
       .filter(
         (track) =>
           !(
@@ -302,12 +235,12 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const id = trackModel.id;
         const createSVGData = trackData[`${id}`].fetchData;
         let newTrackLegend;
-
+        console.log(createSVGData);
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
           trackState: createSVGData.trackState,
-          windowWidth: createSVGData.windowWidth + 120,
+          windowWidth: createSVGData.windowWidth,
           configOptions: createSVGData.configOptions,
           trackModel,
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
@@ -332,76 +265,86 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             />
           );
         }
-
+        setMsg("");
         return (
           <div key={index} style={{ display: "flex" }}>
             {newTrackLegend ? newTrackLegend : ""}
-
             {svgResult}
-
           </div>
         );
       });
 
     return trackSvgElements;
   };
-
+  function updateScreenshot() {
+    props.retakeScreenshot();
+    setMsg(
+      "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+    );
+  }
   useEffect(() => {
     if (props.trackData && Object.keys(props.trackData).length > 0) {
-      setSvgView(makeSvgTrackElements());
+      setMsg(
+        "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+      );
     }
   }, [props.trackData]);
 
+  useEffect(() => {
+    if (
+      props.trackData &&
+      Object.keys(props.trackData).length > 0 &&
+      msg !== ""
+    ) {
+      const timeoutId = setTimeout(() => {
+        makeSvgTrackElements().then((elements) => {
+          setSvgView(elements);
+        });
+      }, 250); // Adding a small delay to ensure the message is rendered
+      return () => clearTimeout(timeoutId);
+    }
+  }, [msg, props.trackData]);
+
   return (
-    <>
+    <div style={{ display, backgroundColor: "var(--bg-color)" }}>
+      {msg !== "" ? (
+        <>
+          <ClipLoader color="#09f" loading={true} size={24} />
+          <p>{msg}</p>
+        </>
+      ) : (
+        ""
+      )}
+      {svgView ? (
+        <>
+          <div className="font-italic">
+            You can get the updated view of the tracks by retaking your
+            screenshot.
+          </div>
+          <div style={{ display: "flex", gap: "1ch" }}>
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginBottom: "2ch" }}
+              onClick={downloadSvg}
+            >
+              ⬇ Download SVG
+            </button>
 
-      <span
-        className="text-right"
-        style={{
-          cursor: "pointer",
-          color: "red",
-          fontSize: "2em",
-          position: "absolute",
-          top: "-5px",
-          right: "15px",
-          zIndex: 5,
-        }}
-        onClick={props.handleCloseModal}
-      >
-        ×
-      </span>
-      <div style={{ display, backgroundColor: "var(--bg-color)" }}>
-        <p>
-          Please wait for the following browser view to finish loading, <br />
-          then click the Download button below to download the browser view as
-          an SVG file.
-        </p>
-        <div className="font-italic">
-          <strong>Download SVG</strong> is recommended.
-        </div>
-        <button
-          className="btn btn-primary btn-sm"
-          style={{ marginBottom: "2ch" }}
-          onClick={downloadSvg}
-        // disabled={buttonDisabled === "disabled"}
-        >
-          ⬇ Download SVG
-        </button>{" "}
-        {/* <button
-            className="btn btn-success btn-sm"
-            style={{ marginBottom: "2ch" }}
-            onClick={downloadPdf}
-            // disabled={buttonDisabled === "disabled"}
-          >
-            ⬇ Download PDF
-          </button> */}
-        <div id="screenshotContainer" >
-          {svgView}
-        </div>
-        <div id="pdfContainer"></div>
-      </div>{" "}
-
-    </>
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginBottom: "2ch" }}
+              onClick={updateScreenshot}
+            >
+              📷 Retake Screenshot
+            </button>
+          </div>
+          <div id="screenshotContainer">{svgView}</div>
+          <div id="pdfContainer"></div>
+        </>
+      ) : (
+        ""
+      )}
+    </div>
   );
 };
 

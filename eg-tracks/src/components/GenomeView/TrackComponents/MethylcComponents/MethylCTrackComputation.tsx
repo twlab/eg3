@@ -176,14 +176,22 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
         </div>
       </div>
     );
-    if (getNumLegend) { getNumLegend(legend) }
+    if (getNumLegend) {
+      getNumLegend(legend);
+    }
     let strandRenderers, tooltipY;
     if (isCombineStrands) {
-      strandRenderers = <StrandVisualizer {...childProps} strand="combined" />;
+      strandRenderers = (
+        <React.Fragment>
+          {forceSvg ? legend : ""}
+          <StrandVisualizer {...childProps} strand="combined" />
+        </React.Fragment>
+      );
       tooltipY = height;
     } else {
       strandRenderers = (
         <React.Fragment>
+          {forceSvg ? legend : ""}
           <StrandVisualizer {...childProps} strand="forward" />
           <StrandVisualizer {...childProps} strand="reverse" />
         </React.Fragment>
@@ -193,26 +201,30 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
 
     return (
       <>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
+        {!forceSvg ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
 
-            zIndex: 3,
-          }}
-        >
-          <HoverToolTip
-            data={this.aggregatedRecords}
-            windowWidth={width}
-            trackModel={trackModel}
-            trackType={"methyc"}
-            options={options}
-            height={tooltipY}
-            viewRegion={viewRegion}
-            hasReverse={true}
-          />
-        </div>
+              zIndex: 3,
+            }}
+          >
+            <HoverToolTip
+              data={this.aggregatedRecords}
+              windowWidth={width}
+              trackModel={trackModel}
+              trackType={"methyc"}
+              options={options}
+              height={tooltipY}
+              viewRegion={viewRegion}
+              hasReverse={true}
+            />
+          </div>
+        ) : (
+          ""
+        )}
         {strandRenderers}
       </>
     );
@@ -227,8 +239,6 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       options.height,
       options.maxMethyl
     );
-
-
 
     return this.renderVisualizer();
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ScreenshotUI from "@eg/tracks/src/components/GenomeView/TabComponents/ScreenshotUI";
 import {
   selectScreenShotData,
@@ -13,17 +13,29 @@ export default function Screenshot() {
   useExpandedNavigationTab();
   const screenShotData = useAppSelector(selectScreenShotData);
   const isOpen = useAppSelector(selectScreenShotOpen);
-  const [showModal, setShowModal] = useState(false);
+  const isRetakeScreenshot = useRef<boolean>(false);
   const dispatch = useAppDispatch();
 
-  function handleCloseModal() {
+  function retakeScreenshot() {
     dispatch(updateScreenShotData({}));
     dispatch(updateScreenShotOpen(false));
+    isRetakeScreenshot.current = true;
   }
 
   useEffect(() => {
+    if (
+      screenShotData &&
+      Object.keys(screenShotData).length === 0 &&
+      isRetakeScreenshot.current
+    ) {
+      dispatch(updateScreenShotOpen(true));
+      isRetakeScreenshot.current = false;
+    }
+  }, [screenShotData]);
+
+  useEffect(() => {
     dispatch(updateScreenShotOpen(true));
-    setShowModal(true);
+
     return () => {
       dispatch(updateScreenShotOpen(false));
       dispatch(updateScreenShotData({}));
@@ -31,7 +43,7 @@ export default function Screenshot() {
   }, []);
 
   return Object.keys(screenShotData).length > 0 && isOpen ? (
-    <div   >
+    <div>
       <ScreenshotUI
         highlights={screenShotData.highlights}
         needClip={false}
@@ -41,13 +53,11 @@ export default function Screenshot() {
         tracks={screenShotData.tracks}
         trackData={screenShotData.trackData}
         metadataTerms={[]}
-        // viewRegion={screenShotData.viewRegion}
-        handleCloseModal={handleCloseModal}
-        isOpen={showModal}
+        retakeScreenshot={retakeScreenshot}
         windowWidth={screenShotData.windowWidth}
       />
     </div>
   ) : (
-    ""
+    <div> No tracks in view </div>
   );
 }

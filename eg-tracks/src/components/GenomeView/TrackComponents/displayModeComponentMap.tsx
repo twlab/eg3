@@ -130,6 +130,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
         let end = trackState.viewWindow.end - trackState.visWidth / 3;
         let svgWidth = end - start;
+        console.log(svgWidth, start, end, width / 3, "SVG");
         return (
           <svg
             style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
@@ -140,7 +141,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             display={"block"}
           >
             {placements.map(renderAnnotation)}
-            {/* <line
+            <line
               x1={width / 3}
               y1={0}
               x2={width / 3}
@@ -155,7 +156,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y2={height}
               stroke="black"
               strokeWidth={1}
-            /> */}
+            />
           </svg>
         );
       }
@@ -169,7 +170,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           display={"block"}
         >
           {placements.map(renderAnnotation)}
-          {/* <line
+          <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -184,7 +185,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          /> */}
+          />
         </svg>
       );
     }

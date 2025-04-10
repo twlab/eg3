@@ -7,6 +7,7 @@ export const hubSlice = createSlice({
   initialState: {
     publicTracksPool: [] as ITrackModel[],
     customTracksPool: [] as ITrackModel[],
+    savedDeleteTrackList: [] as ITrackModel[],
     screenshotData: {} as { [key: string]: any },
     screenShotOpen: false as boolean,
     loadedPublicHub: new Set(),
@@ -50,10 +51,16 @@ export const hubSlice = createSlice({
     updateLoadedPublicHub: (state, action: PayloadAction<Set<any>>) => {
       state.loadedPublicHub = action.payload;
     },
-
+    updateSavedDeleteTrackList: (
+      state,
+      action: PayloadAction<ITrackModel[]>
+    ) => {
+      state.savedDeleteTrackList = action.payload;
+    },
     resetState: (state) => {
       state.publicTracksPool = [];
       state.customTracksPool = [];
+      state.savedDeleteTrackList = [];
       state.screenshotData = {};
       state.screenShotOpen = false;
       state.loadedPublicHub = new Set();
@@ -73,6 +80,7 @@ export const {
   resetState,
   updateLoadedPublicHub,
   updateBundle,
+  updateSavedDeleteTrackList,
 } = hubSlice.actions;
 
 export const selectPublicTracksPool = (state: RootState) =>
@@ -86,5 +94,7 @@ export const selectScreenShotOpen = (state: RootState) =>
 export const selectLoadedPublicHub = (state: RootState) =>
   state.hub.loadedPublicHub;
 export const selectBundle = (state: RootState) => state.hub.bundle;
+export const selectSavedDeleteTrackList = (state: RootState) =>
+  state.hub.savedDeleteTrackList;
 
 export default hubSlice.reducer;

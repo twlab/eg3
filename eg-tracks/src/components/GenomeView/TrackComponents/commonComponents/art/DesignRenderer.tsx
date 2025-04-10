@@ -61,12 +61,12 @@ export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
           let end = this.props.viewWindow.end - this.props.width / 3;
 
           let svgWidth = end - start;
-
+          console.log(this.props.width / 3, start, end, svgWidth, "canvas");
           return (
             <svg
               children={this.props.children}
               style={mergedStyle}
-              width={this.props.width / 3}
+              width={(svgWidth + 120) / 3}
               viewBox={`${start} 0 ${svgWidth} ${this.props.height}`}
               height={this.props.height}
               display={"block"}
