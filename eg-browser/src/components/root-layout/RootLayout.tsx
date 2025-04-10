@@ -82,181 +82,183 @@ export default function RootLayout() {
         }}
       >
         <NavBar />
-        <div className="flex flex-row flex-1 relative" ref={contentRef}>
-          <AnimatePresence mode="wait">
-            {sessionPanelOpen && (
-              <motion.div
-                className="h-full bg-white overflow-hidden absolute top-0 left-0 z-10"
-                key="navigation-tabs"
-                style={{
-                  width: "25vw",
-                  borderTopRightRadius: CURL_RADIUS,
-                  borderBottomRightRadius: CURL_RADIUS,
-                }}
-                initial={{
-                  translateX: "-100%",
-                }}
-                animate={{
-                  translateX: 0,
-                }}
-                exit={{
-                  translateX: "-100%",
-                }}
-              >
-                <div
-                  className="flex flex-col"
-                  style={{ height: contentHeight }}
-                >
-                  <SessionPanel />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* MARK: - Main Content */}
-          <motion.div
-            className="flex flex-row flex-1 overflow-hidden"
-            animate={{
-              scale: sessionPanelOpen ? 0.95 : 1,
-              borderRadius: sessionPanelOpen ? 15 : 0,
-              filter: sessionPanelOpen
-                ? "blur(5px) brightness(0.7)"
-                : "blur(0px) brightness(1)",
-            }}
-            onClick={
-              sessionPanelOpen
-                ? () => dispatch(setSessionPanelOpen(false))
-                : undefined
-            }
-          >
-            {/* MARK: - Genome View */}
-            <motion.div
-              className="h-full border-r bg-white overflow-hidden"
-              initial={{
-                width: "100vw",
-              }}
-              animate={{
-                borderTopRightRadius: !showRightTab ? 0 : CURL_RADIUS,
-                borderBottomRightRadius: !showRightTab ? 0 : CURL_RADIUS,
-                borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
-                borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
-                scale: expandNavigationTab ? 0.95 : 1,
-                filter: expandNavigationTab
-                  ? "blur(5px) brightness(0.7)"
-                  : "blur(0px) brightness(1)",
-                translateX: expandNavigationTab ? 50 : 0,
-                width: !showRightTab ? "100vw" : "75vw",
-              }}
-              style={{
-                pointerEvents: sessionPanelOpen ? "none" : "auto",
-              }}
-            >
-              <AnimatePresence mode="wait">
-                {sessionId !== null ? (
-                  <motion.div
-                    className="flex flex-col h-full w-screen overflow-auto pb-44"
-                    key="genome-view"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    style={{ width: contentWidth, height: contentHeight }}
-                  >
-                    <GenomeErrorBoundary onGoHome={handleGoHome}>
-                      <GenomeView />
-                    </GenomeErrorBoundary>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className="h-full"
-                    key="genome-picker"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    style={{ width: contentWidth, height: contentHeight }}
-                  >
-                    <GenomePicker />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* MARK: - Navigation Tabs */}
+        <div className="relative flex-1" ref={contentRef}>
+          <div className="flex flex-row absolute" style={{ width: contentWidth, height: contentHeight }}>
             <AnimatePresence mode="wait">
-              {showRightTab && (
+              {sessionPanelOpen && (
                 <motion.div
-                  className="h-full bg-white overflow-hidden z-10"
+                  className="h-full bg-white overflow-hidden absolute top-0 left-0 z-10"
                   key="navigation-tabs"
+                  style={{
+                    width: "25vw",
+                    borderTopRightRadius: CURL_RADIUS,
+                    borderBottomRightRadius: CURL_RADIUS,
+                  }}
                   initial={{
-                    width: 0,
-                    marginLeft: 0,
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
+                    translateX: "-100%",
                   }}
                   animate={{
-                    width: expandNavigationTab ? "75vw" : "25vw",
-                    marginLeft: 5,
-                    borderTopLeftRadius: CURL_RADIUS,
-                    borderBottomLeftRadius: CURL_RADIUS,
+                    translateX: 0,
                   }}
                   exit={{
-                    width: 0,
-                    marginLeft: 0,
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
+                    translateX: "-100%",
                   }}
                 >
-                  <div className="flex flex-col h-full">
-                    <div className="flex-1 relative">
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "tracks" ? "block" : "none",
-                        }}
-                      >
-                        <TracksTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "apps" ? "block" : "none",
-                        }}
-                      >
-                        <AppsTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "help" ? "block" : "none",
-                        }}
-                      >
-                        <HelpTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "share" ? "block" : "none",
-                        }}
-                      >
-                        <ShareTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "settings" ? "block" : "none",
-                        }}
-                      >
-                        <SettingsTab />
-                      </div>
-                    </div>
+                  <div
+                    className="flex flex-col"
+                    style={{ height: contentHeight }}
+                  >
+                    <SessionPanel />
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+
+            {/* MARK: - Main Content */}
+            <motion.div
+              className="flex flex-row flex-1 overflow-hidden"
+              animate={{
+                scale: sessionPanelOpen ? 0.95 : 1,
+                borderRadius: sessionPanelOpen ? 15 : 0,
+                filter: sessionPanelOpen
+                  ? "blur(5px) brightness(0.7)"
+                  : "blur(0px) brightness(1)",
+              }}
+              onClick={
+                sessionPanelOpen
+                  ? () => dispatch(setSessionPanelOpen(false))
+                  : undefined
+              }
+            >
+              {/* MARK: - Genome View */}
+              <motion.div
+                className="h-full border-r bg-white overflow-hidden"
+                initial={{
+                  width: "100vw",
+                }}
+                animate={{
+                  borderTopRightRadius: !showRightTab ? 0 : CURL_RADIUS,
+                  borderBottomRightRadius: !showRightTab ? 0 : CURL_RADIUS,
+                  borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
+                  borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
+                  scale: expandNavigationTab ? 0.95 : 1,
+                  filter: expandNavigationTab
+                    ? "blur(5px) brightness(0.7)"
+                    : "blur(0px) brightness(1)",
+                  translateX: expandNavigationTab ? 50 : 0,
+                  width: !showRightTab ? "100vw" : "75vw",
+                }}
+                style={{
+                  pointerEvents: sessionPanelOpen ? "none" : "auto",
+                }}
+              >
+                <AnimatePresence mode="wait">
+                  {sessionId !== null ? (
+                    <motion.div
+                      className="flex flex-col h-full w-screen overflow-auto pb-44"
+                      key="genome-view"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      style={{ width: contentWidth, height: contentHeight }}
+                    >
+                      <GenomeErrorBoundary onGoHome={handleGoHome}>
+                        <GenomeView />
+                      </GenomeErrorBoundary>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      className="h-full"
+                      key="genome-picker"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      style={{ width: contentWidth, height: contentHeight }}
+                    >
+                      <GenomePicker />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* MARK: - Navigation Tabs */}
+              <AnimatePresence mode="wait">
+                {showRightTab && (
+                  <motion.div
+                    className="h-full bg-white overflow-hidden z-10"
+                    key="navigation-tabs"
+                    initial={{
+                      width: 0,
+                      marginLeft: 0,
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                    }}
+                    animate={{
+                      width: expandNavigationTab ? "75vw" : "25vw",
+                      marginLeft: 5,
+                      borderTopLeftRadius: CURL_RADIUS,
+                      borderBottomLeftRadius: CURL_RADIUS,
+                    }}
+                    exit={{
+                      width: 0,
+                      marginLeft: 0,
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                    }}
+                  >
+                    <div className="flex flex-col h-full">
+                      <div className="flex-1 relative">
+                        <div
+                          className="h-full"
+                          style={{
+                            display:
+                              navigationTab === "tracks" ? "block" : "none",
+                          }}
+                        >
+                          <TracksTab />
+                        </div>
+                        <div
+                          className="h-full"
+                          style={{
+                            display: navigationTab === "apps" ? "block" : "none",
+                          }}
+                        >
+                          <AppsTab />
+                        </div>
+                        <div
+                          className="h-full"
+                          style={{
+                            display: navigationTab === "help" ? "block" : "none",
+                          }}
+                        >
+                          <HelpTab />
+                        </div>
+                        <div
+                          className="h-full"
+                          style={{
+                            display: navigationTab === "share" ? "block" : "none",
+                          }}
+                        >
+                          <ShareTab />
+                        </div>
+                        <div
+                          className="h-full"
+                          style={{
+                            display:
+                              navigationTab === "settings" ? "block" : "none",
+                          }}
+                        >
+                          <SettingsTab />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
         </div>
       </motion.div>
 

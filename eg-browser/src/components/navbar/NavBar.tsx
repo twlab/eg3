@@ -68,7 +68,7 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl text-primary font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
+                style={`text-2xl text-primary font-light ${currentSession.title.length > 0 ? "" : "font-medium"
                   }`}
                 tooltip={
                   currentSession.title.length > 0

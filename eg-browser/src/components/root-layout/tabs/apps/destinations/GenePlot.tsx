@@ -17,6 +17,7 @@ import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import { getGenomeConfig } from "@eg/tracks";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
 export const NUMERICAL_TRACK_TYPES = ["bigwig", "bedgraph"]; // the front UI we allow any case of types, in TrackModel only lower case
 
@@ -34,6 +35,8 @@ const PLOT_TYPE_DESC = {
 };
 
 const Geneplot: React.FC<GeneplotProps> = () => {
+  useExpandedNavigationTab();
+
   const [setName, setSetName] = useState("");
   const [trackName, setTrackName] = useState("");
   const [plotType, setPlotType] = useState("box");

@@ -176,6 +176,7 @@
         ],
         "Genes": [
             {
+                "type": "geneAnnotation",
                 "name": "ncbiRefSeq",
                 "label": "NCBI genes",
                 "filetype": "geneAnnotation"
@@ -188,6 +189,7 @@
             "type": "ruler"
         },
         {
+            "type": "geneAnnotation",
             "name": "ncbiRefSeq",
             "label": "NCBI genes",
             "filetype": "geneAnnotation"
