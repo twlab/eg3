@@ -18,7 +18,7 @@ export default function NavigationToolbar({
     >
       {canGoBack && (
         <button
-          className="text-primary flex flex-row items-center"
+          className="text-primary dark:text-dark-primary flex flex-row items-center"
           onClick={pop}
         >
           <ChevronLeftIcon className="size-6" />
@@ -32,7 +32,7 @@ export default function NavigationToolbar({
         ? options.trailing
         : canGoBack && (
           <button
-            className="text-primary flex flex-row items-center invisible"
+            className="text-primary dark:text-dark-primary flex flex-row items-center invisible"
             onClick={pop}
           >
             <ChevronLeftIcon className="size-6" />

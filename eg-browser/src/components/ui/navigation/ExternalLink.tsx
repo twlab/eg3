@@ -17,7 +17,7 @@ export default function ExternalLink({
 
     return (
         <div
-            className="flex flex-row gap-4 bg-secondary p-4 rounded-2xl justify-between items-center cursor-pointer"
+            className="flex flex-row gap-4 bg-secondary dark:bg-dark-secondary dark:text-dark-primary p-4 rounded-2xl justify-between items-center cursor-pointer"
             onClick={handleClick}
         >
             <div className="flex flex-col gap-2">

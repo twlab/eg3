@@ -71,8 +71,7 @@ export default function CollectionView<T>({
     const renderSearchBar = () => (
         <div
             ref={searchBarGeometry.ref}
-            className="sticky top-0 z-20 pb-2 flex items-center"
-            style={{ backgroundColor: "var(--bg-container-color)" }}
+            className="sticky top-0 z-20 pb-2 flex items-center bg-white dark:bg-dark-background"
         >
             <input
                 type="text"
@@ -98,18 +97,18 @@ export default function CollectionView<T>({
             {selectedIds !== undefined && (
                 <>
                     {selectedIds.has(item.id) ? (
-                        <div className="w-6 h-6 rounded-md bg-green-200 flex items-center justify-center flex-shrink-0">
-                            <CheckIcon className="w-4 h-4" />
+                        <div className="w-6 h-6 rounded-md bg-green-200 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
+                            <CheckIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
                         </div>
                     ) : (
                         <button
-                            className="w-6 h-6 rounded-md bg-secondary flex items-center justify-center hover:bg-purple-200 flex-shrink-0"
+                            className="w-6 h-6 rounded-md bg-secondary dark:bg-dark-secondary flex items-center justify-center hover:bg-purple-200 flex-shrink-0"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onSelect(item);
                             }}
                         >
-                            <PlusIcon className="w-4 h-4" />
+                            <PlusIcon className="w-4 h-4 text-primary dark:text-dark-primary" />
                         </button>
                     )}
                 </>
@@ -121,9 +120,9 @@ export default function CollectionView<T>({
         <div key={group.name} className="mb-4 relative">
             {group.name && (
                 <h2
-                    className="text-base font-medium mb-1 sticky z-10 pb-1"
+                    className="text-base font-medium mb-1 sticky z-10 pb-1 bg-white dark:bg-dark-background"
 
-                    style={{ top: `${searchBarGeometry.height}px`, backgroundColor: "var(--bg-container-color)" }}
+                    style={{ top: `${searchBarGeometry.height}px` }}
                 >
                     {group.name}
                 </h2>

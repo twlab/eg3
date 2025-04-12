@@ -26,15 +26,15 @@ export default function DescriptiveNavigationLink({
 
     return (
         <div
-            className="text-primary flex flex-row gap-4 bg-secondary p-4 rounded-2xl justify-between items-center cursor-pointer"
+            className="text-primary flex flex-row gap-4 bg-secondary dark:bg-dark-secondary p-4 rounded-2xl justify-between items-center cursor-pointer"
             onClick={handleClick}
         >
             <div className="flex flex-col gap-2">
-                <h1 className="text-2xl">{title}</h1>
-                {description && <p className="text-sm">{description}</p>}
+                <h1 className="text-2xl text-primary dark:text-dark-primary">{title}</h1>
+                {description && <p className="text-sm text-primary dark:text-dark-primary">{description}</p>}
             </div>
             <div>
-                <ChevronRightIcon className="size-6" />
+                <ChevronRightIcon className="size-6 text-primary dark:text-dark-primary" />
             </div>
         </div>
     );

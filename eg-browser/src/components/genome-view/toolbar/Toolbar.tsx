@@ -37,7 +37,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
     useState<MagnifyingDirection | null>(null);
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `p-1.5 ${tool === buttonTool ? "bg-secondary" : ""} ${tool !== buttonTool ? "hover:bg-gray-200" : ""
+    return `p-1.5 ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""} ${tool !== buttonTool ? "hover:bg-gray-200 dark:hover:bg-dark-secondary" : ""
       } rounded-md`;
   };
   const handleToolClick = (selectedTool: Tool): any => {
@@ -50,7 +50,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
 
   return (
     <motion.div
-      className="bg-white/80 backdrop-blur-md flex flex-col p-1 m-1.5 border border-gray-secondary rounded-md"
+      className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-col p-1 m-1.5 border border-gray-secondary rounded-md"
       animate={{
         gap: isSearchFocused ? 0 : "0.5rem",
       }}
@@ -84,7 +84,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
-            <HandRaisedIcon className="size-6 text-gray-600" />
+            <HandRaisedIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
 
           <button
@@ -92,7 +92,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.Zoom)}
             title="Zoom-in"
           >
-            <span className="size-6 text-gray-600">
+            <span className="size-6 text-gray-600 dark:text-dark-primary">
               ⬚🔍+
             </span>
           </button>
@@ -101,7 +101,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.Reorder)}
             title="Re-order"
           >
-            <ArrowsUpDownIcon className="size-6 text-gray-600" />
+            <ArrowsUpDownIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
 
 
@@ -129,7 +129,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.PanLeft)}
             title="Pan left"
           >
-            <ArrowLeftCircleIcon className="size-6 text-gray-600" />
+            <ArrowLeftCircleIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
         </motion.div>
         <motion.div
@@ -162,9 +162,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                 : ""
               }`
             }
+            onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
             title="Zoom out"
           >
-            <MagnifyingGlassMinusIcon className="size-6 text-gray-600" />
+            <MagnifyingGlassMinusIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
           <AnimatePresence>
             {hoveredMagnifyingDirection === MagnifyingDirection.Out && (
@@ -180,7 +181,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                   onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
                   className={
                     getButtonClass() +
-                    " text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
+                    " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
                   }
                 >
                   -⅓
@@ -189,7 +190,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                   onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
                   className={
                     getButtonClass() +
-                    " text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
+                    " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
                   }
                 >
                   -1
@@ -198,7 +199,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                   onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
                   className={
                     getButtonClass() +
-                    " text-gray-600 rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
+                    " text-gray-600 dark:text-dark-primary rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
                   }
                 >
                   -5
@@ -238,9 +239,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                 : ""
               }`
             }
+            onClick={() => handleToolClick(Tool.ZoomInOneFold)}
             title="Zoom in"
           >
-            <MagnifyingGlassPlusIcon className="size-6 text-gray-600" />
+            <MagnifyingGlassPlusIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
           <AnimatePresence>
             {hoveredMagnifyingDirection === MagnifyingDirection.In && (
@@ -256,7 +258,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                   onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
                   className={
                     getButtonClass() +
-                    " text-gray-600 rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
+                    " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
                   }
                 >
                   +⅓
@@ -265,7 +267,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                   onClick={() => handleToolClick(Tool.ZoomInOneFold)}
                   className={
                     getButtonClass() +
-                    " text-gray-600 rounded-r-full pr-1.5 -mr-1.5 w-[33%]"
+                    " text-gray-600 dark:text-dark-primary rounded-r-full pr-1.5 -mr-1.5 w-[33%]"
                   }
                 >
                   +1
@@ -274,7 +276,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                   onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
                   className={
                     getButtonClass() +
-                    " text-gray-600 rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
+                    " text-gray-600 dark:text-dark-primary rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
                   }
                 >
                   +5
@@ -296,7 +298,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.PanRight)}
             title="Pan right"
           >
-            <ArrowRightCircleIcon className="size-6 text-gray-600" />
+            <ArrowRightCircleIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
         </motion.div>
         <motion.div
@@ -322,24 +324,24 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
-            <HandRaisedIcon className="size-6 text-gray-600" />
+            <HandRaisedIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button> */}
           {/* <button className={getButtonClass()} title="Zoom in">
-            <ClockIcon className="size-6 text-gray-600" />
+            <ClockIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button> */}
           <button
             onClick={() => handleToolClick(Tool.Highlight)}
             className={getButtonClass(Tool.Highlight)}
             title="Highlight"
           >
-            <BoltIcon className="size-6 text-gray-600" />
+            <BoltIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
           <button
             className={getButtonClass()}
             onClick={() => handleToolClick(Tool.highlightMenu)}
             title="Highlight list"
           >
-            <LightBulbIcon className="size-6 text-gray-600" />
+            <LightBulbIcon className="size-6 text-gray-600 dark:text-dark-primary" />
           </button>
         </motion.div>
       </motion.div>

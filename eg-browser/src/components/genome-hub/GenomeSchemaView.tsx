@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ChevronDownIcon, ChevronRightIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { genomeDataSchema } from "@eg/tracks";
 import Button from "../ui/button/Button";
@@ -22,7 +22,8 @@ const SchemaNode: React.FC<{
     path: string;
     required?: boolean;
     depth?: number;
-}> = ({ node, name, path, required = false, depth = 0 }) => {
+    onExpand?: () => void;
+}> = ({ node, name, path, required = false, depth = 0, onExpand }) => {
     const [isExpanded, setIsExpanded] = useState(depth < 2);
 
     const hasChildren =
@@ -30,17 +31,23 @@ const SchemaNode: React.FC<{
         node.items ||
         (node.patternProperties && Object.keys(node.patternProperties).length > 0);
 
-    const toggle = () => setIsExpanded(!isExpanded);
+    const toggle = () => {
+        const newExpanded = !isExpanded;
+        setIsExpanded(newExpanded);
+        if (newExpanded && onExpand) {
+            onExpand();
+        }
+    };
 
     const getTypeColor = (type: string) => {
         switch (type) {
-            case 'string': return 'text-green-600';
+            case 'string': return 'text-green-600 dark:text-green-400';
             case 'integer':
-            case 'number': return 'text-blue-600';
-            case 'boolean': return 'text-purple-600';
-            case 'array': return 'text-yellow-600';
-            case 'object': return 'text-red-600';
-            default: return 'text-gray-600';
+            case 'number': return 'text-blue-600 dark:text-blue-400';
+            case 'boolean': return 'text-purple-600 dark:text-purple-400';
+            case 'array': return 'text-yellow-600 dark:text-yellow-400';
+            case 'object': return 'text-red-600 dark:text-red-400';
+            default: return 'text-gray-600 dark:text-gray-400';
         }
     };
 
@@ -49,7 +56,7 @@ const SchemaNode: React.FC<{
 
         if (node.enum) {
             details.push(
-                <div key="enum" className="ml-4 text-sm text-gray-600">
+                <div key="enum" className="ml-4 text-sm text-gray-600 dark:text-gray-400">
                     Allowed values: [{node.enum.map(v => `"${v}"`).join(', ')}]
                 </div>
             );
@@ -57,7 +64,7 @@ const SchemaNode: React.FC<{
 
         if (node.minimum !== undefined) {
             details.push(
-                <div key="min" className="ml-4 text-sm text-gray-600">
+                <div key="min" className="ml-4 text-sm text-gray-600 dark:text-gray-400">
                     Minimum: {node.minimum}
                 </div>
             );
@@ -65,7 +72,7 @@ const SchemaNode: React.FC<{
 
         if (node.additionalProperties === false) {
             details.push(
-                <div key="additionalProps" className="ml-4 text-sm text-gray-600">
+                <div key="additionalProps" className="ml-4 text-sm text-gray-600 dark:text-gray-400">
                     No additional properties allowed
                 </div>
             );
@@ -92,6 +99,7 @@ const SchemaNode: React.FC<{
                         path={`${path}.${propName}`}
                         required={isReq}
                         depth={depth + 1}
+                        onExpand={onExpand}
                     />
                 );
             });
@@ -106,6 +114,7 @@ const SchemaNode: React.FC<{
                         name="items"
                         path={`${path}.items`}
                         depth={depth + 1}
+                        onExpand={onExpand}
                     />
                 </div>
             );
@@ -121,6 +130,7 @@ const SchemaNode: React.FC<{
                             name="patternProperty"
                             path={`${path}.pattern.${pattern}`}
                             depth={depth + 1}
+                            onExpand={onExpand}
                         />
                     </div>
                 );
@@ -138,6 +148,7 @@ const SchemaNode: React.FC<{
                             name={`option ${index + 1}`}
                             path={`${path}.oneOf.${index}`}
                             depth={depth + 1}
+                            onExpand={onExpand}
                         />
                     ))}
                 </div>
@@ -167,7 +178,7 @@ const SchemaNode: React.FC<{
 
                 <div>
                     <div className="flex items-center">
-                        <span className={`font-semibold ${required ? 'text-black' : 'text-gray-600'}`}>
+                        <span className={`font-semibold ${required ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                             {name}
                             {required && <span className="text-red-500 ml-1">*</span>}
                         </span>
@@ -177,7 +188,7 @@ const SchemaNode: React.FC<{
                         {path !== 'root' && (
                             <div className="ml-2 text-gray-500 text-xs cursor-help group relative">
                                 <InformationCircleIcon className="w-4 h-4" />
-                                <div className="hidden group-hover:block absolute left-0 bottom-full bg-gray-800 text-white text-xs p-2 rounded w-48 z-10">
+                                <div className="hidden group-hover:block absolute right-full mr-2 bottom-full bg-gray-800 text-white text-xs p-2 rounded w-48 z-10">
                                     JSON path: {path}
                                 </div>
                             </div>
@@ -193,17 +204,30 @@ const SchemaNode: React.FC<{
 
 export default function GenomeSchemaView() {
     const [showExample, setShowExample] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const exampleData = {
-        genomeName: "hg19",
+        name: "hg19",
+        id: crypto.randomUUID(),
         chromosomes: [
             { name: "chr1", length: 249250621 },
             { name: "chrX", length: 155270560 }
         ]
     };
 
+    const handleNodeExpand = () => {
+        if (containerRef.current) {
+            setTimeout(() => {
+                containerRef.current?.scrollTo({
+                    left: containerRef.current.scrollWidth,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+    };
+
     return (
-        <div className="max-w-4xl mx-auto p-4" style={{ color: "var(--font-color)" }}>
+        <div className="max-w-4xl mx-auto">
             <p className="mb-4" >
                 This schema defines the structure for genomic data files. Fields marked with an asterisk (*) are required.
             </p>
@@ -211,7 +235,6 @@ export default function GenomeSchemaView() {
             <div className="flex mb-4">
                 <Button
                     onClick={() => setShowExample(!showExample)}
-                    style={{ color: "#5F6368" }}
                     active
                 >
                     {showExample ? 'Hide Example' : 'Show Example'}
@@ -219,16 +242,21 @@ export default function GenomeSchemaView() {
             </div>
 
             {showExample && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="mb-6 p-4 bg-gray-50 dark:bg-dark-background rounded-lg">
                     <h2 className="text-lg font-semibold mb-2">Example (minimal valid data):</h2>
-                    <pre className="bg-white p-4 rounded overflow-auto text-sm">
+                    <pre className="bg-white dark:bg-dark-background p-4 rounded overflow-auto text-sm">
                         {JSON.stringify(exampleData, null, 2)}
                     </pre>
                 </div>
             )}
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <SchemaNode node={genomeDataSchema as any} name="Root" path="root" />
+            <div ref={containerRef} className="bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-dark-secondary rounded-lg p-4 break-words overflow-x-auto">
+                <SchemaNode
+                    node={genomeDataSchema as any}
+                    name="Root"
+                    path="root"
+                    onExpand={handleNodeExpand}
+                />
             </div>
 
             <div className="mt-6 text-sm text-gray-400">

@@ -84,10 +84,10 @@ export default function GenomePicker() {
   }, [debouncedSearchQuery]);
 
   return (
-    <div className="bg-black h-full flex flex-row">
+    <div className="h-full flex flex-row bg-black">
       {!isSmallScreen && (
         <div
-          className="h-full bg-white w-[25vw] min-w-96 overflow-hidden"
+          className="h-full w-[25vw] min-w-96 overflow-hidden"
           style={{
             borderTopRightRadius: CURL_RADIUS,
             borderBottomRightRadius: CURL_RADIUS,
@@ -142,16 +142,16 @@ export default function GenomePicker() {
         </div>
       )}
       <div
-        className="flex-1  overflow-y-scroll px-4"
+        className="flex-1 overflow-y-scroll px-4 bg-white dark:bg-dark-background"
         style={{
           borderTopLeftRadius: !isSmallScreen ? CURL_RADIUS : 0,
           borderBottomLeftRadius: !isSmallScreen ? CURL_RADIUS : 0,
-          marginLeft: !isSmallScreen ? 5 : 0, backgroundColor: "var(--bg-container-color)"
+          marginLeft: !isSmallScreen ? 5 : 0,
         }}
       >
         <div className="max-w-2xl mx-auto py-4 h-full" >
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4" >
-            <h2 style={{ color: "var(--font-tint-color)" }} className="text-3xl">Select a Genome</h2>
+            <h2 className="text-3xl">Select a Genome</h2>
             <div className="relative mt-2 sm:mt-0 flex-1 w-full">
               <input
                 type="text"
@@ -173,8 +173,7 @@ export default function GenomePicker() {
             ).map((genome) => (
               <motion.div
                 key={genome.name}
-                className={`rounded-2xl shadow-md ${selectedPath !== null ? "col-start-2" : ""
-                  }`}
+                className={`rounded-2xl shadow-md dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""}`}
                 layout
                 initial={{ opacity: 0 }}
                 animate={{
@@ -204,7 +203,6 @@ export default function GenomePicker() {
                       fontSize: selectedPath !== null ? "30px" : "24px",
                       lineHeight: selectedPath !== null ? "36px" : "32px",
                     }}
-                    style={{ color: "var(--font-color)" }}
                   >
                     {genome.name}
                   </motion.h2>
@@ -216,7 +214,6 @@ export default function GenomePicker() {
                       layout
                       key={version}
                       className="flex items-center gap-2 cursor-pointer"
-                      style={{ color: "var(--font-color)" }}
                       onClick={() => setSelectedPath([genome.name, version])}
                     >
                       {selectedPath === null && (

@@ -144,7 +144,7 @@ export default function ShareTab() {
     ];
 
     return (
-        <div className="p-4" style={{ color: "var(--font-container-color)" }}>
+        <div className="p-4 bg-white dark:bg-dark-background h-full">
             <h1 className="text-2xl mb-4">Share</h1>
             <TabView tabs={tabs} />
         </div>

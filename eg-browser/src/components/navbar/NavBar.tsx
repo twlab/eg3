@@ -1,11 +1,15 @@
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import {
   selectCurrentSession,
+  setCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
+  SunIcon,
+  MoonIcon,
+  BackspaceIcon,
 } from "@heroicons/react/24/outline";
 import classNames from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -47,18 +51,24 @@ export default function NavBar() {
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-      versionToLogoUrl[genome.name]?.logoUrl
+    versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
   return (
     <div
-      className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-30"
-      style={{
-        backgroundColor: "var(--bg-container-color)",
-      }}
+      className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background"
     >
-      <div className="flex flex-row items-center gap-4 relative">
+      <div className="flex flex-row items-center gap-3 relative">
+        {currentSession && (
+          <BackspaceIcon
+            className="size-5 text-gray-600 dark:text-dark-primary cursor-pointer"
+            onClick={() => {
+              dispatch(setSessionPanelOpen(false));
+              dispatch(setCurrentSession(null));
+            }}
+          />
+        )}
         <img
           src={genomeLogoUrl ? import.meta.env.BASE_URL + genomeLogoUrl : Logo}
           alt="logo"
@@ -66,7 +76,7 @@ export default function NavBar() {
             "z-10",
             "size-12",
             currentSession ? "cursor-pointer" : "cursor-default",
-            sessionPanelOpen ? "bg-secondary" : "",
+            sessionPanelOpen ? "bg-secondary dark:bg-dark-secondary" : "",
             genomeLogoUrl ? "rounded-full p-1" : "rounded-md p-2",
             genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : ""
           )}
@@ -82,17 +92,11 @@ export default function NavBar() {
               {currentSession.title.length > 0 && genome?.name && (
                 //replaced text-primary with var font color
                 <>
-                  <p
-                    className="text-2xl  font-medium"
-                    style={{ color: "var(--font-container-color)" }}
-                  >
+                  <p className="text-2xl  font-medium">
                     {genome?.name}
                   </p>
 
-                  <p
-                    className="text-2xl y font-light"
-                    style={{ color: "var(--font-container-color)" }}
-                  >
+                  <p className="text-2xl font-light">
                     /
                   </p>
                 </>
@@ -106,9 +110,8 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl font-light border border-blue-500 px-2 ${
-                  currentSession.title.length > 0 ? "" : "font-medium"
-                }`}
+                style={`text-2xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
+                  }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -119,7 +122,6 @@ export default function NavBar() {
           ) : (
             <h1
               className="text-2xl font-light"
-              style={{ color: "var(--font-container-color)" }}
             >
               <span className="font-medium">WashU </span> Epigenome Browser
             </h1>
@@ -209,15 +211,6 @@ export default function NavBar() {
             >
               Help
             </Button>
-            <div className="flex flex-col gap-4 pt-4">
-              <div className="w-full flex items-center justify-between">
-                <Switch
-                  checked={darkTheme}
-                  onChange={(checked) => dispatch(setDarkTheme(checked))}
-                />
-              </div>
-              <div className="w-full h-[1px] bg-gray-200"></div>
-            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -235,20 +228,16 @@ export default function NavBar() {
                 )
               }
               active={currentTab === "tracks"}
-              style={{ color: "var(--font-tint-color)" }}
             >
               Use Previous Version
             </Button>
 
-            <div className="flex flex-col gap-4 pt-4">
-              <div className="w-full flex items-center justify-between">
-                <Switch
-                  checked={darkTheme}
-                  onChange={(checked) => dispatch(setDarkTheme(checked))}
-                />
-              </div>
-              <div className="w-full h-[1px] bg-gray-200"></div>
-            </div>
+            <Switch
+              checked={darkTheme}
+              onChange={(checked) => dispatch(setDarkTheme(checked))}
+              checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+              uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+            />
           </motion.div>
         )}
       </AnimatePresence>

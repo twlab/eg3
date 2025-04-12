@@ -115,16 +115,16 @@ export default function PublicDataHubs() {
           ) : (
             <button
               className={`size-6 rounded-md flex items-center justify-center ${isLoaded
-                ? "bg-green-200 hover:bg-green-300"
-                : "bg-secondary hover:bg-purple-200"
+                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
                 }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
               {isLoaded ? (
-                <CheckIcon className="size-4 text-green-700" />
+                <CheckIcon className="size-4 text-green-700 dark:text-dark-primary" />
               ) : (
-                <PlusIcon className="size-4" />
+                <PlusIcon className="size-4 text-primary dark:text-dark-primary" />
               )}
             </button>
           )}
@@ -139,7 +139,6 @@ export default function PublicDataHubs() {
     <div
       ref={searchBarGeometry.ref}
       className="sticky top-0 z-20 pb-2"
-      style={{ backgroundColor: "var(--bg-container-color)" }}
     >
       <input
         type="text"
@@ -155,7 +154,7 @@ export default function PublicDataHubs() {
     <div key={collection} className="mb-4 relative">
       <h2
         className="text-base font-medium mb-1 sticky z-10 py-2"
-        style={{ top: `${searchBarGeometry.height}px`, backgroundColor: "var(--bg-container-color)" }}
+        style={{ top: `${searchBarGeometry.height}px` }}
       >
         {collection}
       </h2>

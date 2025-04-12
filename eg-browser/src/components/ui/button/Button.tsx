@@ -27,15 +27,15 @@ export default function Button({
   return (
     <button
       className={classNames(
-        "px-2 py-2 rounded-2xl flex items-center justify-center",
-        active && "bg-secondary",
+        "px-2 py-2 rounded-2xl flex items-center justify-center text-primary dark:text-dark-primary",
+        active && "bg-secondary dark:bg-dark-secondary",
         disabled && "bg-slate-200",
         outlined && "border border-primary",
-        backgroundColor === "tint" && "bg-tint text-white",
+        backgroundColor === "tint" && "bg-tint dark:bg-dark-tint text-white",
         backgroundColor === "alert" && "bg-alert text-white"
       )}
       onClick={_onClick}
-      style={{ ...{ color: "var(--font-container-color)", ...style } }}
+      style={style}
     >
       {leftIcon && <span className="mr-2">{leftIcon}</span>}
       {children}

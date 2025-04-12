@@ -98,7 +98,6 @@ function InlineEditable(props: InlineEditableProps) {
                 <div
                     onClick={handleClick}
                     className={`inline-block cursor-pointer ${hovering ? "outline outline-1 outline-gray-300" : ""}`}
-                    style={{ color: "var(--font-color)" }}
                 >
                     {body}
                     <div className="absolute invisible group-hover:visible top-full mt-1 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-ml-1 before:border-4 before:border-transparent before:border-b-gray-800">

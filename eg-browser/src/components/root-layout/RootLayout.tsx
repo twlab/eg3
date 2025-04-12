@@ -71,12 +71,12 @@ export default function RootLayout() {
 
   return (
     <div
-      className="h-screen w-screen flex flex-col bg-black"
-      data-theme={!darkTheme ? "light" : "dark"}
+      className={`h-screen w-screen flex flex-col ${darkTheme ? 'dark' : ''}`}
+      data-theme={darkTheme ? 'dark' : 'light'}
     >
       <GoogleAnalytics />
       <motion.div
-        className="flex flex-col h-full"
+        className="flex flex-col h-full text-primary dark:text-white"
         animate={{
           scale: showModal ? 0.95 : 1,
           filter: showModal
@@ -86,7 +86,7 @@ export default function RootLayout() {
         }}
       >
         <NavBar />
-        <div className="flex flex-row flex-1 relative" ref={contentRef}>
+        <div className="flex flex-row flex-1 relative bg-black" ref={contentRef}>
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
@@ -96,8 +96,6 @@ export default function RootLayout() {
                   width: "25vw",
                   borderTopRightRadius: CURL_RADIUS,
                   borderBottomRightRadius: CURL_RADIUS,
-                  color: "var(--font-container-color)",
-                  backgroundColor: "var(--bg-container-color)",
                 }}
                 initial={{
                   translateX: "-100%",
@@ -121,7 +119,7 @@ export default function RootLayout() {
 
           {/* MARK: - Main Content */}
           <motion.div
-            className="flex flex-row flex-1 overflow-hidden"
+            className="flex flex-row flex-1 overflow-hidden bg-black"
             animate={{
               scale: sessionPanelOpen ? 0.95 : 1,
               borderRadius: sessionPanelOpen ? 15 : 0,
@@ -137,7 +135,7 @@ export default function RootLayout() {
           >
             {/* MARK: - Genome View */}
             <motion.div
-              className="h-full border-r overflow-hidden"
+              className="h-full overflow-hidden bg-white dark:bg-dark-background"
               initial={{
                 width: "100vw",
               }}
@@ -157,7 +155,6 @@ export default function RootLayout() {
               }}
               style={{
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
-                backgroundColor: "var(--bg-container-color)",
               }}
             >
               <AnimatePresence mode="wait">
@@ -215,7 +212,6 @@ export default function RootLayout() {
                     borderTopLeftRadius: 0,
                     borderBottomLeftRadius: 0,
                   }}
-                  style={{ backgroundColor: "var(--bg-container-color)" }}
                 >
                   <div className="flex flex-col h-full">
                     <div className="flex-1 relative">

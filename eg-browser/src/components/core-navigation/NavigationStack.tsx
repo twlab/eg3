@@ -108,11 +108,7 @@ export default function NavigationStack({
   return (
     <NavigationStackContext.Provider value={{ path, setPath }}>
       <div
-        className="flex flex-col h-full"
-        style={{
-          backgroundColor: "var(--bg-container-color)",
-          color: "var(--font-container-color)",
-        }}
+        className="flex flex-col h-full bg-white dark:bg-dark-background"
       >
         <NavigationToolbar options={currentOptions} />
         <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
@@ -134,14 +130,13 @@ export default function NavigationStack({
               return (
                 <motion.div
                   key={element.path}
-                  className="px-4 pb-4 absolute overflow-y-scroll"
+                  className="px-4 pb-4 absolute overflow-y-scroll bg-white dark:bg-dark-background"
                   initial={{ x: "100%" }}
                   animate={{ x: idx === path.length - 1 ? 0 : "-33%" }}
                   exit={{ x: "100%" }}
                   style={{
                     width,
                     height,
-                    backgroundColor: "var(--bg-container-color)",
                   }}
                 >
                   <destination.component params={element.params} />

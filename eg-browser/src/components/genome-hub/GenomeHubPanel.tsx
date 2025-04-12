@@ -86,7 +86,6 @@ export default function GenomeHubPanel() {
               path: "add-custom-genome",
             });
           }}
-          style={{ color: "#5F6368" }}
         >
           Add Custom Genome
         </Button>
@@ -138,7 +137,7 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
       onClick={handleClick}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="flex flex-col bg-secondary p-4 rounded-2xl cursor-pointer overflow-hidden"
+      className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden"
       initial={{ height: "auto" }}
       animate={{ height: shouldExpand ? "auto" : "auto" }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
@@ -181,7 +180,7 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
           marginTop: shouldExpand ? "1rem" : 0,
         }}
         transition={{ duration: 0.2 }}
-        className="text-sm text-muted-foreground"
+        className="text-sm text-primary dark:text-dark-primary"
       >
         <div className="flex flex-col gap-2 pt-2 border-t border-primary">
           <p>Default region: {genome.defaultRegion}</p>

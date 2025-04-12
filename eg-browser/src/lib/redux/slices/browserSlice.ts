@@ -31,7 +31,6 @@ export interface BrowserSession {
   regionSets: Array<any>;
   selectedRegionSet: RegionSet | null;
   overrideViewRegion: GenomeCoordinate | null;
-  darkTheme: boolean
 }
 
 // MARK: - State
@@ -84,7 +83,6 @@ export const browserSlice = createSlice({
         userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
-
         highlights: [],
         metadataTerms: [],
         regionSets: [],
@@ -191,6 +189,7 @@ export const {
   deleteSession,
   setCurrentSession,
   updateCurrentSession,
+  updateSession,
   addTracks,
   clearAllSessions,
 } = browserSlice.actions;

@@ -1,3 +1,5 @@
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface IStepAccordionItem<T extends string> {
@@ -18,6 +20,8 @@ export default function StepAccordion<T extends string>({
     selectedItem,
     onSelectedItemChange
 }: StepAccordionProps<T>) {
+    const isDarkTheme = useAppSelector(selectDarkTheme);
+
     return (
         <div className="flex flex-col gap-1">
             {items.map((item, idx) => {
@@ -35,7 +39,7 @@ export default function StepAccordion<T extends string>({
                                     initial={false}
                                     animate={{
                                         scale: isSelected ? 1 : 0.8,
-                                        backgroundColor: isSelected ? "#E8DEF8" : "transparent",
+                                        backgroundColor: isSelected ? (isDarkTheme ? "#29124D" : "#E8DEF8") : "transparent",
                                         borderRadius: "9999px"
                                     }}
                                     transition={{
@@ -44,7 +48,7 @@ export default function StepAccordion<T extends string>({
                                         damping: 30
                                     }}
                                 />
-                                <span className="text-black text-center absolute inset-0 flex items-center justify-center">{idx + 1}</span>
+                                <span className={`text-black text-center absolute inset-0 flex items-center justify-center ${isDarkTheme ? "text-white" : ""}`}>{idx + 1}</span>
                             </div>
                             <div className="flex flex-col items-start">
                                 <span className="text-lg">{item.label}</span>

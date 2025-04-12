@@ -86,7 +86,6 @@ export default function AddCustomGenome() {
                             path: "genome-schema",
                         })
                     }}
-                    style={{ color: "#5F6368" }}
                 >
                     View Schema
                 </Button>

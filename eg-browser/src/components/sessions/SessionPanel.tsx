@@ -24,7 +24,7 @@ export default function SessionPanel() {
             rootOptions={{
                 title: 'Sessions',
                 trailing: (
-                    <button className="text-primary" onClick={handleNewSession}>
+                    <button className="text-primary dark:text-dark-primary" onClick={handleNewSession}>
                         <PlusIcon className="size-6" />
                     </button>
                 )

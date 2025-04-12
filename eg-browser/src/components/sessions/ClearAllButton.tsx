@@ -43,14 +43,14 @@ export default function ClearAllButton({
 
     const getBackgroundColor = () => {
         if (isConfirmed) return "bg-alert";
-        if (countdown !== null) return "bg-gray-200";
-        return "bg-secondary";
+        if (countdown !== null) return "bg-gray-200 dark:bg-dark-surface";
+        return "bg-secondary dark:bg-dark-secondary";
     };
 
     const getIconColor = () => {
         if (isConfirmed) return "text-white";
-        if (countdown !== null) return "text-gray-500";
-        return "text-primary";
+        if (countdown !== null) return "text-gray-500 dark:text-dark-primary";
+        return "text-primary dark:text-dark-primary";
     }
 
     return (

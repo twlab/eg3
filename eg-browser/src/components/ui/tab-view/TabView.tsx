@@ -25,22 +25,21 @@ export default function TabView<T extends string>({
 
   return (
     <div className="flex flex-col gap-1 h-full">
-      <div className="flex flex-row items-center justify-between gap-1 bg-gray-100 rounded-lg p-1 relative">
+      <div className="flex flex-row items-center justify-between gap-1 bg-gray-100 dark:bg-dark-surface rounded-lg p-1 relative">
         <div
-          className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary rounded-lg"
+          className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
           style={{
-            width: `calc(${100 / tabs.length}% - ${(tabs.length - 1) * 2}px)`,
-            left: `calc(${
-              (selectedTab
-                ? tabs.findIndex((t) => t.value === selectedTab.value)
-                : 0) * 100
-            }% / ${tabs.length} + 4px)`,
+            width: `calc(${100 / tabs.length}% - 8px)`,
+            left: `calc(${(selectedTab
+              ? tabs.findIndex((t) => t.value === selectedTab.value)
+              : 0) * 100
+              }% / ${tabs.length} + 4px)`,
           }}
         />
         {tabs.map((tab) => (
           <div
             key={tab.value}
-            className="text-primary relative flex-1 text-center py-1 rounded-lg cursor-pointer z-10 transition-colors"
+            className="text-primary dark:text-dark-primary relative flex-1 text-center py-1 rounded-lg cursor-pointer z-10 transition-colors"
             onClick={() => setSelectedTabId(tab.value)}
           >
             {tab.label}
