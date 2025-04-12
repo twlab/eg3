@@ -50,16 +50,12 @@ class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
     const genomeConfig = this.props.genomeConfig;
 
     if (this.props.options && this.props.options.forceSvg) {
-      let start = this.props.viewWindow.start + this.props.width / 3;
 
-      let end = this.props.viewWindow.end - this.props.width / 3;
-
-      let svgWidth = end - start;
 
       return (
         <svg
           width={this.props.width / 3}
-          viewBox={`${start} 0 ${svgWidth} ${HEIGHT}`}
+          viewBox={`${this.props.viewWindow.start} 0 ${this.props.width / 3} ${HEIGHT}`}
           height={HEIGHT}
           display={"block"}
         >

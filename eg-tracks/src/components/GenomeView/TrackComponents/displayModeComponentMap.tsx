@@ -126,10 +126,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
       let svgKey = crypto.randomUUID();
       if (configOptions.forceSvg) {
-        let start = trackState.viewWindow.start + trackState.visWidth / 3;
 
-        let end = trackState.viewWindow.end - trackState.visWidth / 3;
-        let svgWidth = end - start;
+
+
 
         return (
           <div style={{ display: "flex" }}>
@@ -148,7 +147,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={svgKey}
               width={width / 3}
-              viewBox={`${start} 0 ${svgWidth} ${height}`}
+              viewBox={`${trackState.viewWindow.start} 0 ${trackState.visWidth / 3} ${height}`}
               height={height}
               display={"block"}
             >
@@ -618,8 +617,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
           return !(
             curXSpan.end <
-            trackState.viewWindow.start + trackState.visWidth / 3 ||
-            curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
+            trackState.viewWindow.start ||
+            curXSpan.start > trackState.viewWindow.end
           );
         }
       );
