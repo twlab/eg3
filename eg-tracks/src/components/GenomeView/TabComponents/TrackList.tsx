@@ -34,7 +34,7 @@ const TrackList: React.FC<TrackListProps> = ({
     () => [
       {
         Header: "Label",
-        accessor: "label",
+        accessor: (row) => row.options.label,
       },
       {
         Header: "Track type",
@@ -67,7 +67,7 @@ const TrackList: React.FC<TrackListProps> = ({
     () => [
       {
         Header: "Label",
-        accessor: "label",
+        accessor: (row) => row.options.label,
       },
       {
         Header: "Track type",
@@ -178,8 +178,8 @@ const TrackList: React.FC<TrackListProps> = ({
                 {...restRowProps}
                 style={trStyle}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    trHoverStyle.backgroundColor)
+                (e.currentTarget.style.backgroundColor =
+                  trHoverStyle.backgroundColor)
                 }
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "")}
               >
@@ -240,8 +240,8 @@ const TrackList: React.FC<TrackListProps> = ({
                     {...restRowProps}
                     style={trStyle}
                     onMouseOver={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        trHoverStyle.backgroundColor)
+                    (e.currentTarget.style.backgroundColor =
+                      trHoverStyle.backgroundColor)
                     }
                     onMouseOut={(e) =>
                       (e.currentTarget.style.backgroundColor = "")

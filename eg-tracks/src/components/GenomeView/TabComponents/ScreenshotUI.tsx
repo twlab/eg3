@@ -12,6 +12,7 @@ import {
 import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
 import TrackLegend from "../TrackComponents/commonComponents/TrackLegend";
 import { objToInstanceAlign } from "../TrackManager";
+import { ClipLoader } from "react-spinners";
 interface Highlight {
   start: number;
   end: number;
@@ -29,15 +30,16 @@ interface Props {
   trackData: any;
   metadataTerms: any;
   viewRegion?: any;
-  isOpen: any;
-  handleCloseModal: any;
+  retakeScreenshot: any;
   windowWidth: number;
 }
+
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("block");
   const [buttonDisabled, setButtonDisabled] = useState<string>("");
-  const [svgView, setSvgView] = useState<any>(<div></div>);
+  const [svgView, setSvgView] = useState<any>(null);
+  const [msg, setMsg] = useState<string>("");
   // const svgDataURL = (svg: SVGElement) => {
   //   const svgAsXML = new XMLSerializer().serializeToString(svg);
   //   return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
@@ -314,76 +316,80 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
           ;
       });
-
+    setMsg(
+      ""
+    );
     return trackSvgElements;
   };
-
+  function updateScreenshot() {
+    props.retakeScreenshot();
+    setMsg(
+      "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+    );
+  }
   useEffect(() => {
     if (props.trackData && Object.keys(props.trackData).length > 0) {
-      setSvgView(makeSvgTrackElements());
+      setMsg(
+        "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+      );
     }
   }, [props.trackData]);
 
+  useEffect(() => {
+    if (
+      props.trackData &&
+      Object.keys(props.trackData).length > 0 &&
+      msg !== ""
+    ) {
+      const timeoutId = setTimeout(() => {
+        const elements = makeSvgTrackElements();
+        setSvgView(elements);
+      }, 250); // Adding a small delay to ensure the message is rendered
+      return () => clearTimeout(timeoutId);
+    }
+  }, [msg, props.trackData]);
+
+
   return (
-    <>
-      {" "}
-      <ReactModal
-        isOpen={props.isOpen}
-        contentLabel="Gene & Region search"
-        ariaHideApp={false}
-        onRequestClose={props.handleCloseModal}
-        shouldCloseOnOverlayClick={true}
-      >
-        <span
-          className="text-right"
-          style={{
-            cursor: "pointer",
-            color: "red",
-            fontSize: "2em",
-            position: "absolute",
-            top: "-5px",
-            right: "15px",
-            zIndex: 5,
-          }}
-          onClick={props.handleCloseModal}
-        >
-          ×
-        </span>
-        <div>
-          <p>
-            Please wait for the following browser view to finish loading, <br />
-            then click the Download button below to download the browser view as
-            an SVG file.
-          </p>
+    <div style={{ display, backgroundColor: "var(--bg-color)" }}>
+      {msg !== "" ? (
+        <>
+          <ClipLoader color="#09f" loading={true} size={24} />
+          <p>{msg}</p>
+        </>
+      ) : (
+        ""
+      )}
+      {svgView ? (
+        <>
           <div className="font-italic">
-            <strong>Download SVG</strong> is recommended.
+            You can get the updated view of the tracks by retaking your
+            screenshot.
           </div>
-          <button
-            className="btn btn-primary btn-sm"
-            style={{ marginBottom: "2ch" }}
-            onClick={downloadSvg}
-          // disabled={buttonDisabled === "disabled"}
-          >
-            ⬇ Download SVG
-          </button>{" "}
-          {/* <button
-            className="btn btn-success btn-sm"
-            style={{ marginBottom: "2ch" }}
-            onClick={downloadPdf}
-            // disabled={buttonDisabled === "disabled"}
-          >
-            ⬇ Download PDF
-          </button> */}
-          <div
-            id="screenshotContainer"
-            style={{ width: props.windowWidth + 20 + 120 }}
-          >
-            {svgView}
+          <div style={{ display: "flex", gap: "1ch" }}>
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginBottom: "2ch" }}
+              onClick={downloadSvg}
+            >
+              ⬇ Download SVG
+            </button>
+
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginBottom: "2ch" }}
+              onClick={updateScreenshot}
+            >
+              📷 Retake Screenshot
+            </button>
           </div>
+          <div id="screenshotContainer">{svgView}</div>
           <div id="pdfContainer"></div>
-        </div>{" "}
-      </ReactModal>
-    </>
+        </>
+      ) : (
+        ""
+      )}
+    </div>
   );
 };
 
