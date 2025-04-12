@@ -225,6 +225,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const screenshotDataObj = useRef<{ [key: string]: any }>({});
   const preload = useRef<boolean>(false);
   // These states are used to update the tracks with new fetch(data);
+
   const globalTrackState = useRef<{ [key: string]: any }>({
     rightIdx: 0,
     leftIdx: 1,
@@ -590,7 +591,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     let newSelected: { [key: string]: any } = {};
     if (key === "label" && trackId) {
-      console.log(trackId, { [key]: value });
       newSelected[`${trackId}`] = { [key]: value };
     } else {
       for (const selected in selectedTracks.current) {
@@ -1581,6 +1581,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //______________________________________________________________________________________________________________
 
   function initTrackFetchCache(initTrackModel: { [key: string]: any }) {
+
     trackFetchedDataCache.current[`${initTrackModel.id}`]["queryGenome"] =
       "querygenome" in initTrackModel && initTrackModel.querygenome
         ? initTrackModel.querygenome
@@ -1776,6 +1777,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         rightIdx: 0,
       };
       initTrackFetchCache(item.trackModel);
+
     });
 
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
@@ -2463,8 +2465,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             };
 
             initTrackFetchCache(curTrackModel);
+
           }
+
         }
+
         if (!checkHasGenAlign) {
           useFineModeNav.current = false;
           hasGenomeAlign.current = false;
@@ -2691,7 +2696,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       key={item.id}
                       style={{
                         display: "flex",
-                        backgroundColor: "var(--bg-color)",
+
                         width: `${windowWidth + 120}px`,
 
                         borderBottom: item.trackModel.isSelected

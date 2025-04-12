@@ -248,7 +248,19 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       pdfContainer.innerHTML = svgContent;
     }
   };
-
+  const styles = {
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',  // Centers children horizontally
+      paddingTop: "20px",
+      height: '100vh',  // Full height to center within the whole view height
+    },
+    message: {
+      fontWeight: 'bold',
+      marginBottom: '10px',  // Add some space between the message and the loader
+    },
+  };
   // const downloadPdf = () => {
   //   const svgContent = prepareSvg();
   //   const tracks = Array.from(
@@ -353,10 +365,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   return (
     <div style={{ display, backgroundColor: "var(--bg-color)" }}>
       {msg !== "" ? (
-        <>
+        <div style={styles.container}>
+          <p style={styles.message}>{msg}</p>
           <ClipLoader color="#09f" loading={true} size={24} />
-          <p>{msg}</p>
-        </>
+        </div>
       ) : (
         ""
       )}
