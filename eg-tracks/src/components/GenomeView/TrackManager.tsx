@@ -279,6 +279,25 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const isWorkerBusy = useRef(false);
   const genomeAlignMessageQueue = useRef<any>([]);
   const isfetchGenomeAlignWorkerBusy = useRef(false);
+
+  const throttleViewRegion = (callback, limit) => {
+    let timeoutId: any = null;
+    return (...args) => {
+      if (!timeoutId) {
+        callback(...args);
+        timeoutId = setTimeout(() => {
+          timeoutId = null;
+        }, limit);
+      }
+    };
+  };
+  const throttleOnNewRegionSelect = useRef(
+    throttleViewRegion((startbase, endbase, highlightSearch) => {
+      onNewRegionSelect(startbase, endbase, highlightSearch);
+    }, 400)
+  );
+
+
   const enqueueMessage = (message: Array<any>) => {
     messageQueue.current.push(message);
     processQueue();
@@ -1504,7 +1523,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
 
-      onNewRegionSelect(startbase, endbase, highlightSearch);
+      throttleOnNewRegionSelect.current(startbase, endbase, highlightSearch);
     }
     // adding new highlight region
     else if (toolTitle === 2) {
@@ -2511,7 +2530,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           viewWindowConfigData.current.dataIdx
         );
       }
-      console.log(viewWindowConfigData.current.viewWindow)
+
     }
   }, [viewWindowConfigData.current]);
   useEffect(() => {
