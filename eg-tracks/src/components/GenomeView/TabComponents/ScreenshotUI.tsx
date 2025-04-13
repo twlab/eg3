@@ -322,9 +322,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           trackModel,
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
+          genomeConfig: createSVGData.genomeConfig
         });
 
-        return svgResult
+        return <div key={index}>{svgResult} </div>
 
           ;
       });

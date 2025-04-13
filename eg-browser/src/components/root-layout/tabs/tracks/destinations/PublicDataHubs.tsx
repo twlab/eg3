@@ -186,7 +186,7 @@ export default function PublicDataHubs() {
   }
   return (
     <div>
-      {renderSearchBar()}
+
       {currentSession && publicTracksPool.length > 0 ? (
         <div>
           <h2 className="text-base font-medium mb-4">Available Tracks</h2>
@@ -203,6 +203,7 @@ export default function PublicDataHubs() {
       ) : (
         ""
       )}
+      {renderSearchBar()}
       <div>
         {Object.entries(groupedHubs).map(([collection, hubs]) =>
           renderHubGroup(collection, hubs)

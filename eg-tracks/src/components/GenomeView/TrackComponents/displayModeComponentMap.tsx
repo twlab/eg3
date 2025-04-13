@@ -1089,6 +1089,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     genomeName,
+    genomeConfig
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -1107,7 +1108,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         )}
         viewWindow={trackState.viewWindow}
         getNumLegend={getNumLegend}
-        genomeConfig={getGenomeConfig(genomeName)}
+        genomeConfig={genomeConfig}
         options={configOptions}
       />
     );
@@ -1327,6 +1328,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
       genomeName: drawData.genomeName,
+      genomeConfig: drawData.genomeConfig
     });
   } else if (drawData.trackModel.type === "vcf") {
     let formattedData = drawData.genesArr;

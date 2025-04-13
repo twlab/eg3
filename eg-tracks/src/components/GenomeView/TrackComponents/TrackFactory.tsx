@@ -120,6 +120,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       getDisplayModeFunction({
         basesByPixel: basePerPixel,
         genesArr,
+        genomeConfig,
         genomeName: genomeConfig.genome.getName(),
         trackState,
         windowWidth,
@@ -557,7 +558,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   ? svgHeight.current
                   : configOptions.current.height,
               trackModel,
-              basesByPixel: basePerPixel
+              basesByPixel: basePerPixel,
+              genomeConfig
             },
             trackId: id,
           });
