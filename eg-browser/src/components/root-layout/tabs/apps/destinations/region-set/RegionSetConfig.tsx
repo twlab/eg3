@@ -12,6 +12,7 @@ import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import useExpandedNavigationTab from "../../../../../../lib/hooks/useExpandedNavigationTab";
 
 const DEFAULT_LIST = `CYP4A22
 chr10:96796528-96829254
@@ -33,6 +34,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   onSetConfigured,
   genome,
 }) => {
+  useExpandedNavigationTab()
   const currentSession = useAppSelector(selectCurrentSession);
 
   const [regionSet, setRegionSet] = useState<RegionSet | null>(null);

@@ -455,95 +455,113 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let combinedData: Array<any> | undefined = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
-        for (let i = 0; i < 3; i++) {
-          if (!cacheTrackData[currIdx].dataCache) {
-            continue;
-          }
-          if (
-            cacheTrackData[currIdx].dataCache &&
-            "error" in cacheTrackData[currIdx].dataCache
-          ) {
-            hasError = true;
-            combinedData.push(cacheTrackData[currIdx].dataCache.error);
-          } else {
-            combinedData.push(cacheTrackData[currIdx]);
-          }
-
-          currIdx--;
-        }
-        var noData = false;
-        if (!hasError) {
-          if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
-            combinedData = getDeDupeArrMatPlot(combinedData, false);
-          } else {
-            combinedData = combinedData
-              .map((item) => {
-                if (item && "dataCache" in item) {
-                  return item.dataCache;
-                } else {
-                  noData = true;
-                }
-              })
-              .flat(1);
-          }
-        }
-        if (noData || !combinedData) {
-          return;
-        }
         let trackState = _.cloneDeep(
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
+        if (trackModel.type !== "genomealign") {
+          for (let i = 0; i < 3; i++) {
+            if (!cacheTrackData[currIdx].dataCache) {
+              continue;
+            }
+            if (
+              cacheTrackData[currIdx].dataCache &&
+              "error" in cacheTrackData[currIdx].dataCache
+            ) {
+              hasError = true;
+              combinedData.push(cacheTrackData[currIdx].dataCache.error);
+            } else {
+              combinedData.push(cacheTrackData[currIdx]);
+            }
 
-        const primaryVisData =
-          trackState.genomicFetchCoord[trackState.primaryGenName]
-            .primaryVisData;
-        let visRegion = !cacheTrackData.usePrimaryNav
-          ? trackState.genomicFetchCoord[
-            trackFetchedDataCache.current[`${id}`].queryGenome
-          ].queryRegion
-          : primaryVisData.visRegion;
-        trackState["visRegion"] = visRegion;
+            currIdx--;
+          }
+          var noData = false;
+          if (!hasError) {
+            if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+              combinedData = getDeDupeArrMatPlot(combinedData, false);
+            } else {
+              combinedData = combinedData
+                .map((item) => {
+                  if (item && "dataCache" in item) {
+                    return item.dataCache;
+                  } else {
+                    noData = true;
+                  }
+                })
+                .flat(1);
+            }
+          }
+          if (noData || !combinedData) {
+            return;
+          }
 
-        const width = primaryVisData.visWidth
-          ? primaryVisData.visWidth
-          : windowWidth * 3;
 
-        const expandedViewWindow =
-          updateSide.current === "right"
-            ? new OpenInterval(
-              -(dragX! + (xPos.current + windowWidth)),
-              windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-            )
-            : new OpenInterval(
-              -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-              windowWidth * 3 -
-              (dragX! - (xPos.current + windowWidth)) +
-              windowWidth
-            );
-        let start = expandedViewWindow.start + width / 3;
+          const primaryVisData =
+            trackState.genomicFetchCoord[trackState.primaryGenName]
+              .primaryVisData;
+          let visRegion = !cacheTrackData.usePrimaryNav
+            ? trackState.genomicFetchCoord[
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
+            : primaryVisData.visRegion;
+          trackState["visRegion"] = visRegion;
 
-        let end = expandedViewWindow.end - width / 3;
+          const width = primaryVisData.visWidth
+            ? primaryVisData.visWidth
+            : windowWidth * 3;
 
-        trackState["viewWindow"] = new OpenInterval(start, end)
+          const expandedViewWindow =
+            updateSide.current === "right"
+              ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+              : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                (dragX! - (xPos.current + windowWidth)) +
+                windowWidth
+              );
+          let start = expandedViewWindow.start + width / 3;
+
+          let end = expandedViewWindow.end - width / 3;
+
+          trackState["viewWindow"] = new OpenInterval(start, end)
+        }
+        else {
+          const tmpCombinedData = cacheTrackData[dataIdx]
+            ? cacheTrackData[dataIdx].dataCache
+            : null;
+
+          if (tmpCombinedData) {
+            if (newDrawData.viewWindow) {
+              trackState["viewWindow"] = newDrawData.viewWindow;
+            }
+            combinedData = tmpCombinedData
+
+          }
+        }
 
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
-
-        sentScreenshotData({
-          fetchData: {
-            genomeName: genomeConfig.genome.getName(),
-            genesArr: combinedData,
-            trackState,
-            windowWidth,
-            configOptions: drawOptions,
-            svgHeight:
-              configOptions.current.displayMode === "full"
-                ? svgHeight.current
-                : configOptions.current.height,
-            trackModel,
-          },
-          trackId: id,
-        });
+        if (combinedData) {
+          sentScreenshotData({
+            fetchData: {
+              genomeName: genomeConfig.genome.getName(),
+              genesArr: combinedData,
+              trackState,
+              windowWidth,
+              configOptions: drawOptions,
+              svgHeight:
+                configOptions.current.displayMode === "full"
+                  ? svgHeight.current
+                  : configOptions.current.height,
+              trackModel,
+              basesByPixel: basePerPixel
+            },
+            trackId: id,
+          });
+        }
       }
 
       handle();

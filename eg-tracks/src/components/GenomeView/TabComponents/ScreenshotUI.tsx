@@ -61,7 +61,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const boxWidth = tracks[0].clientWidth;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
+    // svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
     //add the width of the track and tracklegend to to correctly view all the svg
     const width = props.windowWidth + 20 + 120;
     svgElem.setAttributeNS(null, "width", width + "");
@@ -318,7 +318,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           trackState: createSVGData.trackState,
           windowWidth: createSVGData.windowWidth + 120,
           configOptions: createSVGData.configOptions,
-
+          basesByPixel: createSVGData.basesByPixel,
           trackModel,
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,

@@ -14,6 +14,7 @@ import OpenInterval from "../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import { HighlightInterval } from "../ToolComponents/HighlightMenu";
 import { ITrackModel } from "../../../types";
+import { AppStateSaver } from "../../../models/AppSaveLoad";
 export interface BundleProps {
   bundleId: string;
   customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
@@ -28,6 +29,7 @@ export interface BundleProps {
   viewRegion: DisplayedRegionModel | null;
   trackLegendWidth: number;
   tracks: Array<TrackModel> | Array<ITrackModel>;
+  onRestoreBundle: any;
 }
 
 interface SessionBundle {
@@ -54,9 +56,11 @@ interface SessionUIProps extends HasBundleId {
   withGenomePicker?: boolean;
   state?: BundleProps;
   curBundle: any;
+  onRestoreBundle: any;
 }
 
 export const onRetrieveSession = async (retrieveId: string) => {
+
   if (retrieveId.length === 0) {
     console.log("Session bundle Id cannot be empty.", "error", 2000);
     return null;
@@ -129,6 +133,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   onRetrieveBundle,
   withGenomePicker,
   updateBundle,
+  onRestoreBundle,
   state,
   curBundle,
   bundleId,
@@ -181,7 +186,17 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const downloadSession = (asHub = false) => {
-    // Add your session saving logic here
+
+    const sessionInJSON = new AppStateSaver().toObject(state);
+    const content = asHub ? (sessionInJSON as any).tracks : sessionInJSON;
+    const descriptor = asHub ? "hub" : "session";
+    const sessionString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(content));
+    const dl = document.createElement("a");
+    document.body.appendChild(dl); // This line makes it work in Firefox.
+    dl.setAttribute("href", sessionString);
+    dl.setAttribute("download", `eg-${descriptor}-${bundle.currentId}-${bundle.bundleId}.json`);
+    dl.click();
+    console.log("Session downloaded!", "success", 2000);
   };
 
   const downloadAsSession = () => {
@@ -218,26 +233,35 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const restoreSession = async (sessionId: string) => {
-    const newBundle = {
-      ...bundle,
-      currentId: sessionId,
-    };
-    setBundle(newBundle);
-    setLastBundleId(bundle.bundleId);
-    onRestoreSession(newBundle);
-    const db = getDatabase();
-    try {
-      await set(
-        ref(db, `sessions/${bundle.bundleId}`),
-        JSON.parse(JSON.stringify(newBundle))
-      );
 
-      setNewSessionLabel(getFunName());
+    if (sessionId) {
+      const newBundle: any = {
+        ...bundle,
+        currentId: sessionId,
+      };
 
-      console.log("Session restored.", "success", 2000);
-    } catch (error) {
-      console.error(error);
-      console.log("Error while restoring session", "error", 2000);
+      setBundle(newBundle);
+      setLastBundleId(bundle.bundleId);
+
+      const curSessionId = newBundle.currentId;
+      const sessionBundle = newBundle.sessionsInBundle[`${curSessionId}`].state
+
+      onRestoreSession(sessionBundle);
+      onRetrieveBundle(newBundle)
+      const db = getDatabase();
+      try {
+        await set(
+          ref(db, `sessions/${bundle.bundleId}`),
+          JSON.parse(JSON.stringify(newBundle))
+        );
+
+        setNewSessionLabel(getFunName());
+
+        console.log("Session restored.", "success", 2000);
+      } catch (error) {
+        console.error(error);
+        console.log("Error while restoring session", "error", 2000);
+      }
     }
   };
 
@@ -266,75 +290,107 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const renderSavedSessions = () => {
-    const sessions = Object.entries(bundle.sessionsInBundle || {});
-    if (!sessions.length) {
-      return null;
-    }
-    if (sortSession === "date") {
-      sessions.sort(([, a]: any, [, b]: any) => b.date - a.date);
-    }
-    if (sortSession === "label") {
-      sessions.sort(([, a]: any, [, b]: any) =>
-        a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    if (bundle) {
+      const sessions = Object.entries(bundle.sessionsInBundle || {});
+      if (!sessions.length) {
+        return null;
+      }
+      if (sortSession === "date") {
+        sessions.sort(([, a]: any, [, b]: any) => b.date - a.date);
+      }
+      if (sortSession === "label") {
+        sessions.sort(([, a]: any, [, b]: any) =>
+          a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+        );
+      }
+      const buttons = sessions.map(([id, session]: any) => (
+        <li key={id}>
+          <span style={{ marginRight: "1ch" }}>{session.label}</span>(
+          {new Date(session.date).toLocaleString()})
+          {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
+            <button className="SessionUI btn btn-secondary btn-sm" disabled>
+              Restored
+            </button>
+          ) : (
+            <button
+              className="SessionUI btn btn-success btn-sm"
+              onClick={() => restoreSession(id)}
+            >
+              Restore
+            </button>
+          )}
+          <button
+            onClick={() => deleteSession(id)}
+            className="SessionUI btn btn-danger btn-sm"
+          >
+            Delete
+          </button>
+        </li>
+      ));
+      return (
+        <div className="SessionUI-sessionlist">
+          Sort session by:
+          <label>
+            <input
+              type="radio"
+              value="date"
+              name="sort"
+              checked={sortSession === "date"}
+              onChange={(e) => setSortSession(e.target.value)}
+            />
+            <span>Date</span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="sort"
+              value="label"
+              checked={sortSession === "label"}
+              onChange={(e) => setSortSession(e.target.value)}
+            />
+            <span>Label</span>
+          </label>
+          <ol>{buttons}</ol>
+        </div>
       );
     }
-    const buttons = sessions.map(([id, session]: any) => (
-      <li key={id}>
-        <span style={{ marginRight: "1ch" }}>{session.label}</span>(
-        {new Date(session.date).toLocaleString()})
-        {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
-          <button className="SessionUI btn btn-secondary btn-sm" disabled>
-            Restored
-          </button>
-        ) : (
-          <button
-            className="SessionUI btn btn-success btn-sm"
-            onClick={() => restoreSession(id)}
-          >
-            Restore
-          </button>
-        )}
-        <button
-          onClick={() => deleteSession(id)}
-          className="SessionUI btn btn-danger btn-sm"
-        >
-          Delete
-        </button>
-      </li>
-    ));
-    return (
-      <div className="SessionUI-sessionlist">
-        Sort session by:
-        <label>
-          <input
-            type="radio"
-            value="date"
-            name="sort"
-            checked={sortSession === "date"}
-            onChange={(e) => setSortSession(e.target.value)}
-          />
-          <span>Date</span>
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="sort"
-            value="label"
-            checked={sortSession === "label"}
-            onChange={(e) => setSortSession(e.target.value)}
-          />
-          <span>Label</span>
-        </label>
-        <ol>{buttons}</ol>
-      </div>
-    );
   };
-
+  // fix because when download as current session we get back bundleSession which as viewinterval instead of viewregion
   const uploadSession = async (event: ChangeEvent<HTMLInputElement>) => {
-    const contents = await readFileAsText(event.target.files![0]);
-    onRestoreSession(JSON.parse(contents as string));
+    const contents: any = await readFileAsText(event.target.files![0]) as { [key: string]: any };
+    const bundleSession = JSON.parse(contents as string)
+    const bundleRes = await onRetrieveSession(bundleSession.bundleId);
+
+    if (bundleRes) {
+      onRetrieveBundle(bundleRes);
+      setBundle(bundleRes);
+      const genomeConfig = getGenomeConfig(bundleSession.genomeName);
+      if (genomeConfig) {
+        let viewInterval;
+        if (bundleSession.viewInterval) {
+          viewInterval = bundleSession.viewInterval;
+        } else {
+          viewInterval = {
+            start: genomeConfig.defaultRegion.start,
+            end: genomeConfig.defaultRegion.end,
+          };
+        }
+
+        bundleSession["viewRegion"] = new DisplayedRegionModel(
+          genomeConfig.navContext,
+          viewInterval.start,
+          viewInterval.end
+        )
+        onRestoreSession(bundleSession)
+      }
+      else {
+        console.log("Genome not found in session upload")
+      }
+    }
+
 
   };
+
   const setRandomLabel = () => {
     setNewSessionLabel(getFunName());
   };
@@ -367,92 +423,155 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
   const styles = {
     container: {
-      padding: "20px",
-      display: withGenomePicker ? "flex" : "block",
-      flexDirection: withGenomePicker ? "column" : "unset",
-      alignItems: withGenomePicker ? "center" : "unset",
+      width: '100%',
+      maxWidth: '600px',
+      margin: '0 auto',
+      padding: '20px',
+      background: '#fff',
+      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+      borderRadius: '8px',
     },
     inputContainer: {
-      marginBottom: "1rem",
+      marginBottom: '20px',
     },
     label: {
-      display: "flex",
-      gap: "0.5rem",
-      alignItems: "center",
+      display: 'block',
+      fontWeight: 'bold',
+      marginBottom: '8px',
+    },
+    row: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
     },
     input: {
-      padding: "10px",
-      border: "1px solid #ccc",
-      borderRadius: "5px",
-      width: "400px",
-      color: "#4B5563",
+      padding: '10px',
+      border: '1px solid #ccc',
+      borderRadius: '4px',
+      flex: '1',
     },
     button: {
-      backgroundColor: "#5BA4CF",
-      color: "white",
-      padding: "10px 20px",
-      borderRadius: "5px",
-      cursor: "pointer",
-      transition: "background-color 0.2s",
+      padding: '10px 15px',
+      border: 'none',
+      borderRadius: '4px',
+      backgroundColor: '#007bff',
+      color: 'white',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '5px',
     },
     buttonHover: {
-      backgroundColor: "#4A93BE",
+      backgroundColor: '#0056b3',
     },
     uploadContainer: {
-      display: "flex",
-      alignItems: "center",
-      gap: "0.5rem",
-      marginTop: "1rem",
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      marginTop: '20px',
     },
-    uploadButtonContainer: {
-      position: "relative",
+    uploadButtonWrapper: {
+      position: 'relative',
     },
     uploadButton: {
-      backgroundColor: "#5CB85C",
-      color: "white",
-      padding: "10px 20px",
-      borderRadius: "5px",
-      cursor: "pointer",
-      transition: "background-color 0.2s",
+      padding: '10px 15px',
+      border: '1px solid',
+      borderRadius: '4px',
+      backgroundColor: '#5cb85c',
+      color: 'white',
+      cursor: 'pointer',
+    },
+    uploadButtonHover: {
+      backgroundColor: '#4ca84c',
     },
     uploadInput: {
-      position: "absolute",
-      inset: 0,
-      opacity: 0,
-      cursor: "pointer",
+      position: 'absolute',
+      left: '0',
+      top: '0',
+      opacity: '0',
+      width: '100%',
+      height: '100%',
+      cursor: 'pointer',
+    },
+    separator: {
+      borderTop: '1px solid #eee',
+      margin: '20px 0',
     },
     additionalActions: {
-      flexDirection: "column",
-      gap: "0.5rem",
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '10px',
+      marginTop: '20px',
     },
     actionButton: {
-      padding: "10px 20px",
-      borderRadius: "5px",
-      color: "white",
-      cursor: "pointer",
+      padding: '10px 15px',
+      border: '1px solid',
+      borderRadius: '4px',
+      background: 'white',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '5px',
+    },
+    actionButtonColors: {
+      save: {
+        borderColor: '#4285F4',
+        color: '#4285F4',
+        hover: {
+          backgroundColor: '#4285F4',
+          color: 'white',
+        },
+      },
+      downloadSession: {
+        borderColor: '#5CB85C',
+        color: '#5CB85C',
+        hover: {
+          backgroundColor: '#5CB85C',
+          color: 'white',
+        },
+      },
+      downloadHub: {
+        borderColor: '#5BA4CF',
+        color: '#5BA4CF',
+        hover: {
+          backgroundColor: '#5BA4CF',
+          color: 'white',
+        },
+      },
+      downloadBundle: {
+        borderColor: '#F0AD4E',
+        color: '#F0AD4E',
+        hover: {
+          backgroundColor: '#F0AD4E',
+          color: 'white',
+        },
+      },
     },
     disclaimer: {
-      marginTop: "1rem",
-      maxWidth: "600px",
-      fontStyle: "italic",
+      marginTop: '20px',
+      padding: '10px',
+      background: '#f8f9fa',
+      borderRadius: '4px',
     },
     emphasis: {
-      fontWeight: "bold",
+      fontWeight: 'bold',
     },
     link: {
-      color: "#3B82F6",
-      textDecoration: "none",
-      transition: "color 0.2s",
+      color: '#007bff',
+      textDecoration: 'none',
     },
     linkHover: {
-      color: "#1D4ED8",
+      color: '#0056b3',
     },
   };
+
+
 
   return (
     <div style={styles.container}>
       <div style={styles.inputContainer}>
-        <label style={styles.label}>
+        <label style={styles.label}>Session bundle Id</label>
+        <div style={styles.row}>
           <input
             type="text"
             style={styles.input}
@@ -462,127 +581,141 @@ const SessionUI: React.FC<SessionUIProps> = ({
           />
           <button
             style={styles.button}
-            onMouseOver={(e) =>
-            (e.target.style.backgroundColor =
-              styles.buttonHover.backgroundColor)
-            }
-            onMouseOut={(e) =>
-              (e.target.style.backgroundColor = styles.button.backgroundColor)
-            }
+            onMouseOver={(e) => e.target.style.backgroundColor = styles.buttonHover.backgroundColor}
+            onMouseOut={(e) => e.target.style.backgroundColor = styles.button.backgroundColor}
             onClick={() => retrieveSession(retrieveId)}
           >
             Retrieve
           </button>
-        </label>
+        </div>
         <div style={styles.uploadContainer}>
           <span>Or use a session file:</span>
-          <div style={styles.uploadButtonContainer}>
+          <div style={styles.uploadButtonWrapper}>
             <button
               style={styles.uploadButton}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#4CA84C")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "#5CB85C")}
+              onMouseOver={(e) =>
+                (e.target.style.backgroundColor = styles.uploadButtonHover.backgroundColor)
+              }
+              onMouseOut={(e) =>
+                (e.target.style.backgroundColor = styles.uploadButton.backgroundColor)
+              }
             >
               Upload
+              <input
+                type="file"
+                style={styles.uploadInput}
+                onChange={uploadSession}
+              />
             </button>
-            <input
-              type="file"
-              style={styles.uploadInput}
-              onChange={uploadSession}
-            />
           </div>
         </div>
-      </div>
-      {!withGenomePicker && (
-        <>
-          <div style={styles.inputContainer}>
-            <p style={styles.label}>
-              Session bundle Id: {bundle.bundleId}
-              <CopyToClip value={bundle.bundleId} />
-            </p>
-            <label
-              style={{
-                ...styles.label,
-                flexDirection: "column",
-                alignItems: "start",
-              }}
-            >
-              Name your session:
-              <input
-                type="text"
-                value={newSessionLabel}
-                style={{ ...styles.input, width: "auto", flex: "1" }}
-                onChange={(e) => setNewSessionLabel(e.target.value.trim())}
-              />
-              <span>or use a</span>
+        <div style={styles.separator}></div>
+        {!withGenomePicker && (
+          <>
+            <div style={styles.inputContainer}>
+              <div style={styles.row}>
+                <p style={styles.label}>
+                  Session bundle Id: {bundle && bundle.bundleId ? bundle.bundleId : ''}{" "}
+                  <CopyToClip value={bundle && bundle.bundleId ? bundle.bundleId : ""} />
+                </p>
+              </div>
+              <div style={styles.label}>
+                <span>Name your session</span>
+                <div style={styles.row}>
+                  <input
+                    type="text"
+                    value={newSessionLabel}
+                    style={{ ...styles.input, width: 'auto', flex: '1' }}
+                    onChange={(e) => setNewSessionLabel(e.target.value.trim())}
+                  />
+                  <span>or use a</span>
+                  <button
+                    type="button"
+                    style={{ ...styles.button, backgroundColor: '#F0AD4E' }}
+                    onMouseOver={(e) => e.target.style.backgroundColor = '#EC971F'}
+                    onMouseOut={(e) => e.target.style.backgroundColor = styles.button.backgroundColor}
+                    onClick={() => setNewSessionLabel(getFunName())}
+                  >
+                    Random name
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div style={styles.additionalActions}>
               <button
-                type="button"
-                style={{ ...styles.button, backgroundColor: "#F0AD4E" }}
+                style={{ ...styles.actionButton, ...styles.actionButtonColors.save }}
                 onMouseOver={(e) =>
-                  (e.target.style.backgroundColor = "#EC971F")
+                (e.target.style.backgroundColor = styles.actionButtonColors.save.hover.backgroundColor,
+                  e.target.style.color = styles.actionButtonColors.save.hover.color)
                 }
                 onMouseOut={(e) =>
-                (e.target.style.backgroundColor =
-                  styles.button.backgroundColor)
+                (e.target.style.backgroundColor = 'white',
+                  e.target.style.color = styles.actionButtonColors.save.color)
                 }
-                onClick={() => setNewSessionLabel(getFunName())}
+                onClick={saveSession}
               >
-                Random name
+                💾 Save session
               </button>
-            </label>
-          </div>
-          <div style={styles.additionalActions}>
-            <button
-              style={{ ...styles.actionButton, backgroundColor: "#4285F4" }}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#3367D6")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "#4285F4")}
-              onClick={saveSession}
-            >
-              Save session
-            </button>
-            <button
-              style={{ ...styles.actionButton, backgroundColor: "#5CB85C" }}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#4CA84C")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "#5CB85C")}
-              onClick={downloadAsSession}
-            >
-              Download current session
-            </button>
-            <button
-              style={{ ...styles.actionButton, backgroundColor: "#5BA4CF" }}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#4A93BE")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "#5BA4CF")}
-              onClick={downloadAsHub}
-            >
-              Download as datahub
-            </button>
-            <button
-              style={{ ...styles.actionButton, backgroundColor: "#F0AD4E" }}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#EC971F")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "#F0AD4E")}
-              onClick={downloadWholeBundle}
-            >
-              Download whole bundle
-            </button>
-          </div>
-        </>
-      )}
-      {renderSavedSessions()}
-      <div style={styles.disclaimer}>
-        Disclaimer: please use <span style={styles.emphasis}>sessionFile</span>{" "}
-        or <span style={styles.emphasis}>hub</span> URL for publishing using the
-        Browser. Session id is supposed to be shared with trusted people only.
-        Please check our docs for{" "}
-        <a
-          href={HELP_LINKS.publish}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={styles.link}
-          onMouseOver={(e) => (e.target.style.color = styles.linkHover.color)}
-          onMouseOut={(e) => (e.target.style.color = styles.link.color)}
-        >
-          Publish with the browser
-        </a>
-        . Thank you!
+              <button
+                style={{ ...styles.actionButton, ...styles.actionButtonColors.downloadSession }}
+                onMouseOver={(e) =>
+                (e.target.style.backgroundColor = styles.actionButtonColors.downloadSession.hover.backgroundColor,
+                  e.target.style.color = styles.actionButtonColors.downloadSession.hover.color)
+                }
+                onMouseOut={(e) =>
+                (e.target.style.backgroundColor = 'white',
+                  e.target.style.color = styles.actionButtonColors.downloadSession.color)
+                }
+                onClick={downloadAsSession}
+              >
+                ⬇ Download current session
+              </button>
+              <button
+                style={{ ...styles.actionButton, ...styles.actionButtonColors.downloadHub }}
+                onMouseOver={(e) =>
+                (e.target.style.backgroundColor = styles.actionButtonColors.downloadHub.hover.backgroundColor,
+                  e.target.style.color = styles.actionButtonColors.downloadHub.hover.color)
+                }
+                onMouseOut={(e) =>
+                (e.target.style.backgroundColor = 'white',
+                  e.target.style.color = styles.actionButtonColors.downloadHub.color)
+                }
+                onClick={downloadAsHub}
+              >
+                ⬇ Download as datahub
+              </button>
+              <button
+                style={{ ...styles.actionButton, ...styles.actionButtonColors.downloadBundle }}
+                onMouseOver={(e) =>
+                (e.target.style.backgroundColor = styles.actionButtonColors.downloadBundle.hover.backgroundColor,
+                  e.target.style.color = styles.actionButtonColors.downloadBundle.hover.color)
+                }
+                onMouseOut={(e) =>
+                (e.target.style.backgroundColor = 'white',
+                  e.target.style.color = styles.actionButtonColors.downloadBundle.color)
+                }
+                onClick={downloadWholeBundle}
+              >
+                ⬇ Download whole bundle
+              </button>
+            </div>
+          </>
+        )}
+        {renderSavedSessions()}
+        <div style={styles.disclaimer}>
+          Disclaimer: please use <span style={styles.emphasis}>sessionFile</span> or <span style={styles.emphasis}>hub</span> URL for publishing using the Browser. Session id is supposed to be shared with trusted people only. Please check our docs for{' '}
+          <a
+            href={HELP_LINKS.publish}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.link}
+            onMouseOver={(e) => e.target.style.color = styles.linkHover.color}
+            onMouseOut={(e) => e.target.style.color = styles.link.color}
+          >
+            Publish with the browser
+          </a>
+          . Thank you!
+        </div>
       </div>
     </div>
   );

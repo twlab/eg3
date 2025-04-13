@@ -88,7 +88,6 @@ class FlankingStrategy {
    * @return {Feature} new Feature whose locus is based off the input Feature
    */
   makeFlankedFeature(feature: Feature, genome: Genome) {
-    console.log(feature, genome)
     const unsafeInterval = this._makeFlankedCoordinates(
       feature.getLocus(),
       feature.getIsForwardStrand()

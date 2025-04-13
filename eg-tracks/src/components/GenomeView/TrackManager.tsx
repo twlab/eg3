@@ -2540,6 +2540,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [viewWindowConfigData.current]);
   useEffect(() => {
     if (newDrawData.curDataIdx === dataIdx) {
+
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
       if (
@@ -2554,9 +2555,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         const primaryVisData =
           trackState.genomicFetchCoord[genomeName].primaryVisData;
+
         const startViewWindow = primaryVisData.viewWindow;
         const tmpCur = globalTrackState.current.viewWindow;
-        const start = tmpCur.start - windowWidth + startViewWindow.start;
+        let tmpStart
+        let tmpEnd
+        if (tmpCur) {
+          tmpStart = tmpCur.start
+          tmpEnd = tmpCur.end
+        }
+        else {
+          tmpStart = 0
+          tmpEnd = 0
+        }
+
+        const start = tmpStart - windowWidth + startViewWindow.start;
         const end = start + windowWidth;
         curViewWindow = new OpenInterval(start, end);
 

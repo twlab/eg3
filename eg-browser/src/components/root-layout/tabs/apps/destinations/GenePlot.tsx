@@ -90,7 +90,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       return [];
     }
   }, [currentSession]);
-  console.log(sets)
+
   const renderRegionList = () => {
     const setList = sets.map((item, index) => (
       <option key={index} value={item.name}>
