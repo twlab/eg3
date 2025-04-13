@@ -1592,7 +1592,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const queryGenome =
       trackFetchedDataCache.current[`${initTrackModel.id}`]["queryGenome"];
     trackFetchedDataCache.current[`${initTrackModel.id}`]["usePrimaryNav"] =
-      queryGenome !== genomeConfig.genome.getName() ? false : true;
+      queryGenome && queryGenome !== genomeConfig.genome.getName() ? false : true;
 
     trackFetchedDataCache.current[`${initTrackModel.id}`]["useExpandedLoci"] =
       initTrackModel.type in trackUsingExpandedLoci ||

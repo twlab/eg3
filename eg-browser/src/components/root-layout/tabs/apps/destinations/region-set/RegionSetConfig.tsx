@@ -94,7 +94,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           if (locus) {
             return new Feature(symbol, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) {}
+        } catch (error) { }
         return getSymbolRegions(genome.getName(), symbol);
       })
     );
@@ -108,13 +108,14 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                  gene.name,
-                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                  gene.strand
-                )
+                gene.name,
+                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                gene.strand
+              )
               : null
           )
           .filter((hit) => hit);
+
         if (hits.length === 0) {
           return null;
         }
@@ -124,7 +125,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
       }
     });
 
-    const nullList = parsed2.filter((item) => item === null);
+    const nullList = parsed2.filter((item) => item === null || "statusCode" in item);
     if (nullList.length > 0) {
       console.log(
         `${nullList.length} item(s) cannot find location(s) on genome`,
@@ -133,16 +134,17 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
       );
     } else {
       console.log(`${parsed2.length} region(s) added`, "success", 2000);
+      const newSet = new RegionSet(
+        "New set",
+        parsed2.filter((item) => item !== null) as Feature[],
+        genome!,
+        new FlankingStrategy()
+      );
+      setRegionSet(newSet);
     }
     setLoadingMsg("");
 
-    const newSet = new RegionSet(
-      "New set",
-      parsed2.filter((item) => item !== null) as Feature[],
-      genome!,
-      new FlankingStrategy()
-    );
-    setRegionSet(newSet);
+
   };
 
   const changeSetName = (event: React.ChangeEvent<HTMLInputElement>) => {
