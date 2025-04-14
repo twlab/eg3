@@ -126,10 +126,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
       let svgKey = crypto.randomUUID();
       if (configOptions.forceSvg) {
-
-
-
-
         return (
           <div style={{ display: "flex" }}>
             <TrackLegend
@@ -139,15 +135,17 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 configOptions.label
                   ? configOptions.label
                   : trackModel.options.label
-                    ? trackModel.options.label
-                    : ""
+                  ? trackModel.options.label
+                  : ""
               }
             />
             <svg
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={svgKey}
               width={width / 3}
-              viewBox={`${trackState.viewWindow.start} 0 ${trackState.visWidth / 3} ${height}`}
+              viewBox={`${trackState.viewWindow.start} 0 ${
+                trackState.visWidth / 3
+              } ${height}`}
               height={height}
               display={"block"}
             >
@@ -215,7 +213,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -240,7 +238,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -320,7 +318,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -345,7 +343,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => { }}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onHideTooltip}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -403,6 +401,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           if (estimatedLabelWidth < 0.9 * width) {
             const centerX = xSpan.start + 0.5 * width;
             const centerY = height - TEXT_HEIGHT * 2;
+
             label = (
               <BackgroundedText
                 x={centerX}
@@ -427,7 +426,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               color="white"
             />
           );
-
+          console.log(y);
           return (
             <TranslatableG
               onClick={(event) => {
@@ -466,7 +465,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => { }}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -492,7 +491,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -511,7 +510,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -531,8 +530,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-          imgCount -
-          THUMBNAIL_PADDING,
+            imgCount -
+            THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -556,8 +555,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
               configOptions.label
                 ? configOptions.label
                 : trackModel.options.label
-                  ? trackModel.options.label
-                  : ""
+                ? trackModel.options.label
+                : ""
             }
           />
         );
@@ -576,7 +575,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => { }}
+          onSetImageInfo={() => {}}
           heightObj={heightObj}
         />
       );
@@ -616,8 +615,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           const curXSpan = feature.xSpan;
 
           return !(
-            curXSpan.end <
-            trackState.viewWindow.start ||
+            curXSpan.end < trackState.viewWindow.start ||
             curXSpan.start > trackState.viewWindow.end
           );
         }
@@ -629,7 +627,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackModel.type in { repeatmasker: "" }
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
-
+    console.log(height);
     if (updatedLegend) {
       // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
       updatedLegend.current = (
@@ -640,8 +638,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             configOptions.label
               ? configOptions.label
               : trackModel.options.label
-                ? trackModel.options.label
-                : ""
+              ? trackModel.options.label
+              : ""
           }
         />
       );
@@ -1089,7 +1087,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     genomeName,
-    genomeConfig
+    genomeConfig,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -1134,8 +1132,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
               drawData.configOptions.label
                 ? drawData.configOptions.label
                 : drawData.trackModel.options.label
-                  ? drawData.trackModel.options.label
-                  : ""
+                ? drawData.trackModel.options.label
+                : ""
             }
           />
         );
@@ -1152,13 +1150,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
       let element;
       if (drawData.configOptions.forceSvg) {
         element = (
-          < div
+          <div
             style={{
               display: "flex",
               flexDirection: "row",
               zIndex: 3,
-            }
-            }
+            }}
           >
             <TrackLegend
               height={drawData.configOptions.height}
@@ -1167,20 +1164,23 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 drawData.configOptions.label
                   ? drawData.configOptions.label
                   : drawData.trackModel.options.label
-                    ? drawData.trackModel.options.label
-                    : ""
+                  ? drawData.trackModel.options.label
+                  : ""
               }
             />
             <svg
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={crypto.randomUUID()}
               width={drawData.trackState.visWidth / 3}
-              viewBox={`${drawData.trackState.viewWindow.start} 0 ${drawData.trackState.visWidth / 3} ${drawData.configOptions.height}`}
+              viewBox={`${drawData.trackState.viewWindow.start} 0 ${
+                drawData.trackState.visWidth / 3
+              } ${drawData.configOptions.height}`}
               height={drawData.configOptions.height}
               display={"block"}
             >
               {svgElements}
-            </svg> </div>
+            </svg>{" "}
+          </div>
         );
       } else {
         element = (
@@ -1193,16 +1193,19 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 zIndex: 3,
               }}
             >
-
-              {!drawData.forceSvg ? <HoverToolTip
-                data={drawData.genesArr}
-                windowWidth={drawData.trackState.visWidth}
-                trackType={"genomealignFine"}
-                height={drawData.configOptions.height}
-                viewRegion={drawData.trackState.visRegion}
-                side={drawData.trackState.side}
-                options={drawData.configOptions}
-              /> : ""}
+              {!drawData.forceSvg ? (
+                <HoverToolTip
+                  data={drawData.genesArr}
+                  windowWidth={drawData.trackState.visWidth}
+                  trackType={"genomealignFine"}
+                  height={drawData.configOptions.height}
+                  viewRegion={drawData.trackState.visRegion}
+                  side={drawData.trackState.side}
+                  options={drawData.configOptions}
+                />
+              ) : (
+                ""
+              )}
             </div>
 
             <svg
@@ -1229,8 +1232,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             drawData.configOptions.label
               ? drawData.configOptions.label
               : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
+              ? drawData.trackModel.options.label
+              : ""
           }
         />
       );
@@ -1328,7 +1331,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
       genomeName: drawData.genomeName,
-      genomeConfig: drawData.genomeConfig
+      genomeConfig: drawData.genomeConfig,
     });
   } else if (drawData.trackModel.type === "vcf") {
     let formattedData = drawData.genesArr;
@@ -1347,14 +1350,13 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       xvalues: drawData.xvalues,
     });
   } else if (
-    drawData.configOptions.displayMode === "full" &&
-    drawData.trackModel.type !== "genomealign"
+    drawData.trackModel.type === "geneannotation" ||
+    (drawData.configOptions.displayMode === "full" &&
+      drawData.trackModel.type !== "genomealign")
   ) {
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
-      const filteredArray = removeDuplicates(drawData.genesArr, "id");
-
-      formattedData = filteredArray.map((record) => new Gene(record));
+      formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "refbed") {
       const filteredArray = removeDuplicates(drawData.genesArr, 7);
 
@@ -1619,15 +1621,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   ) {
     let formattedData;
     if (drawData.trackModel.type === "geneannotation") {
-      const filteredArray = removeDuplicates(drawData.genesArr, "id");
-      formattedData = filteredArray.map((record) => {
-        let newChrInt = new ChromosomeInterval(
-          record.chrom,
-          record.txStart,
-          record.txEnd
-        );
-        return new NumericalFeature("", newChrInt).withValue(record.score);
-      });
+      formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "bigbed") {
       formattedData = drawData.genesArr.map((record) => {
         const fields = record.rest.split("\t");
@@ -1688,7 +1682,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     return canvasElements;
   }
 }
-
+// MARK: FORMAT
 function formatGeneAnnotationData(genesArr: any[]) {
   const filteredArray = removeDuplicates(genesArr, "id");
   return filteredArray.map((record) => new Gene(record));
@@ -1965,7 +1959,7 @@ function formatLongRange(genesArr: any[]) {
 }
 export const twoDataTypeTracks = {
   bigbed: "",
-  geneannotation: "",
+  // geneannotation: "",
   refbed: "",
   bed: "",
   repeatmasker: "",

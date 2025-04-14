@@ -2187,9 +2187,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       for (let key in trackFetchedDataCache.current) {
         const cacheTrackData = trackFetchedDataCache.current[key];
         // methylc: "" qbed: "" , dynseq: "",,
-        if (!(cacheTrackData.trackType in numericalTracks)) {
+        const configOptions = globalTrackConfig.current[key];
+
+        if (
+          !(cacheTrackData.trackType in numericalTracks) ||
+          configOptions.displayMode !== "density"
+        ) {
           continue;
         }
+        console.log(configOptions, cacheTrackData);
         let combinedData: any = [];
 
         let currIdx = dataIdx + 1;

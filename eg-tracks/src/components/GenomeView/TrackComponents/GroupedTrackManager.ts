@@ -4,8 +4,23 @@ import TrackModel from "../../../models/TrackModel";
 
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
-export const numericalTracks = { bigwig: "", bedgraph: "", vcf: "", methylc: "" }
-export const numericalTracksGroup = { bigwig: "", bedgraph: "" }
+export const numericalTracks = {
+  bigwig: "",
+  bedgraph: "",
+  vcf: "",
+  methylc: "",
+};
+export const possibleNumericalTracks = {
+  bigbed: "",
+  geneannotation: "",
+  refbed: "",
+  bed: "",
+  repeatmasker: "",
+  omeroidr: "",
+  bam: "",
+  snp: "",
+};
+export const numericalTracksGroup = { bigwig: "", bedgraph: "" };
 export class GroupedTrackManager {
   /**
    * @returns list of groups found in the track list, their data, and their original indicies
@@ -29,10 +44,8 @@ export class GroupedTrackManager {
       for (let i = 0; i < tracks.length; i++) {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
-        if (!(tracks[i].type in numericalTracksGroup)) {
-          continue;
-        }
-        if (tracks[i].options.group) {
+
+        if (tracks[i].options.group && tracks[i].type in numericalTracksGroup) {
           const g = tracks[i].options.group;
           const tid = tracks[i].id;
           if (tracks[i].options.yScale === ScaleChoices.FIXED) {
@@ -111,7 +124,10 @@ export class GroupedTrackManager {
       for (let i = 0; i < tracks.length; i++) {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
-        if (!(tracks[i].type in numericalTracksGroup) || !tracks[i].options.group) {
+        if (
+          !(tracks[i].type in numericalTracksGroup) ||
+          !tracks[i].options.group
+        ) {
           continue;
         }
         const g = tracks[i].options.group;
