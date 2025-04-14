@@ -378,7 +378,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           let scale = scaleLinear()
             .domain([1, 0])
             .range([TOP_PADDING, configOptions.height]);
-          let y = scale(feature.value);
+          let y = scale(feature.repeatValue);
           const drawHeight = configOptions.height - y;
 
           const width = xSpan.getLength();
@@ -426,7 +426,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               color="white"
             />
           );
-          console.log(y);
+
           return (
             <TranslatableG
               onClick={(event) => {
@@ -627,7 +627,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackModel.type in { repeatmasker: "" }
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
-    console.log(height);
+
     if (updatedLegend) {
       // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
       updatedLegend.current = (
@@ -1350,9 +1350,8 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       xvalues: drawData.xvalues,
     });
   } else if (
-    drawData.trackModel.type === "geneannotation" ||
-    (drawData.configOptions.displayMode === "full" &&
-      drawData.trackModel.type !== "genomealign")
+    drawData.configOptions.displayMode === "full" &&
+    drawData.trackModel.type !== "genomealign"
   ) {
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
@@ -1423,36 +1422,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       const filteredArray = removeDuplicates(drawData.genesArr, "id");
       formattedData = filteredArray.map((record) => new Snp(record));
     } else if (drawData.trackModel.type === "repeatmasker") {
-      let rawDataArr: Array<RepeatDASFeature> = [];
-      drawData.genesArr.map((record) => {
-        const restValues = record.rest.split("\t");
-        const output: RepeatDASFeature = {
-          genoLeft: restValues[7],
-          label: restValues[0],
-          max: record.end,
-          milliDel: restValues[5],
-          milliDiv: restValues[4],
-          milliIns: restValues[6],
-          min: record.start,
-          orientation: restValues[2],
-          repClass: restValues[8],
-          repEnd: restValues[11],
-          repFamily: restValues[9],
-          repLeft: restValues[12],
-          repStart: restValues[10],
-          score: Number(restValues[1]),
-          segment: record.chr,
-          swScore: restValues[3],
-          type: "bigbed",
-          _chromId: record.chromId,
-        };
-
-        rawDataArr.push(output);
-      });
-
-      formattedData = rawDataArr.map(
-        (feature) => new RepeatMaskerFeature(feature)
-      );
+      formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "jaspar") {
       const filteredArray = removeDuplicates(drawData.genesArr, "matrixId");
 
@@ -1654,15 +1624,17 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     } else if (drawData.trackModel.type === "bigwig") {
       formattedData = drawData.genesArr;
     } else {
-      formattedData = drawData.genesArr.map((record) => {
-        let newChrInt = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end
-        );
-        return new NumericalFeature("", newChrInt).withValue(record.score);
-      });
+      formattedData = drawData.genesArr;
+      // formattedData = drawData.genesArr.map((record) => {
+      //   let newChrInt = new ChromosomeInterval(
+      //     record.chr,
+      //     record.start,
+      //     record.end
+      //   );
+      //   return new NumericalFeature("", newChrInt).withValue(record.score);
+      // });
     }
+
     let newConfigOptions = { ...drawData.configOptions };
     // if (drawData.trackModel.type !== "bigwig") {
     //   newConfigOptions.displayMode = "auto";
@@ -1687,7 +1659,40 @@ function formatGeneAnnotationData(genesArr: any[]) {
   const filteredArray = removeDuplicates(genesArr, "id");
   return filteredArray.map((record) => new Gene(record));
 }
+function formatRepeatMasker(genesArr: any[]) {
+  const findUnique: { [key: string]: boolean } = {};
+  const filteredArray: Array<any> = [];
+  for (const record of genesArr) {
+    if (record.uniqueId && !findUnique[record.uniqueId]) {
+      findUnique[record.uniqueId] = true;
+      const restValues = record.rest.split("\t");
 
+      const output: RepeatDASFeature = {
+        genoLeft: restValues[7],
+        label: restValues[0],
+        max: record.end,
+        milliDel: restValues[5],
+        milliDiv: restValues[4],
+        milliIns: restValues[6],
+        min: record.start,
+        orientation: restValues[2],
+        repClass: restValues[8],
+        repEnd: restValues[11],
+        repFamily: restValues[9],
+        repLeft: restValues[12],
+        repStart: restValues[10],
+        score: Number(restValues[1]),
+        segment: record.chr,
+        swScore: restValues[3],
+        type: "bigbed",
+        _chromId: record.chromId,
+      };
+
+      filteredArray.push(new RepeatMaskerFeature(output));
+    }
+  }
+  return filteredArray;
+}
 function formatRefBedData(genesArr: any[]) {
   const filteredArray = removeDuplicates(genesArr, 7);
 
@@ -1962,7 +1967,7 @@ export const twoDataTypeTracks = {
   // geneannotation: "",
   refbed: "",
   bed: "",
-  repeatmasker: "",
+  // repeatmasker: "",
   omeroidr: "",
   bam: "",
   snp: "",
@@ -1970,6 +1975,7 @@ export const twoDataTypeTracks = {
 
 const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   geneannotation: formatGeneAnnotationData,
+  repeatmasker: formatRepeatMasker,
   refbed: formatRefBedData,
   bed: formatBedData,
   categorical: formatCategoricalData,

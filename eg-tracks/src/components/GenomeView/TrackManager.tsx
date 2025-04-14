@@ -180,7 +180,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
   const fetchInstances = useRef<{ [key: string]: any }>({});
   const isMouseInsideRef = useRef(false);
-  const globalTrackConfig = useRef<{ [key: string]: any }>({});
+  const globalTrackConfig = useRef<{ [key: string]: any }>({
+    viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+  });
   const trackManagerState = useRef<TrackState>({
     bundleId: "",
     customTracksPool: [],
@@ -1092,6 +1094,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     ) {
                       delete trackFetchedDataCache.current[key][cacheDataIdx]
                         .records;
+                    }
+                    if (
+                      "xvalues" in
+                      trackFetchedDataCache.current[key][cacheDataIdx]
+                    ) {
+                      delete trackFetchedDataCache.current[key][cacheDataIdx]
+                        .xvalues;
                     }
                   }
                 }
@@ -2124,6 +2133,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               delete trackFetchedDataCache.current[key][dataKey].dataCache;
             }
           }
+        } else {
+          for (const cacheDataIdx in trackCache) {
+            if (isInteger(cacheDataIdx)) {
+              if (
+                "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
+              ) {
+                delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
+              }
+            }
+          }
         }
       }
 
@@ -2136,7 +2155,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setTrackComponents(tmpArr);
       queueRegionToFetch(dataIdx);
     } else {
+      for (const key in trackFetchedDataCache.current) {
+        const curTrack = trackFetchedDataCache.current[key];
+
+        for (const cacheDataIdx in curTrack) {
+          if (isInteger(cacheDataIdx)) {
+            if ("xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]) {
+              delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
+            }
+          }
+        }
+      }
       const tmpArr = [...trackComponents];
+
+      const newViewWindow =
+        side.current === "right"
+          ? new OpenInterval(
+              -((dragX.current % windowWidth) + -windowWidth),
+              -((dragX.current % windowWidth) + -windowWidth) + windowWidth
+            )
+          : new OpenInterval(
+              windowWidth * 3 - ((dragX.current % windowWidth) + windowWidth),
+              windowWidth * 3 - (dragX.current % windowWidth)
+            );
+
+      globalTrackState.current.viewWindow = newViewWindow;
       setTrackComponents(tmpArr);
       setNewDrawData({
         curDataIdx: dataIdx,
@@ -2179,23 +2222,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
 
-  function getWindowViewConfig(viewWindow, dataIdx) {
+  function getWindowViewConfig(viewWindow, dataIdx, trackToDrawId) {
     if (viewWindow) {
       const trackDataObj: { [key: string]: any } = {};
-      const trackToDrawId: { [key: string]: any } = {};
       let primaryVisData;
       for (let key in trackFetchedDataCache.current) {
         const cacheTrackData = trackFetchedDataCache.current[key];
         // methylc: "" qbed: "" , dynseq: "",,
-        const configOptions = globalTrackConfig.current[key];
+        let configOptions;
+        if (key in globalTrackConfig.current) {
+          configOptions = globalTrackConfig.current[key];
+        } else {
+          const curTrackModel = tracks.find(
+            (trackModel: any) => trackModel.id === key
+          );
+
+          if (curTrackModel) {
+            configOptions = {
+              ...trackOptionMap[`${trackFetchedDataCache.current.trackType}`],
+              ...curTrackModel.options,
+            };
+          }
+        }
 
         if (
           !(cacheTrackData.trackType in numericalTracks) ||
-          configOptions.displayMode !== "density"
+          configOptions.displayMode !== "density" ||
+          !(key in trackToDrawId)
         ) {
           continue;
         }
-        console.log(configOptions, cacheTrackData);
+
         let combinedData: any = [];
 
         let currIdx = dataIdx + 1;
@@ -2263,9 +2320,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             };
           }
         }
-        if (!noData) {
-          trackToDrawId[key] = "";
-        }
       }
 
       const groupScale = groupManager.getGroupScale(
@@ -2276,7 +2330,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           : windowWidth * 3,
         viewWindow,
         dataIdx,
-        trackFetchedDataCache
+        trackFetchedDataCache,
+        trackToDrawId
       );
 
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
@@ -2562,7 +2617,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           tmpEnd = tmpCur.end;
         } else {
           tmpStart = 0;
-          tmpEnd = 0;
+          tmpEnd = 1;
         }
 
         const start = tmpStart - windowWidth + startViewWindow.start;
@@ -2571,11 +2626,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         curViewWindow = globalTrackState.current.viewWindow;
       }
-
-      getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
+      console.log(curViewWindow, windowWidth, globalTrackState.current);
+      getWindowViewConfig(
+        curViewWindow,
+        newDrawData.curDataIdx,
+        newDrawData.trackToDrawId
+      );
 
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
     }
+    console.log(trackFetchedDataCache.current);
   }, [newDrawData]);
   return (
     <div style={{ backgroundColor: "var(--bg-color)" }}>

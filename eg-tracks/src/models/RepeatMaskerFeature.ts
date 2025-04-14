@@ -147,7 +147,7 @@ export class RepeatMaskerFeature extends Feature {
         */
   }
 
-  get value() {
+  get repeatValue() {
     if (this._value === null) {
       const divergence = Number.parseInt(this.milliDiv, 10) / 1000.0;
       this._value = 1 - divergence;

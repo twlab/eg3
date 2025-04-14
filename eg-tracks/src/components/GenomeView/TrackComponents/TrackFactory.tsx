@@ -207,7 +207,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   useEffect(() => {
     if (svgComponents || canvasComponents) {
-      console.log(updatedLegend.current);
       setLegend(updatedLegend.current);
     }
   }, [svgComponents, canvasComponents]);
@@ -941,7 +940,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                       {feature.getLocus().toString()} (
                       {feature.getLocus().getLength()}bp)
                     </div>
-                    <div>(1 - divergence%) = {feature.value.toFixed(2)}</div>
+                    <div>
+                      (1 - divergence%) = {feature.repeatValue.toFixed(2)}
+                    </div>
                     <div>strand: {feature.strand}</div>
                     <div className="Tooltip-minor-text">
                       {trackModel.getDisplayLabel()}

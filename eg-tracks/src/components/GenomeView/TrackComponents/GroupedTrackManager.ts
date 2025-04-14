@@ -36,7 +36,8 @@ export class GroupedTrackManager {
     width: number,
     viewWindow: OpenInterval,
     dataIdx: number,
-    trackFetchedDataCache: any
+    trackFetchedDataCache: any,
+    trackToDrawId: any
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
     if (trackData) {
@@ -58,16 +59,20 @@ export class GroupedTrackManager {
           }
           if (trackData[tid]) {
             const data = trackData[tid].data;
+            let xvalues;
             // console.log(data);
+            if (trackFetchedDataCache.current[tid][dataIdx]["xvalues"]) {
+              xvalues = trackFetchedDataCache.current[tid][dataIdx]["xvalues"];
+            } else {
+              xvalues = this.aggregator.xToValueMaker(
+                data,
+                trackData[tid].visRegion,
+                width,
+                tracks[i].options
+              );
+              trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
+            }
 
-            const xvalues = this.aggregator.xToValueMaker(
-              data,
-              trackData[tid].visRegion,
-              width,
-              tracks[i].options
-            );
-
-            trackFetchedDataCache.current[tid][dataIdx]["xvalues"] = xvalues;
             const max =
               xvalues[0] && xvalues[0].length
                 ? _.max(xvalues[0].slice(viewWindow.start, viewWindow.end))
@@ -90,6 +95,13 @@ export class GroupedTrackManager {
           }
         } else {
           const tid = tracks[i].id;
+          if (
+            !(tracks[i].id in trackToDrawId) &&
+            trackFetchedDataCache.current[tid][dataIdx]["xvalues"]
+          ) {
+            continue;
+          }
+
           if (trackData[tid]) {
             const data = trackData[tid].data;
             const xvalues = this.aggregator.xToValueMaker(
