@@ -12,6 +12,7 @@ import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import useExpandedNavigationTab from "../../../../../../lib/hooks/useExpandedNavigationTab";
 
 const DEFAULT_LIST = `CYP4A22
 chr10:96796528-96829254
@@ -33,6 +34,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   onSetConfigured,
   genome,
 }) => {
+  useExpandedNavigationTab()
   const currentSession = useAppSelector(selectCurrentSession);
 
   const [regionSet, setRegionSet] = useState<RegionSet | null>(null);
@@ -94,7 +96,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           if (locus) {
             return new Feature(symbol, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) {}
+        } catch (error) { }
         return getSymbolRegions(genome.getName(), symbol);
       })
     );
@@ -108,13 +110,14 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                  gene.name,
-                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                  gene.strand
-                )
+                gene.name,
+                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                gene.strand
+              )
               : null
           )
           .filter((hit) => hit);
+
         if (hits.length === 0) {
           return null;
         }
@@ -124,7 +127,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
       }
     });
 
-    const nullList = parsed2.filter((item) => item === null);
+    const nullList = parsed2.filter((item) => item === null || "statusCode" in item);
     if (nullList.length > 0) {
       console.log(
         `${nullList.length} item(s) cannot find location(s) on genome`,
@@ -133,16 +136,17 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
       );
     } else {
       console.log(`${parsed2.length} region(s) added`, "success", 2000);
+      const newSet = new RegionSet(
+        "New set",
+        parsed2.filter((item) => item !== null) as Feature[],
+        genome!,
+        new FlankingStrategy()
+      );
+      setRegionSet(newSet);
     }
     setLoadingMsg("");
 
-    const newSet = new RegionSet(
-      "New set",
-      parsed2.filter((item) => item !== null) as Feature[],
-      genome!,
-      new FlankingStrategy()
-    );
-    setRegionSet(newSet);
+
   };
 
   const changeSetName = (event: React.ChangeEvent<HTMLInputElement>) => {

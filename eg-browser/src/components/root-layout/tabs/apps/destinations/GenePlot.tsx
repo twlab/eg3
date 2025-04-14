@@ -90,6 +90,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       return [];
     }
   }, [currentSession]);
+
   const renderRegionList = () => {
     const setList = sets.map((item, index) => (
       <option key={index} value={item.name}>
@@ -167,6 +168,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     const trackConfig = getTrackConfig(track);
 
     const set = getSetByName(setName);
+
     const flankedFeatures = set.features.map((feature) =>
       set.flankingStrategy.makeFlankedFeature(feature, set.genome)
     );

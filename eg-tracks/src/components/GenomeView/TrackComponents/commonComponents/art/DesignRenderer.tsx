@@ -56,9 +56,9 @@ export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
         );
       case RenderTypes.SVG:
         if (this.props.forceSvg) {
-          let start = this.props.viewWindow.start + this.props.width / 3;
+          let start = this.props.viewWindow.start
 
-          let end = this.props.viewWindow.end - this.props.width / 3;
+          let end = this.props.viewWindow.end
 
           let svgWidth = end - start;
 

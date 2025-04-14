@@ -9,13 +9,33 @@ import BigSourceWorker from "./BigSourceWorker";
 
 const AWS_API = "https://lambda.epigenomegateway.org/v3";
 let cachedFetchInstance: { [key: string]: any } = {};
+const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" }
 export const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
-    let url = `${AWS_API}/${regionData.genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
 
-    if (regionData.genomeName === "canFam6") {
-      url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    let genomeName;
+    let apiConfigPrefix;
+    const trackModel = regionData.trackModel
+    if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
+      genomeName = trackModel["apiConfig"]["genome"]
     }
+    else {
+      genomeName = regionData.genomeName
+    }
+
+    if (trackModel["apiConfig"] && trackModel["apiConfig"]["format"] in apiConfigMap) {
+      apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`]
+    }
+    else {
+      apiConfigPrefix = apiConfigMap.WashU
+    }
+
+
+    let url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+
+    // if (regionData.genomeName === "canFam6") {
+    //   url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    // }
 
     const genRefResponse = await fetch(url, {
       method: "GET",

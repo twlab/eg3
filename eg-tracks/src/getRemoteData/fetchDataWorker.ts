@@ -185,10 +185,9 @@ self.onmessage = async (event: MessageEvent) => {
           ) {
             curFetchNav =
               genomicFetchCoord[
-                `${
-                  item.metadata.genome === ""
-                    ? primaryGenName
-                    : item.metadata.genome
+                `${item.metadata.genome === ""
+                  ? primaryGenName
+                  : item.metadata.genome
                 }`
               ].queryGenomicCoord;
           } else if (
@@ -265,15 +264,15 @@ self.onmessage = async (event: MessageEvent) => {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            });
 
           if (
             curRespond &&
@@ -290,6 +289,7 @@ self.onmessage = async (event: MessageEvent) => {
       } else if (!isLocalFetch) {
         for (let i = 0; i < curFetchNav.length; i++) {
           let curRespond;
+
           try {
             if (trackModel.type in { geneannotation: "", snp: "" }) {
               curRespond = await Promise.all(
@@ -298,7 +298,7 @@ self.onmessage = async (event: MessageEvent) => {
                     genomeName:
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
-                        : primaryGenName,
+                        : trackModel.genome ? trackModel.genome : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,

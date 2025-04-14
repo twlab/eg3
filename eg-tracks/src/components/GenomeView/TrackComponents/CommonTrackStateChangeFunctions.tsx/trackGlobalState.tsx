@@ -11,7 +11,7 @@ export function trackGlobalState({
 }: cacheFetchedDataParams) {
   const primaryVisData =
     trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
-  console.log(trackState.initVisData)
+
   if (trackState.initial === 1) {
     let trackState0 = {
       initial: 0,

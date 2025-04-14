@@ -4,14 +4,8 @@ import TrackModel from "../../../models/TrackModel";
 
 import { NumericalAggregator } from "./commonComponents/numerical/NumericalAggregator";
 import OpenInterval from "../../../models/OpenInterval";
-
-export function isNumericalTrack(trackModel): boolean {
-  return (
-    trackModel.type === "bigwig" ||
-    trackModel.type === "bedgraph" ||
-    trackModel.type === "vcf"
-  );
-}
+export const numericalTracks = { bigwig: "", bedgraph: "", vcf: "", methylc: "" }
+export const numericalTracksGroup = { bigwig: "", bedgraph: "" }
 export class GroupedTrackManager {
   /**
    * @returns list of groups found in the track list, their data, and their original indicies
@@ -35,7 +29,7 @@ export class GroupedTrackManager {
       for (let i = 0; i < tracks.length; i++) {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
-        if (isNumericalTrack(tracks[i]) === false) {
+        if (!(tracks[i].type in numericalTracksGroup)) {
           continue;
         }
         if (tracks[i].options.group) {
@@ -117,7 +111,7 @@ export class GroupedTrackManager {
       for (let i = 0; i < tracks.length; i++) {
         // if (tracks[i].options.hasOwnProperty("group") && tracks[i].options.group) { // check up already done at trackContainer
         // console.log(tracks[i]);
-        if (isNumericalTrack(tracks[i]) === false && tracks[i].options.group) {
+        if (!(tracks[i].type in numericalTracksGroup) || !tracks[i].options.group) {
           continue;
         }
         const g = tracks[i].options.group;

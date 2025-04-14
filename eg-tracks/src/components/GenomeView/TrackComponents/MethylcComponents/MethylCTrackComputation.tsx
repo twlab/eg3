@@ -181,10 +181,15 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     }
     let strandRenderers, tooltipY;
     if (isCombineStrands) {
+
       strandRenderers = (
         <React.Fragment>
-          {forceSvg ? legend : ""}
-          <StrandVisualizer {...childProps} strand="combined" />
+          <div style={{ display: "flex" }}>
+            {forceSvg ? legend : ""}
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <StrandVisualizer {...childProps} strand="combined" />       </div>
+          </div>
         </React.Fragment>
       );
       tooltipY = height;

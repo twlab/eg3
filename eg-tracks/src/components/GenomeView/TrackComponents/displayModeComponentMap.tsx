@@ -126,10 +126,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
       let svgKey = crypto.randomUUID();
       if (configOptions.forceSvg) {
-        let start = trackState.viewWindow.start + trackState.visWidth / 3;
 
-        let end = trackState.viewWindow.end - trackState.visWidth / 3;
-        let svgWidth = end - start;
+
+
 
         return (
           <div style={{ display: "flex" }}>
@@ -148,12 +147,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={svgKey}
               width={width / 3}
-              viewBox={`${start} 0 ${svgWidth} ${height}`}
+              viewBox={`${trackState.viewWindow.start} 0 ${trackState.visWidth / 3} ${height}`}
               height={height}
               display={"block"}
             >
               {placements.map(renderAnnotation)}
-              <line
+              {/* <line
                 x1={width / 3}
                 y1={0}
                 x2={width / 3}
@@ -168,7 +167,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 y2={height}
                 stroke="black"
                 strokeWidth={1}
-              />
+              /> */}
             </svg>
           </div>
         );
@@ -183,7 +182,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           display={"block"}
         >
           {placements.map(renderAnnotation)}
-          <line
+          {/* <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -198,7 +197,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          />
+          /> */}
         </svg>
       );
     }
@@ -618,8 +617,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
           return !(
             curXSpan.end <
-            trackState.viewWindow.start + trackState.visWidth / 3 ||
-            curXSpan.start > trackState.viewWindow.end - trackState.visWidth / 3
+            trackState.viewWindow.start ||
+            curXSpan.start > trackState.viewWindow.end
           );
         }
       );
@@ -1090,6 +1089,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     genomeName,
+    genomeConfig
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -1108,7 +1108,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         )}
         viewWindow={trackState.viewWindow}
         getNumLegend={getNumLegend}
-        genomeConfig={getGenomeConfig(genomeName)}
+        genomeConfig={genomeConfig}
         options={configOptions}
       />
     );
@@ -1125,19 +1125,21 @@ export const displayModeComponentMap: { [key: string]: any } = {
     }
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
-      drawData.updatedLegend.current = (
-        <TrackLegend
-          height={drawData.configOptions.height}
-          trackModel={drawData.trackModel}
-          label={
-            drawData.configOptions.label
-              ? drawData.configOptions.label
-              : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
-          }
-        />
-      );
+      if (drawData.updatedLegend) {
+        drawData.updatedLegend.current = (
+          <TrackLegend
+            height={drawData.configOptions.height}
+            trackModel={drawData.trackModel}
+            label={
+              drawData.configOptions.label
+                ? drawData.configOptions.label
+                : drawData.trackModel.options.label
+                  ? drawData.trackModel.options.label
+                  : ""
+            }
+          />
+        );
+      }
       svgElements = drawDatas.map((item, index) =>
         renderFineAlignment(item, index, drawData.configOptions)
       );
@@ -1149,24 +1151,36 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
       let element;
       if (drawData.configOptions.forceSvg) {
-        let start =
-          drawData.trackState.viewWindow.start +
-          drawData.trackState.visWidth / 3;
-
-        let end =
-          drawData.trackState.viewWindow.end - drawData.trackState.visWidth / 3;
-        let svgWidth = end - start;
         element = (
-          <svg
-            style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
-            key={crypto.randomUUID()}
-            width={drawData.trackState.visWidth / 3}
-            viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
-            height={drawData.configOptions.height}
-            display={"block"}
+          < div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              zIndex: 3,
+            }
+            }
           >
-            {svgElements}
-          </svg>
+            <TrackLegend
+              height={drawData.configOptions.height}
+              trackModel={drawData.trackModel}
+              label={
+                drawData.configOptions.label
+                  ? drawData.configOptions.label
+                  : drawData.trackModel.options.label
+                    ? drawData.trackModel.options.label
+                    : ""
+              }
+            />
+            <svg
+              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
+              key={crypto.randomUUID()}
+              width={drawData.trackState.visWidth / 3}
+              viewBox={`${drawData.trackState.viewWindow.start} 0 ${drawData.trackState.visWidth / 3} ${drawData.configOptions.height}`}
+              height={drawData.configOptions.height}
+              display={"block"}
+            >
+              {svgElements}
+            </svg> </div>
         );
       } else {
         element = (
@@ -1179,7 +1193,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 zIndex: 3,
               }}
             >
-              <HoverToolTip
+
+              {!drawData.forceSvg ? <HoverToolTip
                 data={drawData.genesArr}
                 windowWidth={drawData.trackState.visWidth}
                 trackType={"genomealignFine"}
@@ -1187,7 +1202,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 viewRegion={drawData.trackState.visRegion}
                 side={drawData.trackState.side}
                 options={drawData.configOptions}
-              />
+              /> : ""}
             </div>
 
             <svg
@@ -1313,6 +1328,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
       genomeName: drawData.genomeName,
+      genomeConfig: drawData.genomeConfig
     });
   } else if (drawData.trackModel.type === "vcf") {
     let formattedData = drawData.genesArr;

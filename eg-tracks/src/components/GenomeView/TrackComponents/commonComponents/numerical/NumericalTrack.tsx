@@ -114,8 +114,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-              )
+              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+            )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -214,21 +214,14 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let isDrawingBars = getEffectiveDisplayMode() === NumericalDisplayModes.BAR;
 
   const legend = (
-    <div
-      style={{
-        width: 120,
-        backgroundColor: trackModel.isSelected ? "#FFD0C7" : "var(--bg-color)",
 
-        color: trackModel.isSelected ? "black" : "var(--font-color)",
-      }}
-    >
-      <TrackLegend
-        trackModel={trackModel}
-        height={height}
-        axisScale={isDrawingBars ? scales.axisScale : undefined}
-        axisLegend={unit}
-      />
-    </div>
+    <TrackLegend
+      trackModel={trackModel}
+      height={height}
+      axisScale={isDrawingBars ? scales.axisScale : undefined}
+      axisLegend={unit}
+    />
+
   );
 
   if (getNumLegend) {

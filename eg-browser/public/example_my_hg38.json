@@ -6235,7 +6235,12 @@
             "tracks": [],
             "isText": false,
             "textConfig": {},
-            "apiConfig": {},
+            "apiConfig": {
+                "format": "WashU",
+                "API_root": "https://lambda.epigenomegateway.org/v3/",
+                "genome": "hg38",
+                "dataTable": "refGene"
+            },
             "queryEndpoint": {},
             "genome": "hg38"
         },
@@ -6256,7 +6261,12 @@
             "tracks": [],
             "isText": false,
             "textConfig": {},
-            "apiConfig": {},
+            "apiConfig": {
+                "format": "WashU",
+                "API_root": "https://lambda.epigenomegateway.org/v3/",
+                "genome": "hg38",
+                "dataTable": "gencodeV47"
+            },
             "queryEndpoint": {},
             "genome": "hg38"
         },
@@ -6277,9 +6287,13 @@
             "tracks": [],
             "isText": false,
             "textConfig": {},
-            "apiConfig": {},
-            "queryEndpoint": {},
-            "genome": "hg38"
+            "apiConfig": {
+                "format": "WashU",
+                "API_root": "https://lambda.epigenomegateway.org/v3/",
+                "genome": "hg38",
+                "dataTable": "MANE_select_1.4"
+            },
+            "queryEndpoint": {}
         },
         {
             "name": "RepeatMasker",
@@ -6559,17 +6573,35 @@
             {
                 "name": "refGene",
                 "label": "RefSeq genes",
-                "filetype": "geneAnnotation"
+                "filetype": "geneAnnotation",
+                "apiConfig": {
+                    "format": "WashU",
+                    "API_root": "https://lambda.epigenomegateway.org/v3/",
+                    "genome": "hg38",
+                    "dataTable": "refGene"
+                }
             },
             {
                 "name": "MANE_select_1.4",
                 "label": "MANE selection v1.4",
-                "filetype": "geneAnnotation"
+                "filetype": "geneAnnotation",
+                "apiConfig": {
+                    "format": "WashU",
+                    "API_root": "https://lambda.epigenomegateway.org/v3/",
+                    "genome": "hg38",
+                    "dataTable": "MANE_select_1.4"
+                }
             },
             {
                 "name": "MANE_select_1.0",
                 "label": "MANE selection v1.0",
-                "filetype": "geneAnnotation"
+                "filetype": "geneAnnotation",
+                "apiConfig": {
+                    "format": "WashU",
+                    "API_root": "https://lambda.epigenomegateway.org/v3/",
+                    "genome": "hg38",
+                    "dataTable": "MANE_select_1.0"
+                }
             },
             {
                 "name": "gencodeV47",
@@ -6583,7 +6615,13 @@
                         "polyA": "rgb(0,0,51)"
                     }
                 },
-                "filetype": "geneAnnotation"
+                "filetype": "geneAnnotation",
+                "apiConfig": {
+                    "format": "WashU",
+                    "API_root": "https://lambda.epigenomegateway.org/v3/",
+                    "genome": "hg38",
+                    "dataTable": "gencodeV47"
+                }
             },
             {
                 "name": "gencodeV39",
@@ -6597,7 +6635,13 @@
                         "polyA": "rgb(0,0,51)"
                     }
                 },
-                "filetype": "geneAnnotation"
+                "filetype": "geneAnnotation",
+                "apiConfig": {
+                    "format": "WashU",
+                    "API_root": "https://lambda.epigenomegateway.org/v3/",
+                    "genome": "hg38",
+                    "dataTable": "gencodeV39"
+                }
             }
         ],
         "Transcription Factor": [
