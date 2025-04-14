@@ -19,6 +19,7 @@ import {
   selectCustomTracksPool,
 } from "@/lib/redux/slices/hubSlice";
 import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
 export default function RemoteTracks() {
   return (
@@ -62,6 +63,7 @@ interface TrackState {
 }
 
 function AddTracks() {
+  useExpandedNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const customTracksPool = useAppSelector(selectCustomTracksPool);
 
@@ -178,6 +180,22 @@ function AddTracks() {
 
   return (
     <div>
+      {currentSession && customTracksPool.length > 0 ? (
+        <div>
+          <h2 className="text-base font-medium mb-4">Available Tracks</h2>
+          <FacetTable
+            tracks={customTracksPool}
+            addedTracks={currentSession!.tracks}
+            onTracksAdded={onTracksAdded}
+            publicTrackSets={undefined}
+            addedTrackSets={addedTrackUrls as Set<string>}
+            addTermToMetaSets={() => {}}
+            contentColorSetup={{ color: "#222", background: "white" }}
+          />
+        </div>
+      ) : (
+        ""
+      )}
       <div className="flex flex-col py-4">
         <StepAccordion<AddTracksStep>
           selectedItem={selectedStep}
@@ -252,35 +270,6 @@ function AddTracks() {
           Submit
         </Button>
       </div>
-
-      <div style={{ display: "flex", alignItems: "center", margin: "20px 0" }}>
-        <div
-          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
-        ></div>
-        <span style={{ margin: "0 10px", fontSize: "14px", color: "black" }}>
-          Custom Track Facet
-        </span>
-        <div
-          style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
-        ></div>
-      </div>
-
-      {currentSession && customTracksPool.length > 0 ? (
-        <div>
-          <h2 className="text-base font-medium mb-4">Available Tracks</h2>
-          <FacetTable
-            tracks={customTracksPool}
-            addedTracks={currentSession!.tracks}
-            onTracksAdded={onTracksAdded}
-            publicTrackSets={undefined}
-            addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
-            contentColorSetup={{ color: "#222", background: "white" }}
-          />
-        </div>
-      ) : (
-        ""
-      )}
     </div>
   );
 }
@@ -427,6 +416,7 @@ function ConfigureTrack({ onOptionsChange }: ConfigureTrackProps) {
 // MARK: - Add Data Hubs
 
 function AddDataHubs() {
+  useExpandedNavigationTab();
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectCurrentSession);
   const [inputUrl, setInputUrl] = useState<any>("");
@@ -527,6 +517,23 @@ function AddDataHubs() {
   }
   return (
     <>
+      {" "}
+      {currentSession && customTracksPool.length > 0 ? (
+        <div>
+          <h2 className="text-base font-medium mb-4">Available Tracks</h2>
+          <FacetTable
+            tracks={customTracksPool}
+            addedTracks={currentSession!.tracks}
+            onTracksAdded={onTracksAdded}
+            publicTrackSets={undefined}
+            addedTrackSets={addedTrackUrls as Set<string>}
+            addTermToMetaSets={() => {}}
+            contentColorSetup={{ color: "#222", background: "white" }}
+          />
+        </div>
+      ) : (
+        ""
+      )}
       <div>
         {" "}
         <form>
@@ -633,35 +640,6 @@ function AddDataHubs() {
             </label>
           </div>
         </div>
-        <div
-          style={{ display: "flex", alignItems: "center", margin: "20px 0" }}
-        >
-          <div
-            style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
-          ></div>
-          <span style={{ margin: "0 10px", fontSize: "14px", color: "black" }}>
-            Custom Track Facet
-          </span>
-          <div
-            style={{ flex: 1, height: "1px", backgroundColor: "#205781" }}
-          ></div>
-        </div>
-        {currentSession && customTracksPool.length > 0 ? (
-          <div>
-            <h2 className="text-base font-medium mb-4">Available Tracks</h2>
-            <FacetTable
-              tracks={customTracksPool}
-              addedTracks={currentSession!.tracks}
-              onTracksAdded={onTracksAdded}
-              publicTrackSets={undefined}
-              addedTrackSets={addedTrackUrls as Set<string>}
-              addTermToMetaSets={() => {}}
-              contentColorSetup={{ color: "#222", background: "white" }}
-            />
-          </div>
-        ) : (
-          ""
-        )}
       </div>
     </>
   );

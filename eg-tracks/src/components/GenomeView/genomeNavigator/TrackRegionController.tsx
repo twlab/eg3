@@ -6,6 +6,7 @@ import GeneSearchBox from "./GeneSearchBox";
 import SnpSearchBox from "./SnpSearchBox";
 import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
 import Genome from "../../../models/Genome";
+import { parse } from "path";
 
 const MODAL_STYLE = {
   content: {
@@ -37,7 +38,7 @@ interface TrackRegionControllerProps {
     newStart: number,
     newEnd: number,
     toolTitle: number | string,
-    highlightSearch: boolean,
+    highlightSearch: boolean
   ) => void;
 
   contentColorSetup: { color: string; background: string };
@@ -93,7 +94,14 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
     if (badInputMessage) {
       setBadInputMessage("");
     }
-    onRegionSelected(parsedRegion!.start, parsedRegion.end, "isJump", doHighlight);
+    onRegionSelected(
+      selectedRegion._startBase
+        ? selectedRegion._startBase
+        : parsedRegion!.start,
+      selectedRegion._endBase ? selectedRegion._endBase : parsedRegion!.end,
+      "isJump",
+      doHighlight
+    );
 
     handleCloseModal();
   };

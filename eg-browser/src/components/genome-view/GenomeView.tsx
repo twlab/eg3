@@ -22,7 +22,6 @@ import { fetchBundle } from "../../lib/redux/thunk/session";
 
 import { RootState } from "../../lib/redux/store";
 
-
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
   let currentState = null;
@@ -45,7 +44,6 @@ export default function GenomeView() {
 
   const sessionId = currentSession ? currentSession.id : null;
   if (lastSessionId.current !== sessionId) {
-
     dispatch(resetState());
     lastSessionId.current = sessionId;
     if (bundleId) {
@@ -87,9 +85,8 @@ export default function GenomeView() {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => {
-
     if (coordinate === currentSession?.viewRegion) {
-      coordinate = `${coordinate},${startbase}-${endbase}`
+      coordinate = `${coordinate},${startbase}-${endbase}`;
     }
 
     dispatch(
