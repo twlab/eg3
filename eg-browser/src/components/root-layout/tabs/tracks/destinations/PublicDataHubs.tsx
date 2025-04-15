@@ -140,7 +140,7 @@ export default function PublicDataHubs() {
   const renderSearchBar = () => (
     <div
       ref={searchBarGeometry.ref}
-      className="sticky top-0 z-20 pb-2"
+      className="sticky top-0 z-20 pb-2 bg-white dark:bg-dark-background"
     >
       <input
         type="text"
@@ -155,7 +155,7 @@ export default function PublicDataHubs() {
   const renderHubGroup = (collection: string, hubs: any[]) => (
     <div key={collection} className="mb-4 relative">
       <h2
-        className="text-base font-medium mb-1 sticky z-10 py-2"
+        className="text-base font-medium mb-1 sticky z-10 py-2 bg-white dark:bg-dark-background"
         style={{ top: `${searchBarGeometry.height}px` }}
       >
         {collection}

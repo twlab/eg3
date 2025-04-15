@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, CSSProperties, useEffect } from "react";
 import { ChevronDownIcon, ChevronRightIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { genomeDataSchema } from "@eg/tracks";
 import Button from "../ui/button/Button";
@@ -25,6 +25,13 @@ const SchemaNode: React.FC<{
     onExpand?: () => void;
 }> = ({ node, name, path, required = false, depth = 0, onExpand }) => {
     const [isExpanded, setIsExpanded] = useState(depth < 2);
+    const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+    const [tooltipStyle, setTooltipStyle] = useState<CSSProperties>({
+        position: 'absolute',
+        visibility: 'hidden'
+    });
+    const iconContainerRef = useRef<HTMLDivElement>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
 
     const hasChildren =
         (node.properties && Object.keys(node.properties).length > 0) ||
@@ -86,7 +93,6 @@ const SchemaNode: React.FC<{
 
         const children = [];
 
-        // Render properties
         if (node.properties) {
             const properties = Object.entries(node.properties);
             properties.forEach(([propName, propSchema], index) => {
@@ -158,6 +164,67 @@ const SchemaNode: React.FC<{
         return children.length > 0 ? <div className="ml-8">{children}</div> : null;
     };
 
+    useEffect(() => {
+        if (isTooltipVisible && iconContainerRef.current && tooltipRef.current) {
+            const scrollContainer = iconContainerRef.current.closest<HTMLElement>('[data-scroll-container="true"]');
+            if (!scrollContainer) return;
+
+            const iconRect = iconContainerRef.current.getBoundingClientRect();
+            const scrollRect = scrollContainer.getBoundingClientRect();
+            const tooltipRect = tooltipRef.current.getBoundingClientRect();
+
+            const spaceBelow = scrollRect.bottom - iconRect.bottom;
+            const spaceAbove = iconRect.top - scrollRect.top;
+
+            let top = iconRect.height + 4;
+            let left = (iconRect.width - tooltipRect.width) / 2;
+
+            if (spaceBelow < tooltipRect.height + 4 && spaceAbove > tooltipRect.height + 4) {
+                top = -(tooltipRect.height + 4);
+            } else if (spaceBelow < tooltipRect.height + 4 && spaceAbove < tooltipRect.height + 4) {
+                if (spaceAbove > spaceBelow) {
+                    top = -(tooltipRect.height + 4);
+                    if (iconRect.top + top < scrollRect.top) {
+                        top = scrollRect.top - iconRect.top;
+                    }
+                } else {
+                    if (iconRect.bottom + top + tooltipRect.height > scrollRect.bottom) {
+                        top = scrollRect.bottom - iconRect.bottom - tooltipRect.height;
+                    }
+                }
+            }
+
+            const desiredLeftEdge = iconRect.left + left;
+            const desiredRightEdge = desiredLeftEdge + tooltipRect.width;
+
+            if (desiredRightEdge > scrollRect.right) {
+                left -= (desiredRightEdge - scrollRect.right + 4);
+            }
+            if (desiredLeftEdge < scrollRect.left) {
+                left += (scrollRect.left - desiredLeftEdge + 4);
+            }
+
+            setTooltipStyle(prevStyle => ({
+                ...prevStyle,
+                top: `${top}px`,
+                left: `${left}px`,
+                visibility: 'visible'
+            }));
+        }
+    }, [isTooltipVisible]);
+
+    const handleMouseEnter = () => {
+        setIsTooltipVisible(true);
+    };
+
+    const handleMouseLeave = () => {
+        setIsTooltipVisible(false);
+        setTooltipStyle({
+            position: 'absolute',
+            visibility: 'hidden'
+        });
+    };
+
     return (
         <div className={`mt-1 ${depth > 0 ? 'ml-4' : ''}`}>
             <div className="flex items-start">
@@ -186,9 +253,18 @@ const SchemaNode: React.FC<{
                             {node.type}
                         </span>
                         {path !== 'root' && (
-                            <div className="ml-2 text-gray-500 text-xs cursor-help group relative">
+                            <div
+                                ref={iconContainerRef}
+                                onMouseEnter={handleMouseEnter}
+                                onMouseLeave={handleMouseLeave}
+                                className="ml-2 text-gray-500 text-xs cursor-help relative"
+                            >
                                 <InformationCircleIcon className="w-4 h-4" />
-                                <div className="hidden group-hover:block absolute right-full mr-2 bottom-full bg-gray-800 text-white text-xs p-2 rounded w-48 z-10">
+                                <div
+                                    ref={tooltipRef}
+                                    style={tooltipStyle}
+                                    className="bg-gray-800 text-white text-xs p-2 rounded w-48 z-10 pointer-events-none"
+                                >
                                     JSON path: {path}
                                 </div>
                             </div>
@@ -250,7 +326,11 @@ export default function GenomeSchemaView() {
                 </div>
             )}
 
-            <div ref={containerRef} className="bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-dark-secondary rounded-lg p-4 break-words overflow-x-auto">
+            <div
+                ref={containerRef}
+                data-scroll-container="true"
+                className="bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-dark-secondary rounded-lg p-4 break-words overflow-x-auto"
+            >
                 <SchemaNode
                     node={genomeDataSchema as any}
                     name="Root"
