@@ -117,7 +117,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         // Compute y
         const rowIndex = Math.min(placedGroup.row, maxRowIndex);
         const y = rowIndex * rowHeight + TOP_PADDING;
-
+        console.log(rowHeight, rowIndex, placedGroup, maxRowIndex)
         return getAnnotationElementMap[`${trackModel.type}`](
           placedGroup,
           y,
@@ -337,10 +337,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
       ) {
         return placedGroup.placedFeatures.map((placement, i) => (
           <FiberAnnotation
+
             key={i}
-            placement={placement}
             y={y}
             isMinimal={isLastRow}
+            placement={placement}
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
@@ -983,6 +984,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend={updatedLegend}
         getGenePadding={getGenePadding}
         getHeight={getHeight}
+        ROW_HEIGHT={ROW_HEIGHT}
         onClose={onClose}
       />
     );
