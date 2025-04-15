@@ -10,6 +10,7 @@ import { LogChoices } from "../../../../models/LogChoices";
 import { DownsamplingChoices } from "../../../../models/DownsamplingChoices";
 import { FeatureAggregator } from "../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
+import TrackLegend from "../commonComponents/TrackLegend";
 
 type Options = {
   height: number;
@@ -45,6 +46,7 @@ type QBedTrackProps = {
   trackModel: any;
   viewWindow: any;
   forceSvg: boolean;
+  getNumLegend: any;
 };
 
 export const DEFAULT_OPTIONS = {
@@ -274,29 +276,34 @@ class QBedTrackComponents extends React.PureComponent<QBedTrackProps> {
       this.xToValue = this.downSample(this.xToValue, sampleSize);
     }
 
-    // const legend = (
-    //   <TrackLegend
-    //     trackModel={trackModel}
-    //     height={height}
-    //     axisScale={this.scales.valueToY}
-    //   />
-    // );
-    const visualizer = (
-      <QBedPlot
-        xToValue={this.xToValue}
-        scales={this.scales}
+    const legend = (
+      <TrackLegend
+        trackModel={trackModel}
         height={height}
-        color={color}
-        color2={color2}
-        forceSvg={forceSvg}
-        markerSize={markerSize}
-        alpha={opacity[0] / 100}
-        show={show}
-        sampleSize={sampleSize}
-        showHorizontalLine={showHorizontalLine}
-        horizontalLineValue={horizontalLineValue}
-        viewWindow={viewWindow}
+        axisScale={this.scales.valueToY}
       />
+    );
+    if (this.props.getNumLegend) {
+      this.props.getNumLegend(legend);
+    }
+    const visualizer = (
+      <React.Fragment>
+        {forceSvg ? legend : ""}
+        <QBedPlot
+          xToValue={this.xToValue}
+          scales={this.scales}
+          height={height}
+          color={color}
+          color2={color2}
+          forceSvg={forceSvg}
+          markerSize={markerSize}
+          alpha={opacity[0] / 100}
+          show={show}
+          sampleSize={sampleSize}
+          showHorizontalLine={showHorizontalLine}
+          horizontalLineValue={horizontalLineValue}
+          viewWindow={viewWindow}
+        />      </React.Fragment>
     );
     return visualizer;
   }

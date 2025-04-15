@@ -9,6 +9,8 @@ export const numericalTracks = {
   bedgraph: "",
   vcf: "",
   methylc: "",
+  boxplot: "",
+  qbed: ""
 };
 export const possibleNumericalTracks = {
   bigbed: "",

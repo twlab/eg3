@@ -36,6 +36,7 @@ interface BoxplotTrackProps {
   options: any; // Specify a more detailed type if you have one
   forceSvg: boolean;
   viewWindow: any;
+  getNumLegend: any;
 }
 class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
   /**
@@ -224,21 +225,33 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
         axisLegend={unit}
       />
     );
+
+
+
+    if (this.props.getNumLegend) {
+      this.props.getNumLegend(legend);
+    }
+
     const visualizer = (
       //   <HoverTooltipContext
       //     tooltipRelativeY={height}
       //     getTooltipContents={this.renderTooltip}
       //   >
-      <Boxplot
-        xMap={this.xMap}
-        scales={this.scales}
-        height={height}
-        width={width}
-        windowSize={options.windowSize}
-        boxColor={boxColor}
-        lineColor={lineColor}
-        forceSvg={forceSvg}
-      />
+      <React.Fragment>
+        <div style={{ display: "flex" }}>
+          {forceSvg ? legend : ""}
+          <Boxplot
+            xMap={this.xMap}
+            scales={this.scales}
+            height={height}
+            width={width}
+            windowSize={options.windowSize}
+            boxColor={boxColor}
+            lineColor={lineColor}
+            forceSvg={forceSvg}
+          />
+        </div>
+      </React.Fragment>
     );
     return visualizer;
   }

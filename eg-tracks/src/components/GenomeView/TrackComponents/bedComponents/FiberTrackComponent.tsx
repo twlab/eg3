@@ -15,6 +15,7 @@ import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
 import { FiberDisplayModes } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 const ROW_VERTICAL_PADDING = 2;
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 
@@ -186,6 +187,7 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
   visualizer = () => {
     const { pctToY, countToY, pcts, counts } = this.scales;
     const { height, color, color2, displayMode } = this.props.options;
+    const { width, trackModel, forceSvg, getNumLegend, options, visRegion } = this.props
     const colorScale = scaleLinear()
       .domain([0, 1])
       .range([color2 as any, color as any])
@@ -235,15 +237,56 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
         <line key={i} x1={i} y1={y1} x2={i + 1} y2={y2} stroke="#525252" />
       );
     }
+
+    const legend = <div>
+      <TrackLegend trackModel={trackModel} height={options.height} axisScale={options.displayMode === FiberDisplayModes.AUTO ? this.scales.pctToY : this.scales.countToY}
+      />
+    </div>
+    if (getNumLegend) {
+      getNumLegend(legend);
+    }
+
     return (
-      <DesignRenderer
-        type={this.props.forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-        width={this.props.width}
-        height={height}
-      >
-        {bars}
-        {lines}
-      </DesignRenderer>
+      <React.Fragment>
+        <div style={{ display: "flex" }}>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+            }}
+          >
+            {!forceSvg ? (
+              <HoverToolTip
+                data={this.xMap}
+                scale={this.scales}
+                windowWidth={width}
+                trackType={"modbed"}
+                trackModel={trackModel}
+                height={height}
+                viewRegion={visRegion}
+                unit={""}
+                hasReverse={true}
+                options={options}
+              />
+            ) : (
+              ""
+            )}
+          </div>
+          {forceSvg ? legend : ""}
+
+          <DesignRenderer
+            type={this.props.forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+            width={this.props.width}
+            height={height}
+          >
+            {bars}
+            {lines}
+          </DesignRenderer>
+        </div>
+      </React.Fragment>
     );
   };
 

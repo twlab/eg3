@@ -23,6 +23,7 @@ interface HoverToolTipProps {
   options?: any;
   legendWidth?: any;
   viewWindow?: any;
+  scale?: any;
 }
 import { sameLoci } from "../../../../../models/util";
 import { arc } from "d3";
@@ -83,6 +84,23 @@ export const getHoverTooltip = {
         </div>
       ),
     };
+  },
+  modbed: function getTooltip(dataObj: { [key: string]: any }) {
+
+    const x = dataObj.relativeX
+    const index = Math.round(x)
+    const pcts = dataObj.scale ? dataObj.scale.pcts : null
+    const item = dataObj.data[index];
+    if (!item.count || !pcts) { return null };
+
+
+    return {
+      toolTip: <div>
+        <div>methylation level: {pcts[index].toFixed(3)}</div>
+        <div>{item.on} modified base(s)/{item.off} canonical base(s)</div>
+        <div>{item.count} reads</div>
+      </div>
+    }
   },
   methyc: function getTooltip(dataObj: { [key: string]: any }) {
     const { trackModel, viewRegion, width, options } = dataObj;
@@ -233,15 +251,15 @@ export const getHoverTooltip = {
 
     return beamElements
       ? {
-          beams: beamElements,
-          toolTip: (
-            <div>
-              <div>Locus1: {polygon.interaction.locus1.toString()}</div>
-              <div>Locus2: {polygon.interaction.locus2.toString()}</div>
-              <div>Score: {polygon.interaction.score}</div>
-            </div>
-          ),
-        }
+        beams: beamElements,
+        toolTip: (
+          <div>
+            <div>Locus1: {polygon.interaction.locus1.toString()}</div>
+            <div>Locus2: {polygon.interaction.locus2.toString()}</div>
+            <div>Score: {polygon.interaction.score}</div>
+          </div>
+        ),
+      }
       : "";
   },
   interactionArc: function getToolTip(dataObj: { [key: string]: any }) {
@@ -320,7 +338,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-              item[2]
+            item[2]
           ) <=
           0.5 * item[3]
         ) {
@@ -336,7 +354,7 @@ export const getHoverTooltip = {
         if (
           Math.abs(
             Math.sqrt(Math.pow(x - item[0], 2) + Math.pow(y - item[1], 2)) -
-              item[2]
+            item[2]
           ) <=
           0.5 * item[3]
         ) {
@@ -378,14 +396,14 @@ export const getHoverTooltip = {
 
     return polygon
       ? {
-          toolTip: (
-            <div>
-              <div>Locus1: {interaction.locus1.toString()}</div>
-              <div>Locus2: {interaction.locus2.toString()}</div>
-              <div>Score: {interaction.score}</div>
-            </div>
-          ),
-        }
+        toolTip: (
+          <div>
+            <div>Locus1: {interaction.locus1.toString()}</div>
+            <div>Locus2: {interaction.locus2.toString()}</div>
+            <div>Score: {interaction.score}</div>
+          </div>
+        ),
+      }
       : "";
   },
   genomealignFine: function genomeAlignFetch(dataObj: { [key: string]: any }) {
@@ -396,7 +414,7 @@ export const getHoverTooltip = {
     const indexOfCusorSegment = drawData.reduce(
       (iCusor, x, i) =>
         x.targetXSpan.start < dataObj.relativeX &&
-        x.targetXSpan.end >= dataObj.relativeX
+          x.targetXSpan.end >= dataObj.relativeX
           ? i
           : iCusor,
       NaN
@@ -454,6 +472,8 @@ function isDataValid(data: any): boolean {
   return isObjectNotEmpty(data) || isArrayNotEmpty(data);
 }
 
+
+// MARK: Hover
 const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   data,
   windowWidth,
@@ -468,6 +488,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   options,
   viewWindow,
   legendWidth,
+  scale
 }) {
   const targetRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -505,6 +526,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         viewWindow,
         legendWidth,
         targetRef,
+        scale
       });
 
       setPosition({
@@ -555,9 +577,9 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         <>
           {"trackManagerRef" in options
             ? ReactDOM.createPortal(
-                rectPosition.beams,
-                options.trackManagerRef.current
-              )
+              rectPosition.beams,
+              options.trackManagerRef.current
+            )
             : ""}
 
           {ReactDOM.createPortal(

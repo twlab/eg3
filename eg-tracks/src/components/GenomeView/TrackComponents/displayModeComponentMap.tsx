@@ -80,6 +80,8 @@ import React from "react";
 import { format } from "path";
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
+
+
 import VcfTrack from "./VcfComponents/VcfTrack";
 import { VcfColorScaleKeys } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 
@@ -760,11 +762,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
         options={configOptions}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        viewWindow={trackState.viewWindow}
+        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, windowWidth * 3)}
         trackModel={trackModel}
         isLoading={false}
         error={undefined}
         forceSvg={configOptions.forceSvg}
+        getNumLegend={getNumLegend}
       />
     );
     return canvasElements;
@@ -789,13 +792,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <BoxplotTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow}
+        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, windowWidth * 3)}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         // isLoading={false}
         // error={undefined}
+        getNumLegend={getNumLegend}
         unit={""}
       />
     );
@@ -820,7 +824,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <MatplotTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow}
+        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, windowWidth * 3)}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
@@ -867,6 +871,12 @@ export const displayModeComponentMap: { [key: string]: any } = {
     getHeight,
     ROW_HEIGHT,
   }) {
+    function getNumLegend(legend: ReactNode) {
+      if (updatedLegend) {
+        updatedLegend.current = legend;
+      }
+    }
+
     let canvasElements = (
       <DynamicBedTrackComponents
         data={formattedData}
@@ -953,6 +963,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           updatedLegend.current = legend;
         }
       }
+
       let canvasElements = (
         <FiberTrackComponent
           data={formattedData}

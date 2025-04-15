@@ -77,9 +77,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let xvalues = xvaluesData
     ? xvaluesData
     : aggregator.xToValueMaker(data, viewRegion, width, options);
-  if (trackModel.type === "geneannotation") {
-    console.log(props, xvalues)
-  }
+
   let [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
