@@ -207,9 +207,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   useEffect(() => {
     if (svgComponents || canvasComponents) {
-      if (trackModel.type === "geneannotation") {
-        console.log(canvasComponents)
-      }
+
       setLegend(updatedLegend.current);
     }
   }, [svgComponents, canvasComponents]);

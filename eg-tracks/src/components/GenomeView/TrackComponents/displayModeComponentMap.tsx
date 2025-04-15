@@ -1353,72 +1353,36 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   ) {
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "refbed") {
-      const filteredArray = removeDuplicates(drawData.genesArr, 7);
 
-      formattedData = filteredArray.map((record) => {
-        const refBedRecord = {} as IdbRecord;
-        refBedRecord.chrom = record.chr;
-        refBedRecord.txStart = record.start;
-        refBedRecord.txEnd = record.end;
-        refBedRecord.id = record[7];
-        refBedRecord.name = record[6];
-        refBedRecord.description = record[11] ? record[11] : "";
-        refBedRecord.transcriptionClass = record[8];
-        refBedRecord.exonStarts = record[9];
-        refBedRecord.exonEnds = record[10];
-        refBedRecord.cdsStart = Number.parseInt(record[3], 10);
-        refBedRecord.cdsEnd = Number.parseInt(record[4], 10);
-        refBedRecord.strand = record[5];
-        return new Gene(refBedRecord);
-      });
+      // formattedData = removeDuplicates(drawData.genesArr, "id");
+      formattedData = drawData.genesArr
+    } else if (drawData.trackModel.type === "refbed") {
+      // formattedData = removeDuplicates(drawData.genesArr, "id");
+      formattedData = drawData.genesArr
     } else if (drawData.trackModel.type === "bed") {
-      const filteredArray = removeDuplicates(drawData.genesArr, "start", "end");
-      formattedData = filteredArray.map((record) => {
-        let newChrInt = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end
-        );
-        return new Feature(
-          newChrInt.toStringWithOther(newChrInt),
-          newChrInt,
-          drawData.trackModel.isText ? record[5] : ""
-        );
-      });
+
+
+      // formattedData = removeDuplicatesWithoutId(drawData.genesArr)
+      formattedData = drawData.genesArr
     } else if (drawData.trackModel.type === "categorical") {
-      const filteredArray = removeDuplicatesWithoutId(drawData.genesArr);
-      formattedData = filteredArray;
+      // const filteredArray = removeDuplicatesWithoutId(drawData.genesArr);
+      // formattedData = filteredArray;
+      formattedData = drawData.genesArr
     } else if (drawData.trackModel.type === "bam") {
-      const filteredArray = removeDuplicates(drawData.genesArr, "_id");
-      formattedData = BamAlignment.makeBamAlignments(filteredArray);
+      // formattedData = removeDuplicates(drawData.genesArr, "id");
+      formattedData = drawData.genesArr
     } else if (drawData.trackModel.type === "omeroidr") {
       formattedData = drawData.genesArr.map(
         (record) => new ImageRecord(record)
       );
     } else if (drawData.trackModel.type === "bigbed") {
-      const uniqueDataMap = new Map();
 
-      formattedData = drawData.genesArr.reduce((acc, record) => {
-        const key = `${record.min}-${record.max}`;
-
-        if (!uniqueDataMap.has(key)) {
-          const feature = new Feature(
-            record.label || "",
-            new ChromosomeInterval(record.segment, record.min, record.max),
-            record.orientation
-          );
-
-          uniqueDataMap.set(key, feature);
-          acc.push(feature);
-        }
-
-        return acc;
-      }, []);
+      // formattedData = removeDuplicatesWithoutId(drawData.genesArr)
+      formattedData = drawData.genesArr
     } else if (drawData.trackModel.type === "snp") {
-      const filteredArray = removeDuplicates(drawData.genesArr, "id");
-      formattedData = filteredArray.map((record) => new Snp(record));
+
+      // formattedData = removeDuplicates(drawData.genesArr, "id")
+      formattedData = drawData.genesArr
     } else if (drawData.trackModel.type === "repeatmasker") {
       formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "jaspar") {
@@ -1590,32 +1554,18 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     let formattedData;
     if (drawData.trackModel.type === "geneannotation") {
       formattedData = drawData.genesArr;
-      console.log(formattedData)
-    } else if (drawData.trackModel.type === "bigbed") {
-      formattedData = drawData.genesArr.map((record) => {
-        const fields = record.rest.split("\t");
 
-        const name = fields[0];
-        const numVal = fields[1];
-        const strand = fields[2];
-        let newChrInt = new ChromosomeInterval(
-          record.chr,
-          record.start,
-          record.end
-        );
-        return new NumericalFeature(name, newChrInt, strand).withValue(
-          record.score
-        );
-      });
+    } else if (drawData.trackModel.type === "bigbed") {
+      formattedData = drawData.genesArr
     } else if (
       drawData.trackModel.type === "bedgraph" ||
       drawData.trackModel.filetype === "bedgraph"
     ) {
       formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "snp") {
-      formattedData = drawData.genesArr.map((record) => new Snp(record));
+      formattedData = drawData.genesArr
     } else if (drawData.trackModel.type === "bam") {
-      formattedData = BamAlignment.makeBamAlignments(drawData.genesArr);
+      formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "omeroidr") {
       formattedData = drawData.genesArr.map(
         (record) => new ImageRecord(record)
@@ -1624,7 +1574,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       formattedData = drawData.genesArr;
     } else {
       formattedData = drawData.genesArr;
-      console.log(formattedData)
+
       // formattedData = drawData.genesArr.map((record) => {
       //   let newChrInt = new ChromosomeInterval(
       //     record.chr,
@@ -1656,48 +1606,45 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
 }
 // MARK: FORMAT
 function formatGeneAnnotationData(genesArr: any[]) {
-  const filteredArray = removeDuplicates(genesArr, "id");
-
-  return filteredArray.map((record) => new Gene(record));
+  return genesArr.map((record) => new Gene(record));
 }
 function formatRepeatMasker(genesArr: any[]) {
-  const findUnique: { [key: string]: boolean } = {};
   const filteredArray: Array<any> = [];
   for (const record of genesArr) {
-    if (record.uniqueId && !findUnique[record.uniqueId]) {
-      findUnique[record.uniqueId] = true;
-      const restValues = record.rest.split("\t");
 
-      const output: RepeatDASFeature = {
-        genoLeft: restValues[7],
-        label: restValues[0],
-        max: record.end,
-        milliDel: restValues[5],
-        milliDiv: restValues[4],
-        milliIns: restValues[6],
-        min: record.start,
-        orientation: restValues[2],
-        repClass: restValues[8],
-        repEnd: restValues[11],
-        repFamily: restValues[9],
-        repLeft: restValues[12],
-        repStart: restValues[10],
-        score: Number(restValues[1]),
-        segment: record.chr,
-        swScore: restValues[3],
-        type: "bigbed",
-        _chromId: record.chromId,
-      };
 
-      filteredArray.push(new RepeatMaskerFeature(output));
-    }
+    const restValues = record.rest.split("\t");
+
+    const output: RepeatDASFeature = {
+      genoLeft: restValues[7],
+      label: restValues[0],
+      max: record.end,
+      milliDel: restValues[5],
+      milliDiv: restValues[4],
+      milliIns: restValues[6],
+      min: record.start,
+      orientation: restValues[2],
+      repClass: restValues[8],
+      repEnd: restValues[11],
+      repFamily: restValues[9],
+      repLeft: restValues[12],
+      repStart: restValues[10],
+      score: Number(restValues[1]),
+      segment: record.chr,
+      swScore: restValues[3],
+      type: "bigbed",
+      _chromId: record.chromId,
+    };
+
+    filteredArray.push(new RepeatMaskerFeature(output));
   }
   return filteredArray;
 }
 function formatRefBedData(genesArr: any[]) {
-  const filteredArray = removeDuplicates(genesArr, 7);
 
-  return filteredArray.map((record) => {
+
+  return genesArr.map((record) => {
+
     const refBedRecord: IdbRecord = {
       chrom: record.chr,
       txStart: record.start,
@@ -1717,8 +1664,8 @@ function formatRefBedData(genesArr: any[]) {
 }
 
 function formatBedData(genesArr: any[]) {
-  const filteredArray = removeDuplicates(genesArr, "start", "end");
-  return filteredArray.map((record) => {
+
+  return genesArr.map((record) => {
     const newChrInt = new ChromosomeInterval(
       record.chr,
       record.start,
@@ -1728,8 +1675,9 @@ function formatBedData(genesArr: any[]) {
   });
 }
 function formatBamData(genesArr: any[]) {
-  const filteredArray = removeDuplicates(genesArr, "_id");
-  return BamAlignment.makeBamAlignments(filteredArray);
+  // const filteredArray = removeDuplicates(genesArr, "_id");
+
+  return BamAlignment.makeBamAlignments(genesArr);
 }
 
 function formatOmeroidrData(genesArr: any[]) {
@@ -1737,24 +1685,25 @@ function formatOmeroidrData(genesArr: any[]) {
 }
 
 function formatBigBedData(genesArr: any[]) {
-  const filteredArray = removeDuplicates(genesArr, "rest");
-  return filteredArray.map((record) => {
-    const fields = record.rest.split("\t");
 
-    const name = fields[0];
-    const strand = fields[2];
-
-    return new Feature(
-      name,
-      new ChromosomeInterval(record.chr, record.start, record.end),
-      strand
+  const formattedData = genesArr.map((record) => {
+    const feature = new Feature(
+      record.name ? record.name : record.label ? record.label : "",
+      new ChromosomeInterval(record.segment, record.min, record.max),
+      record.orientation,
+      record.score
     );
-  });
+
+
+
+    return feature;
+  })
+  return formattedData
 }
 
 function formatSnpData(genesArr: any[]) {
-  const filteredArray = removeDuplicates(genesArr, "id");
-  return filteredArray.map((record) => new Snp(record));
+
+  return genesArr.map((record) => new Snp(record));
 }
 function formatCategoricalData(genesArr: any[]) {
   const formattedData = genesArr.map(
@@ -1964,14 +1913,14 @@ function formatLongRange(genesArr: any[]) {
   return formattedData;
 }
 export const twoDataTypeTracks = {
-  bigbed: "",
+  // bigbed: "",
   // geneannotation: "",
-  refbed: "",
-  bed: "",
+  // refbed: "",
+  // bed: "",
   // repeatmasker: "",
   omeroidr: "",
-  bam: "",
-  snp: "",
+  // bam: "",
+  // snp: "",
 };
 
 const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {

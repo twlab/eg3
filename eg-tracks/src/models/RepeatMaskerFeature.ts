@@ -129,7 +129,7 @@ export class RepeatMaskerFeature extends Feature {
       rmskRecord.min,
       rmskRecord.max
     );
-    super(rmskRecord.label, locus, rmskRecord.orientation);
+    super(rmskRecord.label, locus, rmskRecord.orientation, rmskRecord.score);
     this.repClass = rmskRecord.repClass;
     this.repFamily = rmskRecord.repFamily;
     this.milliDiv = rmskRecord.milliDiv;
