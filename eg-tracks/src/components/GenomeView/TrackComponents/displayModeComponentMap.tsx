@@ -84,7 +84,7 @@ import Vcf from "./VcfComponents/Vcf";
 
 import VcfTrack from "./VcfComponents/VcfTrack";
 import { VcfColorScaleKeys } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
-
+export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 enum BedColumnIndex {
   CATEGORY = 3,
 }
@@ -101,7 +101,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     getGenePadding,
     ROW_HEIGHT,
-    onHideTooltip = undefined,
+    onClose,
     scales,
   }) {
     function createFullVisualizer(
@@ -345,10 +345,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
             renderTooltip={renderTooltip ? renderTooltip : () => { }}
-            onHideTooltip={onHideTooltip}
+            onHideTooltip={onClose}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
             pixelsPadding={configOptions.pixelsPadding}
+            displayMode={configOptions.displayMode}
+
+
           />
         ));
       },
@@ -738,6 +741,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getHeight={getHeight}
         xvaluesData={xvalues}
         getNumLegend={getNumLegend}
+        xvalues={xvalues}
       />
     );
   },
@@ -950,52 +954,40 @@ export const displayModeComponentMap: { [key: string]: any } = {
     getHeight,
     ROW_HEIGHT,
     onHideToolTip,
+    onClose,
   }) {
-    const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
-    let currDisplayNav;
 
-    if (
-      objToInstanceAlign(trackState.visRegion).getWidth() >
-      FIBER_DENSITY_CUTOFF_LENGTH
-    ) {
-      function getNumLegend(legend: ReactNode) {
-        if (updatedLegend) {
-          updatedLegend.current = legend;
-        }
+
+
+    function getNumLegend(legend: ReactNode) {
+      if (updatedLegend) {
+        updatedLegend.current = legend;
       }
-
-      let canvasElements = (
-        <FiberTrackComponent
-          data={formattedData}
-          options={configOptions}
-          viewWindow={trackState.viewWindow}
-          width={trackState.visWidth}
-          forceSvg={configOptions.forceSvg}
-          visRegion={objToInstanceAlign(trackState.visRegion)}
-          trackModel={trackModel}
-          getNumLegend={getNumLegend}
-          isLoading={false}
-        />
-      );
-      return canvasElements;
-    } else {
-      let elements = displayModeComponentMap["full"]({
-        formattedData,
-        trackState,
-        windowWidth,
-
-        configOptions,
-        renderTooltip,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        getGenePadding,
-        getHeight,
-        ROW_HEIGHT,
-        onHideToolTip,
-      });
-      return elements;
     }
+
+    let canvasElements = (
+      <FiberTrackComponent
+        data={formattedData}
+        options={configOptions}
+        viewWindow={new OpenInterval(0, trackState.visWidth)}
+        width={trackState.visWidth}
+        forceSvg={configOptions.forceSvg}
+        visRegion={objToInstanceAlign(trackState.visRegion)}
+        trackModel={trackModel}
+        getNumLegend={getNumLegend}
+        isLoading={false}
+        trackState={trackState}
+        getAnnotationTrack={displayModeComponentMap}
+        renderTooltip={renderTooltip}
+        svgHeight={svgHeight}
+        updatedLegend={updatedLegend}
+        getGenePadding={getGenePadding}
+        getHeight={getHeight}
+        onClose={onClose}
+      />
+    );
+    return canvasElements;
+
   },
 
   interaction: function getInteraction({
@@ -1450,6 +1442,8 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.configOptions.rowHeight + 2,
       onHideToolTip: drawData.onHideToolTip,
+      xvalues: drawData.xvalues,
+      onClose: drawData.onClose
     });
 
     return elements;

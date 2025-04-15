@@ -113,11 +113,11 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
     let min =
       (xToValue2.length > 0
         ? _.min(
-            xToValue2.slice(
-              this.props.viewWindow.start,
-              this.props.viewWindow.end
-            )
+          xToValue2.slice(
+            this.props.viewWindow.start,
+            this.props.viewWindow.end
           )
+        )
         : 0) || 0;
 
     if (yScale === ScaleChoices.FIXED) {
@@ -219,11 +219,11 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
     this.xToValue! =
       dataForward.length > 0
         ? this.aggregateFeatures(
-            dataForward,
-            viewRegion,
-            width,
-            aggregateMethod
-          )
+          dataForward,
+          viewRegion,
+          width,
+          aggregateMethod
+        )
         : [];
 
     this.scales = this.computeScales(this.xToValue!, this.xToValue2!, height);
@@ -257,6 +257,7 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       if (this.props.getNumLegend) {
         this.props.getNumLegend(legend);
       }
+      console.log("YO")
       const visualizer = (
         <React.Fragment>
           <div
@@ -278,6 +279,7 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
               viewRegion={viewRegion}
               unit={unit}
               hasReverse={true}
+              options={options}
             />{" "}
           </div>
           <svg width={width} height={height} style={{ display: "block" }}>

@@ -20,7 +20,7 @@ import BedAnnotation, {
 
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import OpenInterval from "../../../models/OpenInterval";
-import { AnnotationDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { AnnotationDisplayModes, NumericalDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import Feature from "../../../models/Feature";
 import { DefaultAggregators } from "../../../models/FeatureAggregator";
 
@@ -130,6 +130,8 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
 
       ...defaultVcfTrack,
+      displayMode: NumericalDisplayModes.AUTO,
+      aggregateMethod: DefaultAggregators.types.COUNT,
     },
     getGenePadding: function paddingFunc(vcf: Vcf, xSpan: OpenInterval) {
       const width = xSpan.end - xSpan.start;
@@ -179,7 +181,11 @@ export const trackOptionMap: { [key: string]: any } = {
   },
   modbed: {
     defaultOptions: {
+      ...defaultAnnotationTrack,
+      ...defaultNumericalTrack,
       ...defaultFiberTrack,
+      displayMode: NumericalDisplayModes.AUTO,
+      aggregateMethod: DefaultAggregators.types.COUNT,
     },
     getGenePadding: function getGenePadding(
       feature: Fiber,

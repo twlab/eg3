@@ -34,7 +34,14 @@ interface FiberTrackProps extends PropsFromTrackContainer {
   };
   forceSvg?: boolean;
   visRegion: DisplayedRegionModel;
-  getNumLegend: any;
+  getNumLegend: any; getAnnotationTrack: any
+
+  ; trackState: any; renderTooltip: any;
+
+  svgHeight: any;
+  updatedLegend: any;
+  getGenePadding: any;
+  getHeight: any;
 }
 
 interface AggregatedFiber {
@@ -287,15 +294,33 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
           </DesignRenderer>
         </div>
       </React.Fragment>
+
+
     );
   };
 
   render() {
-    const { data, visRegion, width } = this.props;
 
-    this.xMap = this.aggregateFibers(data, visRegion, width);
-    this.scales = this.computeScales();
-    return this.visualizer();
+    const { getHeight, data, getGenePadding, visRegion, svgHeight, width, options, trackModel, getAnnotationTrack, trackState, renderTooltip, updatedLegend } = this.props;
+    if (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
+      this.xMap = this.aggregateFibers(data, visRegion, width);
+      this.scales = this.computeScales();
+      return this.visualizer();
+    }
+
+    return getAnnotationTrack["vcf"]({
+      formattedData: data,
+      trackState: trackState,
+      windowWidth: width / 3,
+      configOptions: options,
+      renderTooltip: renderTooltip,
+      svgHeight: svgHeight,
+      updatedLegend: updatedLegend,
+      trackModel: trackModel,
+      getGenePadding: getGenePadding,
+      getHeight: getHeight,
+    })
+
   }
 }
 

@@ -2240,7 +2240,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           );
 
           if (curTrackModel) {
-
             configOptions = {
               ...trackOptionMap[`${cacheTrackData.trackType}`].defaultOptions,
               ...curTrackModel.options,
@@ -2248,16 +2247,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           }
         }
-
         if (
-          !(cacheTrackData.trackType in numericalTracks) &&
-          (configOptions.displayMode !== "density")
+          (!(cacheTrackData.trackType in numericalTracks) &&
+            (configOptions.displayMode !== "density"))
 
         ) {
-
           continue;
         }
-
         let combinedData: any = [];
         let noData = false;
         if (!("xvalues" in cacheTrackData[dataIdx])) {
@@ -2284,6 +2280,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               { matplot: "", dynamic: "", dynamicbed: "" }
             ) {
               combinedData = getDeDupeArrMatPlot(combinedData, false);
+
             } else {
               combinedData = combinedData
                 .map((item) => {
@@ -2297,6 +2294,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           }
         }
+
         if (!noData) {
           const trackState = {
             ...globalTrackState.current.trackStates[dataIdx].trackState,
@@ -2316,15 +2314,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (typeof visRegion === "object") {
               visRegion = objToInstanceAlign(visRegion);
             }
+            if (cacheTrackData.trackType === "vcf") {
+              const currentViewLength =
+                (visRegion.getWidth() * viewWindow.getLength()) / primaryVisData.visWidth;
+              console.log(currentViewLength)
+              if (currentViewLength > 100000) {
 
-            trackDataObj[key] = {
-              data: combinedData,
-              visRegion: visRegion,
-              visWidth: primaryVisData.visWidth
-                ? primaryVisData.visWidth
-                : windowWidth * 3,
-              configOptions
-            };
+                trackDataObj[key] = {
+                  data: combinedData,
+                  visRegion: visRegion,
+                  visWidth: primaryVisData.visWidth
+                    ? primaryVisData.visWidth
+                    : windowWidth * 3,
+                  configOptions
+                };
+              }
+            }
+            else {
+              trackDataObj[key] = {
+                data: combinedData,
+                visRegion: visRegion,
+                visWidth: primaryVisData.visWidth
+                  ? primaryVisData.visWidth
+                  : windowWidth * 3,
+                configOptions
+              };
+            }
+
+
           }
         }
         if (!noData) {

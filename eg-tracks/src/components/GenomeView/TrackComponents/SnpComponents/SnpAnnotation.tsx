@@ -18,7 +18,7 @@ interface SnpAnnotationProps {
   isInvertArrowDirection?: boolean;
   alwaysDrawLabel?: boolean;
   hiddenPixels?: number;
-  onClick?: (event: React.MouseEvent<SVGElement, MouseEvent>, snp: Snp) => void;
+  onClick(event: React.MouseEvent, gene: Snp): void;
 }
 
 const SnpAnnotation: React.FC<SnpAnnotationProps> = ({
@@ -31,8 +31,9 @@ const SnpAnnotation: React.FC<SnpAnnotationProps> = ({
   isInvertArrowDirection = false,
   alwaysDrawLabel = false,
   hiddenPixels = 0,
-  onClick = (event, snp) => undefined,
+  onClick,
 }) => {
+  console.log(onClick)
   const colorToUse = snp.getIsReverseStrand() ? reverseStrandColor : color;
   const contrastColor = getContrastingColor(colorToUse);
   const [startX, endX] = xSpan;

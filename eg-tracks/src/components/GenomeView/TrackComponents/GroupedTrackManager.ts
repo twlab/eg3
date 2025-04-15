@@ -7,14 +7,16 @@ import OpenInterval from "../../../models/OpenInterval";
 export const numericalTracks = {
   bigwig: "",
   bedgraph: "",
-  vcf: "",
   methylc: "",
   boxplot: "",
-  qbed: ""
+  qbed: "",
+  vcf: "",
 };
 export const possibleNumericalTracks = {
   bigbed: "",
   geneannotation: "",
+
+  // modbed: "",
   refbed: "",
   bed: "",
   repeatmasker: "",
@@ -111,6 +113,7 @@ export class GroupedTrackManager {
 
             }
             else {
+              console.log(data, tracks[i])
               xvalues = this.aggregator.xToValueMaker(
                 data,
                 trackData[tid].visRegion,

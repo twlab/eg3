@@ -18,6 +18,7 @@ import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import Feature from "../../../../../models/Feature";
 import TrackModel from "../../../../../models/TrackModel";
 import TrackLegend from "../TrackLegend";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -204,18 +205,48 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
 
     const visualizer = (
       // <HoverTooltipContext tooltipRelativeY={height} getTooltipContents={this.renderTooltip} >
-      <LinePlot
-        trackModel={trackModel}
-        xToValue={this.xToValue}
-        scales={this.scales}
-        height={height}
-        forceSvg={forceSvg}
-        lineWidth={lineWidth}
-        width={width}
-        viewWindow={viewWindow}
-      />
+      <React.Fragment>
+        <div style={{ display: "flex" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+            }}
+          >
+            {!forceSvg ? (
+              <HoverToolTip
+                data={this.xToValue}
+                scale={this.scales}
+                windowWidth={width}
+                trackType={"matplot"}
+                trackModel={trackModel}
+                height={height}
+                viewRegion={viewRegion}
+                unit={unit ? unit : ""}
+                hasReverse={true}
+                options={options}
+              />
+            ) : (
+              ""
+            )}
+          </div>
+          {forceSvg ? legend : ""}
+          <LinePlot
+            trackModel={trackModel}
+            xToValue={this.xToValue}
+            scales={this.scales}
+            height={height}
+            forceSvg={forceSvg}
+            lineWidth={lineWidth}
+            width={width}
+            viewWindow={viewWindow}
+          />
+        </div>
+      </React.Fragment>
     );
-    // </HoverTooltipContext>
+
     return visualizer;
   }
 }

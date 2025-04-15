@@ -135,6 +135,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         groupScale: trackState.groupScale,
         xvalues: xvalues,
+        onClose
       })
     );
 
@@ -158,13 +159,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
   }
   // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
+  function onClose() {
+    setToolTip(null)
 
+  }
   function renderTooltip(event, gene) {
     const currtooltip = geneClickToolTipMap[`${trackModel.type}`](
       gene,
       event.pageX,
       event.pageY,
       genomeConfig.genome._name,
+
       onClose
     );
     setToolTipVisible(true);
@@ -186,7 +191,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         bs,
         event.pageX,
         event.pageY,
-        feature
+        feature, onClose
+
       );
     } else {
       currtooltip = geneClickToolTipMap["barModbed"](
@@ -195,15 +201,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         event.pageY,
         onCount,
         onPct,
-        total
+        total, onClose
       );
     }
     setToolTipVisible(true);
     setToolTip(currtooltip);
   }
-  function onClose() {
-    setToolTipVisible(false);
-  }
+
 
   useEffect(() => {
     if (svgComponents || canvasComponents) {
@@ -1107,7 +1111,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         document.body
       );
     },
-    snp: function SnpClickToolTip(snp: any, pageX, pageY, onClose) {
+    snp: function SnpClickToolTip(snp: any, pageX, pageY, name = "", onClose) {
       const contentStyle = Object.assign({
         marginTop: ARROW_SIZE,
         pointerEvents: "auto",
@@ -1362,7 +1366,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         document.body
       );
     },
-    normModbed: function normToolTip(bs: any, pageX, pageY, feature) {
+    normModbed: function normToolTip(bs: any, pageX, pageY, feature, onClose) {
       const contentStyle = Object.assign({
         marginTop: ARROW_SIZE,
         pointerEvents: "auto",
@@ -1390,9 +1394,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             }}
             className="Tooltip"
           >
-            <div>
-              {bs && `position ${bs} in`} {feature.getName()} read
-            </div>
+            <OutsideClickDetector onOutsideClick={onClose}>
+              <div>
+                {bs && `position ${bs} in`} {feature.getName()} read
+              </div>
+            </OutsideClickDetector>
           </div>
         </Manager>,
         document.body
@@ -1405,7 +1411,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       pageY,
       onCount,
       onPct,
-      total
+      total, onClose
     ) {
       const contentStyle = Object.assign({
         marginTop: ARROW_SIZE,
@@ -1440,9 +1446,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 }}
                 className="Tooltip"
               >
-                <div>
-                  {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
-                </div>
+                <OutsideClickDetector onOutsideClick={onClose}>
+                  <div>
+                    {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
+                  </div>
+                </OutsideClickDetector>
                 <div>{feature.getName()}</div>
               </div>
             )}
@@ -1505,7 +1513,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : canvasComponents}
         </div>
 
-        {toolTipVisible ? toolTip : ""}
+        <div className={toolTipVisible ? 'visible' : 'hidden'}>
+          {toolTip}
+        </div>
 
         {highlightElements.length > 0
           ? highlightElements.map((item, index) => {

@@ -12,6 +12,7 @@ import { RenderTypes, DesignRenderer } from "../art/DesignRenderer";
 import { FeatureAggregator } from "../../../../../models/FeatureAggregator";
 import TrackModel from "../../../../../models/TrackModel";
 import DisplayedRegionModel from "../../../../../models/DisplayedRegionModel";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 export const DEFAULT_OPTIONS = {
   height: 100,
   boxColor: "#36558F",
@@ -239,6 +240,32 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
       //   >
       <React.Fragment>
         <div style={{ display: "flex" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+            }}
+          >
+            {!forceSvg ? (
+              <HoverToolTip
+                data={this.xMap}
+                scale={this.scales}
+                windowWidth={width}
+                trackType={"boxplot"}
+                trackModel={trackModel}
+                height={height}
+                viewRegion={viewRegion}
+                unit={unit ? unit : ""}
+                hasReverse={true}
+                options={options}
+                xAlias={this.xAlias}
+              />
+            ) : (
+              ""
+            )}
+          </div>
           {forceSvg ? legend : ""}
           <Boxplot
             xMap={this.xMap}
