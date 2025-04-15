@@ -24,12 +24,9 @@ import { RootState } from "../../lib/redux/store";
 
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
-  let currentState = null;
-  if (currentSession) {
-    currentState = useAppSelector((state: RootState) => {
-      return { ...state.browser };
-    });
-  }
+  const currentState = useAppSelector((state: RootState) => {
+    return currentSession ? { ...state.browser } : null;
+  });
 
   const dispatch = useAppDispatch();
 

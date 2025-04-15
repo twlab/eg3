@@ -10,7 +10,7 @@ export const hubSlice = createSlice({
     savedDeleteTrackList: [] as ITrackModel[],
     screenshotData: {} as { [key: string]: any },
     screenShotOpen: false as boolean,
-    loadedPublicHub: new Set(),
+    loadedPublicHub: {} as { [key: string]: boolean },
     bundle: {
       bundleId: crypto.randomUUID(),
       currentId: null,
@@ -48,7 +48,10 @@ export const hubSlice = createSlice({
     updateScreenShotOpen: (state, action: PayloadAction<boolean>) => {
       state.screenShotOpen = action.payload;
     },
-    updateLoadedPublicHub: (state, action: PayloadAction<Set<any>>) => {
+    updateLoadedPublicHub: (
+      state,
+      action: PayloadAction<{ [key: string]: boolean }>
+    ) => {
       state.loadedPublicHub = action.payload;
     },
     updateSavedDeleteTrackList: (
@@ -63,7 +66,7 @@ export const hubSlice = createSlice({
       state.savedDeleteTrackList = [];
       state.screenshotData = {};
       state.screenShotOpen = false;
-      state.loadedPublicHub = new Set();
+      state.loadedPublicHub = {};
       state.bundle = {
         bundleId: crypto.randomUUID(),
         currentId: null,
@@ -91,7 +94,7 @@ export const selectScreenShotData = (state: RootState) =>
   state.hub.screenshotData;
 export const selectScreenShotOpen = (state: RootState) =>
   state.hub.screenShotOpen;
-export const selectLoadedPublicHub = (state: RootState) =>
+export const selectLoadedPublicHub = (state: RootState): { [key: string]: boolean } =>
   state.hub.loadedPublicHub;
 export const selectBundle = (state: RootState) => state.hub.bundle;
 export const selectSavedDeleteTrackList = (state: RootState) =>
