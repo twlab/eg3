@@ -77,7 +77,9 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let xvalues = xvaluesData
     ? xvaluesData
     : aggregator.xToValueMaker(data, viewRegion, width, options);
-
+  if (trackModel.type === "geneannotation") {
+    console.log(props, xvalues)
+  }
   let [xToValue, xToValue2, hasReverse] = xvalues;
 
   const computeScales = useMemo(() => {
@@ -114,8 +116,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-              )
+              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+            )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;

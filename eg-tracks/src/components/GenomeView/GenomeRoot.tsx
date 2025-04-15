@@ -44,11 +44,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     };
   };
+
   const throttledSetConfig = useRef(
     throttle((curGenome) => {
       setCurrentGenomeConfig(curGenome);
     }, 200)
   );
+
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -74,7 +76,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           userViewRegion._endBase!
         );
       }
-      setCurrentGenomeConfig(curGenome);
+
+      throttledSetConfig.current(curGenome);
     }
   }, [size.width]);
 

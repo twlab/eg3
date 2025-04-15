@@ -42,7 +42,7 @@ export class Feature {
     name: string | undefined,
     public locus: ChromosomeInterval,
     public strand: Strand = "",
-    value: any = null
+    value?: any = null
   ) {
     this.name = name === undefined ? locus.toString() : name; // eslint-disable-line eqeqeq
     this.locus = locus;
@@ -133,7 +133,7 @@ export class Feature {
  * @author Silas Hsu
  */
 export class NumericalFeature extends Feature {
-  declare value: number | undefined;
+  value: number | undefined;
 
   /**
    * Sets value and returns this.
