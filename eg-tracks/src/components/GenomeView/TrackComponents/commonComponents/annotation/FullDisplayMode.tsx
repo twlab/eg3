@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSX } from "react";
 import memoizeOne from "memoize-one";
 
 // import Track, { PropsFromTrackContainer } from "../Track";

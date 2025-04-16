@@ -6,6 +6,7 @@ import {
   selectCurrentSessionId,
   selectSessions,
   upsertSession,
+  updateSession,
 } from "@/lib/redux/slices/browserSlice";
 import {
   ChevronRightIcon,
@@ -181,9 +182,24 @@ function SessionListItem({
     dispatch(deleteSession(session.id));
   };
 
+  const handleRename = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    const newTitle = window.prompt("Enter new session name:", session.title);
+    if (newTitle !== null) {
+      dispatch(
+        updateSession({
+          id: session.id,
+          changes: {
+            title: newTitle,
+          },
+        })
+      );
+    }
+  };
+
   if (error) {
     return (
-      <div className="flex flex-col bg-secondary p-4 rounded-2xl cursor-pointer overflow-hidden">
+      <div className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden">
         <h1 className="text-2xl">Genome ID: {session.genomeId}</h1>
         <p className="text-sm">Error loading genome: {error.message}</p>
       </div>
@@ -195,12 +211,12 @@ function SessionListItem({
       onClick={onClick}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="flex flex-col bg-secondary p-4 rounded-2xl cursor-pointer overflow-hidden"
+      className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden"
       initial={{ height: "auto" }}
       animate={{ height: isHovered ? "auto" : "auto" }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
-      <div className="flex flex-row justify-between items-center">
+      <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
         <div className="flex flex-col gap-2">
           {session.title.length > 0 ? (
             <>
@@ -232,13 +248,22 @@ function SessionListItem({
           marginTop: isHovered ? "1rem" : 0,
         }}
         transition={{ duration: 0.2 }}
-        className="text-sm text-muted-foreground"
+        className="text-sm text-primary dark:text-dark-primary"
       >
-        <div className="flex flex-col gap-2 pt-2 border-t border-primary">
+        <div className="text-primary dark:text-dark-primary flex flex-col gap-2 pt-2 border-t border-primary">
           <p>Last updated: {new Date(session.updatedAt).toLocaleString()}</p>
-          <p>View region: {session.viewRegion}</p>
-          <p>Active tracks: {session.tracks.length}</p>
-          {/* <p>Highlights: {session.highlights.length}</p> */}
+          <p>
+            View region:{" "}
+            {session.viewRegion && typeof session.viewRegion === "object"
+              ? session.viewRegion.coordinate
+              : session.viewRegion
+                ? session.viewRegion
+                : ""}
+          </p>
+          <p>Active tracks: {session.tracks ? session.tracks.length : 0}</p>
+          <p>
+            Highlights: {session.highlights ? session.highlights.length : 0}
+          </p>
           {session.metadataTerms.length > 0 && (
             <div>
               <p>Metadata terms:</p>
@@ -282,6 +307,13 @@ function SessionListItem({
               style={{ flex: 1 }}
             >
               Duplicate
+            </Button>
+            <Button
+              backgroundColor="tint"
+              onClick={handleRename}
+              style={{ flex: 1 }}
+            >
+              Rename
             </Button>
           </div>
         </div>

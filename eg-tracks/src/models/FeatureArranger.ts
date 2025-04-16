@@ -128,22 +128,20 @@ export class FeatureArranger {
     hiddenPixels: number = 0.5,
     sortItems: SortItemsOptions = SortItemsOptions.NONE
   ): FeatureArrangementResult {
+
     const drawModel = new LinearDrawingModel(viewRegion, width);
     const visibleFeatures = features.filter(
       (feature) => drawModel.basesToXWidth(feature.getLength()) >= hiddenPixels
     );
 
     const results: PlacedFeatureGroup[] = [];
+    for (const feature of visibleFeatures) {
+      const placements = FEATURE_PLACER.placeFeatures([feature], viewRegion, width);
+      results.push(...this._combineAdjacent(placements));
+    }
 
-    const placements = FEATURE_PLACER.placeFeatures(
-      visibleFeatures,
-      viewRegion,
-      width
-    );
-
-    results.push(...this._combineAdjacent(placements));
-    // console.log(results, placements);
     const numRowsAssigned = this._assignRows(results, padding, sortItems);
+
     return {
       placements: results,
       numRowsAssigned,

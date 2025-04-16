@@ -25,22 +25,23 @@ import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
-
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
+import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
-  authDomain: "chadeg3-83548.firebaseapp.com",
-  databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
-  storageBucket: "chadeg3-83548.firebasestorage.app",
-};
 // const firebaseConfig = {
-//   apiKey: process.env.REACT_APP_FIREBASE_KEY,
-//   authDomain: process.env.REACT_APP_FIREBASE_DOMAIN,
-//   databaseURL: process.env.REACT_APP_FIREBASE_DATABASE,
-//   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+//   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
+//   authDomain: "chadeg3-83548.firebaseapp.com",
+//   databaseURL: "https://chadeg3-83548-default-rtdb.firebaseio.com",
+//   storageBucket: "chadeg3-83548.firebasestorage.app",
 // };
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+};
+
 firebase.initializeApp(firebaseConfig);
 export default function RootLayout() {
   useBrowserInitialization();
@@ -52,7 +53,7 @@ export default function RootLayout() {
   const navigationTab = useAppSelector(selectNavigationTab);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
-
+  const darkTheme = useAppSelector(selectDarkTheme);
   const isNavigationTabEmpty = !sessionId || navigationTab === null;
 
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
@@ -69,10 +70,13 @@ export default function RootLayout() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-black">
+    <div
+      className={`h-screen w-screen flex flex-col ${darkTheme ? 'dark' : ''}`}
+      data-theme={darkTheme ? 'dark' : 'light'}
+    >
       <GoogleAnalytics />
       <motion.div
-        className="flex flex-col h-full"
+        className="flex flex-col h-full text-primary dark:text-white"
         animate={{
           scale: showModal ? 0.95 : 1,
           filter: showModal
@@ -82,11 +86,11 @@ export default function RootLayout() {
         }}
       >
         <NavBar />
-        <div className="flex flex-row flex-1 relative" ref={contentRef}>
+        <div className="flex flex-row flex-1 relative bg-black" ref={contentRef}>
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
-                className="h-full bg-white overflow-hidden absolute top-0 left-0 z-10"
+                className="h-full overflow-hidden absolute top-0 left-0 z-10"
                 key="navigation-tabs"
                 style={{
                   width: "25vw",
@@ -115,7 +119,7 @@ export default function RootLayout() {
 
           {/* MARK: - Main Content */}
           <motion.div
-            className="flex flex-row flex-1 overflow-hidden"
+            className="flex flex-row flex-1 overflow-hidden bg-black"
             animate={{
               scale: sessionPanelOpen ? 0.95 : 1,
               borderRadius: sessionPanelOpen ? 15 : 0,
@@ -131,7 +135,7 @@ export default function RootLayout() {
           >
             {/* MARK: - Genome View */}
             <motion.div
-              className="h-full border-r bg-white overflow-hidden"
+              className="h-full overflow-hidden bg-white dark:bg-dark-background"
               initial={{
                 width: "100vw",
               }}
@@ -141,10 +145,12 @@ export default function RootLayout() {
                 borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
                 borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
                 scale: expandNavigationTab ? 0.95 : 1,
-                filter: expandNavigationTab
-                  ? "blur(5px) brightness(0.7)"
-                  : "blur(0px) brightness(1)",
-                translateX: expandNavigationTab ? 50 : 0,
+                // filter: expandNavigationTab
+                //   ? "blur(5px) brightness(0.7)"
+                //   : "blur(0px) brightness(1)",
+
+                filter: "blur(0px) brightness(1)",
+                // translateX: expandNavigationTab ? 50 : 0,
                 width: !showRightTab ? "100vw" : "75vw",
               }}
               style={{
@@ -186,7 +192,7 @@ export default function RootLayout() {
             <AnimatePresence mode="wait">
               {showRightTab && (
                 <motion.div
-                  className="h-full bg-white overflow-hidden z-10"
+                  className="h-full overflow-hidden z-10"
                   key="navigation-tabs"
                   initial={{
                     width: 0,

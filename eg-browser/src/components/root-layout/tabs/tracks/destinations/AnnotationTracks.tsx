@@ -39,6 +39,7 @@ export default function AnnotationTracks() {
 
       return trackList.map((track) => ({
         section,
+        genomeName: genomeConfig && genomeConfig.name ? genomeConfig.name : "none",
         id: track.name || track.url,
         title: track.label ?? track.name,
         data: track,
@@ -51,7 +52,7 @@ export default function AnnotationTracks() {
 
     track.metadata = {
       ...track.metadata,
-      genome: session?.genomeId,
+      genome: genomeConfig && genomeConfig.name ? genomeConfig.name : "none",
     };
 
     dispatch(

@@ -80,13 +80,16 @@ class GenomeNavigator extends React.Component<
 
   //commented out because cause zoom glitch with new GenomeContext update
   UNSAFE_componentWillReceiveProps(nextProps) {
-    // const thisNavContext = this.state.viewRegion.getNavigationContext();
-    // const nextNavContext = nextProps.selectedRegion.getNavigationContext();
+    const thisNavContext = this.state.viewRegion.getNavigationContext();
+    const nextNavContext = nextProps.selectedRegion.getNavigationContext();
 
-    // if (thisNavContext !== nextNavContext) {
-    //   this.setState({ viewRegion: new DisplayedRegionModel(nextNavContext) });
-    // }
-    if (
+    if (thisNavContext !== nextNavContext) {
+      this.setState({ viewRegion: new DisplayedRegionModel(nextNavContext) });
+      this.setState({
+        viewRegion: this._setInitialView(nextProps.selectedRegion),
+      });
+    }
+    else if (
       this.props.selectedRegion.getGenomeIntervals()[0].chr !==
       nextProps.selectedRegion.getGenomeIntervals()[0].chr
     ) {
@@ -148,6 +151,7 @@ class GenomeNavigator extends React.Component<
    * @inheritdoc
    */
   render() {
+
     return (
       <div>
         <MainPane

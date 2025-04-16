@@ -7,9 +7,10 @@ export const hubSlice = createSlice({
   initialState: {
     publicTracksPool: [] as ITrackModel[],
     customTracksPool: [] as ITrackModel[],
+    savedDeleteTrackList: [] as ITrackModel[],
     screenshotData: {} as { [key: string]: any },
     screenShotOpen: false as boolean,
-    loadedPublicHub: new Set(),
+    loadedPublicHub: {} as { [key: string]: boolean },
     bundle: {
       bundleId: crypto.randomUUID(),
       currentId: null,
@@ -47,16 +48,25 @@ export const hubSlice = createSlice({
     updateScreenShotOpen: (state, action: PayloadAction<boolean>) => {
       state.screenShotOpen = action.payload;
     },
-    updateLoadedPublicHub: (state, action: PayloadAction<Set<any>>) => {
+    updateLoadedPublicHub: (
+      state,
+      action: PayloadAction<{ [key: string]: boolean }>
+    ) => {
       state.loadedPublicHub = action.payload;
     },
-
+    updateSavedDeleteTrackList: (
+      state,
+      action: PayloadAction<ITrackModel[]>
+    ) => {
+      state.savedDeleteTrackList = action.payload;
+    },
     resetState: (state) => {
       state.publicTracksPool = [];
       state.customTracksPool = [];
+      state.savedDeleteTrackList = [];
       state.screenshotData = {};
       state.screenShotOpen = false;
-      state.loadedPublicHub = new Set();
+      state.loadedPublicHub = {};
       state.bundle = {
         bundleId: crypto.randomUUID(),
         currentId: null,
@@ -73,6 +83,7 @@ export const {
   resetState,
   updateLoadedPublicHub,
   updateBundle,
+  updateSavedDeleteTrackList,
 } = hubSlice.actions;
 
 export const selectPublicTracksPool = (state: RootState) =>
@@ -83,8 +94,10 @@ export const selectScreenShotData = (state: RootState) =>
   state.hub.screenshotData;
 export const selectScreenShotOpen = (state: RootState) =>
   state.hub.screenShotOpen;
-export const selectLoadedPublicHub = (state: RootState) =>
+export const selectLoadedPublicHub = (state: RootState): { [key: string]: boolean } =>
   state.hub.loadedPublicHub;
 export const selectBundle = (state: RootState) => state.hub.bundle;
+export const selectSavedDeleteTrackList = (state: RootState) =>
+  state.hub.savedDeleteTrackList;
 
 export default hubSlice.reducer;

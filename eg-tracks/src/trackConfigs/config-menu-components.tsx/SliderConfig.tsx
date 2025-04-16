@@ -51,7 +51,7 @@ function Track({ source, target, getTrackProps }) {
         width: `${target.percent - source.percent}%`,
       }}
       {
-        ...getTrackProps() /* this will set up events if you want it to be clickeable (optional) */
+      ...getTrackProps() /* this will set up events if you want it to be clickeable (optional) */
       }
     />
   );
@@ -124,7 +124,7 @@ class SliderConfig extends React.PureComponent<
     mode: 1,
     step: 1,
     domain: [0, 100],
-    values: [100],
+    values: [],
   };
 
   constructor(props) {

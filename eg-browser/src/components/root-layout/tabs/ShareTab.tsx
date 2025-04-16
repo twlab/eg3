@@ -89,7 +89,7 @@ export default function ShareTab() {
                     <Button
                         onClick={generateShortLink}
                         disabled={isGenerating}
-                        style={{ marginLeft: '0.5rem' }}
+                        style={{ marginLeft: '0.5rem', color: "#5F6368" }}
                     >
                         {isGenerating ? "Generating..." : "Generate New Link"}
                     </Button>
@@ -117,14 +117,14 @@ export default function ShareTab() {
     );
 
     const EmbedTab = () => (
-        <div className="flex flex-col gap-4 p-4">
+        <div className="text-primary flex flex-col gap-4 p-4" >
             <OutdatedLinkWarning />
             <textarea
                 className="w-full h-32 p-2 border rounded bg-gray-50"
                 value={iframeContent}
                 readOnly
             />
-            <Button onClick={() => copyToClipboard(iframeContent)}>
+            <Button onClick={() => copyToClipboard(iframeContent)} >
                 {copied ? "Copied!" : "Copy Embed Code"}
             </Button>
         </div>
@@ -144,7 +144,7 @@ export default function ShareTab() {
     ];
 
     return (
-        <div className="p-4">
+        <div className="p-4 bg-white dark:bg-dark-background h-full">
             <h1 className="text-2xl mb-4">Share</h1>
             <TabView tabs={tabs} />
         </div>

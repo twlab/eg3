@@ -60,6 +60,7 @@
     "react-modal": "^3.16.1",
     "react-plotly.js": "^2.6.0",
     "react-popper": "^2.3.0",
+    "react-spinners": "^0.15.0",
     "react-table": "^7.8.0",
     "styled-components": "^6.1.16",
     "uuid": "^11.1.0"

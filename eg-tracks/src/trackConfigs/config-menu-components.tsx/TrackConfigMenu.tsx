@@ -25,16 +25,18 @@ function ConfigMenuComponent(props: any) {
               position: "absolute",
               left: menuData.pageX - leftMargin,
               // measured from bottom to top of the component
-              top: menuData.pageY - blockPosData.top - blockPosData.height,
+              top: menuData.pageY - blockPosData.height,
+              backgroundColor: "var(--bg-container-color)",
+              color: "var(--font-color)"
             }}
           >
-            <Popper placement="right-start">
+            <Popper placement="right-end">
               {({ ref, style, placement, arrowProps }) => (
                 <div
                   ref={ref}
                   style={{
                     ...style,
-                    // maxHeight: "calc(100vh - 20px)",
+
                     overflow: "auto",
                     zIndex: 1000,
                   }}
@@ -44,7 +46,7 @@ function ConfigMenuComponent(props: any) {
                   >
                     <div
                       className="TrackContextMenu-body"
-                      style={{ backgroundColor: "white" }}
+                      style={{ backgroundColor: "var(--bg-container-color)" }}
                     >
                       <MenuTitle
                         title={
@@ -70,6 +72,7 @@ function ConfigMenuComponent(props: any) {
                               optionsObjects={menuData.configOptions}
                               defaultValue={defaultVal}
                               onOptionSet={menuData.onConfigChange}
+                              trackId={menuData.trackId}
                             />
                           );
                         }

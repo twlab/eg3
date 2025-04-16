@@ -12,7 +12,6 @@ import {
 
 import { RootState } from "../store";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
-import { BundleProps } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
 
 export type uuid = string;
 
@@ -77,14 +76,13 @@ export const browserSlice = createSlice({
         id: crypto.randomUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        title: "",
+        title: "Untitled Session",
         bundleId: null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
         tracks: initializedTracks,
         genomeId: genome.id,
-
         highlights: [],
         metadataTerms: [],
         regionSets: [],
@@ -191,6 +189,7 @@ export const {
   deleteSession,
   setCurrentSession,
   updateCurrentSession,
+  updateSession,
   addTracks,
   clearAllSessions,
 } = browserSlice.actions;
@@ -205,9 +204,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-        state,
-        state.browser.present.currentSession
-      )
+      state,
+      state.browser.present.currentSession
+    )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

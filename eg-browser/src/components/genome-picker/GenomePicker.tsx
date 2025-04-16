@@ -84,10 +84,10 @@ export default function GenomePicker() {
   }, [debouncedSearchQuery]);
 
   return (
-    <div className="bg-black h-full flex flex-row">
+    <div className="h-full flex flex-row bg-black">
       {!isSmallScreen && (
         <div
-          className="h-full bg-white w-[25vw] min-w-96 overflow-hidden"
+          className="h-full w-[25vw] min-w-96 overflow-hidden"
           style={{
             borderTopRightRadius: CURL_RADIUS,
             borderBottomRightRadius: CURL_RADIUS,
@@ -142,16 +142,16 @@ export default function GenomePicker() {
         </div>
       )}
       <div
-        className="flex-1 bg-white overflow-y-scroll px-4"
+        className="flex-1 overflow-y-scroll px-4 bg-white dark:bg-dark-background"
         style={{
           borderTopLeftRadius: !isSmallScreen ? CURL_RADIUS : 0,
           borderBottomLeftRadius: !isSmallScreen ? CURL_RADIUS : 0,
           marginLeft: !isSmallScreen ? 5 : 0,
         }}
       >
-        <div className="max-w-2xl mx-auto py-4 h-full">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-            <h2 className="text-3xl text-tint">Select a Genome</h2>
+        <div className="max-w-2xl mx-auto py-4 h-full" >
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4" >
+            <h2 className="text-3xl">Select a Genome</h2>
             <div className="relative mt-2 sm:mt-0 flex-1 w-full">
               <input
                 type="text"
@@ -164,9 +164,8 @@ export default function GenomePicker() {
             </div>
           </div>
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
-              selectedPath !== null ? "items-center" : ""
-            }`}
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${selectedPath !== null ? "items-center" : ""
+              }`}
           >
             {(selectedPath === null
               ? filteredGenomes
@@ -174,9 +173,7 @@ export default function GenomePicker() {
             ).map((genome) => (
               <motion.div
                 key={genome.name}
-                className={`rounded-2xl shadow-md ${
-                  selectedPath !== null ? "col-start-2" : ""
-                }`}
+                className={`rounded-2xl shadow-md dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""}`}
                 layout
                 initial={{ opacity: 0 }}
                 animate={{
@@ -195,7 +192,7 @@ export default function GenomePicker() {
                 <motion.div className="p-4 pb-6">
                   <motion.h2
                     layout
-                    className={`text-primary mb-2`}
+                    className={`mb-2`}
                     initial={{
                       textAlign: "left",
                       fontSize: "24px",
@@ -216,18 +213,17 @@ export default function GenomePicker() {
                     <motion.div
                       layout
                       key={version}
-                      className="flex items-center gap-2 text-primary cursor-pointer"
+                      className="flex items-center gap-2 cursor-pointer"
                       onClick={() => setSelectedPath([genome.name, version])}
                     >
                       {selectedPath === null && (
                         <ChevronRightIcon className="w-4 h-4" />
                       )}
                       <motion.p
-                        className={`${
-                          selectedPath !== null
-                            ? "text-center text-xl w-full"
-                            : ""
-                        }`}
+                        className={`${selectedPath !== null
+                          ? "text-center text-xl w-full"
+                          : ""
+                          }`}
                       >
                         {version}
                       </motion.p>

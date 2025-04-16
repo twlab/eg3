@@ -568,13 +568,13 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
                 left: rectPosition.left + rectPosition.dataIdxX,
                 backgroundColor: "lightBlue",
                 borderRadius: 4,
-                padding: 8,
+
                 fontSize: 14,
                 zIndex: 1000,
                 // prevent the tooltip from getting clipped off the edge of the screen viewport
               }}
             >
-              {rectPosition.dataIdxX}
+              {/* {rectPosition.dataIdxX} */}
               {rectPosition.toolTip}
             </div>,
             document.body

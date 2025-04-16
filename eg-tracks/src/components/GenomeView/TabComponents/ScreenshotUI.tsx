@@ -12,6 +12,7 @@ import {
 import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
 import TrackLegend from "../TrackComponents/commonComponents/TrackLegend";
 import { objToInstanceAlign } from "../TrackManager";
+import { ClipLoader } from "react-spinners";
 interface Highlight {
   start: number;
   end: number;
@@ -29,15 +30,16 @@ interface Props {
   trackData: any;
   metadataTerms: any;
   viewRegion?: any;
-  isOpen: any;
-  handleCloseModal: any;
+  retakeScreenshot: any;
   windowWidth: number;
 }
+
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("block");
   const [buttonDisabled, setButtonDisabled] = useState<string>("");
-  const [svgView, setSvgView] = useState<any>(<div></div>);
+  const [svgView, setSvgView] = useState<any>(null);
+  const [msg, setMsg] = useState<string>("");
   // const svgDataURL = (svg: SVGElement) => {
   //   const svgAsXML = new XMLSerializer().serializeToString(svg);
   //   return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
@@ -59,13 +61,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const boxWidth = tracks[0].clientWidth;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    // svgElem.setAttributeNS(
-    //   null,
-    //   "viewBox",
-    //   "0 0 " + boxWidth -10 + " " + (boxHeight - 5)
-    // );
+    // svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
     //add the width of the track and tracklegend to to correctly view all the svg
-    svgElem.setAttributeNS(null, "width", props.windowWidth + 120 + "");
+    const width = props.windowWidth + 20 + 120;
+    svgElem.setAttributeNS(null, "width", width + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
     svgElem.style.display = "block";
@@ -249,7 +248,19 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       pdfContainer.innerHTML = svgContent;
     }
   };
-
+  const styles = {
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',  // Centers children horizontally
+      paddingTop: "20px",
+      height: '100vh',  // Full height to center within the whole view height
+    },
+    message: {
+      fontWeight: 'bold',
+      marginBottom: '10px',  // Add some space between the message and the loader
+    },
+  };
   // const downloadPdf = () => {
   //   const svgContent = prepareSvg();
   //   const tracks = Array.from(
@@ -307,105 +318,91 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           trackState: createSVGData.trackState,
           windowWidth: createSVGData.windowWidth + 120,
           configOptions: createSVGData.configOptions,
-
+          basesByPixel: createSVGData.basesByPixel,
           trackModel,
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
+          genomeConfig: createSVGData.genomeConfig
         });
-        let newTrackLegend = null;
-        if (
-          createSVGData.configOptions.displayMode === "full" ||
-          trackModel.type === "ruler"
-        ) {
-          newTrackLegend = (
-            <TrackLegend
-              height={createSVGData.configOptions.height}
-              trackModel={trackModel}
-              label={trackModel.options.label}
-              trackViewRegion={objToInstanceAlign(
-                createSVGData.trackState.visData.visRegion
-              )}
-              selectedRegion={objToInstanceAlign(
-                createSVGData.trackState.visData.viewWindowRegion
-              )}
-            />
-          );
-        }
 
-        return (
-          <div key={index} className="Track" style={{ display: "flex" }}>
-            {newTrackLegend ? newTrackLegend : ""}
-            {svgResult}
-          </div>
-        );
+        return <div key={index}>{svgResult} </div>
+
+          ;
       });
-
+    setMsg(
+      ""
+    );
     return trackSvgElements;
   };
-
+  function updateScreenshot() {
+    props.retakeScreenshot();
+    setMsg(
+      "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+    );
+  }
   useEffect(() => {
     if (props.trackData && Object.keys(props.trackData).length > 0) {
-      setSvgView(makeSvgTrackElements());
+      setMsg(
+        "Please wait for the following browser view to finish loading, then click the Download button below to download the browser view as an SVG file."
+      );
     }
   }, [props.trackData]);
 
+  useEffect(() => {
+    if (
+      props.trackData &&
+      Object.keys(props.trackData).length > 0 &&
+      msg !== ""
+    ) {
+      const timeoutId = setTimeout(() => {
+        const elements = makeSvgTrackElements();
+        setSvgView(elements);
+      }, 250); // Adding a small delay to ensure the message is rendered
+      return () => clearTimeout(timeoutId);
+    }
+  }, [msg, props.trackData]);
+
+
   return (
-    <>
-      {" "}
-      <ReactModal
-        isOpen={props.isOpen}
-        contentLabel="Gene & Region search"
-        ariaHideApp={false}
-        onRequestClose={props.handleCloseModal}
-        shouldCloseOnOverlayClick={true}
-      >
-        <span
-          className="text-right"
-          style={{
-            cursor: "pointer",
-            color: "red",
-            fontSize: "2em",
-            position: "absolute",
-            top: "-5px",
-            right: "15px",
-            zIndex: 5,
-          }}
-          onClick={props.handleCloseModal}
-        >
-          ×
-        </span>
-        <div>
-          <p>
-            Please wait for the following browser view to finish loading, <br />
-            then click the Download button below to download the browser view as
-            an SVG file.
-          </p>
+    <div style={{ display, backgroundColor: "var(--bg-color)" }}>
+      {msg !== "" ? (
+        <div style={styles.container}>
+          <p style={styles.message}>{msg}</p>
+          <ClipLoader color="#09f" loading={true} size={24} />
+        </div>
+      ) : (
+        ""
+      )}
+      {svgView ? (
+        <>
           <div className="font-italic">
-            <strong>Download SVG</strong> is recommended.
+            You can get the updated view of the tracks by retaking your
+            screenshot.
           </div>
-          <button
-            className="btn btn-primary btn-sm"
-            style={{ marginBottom: "2ch" }}
-            onClick={downloadSvg}
-            // disabled={buttonDisabled === "disabled"}
-          >
-            ⬇ Download SVG
-          </button>{" "}
-          {/* <button
-            className="btn btn-success btn-sm"
-            style={{ marginBottom: "2ch" }}
-            onClick={downloadPdf}
-            // disabled={buttonDisabled === "disabled"}
-          >
-            ⬇ Download PDF
-          </button> */}
-          <div id="screenshotContainer" style={{ display }}>
-            {svgView}
+          <div style={{ display: "flex", gap: "1ch" }}>
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginBottom: "2ch" }}
+              onClick={downloadSvg}
+            >
+              ⬇ Download SVG
+            </button>
+
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginBottom: "2ch" }}
+              onClick={updateScreenshot}
+            >
+              📷 Retake Screenshot
+            </button>
           </div>
+          <div id="screenshotContainer">{svgView}</div>
           <div id="pdfContainer"></div>
-        </div>{" "}
-      </ReactModal>
-    </>
+        </>
+      ) : (
+        ""
+      )}
+    </div>
   );
 };
 

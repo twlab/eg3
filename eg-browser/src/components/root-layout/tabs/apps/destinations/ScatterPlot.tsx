@@ -12,13 +12,15 @@ import { NumericalFeature } from "@eg/tracks/src/models/Feature";
 import { NUMERICAL_TRACK_TYPES } from "./GenePlot";
 import { getGenomeConfig } from "@eg/tracks";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
-import ReactModal from "react-modal";
+
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { useAppSelector } from "@/lib/redux/hooks";
+import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
 const ScatterPlot: React.FC = () => {
+  useExpandedNavigationTab();
   const [setName, setSetName] = useState("");
   const [trackNameX, setTrackNameX] = useState("");
   const [trackNameY, setTrackNameY] = useState("");
@@ -402,88 +404,60 @@ const ScatterPlot: React.FC = () => {
           </p>
           <RegionSetSelector />
         </div>
-      ) : currentSession ? (
+      ) : currentSession && showModal ? (
         <>
-          <button
+          {/* <span
+            className="text-right"
             style={{
-              width: "100%",
-              marginTop: "10px",
-              color: isHovered ? "white" : "black",
-              backgroundColor: isHovered ? "#C7D9DD" : "#ADB2D4",
-              transition: "all 0.3s ease",
               cursor: "pointer",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "20px",
-              outline: "none",
-              fontSize: "16px",
+              color: "red",
+              fontSize: "2em",
+              position: "absolute",
+              top: "-5px",
+              right: "15px",
             }}
-            onClick={handleOpenModal}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onClick={handleCloseModal}
           >
-            Open scatterplot menu
-          </button>
-          <ReactModal
-            isOpen={showModal}
-            contentLabel="Gene & Region search"
-            ariaHideApp={false}
-            onRequestClose={handleCloseModal}
-            shouldCloseOnOverlayClick={true}
-          >
-            {" "}
-            <span
-              className="text-right"
-              style={{
-                cursor: "pointer",
-                color: "red",
-                fontSize: "2em",
-                position: "absolute",
-                top: "-5px",
-                right: "15px",
-              }}
-              onClick={handleCloseModal}
-            >
-              ×
-            </span>
-            <div style={styles.container}>
-              <p style={styles.lead}>1. Choose a region set</p>
-              <div>{renderRegionList()}</div>
+            ×
+          </span> */}
+          <div style={styles.container}>
+            <p style={styles.lead}>1. Choose a region set</p>
+            <div>{renderRegionList()}</div>
 
-              <p style={styles.lead}>
-                2. Choose a{" "}
-                <a
-                  href={HELP_LINKS.numerical}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={styles.link}
-                >
-                  numerical track
-                </a>{" "}
-                for X-axis:
-              </p>
-              <div>{renderTrackXList()}</div>
+            <p style={styles.lead}>
+              2. Choose a{" "}
+              <a
+                href={HELP_LINKS.numerical}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={styles.link}
+              >
+                numerical track
+              </a>{" "}
+              for X-axis:
+            </p>
+            <div>{renderTrackXList()}</div>
 
-              <p style={styles.lead}>3. Choose a numerical track for Y-axis:</p>
-              <div>{renderTrackYList()}</div>
+            <p style={styles.lead}>3. Choose a numerical track for Y-axis:</p>
+            <div>{renderTrackYList()}</div>
 
-              <p style={styles.lead}>4. Plot configuration:</p>
-              <div style={styles.configContainer}>
-                {renderMarkerColorPicker()}
-                {renderMarkerSizeInput()}
-              </div>
-
-              <div style={styles.buttonContainer}>
-                <button onClick={getScatterPlotData} style={styles.button}>
-                  Plot
-                </button>{" "}
-                <span>{plotMsg}</span>
-              </div>
+            <p style={styles.lead}>4. Plot configuration:</p>
+            <div style={styles.configContainer}>
+              {renderMarkerColorPicker()}
+              {renderMarkerSizeInput()}
             </div>
-            <div>
-              <Plot data={[data]} layout={layout} />
+
+            <div style={styles.buttonContainer}>
+              <button onClick={getScatterPlotData} style={styles.button}>
+                Plot
+              </button>{" "}
+              <span>{plotMsg}</span>
             </div>
-          </ReactModal>
+          </div>
+          <div style={{ marginLeft: "-150px" }}>
+            <Plot data={[data]} layout={layout} />
+          </div>
+
         </>
       ) : (
         ""

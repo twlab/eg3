@@ -1,6 +1,6 @@
 import NavigationStack, { NavigationDestination } from "@/components/core-navigation/NavigationStack";
 import Switch from "@/components/ui/switch/Switch";
-import { selectIsNavigatorVisible, setNavigatorVisibility } from "@/lib/redux/slices/settingsSlice";
+import { selectIsNavigatorVisible, setNavigatorVisibility, selectDarkTheme, setDarkTheme } from "@/lib/redux/slices/settingsSlice";
 import { useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 
@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 export default function SettingsTab() {
     const dispatch = useAppDispatch();
     const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
+    const isDarkTheme = useAppSelector(selectDarkTheme);
 
     const destinations: NavigationDestination[] = useMemo(() => [
 
@@ -24,6 +25,13 @@ export default function SettingsTab() {
                     />
                 </div>
                 <div className="w-full h-[1px] bg-gray-200"></div>
+                <div className="w-full flex items-center justify-between">
+                    <p>Dark Mode</p>
+                    <Switch
+                        checked={isDarkTheme}
+                        onChange={(checked) => dispatch(setDarkTheme(checked))}
+                    />
+                </div>
             </div>
         </NavigationStack>
     )

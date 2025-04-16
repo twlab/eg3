@@ -14,7 +14,9 @@ import { BundleProps } from "@eg/tracks/src/components/GenomeView/TabComponents/
 import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 const Session: React.FC = () => {
+  useExpandedNavigationTab();
   const dispatch = useAppDispatch();
   const customTracksPool = useAppSelector(selectCustomTracksPool);
   const currentSession = useAppSelector(selectCurrentSession);
@@ -48,20 +50,18 @@ const Session: React.FC = () => {
       tracks,
       viewRegion: userViewRegion
         ? new DisplayedRegionModel(
-            genomeConfig.navContext,
-            userViewRegion?.start,
-            userViewRegion?.end
-          )
+          genomeConfig.navContext,
+          userViewRegion?.start,
+          userViewRegion?.end
+        )
         : new DisplayedRegionModel(
-            genomeConfig.navContext,
-            ...genomeConfig.defaultRegion
-          ),
+          genomeConfig.navContext,
+          ...genomeConfig.defaultRegion
+        ),
     };
   }
   //provide data to genomeTracks to new current bundle session
-  function onRestoreSession(bundle: any) {
-    const curSessionId = bundle.currentId;
-    const sessionBundle = bundle.sessionsInBundle[`${curSessionId}`].state;
+  function onRestoreSession(sessionBundle: any) {
 
     const session = {
       genomeId: sessionBundle.genomeName,
@@ -81,18 +81,21 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
-    dispatch(updateBundle(bundle));
+
     dispatch(updateCurrentSession(session));
   }
 
+
   //set the bundleid for this session to the retreive id and bundle to new bundle
   function onRetrieveBundle(newBundle: any) {
-    dispatch(updateBundle(newBundle));
-    dispatch(
-      updateCurrentSession({
-        bundleId: newBundle.bundleId,
-      })
-    );
+    if (newBundle && newBundle.bundleId) {
+      dispatch(updateBundle(newBundle));
+      dispatch(
+        updateCurrentSession({
+          bundleId: newBundle.bundleId,
+        })
+      );
+    }
   }
 
   //add or delete session from bundle
@@ -100,17 +103,16 @@ const Session: React.FC = () => {
     dispatch(updateBundle(bundle));
     dispatch(updateCurrentSession({ bundleId: bundle.bundleId }));
   }
-  return curUserState ? (
+  return (
     <SessionUI
       onRestoreSession={onRestoreSession}
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
-      bundleId={bundle.bundleId}
+      bundleId={bundle.bundleId ? bundle.bundleId : ""}
       curBundle={bundle}
       state={curUserState}
+
     />
-  ) : (
-    ""
   );
 };
 

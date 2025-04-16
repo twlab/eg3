@@ -10,6 +10,7 @@ import {
 
 import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
+import { ITrackModel } from "@eg/tracks";
 
 import {
   addPublicTracksPool,
@@ -21,14 +22,17 @@ import DataHubParser from "@eg/tracks/src/models/DataHubParser";
 import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import TrackModel from "@eg/tracks/src/models/TrackModel";
+import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+
 export default function PublicDataHubs() {
+  useExpandedNavigationTab();
   const genomeConfig = useCurrentGenome();
   const loadedPublicHub = useAppSelector(selectLoadedPublicHub);
   const publicTracksPool = useAppSelector(selectPublicTracksPool);
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadingHubs, setLoadingHubs] = useState<Set<string>>(new Set());
+  const [loadingHubs, setLoadingHubs] = useState<{ [key: string]: boolean }>({});
 
   const secondaryGenomes: Array<any> = [];
   let selectedGenomeName = null;
@@ -49,8 +53,8 @@ export default function PublicDataHubs() {
   const groupedHubs = useMemo(() => {
     const hubs = selectedGenomeConfig ? selectedGenomeConfig.publicHubList : [];
 
-    const filteredHubs = hubs.filter((hub) =>
-      Object.values(hub).some((value) =>
+    const filteredHubs = hubs.filter((hub: any) =>
+      Object.values(hub).some((value: any) =>
         String(value).toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
@@ -60,7 +64,7 @@ export default function PublicDataHubs() {
 
   const loadHub = async (hub: any) => {
     const parser = new DataHubParser();
-    setLoadingHubs((prev) => new Set([...prev, hub.url]));
+    setLoadingHubs((prev) => ({ ...prev, [hub.url]: true }));
 
     try {
       const json = await new Json5Fetcher().get(hub.url);
@@ -85,22 +89,22 @@ export default function PublicDataHubs() {
           })
         );
       }
-      dispatch(updateLoadedPublicHub(new Set([...loadedPublicHub, hub.url])));
+      dispatch(updateLoadedPublicHub({ ...loadedPublicHub, [hub.url]: true }));
     } catch (error) {
       console.error(error);
       // dispatch(addPublicTracksPool([...publicTracksPool]));
     } finally {
       setLoadingHubs((prev) => {
-        const next = new Set(prev);
-        next.delete(hub.url);
+        const next = { ...prev };
+        delete next[hub.url];
         return next;
       });
     }
   };
 
   const renderHubItem = (hub: any) => {
-    const isLoading = loadingHubs.has(hub.url);
-    const isLoaded = loadedPublicHub.has(hub.url);
+    const isLoading = loadingHubs[hub.url];
+    const isLoaded = loadedPublicHub[hub.url];
 
     return (
       <div key={hub.url} className="flex items-center justify-between py-1">
@@ -114,18 +118,17 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${
-                isLoaded
-                  ? "bg-green-200 hover:bg-green-300"
-                  : "bg-secondary hover:bg-purple-200"
-              }`}
+              className={`size-6 rounded-md flex items-center justify-center ${isLoaded
+                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+                }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
               {isLoaded ? (
-                <CheckIcon className="size-4 text-green-700" />
+                <CheckIcon className="size-4 text-green-700 dark:text-dark-primary" />
               ) : (
-                <PlusIcon className="size-4" />
+                <PlusIcon className="size-4 text-primary dark:text-dark-primary" />
               )}
             </button>
           )}
@@ -139,7 +142,7 @@ export default function PublicDataHubs() {
   const renderSearchBar = () => (
     <div
       ref={searchBarGeometry.ref}
-      className="sticky top-0 bg-white z-20 pb-2"
+      className="sticky top-0 z-20 pb-2 bg-white dark:bg-dark-background"
     >
       <input
         type="text"
@@ -154,8 +157,10 @@ export default function PublicDataHubs() {
   const renderHubGroup = (collection: string, hubs: any[]) => (
     <div key={collection} className="mb-4 relative">
       <h2
-        className="text-base font-medium mb-1 sticky bg-white z-10 py-2"
-        style={{ top: `${searchBarGeometry.height}px` }}
+        className="text-base font-medium mb-1 sticky z-10 py-2 bg-white dark:bg-dark-background"
+        style={{
+          top: `${searchBarGeometry.height}px`,
+        }}
       >
         {collection}
       </h2>
@@ -185,29 +190,28 @@ export default function PublicDataHubs() {
   }
   return (
     <div>
-      {renderSearchBar()}
-      <div>
-        {Object.entries(groupedHubs).map(([collection, hubs]) =>
-          renderHubGroup(collection, hubs)
-        )}
-      </div>
-
       {currentSession && publicTracksPool.length > 0 ? (
         <div>
           <h2 className="text-base font-medium mb-4">Available Tracks</h2>
           <FacetTable
             tracks={publicTracksPool}
-            addedTracks={currentSession!.tracks}
+            addedTracks={currentSession!.tracks as ITrackModel[]}
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
       ) : (
         ""
       )}
+      {renderSearchBar()}
+      <div>
+        {Object.entries(groupedHubs).map(([collection, hubs]) =>
+          renderHubGroup(collection, hubs)
+        )}
+      </div>
     </div>
   );
 }

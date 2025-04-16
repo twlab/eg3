@@ -1,39 +1,39 @@
 :root {
-  backface-visibility: hidden;
-  perspective: 1000;
-  --colNum: 2;
-  -webkit-backface-visibility: hidden;
-  -webkit-perspective: 1000;
   --dark-fg-color: white;
-  --dark-bg-color: #222;
-  --light-fg-color: #222;
+  --dark-bg-color: black;
+  --dark-container-color: #2c2c2c;
+
+  --light-fg-color: black;
   --light-bg-color: white;
+  --light-container-color: white;
 }
+
 @keyframes borderPulse {
   0% {
-    border-top: 1px solid red;
-    border-bottom: 1px solid red;
+    border-bottom: 1px solid #f89581;
   }
+
   50% {
-    border-top: 1px solid lightcoral;
-    border-bottom: 1px solid lightcoral;
+    border-bottom: 1px solid #feaa9a;
   }
+
   100% {
-    border-top: 1px solid white;
-    border-bottom: 1px solid white;
+    border-bottom: 1px solid #feded8;
   }
 }
+
 .animatedBorder {
-  animation: borderPulse 2s infinite;
+  animation: borderPulse 3s infinite;
 }
+
 .App {
   margin-bottom: 30px;
 }
 
-.dense-button {
+/* .dense-button {
   padding: 2px 4px;
   line-height: 1;
-}
+} */
 
 .nav-link {
   user-select: none;
@@ -64,7 +64,8 @@
 .horizontal-line,
 .vertical-line {
   position: absolute;
-  will-change: transform; /* Hint to the browser for optimization */
+  will-change: transform;
+  /* Hint to the browser for optimization */
 }
 
 .horizontal-line {
@@ -85,20 +86,26 @@
   z-index: 3;
   pointer-events: none;
 }
+
 .btn-dense {
   margin-right: 2px !important;
   margin-bottom: 0 !important;
 }
+
 [data-theme="dark"] {
   --font-color: var(--dark-fg-color);
   --bg-color: var(--dark-bg-color);
+  --bg-container-color: var(--dark-container-color);
   /* --link-color: #3bd1ff; */
 }
+
 [data-theme="light"] {
   --font-color: var(--light-fg-color);
   --bg-color: var(--light-bg-color);
+  --bg-container-color: var(--light-container-color);
   /* --link-color: #3f51b5; */
 }
+
 .bg {
   background-color: var(--bg-color);
   color: var(--font-color);

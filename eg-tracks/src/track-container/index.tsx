@@ -111,6 +111,7 @@ export function TrackContainerRepresentable({
         queryEndpoint: track.queryEndpoint,
         querygenome: track.querygenome,
         id: track.id,
+        isSelected: track.isSelected,
       });
     };
 
@@ -141,7 +142,6 @@ export function TrackContainerRepresentable({
 
   const convertedViewRegion = useMemo(() => {
     try {
-      console.log(viewRegion);
       if (!viewRegion) {
         if (userViewRegion) {
           const start = userViewRegion.start;

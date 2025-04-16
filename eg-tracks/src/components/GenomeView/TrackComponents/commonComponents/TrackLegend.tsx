@@ -129,10 +129,15 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
           .filter((d, i) => i === 2)
           .attr("dy", "-0.1em");
       }
-
-      select(this.gNode).selectAll("text").attr("class", "svg-text-bg2");
-      select(this.gNode).selectAll("line").attr("class", "svg-line-bg2");
-      select(this.gNode).selectAll("path").attr("class", "svg-line-bg2");
+      select(this.gNode)
+        .selectAll("text")
+        .attr("class", "svg-text-bg");
+      select(this.gNode)
+        .selectAll("line")
+        .attr("class", "svg-line-bg");
+      select(this.gNode)
+        .selectAll("path")
+        .attr("class", "svg-line-bg");
     }
   }
 
@@ -181,8 +186,9 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
         width,
         minWidth: width,
         height,
-        // backgroundColor: "white",
-        color: "black",
+        // backgroundColor: "var(--bg-color)",
+
+        // color: "var(--font-color)",
         justifyContent: "space-between",
       },
       style
@@ -256,7 +262,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
             className="TrackLegend-label"
             style={{ ...pStyle, wordWrap: "break-word", whiteSpace: "normal" }}
           >
-            {trackModel.options.label}
+            {label ? label : trackModel.options.label}
           </p>
           <div
             style={{ display: "flex", alignItems: "center", fontSize: "12px" }}

@@ -13,6 +13,7 @@ import { DEFAULT_OPTIONS as defaultGenomeAlignTrack } from "./GenomeAlignCompone
 import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/DynamicplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
+import { DEFAULT_OPTIONS as defaultVcfTrack } from "./VcfComponents/VcfTrack";
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
 } from "./bedComponents/BedAnnotation";
@@ -24,6 +25,7 @@ import Feature from "../../../models/Feature";
 import { DefaultAggregators } from "../../../models/FeatureAggregator";
 
 import { Fiber, JasparFeature } from "../../../models/Feature";
+import Vcf from "./VcfComponents/Vcf";
 
 const ROW_VERTICAL_PADDING = 5;
 
@@ -48,9 +50,14 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultAnnotationTrack,
     },
-    getGenePadding: function getGenePadding(gene) {
-      return gene.getName().length * 9;
-      ``;
+    getGenePadding: (feature: Feature, xSpan: OpenInterval) => {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = feature.getName().length * 9;
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
@@ -118,12 +125,27 @@ export const trackOptionMap: { [key: string]: any } = {
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
   },
+  vcf: {
+    defaultOptions: {
+      ...defaultNumericalTrack,
+
+      ...defaultVcfTrack,
+    },
+    getGenePadding: function paddingFunc(vcf: Vcf, xSpan: OpenInterval) {
+      const width = xSpan.end - xSpan.start;
+      const estimatedLabelWidth = vcf.getName().length * 9;
+      if (estimatedLabelWidth < 0.5 * width) {
+        return 5;
+      } else {
+        return 9 + estimatedLabelWidth;
+      }
+    },
+  },
   omeroidr: {
     defaultOptions: {
       ...defaultOmeroTrack,
       ...defaultNumericalTrack,
       aggregateMethod: DefaultAggregators.types.IMAGECOUNT,
-      displayMode: "density",
     },
     getGenePadding: function getGenePadding(gene) {
       return gene.getName().length * 9;
@@ -234,7 +256,6 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultMethylc,
-      displayMode: "density",
     },
   },
   dynseq: {
@@ -247,7 +268,6 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultBoxplotTrack,
-      displayMode: "density",
     },
   },
   qbed: {
@@ -255,12 +275,10 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
       ...defaultQBedTrack,
     },
-    displayMode: "density",
   },
   bedgraph: {
     defaultOptions: {
       ...defaultNumericalTrack,
-      displayMode: "density",
     },
   },
   // interaction track
@@ -296,7 +314,6 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultDynamic,
-      displayMode: "density",
     },
   },
   // dynamic both nav
@@ -304,7 +321,7 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultMatplot,
-      displayMode: "density",
+
       forceSvg: false,
     },
   },
@@ -322,7 +339,6 @@ export const trackOptionMap: { [key: string]: any } = {
       useDynamicColors: false,
       backgroundColor: "white",
       arrayAggregateMethod: "MEAN",
-      displayMode: "density",
     },
   },
   dynamicbed: {
@@ -338,20 +354,17 @@ export const trackOptionMap: { [key: string]: any } = {
       dynamicColors: [],
       useDynamicColors: false,
       backgroundColor: "white",
-      displayMode: "density",
     },
   },
   dynamicplot: {
     defaultOptions: {
       ...defaultNumericalTrack,
       ...defaultDynamic,
-      displayMode: "density",
     },
   },
   error: {
     defaultOptions: {
       ...defaultNumericalTrack,
-      displayMode: "density",
     },
   },
 };

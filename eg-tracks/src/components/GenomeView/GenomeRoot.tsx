@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
-import "./track.css";
+// import "./track.css";
 // import { chrType } from "../../localdata/genomename";
 // import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
@@ -26,14 +26,29 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   userViewRegion,
   setScreenshotData,
   isScreenShotOpen,
+  selectedRegionSet,
 }) {
   const [resizeRef, size] = useResizeObserver();
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
-  const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 })
-  // TO-DO need to set initial.current back to true when genomeConfig changes
-  // to see if genomeConfig we can check its session id because it will unique
+  const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
 
+  const throttle = (callback, limit) => {
+    let timeoutId: any = null;
+    return (...args) => {
+      if (!timeoutId) {
+        callback(...args);
+        timeoutId = setTimeout(() => {
+          timeoutId = null;
+        }, limit);
+      }
+    };
+  };
+  const throttledSetConfig = useRef(
+    throttle((curGenome) => {
+      setCurrentGenomeConfig(curGenome);
+    }, 200)
+  );
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -46,11 +61,12 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
+        curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = true;
       } else {
-
         trackManagerId.current = crypto.randomUUID();
         curGenome = { ...genomeConfig };
+        curGenome.navContext = userViewRegion._navContext;
         curGenome["isInitial"] = true;
         curGenome["genomeID"] = trackManagerId.current;
         curGenome.defaultRegion = new OpenInterval(
@@ -61,10 +77,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }
   }, [size.width]);
+
   useEffect(() => {
     if (size.width > 0) {
-
-
       if (trackManagerId.current) {
         const curGenome = { ...genomeConfig };
         curGenome["isInitial"] = false;
@@ -84,11 +99,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     if (size.width > 0) {
       if (
         trackManagerId.current &&
-        currentState.browser.index !== currentState.browser.limit - 1
+        currentState.index !== currentState.limit - 1
       ) {
-        if (genomeConfig.genomeName !== prevViewRegion.current.genomeName ||
+        if (
+          genomeConfig.genomeName !== prevViewRegion.current.genomeName ||
           userViewRegion._startBase !== prevViewRegion.current.start ||
-          userViewRegion._endBase !== prevViewRegion.current.end) {
+          userViewRegion._endBase !== prevViewRegion.current.end
+        ) {
           const curGenome = { ...genomeConfig };
           curGenome["isInitial"] = false;
           curGenome["genomeID"] = trackManagerId.current;
@@ -99,9 +116,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           );
           curGenome.navContext = userViewRegion._navContext;
           curGenome["sizeChange"] = false;
-          setCurrentGenomeConfig(curGenome);
-        }
 
+          throttledSetConfig.current(curGenome);
+        }
       }
       prevViewRegion.current.genomeName = genomeConfig.genomeName;
       prevViewRegion.current.start = userViewRegion._startBase!;
@@ -110,7 +127,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [userViewRegion]);
 
   return (
-    <div data-theme={"light"} style={{ paddingLeft: "1%", paddingRight: "1%" }}>
+    <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && (
@@ -118,7 +135,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width}
+            windowWidth={size.width - legendWidth - 20}
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={currentGenomeConfig}
@@ -132,6 +149,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             showGenomeNav={showGenomeNav}
             setScreenshotData={setScreenshotData}
             isScreenShotOpen={isScreenShotOpen}
+            selectedRegionSet={selectedRegionSet}
           />
         )}
       </div>

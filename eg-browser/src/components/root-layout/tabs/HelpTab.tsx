@@ -4,7 +4,7 @@ import ExternalLink from "@/components/ui/navigation/ExternalLink";
 export default function HelpTab() {
     return (
         <NavigationStack destinations={[]} rootOptions={{ title: 'Help' }}>
-            <div className="flex flex-col gap-4">
+            <div className="text-primary flex flex-col gap-4">
                 <ExternalLink
                     title="Documentation"
                     description="Read our comprehensive documentation and user guides"

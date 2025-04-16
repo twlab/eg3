@@ -173,7 +173,12 @@ function SearchSuggestionDivider(props: any) {
         padding: "0 1rem",
       }}
     >
-      <div style={{ color: "#6B7280", fontSize: "0.875rem" }}>{props.text}</div>
+      <div
+        className="text-gray-600 dark:text-dark-primary"
+        style={{ fontSize: "0.875rem" }}
+      >
+        {props.text}
+      </div>
       {props.highlightSearch !== undefined ? (
         <div style={{ display: "flex", alignItems: "center" }}>
           <input
@@ -185,9 +190,9 @@ function SearchSuggestionDivider(props: any) {
           />
           <label
             htmlFor="highsearch"
+            className="text-gray-600 dark:text-dark-primary"
             style={{
               marginLeft: "0.5rem",
-              color: "#6B7280",
               fontSize: "0.875rem",
             }}
           >
@@ -214,7 +219,7 @@ function SearchSuggestionBase({
 }) {
   return (
     <div
-      className="cursor-pointer hover:bg-gray-100 p-2 rounded-lg flex items-center gap-2"
+      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-background p-2 rounded-lg flex items-center gap-2"
       onClick={onClick}
     >
       <div className="flex-shrink-0">{icon}</div>
@@ -429,12 +434,11 @@ export default function SearchBar({
         suggestions.push(
           <motion.div
             key={`command-${command}`}
-            className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
-            whileHover={{ backgroundColor: "#f3f4f6" }}
+            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-secondary dark:text-dark-primary cursor-pointer flex items-center gap-2"
             onClick={() => setActiveCommand(command)}
           >
             <span className="text-xl">{typeToEmoji[command]}</span>
-            <span className="text-sm text-gray-600">/{command}</span>
+            <span className="text-sm text-gray-600 dark:text-dark-primary">/{command}</span>
           </motion.div>
         );
       });
@@ -454,7 +458,7 @@ export default function SearchBar({
           suggestions.push(
             <motion.div
               key={`gene-${result.id}`}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-background cursor-pointer"
               whileHover={{ backgroundColor: "#f3f4f6" }}
               onClick={() => handleResultClick(result)}
             >
@@ -477,7 +481,7 @@ export default function SearchBar({
           suggestions.push(
             <motion.div
               key={`snp-${result.id}`}
-              className="px-4 py-2 hover:bg-gray-100"
+              className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-background"
               whileHover={{ backgroundColor: "#f3f4f6" }}
             >
               <SnpComponent
@@ -561,7 +565,7 @@ export default function SearchBar({
       <AnimatePresence>
         {isShowingIsoforms ? (
           <motion.div
-            className="absolute bottom-full left-0 right-0 bg-white rounded-lg shadow-lg mb-2 z-50"
+            className="absolute bottom-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mb-2 z-50"
             initial={{ opacity: 0, y: 10, height: 0 }}
             animate={{ opacity: 1, y: 0, height: "auto" }}
             exit={{ opacity: 0, y: 10, height: 0 }}
@@ -591,7 +595,7 @@ export default function SearchBar({
           {isSearchFocused &&
             ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
-              className="absolute bottom-full left-0 right-0 bg-white rounded-lg shadow-lg mb-2 overflow-hidden z-50"
+              className="absolute bottom-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mb-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: 10, height: 0 }}
               animate={{ opacity: 1, y: 0, height: "auto" }}
               exit={{ opacity: 0, y: 10, height: 0 }}
@@ -607,8 +611,8 @@ export default function SearchBar({
         <div className="flex flex-row items-center">
           <div className="flex flex-row items-center px-2 py-2 pb-3.5 w-full">
             {activeCommand ? (
-              <div className="flex items-center bg-secondary px-2 py-1 rounded-lg -ml-1">
-                <span className="text-sm text-tint">/{activeCommand}</span>
+              <div className="flex items-center bg-secondary dark:bg-dark-secondary px-2 py-1 rounded-lg -ml-1">
+                <span className="text-sm text-tint dark:text-dark-primary">/{activeCommand}</span>
               </div>
             ) : (
               <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -643,7 +647,7 @@ export default function SearchBar({
                 onClick={() =>
                   parseRegion(document.querySelector("input")?.value || "")
                 }
-                className="flex items-center justify-center w-6 h-6 rounded-full bg-secondary hover:bg-opacity-80 transition-colors"
+                className="flex items-center justify-center w-6 h-6 rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
               >
                 <ArrowRightIcon className="w-4 h-4 text-tint" />
               </button>

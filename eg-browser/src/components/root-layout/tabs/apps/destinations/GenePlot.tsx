@@ -17,6 +17,7 @@ import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import { getGenomeConfig } from "@eg/tracks";
+import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
 export const NUMERICAL_TRACK_TYPES = ["bigwig", "bedgraph"]; // the front UI we allow any case of types, in TrackModel only lower case
 
@@ -34,6 +35,7 @@ const PLOT_TYPE_DESC = {
 };
 
 const Geneplot: React.FC<GeneplotProps> = () => {
+  useExpandedNavigationTab();
   const [setName, setSetName] = useState("");
   const [trackName, setTrackName] = useState("");
   const [plotType, setPlotType] = useState("box");
@@ -88,6 +90,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       return [];
     }
   }, [currentSession]);
+
   const renderRegionList = () => {
     const setList = sets.map((item, index) => (
       <option key={index} value={item.name}>
@@ -159,11 +162,13 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
 
   const getPlotData = async () => {
+    setPlotMsg("Loading...");
     const track = getTrackByName(trackName);
 
     const trackConfig = getTrackConfig(track);
 
     const set = getSetByName(setName);
+
     const flankedFeatures = set.features.map((feature) =>
       set.flankingStrategy.makeFlankedFeature(feature, set.genome)
     );
@@ -322,16 +327,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
     );
   };
 
-  if (sets && sets.length === 0) {
-    return (
-      <div>
-        <p className="alert alert-warning">
-          There is no region set yet, please submit a region set below.
-        </p>
-        <RegionSetSelector />
-      </div>
-    );
-  }
   const layout = {
     width: 900,
     height: 600,
@@ -391,105 +386,75 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   };
   return (
     <div>
-      <button
-        style={{
-          width: "100%",
-          marginTop: "10px",
-          color: isHovered ? "white" : "black",
-          backgroundColor: isHovered ? "#C7D9DD" : "#ADB2D4",
-          transition: "all 0.3s ease",
-          cursor: "pointer",
-          border: "none",
-          padding: "10px 20px",
-          borderRadius: "20px",
-          outline: "none",
-          fontSize: "16px",
-        }}
-        onClick={handleOpenModal}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        Open geneplot menu
-      </button>
-      <ReactModal
-        isOpen={showModal}
-        contentLabel="Gene & Region search"
-        ariaHideApp={false}
-        onRequestClose={handleCloseModal}
-        shouldCloseOnOverlayClick={true}
-      >
-        {" "}
-        <span
-          className="text-right"
-          style={{
-            cursor: "pointer",
-            color: "red",
-            fontSize: "2em",
-            position: "absolute",
-            top: "-5px",
-            right: "15px",
-          }}
-          onClick={handleCloseModal}
-        >
-          ×
-        </span>
-        <div style={{}}>
-          <div style={styles.container}>
-            <p style={styles.lead}>1. Choose a region set</p>
-            <div>{renderRegionList()}</div>
+      {currentSession && sets && sets.length === 0 ? (
+        <div>
+          <p className="alert alert-warning">
+            There is no region set yet, please submit a region set below.
+          </p>
+          <RegionSetSelector />
+        </div>
+      ) : currentSession && showModal ? (
+        <>
+          <div>
+            <div>
+              <div style={styles.container}>
+                <p style={styles.lead}>1. Choose a region set</p>
+                <div>{renderRegionList()}</div>
 
-            <div style={{ marginBottom: "20px" }}>
-              <p style={styles.lead}>
-                2. Choose a
-                <a
-                  href={HELP_LINKS.numerical}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={styles.lead}>
+                    2. Choose a
+                    <a
+                      href={HELP_LINKS.numerical}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        textDecoration: "underline",
+                        color: "#007bff",
+                      }}
+                    >
+                      {" "}
+                      numerical track
+                    </a>
+                    :
+                  </p>
+                  <div>{renderTrackList()}</div>
+                </div>
+
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={styles.lead}>3. Choose a plot type:</p>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {renderPlotTypes()}
+                    {renderDataPoints()}
+                    {plotType === "box" &&
+                      Object.keys(data).length > 0 &&
+                      renderBoxColorPicker()}
+                  </div>
+                </div>
+
+                <div
                   style={{
-                    textDecoration: "underline",
-                    color: "#007bff",
+                    fontStyle: "italic",
+                    marginTop: "10px",
                   }}
                 >
-                  {" "}
-                  numerical track
-                </a>
-                :
-              </p>
-              <div>{renderTrackList()}</div>
-            </div>
+                  {PLOT_TYPE_DESC[plotType]}
+                </div>
 
-            <div style={{ marginBottom: "20px" }}>
-              <p style={styles.lead}>3. Choose a plot type:</p>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {renderPlotTypes()}
-                {renderDataPoints()}
-                {plotType === "box" &&
-                  Object.keys(data).length > 0 &&
-                  renderBoxColorPicker()}
+                <div style={styles.buttonContainer}>
+                  <button style={styles.button} onClick={getPlotData}>
+                    Plot
+                  </button>
+                  <div style={{ marginLeft: "10px" }}>{plotMsg}</div>
+                </div>
               </div>
             </div>
-
-            <div
-              style={{
-                fontStyle: "italic",
-                marginTop: "10px",
-              }}
-            >
-              {PLOT_TYPE_DESC[plotType]}
-            </div>
-
-            <div style={styles.buttonContainer}>
-              <button style={styles.button} onClick={getPlotData}>
-                Plot
-              </button>
-              <div style={{ marginLeft: "10px" }}>{plotMsg}</div>
+            <div style={{ marginLeft: "-150px" }}>
+              <Plot data={data[plotType]} layout={layout} config={config} />
             </div>
           </div>
-        </div>
-        <div>
-          <Plot data={data[plotType]} layout={layout} config={config} />
-        </div>
-      </ReactModal>
+        </>
+      ) : null}
     </div>
   );
 };

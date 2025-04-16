@@ -4,16 +4,38 @@ import BigSourceWorkerGmod from "./BigSourceWorkerGmod";
 import RepeatSource from "./RepeatSource";
 
 import JasparSource from "./JasparSource";
+import VcfSource from "./VcfSource";
+import BigSourceWorker from "./BigSourceWorker";
 
 const AWS_API = "https://lambda.epigenomegateway.org/v3";
 let cachedFetchInstance: { [key: string]: any } = {};
+const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" }
 export const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
-    let url = `${AWS_API}/${regionData.genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
 
-    if (regionData.genomeName === "canFam6") {
-      url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    let genomeName;
+    let apiConfigPrefix;
+    const trackModel = regionData.trackModel
+    if (trackModel["apiConfig"] && trackModel["apiConfig"]["genome"]) {
+      genomeName = trackModel["apiConfig"]["genome"]
     }
+    else {
+      genomeName = regionData.genomeName
+    }
+
+    if (trackModel["apiConfig"] && trackModel["apiConfig"]["format"] in apiConfigMap) {
+      apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`]
+    }
+    else {
+      apiConfigPrefix = apiConfigMap.WashU
+    }
+
+
+    let url = `${apiConfigPrefix}/${genomeName}/genes/${regionData.name}/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+
+    // if (regionData.genomeName === "canFam6") {
+    //   url = `https://lambda.epigenomegateway.org/v3/canFam6/genes/ncbiRefSeq/queryRegion?chr=${regionData.chr}&start=${regionData.start}&end=${regionData.end}`;
+    // }
 
     const genRefResponse = await fetch(url, {
       method: "GET",
@@ -41,9 +63,8 @@ export const trackFetchFunction: { [key: string]: any } = {
     };
 
     if (regionData.end - regionData.start <= 30000) {
-      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
-        regionData.end + "?content-type=application%2Fjson&feature=variation"
-      }`;
+      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${regionData.end + "?content-type=application%2Fjson&feature=variation"
+        }`;
 
       return fetch(url, { headers })
         .then((response) => {
@@ -89,7 +110,7 @@ export const trackFetchFunction: { [key: string]: any } = {
     return getRemoteData(regionData, "jaspar");
   },
   bigbed: async function bigbedFetch(regionData: any) {
-    return getRemoteData(regionData, "big");
+    return getRemoteData(regionData, "bigbed");
   },
   refbed: async function refbedFetch(regionData: any) {
     return getRemoteData(regionData, "bedOrTabix");
@@ -124,16 +145,34 @@ export const trackFetchFunction: { [key: string]: any } = {
   genomealign: function genomeAlignFetch(regionData: any) {
     return getRemoteData(regionData, "bedOrTabix");
   },
+  vcf: function vcfFetch(regionData: any) {
+    return getRemoteData(regionData, "vcf");
+  },
 };
 
 function getRemoteData(regionData: any, trackType: string) {
+  let indexUrl = null
+  if (regionData.trackModel.indexUrl) {
+    indexUrl = regionData.trackModel.indexUrl
+  }
   if (regionData.trackModel.id in cachedFetchInstance) {
   } else {
     if (trackType === "bedOrTabix") {
       cachedFetchInstance[`${regionData.trackModel.id}`] = new TabixSource(
-        regionData.trackModel.url
+        regionData.trackModel.url, indexUrl
       );
-    } else if (trackType === "big") {
+    } else if (trackType === "vcf") {
+      cachedFetchInstance[`${regionData.trackModel.id}`] = new VcfSource(
+        regionData.trackModel.url, indexUrl
+      );
+    }
+    else if (trackType === "bigbed") {
+
+      cachedFetchInstance[`${regionData.trackModel.id}`] = new BigSourceWorker(regionData.trackModel.url)
+
+    }
+
+    else if (trackType === "big") {
       cachedFetchInstance[`${regionData.trackModel.id}`] =
         new BigSourceWorkerGmod(regionData.trackModel.url);
     } else if (trackType === "repeat") {
@@ -148,13 +187,15 @@ function getRemoteData(regionData: any, trackType: string) {
   }
   let fetchInstance = cachedFetchInstance[`${regionData.trackModel.id}`];
 
-  if (trackType in { repeat: "", jaspar: "" }) {
+  if (trackType in { repeat: "", jaspar: "", bigbed: "" }) {
     return fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,
       regionData.trackModel.options
     );
   }
+
+
   return fetchInstance.getData(regionData.nav, regionData.trackModel.options);
 }
 

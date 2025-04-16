@@ -148,56 +148,6 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       forceSvg: options.forceSvg,
       viewWindow: this.props.viewWindow,
     };
-    let strandRenderers, tooltipY;
-    if (isCombineStrands) {
-      strandRenderers = <StrandVisualizer {...childProps} strand="combined" />;
-      tooltipY = height;
-    } else {
-      strandRenderers = (
-        <React.Fragment>
-          <StrandVisualizer {...childProps} strand="forward" />
-          <StrandVisualizer {...childProps} strand="reverse" />
-        </React.Fragment>
-      );
-      tooltipY = height * 2;
-    }
-
-    return (
-      <>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
-
-            zIndex: 3,
-          }}
-        >
-          <HoverToolTip
-            data={this.aggregatedRecords}
-            windowWidth={width}
-            trackModel={trackModel}
-            trackType={"methyc"}
-            options={options}
-            height={tooltipY}
-            viewRegion={viewRegion}
-            hasReverse={true}
-          />
-        </div>
-        {strandRenderers}
-      </>
-    );
-  }
-
-  render() {
-    const { data, trackModel, viewRegion, width, options, getNumLegend } =
-      this.props;
-    this.aggregatedRecords = this.aggregateRecords(data, viewRegion, width);
-    this.scales = this.computeScales(
-      this.aggregatedRecords,
-      options.height,
-      options.maxMethyl
-    );
 
     let legend = (
       <div
@@ -226,7 +176,80 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
         </div>
       </div>
     );
-    getNumLegend(legend);
+    if (getNumLegend) {
+      getNumLegend(legend);
+    }
+    let strandRenderers, tooltipY;
+    if (isCombineStrands) {
+
+      strandRenderers = (
+        <React.Fragment>
+          <div style={{ display: "flex" }}>
+            {forceSvg ? legend : ""}
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <StrandVisualizer {...childProps} strand="combined" />       </div>
+          </div>
+        </React.Fragment>
+      );
+      tooltipY = height;
+    } else {
+
+      strandRenderers = (
+        <React.Fragment>
+          <div style={{ display: "flex" }}>
+            {forceSvg ? legend : ""}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <StrandVisualizer {...childProps} strand="forward" />
+              <StrandVisualizer {...childProps} strand="reverse" />
+            </div>
+          </div>
+        </React.Fragment>
+      );
+      tooltipY = height * 2;
+    }
+
+    return (
+      <>
+        {!forceSvg ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+
+              zIndex: 3,
+            }}
+          >
+            <HoverToolTip
+              data={this.aggregatedRecords}
+              windowWidth={width}
+              trackModel={trackModel}
+              trackType={"methyc"}
+              options={options}
+              height={tooltipY}
+              viewRegion={viewRegion}
+              hasReverse={true}
+            />
+          </div>
+        ) : (
+          ""
+        )}
+        {strandRenderers}
+      </>
+    );
+  }
+
+  render() {
+    const { data, trackModel, viewRegion, width, options, getNumLegend } =
+      this.props;
+    this.aggregatedRecords = this.aggregateRecords(data, viewRegion, width);
+    this.scales = this.computeScales(
+      this.aggregatedRecords,
+      options.height,
+      options.maxMethyl
+    );
+
     return this.renderVisualizer();
   }
 }
