@@ -77,6 +77,8 @@ interface MethylCTrackProps {
   };
   forceSvg: boolean;
   getNumLegend: any;
+  xValuesData?: any;
+  xvaluesData?: any;
 }
 
 class MethylCTrack extends PureComponent<MethylCTrackProps> {
@@ -241,9 +243,9 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
   }
 
   render() {
-    const { data, trackModel, viewRegion, width, options, getNumLegend } =
+    const { data, trackModel, viewRegion, width, options, getNumLegend, xvaluesData } =
       this.props;
-    this.aggregatedRecords = this.aggregateRecords(data, viewRegion, width);
+    this.aggregatedRecords = xvaluesData ? xvaluesData : this.aggregateRecords(data, viewRegion, width);
     this.scales = this.computeScales(
       this.aggregatedRecords,
       options.height,
@@ -406,6 +408,8 @@ function ReverseStrandLegend(props) {
   const mockTrackModel = new TrackModel({
     name: " ",
     isSelected: props.trackModel.isSelected,
+    id: "mock-id",
+    options: {},
   });
   return (
     <TrackLegend

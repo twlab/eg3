@@ -44,6 +44,7 @@ interface FiberTrackProps extends PropsFromTrackContainer {
   getHeight: any;
   ROW_HEIGHT: any;
   onClose: any;
+  xvaluesData?: any;
 }
 
 interface AggregatedFiber {

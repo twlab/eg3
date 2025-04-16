@@ -48,6 +48,7 @@ interface ITrackModel {
   label?: string;
   files?: any;
   details?: any;
+  isSelected?: any;
 }
 
 /**

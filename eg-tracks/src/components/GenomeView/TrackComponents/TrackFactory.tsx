@@ -103,7 +103,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
 
     trackState["viewWindow"] = trackState.viewWindow;
-
+    console.log(trackState, trackModel)
     let res = fetchError.current ? (
       <div
         style={{
@@ -134,7 +134,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getHeight,
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         groupScale: trackState.groupScale,
-        xvalues: xvalues,
+        xvaluesData: xvalues,
         onClose
       })
     );
@@ -187,10 +187,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   ) {
     let currtooltip;
     if (type === "norm") {
-      console.log(event,
-        feature,
-        bs,
-        type, event.pageX, event.pageY)
+
       currtooltip = geneClickToolTipMap["normModbed"](
         bs,
         event.pageX,
@@ -233,21 +230,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
+      const primaryVisData =
+        trackState.genomicFetchCoord[trackState.primaryGenName]
+          .primaryVisData;
       if (cacheTrackData.trackType !== "genomealign") {
-        const primaryVisData =
-          trackState.genomicFetchCoord[trackState.primaryGenName]
-            .primaryVisData;
+
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
             trackFetchedDataCache.current[`${id}`].queryGenome
           ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
-        trackState["visWidth"] = primaryVisData.visWidth
-          ? primaryVisData.visWidth
-          : windowWidth * 3;
+
       }
+      trackState["visWidth"] = primaryVisData.visWidth
+        ? primaryVisData.visWidth
+        : windowWidth * 3;
 
       if (initTrackStart.current) {
         // use previous data before resetState
@@ -409,7 +407,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       id in viewWindowConfigChange.trackToDrawId &&
       (trackModel.type in numericalTracks || configOptions.current.displayMode === "density")
     ) {
-
+      if (trackModel.type === "matplot") {
+        console.log("yay")
+      }
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );

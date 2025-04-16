@@ -43,7 +43,8 @@ export function getConfigChangeData({
     ];
 
     if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
-      viewData = getDeDupeArrMatPlot(viewData, newIntanceTrackState.isError);
+      viewData = getDeDupeArrMatPlot(viewData, false);
+      console.log(viewData)
     } else {
       viewData = viewData.map((item) => item.dataCache).flat(1);
     }

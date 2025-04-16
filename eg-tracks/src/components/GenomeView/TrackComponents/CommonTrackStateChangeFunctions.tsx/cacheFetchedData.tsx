@@ -1,6 +1,6 @@
 // import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 
-import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
+
 import {
   removeDuplicates,
   removeDuplicatesWithoutId,
@@ -105,8 +105,8 @@ export function cacheFetchedData({
           }
             ? trackData
             : trackType === "genomealign"
-            ? trackData
-            : trackData.flat(1),
+              ? trackData
+              : trackData.flat(1),
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
     }
@@ -119,8 +119,8 @@ export function cacheFetchedData({
         dataCache:
           trackType in { matplot: "", dynamic: "", dynamicbed: "" }
             ? trackData.map((item: any, index: number) => {
-                return item[0];
-              })
+              return item[0];
+            })
             : trackData[0],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]++;
@@ -131,8 +131,8 @@ export function cacheFetchedData({
         dataCache:
           trackType in { matplot: "", dynamic: "", dynamicbed: "" }
             ? trackData.map((item: any, index: number) => {
-                return item[1];
-              })
+              return item[1];
+            })
             : trackData[1],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
@@ -142,8 +142,8 @@ export function cacheFetchedData({
         dataCache:
           trackType in { matplot: "", dynamic: "", dynamicbed: "" }
             ? trackData.map((item: any, index: number) => {
-                return item[2];
-              })
+              return item[2];
+            })
             : trackData[2],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;

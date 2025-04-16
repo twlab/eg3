@@ -470,6 +470,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curViewWindow = new OpenInterval(start, end);
     }
 
+
     setDataIdx((prevState) => {
       if (prevState === curDataIdx) {
         viewWindowConfigData.current = {
@@ -2227,6 +2228,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const trackDataObj: { [key: string]: any } = {};
       const trackToDrawId: { [key: string]: any } = {};
       let primaryVisData;
+
       for (let key in trackFetchedDataCache.current) {
         const cacheTrackData = trackFetchedDataCache.current[key];
         // methylc: "" qbed: "" , dynseq: "",,
@@ -2254,6 +2256,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) {
           continue;
         }
+        if (cacheTrackData.trackType === "matplot") {
+          console.log("ASDAS", cacheTrackData[dataIdx].dataCache)
+        }
         let combinedData: any = [];
         let noData = false;
         if (!("xvalues" in cacheTrackData[dataIdx])) {
@@ -2266,6 +2271,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               !cacheTrackData[currIdx].dataCache ||
               "error" in cacheTrackData[currIdx].dataCache
             ) {
+              console.log(cacheTrackData)
               noData = true;
               break;
             } else {
@@ -2292,6 +2298,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 })
                 .flat(1);
             }
+
+            if (cacheTrackData.trackType === "matplot") {
+              console.log("SADASD", combinedData)
+            }
           }
         }
 
@@ -2300,7 +2310,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             ...globalTrackState.current.trackStates[dataIdx].trackState,
           };
           let visRegion;
-
+          if (cacheTrackData.trackType === "matplot") {
+            console.log("ASDAS", cacheTrackData[dataIdx].dataCache, combinedData, noData)
+          }
           if (cacheTrackData.trackType !== "genomealign") {
             primaryVisData =
               trackState.genomicFetchCoord[trackState.primaryGenName]
@@ -2317,7 +2329,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             if (cacheTrackData.trackType === "vcf") {
               const currentViewLength =
                 (visRegion.getWidth() * viewWindow.getLength()) / primaryVisData.visWidth;
-              console.log(currentViewLength)
+
               if (currentViewLength > 100000) {
 
                 trackDataObj[key] = {

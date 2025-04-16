@@ -117,7 +117,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         // Compute y
         const rowIndex = Math.min(placedGroup.row, maxRowIndex);
         const y = rowIndex * rowHeight + TOP_PADDING;
-        console.log(rowHeight, rowIndex, placedGroup, maxRowIndex)
+
         return getAnnotationElementMap[`${trackModel.type}`](
           placedGroup,
           y,
@@ -672,7 +672,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     groupScale,
-    xvalues,
+    xvaluesData,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -697,7 +697,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackModel={trackModel}
         getNumLegend={getNumLegend}
         groupScale={groupScale}
-        xvaluesData={xvalues}
+        xvaluesData={xvaluesData}
       />
     );
     return canvasElements;
@@ -712,7 +712,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
     getGenePadding,
-    xvalues,
+    xvaluesData,
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -740,9 +740,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         trackState={trackState}
         options={configOptions}
         getHeight={getHeight}
-        xvaluesData={xvalues}
+        xvaluesData={xvaluesData}
         getNumLegend={getNumLegend}
-        xvalues={xvalues}
+
       />
     );
   },
@@ -767,7 +767,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         options={configOptions}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
-        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, windowWidth * 3)}
+        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, trackState.visWidth)}
         trackModel={trackModel}
         isLoading={false}
         error={undefined}
@@ -797,7 +797,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <BoxplotTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, windowWidth * 3)}
+        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, trackState.visWidth)}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
@@ -818,23 +818,25 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    xvaluesData
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
         updatedLegend.current = legend;
       }
     }
-
+    console.log(trackState)
     let canvasElements = (
       <MatplotTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, windowWidth * 3)}
+        viewWindow={trackState.viewWindow ? trackState.viewWindow : new OpenInterval(0, trackState.visWidth)}
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
+        xvaluesData={xvaluesData}
       />
     );
     return canvasElements;
@@ -954,8 +956,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
     getGenePadding,
     getHeight,
     ROW_HEIGHT,
-    onHideToolTip,
     onClose,
+    xvaluesData
   }) {
 
 
@@ -986,6 +988,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getHeight={getHeight}
         ROW_HEIGHT={ROW_HEIGHT}
         onClose={onClose}
+        xvaluesData={xvaluesData}
       />
     );
     return canvasElements;
@@ -1010,7 +1013,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <InteractionTrackComponent
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         visRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
@@ -1029,6 +1036,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     configOptions,
     updatedLegend,
     trackModel,
+    xvaluesData
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -1040,12 +1048,17 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <MethylCTrackComputation
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
         trackModel={trackModel}
         getNumLegend={getNumLegend}
+        xvaluesData={xvaluesData}
       />
     );
 
@@ -1061,6 +1074,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     trackModel,
     genomeConfig,
     basesByPixel,
+    xvaluesData
   }) {
     function getNumLegend(legend: ReactNode) {
       if (updatedLegend) {
@@ -1072,7 +1086,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
       <DynseqTrackComponents
         data={formattedData}
         options={configOptions}
-        viewWindow={trackState.viewWindow}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         forceSvg={configOptions.forceSvg}
@@ -1080,6 +1098,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         getNumLegend={getNumLegend}
         basesByPixel={basesByPixel}
         genomeConfig={genomeConfig}
+        xvaluesData={xvaluesData}
       />
     );
 
@@ -1108,7 +1127,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
           trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
             .viewWindowRegion
         )}
-        viewWindow={trackState.viewWindow}
+        viewWindow={
+          trackState.viewWindow
+            ? trackState.viewWindow
+            : new OpenInterval(0, trackState.visWidth)
+        }
         getNumLegend={getNumLegend}
         genomeConfig={genomeConfig}
         options={configOptions}
@@ -1255,7 +1278,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       const arrows = renderRoughStrand(
         "+",
         0,
-        new OpenInterval(0, drawData.windowWidth * 3),
+        new OpenInterval(0, drawData.trackState.visWidth),
         false
       );
       svgElements.push(arrows);
@@ -1263,7 +1286,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       const primaryArrows = renderRoughStrand(
         strand,
         80 - 15,
-        new OpenInterval(0, drawData.windowWidth * 3),
+        new OpenInterval(0, drawData.trackState.visWidth),
         true
       );
       svgElements.push(primaryArrows);
@@ -1350,7 +1373,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       trackModel: drawData.trackModel,
       getGenePadding: drawData.getGenePadding,
       getHeight: drawData.getHeight,
-      xvalues: drawData.xvalues,
+      xvaluesData: drawData.xvaluesData,
     });
   } else if (
     drawData.configOptions.displayMode === "full" &&
@@ -1415,16 +1438,16 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     return displayModeComponentMap.genomealign(drawData);
   } else if (drawData.trackModel.type === "matplot") {
     let formattedData = drawData.genesArr;
-    let tmpObj = { ...drawData.configOptions };
-    tmpObj.displayMode = "auto";
+
 
     let canvasElements = displayModeComponentMap["matplot"]({
       formattedData,
       trackState: drawData.trackState,
       windowWidth: drawData.windowWidth,
-      configOptions: tmpObj,
+      configOptions: drawData.configOptions,
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
+      xvaluesData: drawData.xvaluesData
     });
 
     return canvasElements;
@@ -1444,7 +1467,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.configOptions.rowHeight + 2,
       onHideToolTip: drawData.onHideToolTip,
-      xvalues: drawData.xvalues,
+      xvaluesData: drawData.xvaluesData,
       onClose: drawData.onClose
     });
 
@@ -1513,6 +1536,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       trackModel: drawData.trackModel,
       genomeConfig: drawData.genomeConfig,
       basesByPixel: drawData.basesByPixel,
+      xvaluesData: drawData.xvaluesData
     });
 
     return canvasElements;
@@ -1605,7 +1629,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
       groupScale: drawData.groupScale,
-      xvalues: drawData.xvalues,
+      xvaluesData: drawData.xvaluesData,
     });
 
     return canvasElements;

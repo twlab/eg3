@@ -30,7 +30,7 @@ interface NumericalTrackProps {
   width?: any;
   forceSvg?: any;
   getNumLegend?: any;
-  xvaluesData: Array<any>;
+  xvaluesData?: Array<any>;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
