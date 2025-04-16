@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr3:63836292-64336395");
 
 const defaultTracks = [
   new TrackModel({
@@ -227,7 +227,6 @@ const defaultTracks = [
       },
     ],
   }),
-
   new TrackModel({
     type: "dynseq",
     name: "example dynseq",
@@ -237,6 +236,12 @@ const defaultTracks = [
       height: 100,
     },
   }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "example longrange",
+  //   url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
+  //   indexUrl: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4"
+  // }),
   new TrackModel({
     type: "methylc",
     name: "H1",
@@ -280,11 +285,11 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig",
   // }),
 
-  // new TrackModel({
-  //   type: "biginteract",
-  //   name: "test bigInteract",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
-  // }),
+  new TrackModel({
+    type: "biginteract",
+    name: "test bigInteract",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/interactExample3.inter.bb",
+  }),
   // new TrackModel({
   //   name: "dynamic hic",
   //   type: "dynamichic",
@@ -453,11 +458,11 @@ const defaultTracks = [
   //   ],
   //   showOnHubLoad: true,
   // }),
-  // new TrackModel({
-  //   type: "longrange",
-  //   name: "ES-E14 ChIA-PET",
-  //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  // }),
+  new TrackModel({
+    type: "longrange",
+    name: "ES-E14 ChIA-PET",
+    url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+  }),
   // new TrackModel({
   //   type: "longrange",
   //   name: "Test 1 longrange file",

@@ -33,7 +33,7 @@ const SnpAnnotation: React.FC<SnpAnnotationProps> = ({
   hiddenPixels = 0,
   onClick,
 }) => {
-  console.log(onClick)
+
   const colorToUse = snp.getIsReverseStrand() ? reverseStrandColor : color;
   const contrastColor = getContrastingColor(colorToUse);
   const [startX, endX] = xSpan;

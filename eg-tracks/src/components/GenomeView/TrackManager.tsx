@@ -1531,8 +1531,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } ||
       toolTitle === "isJump"
     ) {
+      console.log("HERERERRE")
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
+      // onNewRegionSelect(startbase, endbase, highlightSearch);
       throttleOnNewRegionSelect.current(startbase, endbase, highlightSearch);
     }
     // adding new highlight region
@@ -2234,6 +2236,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // methylc: "" qbed: "" , dynseq: "",,
         let curTrackModel
         let configOptions;
+        if (cacheTrackData.trackType in { hic: "", longrange: "" }) {
+          trackToDrawId[key] = ""
+          continue
+        }
         if (key in globalTrackConfig.current) {
           configOptions = globalTrackConfig.current[key].configOptions;
         } else {
@@ -2626,7 +2632,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           viewWindowConfigData.current.dataIdx
         );
 
-        console.log(viewWindowConfigData.current, "viewWindowConfigData")
+
         setViewWindowConfigChange({
           dataIdx,
           viewWindow: viewWindowConfigData.current.viewWindow,
@@ -2671,7 +2677,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         curViewWindow = globalTrackState.current.viewWindow;
       }
-      console.log(newDrawData, "newDrawData")
+      // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
       getWindowViewConfig(
         curViewWindow,
         newDrawData.curDataIdx
@@ -2709,12 +2715,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           {userViewRegion && (
             <TrackRegionController
               selectedRegion={userViewRegion}
-              onRegionSelected={(
-                start: number,
-                end: number,
-                title: number | string = "isJump",
-                highlightSearch
-              ) => onRegionSelected(start, end, title, highlightSearch)}
+              onRegionSelected={onRegionSelected}
               contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
               genomeConfig={genomeConfig}
               trackManagerState={trackManagerState}
@@ -2843,7 +2844,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         globalTrackState={globalTrackState}
                         isScreenShotOpen={isScreenShotOpen}
                         highlightElements={highlightElements}
-                        viewWindowConfigData={viewWindowConfigData.current}
+                        viewWindowConfigData={viewWindowConfigData}
                         viewWindowConfigChange={viewWindowConfigChange}
                       />
                     </div>

@@ -85,7 +85,7 @@ export class BamAlignment extends Feature {
         : FORWARD_STRAND_CHAR;
     super(rawObject.get("name"), locus, strand);
 
-    console.log(rawObject)
+
     this.id = rawObject["_id"]
     this.MD = rawObject.get("md");
     this.cigar = parsedCigar;

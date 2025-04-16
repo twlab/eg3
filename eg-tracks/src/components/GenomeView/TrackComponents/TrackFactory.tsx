@@ -386,6 +386,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
+        if (viewWindowConfigData.current) {
+
+          trackState.viewWindow = viewWindowConfigData.current.viewWindow;
+        }
 
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
@@ -407,26 +411,50 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       id in viewWindowConfigChange.trackToDrawId &&
       (trackModel.type in numericalTracks || configOptions.current.displayMode === "density")
     ) {
+      if (trackModel.type in { hic: "", longrange: "" }) {
 
+        if (!configOptions.current.fetchViewWindowOnly && !configOptions.current.bothAnchorsInView) {
+          return
+        }
+      }
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-      let curIdx = dataIdx + 1;
       let noData = false;
-      for (let i = 0; i < 3; i++) {
-        if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
-          noData = true;
+      if (!cacheTrackData.useExpandedLoci) {
+        let curIdx = dataIdx + 1;
+
+        for (let i = 0; i < 3; i++) {
+          if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
+            noData = true;
+          }
+          if (
+            cacheTrackData[curIdx].dataCache &&
+            "error" in cacheTrackData[curIdx].dataCache
+          ) {
+            fetchError.current = true;
+          } else {
+            fetchError.current = false;
+          }
+          curIdx--;
         }
-        if (
-          cacheTrackData[curIdx].dataCache &&
-          "error" in cacheTrackData[curIdx].dataCache
-        ) {
-          fetchError.current = true;
-        } else {
-          fetchError.current = false;
+      }
+      else {
+        const combinedData = cacheTrackData[dataIdx]
+          ? cacheTrackData[dataIdx].dataCache
+          : null;
+        if (combinedData) {
+          if (typeof combinedData === "object" && "error" in combinedData) {
+            fetchError.current = true;
+            noData = true;
+          }
+
         }
-        curIdx--;
+        else {
+          noData = true
+        }
+
       }
       if (!noData) {
         if (cacheTrackData.trackType !== "genomealign") {

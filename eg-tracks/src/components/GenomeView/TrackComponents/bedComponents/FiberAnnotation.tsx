@@ -54,7 +54,7 @@ class FiberAnnotation extends React.Component<FiberAnnotationProps> {
       hideMinimalItems,
       pixelsPadding,
     } = this.props;
-    console.log(this.props)
+
     const { feature, xSpan, visiblePart } = placement;
     const { relativeStart, relativeEnd } = visiblePart;
     const segmentWidth = relativeEnd - relativeStart;

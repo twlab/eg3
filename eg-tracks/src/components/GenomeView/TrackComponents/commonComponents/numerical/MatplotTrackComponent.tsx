@@ -95,7 +95,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
 
   computeScales(xToValue, height) {
     const { yScale, yMin, yMax } = this.props.options;
-    console.log(this.props.viewWindow.start, this.props.viewWindow.end)
+
     if (yMin > yMax) {
       // notify.show('Y-axis min must less than max', 'error', 2000);
     }

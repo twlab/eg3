@@ -269,29 +269,20 @@ export function TrackContainerRepresentable({
     [onNewRegion]
   );
 
-  const handleNewRegionSelect = useCallback(
+  const handleNewRegionSelect = (
     (startbase: number, endbase: number, highlightSearch: boolean = false) => {
-      if (lastViewRegion.current) {
-        const newRegion = lastViewRegion.current
-          .clone()
-          .setRegion(startbase, endbase);
-        onNewRegionSelect(
-          startbase,
-          endbase,
-          newRegion.currentRegionAsString() as GenomeCoordinate
-        );
-      } else {
-        const newRegion = new DisplayedRegionModel(
-          genomeConfig.navContext,
-          startbase,
-          endbase
-        );
-        onNewRegionSelect(
-          startbase,
-          endbase,
-          newRegion.currentRegionAsString() as GenomeCoordinate
-        );
-      }
+
+      const newRegion = new DisplayedRegionModel(
+        genomeConfig.navContext,
+        startbase,
+        endbase
+      );
+      onNewRegionSelect(
+        startbase,
+        endbase,
+        newRegion.currentRegionAsString() as GenomeCoordinate
+      );
+
       if (highlightSearch) {
         const newHightlight = {
           start: startbase,
@@ -303,8 +294,8 @@ export function TrackContainerRepresentable({
         const tmpHighlight = [...highlights, newHightlight];
         onNewHighlight(tmpHighlight);
       }
-    },
-    [lastViewRegion, onNewRegionSelect]
+    }
+
   );
 
   return (

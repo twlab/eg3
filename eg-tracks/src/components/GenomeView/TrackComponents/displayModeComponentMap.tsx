@@ -825,7 +825,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         updatedLegend.current = legend;
       }
     }
-    console.log(trackState)
+
     let canvasElements = (
       <MatplotTrackComponent
         data={formattedData}

@@ -55,8 +55,8 @@ export class HicTrackConfig extends TrackConfig {
       BackgroundColorConfig,
       MaxValueFilterConfig,
       MinValueFilterConfig,
-      // FetchViewWindowConfig,
-      // BothAnchorsInViewConfig,
+      FetchViewWindowConfig,
+      BothAnchorsInViewConfig,
     ];
     if (this.getOptions().scoreScale === ScaleChoices.AUTO) {
       items.splice(4, 0, ScalePercentileConfig);

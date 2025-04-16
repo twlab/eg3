@@ -35,6 +35,7 @@ export function getConfigChangeData({
   let newIntanceTrackState = trackState;
   if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
     viewData = fetchedDataCache[dataIdx!].dataCache;
+
   } else {
     viewData = [
       fetchedDataCache[dataIdx! + 1],
@@ -44,7 +45,7 @@ export function getConfigChangeData({
 
     if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
       viewData = getDeDupeArrMatPlot(viewData, false);
-      console.log(viewData)
+
     } else {
       viewData = viewData.map((item) => item.dataCache).flat(1);
     }

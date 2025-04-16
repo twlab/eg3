@@ -14,7 +14,9 @@ export const numericalTracks = {
   qbed: "",
   vcf: "",
   dynseq: "",
-  matplot: ""
+  matplot: "",
+  longrange: "",
+  hic: ""
 };
 export const possibleNumericalTracks = {
   bigbed: "",

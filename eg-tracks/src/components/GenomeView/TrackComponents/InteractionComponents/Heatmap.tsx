@@ -62,19 +62,22 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
     if (xSpan1.end < viewWindow.start && xSpan2.start > viewWindow.end) {
       return null;
     }
+    function isPartlyWithin(span, window) {
+      return !(span.end <= window.start || span.start >= window.end);
+    }
+
+    // Check if both anchors (xSpan1 and xSpan2) are partially within viewWindow
     if (bothAnchorsInView) {
-      if (
-        xSpan1.start < viewWindow.start + this.props.width / 3 ||
-        xSpan2.end > viewWindow.end - this.props.width / 3
-      ) {
+
+      if (!isPartlyWithin(xSpan1, viewWindow) || !isPartlyWithin(xSpan2, viewWindow)) {
         return null;
       }
     }
+
+    // Check if either xSpan1 or xSpan2 is partially within the viewWindow for fetching action
     if (fetchViewWindowOnly) {
-      if (
-        xSpan1.end < viewWindow.start + this.props.width / 3 ||
-        xSpan2.start > viewWindow.end - this.props.width / 3
-      ) {
+
+      if (!isPartlyWithin(xSpan1, viewWindow) && !isPartlyWithin(xSpan2, viewWindow)) {
         return null;
       }
     }
