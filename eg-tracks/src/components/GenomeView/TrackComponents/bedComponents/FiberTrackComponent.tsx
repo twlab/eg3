@@ -55,9 +55,8 @@ interface AggregatedFiber {
 export const DEFAULT_OPTIONS = {
   hiddenPixels: 0.5,
   rowHeight: 40,
-  color: "orangered",
-  color2: "lightgray",
-  backgroundColor: "var(--bg-color)",
+  color: 'orangered',
+  color2: 'blue',
   height: 40,
   maxRows: 20,
   displayMode: FiberDisplayModes.AUTO,

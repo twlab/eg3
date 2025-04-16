@@ -187,11 +187,16 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   ) {
     let currtooltip;
     if (type === "norm") {
+      console.log(event,
+        feature,
+        bs,
+        type, event.pageX, event.pageY)
       currtooltip = geneClickToolTipMap["normModbed"](
         bs,
         event.pageX,
         event.pageY,
-        feature, onClose
+        feature,
+        onClose
 
       );
     } else {
@@ -1386,20 +1391,29 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               />
             )}
           </Reference>
-
-          <div
-            style={{
-              ...contentStyle,
-              zIndex: 1001,
-            }}
-            className="Tooltip"
+          <Popper
+            placement="bottom-start"
+            modifiers={[{ name: "flip", enabled: false }]}
           >
-            <OutsideClickDetector onOutsideClick={onClose}>
-              <div>
-                {bs && `position ${bs} in`} {feature.getName()} read
+            {({ ref, style, placement, arrowProps }) => (
+              <div
+                ref={ref}
+                style={{
+                  ...style,
+                  ...contentStyle,
+                  zIndex: 1001,
+                }}
+                className="Tooltip"
+              >
+                <OutsideClickDetector onOutsideClick={onClose}>
+                  <div>
+                    {bs && `position ${bs} in`} {feature.getName()} read
+                  </div>
+                </OutsideClickDetector>
+                <div>{feature.getName()}</div>
               </div>
-            </OutsideClickDetector>
-          </div>
+            )}
+          </Popper>
         </Manager>,
         document.body
       );
