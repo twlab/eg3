@@ -270,8 +270,8 @@ export const getHoverTooltip = {
               style={{
                 position: "absolute",
                 display: "block",
-                // 10 is the padding in genome Root  and 2 is the border width tomato red in trackmanager
-                left: parentPos.left + left - 12 + "px",
+                // 20 px is the padding in genome Root  and 2 is the border width tomato red in trackmanager
+                left: parentPos.left + left - 22 + "px",
                 width: leftWidth + "px",
                 height: "100%",
 
@@ -286,7 +286,7 @@ export const getHoverTooltip = {
                 position: "absolute",
                 display: "block",
                 // 10 is the padding in genome Root  and 2 is the border width tomato red in trackmanager
-                left: parentPos.left + right - 12 + "px",
+                left: parentPos.left + right - 22 + "px",
                 width: rightWidth + "px",
                 height: "1000",
                 zIndex: 1000,

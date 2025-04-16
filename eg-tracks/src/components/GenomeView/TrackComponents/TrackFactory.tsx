@@ -103,7 +103,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
 
     trackState["viewWindow"] = trackState.viewWindow;
-    console.log(trackState, trackModel)
+
     let res = fetchError.current ? (
       <div
         style={{
@@ -407,9 +407,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       id in viewWindowConfigChange.trackToDrawId &&
       (trackModel.type in numericalTracks || configOptions.current.displayMode === "density")
     ) {
-      if (trackModel.type === "matplot") {
-        console.log("yay")
-      }
+
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );

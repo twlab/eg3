@@ -37,8 +37,8 @@ export class LongRangeTrackConfig extends TrackConfig {
       BackgroundColorConfig,
       MaxValueFilterConfig,
       MinValueFilterConfig,
-      FetchViewWindowConfig,
-      BothAnchorsInViewConfig,
+      // FetchViewWindowConfig,
+      // BothAnchorsInViewConfig,
     ];
     if (this.getOptions().displayMode === InteractionDisplayMode.ARC) {
       items.splice(1, 0, LineWidthConfig);

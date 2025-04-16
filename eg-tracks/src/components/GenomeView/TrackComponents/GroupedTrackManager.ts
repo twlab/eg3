@@ -72,7 +72,7 @@ export class GroupedTrackManager {
   ): { [groupId: number]: { scale: TrackModel; min: {}; max: {} } } {
     // console.log(tracks);
     if (trackData) {
-      console.log(trackData)
+
       const grouping = {}; // key: group id, value: {scale: 'auto'/'fixed', min: {trackid: xx,,,}, max: {trackid: xx,,,,}}
       for (let i = 0; i < tracks.length; i++) {
 
@@ -137,9 +137,7 @@ export class GroupedTrackManager {
               trackFetchedDataCache.current[tid][dataIdx]["xvalues"]
 
             ) {
-              if (tracks[i].type === "matplot") {
-                console.log(tracks[i], "HUIH", trackFetchedDataCache.current[tid][dataIdx]["xvalues"])
-              }
+
             }
             else {
 

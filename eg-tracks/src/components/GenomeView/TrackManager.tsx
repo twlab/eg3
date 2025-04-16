@@ -263,7 +263,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     title: "none",
   });
   const [draw, setDraw] = useState<{ [key: string]: any }>({});
-  const [dataIdx, setDataIdx] = useState(0);
+  const [dataIdx, setDataIdx] = useState(-0);
   const [highlightElements, setHighLightElements] = useState<Array<any>>([]);
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any } | null>(
     null
@@ -2256,9 +2256,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) {
           continue;
         }
-        if (cacheTrackData.trackType === "matplot") {
-          console.log("ASDAS", cacheTrackData[dataIdx].dataCache)
-        }
+
         let combinedData: any = [];
         let noData = false;
         if (!("xvalues" in cacheTrackData[dataIdx])) {
@@ -2271,7 +2269,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               !cacheTrackData[currIdx].dataCache ||
               "error" in cacheTrackData[currIdx].dataCache
             ) {
-              console.log(cacheTrackData)
+
               noData = true;
               break;
             } else {
@@ -2299,9 +2297,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 .flat(1);
             }
 
-            if (cacheTrackData.trackType === "matplot") {
-              console.log("SADASD", combinedData)
-            }
+
           }
         }
 
@@ -2310,9 +2306,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             ...globalTrackState.current.trackStates[dataIdx].trackState,
           };
           let visRegion;
-          if (cacheTrackData.trackType === "matplot") {
-            console.log("ASDAS", cacheTrackData[dataIdx].dataCache, combinedData, noData)
-          }
+
           if (cacheTrackData.trackType !== "genomealign") {
             primaryVisData =
               trackState.genomicFetchCoord[trackState.primaryGenName]
@@ -2625,13 +2619,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWIndow useeffect
   useEffect(() => {
     if (viewWindowConfigData.current) {
+
       if (dataIdx === viewWindowConfigData.current.dataIdx) {
         const curTrackToDrawId = getWindowViewConfig(
           viewWindowConfigData.current.viewWindow,
           viewWindowConfigData.current.dataIdx
         );
 
-
+        console.log(viewWindowConfigData.current, "viewWindowConfigData")
         setViewWindowConfigChange({
           dataIdx,
           viewWindow: viewWindowConfigData.current.viewWindow,
@@ -2676,7 +2671,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         curViewWindow = globalTrackState.current.viewWindow;
       }
-
+      console.log(newDrawData, "newDrawData")
       getWindowViewConfig(
         curViewWindow,
         newDrawData.curDataIdx
