@@ -15,6 +15,7 @@ import DesignRenderer, {
   RenderTypes,
 } from "../commonComponents/art/DesignRenderer";
 import { FiberDisplayModes } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 const ROW_VERTICAL_PADDING = 2;
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 
@@ -33,7 +34,17 @@ interface FiberTrackProps extends PropsFromTrackContainer {
   };
   forceSvg?: boolean;
   visRegion: DisplayedRegionModel;
-  getNumLegend: any;
+  getNumLegend: any; getAnnotationTrack: any
+
+  ; trackState: any; renderTooltip: any;
+
+  svgHeight: any;
+  updatedLegend: any;
+  getGenePadding: any;
+  getHeight: any;
+  ROW_HEIGHT: any;
+  onClose: any;
+  xvaluesData?: any;
 }
 
 interface AggregatedFiber {
@@ -45,9 +56,8 @@ interface AggregatedFiber {
 export const DEFAULT_OPTIONS = {
   hiddenPixels: 0.5,
   rowHeight: 40,
-  color: "orangered",
-  color2: "lightgray",
-  backgroundColor: "var(--bg-color)",
+  color: 'orangered',
+  color2: 'blue',
   height: 40,
   maxRows: 20,
   displayMode: FiberDisplayModes.AUTO,
@@ -186,6 +196,7 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
   visualizer = () => {
     const { pctToY, countToY, pcts, counts } = this.scales;
     const { height, color, color2, displayMode } = this.props.options;
+    const { width, trackModel, forceSvg, getNumLegend, options, visRegion } = this.props
     const colorScale = scaleLinear()
       .domain([0, 1])
       .range([color2 as any, color as any])
@@ -235,24 +246,85 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
         <line key={i} x1={i} y1={y1} x2={i + 1} y2={y2} stroke="#525252" />
       );
     }
+
+    const legend = <div>
+      <TrackLegend trackModel={trackModel} height={options.height} axisScale={options.displayMode === FiberDisplayModes.AUTO ? this.scales.pctToY : this.scales.countToY}
+      />
+    </div>
+    if (getNumLegend) {
+      getNumLegend(legend);
+    }
+
     return (
-      <DesignRenderer
-        type={this.props.forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-        width={this.props.width}
-        height={height}
-      >
-        {bars}
-        {lines}
-      </DesignRenderer>
+      <React.Fragment>
+        <div style={{ display: "flex" }}>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+            }}
+          >
+            {!forceSvg ? (
+              <HoverToolTip
+                data={this.xMap}
+                scale={this.scales}
+                windowWidth={width}
+                trackType={"modbed"}
+                trackModel={trackModel}
+                height={height}
+                viewRegion={visRegion}
+                unit={""}
+                hasReverse={true}
+                options={options}
+              />
+            ) : (
+              ""
+            )}
+          </div>
+          {forceSvg ? legend : ""}
+
+          <DesignRenderer
+            type={this.props.forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+            width={this.props.width}
+            height={height}
+          >
+            {bars}
+            {lines}
+          </DesignRenderer>
+        </div>
+      </React.Fragment>
+
+
     );
   };
 
   render() {
-    const { data, visRegion, width } = this.props;
 
-    this.xMap = this.aggregateFibers(data, visRegion, width);
-    this.scales = this.computeScales();
-    return this.visualizer();
+    const { onClose, ROW_HEIGHT, getHeight, data, getGenePadding, visRegion, svgHeight, width, options, trackModel, getAnnotationTrack, trackState, renderTooltip, updatedLegend } = this.props;
+    if (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
+      this.xMap = this.aggregateFibers(data, visRegion, width);
+      this.scales = this.computeScales();
+      return this.visualizer();
+    }
+
+    return getAnnotationTrack["full"]({
+      formattedData: data,
+      trackState: trackState,
+      windowWidth: width / 3,
+      configOptions: options,
+      renderTooltip: renderTooltip,
+      svgHeight: svgHeight,
+      updatedLegend: updatedLegend,
+      trackModel: trackModel,
+      getGenePadding: getGenePadding,
+      getHeight: getHeight,
+      ROW_HEIGHT: ROW_HEIGHT,
+      onClose
+    })
+
   }
 }
 

@@ -217,15 +217,25 @@ self.onmessage = async (event: MessageEvent) => {
             dynamiclongrange: "",
           }
         ) {
+          let hasError = false
           let tmpResults = await Promise.all(
-            item.tracks.map(async (trackItem) =>
-              (await fetchData(trackItem)).flat(1)
+            item.tracks.map(async (trackItem) => {
+              const result = (await fetchData(trackItem)).flat(1)
+              if (typeof result[0] === "object" && "error" in result[0]) {
+                hasError = true
+              }
+
+              return result
+            }
+
             )
           );
 
           fetchResults.push({
             name: trackType,
-            result: tmpResults,
+            result: hasError ? {
+              error: "Fetch failed: data source is not valid",
+            } : tmpResults,
             id: id,
             metadata: item.metadata,
             trackModel: item,

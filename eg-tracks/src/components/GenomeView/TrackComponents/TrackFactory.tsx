@@ -134,7 +134,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getHeight,
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         groupScale: trackState.groupScale,
-        xvalues: xvalues,
+        xvaluesData: xvalues,
+        onClose
       })
     );
 
@@ -158,13 +159,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
   }
   // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
+  function onClose() {
+    setToolTip(null)
 
+  }
   function renderTooltip(event, gene) {
     const currtooltip = geneClickToolTipMap[`${trackModel.type}`](
       gene,
       event.pageX,
       event.pageY,
       genomeConfig.genome._name,
+
       onClose
     );
     setToolTipVisible(true);
@@ -182,11 +187,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   ) {
     let currtooltip;
     if (type === "norm") {
+
       currtooltip = geneClickToolTipMap["normModbed"](
         bs,
         event.pageX,
         event.pageY,
-        feature
+        feature,
+        onClose
+
       );
     } else {
       currtooltip = geneClickToolTipMap["barModbed"](
@@ -195,19 +203,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         event.pageY,
         onCount,
         onPct,
-        total
+        total, onClose
       );
     }
     setToolTipVisible(true);
     setToolTip(currtooltip);
   }
-  function onClose() {
-    setToolTipVisible(false);
-  }
+
 
   useEffect(() => {
     if (svgComponents || canvasComponents) {
-      console.log(updatedLegend.current);
+
       setLegend(updatedLegend.current);
     }
   }, [svgComponents, canvasComponents]);
@@ -224,21 +230,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
+      const primaryVisData =
+        trackState.genomicFetchCoord[trackState.primaryGenName]
+          .primaryVisData;
       if (cacheTrackData.trackType !== "genomealign") {
-        const primaryVisData =
-          trackState.genomicFetchCoord[trackState.primaryGenName]
-            .primaryVisData;
+
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
-              trackFetchedDataCache.current[`${id}`].queryGenome
-            ].queryRegion
+            trackFetchedDataCache.current[`${id}`].queryGenome
+          ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
-        trackState["visWidth"] = primaryVisData.visWidth
-          ? primaryVisData.visWidth
-          : windowWidth * 3;
+
       }
+      trackState["visWidth"] = primaryVisData.visWidth
+        ? primaryVisData.visWidth
+        : windowWidth * 3;
 
       if (initTrackStart.current) {
         // use previous data before resetState
@@ -309,7 +316,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           }
           trackState["groupScale"] =
             globalTrackState.current.trackStates[dataIdx].trackState[
-              "groupScale"
+            "groupScale"
             ];
 
           createSVGOrCanvas(
@@ -349,6 +356,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   // MARK: [applyConfig]
   useEffect(() => {
     if (svgComponents !== null || canvasComponents !== null) {
+
       if (id in applyTrackConfigChange) {
         configOptions.current = {
           ...configOptions.current,
@@ -373,10 +381,14 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
+        }
+        if (viewWindowConfigData.current) {
+
+          trackState.viewWindow = viewWindowConfigData.current.viewWindow;
         }
 
         getConfigChangeData({
@@ -397,27 +409,52 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (
       viewWindowConfigChange &&
       id in viewWindowConfigChange.trackToDrawId &&
-      trackModel.type in numericalTracks
+      (trackModel.type in numericalTracks || configOptions.current.displayMode === "density")
     ) {
+      if (trackModel.type in { hic: "", longrange: "" }) {
+
+        if (!configOptions.current.fetchViewWindowOnly && !configOptions.current.bothAnchorsInView) {
+          return
+        }
+      }
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-      let curIdx = dataIdx + 1;
       let noData = false;
-      for (let i = 0; i < 3; i++) {
-        if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
-          noData = true;
+      if (!cacheTrackData.useExpandedLoci) {
+        let curIdx = dataIdx + 1;
+
+        for (let i = 0; i < 3; i++) {
+          if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
+            noData = true;
+          }
+          if (
+            cacheTrackData[curIdx].dataCache &&
+            "error" in cacheTrackData[curIdx].dataCache
+          ) {
+            fetchError.current = true;
+          } else {
+            fetchError.current = false;
+          }
+          curIdx--;
         }
-        if (
-          cacheTrackData[curIdx].dataCache &&
-          "error" in cacheTrackData[curIdx].dataCache
-        ) {
-          fetchError.current = true;
-        } else {
-          fetchError.current = false;
+      }
+      else {
+        const combinedData = cacheTrackData[dataIdx]
+          ? cacheTrackData[dataIdx].dataCache
+          : null;
+        if (combinedData) {
+          if (typeof combinedData === "object" && "error" in combinedData) {
+            fetchError.current = true;
+            noData = true;
+          }
+
         }
-        curIdx--;
+        else {
+          noData = true
+        }
+
       }
       if (!noData) {
         if (cacheTrackData.trackType !== "genomealign") {
@@ -426,8 +463,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
@@ -510,8 +547,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               .primaryVisData;
           let visRegion = !cacheTrackData.usePrimaryNav
             ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
 
@@ -522,15 +559,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           const expandedViewWindow =
             updateSide.current === "right"
               ? new OpenInterval(
-                  -(dragX! + (xPos.current + windowWidth)),
-                  windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-                )
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
               : new OpenInterval(
-                  -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-                  windowWidth * 3 -
-                    (dragX! - (xPos.current + windowWidth)) +
-                    windowWidth
-                );
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                (dragX! - (xPos.current + windowWidth)) +
+                windowWidth
+              );
           let start = expandedViewWindow.start + width / 3;
 
           let end = expandedViewWindow.end - width / 3;
@@ -941,7 +978,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                       {feature.getLocus().toString()} (
                       {feature.getLocus().getLength()}bp)
                     </div>
-                    <div>(1 - divergence%) = {feature.value.toFixed(2)}</div>
+                    <div>
+                      (1 - divergence%) = {feature.repeatValue.toFixed(2)}
+                    </div>
                     <div>strand: {feature.strand}</div>
                     <div className="Tooltip-minor-text">
                       {trackModel.getDisplayLabel()}
@@ -1103,7 +1142,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         document.body
       );
     },
-    snp: function SnpClickToolTip(snp: any, pageX, pageY, onClose) {
+    snp: function SnpClickToolTip(snp: any, pageX, pageY, name = "", onClose) {
       const contentStyle = Object.assign({
         marginTop: ARROW_SIZE,
         pointerEvents: "auto",
@@ -1358,7 +1397,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         document.body
       );
     },
-    normModbed: function normToolTip(bs: any, pageX, pageY, feature) {
+    normModbed: function normToolTip(bs: any, pageX, pageY, feature, onClose) {
       const contentStyle = Object.assign({
         marginTop: ARROW_SIZE,
         pointerEvents: "auto",
@@ -1378,18 +1417,29 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               />
             )}
           </Reference>
-
-          <div
-            style={{
-              ...contentStyle,
-              zIndex: 1001,
-            }}
-            className="Tooltip"
+          <Popper
+            placement="bottom-start"
+            modifiers={[{ name: "flip", enabled: false }]}
           >
-            <div>
-              {bs && `position ${bs} in`} {feature.getName()} read
-            </div>
-          </div>
+            {({ ref, style, placement, arrowProps }) => (
+              <div
+                ref={ref}
+                style={{
+                  ...style,
+                  ...contentStyle,
+                  zIndex: 1001,
+                }}
+                className="Tooltip"
+              >
+                <OutsideClickDetector onOutsideClick={onClose}>
+                  <div>
+                    {bs && `position ${bs} in`} {feature.getName()} read
+                  </div>
+                </OutsideClickDetector>
+                <div>{feature.getName()}</div>
+              </div>
+            )}
+          </Popper>
         </Manager>,
         document.body
       );
@@ -1401,7 +1451,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       pageY,
       onCount,
       onPct,
-      total
+      total, onClose
     ) {
       const contentStyle = Object.assign({
         marginTop: ARROW_SIZE,
@@ -1436,9 +1486,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 }}
                 className="Tooltip"
               >
-                <div>
-                  {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
-                </div>
+                <OutsideClickDetector onOutsideClick={onClose}>
+                  <div>
+                    {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
+                  </div>
+                </OutsideClickDetector>
                 <div>{feature.getName()}</div>
               </div>
             )}
@@ -1478,8 +1530,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 ? svgHeight.current
                 : 40
               : !fetchError.current
-              ? configOptions.current.height
-              : 40,
+                ? configOptions.current.height
+                : 40,
           position: "relative",
         }}
       >
@@ -1501,37 +1553,39 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : canvasComponents}
         </div>
 
-        {toolTipVisible ? toolTip : ""}
+        <div className={toolTipVisible ? 'visible' : 'hidden'}>
+          {toolTip}
+        </div>
 
         {highlightElements.length > 0
           ? highlightElements.map((item, index) => {
-              if (item.display) {
-                return (
+            if (item.display) {
+              return (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    position: "relative",
+                    height: "100%",
+                  }}
+                >
                   <div
                     key={index}
                     style={{
-                      display: "flex",
-                      position: "relative",
+                      position: "absolute",
+                      backgroundColor: item.color,
+                      top: "0",
                       height: "100%",
+                      left: item.side === "right" ? `${item.xPos}px` : "",
+                      right: item.side === "left" ? `${item.xPos}px` : "",
+                      width: item.width,
+                      pointerEvents: "none", // This makes the highlighted area non-interactive
                     }}
-                  >
-                    <div
-                      key={index}
-                      style={{
-                        position: "absolute",
-                        backgroundColor: item.color,
-                        top: "0",
-                        height: "100%",
-                        left: item.side === "right" ? `${item.xPos}px` : "",
-                        right: item.side === "left" ? `${item.xPos}px` : "",
-                        width: item.width,
-                        pointerEvents: "none", // This makes the highlighted area non-interactive
-                      }}
-                    ></div>
-                  </div>
-                );
-              }
-            })
+                  ></div>
+                </div>
+              );
+            }
+          })
           : ""}
       </div>
     </div>

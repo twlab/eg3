@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSX } from "react";
 // import _ from "lodash";
 import memoizeOne from "memoize-one";
 import { scaleLinear } from "d3-scale";

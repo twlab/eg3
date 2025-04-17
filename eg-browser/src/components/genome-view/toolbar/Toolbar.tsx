@@ -41,6 +41,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
       } rounded-md`;
   };
   const handleToolClick = (selectedTool: Tool): any => {
+
     if (tool === selectedTool) {
       dispatch(setTool(null));
     } else {

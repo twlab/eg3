@@ -129,7 +129,7 @@ export class RepeatMaskerFeature extends Feature {
       rmskRecord.min,
       rmskRecord.max
     );
-    super(rmskRecord.label, locus, rmskRecord.orientation);
+    super(rmskRecord.label, locus, rmskRecord.orientation, rmskRecord.score);
     this.repClass = rmskRecord.repClass;
     this.repFamily = rmskRecord.repFamily;
     this.milliDiv = rmskRecord.milliDiv;
@@ -147,7 +147,7 @@ export class RepeatMaskerFeature extends Feature {
         */
   }
 
-  get value() {
+  get repeatValue() {
     if (this._value === null) {
       const divergence = Number.parseInt(this.milliDiv, 10) / 1000.0;
       this._value = 1 - divergence;

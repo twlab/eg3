@@ -9,6 +9,8 @@ import {
 } from "../../../../../models/FeatureAggregator";
 import { PixiScene } from "./PixiScene";
 import GenomicCoordinates from "./GenomicCoordinates";
+import TrackLegend from "../TrackLegend";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 
 export const DEFAULT_OPTIONS = {
   arrayAggregateMethod: DefaultArrayAggregators.types.MEAN,
@@ -42,10 +44,11 @@ interface DynamicNumericalTrackProps {
   viewRegion: any;
   width: number;
   viewWindow: { start: number; end: number };
+  updatedLegend?: any
 }
 
 const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
-  const { data, unit, options, trackModel, viewRegion, width, viewWindow } =
+  const { data, unit, options, trackModel, viewRegion, width, viewWindow, updatedLegend } =
     props;
 
   const {
@@ -57,6 +60,7 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
     speed,
     dynamicColors,
     useDynamicColors,
+
   } = options;
 
   const aggregateFeatures = useCallback(
@@ -116,21 +120,49 @@ const DynamicNumericalTrack: React.FC<DynamicNumericalTrackProps> = (props) => {
       </div>
     );
   };
-
+  if (updatedLegend) {
+    updatedLegend.current = (
+      <TrackLegend trackModel={trackModel} height={height} axisScale={scales.valueToY} axisLegend={unit} />
+    );
+  }
   const visualizer = (
-    <PixiScene
-      xToValue={xToValue}
-      scales={scales}
-      width={width}
-      height={height}
-      color={color}
-      backgroundColor={backgroundColor}
-      playing={playing}
-      speed={speed}
-      viewWindow={viewWindow}
-      dynamicColors={dynamicColors}
-      useDynamicColors={useDynamicColors}
-    />
+    <React.Fragment>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          position: "absolute",
+          zIndex: 3,
+        }}
+      >
+
+        <HoverToolTip
+          data={xToValue}
+          windowWidth={width}
+          trackType={"dbedgraph"}
+          trackModel={trackModel}
+          height={height}
+          viewRegion={viewRegion}
+          unit={unit}
+          hasReverse={true}
+          options={options}
+        />
+
+      </div>
+      <PixiScene
+        xToValue={xToValue}
+        scales={scales}
+        width={width}
+        height={height}
+        color={color}
+        backgroundColor={backgroundColor}
+        playing={playing}
+        speed={speed}
+        viewWindow={viewWindow}
+        dynamicColors={dynamicColors}
+        useDynamicColors={useDynamicColors}
+      />
+    </React.Fragment>
   );
 
   return visualizer;

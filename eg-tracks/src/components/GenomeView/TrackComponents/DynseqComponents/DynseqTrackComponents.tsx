@@ -62,7 +62,7 @@ interface DynseqTrackProps {
   forceSvg: boolean;
   getNumLegend: any;
   basesByPixel: number;
-  genomeConfig: any;
+  genomeConfig: any; xvaluesData: any;
 }
 
 class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
@@ -113,11 +113,11 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
     let min =
       (xToValue2.length > 0
         ? _.min(
-            xToValue2.slice(
-              this.props.viewWindow.start,
-              this.props.viewWindow.end
-            )
+          xToValue2.slice(
+            this.props.viewWindow.start,
+            this.props.viewWindow.end
           )
+        )
         : 0) || 0;
 
     if (yScale === ScaleChoices.FIXED) {
@@ -197,35 +197,42 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       unit,
       genomeConfig,
       basesByPixel,
+      xvaluesData
     } = this.props;
     const { height, aggregateMethod } = options;
-    const dataForward = data.filter(
-      (feature) => feature.value === undefined || feature.value >= 0
-    );
-    const dataReverse = data.filter((feature) => feature.value < 0);
-
-    if (dataReverse.length > 0) {
-      this.hasReverse = true;
-      this.xToValue2! = this.aggregateFeatures(
-        dataReverse,
-        viewRegion,
-        width,
-        aggregateMethod
+    if (!xvaluesData) {
+      const dataForward = data.filter(
+        (feature) => feature.value === undefined || feature.value >= 0
       );
-    } else {
-      this.xToValue2 = [];
-    }
+      const dataReverse = data.filter((feature) => feature.value < 0);
 
-    this.xToValue! =
-      dataForward.length > 0
-        ? this.aggregateFeatures(
+      if (dataReverse.length > 0) {
+        this.hasReverse = true;
+        this.xToValue2! = this.aggregateFeatures(
+          dataReverse,
+          viewRegion,
+          width,
+          aggregateMethod
+        );
+      } else {
+        this.xToValue2 = [];
+      }
+
+      this.xToValue! =
+        dataForward.length > 0
+          ? this.aggregateFeatures(
             dataForward,
             viewRegion,
             width,
             aggregateMethod
           )
-        : [];
-
+          : [];
+    }
+    else {
+      this.xToValue = xvaluesData[0]
+      this.xToValue2 = xvaluesData[1]
+      this.hasReverse = xvaluesData[2]
+    }
     this.scales = this.computeScales(this.xToValue!, this.xToValue2!, height);
     this.drawHeights = this.xToValue!.map(
       (x) => this.scales.valueToHeight(x) || 0
@@ -257,6 +264,7 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       if (this.props.getNumLegend) {
         this.props.getNumLegend(legend);
       }
+
       const visualizer = (
         <React.Fragment>
           <div
@@ -278,6 +286,7 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
               viewRegion={viewRegion}
               unit={unit}
               hasReverse={true}
+              options={options}
             />{" "}
           </div>
           <svg width={width} height={height} style={{ display: "block" }}>
@@ -299,7 +308,7 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       );
       return visualizer;
     } else {
-      return <NumericalTrack {...this.props} />;
+      return <NumericalTrack {...this.props} xvaluesData={[this.xToValue, this.xToValue2, this.hasReverse]} />;
     }
   }
 }

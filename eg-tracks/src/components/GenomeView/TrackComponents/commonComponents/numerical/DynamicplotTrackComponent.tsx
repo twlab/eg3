@@ -14,6 +14,7 @@ import {
 } from "../../../../../models/FeatureAggregator";
 import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import { PixiScene } from "./PixiScene";
+import TrackLegend from "../TrackLegend";
 
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -23,7 +24,7 @@ export const DEFAULT_OPTIONS = {
   yMin: 0,
   smooth: 0,
   color: "blue",
-  backgroundColor: "white",
+  backgroundColor: "var(--bg-color)",
   playing: true,
   speed: [10],
   dynamicColors: [],
@@ -38,15 +39,8 @@ interface ViewWindow {
   end: number;
 }
 
-interface TrackModel {
-  tracks: {
-    options: {
-      color?: string;
-    };
-    label: string;
-  }[];
-  getDisplayLabel: () => string;
-}
+import TrackModel from "../../../../../models/TrackModel";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 
 interface Options {
   aggregateMethod: string;
@@ -79,6 +73,7 @@ interface DynamicplotTrackProps {
   viewWindow: any;
   trackModel: TrackModel;
   width: number;
+  updatedLegend: any;
 }
 
 interface DynamicplotTrackState {
@@ -116,7 +111,7 @@ class DynamicplotTrackComponent extends React.PureComponent<
 
     this.aggregateFeatures = memoizeOne(this.aggregateFeatures);
     this.computeScales = memoizeOne(this.computeScales);
-    this.renderTooltip = this.renderTooltip.bind(this);
+
   }
 
   aggregateFeatures(
@@ -170,43 +165,43 @@ class DynamicplotTrackComponent extends React.PureComponent<
    * @param {number} relativeX - x coordinate of hover relative to the visualizer
    * @return {JSX.Element} tooltip to render
    */
-  renderTooltip(relativeX: number) {
-    const { trackModel, viewRegion, width, unit } = this.props;
-    const values =
-      this.xToValue?.map((value) => value[Math.round(relativeX)]) ?? [];
-    const stringValues = values.map((value) => {
-      return typeof value === "number" && !Number.isNaN(value)
-        ? value.toFixed(2)
-        : "(no data)";
-    });
-    const divs = stringValues.map((value, i) => {
-      const color = trackModel.tracks[i].options.color || "blue";
-      return (
-        <div key={i}>
-          <span style={{ color: color }}>
-            {trackModel.tracks[i].label} {value}
-          </span>
-          {unit && <span className="Tooltip-minor-text">{unit}</span>}
-        </div>
-      );
-    });
-    return (
-      <div>
-        {divs}
-        <div className="Tooltip-minor-text">
-          <GenomicCoordinates
-            viewRegion={viewRegion}
-            width={width}
-            x={relativeX}
-          />
-        </div>
-        <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
-      </div>
-    );
-  }
+  // renderTooltip(relativeX: number) {
+  //   const { trackModel, viewRegion, width, unit } = this.props;
+  //   const values =
+  //     this.xToValue?.map((value) => value[Math.round(relativeX)]) ?? [];
+  //   const stringValues = values.map((value) => {
+  //     return typeof value === "number" && !Number.isNaN(value)
+  //       ? value.toFixed(2)
+  //       : "(no data)";
+  //   });
+  //   const divs = stringValues.map((value, i) => {
+  //     const color = trackModel.tracks[i].options.color || "blue";
+  //     return (
+  //       <div key={i}>
+  //         <span style={{ color: color }}>
+  //           {trackModel.tracks[i].label} {value}
+  //         </span>
+  //         {unit && <span className="Tooltip-minor-text">{unit}</span>}
+  //       </div>
+  //     );
+  //   });
+  //   return (
+  //     <div>
+  //       {divs}
+  //       <div className="Tooltip-minor-text">
+  //         <GenomicCoordinates
+  //           viewRegion={viewRegion}
+  //           width={width}
+  //           x={relativeX}
+  //         />
+  //       </div>
+  //       <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
+  //     </div>
+  //   );
+  // }
 
   render() {
-    const { data, viewRegion, width, trackModel, unit, options, viewWindow } =
+    const { data, viewRegion, width, trackModel, unit, options, viewWindow, updatedLegend } =
       this.props;
 
     const {
@@ -221,6 +216,7 @@ class DynamicplotTrackComponent extends React.PureComponent<
       dynamicLabels,
       dynamicColors,
       useDynamicColors,
+
     } = options;
     const aggregatedData = data.map((d) =>
       this.aggregateFeatures(d, viewRegion, width, aggregateMethod)
@@ -231,30 +227,51 @@ class DynamicplotTrackComponent extends React.PureComponent<
         : aggregatedData.map((d) => Smooth(d, smooth));
     this.scales = this.computeScales(this.xToValue, height);
     const xToValueZipped = _.zip(...this.xToValue);
-    // const legend = (
-    //   <TrackLegend
-    //     trackModel={trackModel}
-    //     height={height}
-    //     axisScale={this.scales.valueToY}
-    //     axisLegend={unit}
-    //   />
-    // );
+    if (updatedLegend) {
+      updatedLegend.current = <TrackLegend trackModel={trackModel} height={height} axisScale={this.scales.valueToY as any} axisLegend={unit} />
+    }
+
     const visualizer = (
-      <PixiScene
-        xToValue={xToValueZipped}
-        scales={this.scales}
-        width={width}
-        height={height}
-        steps={steps}
-        color={color}
-        backgroundColor={backgroundColor}
-        playing={playing}
-        speed={speed}
-        dynamicLabels={dynamicLabels}
-        viewWindow={viewWindow}
-        dynamicColors={dynamicColors}
-        useDynamicColors={useDynamicColors}
-      />
+
+      <React.Fragment>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+          }}
+        >
+
+          <HoverToolTip
+            data={this.xToValue}
+            windowWidth={width}
+            trackType={"dynamic"}
+            trackModel={trackModel}
+            height={height}
+            viewRegion={viewRegion}
+            unit={unit}
+            hasReverse={true}
+            options={options}
+          />
+
+        </div>
+        <PixiScene
+          xToValue={xToValueZipped}
+          scales={this.scales}
+          width={width}
+          height={height}
+          steps={steps}
+          color={color}
+          backgroundColor={backgroundColor}
+          playing={playing}
+          speed={speed}
+          dynamicLabels={dynamicLabels}
+          viewWindow={viewWindow}
+          dynamicColors={dynamicColors}
+          useDynamicColors={useDynamicColors}
+        />
+      </React.Fragment>
     );
     return visualizer;
   }

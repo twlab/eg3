@@ -14,13 +14,14 @@ import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultVcfTrack } from "./VcfComponents/VcfTrack";
+import { DEFAULT_OPTIONS as defaultDynamicInteraction } from "./InteractionComponents/DynamicInteractionTrackComponents";
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
 } from "./bedComponents/BedAnnotation";
 
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import OpenInterval from "../../../models/OpenInterval";
-import { AnnotationDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import { AnnotationDisplayModes, NumericalDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import Feature from "../../../models/Feature";
 import { DefaultAggregators } from "../../../models/FeatureAggregator";
 
@@ -130,6 +131,8 @@ export const trackOptionMap: { [key: string]: any } = {
       ...defaultNumericalTrack,
 
       ...defaultVcfTrack,
+      displayMode: NumericalDisplayModes.AUTO,
+      aggregateMethod: DefaultAggregators.types.COUNT,
     },
     getGenePadding: function paddingFunc(vcf: Vcf, xSpan: OpenInterval) {
       const width = xSpan.end - xSpan.start;
@@ -179,7 +182,11 @@ export const trackOptionMap: { [key: string]: any } = {
   },
   modbed: {
     defaultOptions: {
+      ...defaultAnnotationTrack,
+      ...defaultNumericalTrack,
       ...defaultFiberTrack,
+      displayMode: NumericalDisplayModes.AUTO,
+      aggregateMethod: DefaultAggregators.types.COUNT,
     },
     getGenePadding: function getGenePadding(
       feature: Fiber,
@@ -302,12 +309,12 @@ export const trackOptionMap: { [key: string]: any } = {
   // dynamic expandedloci tracks
   dynamichic: {
     defaultOptions: {
-      ...defaultInteractTrack,
+      ...defaultDynamicInteraction,
     },
   },
   dynamiclongrange: {
     defaultOptions: {
-      ...defaultInteractTrack,
+      ...defaultDynamicInteraction,
     },
   },
   dynamic: {
@@ -327,7 +334,7 @@ export const trackOptionMap: { [key: string]: any } = {
   },
   dbedgraph: {
     defaultOptions: {
-      ...defaultAnnotationTrack,
+      ...defaultNumericalTrack,
       color: "blue",
       color2: "red",
       rowHeight: 10,
@@ -337,7 +344,7 @@ export const trackOptionMap: { [key: string]: any } = {
       playing: true,
       dynamicColors: [],
       useDynamicColors: false,
-      backgroundColor: "white",
+      backgroundColor: "var(--bg-color)",
       arrayAggregateMethod: "MEAN",
     },
   },
@@ -353,7 +360,7 @@ export const trackOptionMap: { [key: string]: any } = {
       playing: true,
       dynamicColors: [],
       useDynamicColors: false,
-      backgroundColor: "white",
+      backgroundColor: "var(--bg-color)"
     },
   },
   dynamicplot: {

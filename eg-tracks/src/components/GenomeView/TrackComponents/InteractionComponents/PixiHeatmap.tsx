@@ -4,6 +4,7 @@ import * as PIXI from "pixi.js";
 import pointInPolygon from "point-in-polygon";
 
 import { colorString2number } from "../../../../models/util";
+import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 
 const ANGLE = Math.PI / 4;
 const SIDE_SCALE = Math.sin(ANGLE);
@@ -82,7 +83,8 @@ export class PixiHeatmap extends PureComponent<
   async componentDidMount() {
     this.container = this.myRef.current;
     const { height, width, backgroundColor } = this.props;
-    const bgColor = colorString2number("white");
+
+    const bgColor = colorString2number("var(--bg-color)",);
     this.app = new PIXI.Application();
     await this.app.init({
       width,
@@ -343,45 +345,35 @@ export class PixiHeatmap extends PureComponent<
    * @param {number} relativeY - y coordinate of hover relative to the visualizer
    * @return {JSX.Element} tooltip to render
    */
-  renderTooltip = (relativeX: number, relativeY: number) => {
-    const { trackModel } = this.props;
-    const polygons = this.findPolygon(relativeX, relativeY);
-    if (polygons.length) {
-      return (
-        <div>
-          {polygons.map((polygon: any, i) => (
-            <div key={i}>
-              <div>
-                <strong>{trackModel?.tracks[i]?.label}</strong>
-              </div>
-              <div>Locus1: {polygon.interaction.locus1.toString()}</div>
-              <div>Locus2: {polygon.interaction.locus2.toString()}</div>
-              <div>Score: {polygon.interaction.score}</div>
-            </div>
-          ))}
-        </div>
-      );
-    } else {
-      return null;
-    }
-  };
 
-  findPolygon = (x: number, y: number) => {
-    const polygons: Array<any> = [];
-    for (const hmData of this.hmData) {
-      for (const item of hmData) {
-        if (pointInPolygon([x, y], item.points)) {
-          polygons.push(item);
-          break;
-        }
-      }
-    }
-    return polygons;
-  };
+
+
 
   render() {
     const { height, width } = this.props;
     const style = { width: `${width}px`, height: `${height}px` };
-    return <div ref={this.myRef}></div>;
+
+    return <React.Fragment>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          position: "absolute",
+          zIndex: 3,
+        }}
+      >
+
+        <HoverToolTip
+          data={this.hmData}
+          windowWidth={width}
+          viewWindow={this.props.viewWindow}
+          trackType={"dynamichic"}
+          height={height}
+
+        />
+
+      </div>
+      <div ref={this.myRef}></div>;
+    </React.Fragment>
   }
 }

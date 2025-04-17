@@ -12,6 +12,7 @@ import { RenderTypes, DesignRenderer } from "../art/DesignRenderer";
 import { FeatureAggregator } from "../../../../../models/FeatureAggregator";
 import TrackModel from "../../../../../models/TrackModel";
 import DisplayedRegionModel from "../../../../../models/DisplayedRegionModel";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 export const DEFAULT_OPTIONS = {
   height: 100,
   boxColor: "#36558F",
@@ -36,6 +37,7 @@ interface BoxplotTrackProps {
   options: any; // Specify a more detailed type if you have one
   forceSvg: boolean;
   viewWindow: any;
+  getNumLegend: any;
 }
 class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
   /**
@@ -224,21 +226,59 @@ class BoxplotTrackComponents extends React.PureComponent<BoxplotTrackProps> {
         axisLegend={unit}
       />
     );
+
+
+
+    if (this.props.getNumLegend) {
+      this.props.getNumLegend(legend);
+    }
+
     const visualizer = (
       //   <HoverTooltipContext
       //     tooltipRelativeY={height}
       //     getTooltipContents={this.renderTooltip}
       //   >
-      <Boxplot
-        xMap={this.xMap}
-        scales={this.scales}
-        height={height}
-        width={width}
-        windowSize={options.windowSize}
-        boxColor={boxColor}
-        lineColor={lineColor}
-        forceSvg={forceSvg}
-      />
+      <React.Fragment>
+        <div style={{ display: "flex" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+            }}
+          >
+            {!forceSvg ? (
+              <HoverToolTip
+                data={this.xMap}
+                scale={this.scales}
+                windowWidth={width}
+                trackType={"boxplot"}
+                trackModel={trackModel}
+                height={height}
+                viewRegion={viewRegion}
+                unit={unit ? unit : ""}
+                hasReverse={true}
+                options={options}
+                xAlias={this.xAlias}
+              />
+            ) : (
+              ""
+            )}
+          </div>
+          {forceSvg ? legend : ""}
+          <Boxplot
+            xMap={this.xMap}
+            scales={this.scales}
+            height={height}
+            width={width}
+            windowSize={options.windowSize}
+            boxColor={boxColor}
+            lineColor={lineColor}
+            forceSvg={forceSvg}
+          />
+        </div>
+      </React.Fragment>
     );
     return visualizer;
   }
