@@ -45,7 +45,7 @@ input {
   --light-bg-color: white;
   --light-container-color: white;
   --light-container-fg-color: #5f6368;
-  --light-fg-tint-color: #75697A;
+  --light-fg-tint-color: #75697a;
 }
 
 @keyframes borderPulse {
@@ -137,8 +137,8 @@ input {
   --bg-color: var(--dark-bg-color);
   --bg-container-color: var(--dark-container-color);
   --font-container-color: var(--dark-container-fg-color);
-  --font-tint-color: var(--dark-fg-tint-color)
-    /* --link-color: #3bd1ff; */
+  --font-tint-color: var(--dark-fg-tint-color);
+  /* --link-color: #3bd1ff; */
 }
 
 [data-theme="light"] {
@@ -146,8 +146,8 @@ input {
   --bg-color: var(--light-bg-color);
   --bg-container-color: var(--light-container-color);
   --font-container-color: var(--light-container-fg-color);
-  --font-tint-color: var(--light-fg-tint-color)
-    /* --link-color: #3f51b5; */
+  --font-tint-color: var(--light-fg-tint-color);
+  /* --link-color: #3f51b5; */
 }
 
 .bg {
@@ -293,18 +293,21 @@ input {
 #shareUI .MuiTab-textColorSecondary {
   color: unset;
 }
-
-.Track {
-  position: relative;
-  display: flex;
-  border-bottom: 1px solid lightgrey;
-  padding: 1px;
-  /* Makes Track-selected-border visible if background color also exists */
+.Track-border-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5; /*  above the child component so animated border will display */
+  pointer-events: none; /* Make sure it doesn't interfere with interactions */
+  outline: 1px solid #9aa6b2;
 }
 
 .Track-selected-border {
-  background-image: url("./assets/border-anim-h.gif"), url("./assets/border-anim-h.gif"),
-    url("./assets/border-anim-v.gif"), url("./assets/border-anim-v.gif");
+  background-image: url("./assets/border-anim-h.gif"),
+    url("./assets/border-anim-h.gif"), url("./assets/border-anim-v.gif"),
+    url("./assets/border-anim-v.gif");
 
   /* Repeat horizontally for the horizontal dashes, vertically for the vertical dashes */
   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;

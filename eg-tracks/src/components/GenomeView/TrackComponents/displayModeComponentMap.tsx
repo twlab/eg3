@@ -1990,7 +1990,7 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   // Add additional type-function mappings here
 };
 export function formatDataByType(genesArr: any[], type: string) {
-  if ("error" in genesArr) {
+  if (typeof genesArr === "object" && "error" in genesArr) {
     return genesArr;
   }
   const formatter = formatFunctions[type];

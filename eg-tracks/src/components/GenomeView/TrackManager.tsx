@@ -1059,7 +1059,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   trackState: curTrackState,
                   result: item.result,
                   id: item.id,
-                  trackType: item.name,
+                  trackType: item.trackModel.type
+                    ? item.trackModel.type
+                    : item.name
+                    ? item.name
+                    : "",
                   metadata: item.metadata,
                   trackModel: item.trackModel,
                   curFetchNav: item.name === "bam" ? item.curFetchNav : "",
@@ -1408,10 +1412,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const curTrackModel = tracks.find(
           (trackModel: any) => trackModel.id === fetchRes.id
         );
-
-        if (curTrackModel && trackOptionMap[`${fetchRes.type}`]) {
+        console.log(fetchRes.type, fetchRes.trackType);
+        if (curTrackModel && trackOptionMap[`${fetchRes.trackType}`]) {
           configOptions = {
-            ...trackOptionMap[`${fetchRes.type}`],
+            ...trackOptionMap[`${fetchRes.trackType}`],
             ...curTrackModel.options,
           };
         }
@@ -1431,6 +1435,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
+        console.log(
+          objToInstanceAlign(visRegion),
+          basePerPixel.current,
+          configOptions
+        );
         result = await fetchInstances.current[`${fetchRes.id}`].getData(
           objToInstanceAlign(visRegion),
           basePerPixel.current,
@@ -2711,7 +2720,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             className="ml-4"
             style={{
               backgroundColor: "var(--bg-color)",
-
               color: "var(--font-color)",
             }}
           >
@@ -2725,16 +2733,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <div
           style={{
             display: "flex",
-            //makes components align right or right when we switch sides
-
             flexDirection: "row",
-            // full windowwidth will make canvas only loop 0-windowidth
-            // the last value will have no data.
-            // so we have to subtract from the size of the canvas
-            border: "1px solid #9AA6B2",
+            outline: "1px solid #9AA6B2",
             width: `${windowWidth + 120}px`,
-            // width: `${fullWindowWidth / 2}px`,
-            // height: "2000px",
             overflowX: "hidden",
             overflowY: "hidden",
           }}
@@ -2764,17 +2765,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             <div
               style={{
                 display: "flex",
-                //makes components align right or right when we switch sides
-
                 flexDirection: "row",
-                // full windowwidth will make canvas only loop 0-windowidth
-                // the last value will have no data.
-                // so we have to subtract from the size of the canvas
                 width: `${windowWidth + 120}px`,
-                // width: `${fullWindowWidth / 2}px`,
-                // height: "2000px",
-                // overflowX: "hidden",
-                // overflowY: "hidden",
               }}
             >
               <SortableList
@@ -2791,17 +2783,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       key={item.id}
                       style={{
                         width: `${windowWidth + 120}px`,
-
-                        // borderBottom: item.trackModel.isSelected
-                        //   ? ""
-                        //   : "1px solid #BCCCDC",
+                        position: "relative", // Ensure the child component is positioned correctly
                       }}
-                      className={
-                        item.trackModel.isSelected
-                          ? "Track Track-selected-border"
-                          : "Track"
-                      }
                     >
+                      {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
+                  track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing error.
+                   */}
+                      {item.trackModel.isSelected ? (
+                        <div className="Track-border-container Track-selected-border"></div>
+                      ) : (
+                        <div className="Track-border-container"></div>
+                      )}
                       <item.component
                         id={item.trackModel.id}
                         trackModel={item.trackModel}
@@ -2834,40 +2826,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   </SortableList.Item>
                 )}
               />
-
-              <div
-                style={{
-                  display: "flex",
-                  position: "absolute",
-                  width: `${windowWidth}px`,
-                  zIndex: 10,
-                }}
-              >
-                {selectedTool &&
-                selectedTool.isSelected &&
-                selectedTool.title !== 1 ? (
-                  <SelectableGenomeArea
-                    selectableRegion={userViewRegion}
-                    dragLimits={
-                      new OpenInterval(legendWidth, windowWidth + 120)
-                    }
-                    onRegionSelected={onRegionSelected}
-                    selectedTool={selectedTool}
-                  >
-                    <div
-                      style={{
-                        height: block.current
-                          ? block.current?.getBoundingClientRect().height
-                          : 0,
-                        zIndex: 3,
-                        width: `${windowWidth + 120}px`,
-                      }}
-                    ></div>
-                  </SelectableGenomeArea>
-                ) : (
-                  ""
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -2876,11 +2834,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           <div
             style={{
               position: "fixed",
-
               zIndex: 1000,
               flexDirection: "column",
               whiteSpace: "nowrap",
-              overflow: "visible", // ensure the menu can overflow the parent
+              overflow: "visible", // Ensure the menu can overflow the parent
             }}
           >
             <ConfigMenuComponent key={configMenu.key} menuData={configMenu} />
@@ -2894,7 +2851,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         <div
           style={{
             display: "flex",
-
             backgroundColor: "var(--bg-color)",
             WebkitBackfaceVisibility: "hidden",
             WebkitPerspective: `${windowWidth + 120}px`,
@@ -2908,9 +2864,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }}
         >
           {g3dtrackComponents.map((item, index) => {
-            let Component = item.component;
-            if (trackManagerState.current.viewRegion) {
-              return (
+            const Component = item.component;
+            return (
+              trackManagerState.current.viewRegion && (
                 <div key={item.id} style={{ width: "50%" }}>
                   <Component
                     handleDelete={handleDelete}
@@ -2922,10 +2878,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     geneFor3d={show3dGene}
                   />
                 </div>
-              );
-            } else {
-              return "";
-            }
+              )
+            );
           })}
         </div>
       ) : (
