@@ -35,7 +35,7 @@ const navContext = genome.makeNavContext();
 // text track longrange chr6:521000000-53000000
 // dbedgraph : "chr6:52424900-52425400"
 
-const defaultRegion = navContext.parse("chr6:52149465-52164219");
+const defaultRegion = navContext.parse("chr6:52424900-52425400");
 const defaultTracks = [
   new TrackModel({
     type: "ruler",
@@ -61,27 +61,27 @@ const defaultTracks = [
   //   type: "jaspar",
   //   url: "https://hgdownload.soe.ucsc.edu/gbdb/mm10/jaspar/JASPAR2022.bb",
   // }),
-  // new TrackModel({
-  //   type: "dbedgraph",
-  //   url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
-  //   options: {
-  //     dynamicLabels: [
-  //       "stage1",
-  //       "stage2",
-  //       "stage3",
-  //       "stage4",
-  //       "stage5",
-  //       "stage6",
-  //       "stage7",
-  //       "stage8",
-  //       "stage9",
-  //       "stage10",
-  //     ],
-  //     dynamicColors: ["red", "blue", "#00FF00", 0x000000],
-  //     useDynamicColors: true,
-  //   },
-  //   showOnHubLoad: true,
-  // }),
+  new TrackModel({
+    type: "dbedgraph",
+    url: "https://wangftp.wustl.edu/~dli/test/a.dbg.gz",
+    options: {
+      dynamicLabels: [
+        "stage1",
+        "stage2",
+        "stage3",
+        "stage4",
+        "stage5",
+        "stage6",
+        "stage7",
+        "stage8",
+        "stage9",
+        "stage10",
+      ],
+      dynamicColors: ["red", "blue", "#00FF00", 0x000000],
+      useDynamicColors: true,
+    },
+    showOnHubLoad: true,
+  }),
   // new TrackModel({
   //     type: "longrange",
   //     name: "ES-E14 ChIA-PET",

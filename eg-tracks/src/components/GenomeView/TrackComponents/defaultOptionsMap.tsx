@@ -14,6 +14,7 @@ import { DEFAULT_OPTIONS as defaultDynamic } from "./commonComponents/numerical/
 import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/MatplotTrackComponent";
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultVcfTrack } from "./VcfComponents/VcfTrack";
+import { DEFAULT_OPTIONS as defaultDynamicInteraction } from "./InteractionComponents/DynamicInteractionTrackComponents";
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
 } from "./bedComponents/BedAnnotation";
@@ -308,12 +309,12 @@ export const trackOptionMap: { [key: string]: any } = {
   // dynamic expandedloci tracks
   dynamichic: {
     defaultOptions: {
-      ...defaultInteractTrack,
+      ...defaultDynamicInteraction,
     },
   },
   dynamiclongrange: {
     defaultOptions: {
-      ...defaultInteractTrack,
+      ...defaultDynamicInteraction,
     },
   },
   dynamic: {
@@ -333,7 +334,7 @@ export const trackOptionMap: { [key: string]: any } = {
   },
   dbedgraph: {
     defaultOptions: {
-      ...defaultAnnotationTrack,
+      ...defaultNumericalTrack,
       color: "blue",
       color2: "red",
       rowHeight: 10,
@@ -343,7 +344,7 @@ export const trackOptionMap: { [key: string]: any } = {
       playing: true,
       dynamicColors: [],
       useDynamicColors: false,
-      backgroundColor: "white",
+      backgroundColor: "var(--bg-color)",
       arrayAggregateMethod: "MEAN",
     },
   },
@@ -359,7 +360,7 @@ export const trackOptionMap: { [key: string]: any } = {
       playing: true,
       dynamicColors: [],
       useDynamicColors: false,
-      backgroundColor: "white",
+      backgroundColor: "var(--bg-color)"
     },
   },
   dynamicplot: {

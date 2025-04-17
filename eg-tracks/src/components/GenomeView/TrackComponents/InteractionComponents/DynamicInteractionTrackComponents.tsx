@@ -7,6 +7,7 @@ import { FeaturePlacer } from "../../../../models/getXSpan/FeaturePlacer";
 import { GenomeInteraction } from "../../../../getRemoteData/GenomeInteraction";
 import { ScaleChoices } from "../../../../models/ScaleChoices";
 import { DynamicInteractionDisplayMode } from "../../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import TrackLegend from "../commonComponents/TrackLegend";
 
 interface DynamicInteractionTrackComponentsProps {
   data: GenomeInteraction[];
@@ -30,7 +31,7 @@ interface DynamicInteractionTrackComponentsProps {
   trackModel: any;
   visRegion: any;
   width: number;
-  viewWindow: any;
+  viewWindow: any; updatedLegend?: any
 }
 
 export const DEFAULT_OPTIONS = {
@@ -125,6 +126,7 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       viewWindow,
       options,
       viewer3dNumFrames,
+      updatedLegend,
     } = this.props;
     this.scales = this.computeScale();
 
@@ -140,7 +142,7 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       color2: options.color2,
       backgroundColor: options.backgroundColor,
       binSize: options.binSize,
-      onInteractionHovered: this.showTooltip,
+
 
       playing: options.playing,
       speed: options.speed,
@@ -151,9 +153,15 @@ class DynamicInteractionTrackComponents extends React.PureComponent<DynamicInter
       viewer3dNumFrames,
     };
     let visualizer;
+    if (updatedLegend) {
+      updatedLegend.current = (
+        <TrackLegend trackModel={trackModel} height={options.height} />
+      );
+    }
 
     if (options.displayMode === DynamicInteractionDisplayMode.ARC) {
-      visualizer = <PixiArc {...visualizerProps} />;
+      visualizer =
+        <PixiArc {...visualizerProps} />;
     } else {
       visualizer = <PixiHeatmap {...visualizerProps} />;
     }

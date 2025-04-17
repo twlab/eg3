@@ -17,12 +17,13 @@ import {
 } from "@eg/tracks";
 
 import Toolbar from "./toolbar/Toolbar";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
 
 import { RootState } from "../../lib/redux/store";
 
 export default function GenomeView() {
+  const prevViewRegion = useRef<any>("")
   const currentSession = useAppSelector(selectCurrentSession);
   let currentState = null;
   if (currentSession) {
@@ -44,7 +45,7 @@ export default function GenomeView() {
 
   const sessionId = currentSession ? currentSession.id : null;
 
-  const prevViewRegion = useRef(currentSession ? currentSession.viewRegion : "")
+  prevViewRegion.current = currentSession ? currentSession?.viewRegion : "";
   if (lastSessionId.current !== sessionId) {
     dispatch(resetState());
     lastSessionId.current = sessionId;

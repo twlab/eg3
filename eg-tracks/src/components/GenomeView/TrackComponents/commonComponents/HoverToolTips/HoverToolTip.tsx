@@ -27,7 +27,6 @@ interface HoverToolTipProps {
   xAlias?: any;
 }
 import { sameLoci } from "../../../../../models/util";
-import { arc } from "d3";
 import ReactDOM from "react-dom";
 function getAbsolutePosition(element) {
   const rect = element.getBoundingClientRect();
@@ -85,6 +84,101 @@ export const getHoverTooltip = {
         </div>
       ),
     };
+  },
+
+  dbedgraph: function getTooltip(dataObj: { [key: string]: any }) {
+    const { trackModel, viewRegion, width, relativeX, data } = dataObj;
+    if (!data) {
+      return null
+    }
+    const value = data[Math.round(relativeX)];
+    const stringValues = _.compact(value).length ? JSON.stringify(value) : "(no data)";
+    return ({
+      toolTip:
+        <div>
+          {stringValues}
+          <div className="Tooltip-minor-text">
+            <GenomicCoordinates viewRegion={viewRegion} width={width} x={relativeX} />
+          </div>
+          <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
+        </div>
+    })
+  },
+  dynamichic: function getTooltip(dataObj: { [key: string]: any }) {
+    const { data, relativeX, relativeY, trackModel } = dataObj
+
+    const findPolygon = (x, y) => {
+      const polygons: Array<any> = [];
+      for (const hmData of data) {
+        for (const item of hmData) {
+
+          if (pointInPolygon([x, y], item.points)) {
+            polygons.push(item);
+            break;
+          }
+        }
+      }
+      return polygons;
+    };
+
+    const polygon = findPolygon(relativeX, relativeY);
+
+    if (polygon.length) {
+      return (
+        {
+          toolTip:
+            <div>
+              {polygon.map((polygon: any, i) => (
+                <div key={i}>
+                  <div>
+                    <strong>{trackModel?.tracks[i]?.label}</strong>
+                  </div>
+                  <div>Locus1: {polygon.interaction.locus1.toString()}</div>
+                  <div>Locus2: {polygon.interaction.locus2.toString()}</div>
+                  <div>Score: {polygon.interaction.score}</div>
+                </div>
+              ))}
+            </div>
+        }
+      );
+    }
+
+
+
+
+
+
+  },
+  dynamic: function getTooltip(dataObj: { [key: string]: any }) {
+    const { trackModel, viewRegion, width, unit, data, relativeX } = dataObj;
+    if (!data) {
+      return null
+    }
+    const values = data.map((value) => value[Math.round(relativeX)]);
+    const stringValues = values.map((value) => {
+      return typeof value === "number" && !Number.isNaN(value) ? value.toFixed(2) : "(no data)";
+    });
+    const divs = stringValues.map((value, i) => {
+      const color = trackModel.tracks[i].options.color || "blue";
+      return (
+        <div key={i}>
+          <span style={{ color: color }}>
+            {trackModel.tracks[i].label} {value}
+          </span>
+          {unit && <span className="Tooltip-minor-text">{unit}</span>}
+        </div>
+      );
+    });
+    return ({
+      toolTip:
+        <div>
+          {divs}
+          <div className="Tooltip-minor-text">
+            <GenomicCoordinates viewRegion={viewRegion} width={width} x={relativeX} />
+          </div>
+          <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
+        </div>
+    });
   },
   modbed: function getTooltip(dataObj: { [key: string]: any }) {
 
@@ -593,19 +687,25 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         scale,
         xAlias
       });
+      if (trackHoverTooltip) {
 
-      setPosition({
-        ...rectPosition,
-        top: rect.bottom,
-        left: rect.left,
-        right: rect.right,
-        dataIdxX: dataIdxX,
-        dataIdxY: dataIdxY,
-        toolTip: trackHoverTooltip.toolTip,
-        beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
-      });
-      setIsVisible(true);
+        setPosition({
+          ...rectPosition,
+          top: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          dataIdxX: dataIdxX,
+          dataIdxY: dataIdxY,
+          toolTip: trackHoverTooltip.toolTip,
+          beams: trackHoverTooltip.beams ? trackHoverTooltip.beams : <></>,
+        });
+        setIsVisible(true);
+      }
+      else {
+        setIsVisible(false)
+      }
     }
+
   };
   // when creating mouse behavior and events for separate component you have to create handler function outside the useeffect or else state is based
   // of data in the element in array.  For example, hovering only works on the latest region of the track because the targetRef doesn't have any handler function to call
@@ -640,7 +740,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     >
       {isVisible ? (
         <>
-          {"trackManagerRef" in options
+          {options && "trackManagerRef" in options
             ? ReactDOM.createPortal(
               rectPosition.beams,
               options.trackManagerRef.current

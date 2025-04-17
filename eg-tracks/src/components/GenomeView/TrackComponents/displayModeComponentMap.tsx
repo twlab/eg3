@@ -111,6 +111,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       rowHeight,
       maxRows
     ) {
+
       // FullVisualizer class from eg2
       function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
         const maxRowIndex = (maxRows || Infinity) - 1;
@@ -151,7 +152,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               display={"block"}
             >
               {placements.map(renderAnnotation)}
-              <line
+              {/* <line
                 x1={width / 3}
                 y1={0}
                 x2={width / 3}
@@ -166,7 +167,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 y2={height}
                 stroke="black"
                 strokeWidth={1}
-              />
+              /> */}
             </svg>
           </div>
         );
@@ -181,7 +182,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           display={"block"}
         >
           {placements.map(renderAnnotation)}
-          <line
+          {/* <line
             x1={width / 3}
             y1={0}
             x2={width / 3}
@@ -196,7 +197,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             y2={height}
             stroke="black"
             strokeWidth={1}
-          />
+          /> */}
         </svg>
       );
     }
@@ -860,6 +861,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         visRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         trackModel={trackModel}
+        updatedLegend={updatedLegend}
       />
     );
     return canvasElements;
@@ -892,6 +894,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         visRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         trackModel={trackModel}
+        svgHeight={svgHeight}
+        updatedLegend={updatedLegend}
+
       />
     );
     return canvasElements;
@@ -913,6 +918,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         trackModel={trackModel}
+        updatedLegend={updatedLegend}
       />
     );
     return canvasElements;
@@ -926,11 +932,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     updatedLegend,
     trackModel,
   }) {
-    function getNumLegend(legend: ReactNode) {
-      if (updatedLegend) {
-        updatedLegend.current = legend;
-      }
-    }
+
     let canvasElements = (
       <DynamicplotTrackComponent
         data={formattedData}
@@ -939,6 +941,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         trackModel={trackModel}
+        updatedLegend={updatedLegend}
       />
     );
     return canvasElements;
@@ -1377,7 +1380,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     });
   } else if (
     drawData.configOptions.displayMode === "full" &&
-    drawData.trackModel.type !== "genomealign"
+    !(drawData.trackModel.type in { "genomealign": "", dynamicbed: "", dbedgraph: "", dynamic: "", dynamiclongrange: "", dynamichic: "" })
   ) {
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
@@ -1505,6 +1508,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     drawData.trackModel.type in
     { dynamic: "", dynamicbed: "", dynamiclongrange: "" }
   ) {
+
     const formattedData = drawData.genesArr;
 
     let canvasElements = displayModeComponentMap[
@@ -1521,6 +1525,8 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       getGenePadding: drawData.getGenePadding,
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
+      svgHeight: drawData.svgHeight,
+
     });
 
     return canvasElements;
@@ -1563,6 +1569,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       configOptions: drawData.configOptions,
       updatedLegend: drawData.updatedLegend,
       trackModel: drawData.trackModel,
+
     });
 
     return canvasElements;
@@ -1810,29 +1817,38 @@ function formatDynamicBed(genesArr: any[]) {
   );
 }
 function formatDynamicLongRange(genesArr: any[]) {
-  let tempLongrangeData: any[] = [];
-  genesArr.map((record) => {
-    const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
 
-    if (regexMatch) {
-      const chr = regexMatch[1];
-      const start = Number.parseInt(regexMatch[2], 10);
-      const end = Number.parseInt(regexMatch[3], 10);
-      const score = Number.parseFloat(record[3].split(",")[1]);
-      const recordLocus1 = new ChromosomeInterval(
-        record.chr,
-        record.start,
-        record.end
-      );
-      const recordLocus2 = new ChromosomeInterval(chr, start, end);
-      tempLongrangeData.push(
-        new GenomeInteraction(recordLocus1, recordLocus2, score)
-      );
-    } else {
-      console.error(`${record[3]} not formatted correctly in longrange track`);
-    }
-  });
-  return tempLongrangeData;
+
+  return genesArr.map((geneArr: any) => {
+    let tempLongrangeData: any[] = [];
+    geneArr.map((record) => {
+
+      const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
+
+      if (regexMatch) {
+        const chr = regexMatch[1];
+        const start = Number.parseInt(regexMatch[2], 10);
+        const end = Number.parseInt(regexMatch[3], 10);
+        const score = Number.parseFloat(record[3].split(",")[1]);
+        const recordLocus1 = new ChromosomeInterval(
+          record.chr,
+          record.start,
+          record.end
+        );
+        const recordLocus2 = new ChromosomeInterval(chr, start, end);
+        tempLongrangeData.push(
+          new GenomeInteraction(recordLocus1, recordLocus2, score)
+        );
+
+      } else {
+        console.error(`${record[3]} not formatted correctly in longrange track`);
+      }
+    })
+
+    return tempLongrangeData
+  }
+  );
+
 }
 
 function formatqBedData(genesArr: any[]) {

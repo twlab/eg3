@@ -1531,7 +1531,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } ||
       toolTitle === "isJump"
     ) {
-      console.log("HERERERRE")
       trackManagerState.current.viewRegion._startBase = startbase;
       trackManagerState.current.viewRegion._endBase = endbase;
       // onNewRegionSelect(startbase, endbase, highlightSearch);
