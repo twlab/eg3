@@ -53,7 +53,7 @@ class OmeroTrackComponents extends React.PureComponent<OmeroTrackProps> {
       onSetImageInfo,
       heightObj,
     } = this.props;
-
+    console.log(this.props);
     const visualizer = forceSvg ? (
       <OmeroSvgVisualizer
         data={data}
