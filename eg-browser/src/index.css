@@ -294,6 +294,14 @@ input {
   color: unset;
 }
 
+.Track {
+  position: relative;
+  display: flex;
+  border-bottom: 1px solid lightgrey;
+  padding: 1px;
+  /* Makes Track-selected-border visible if background color also exists */
+}
+
 .Track-selected-border {
   background-image: url("./assets/border-anim-h.gif"), url("./assets/border-anim-h.gif"),
     url("./assets/border-anim-v.gif"), url("./assets/border-anim-v.gif");

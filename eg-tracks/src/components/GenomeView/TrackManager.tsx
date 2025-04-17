@@ -2806,7 +2806,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     <div
                       key={item.id}
                       style={{
-                        display: "flex",
 
                         width: `${windowWidth + 120}px`,
 
@@ -2815,7 +2814,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         //   : "1px solid #BCCCDC",
                       }}
                       className={
-                        item.trackModel.isSelected ? "Track-selected-border" : ""
+                        item.trackModel.isSelected ? "Track Track-selected-border" : "Track"
                       }
                     >
                       <item.component
