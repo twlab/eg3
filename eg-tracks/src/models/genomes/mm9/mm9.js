@@ -30,30 +30,30 @@ const genome = new Genome("mm9", [
 ]);
 // chr6:52675982-53147856 dynamiclongrange
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr6:52675982-53147856");
+const defaultRegion = navContext.parse("chr6:52115672-52119450");
 const defaultTracks = [
     new TrackModel({
         type: "ruler",
         name: "Ruler",
     }),
 
-    // new TrackModel({
-    //     type: "geneAnnotation",
-    //     name: "refGene",
-    //     genome: "mm9",
-    // }),
-
     new TrackModel({
-        type: "longrange",
-        name: "ES-E14 ChIA-PET",
-        url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+        type: "geneAnnotation",
+        name: "refGene",
+        genome: "mm9",
     }),
 
     // new TrackModel({
-    //     type: 'repeatmasker',
-    //     name: 'RepeatMasker',
-    //     url: 'https://vizhub.wustl.edu/public/mm9/rmsk16.bb',
+    //     type: "longrange",
+    //     name: "ES-E14 ChIA-PET",
+    //     url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
     // }),
+
+    new TrackModel({
+        type: 'repeatmasker',
+        name: 'RepeatMasker',
+        url: 'https://vizhub.wustl.edu/public/mm9/rmsk16.bb',
+    }),
 
     // new TrackModel({
 
@@ -70,32 +70,32 @@ const defaultTracks = [
 
     // }),
 
-    new TrackModel({
-        name: "dynamic hic",
-        type: "dynamiclongrange",
-        options: {
-            dynamicColors: ["red", "blue"],
-            useDynamicColors: true,
-        },
-        tracks: [
-            {
-                type: "longrange",
-                name: "ES-E14 ChIA-PET",
-                url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-            }, {
-                type: "longrange",
-                name: "ES-E14 ChIA-PET",
-                url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-            },
-            // {
-            //     type: "longrange",
-            //     name: "Test 1 longrange file",
-            //     url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-            //     indexUrl: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4"
-            // },
-        ],
-        showOnHubLoad: true,
-    }),
+    // new TrackModel({
+    //     name: "dynamic hic",
+    //     type: "dynamiclongrange",
+    //     options: {
+    //         dynamicColors: ["red", "blue"],
+    //         useDynamicColors: true,
+    //     },
+    //     tracks: [
+    //         {
+    //             type: "longrange",
+    //             name: "ES-E14 ChIA-PET",
+    //             url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+    //         }, {
+    //             type: "longrange",
+    //             name: "ES-E14 ChIA-PET",
+    //             url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
+    //         },
+    //         // {
+    //         //     type: "longrange",
+    //         //     name: "Test 1 longrange file",
+    //         //     url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
+    //         //     indexUrl: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4"
+    //         // },
+    //     ],
+    //     showOnHubLoad: true,
+    // }),
 ];
 
 

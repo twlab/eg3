@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr3:63836292-64336395");
+const defaultRegion = navContext.parse("chr7:27053397-27373765");
 
 const defaultTracks = [
   new TrackModel({
