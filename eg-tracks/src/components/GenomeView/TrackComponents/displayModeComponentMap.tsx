@@ -520,7 +520,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     };
 
     if (trackModel.type === "omeroidr") {
-      console.log("here1");
       const calcTrackHeight = () => {
         let viewWindow = {
           start: 0,
@@ -1396,9 +1395,6 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       )) ||
     drawData.trackModel.type in { omeroidr: "" }
   ) {
-    if (drawData.trackModel.type in { omeroidr: "" }) {
-      console.log("yay");
-    }
     let formattedData: Array<any> = [];
     if (drawData.trackModel.type === "geneannotation") {
       // formattedData = removeDuplicates(drawData.genesArr, "id");

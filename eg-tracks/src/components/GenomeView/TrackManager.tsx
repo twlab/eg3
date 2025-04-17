@@ -1412,7 +1412,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const curTrackModel = tracks.find(
           (trackModel: any) => trackModel.id === fetchRes.id
         );
-        console.log(fetchRes.type, fetchRes.trackType);
         if (curTrackModel && trackOptionMap[`${fetchRes.trackType}`]) {
           configOptions = {
             ...trackOptionMap[`${fetchRes.trackType}`],
@@ -1435,11 +1434,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
-        console.log(
-          objToInstanceAlign(visRegion),
-          basePerPixel.current,
-          configOptions
-        );
         result = await fetchInstances.current[`${fetchRes.id}`].getData(
           objToInstanceAlign(visRegion),
           basePerPixel.current,
@@ -2244,6 +2238,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         // methylc: "" qbed: "" , dynseq: "",,
         let curTrackModel;
         let configOptions;
+        if (!trackOptionMap[`${cacheTrackData.trackType}`]) {
+          continue;
+        }
         if (cacheTrackData.trackType in { hic: "", longrange: "" }) {
           trackToDrawId[key] = "";
           continue;
@@ -2675,7 +2672,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
-      console.log(trackFetchedDataCache.current);
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
     }
   }, [newDrawData]);
@@ -2826,6 +2822,40 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   </SortableList.Item>
                 )}
               />
+
+              <div
+                style={{
+                  display: "flex",
+                  position: "absolute",
+                  width: `${windowWidth}px`,
+                  zIndex: 10,
+                }}
+              >
+                {selectedTool &&
+                selectedTool.isSelected &&
+                selectedTool.title !== 1 ? (
+                  <SelectableGenomeArea
+                    selectableRegion={userViewRegion}
+                    dragLimits={
+                      new OpenInterval(legendWidth, windowWidth + 120)
+                    }
+                    onRegionSelected={onRegionSelected}
+                    selectedTool={selectedTool}
+                  >
+                    <div
+                      style={{
+                        height: block.current
+                          ? block.current?.getBoundingClientRect().height
+                          : 0,
+                        zIndex: 3,
+                        width: `${windowWidth + 120}px`,
+                      }}
+                    ></div>
+                  </SelectableGenomeArea>
+                ) : (
+                  ""
+                )}
+              </div>
             </div>
           </div>
         </div>
