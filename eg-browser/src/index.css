@@ -10,6 +10,10 @@ body {
   @apply bg-transparent text-blue-700 px-1 border border-blue-500 rounded;
 }
 
+[data-theme="dark"] .btn {
+  @apply bg-transparent text-blue-200 px-1 border border-blue-100 rounded;
+}
+
 /* .btn:hover {
     @apply bg-blue-500 text-white border-transparent;
 } */
@@ -288,4 +292,15 @@ input {
 
 #shareUI .MuiTab-textColorSecondary {
   color: unset;
+}
+
+.Track-selected-border {
+  background-image: url("./assets/border-anim-h.gif"), url("./assets/border-anim-h.gif"),
+    url("./assets/border-anim-v.gif"), url("./assets/border-anim-v.gif");
+
+  /* Repeat horizontally for the horizontal dashes, vertically for the vertical dashes */
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+
+  /* top, bottom, left, right.  Corners selected in preparation for clockwise rotation. */
+  background-position: left top, right bottom, left bottom, right top;
 }

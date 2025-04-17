@@ -2810,12 +2810,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
                         width: `${windowWidth + 120}px`,
 
-                        borderBottom: item.trackModel.isSelected
-                          ? ""
-                          : "1px solid #BCCCDC",
+                        // borderBottom: item.trackModel.isSelected
+                        //   ? ""
+                        //   : "1px solid #BCCCDC",
                       }}
                       className={
-                        item.trackModel.isSelected ? "animatedBorder" : ""
+                        item.trackModel.isSelected ? "Track-selected-border" : ""
                       }
                     >
                       <item.component

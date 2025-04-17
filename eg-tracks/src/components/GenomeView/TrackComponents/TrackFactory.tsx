@@ -1512,7 +1512,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           zIndex: 10,
           width: 120,
           backgroundColor: trackModel.isSelected
-            ? "#FFD0C7"
+            ? "yellow"
             : "var(--bg-color)",
 
           color: trackModel.isSelected ? "black" : "var(--font-color)",
