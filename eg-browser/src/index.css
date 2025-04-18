@@ -301,7 +301,8 @@ input {
   bottom: 0;
   z-index: 5; /*  above the child component so animated border will display */
   pointer-events: none; /* Make sure it doesn't interfere with interactions */
-  outline: 1px solid #9aa6b2;
+  /* outline: 1px solid #9aa6b2; */
+  border-bottom: 1px solid lightgray;
 }
 
 .Track-selected-border {
