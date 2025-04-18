@@ -36,19 +36,19 @@ export default function useBrowserInitialization() {
     const publichub = searchParams.get("publichub");
 
     if (session) {
-      window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&session=${session}&statusId=${statusId}`;
+      window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&session=${session}&statusId=${statusId}`;
       return;
     }
     if (datahub) {
       if (coordinate) {
-        window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}&coordinate=${coordinate}`;
+        window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}&coordinate=${coordinate}`;
       } else {
-        window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}`;
+        window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}`;
       }
       return;
     }
     if (publichub) {
-      window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&publichub=${publichub}`;
+      window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&publichub=${publichub}`;
       return;
     }
 
