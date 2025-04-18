@@ -136,17 +136,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 configOptions.label
                   ? configOptions.label
                   : trackModel.options.label
-                  ? trackModel.options.label
-                  : ""
+                    ? trackModel.options.label
+                    : ""
               }
             />
             <svg
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={svgKey}
               width={width / 3}
-              viewBox={`${trackState.viewWindow.start} 0 ${
-                trackState.visWidth / 3
-              } ${height}`}
+              viewBox={`${trackState.viewWindow.start} 0 ${trackState.visWidth / 3
+                } ${height}`}
               height={height}
               display={"block"}
             >
@@ -214,7 +213,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => {}}
+          onClick={renderTooltip ? renderTooltip : () => { }}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -239,7 +238,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => {}}
+          onClick={renderTooltip ? renderTooltip : () => { }}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -319,7 +318,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -344,7 +343,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => {}}
+            renderTooltip={renderTooltip ? renderTooltip : () => { }}
             onHideTooltip={onClose}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -467,7 +466,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => {}}
+              onClick={renderTooltip ? renderTooltip : () => { }}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -493,7 +492,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -512,7 +511,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             options={configOptions}
           />
         ));
@@ -532,8 +531,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-            imgCount -
-            THUMBNAIL_PADDING,
+          imgCount -
+          THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -557,8 +556,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
               configOptions.label
                 ? configOptions.label
                 : trackModel.options.label
-                ? trackModel.options.label
-                : ""
+                  ? trackModel.options.label
+                  : ""
             }
           />
         );
@@ -577,7 +576,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => {}}
+          onSetImageInfo={() => { }}
           heightObj={heightObj}
         />
       );
@@ -640,8 +639,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             configOptions.label
               ? configOptions.label
               : trackModel.options.label
-              ? trackModel.options.label
-              : ""
+                ? trackModel.options.label
+                : ""
           }
         />
       );
@@ -1163,8 +1162,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
               drawData.configOptions.label
                 ? drawData.configOptions.label
                 : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
+                  ? drawData.trackModel.options.label
+                  : ""
             }
           />
         );
@@ -1195,17 +1194,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 drawData.configOptions.label
                   ? drawData.configOptions.label
                   : drawData.trackModel.options.label
-                  ? drawData.trackModel.options.label
-                  : ""
+                    ? drawData.trackModel.options.label
+                    : ""
               }
             />
             <svg
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={crypto.randomUUID()}
               width={drawData.trackState.visWidth / 3}
-              viewBox={`${drawData.trackState.viewWindow.start} 0 ${
-                drawData.trackState.visWidth / 3
-              } ${drawData.configOptions.height}`}
+              viewBox={`${drawData.trackState.viewWindow.start} 0 ${drawData.trackState.visWidth / 3
+                } ${drawData.configOptions.height}`}
               height={drawData.configOptions.height}
               display={"block"}
             >
@@ -1263,8 +1261,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             drawData.configOptions.label
               ? drawData.configOptions.label
               : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
+                ? drawData.trackModel.options.label
+                : ""
           }
         />
       );
@@ -1392,41 +1390,10 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
           dynamiclongrange: "",
           dynamichic: "",
         }
-      )) ||
-    drawData.trackModel.type in { omeroidr: "" }
+      ))
   ) {
-    let formattedData: Array<any> = [];
-    if (drawData.trackModel.type === "geneannotation") {
-      // formattedData = removeDuplicates(drawData.genesArr, "id");
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "refbed") {
-      // formattedData = removeDuplicates(drawData.genesArr, "id");
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "bed") {
-      // formattedData = removeDuplicatesWithoutId(drawData.genesArr)
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "categorical") {
-      // const filteredArray = removeDuplicatesWithoutId(drawData.genesArr);
-      // formattedData = filteredArray;
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "bam") {
-      // formattedData = removeDuplicates(drawData.genesArr, "id");
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "omeroidr") {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "bigbed") {
-      // formattedData = removeDuplicatesWithoutId(drawData.genesArr)
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "snp") {
-      // formattedData = removeDuplicates(drawData.genesArr, "id")
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "repeatmasker") {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "jaspar") {
-      const filteredArray = removeDuplicates(drawData.genesArr, "matrixId");
 
-      formattedData = filteredArray;
-    }
+    const formattedData = drawData.genesArr;
 
     let svgDATA = displayModeComponentMap.full({
       formattedData,
@@ -1441,7 +1408,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       getHeight: drawData.getHeight,
       ROW_HEIGHT: drawData.ROW_HEIGHT,
     });
-    // console.log(formattedData, "checkPrintTWEICE")
+
     return svgDATA;
   } else if (drawData.trackModel.type === "genomealign") {
     return displayModeComponentMap.genomealign(drawData);
@@ -1499,7 +1466,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     return canvasElements;
   } else if (drawData.trackModel.type === "dynamichic") {
     let formattedData = drawData.genesArr;
-    let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
+    let canvasElements = displayModeComponentMap["dynamichic"]({
       formattedData,
       trackState: drawData.trackState,
       windowWidth: drawData.windowWidth,
@@ -1606,9 +1573,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     } else if (drawData.trackModel.type === "bam") {
       formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "omeroidr") {
-      formattedData = drawData.genesArr.map(
-        (record) => new ImageRecord(record)
-      );
+      formattedData = drawData.genesArr;
     } else if (drawData.trackModel.type === "bigwig") {
       formattedData = drawData.genesArr;
     } else {
