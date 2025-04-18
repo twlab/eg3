@@ -13,7 +13,6 @@ import {
   importOneSession,
 } from "../redux/thunk/session";
 
-
 const IDEMPOTENCY_STORAGE_KEY = "_eg-query-idempotency-key";
 
 export default function useBrowserInitialization() {
@@ -29,6 +28,32 @@ export default function useBrowserInitialization() {
     const sessionFile = searchParams.get("sessionFile");
     const idempotencyToken = searchParams.get("idempotencyToken");
 
+    // MARK: - Legacy URL Handling
+    const session = searchParams.get("session");
+    const statusId = searchParams.get("statusId");
+    const datahub = searchParams.get("datahub");
+    const coordinate = searchParams.get("coordinate");
+    const publichub = searchParams.get("publichub");
+
+    if (session) {
+      window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&session=${session}&statusId=${statusId}`;
+      return;
+    }
+    if (datahub) {
+      if (coordinate) {
+        window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}&coordinate=${coordinate}`;
+      } else {
+        window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}`;
+      }
+      return;
+    }
+    if (publichub) {
+      window.location.href = `http://epigenomegateway.wustl.edu/legacy/?genome=${genome}&publichub=${publichub}`;
+      return;
+    }
+
+    // MARK: - Idempotency Check
+
     if (idempotencyToken) {
       const currentIdempotencyToken = localStorage.getItem(
         IDEMPOTENCY_STORAGE_KEY
@@ -38,6 +63,8 @@ export default function useBrowserInitialization() {
         return;
       }
     }
+
+    // MARK: - Session Loading
 
     if (sessionFile) {
       (async () => {
