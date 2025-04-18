@@ -362,6 +362,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
     const bundleRes = await onRetrieveSession(bundleSession.bundleId);
 
     if (bundleRes) {
+
       onRetrieveBundle(bundleRes);
       setBundle(bundleRes);
       const genomeConfig = getGenomeConfig(bundleSession.genomeName);
@@ -375,12 +376,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
             end: genomeConfig.defaultRegion.end,
           };
         }
-
-        bundleSession["viewRegion"] = new DisplayedRegionModel(
-          genomeConfig.navContext,
-          viewInterval.start,
-          viewInterval.end
-        )
+        if (viewInterval) {
+          bundleSession["viewRegion"] = new DisplayedRegionModel(
+            genomeConfig.navContext,
+            viewInterval.start,
+            viewInterval.end
+          )
+        }
         onRestoreSession(bundleSession)
       }
       else {
@@ -418,8 +420,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
 
   const retrieveSession = async (retrieveId: string) => {
     const bundleRes = await onRetrieveSession(retrieveId);
-    setBundle(bundleRes);
-    onRetrieveBundle(bundleRes);
+    if (bundleRes) {
+
+      setBundle(bundleRes);
+      onRetrieveBundle(bundleRes);
+
+    }
+
   };
   const styles = {
     container: {

@@ -58,12 +58,14 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       (acc, cur) => acc + cur.clientHeight,
       tracks.length
     );
-    const boxWidth = tracks[0].clientWidth;
+    //tracks[0].clientWidth
+    const boxWidth = props.windowWidth + 120;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    // svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
+    svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
     //add the width of the track and tracklegend to to correctly view all the svg
-    const width = props.windowWidth + 20 + 120;
+    const width = props.windowWidth + 120;
+
     svgElem.setAttributeNS(null, "width", width + "");
     svgElem.setAttributeNS(null, "height", boxHeight + "");
     svgElem.setAttributeNS(null, "font-family", "Arial, Helvetica, sans-serif");
@@ -102,26 +104,46 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       y = 5;
     tracks.forEach((ele, idx) => {
       const legendWidth = 120;
-      const trackHeight = ele.children[1].clientHeight + 3;
+      let trackHeight
+      let trackLabelText
+      let trackLegendAxisSvgs
+      let eleSvgs
+      if (ele.children[1]) {
+        trackHeight = ele.children[1].children[1].clientHeight + 3;
+        trackLabelText = ele.children[1].children[0].textContent;
+        trackLegendAxisSvgs = ele.children[1].children[0].querySelectorAll("svg");
+
+        //to DO: legends and element overlap because the legend get query here also, find a way to separate them, 
+        eleSvgs = ele.children[1].querySelectorAll("svg");
+      }
+      else {
+        trackHeight = ele.children[0].children[1].clientHeight + 3;
+        trackLabelText = ele.children[0].children[0].textContent;
+        trackLegendAxisSvgs = ele.children[0].children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
+        eleSvgs = ele.children[0].querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
+
+
+      }
+
       const yoffset = trackHeight > 20 ? 24 : 14;
 
-      const trackLabelText = ele.children[0].textContent;
+
 
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
-        labelSvg.setAttributeNS(null, "x", x + 4 + "");
+        labelSvg.setAttributeNS(null, "x", x + "");
         labelSvg.setAttributeNS(null, "y", y + yoffset + "");
-        labelSvg.setAttributeNS(null, "font-size", "12px");
+        labelSvg.setAttributeNS(null, "font-size", "8px");
         const textNode = document.createTextNode(trackLabelText);
         labelSvg.setAttribute("class", "svg-text-bg");
         labelSvg.appendChild(textNode);
         svgElemg.appendChild(labelSvg);
       }
 
-      const chrLabelText = ele.children[0].querySelector(
-        ".TrackLegend-chrLabel"
-      );
-
+      // const chrLabelText = ele.children[0].children[0].querySelector(
+      //   ".TrackLegend-chrLabel"
+      // );
+      // console.log(chrLabelText)
       // if (chrLabelText) {
       //   const labelSvg = document.createElementNS(xmlns, "text");
       //   labelSvg.setAttributeNS(null, "x", x + 15 + "");
@@ -132,7 +154,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       //   labelSvg.appendChild(textNode);
       //   svgElemg.appendChild(labelSvg);
       // }
-      const trackLegendAxisSvgs = ele.children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
       if (trackLegendAxisSvgs.length > 0) {
         const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
         trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
@@ -147,12 +168,12 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       }
       // deal with track contents
       const options = props.tracks[idx].options;
-      const eleSvgs = ele.querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
 
       const trackG = document.createElementNS(xmlns, "g");
       if (eleSvgs.length > 0) {
         x += legendWidth;
         let yoff = 0; // when bi-directional numerical track is not symmetric, need a tempory variable to hold y offset
+        // offset the x here because legend axis and svg element overlapp, separater the elements and axis
         eleSvgs.forEach((eleSvg, idx2) => {
           eleSvg.setAttribute("id", "svg" + idx + idx2);
           eleSvg.setAttribute("x", x + "");
@@ -170,6 +191,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           yoff += eleSvg.clientHeight; // do this before appendChild
           trackG.appendChild(eleSvg);
         });
+
+
       }
       trackG.setAttributeNS(null, "transform", `translate(${translateX})`);
       svgElemg2.appendChild(trackG);
@@ -186,7 +209,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       svgElemg.appendChild(sepLine);
       // y += 1;
       x = 0;
-      clipX = legendWidth - 1;
+      clipX = legendWidth;
     });
     clipHeight = boxHeight;
     clipWidth = boxWidth - clipX;
@@ -325,7 +348,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           genomeConfig: createSVGData.genomeConfig
         });
 
-        return <div key={index}>{svgResult} </div>
+        return <div className={"Track"} key={index}>{svgResult} </div>
 
           ;
       });

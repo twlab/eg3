@@ -101,8 +101,9 @@ export default function GenomeView() {
     );
   };
 
-
-  return currentSession && genomeConfig ? (
+  // need to check if genomes are the same, for example if we update session bundle it can have a different genome name from genomeConfig because
+  // currentSession updates first, but genomeConfig still has the previous genome
+  return currentSession && genomeConfig && (currentSession.genomeId === genomeConfig.name) ? (
     <div>
       <TrackContainerRepresentable
         key={currentSession.id}

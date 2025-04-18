@@ -93,6 +93,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = false;
+
         setCurrentGenomeConfig(curGenome);
       }
     }

@@ -1391,6 +1391,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           missingIdx: curIdx,
         });
       } else {
+
         enqueueMessage(dataToFetchArr);
       }
     }
@@ -1406,6 +1407,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: createCache
   async function createCache(fetchRes: { [key: string]: any }) {
+
     const tmpTrackState = { ...fetchRes.trackState };
     let result;
     if (fetchRes.trackType in { hic: "", dynamichic: "", bam: "" }) {
@@ -1689,11 +1691,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // setSelectedTool({ ...tool });
 
     let highlightElement = createHighlight(highlights);
-    globalTrackState.current = { rightIdx: 0, leftIdx: 1, trackStates: {} };
+    globalTrackState.current = {
+      rightIdx: 0,
+      leftIdx: 1,
+      viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
+      trackStates: {},
+    };
     trackFetchedDataCache.current = {};
     setHighLightElements([...highlightElement]);
 
-    setDataIdx(0);
+    setDataIdx(-0);
 
     setConfigMenu(null);
     setApplyTrackConfigChange({});
@@ -1798,6 +1805,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
 
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
+
     queueRegionToFetch(0);
   }
   // MARK: sigTrackLoad
@@ -2041,12 +2049,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       preload.current = true;
     } else if (genomeConfig.sizeChange) {
+
       // refreshState();
       trackSizeChange();
       // initialConfig.current = true;
 
       // initializeTracks();
     } else {
+
       preload.current = true;
 
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
@@ -2432,6 +2442,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
+
     if (!genomeConfig.isInitial && tracks) {
       if (
         !arraysHaveSameTrackModels(tracks, [

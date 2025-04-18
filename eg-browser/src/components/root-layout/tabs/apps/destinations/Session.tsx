@@ -4,6 +4,7 @@ import {
   updateCurrentSession,
 } from "../../../../../lib/redux/slices/browserSlice";
 import {
+  resetState,
   selectBundle,
   selectCustomTracksPool,
   updateBundle,
@@ -82,7 +83,9 @@ const Session: React.FC = () => {
       regionSets: sessionBundle.regionSets ?? [],
     };
 
+    dispatch(resetState());
     dispatch(updateCurrentSession(session));
+
   }
 
 
