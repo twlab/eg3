@@ -337,10 +337,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: mouseAction
   const handleKeyDown = (event: { key: string }) => {
     if (event.key === "Escape") {
-      let newSelectedTool: { [key: string]: any } = {};
-      newSelectedTool["tool"] = "none";
-      newSelectedTool["isSelected"] = false;
-      setSelectedTool(newSelectedTool);
+      // let newSelectedTool: { [key: string]: any } = {};
+      // newSelectedTool["tool"] = "none";
+      // newSelectedTool["isSelected"] = false;
+      // setSelectedTool(newSelectedTool);
       onTrackUnSelect();
       onConfigMenuClose();
     }
@@ -2759,15 +2759,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               flexDirection: "column",
               position: "relative",
               cursor:
-                tool === Tool.Drag
-                  ? "pointer"
-                  : tool === Tool.Reorder
-                    ? "move"
-                    : tool === Tool.Highlight
-                      ? "ew-resize"
-                      : tool === Tool.Zoom
-                        ? "zoom-in"
-                        : "default",
+                (() => {
+                  switch (tool) {
+                    case Tool.Drag:
+                      return "pointer";
+                    case Tool.Reorder:
+                      return "ns-resize";
+                    case Tool.Highlight:
+                      return "ew-resize";
+                    case Tool.Zoom:
+                      return "zoom-in";
+                    default:
+                      return "crosshair";
+                  }
+                })(),
             }}
           >
             <div ref={horizontalLineRef} className="horizontal-line" />

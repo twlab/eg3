@@ -134,7 +134,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
-        {currentGenomeConfig && (
+        {currentGenomeConfig ? (
           <TrackManager
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
@@ -155,7 +155,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             isScreenShotOpen={isScreenShotOpen}
             selectedRegionSet={selectedRegionSet}
           />
-        )}
+        ) : 'Loading...'}
       </div>
     </div>
   );
