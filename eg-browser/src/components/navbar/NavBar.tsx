@@ -220,7 +220,18 @@ export default function NavBar() {
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
           >
+            <Switch
+              checked={darkTheme}
+              onChange={(checked) => dispatch(setDarkTheme(checked))}
+              checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+              uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
+            />
             <Button
+              style={{
+                backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
+                padding: "4px 8px",
+                color: "black",
+              }}
               onClick={() =>
                 window.open(
                   "https://epigenomegateway.wustl.edu/browser2022/",
@@ -231,13 +242,6 @@ export default function NavBar() {
             >
               Use Previous Version
             </Button>
-
-            <Switch
-              checked={darkTheme}
-              onChange={(checked) => dispatch(setDarkTheme(checked))}
-              checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
-              uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
-            />
           </motion.div>
         )}
       </AnimatePresence>
