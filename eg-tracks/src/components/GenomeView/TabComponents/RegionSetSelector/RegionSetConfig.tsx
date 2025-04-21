@@ -87,7 +87,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           if (locus) {
             return new Feature(symbol, locus, "+"); // coordinates default have + as strand
           }
-        } catch (error) {}
+        } catch (error) { }
         return getSymbolRegions(genomeName, symbol);
       })
     );
@@ -101,10 +101,10 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
           .map((gene) =>
             gene.name.toLowerCase() === inputList[index].toLowerCase()
               ? new Feature(
-                  gene.name,
-                  new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
-                  gene.strand
-                )
+                gene.name,
+                new ChromosomeInterval(gene.chrom, gene.txStart, gene.txEnd),
+                gene.strand
+              )
               : null
           )
           .filter((hit) => hit);
@@ -135,6 +135,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
       genome,
       new FlankingStrategy()
     );
+    console.log(newSet)
     setRegionSet(newSet);
   };
 

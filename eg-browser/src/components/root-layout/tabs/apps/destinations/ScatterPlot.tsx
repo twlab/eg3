@@ -48,12 +48,10 @@ const ScatterPlot: React.FC = () => {
 
   const sets = useMemo(() => {
     if (currentSession) {
+
       return currentSession?.regionSets.map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
-          newRegionSet["genome"] = genome
-            ? genome
-            : getGenomeConfig(item.genomeName).genome;
           newRegionSet["id"] = item.id;
           return newRegionSet;
         } else {

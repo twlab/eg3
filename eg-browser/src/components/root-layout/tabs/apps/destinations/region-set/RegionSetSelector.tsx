@@ -13,7 +13,7 @@ import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
-const RegionSetSelector: React.FC = ({}) => {
+const RegionSetSelector: React.FC = ({ }) => {
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
   const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
@@ -29,16 +29,15 @@ const RegionSetSelector: React.FC = ({}) => {
   if (!genome) {
     return "";
   }
-  const sets = currentSession?.regionSets.map((item) => {
+  const sets = currentSession?.regionSets ? currentSession?.regionSets.map((item) => {
     if (typeof item === "object") {
       const newRegionSet = RegionSet.deserialize(item);
-      newRegionSet["genome"] = genome;
-      newRegionSet["id"] = item.id;
+
       return newRegionSet;
     } else {
       return item;
     }
-  });
+  }) : [];
 
   const setConfigured = (newSet: RegionSet) => {
     if (indexBeingConfigured < 0 || indexBeingConfigured >= sets.length) {

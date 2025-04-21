@@ -10,7 +10,6 @@ import GoLive from "./destinations/GoLive";
 import Screenshot from "./destinations/Screenshot";
 import DynamicRecord from "./destinations/DynamicRecord";
 import FetchSequence from "./destinations/FetchSequence";
-import { useAppDispatch } from "@/lib/redux/hooks";
 import RegionSetSelector from "./destinations/region-set/RegionSetSelector";
 
 export default function AppsTab() {
@@ -76,7 +75,6 @@ export default function AppsTab() {
     []
   );
 
-  const dispatch = useAppDispatch();
 
   return (
     <NavigationStack
@@ -103,7 +101,7 @@ export default function AppsTab() {
           path="session"
           title="Session"
           description="Manage and share your browser sessions"
-          // onClick={() => dispatch(setSessionPanelOpen(true))}
+        // onClick={() => dispatch(setSessionPanelOpen(true))}
         />
         {/* <DescriptiveNavigationLink
           path="go-live"

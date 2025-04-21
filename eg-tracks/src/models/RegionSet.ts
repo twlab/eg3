@@ -14,6 +14,7 @@ export interface IRegionSet {
   genomeName: string;
   flankingStrategy: IFlankingStrategy;
   id?: any;
+  genome?: any;
 }
 
 /**
@@ -58,7 +59,8 @@ class RegionSet {
   }
 
   static deserialize(object: IRegionSet): RegionSet {
-    const genomeName = object.genomeName;
+
+    const genomeName = object.genomeName ? object.genomeName : object.genome._name;
     const genomeConfig = getGenomeConfig(genomeName);
     if (!genomeConfig) {
       throw new Error(

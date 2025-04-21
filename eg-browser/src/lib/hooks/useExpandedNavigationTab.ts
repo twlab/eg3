@@ -9,6 +9,7 @@ export default function useExpandedNavigationTab() {
         dispatch(setExpandNavigationTab(true));
 
         return () => {
+
             dispatch(setExpandNavigationTab(false));
         };
     }, [dispatch]);

@@ -46,12 +46,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   const [boxColor, setBoxColor] = useState("rgb(214,12,140)");
   const [showModal, setShowModal] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  function handleCloseModal() {
-    setShowModal(false);
-  }
-  function handleOpenModal() {
-    setShowModal(true);
-  }
+
   useEffect(() => {
     const debouncedChangeBoxColor = _.debounce(changeBoxColor, 250);
     return () => {
@@ -74,12 +69,10 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const sets = useMemo(() => {
     if (currentSession) {
+
       return currentSession?.regionSets.map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
-          newRegionSet["genome"] = genome
-            ? genome
-            : getGenomeConfig(item.genomeName).genome;
           newRegionSet["id"] = item.id;
           return newRegionSet;
         } else {
@@ -262,7 +255,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       heatmap: heatmapData,
     });
     setPlotMsg("");
-    handleOpenModal();
   };
 
   const groupDataToBins = (data, bins, rights) => {
@@ -393,7 +385,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
           </p>
           <RegionSetSelector />
         </div>
-      ) : currentSession && showModal ? (
+      ) : currentSession ? (
         <>
           <div>
             <div>
@@ -454,7 +446,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
             </div>
           </div>
         </>
-      ) : null}
+      ) : <div></div>}
     </div>
   );
 };

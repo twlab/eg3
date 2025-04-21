@@ -34,7 +34,7 @@ const RegionSetConfig: React.FC<RegionSetConfigProps> = ({
   onSetConfigured,
   genome,
 }) => {
-  useExpandedNavigationTab()
+
   const currentSession = useAppSelector(selectCurrentSession);
 
   const [regionSet, setRegionSet] = useState<RegionSet | null>(null);
