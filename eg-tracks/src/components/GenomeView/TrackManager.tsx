@@ -42,6 +42,7 @@ import {
   formatDataByType,
   twoDataTypeTracks,
 } from "./TrackComponents/displayModeComponentMap";
+import MetadataHeader from "./ToolComponents/MetadataHeader";
 const groupManager = new GroupedTrackManager();
 
 export const convertTrackModelToITrackModel = (
@@ -269,7 +270,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any } | null>(
     null
   );
-  const metasets = useRef<Set<any>>(new Set());
+  const [metaSets, setMetaSets] = useState<{ [key: string]: any }>({
+    suggestedMetaSets: new Set(),
+    terms: new Array(),
+  });
 
   const [viewWindowConfigChange, setViewWindowConfigChange] = useState<null | {
     [key: string]: any;
@@ -1935,11 +1939,90 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function addTermToMetaSets(tracks: Array<any>) {
     const allKeys = tracks.map((track) => Object.keys(track.metadata));
     const metaKeys = _.union(...allKeys);
-    const toBeAdded = Array.isArray(metaKeys) ? metaKeys : [metaKeys];
-    console.log(new Set([...metasets.current, ...toBeAdded]), "SETS");
-    metasets.current = new Set([...metasets.current, ...toBeAdded]);
+    const toBeAdded = metaKeys.filter((key) => !metaSets.terms.includes(key));
+
+    const newSuggestedMetaSets = new Set([
+      ...metaSets.suggestedMetaSets,
+      ...toBeAdded,
+    ]);
+
+    setMetaSets({ ...metaSets, suggestedMetaSets: newSuggestedMetaSets });
+  }
+  function onNewTerms(tracks: Array<any>) {
+    const newSuggestedMetaSets = new Set(
+      [...metaSets.suggestedMetaSets].filter((term) => !tracks.includes(term))
+    );
+
+    const newTerms = Array.from(new Set([...metaSets.terms, ...tracks]));
+
+    setMetaSets({
+      ...metaSets,
+      terms: newTerms,
+      suggestedMetaSets: newSuggestedMetaSets,
+    });
+
+    console.log(
+      { terms: newTerms, suggestedMetaSets: newSuggestedMetaSets },
+      "AddupdatedMetaSets"
+    );
   }
 
+  function onRemoveTerm(termsToRemove: string[]) {
+    // Remove the terms from the terms array
+    const newTerms = metaSets.terms.filter((t) => !termsToRemove.includes(t));
+
+    // Add the removed terms back to suggestedMetaSets
+    const newSuggestedMetaSets = new Set(metaSets.suggestedMetaSets);
+    termsToRemove.forEach((term) => newSuggestedMetaSets.add(term));
+
+    // Update the metaSets state with the new terms and suggestedMetaSets
+    const updatedMetaSets = {
+      ...metaSets,
+      terms: newTerms,
+      suggestedMetaSets: newSuggestedMetaSets,
+    };
+
+    // Call the setMetaSets function to update the state
+    setMetaSets(updatedMetaSets);
+
+    // Log the updated state for debugging
+    console.log(updatedMetaSets, "updatedMetaSetsAfterRemoval");
+  }
+  function onColorBoxClick(key, value) {
+    console.log(key, value);
+    const trackId = trackDetails;
+    let isSelected;
+
+    if (selectedTracks.current[trackId] === "") {
+      isSelected = false;
+    } else {
+      isSelected = true;
+    }
+
+    if (!isSelected) {
+      delete selectedTracks.current[trackId];
+    } else {
+      selectedTracks.current[trackId] = "";
+    }
+
+    const newTracks = trackManagerState.current.tracks.map((trackModel) => {
+      if (trackModel.id === trackId) {
+        return new TrackModel({
+          ...trackModel,
+          isSelected: isSelected,
+        });
+      }
+      return trackModel;
+    });
+
+    onTrackSelected(newTracks);
+
+    if (configMenu && Object.keys(selectedTracks.current).length > 0) {
+      renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackId);
+    } else {
+      setConfigMenu(null);
+    }
+  }
   // MARK: USEEFFECTS
   // USEEFFECTS
   //_________________________________________________________________________________________________________________________________
@@ -2471,6 +2554,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         const newTrackComponents: Array<any> = [];
         const newG3dComponents: Array<any> = [];
+        const newAddedTrackModel: Array<any> = [];
         let checkHasGenAlign = false;
         for (let i = 0; i < tracks.length; i++) {
           const curTrackModel = tracks[i];
@@ -2500,6 +2584,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               });
               continue;
             }
+            newAddedTrackModel.push(curTrackModel);
             if (curTrackModel.type === "genomealign") {
               checkHasGenAlign = true;
               if (basePerPixel.current < 10) {
@@ -2587,7 +2672,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         trackManagerState.current.tracks = tracks;
-
+        addTermToMetaSets(newAddedTrackModel);
         setG3dTrackComponents(newG3dComponents);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx);
@@ -2748,6 +2833,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             region in {Math.round(windowWidth)}px, 1 pixel spans{" "}
             {niceBpCount(basePerPixel.current, true)}
           </p>
+          <MetadataHeader
+            terms={metaSets.terms}
+            onNewTerms={onNewTerms}
+            suggestedMetaSets={metaSets.suggestedMetaSets}
+            onRemoveTerm={onRemoveTerm}
+          />
         </div>
 
         <div
@@ -2845,6 +2936,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         highlightElements={highlightElements}
                         viewWindowConfigData={viewWindowConfigData}
                         viewWindowConfigChange={viewWindowConfigChange}
+                        metaSets={metaSets}
+                        onColorBoxClick={onColorBoxClick}
                       />
                     </div>
                   </SortableList.Item>

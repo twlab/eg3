@@ -37,4 +37,6 @@ export interface TrackProps {
   applyTrackConfigChange: any;
   containerRef: any;
   viewWindowConfigChange?: any;
+  metaSets: any;
+  onColorBoxClick: any;
 }

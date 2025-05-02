@@ -18,10 +18,7 @@ const ARROW_SIZE = 16;
 const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
-import { groups, scaleLinear } from "d3";
-import TrackLegend from "./commonComponents/TrackLegend";
-import { ScaleChoices } from "../../../models/ScaleChoices";
-import { NumericalDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import MetadataIndicator from "./commonComponents/MetadataIndicator";
 
 import VcfDetail from "./VcfComponents/VcfDetail";
 import Vcf from "./VcfComponents/Vcf";
@@ -52,6 +49,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   posRef,
   highlightElements,
   viewWindowConfigData,
+  metaSets,
+  onColorBoxClick,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -1509,6 +1508,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       >
         {legend}
       </div>
+      <MetadataIndicator
+        track={trackModel}
+        terms={metaSets.terms}
+        onClick={onColorBoxClick}
+      />
       <div
         ref={posRef}
         style={{
