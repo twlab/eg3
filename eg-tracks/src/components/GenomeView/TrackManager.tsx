@@ -1988,10 +1988,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // Log the updated state for debugging
     console.log(updatedMetaSets, "updatedMetaSetsAfterRemoval");
   }
-  function onColorBoxClick(metaDataKey, value) {
+  async function onColorBoxClick(metaDataKey, value) {
+    await onTrackUnSelect();
+    await onConfigMenuClose();
     console.log(metaDataKey, value);
-    onTrackUnSelect();
-    onConfigMenuClose();
+
     const newSelectedTracks: { [key: string]: any } = {};
     const newTrackModelArr: Array<any> = [];
     for (let key in trackManagerState.current.tracks) {
@@ -2009,7 +2010,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newTrackModelArr.push(new TrackModel({ ...track, isSelected: false }));
       }
     }
-
+    console.log(newTrackModelArr, newSelectedTracks);
     onTrackSelected(newTrackModelArr);
     selectedTracks.current = newSelectedTracks;
   }

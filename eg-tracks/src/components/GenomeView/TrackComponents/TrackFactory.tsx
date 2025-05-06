@@ -1495,10 +1495,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     <div
       style={{
         display: "flex",
-        position: "relative",
       }}
     >
-      {/* <div
+      <div
         style={{
           zIndex: 2,
           width: 120,
@@ -1508,7 +1507,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }}
       >
         {legend}
-      </div> */}
+      </div>
 
       <div
         ref={posRef}
@@ -1583,7 +1582,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       <div
         style={{
           position: "absolute",
-          zIndex: 100000000000,
+          zIndex: 3,
           height:
             configOptions.current.displayMode === "full"
               ? !fetchError.current
@@ -1592,12 +1591,22 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : !fetchError.current
               ? configOptions.current.height
               : 40,
+          left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
         }}
       >
         <MetadataIndicator
           track={trackModel}
           terms={metaSets.terms}
           onClick={onColorBoxClick}
+          height={
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
+              : 40
+          }
         />
       </div>
     </div>

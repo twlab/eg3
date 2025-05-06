@@ -92,12 +92,14 @@ interface MetadataIndicatorProps {
   terms?: string[]; // Metadata terms to indicate
   // Called when the component is clicked. Signature: (event: React.MouseEvent, term: string)
   onClick?: (event: string, term: string) => void;
+  height: number;
 }
 
 const MetadataIndicator: FC<MetadataIndicatorProps> = ({
   track,
   terms = [],
   onClick = () => undefined,
+  height,
 }) => {
   const getColorForTermValue = (termValue?: string): string => {
     if (!termValue) {
@@ -136,7 +138,7 @@ const MetadataIndicator: FC<MetadataIndicatorProps> = ({
   };
 
   return (
-    <div style={{ display: "flex", height: 20 }}>
+    <div style={{ display: "flex", height: height }}>
       {terms.map((term) => renderBoxForTerm(term))}
     </div>
   );
