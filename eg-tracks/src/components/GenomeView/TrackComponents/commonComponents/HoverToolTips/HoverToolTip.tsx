@@ -720,6 +720,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
         scale,
         xAlias,
       });
+
       if (trackHoverTooltip) {
         setPosition({
           ...rectPosition,

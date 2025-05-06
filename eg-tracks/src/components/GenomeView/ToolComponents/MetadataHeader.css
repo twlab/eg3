@@ -1,7 +1,7 @@
 .MetadataHeader-container {
   /* margin-left: auto;
     margin-right: 0; */
-  padding-bottom: 5px;
+  /* padding-bottom: 5px; */
   flex-grow: 2;
   display: flex;
   justify-content: flex-end;
@@ -25,6 +25,6 @@
   margin-top: auto;
   margin-left: 1ch;
   margin-bottom: auto;
-  padding-bottom: 5px;
+
   position: relative;
 }

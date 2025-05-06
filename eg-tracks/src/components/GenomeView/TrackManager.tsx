@@ -1426,7 +1426,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const curTrackModel = tracks.find(
           (trackModel: any) => trackModel.id === fetchRes.id
         );
-        console.log(curTrackModel, "WUTTT");
+
         if (curTrackModel && trackOptionMap[`${fetchRes.trackType}`]) {
           configOptions = {
             ...trackOptionMap[`${fetchRes.trackType}`],
@@ -1449,18 +1449,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
-        console.log(
-          fetchInstances.current[`${fetchRes.id}`],
+        result = await fetchInstances.current[
+          `${fetchRes.trackModel.url}`
+        ].getData(
           objToInstanceAlign(visRegion),
           basePerPixel.current,
           configOptions
         );
-        result = await fetchInstances.current[`${fetchRes.id}`].getData(
-          objToInstanceAlign(visRegion),
-          basePerPixel.current,
-          configOptions
-        );
-        console.log("hic", result);
       } else if (fetchRes.trackType === "dynamichic") {
         const curStraw = fetchRes.trackModel.tracks.map(
           (_hicTrack: any, index: any) => {
@@ -1747,8 +1742,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
       if (trackManagerState.current.tracks[i].type === "hic") {
-        fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
-          new HicSource(trackManagerState.current.tracks[i].url);
+        if (
+          !fetchInstances.current[`${trackManagerState.current.tracks[i].url}`]
+        ) {
+          fetchInstances.current[`${trackManagerState.current.tracks[i].url}`] =
+            new HicSource(trackManagerState.current.tracks[i].url);
+        }
       } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
         trackManagerState.current.tracks[i].tracks?.map(
           (_item: any, index: string | number) => {
@@ -1971,11 +1970,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       terms: newTerms,
       suggestedMetaSets: newSuggestedMetaSets,
     });
-
-    console.log(
-      { terms: newTerms, suggestedMetaSets: newSuggestedMetaSets },
-      "AddupdatedMetaSets"
-    );
   }
 
   function onRemoveTerm(termsToRemove: string[]) {
@@ -1999,7 +1993,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   async function onColorBoxClick(metaDataKey, value) {
     await onTrackUnSelect();
     await onConfigMenuClose();
-    console.log(metaDataKey, value);
     const stringValue = value;
     const newSelectedTracks: { [key: string]: any } = {};
     const newTrackModelArr: Array<any> = [];
@@ -2020,7 +2013,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newTrackModelArr.push(new TrackModel({ ...track, isSelected: false }));
       }
     }
-    console.log(newTrackModelArr, newSelectedTracks);
     onTrackSelected(newTrackModelArr);
     selectedTracks.current = newSelectedTracks;
   }
@@ -2537,7 +2529,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!genomeConfig.isInitial && tracks) {
-      console.log(tracks);
       if (
         !arraysHaveSameTrackModels(tracks, [
           ...trackComponents.map((item) => item.trackModel),
@@ -2610,10 +2601,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             // for tracks like hic and bam where we create an  instance obj
             // that we reuse to fetch data
             else if (curTrackModel.type === "hic") {
-              fetchInstances.current[`${curTrackModel.id}`] = new HicSource(
-                curTrackModel.url
-              );
-              console.log("created");
+              if (!fetchInstances.current[`${curTrackModel.url}`]) {
+                fetchInstances.current[`${curTrackModel.url}`] = new HicSource(
+                  curTrackModel.url
+                );
+              }
             } else if (curTrackModel.type === "dynamichic") {
               curTrackModel.tracks?.map((_item, index) => {
                 fetchInstances.current[
@@ -2804,6 +2796,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           style={{
             backgroundColor: "var(--bg-color)",
             width: `${windowWidth + 120}px`,
+            marginTop: "10px",
+            marginBottom: "10px",
+            gap: "10px",
           }}
         >
           <HighlightMenu
@@ -2814,36 +2809,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             onSetHighlights={getHighlightState}
             selectedTool={selectedTool}
           />
-          {userViewRegion && (
-            <TrackRegionController
-              selectedRegion={userViewRegion}
-              onRegionSelected={onRegionSelected}
-              contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-              genomeConfig={genomeConfig}
-              trackManagerState={trackManagerState}
-              genomeArr={[]}
-              genomeIdx={0}
-              addGlobalState={undefined}
-            />
-          )}
-          <p
-            className="ml-4"
+          <div
             style={{
-              backgroundColor: "var(--bg-color)",
-              color: "var(--font-color)",
+              width: "62%",
+              display: "flex",
+              justifyContent: "flex-end",
             }}
           >
-            Viewing a{" "}
-            {niceBpCount(trackManagerState.current.viewRegion.getWidth())}{" "}
-            region in {Math.round(windowWidth)}px, 1 pixel spans{" "}
-            {niceBpCount(basePerPixel.current, true)}
-          </p>
-          <MetadataHeader
-            terms={metaSets.terms}
-            onNewTerms={onNewTerms}
-            suggestedMetaSets={metaSets.suggestedMetaSets}
-            onRemoveTerm={onRemoveTerm}
-          />
+            {userViewRegion && (
+              <TrackRegionController
+                selectedRegion={userViewRegion}
+                onRegionSelected={onRegionSelected}
+                contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                genomeConfig={genomeConfig}
+                trackManagerState={trackManagerState}
+                genomeArr={[]}
+                genomeIdx={0}
+                addGlobalState={undefined}
+              />
+            )}
+            <p
+              className="ml-4"
+              style={{
+                backgroundColor: "var(--bg-color)",
+                color: "var(--font-color)",
+              }}
+            >
+              Viewing a{" "}
+              {niceBpCount(trackManagerState.current.viewRegion.getWidth())}{" "}
+              region in {Math.round(windowWidth)}px, 1 pixel spans{" "}
+              {niceBpCount(basePerPixel.current, true)}
+            </p>
+          </div>
+          <div style={{ width: "38%", display: "flex" }}>
+            <MetadataHeader
+              terms={metaSets.terms}
+              onNewTerms={onNewTerms}
+              suggestedMetaSets={metaSets.suggestedMetaSets}
+              onRemoveTerm={onRemoveTerm}
+            />
+          </div>
         </div>
 
         <div

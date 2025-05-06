@@ -31,6 +31,7 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
               ? "btn btn-sm btn-danger dense-button"
               : "btn btn-sm btn-success dense-button"
           }
+          style={{ width: "95px" }}
         >
           Metadata {isShowingEditMenu ? "↩" : "»"}
         </button>
