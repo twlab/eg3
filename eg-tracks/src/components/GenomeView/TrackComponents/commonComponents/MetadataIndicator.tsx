@@ -125,6 +125,7 @@ const MetadataIndicator: FC<MetadataIndicatorProps> = ({
     } else {
       termValue = track.getMetadata(term);
       const color = getColorForTermValue(termValue);
+
       return (
         <ColoredBox
           key={term}

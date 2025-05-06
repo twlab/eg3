@@ -1417,12 +1417,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let result;
     if (fetchRes.trackType in { hic: "", dynamichic: "", bam: "" }) {
       let configOptions;
-      if (fetchRes.id in globalTrackConfig.current) {
+      if (
+        fetchRes.id in globalTrackConfig.current &&
+        globalTrackConfig.current[`${fetchRes.id}`]
+      ) {
         configOptions = globalTrackConfig.current[fetchRes.id];
       } else {
         const curTrackModel = tracks.find(
           (trackModel: any) => trackModel.id === fetchRes.id
         );
+        console.log(curTrackModel, "WUTTT");
         if (curTrackModel && trackOptionMap[`${fetchRes.trackType}`]) {
           configOptions = {
             ...trackOptionMap[`${fetchRes.trackType}`],
@@ -1445,11 +1449,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
+        console.log(
+          fetchInstances.current[`${fetchRes.id}`],
+          objToInstanceAlign(visRegion),
+          basePerPixel.current,
+          configOptions
+        );
         result = await fetchInstances.current[`${fetchRes.id}`].getData(
           objToInstanceAlign(visRegion),
           basePerPixel.current,
           configOptions
         );
+        console.log("hic", result);
       } else if (fetchRes.trackType === "dynamichic") {
         const curStraw = fetchRes.trackModel.tracks.map(
           (_hicTrack: any, index: any) => {
@@ -1984,15 +1995,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     // Call the setMetaSets function to update the state
     setMetaSets(updatedMetaSets);
-
-    // Log the updated state for debugging
-    console.log(updatedMetaSets, "updatedMetaSetsAfterRemoval");
   }
   async function onColorBoxClick(metaDataKey, value) {
     await onTrackUnSelect();
     await onConfigMenuClose();
     console.log(metaDataKey, value);
-
+    const stringValue = value;
     const newSelectedTracks: { [key: string]: any } = {};
     const newTrackModelArr: Array<any> = [];
     for (let key in trackManagerState.current.tracks) {
@@ -2000,10 +2008,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (!track.metadata) {
         continue;
       }
-      if (
-        track.metadata[`${metaDataKey}`] &&
-        track.metadata[`${metaDataKey}`] === value
-      ) {
+      const metaStringValue = Array.isArray(track.metadata[`${metaDataKey}`])
+        ? track.metadata[`${metaDataKey}`][
+            track.metadata[`${metaDataKey}`].length - 1
+          ]
+        : track.metadata[`${metaDataKey}`];
+      if (track.metadata[`${metaDataKey}`] && metaStringValue === stringValue) {
         newSelectedTracks[`${track.id}`] = "";
         newTrackModelArr.push(new TrackModel({ ...track, isSelected: true }));
       } else {
@@ -2527,6 +2537,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!genomeConfig.isInitial && tracks) {
+      console.log(tracks);
       if (
         !arraysHaveSameTrackModels(tracks, [
           ...trackComponents.map((item) => item.trackModel),
@@ -2602,6 +2613,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               fetchInstances.current[`${curTrackModel.id}`] = new HicSource(
                 curTrackModel.url
               );
+              console.log("created");
             } else if (curTrackModel.type === "dynamichic") {
               curTrackModel.tracks?.map((_item, index) => {
                 fetchInstances.current[
