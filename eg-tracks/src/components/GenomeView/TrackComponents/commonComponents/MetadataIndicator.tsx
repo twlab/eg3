@@ -106,7 +106,7 @@ const MetadataIndicator: FC<MetadataIndicatorProps> = ({
     const colorIndex = Math.abs(hashCode(termValue)) % COLORS.length;
     return COLORS[colorIndex];
   };
-  console.log(track);
+
   const renderBoxForTerm = (term: string) => {
     let termValue: any;
     termValue = track.getMetadataAsis(term);
@@ -136,7 +136,7 @@ const MetadataIndicator: FC<MetadataIndicatorProps> = ({
   };
 
   return (
-    <div style={{ display: "flex", zIndex: 2 }}>
+    <div style={{ display: "flex", height: 20 }}>
       {terms.map((term) => renderBoxForTerm(term))}
     </div>
   );

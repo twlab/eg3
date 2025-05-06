@@ -139,7 +139,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width - legendWidth - 20}
+            windowWidth={size.width - legendWidth}
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={currentGenomeConfig}
@@ -155,7 +155,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             isScreenShotOpen={isScreenShotOpen}
             selectedRegionSet={selectedRegionSet}
           />
-        ) : 'Loading...'}
+        ) : (
+          "Loading..."
+        )}
       </div>
     </div>
   );

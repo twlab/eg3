@@ -1988,41 +1988,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     // Log the updated state for debugging
     console.log(updatedMetaSets, "updatedMetaSetsAfterRemoval");
   }
-  function onColorBoxClick(key, value) {
-    console.log(key, value);
-    const trackId = trackDetails;
-    let isSelected;
-
-    if (selectedTracks.current[trackId] === "") {
-      isSelected = false;
-    } else {
-      isSelected = true;
-    }
-
-    if (!isSelected) {
-      delete selectedTracks.current[trackId];
-    } else {
-      selectedTracks.current[trackId] = "";
-    }
-
-    const newTracks = trackManagerState.current.tracks.map((trackModel) => {
-      if (trackModel.id === trackId) {
-        return new TrackModel({
-          ...trackModel,
-          isSelected: isSelected,
-        });
+  function onColorBoxClick(metaDataKey, value) {
+    console.log(metaDataKey, value);
+    onTrackUnSelect();
+    onConfigMenuClose();
+    const newSelectedTracks: { [key: string]: any } = {};
+    const newTrackModelArr: Array<any> = [];
+    for (let key in trackManagerState.current.tracks) {
+      const track = trackManagerState.current.tracks[key];
+      if (!track.metadata) {
+        continue;
       }
-      return trackModel;
-    });
-
-    onTrackSelected(newTracks);
-
-    if (configMenu && Object.keys(selectedTracks.current).length > 0) {
-      renderTrackSpecificConfigMenu(e.pageX, e.pageY, trackId);
-    } else {
-      setConfigMenu(null);
+      if (
+        track.metadata[`${metaDataKey}`] &&
+        track.metadata[`${metaDataKey}`] === value
+      ) {
+        newSelectedTracks[`${track.id}`] = "";
+        newTrackModelArr.push(new TrackModel({ ...track, isSelected: true }));
+      } else {
+        newTrackModelArr.push(new TrackModel({ ...track, isSelected: false }));
+      }
     }
+
+    onTrackSelected(newTrackModelArr);
+    selectedTracks.current = newSelectedTracks;
   }
+
   // MARK: USEEFFECTS
   // USEEFFECTS
   //_________________________________________________________________________________________________________________________________
@@ -2799,6 +2790,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           className="flex flex-row py-10 items-center justify-center"
           style={{
             backgroundColor: "var(--bg-color)",
+            width: `${windowWidth + 120}px`,
           }}
         >
           <HighlightMenu

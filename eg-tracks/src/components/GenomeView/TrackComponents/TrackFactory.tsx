@@ -1495,9 +1495,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     <div
       style={{
         display: "flex",
+        position: "relative",
       }}
     >
-      <div
+      {/* <div
         style={{
           zIndex: 2,
           width: 120,
@@ -1507,12 +1508,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }}
       >
         {legend}
-      </div>
-      <MetadataIndicator
-        track={trackModel}
-        terms={metaSets.terms}
-        onClick={onColorBoxClick}
-      />
+      </div> */}
+
       <div
         ref={posRef}
         style={{
@@ -1582,6 +1579,26 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               })
             : ""
         }
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          zIndex: 100000000000,
+          height:
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
+              : 40,
+        }}
+      >
+        <MetadataIndicator
+          track={trackModel}
+          terms={metaSets.terms}
+          onClick={onColorBoxClick}
+        />
       </div>
     </div>
   );
