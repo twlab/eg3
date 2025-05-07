@@ -1,6 +1,7 @@
 import { TrackConfig } from "./TrackConfig";
 import { BamTrackConfig } from "./BamTrackConfig";
 import { BedTrackConfig } from "./BedTrackConfig";
+import { BedcolorTrackConfig } from "./BedcolorTrackConfig";
 import { DynamicBedTrackConfig } from "./DynamicBedTrackConfig";
 import { QBedTrackConfig } from "./QBedTrackConfig";
 import { CategoricalTrackConfig } from "./CategoricalTrackConfig";
@@ -59,7 +60,7 @@ export const TYPE_NAME_TO_CONFIG = {
   bigwig: BigWigTrackConfig,
   hic: HicTrackConfig,
   longrange: LongRangeTrackConfig,
-
+  bedcolor: BedcolorTrackConfig,
   biginteract: BigInteractTrackConfig,
   geneannotation: GeneAnnotationTrackConfig,
   refbed: RefBedTrackConfig,
@@ -77,7 +78,7 @@ export const TYPE_NAME_TO_CONFIG = {
   // longrangecolor: LongRangeColorTrackConfig,
   // rgbpeak: RgbpeakTrackConfig,
   vcf: VcfTrackConfig,
-  // bedcolor: BedcolorTrackConfig,
+
   // rmskv2: Rmskv2TrackConfig, !
   // bigchain: GenomeAlignTrackConfig,
 

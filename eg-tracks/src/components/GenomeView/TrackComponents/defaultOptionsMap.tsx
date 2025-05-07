@@ -15,13 +15,18 @@ import { DEFAULT_OPTIONS as defaultMatplot } from "./commonComponents/numerical/
 import { DEFAULT_OPTIONS as defaultGeneAnnotationTrack } from "./geneAnnotationTrackComponents/GeneAnnotation";
 import { DEFAULT_OPTIONS as defaultVcfTrack } from "./VcfComponents/VcfTrack";
 import { DEFAULT_OPTIONS as defaultDynamicInteraction } from "./InteractionComponents/DynamicInteractionTrackComponents";
+import { DEFAULT_OPTIONS as defaultBedcolorTrack } from "./bedComponents/BedcolorTrack";
+
 import BedAnnotation, {
   DEFAULT_OPTIONS as defaultBedTrack,
 } from "./bedComponents/BedAnnotation";
 
 import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import OpenInterval from "../../../models/OpenInterval";
-import { AnnotationDisplayModes, NumericalDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+import {
+  AnnotationDisplayModes,
+  NumericalDisplayModes,
+} from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
 import Feature from "../../../models/Feature";
 import { DefaultAggregators } from "../../../models/FeatureAggregator";
 
@@ -100,6 +105,16 @@ export const trackOptionMap: { [key: string]: any } = {
       return gene.getName().length * 9;
     },
     ROW_HEIGHT: 9 + ROW_VERTICAL_PADDING,
+  },
+  bedcolor: {
+    defaultOptions: {
+      ...defaultBedTrack,
+      ...defaultNumericalTrack,
+      ...defaultAnnotationTrack,
+      ...defaultBedcolorTrack,
+    },
+    getGenePadding: 0,
+    ROW_HEIGHT: 40 + 2,
   },
   repeatmasker: {
     defaultOptions: {
@@ -360,7 +375,7 @@ export const trackOptionMap: { [key: string]: any } = {
       playing: true,
       dynamicColors: [],
       useDynamicColors: false,
-      backgroundColor: "var(--bg-color)"
+      backgroundColor: "var(--bg-color)",
     },
   },
   dynamicplot: {

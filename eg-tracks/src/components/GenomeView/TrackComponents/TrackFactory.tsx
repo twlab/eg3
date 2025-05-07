@@ -910,6 +910,77 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         document.body
       );
     },
+    bedcolor: function bedcolorClickTooltip(
+      feature: any,
+      pageX,
+      pageY,
+      name,
+      onClose
+    ) {
+      const contentStyle = Object.assign({
+        marginTop: ARROW_SIZE,
+        pointerEvents: "auto",
+      });
+
+      return ReactDOM.createPortal(
+        <Manager>
+          <Reference>
+            {({ ref }) => (
+              <div
+                ref={ref}
+                style={{
+                  position: "absolute",
+                  left: pageX - 8 * 2,
+                  top: pageY,
+                }}
+              />
+            )}
+          </Reference>
+          <Popper
+            placement="bottom-start"
+            modifiers={[{ name: "flip", enabled: false }]}
+          >
+            {({ ref, style, placement, arrowProps }) => (
+              <div
+                ref={ref}
+                style={{
+                  ...style,
+                  ...contentStyle,
+                  zIndex: 1001,
+                }}
+                className="Tooltip"
+              >
+                <OutsideClickDetector onOutsideClick={onClose}>
+                  <FeatureDetail
+                    feature={feature}
+                    category={undefined}
+                    queryEndpoint={undefined}
+                  />
+                </OutsideClickDetector>
+                {ReactDOM.createPortal(
+                  <div
+                    ref={arrowProps.ref}
+                    style={{
+                      ...arrowProps.style,
+                      width: 0,
+                      height: 0,
+                      position: "absolute",
+                      left: pageX - 8,
+                      top: pageY,
+                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                    }}
+                  />,
+                  document.body
+                )}
+              </div>
+            )}
+          </Popper>
+        </Manager>,
+        document.body
+      );
+    },
     repeatmasker: function repeatMaskLeftClick(
       feature: any,
       pageX,
