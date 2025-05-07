@@ -95,7 +95,7 @@ export class HicSource {
     const SORTED_BIN_SIZES = this.metadata.resolutions;
     let regionLength = region.getWidth();
 
-    if (options.fetchViewWindowOnly === true) {
+    if (options && options.fetchViewWindowOnly === true) {
       regionLength = regionLength / 3;
     }
     for (const binSize of SORTED_BIN_SIZES) {
@@ -116,7 +116,8 @@ export class HicSource {
    * @return {number} bin size to use during data fetch
    */
   getBinSize(options, region) {
-    const numberBinSize = Number(options.binSize) || 0;
+    const numberBinSize =
+      options && options.binSize ? Number(options.binSize) : 0;
 
     return numberBinSize <= 0
       ? this.getAutoBinSize(region, options)

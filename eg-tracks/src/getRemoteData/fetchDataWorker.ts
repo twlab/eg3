@@ -34,6 +34,7 @@ interface QueryGenomePiece {
 const componentMap: { [key: string]: any } = {
   geneannotation: "",
   bed: "",
+  bedcolor: "",
   bigwig: "",
   dynseq: "",
   methylc: "",
@@ -185,9 +186,10 @@ self.onmessage = async (event: MessageEvent) => {
           ) {
             curFetchNav =
               genomicFetchCoord[
-                `${item.metadata.genome === ""
-                  ? primaryGenName
-                  : item.metadata.genome
+                `${
+                  item.metadata.genome === ""
+                    ? primaryGenName
+                    : item.metadata.genome
                 }`
               ].queryGenomicCoord;
           } else if (
@@ -217,25 +219,25 @@ self.onmessage = async (event: MessageEvent) => {
             dynamiclongrange: "",
           }
         ) {
-          let hasError = false
+          let hasError = false;
           let tmpResults = await Promise.all(
             item.tracks.map(async (trackItem) => {
-              const result = (await fetchData(trackItem)).flat(1)
+              const result = (await fetchData(trackItem)).flat(1);
               if (typeof result[0] === "object" && "error" in result[0]) {
-                hasError = true
+                hasError = true;
               }
 
-              return result
-            }
-
-            )
+              return result;
+            })
           );
 
           fetchResults.push({
             name: trackType,
-            result: hasError ? {
-              error: "Fetch failed: data source is not valid",
-            } : tmpResults,
+            result: hasError
+              ? {
+                  error: "Fetch failed: data source is not valid",
+                }
+              : tmpResults,
             id: id,
             metadata: item.metadata,
             trackModel: item,
@@ -274,15 +276,15 @@ self.onmessage = async (event: MessageEvent) => {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            });
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              });
 
           if (
             curRespond &&
@@ -308,7 +310,9 @@ self.onmessage = async (event: MessageEvent) => {
                     genomeName:
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
-                        : trackModel.genome ? trackModel.genome : primaryGenName,
+                        : trackModel.genome
+                        ? trackModel.genome
+                        : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,

@@ -68,16 +68,20 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
 
     // Check if both anchors (xSpan1 and xSpan2) are partially within viewWindow
     if (bothAnchorsInView) {
-
-      if (!isPartlyWithin(xSpan1, viewWindow) || !isPartlyWithin(xSpan2, viewWindow)) {
+      if (
+        !isPartlyWithin(xSpan1, viewWindow) ||
+        !isPartlyWithin(xSpan2, viewWindow)
+      ) {
         return null;
       }
     }
 
     // Check if either xSpan1 or xSpan2 is partially within the viewWindow for fetching action
     if (fetchViewWindowOnly) {
-
-      if (!isPartlyWithin(xSpan1, viewWindow) && !isPartlyWithin(xSpan2, viewWindow)) {
+      if (
+        !isPartlyWithin(xSpan1, viewWindow) &&
+        !isPartlyWithin(xSpan2, viewWindow)
+      ) {
         return null;
       }
     }
@@ -108,8 +112,8 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
     const key = placedInteraction.generateKey() + index;
     // only push the points in screen
     if (
-      topX + halfSpan2 > viewWindow.start &&
-      topX - halfSpan1 < viewWindow.end &&
+      // topX + halfSpan2 > viewWindow.start &&
+      // topX - halfSpan1 < viewWindow.end &&
       topY < height
     ) {
       this.hmData!.push({
@@ -172,6 +176,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       .domain([0, heightStandard])
       .range([0, height])
       .clamp(false);
+
     return (
       <>
         <div
