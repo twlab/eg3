@@ -110,6 +110,19 @@ export default class LocalGenomeRepository implements IGenomeHubSource {
             request.onerror = () => reject(request.error);
         });
     }
+
+    async deleteGenome(id: string): Promise<void> {
+        const db = await this.getDB();
+
+        return new Promise<void>((resolve, reject) => {
+            const transaction = db.transaction(LocalGenomeRepository.STORE_NAME, "readwrite");
+            const store = transaction.objectStore(LocalGenomeRepository.STORE_NAME);
+            const request = store.delete(id);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
 }
 
 type uuid = string;

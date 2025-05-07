@@ -46,6 +46,16 @@ export const clearAllGenomes = createAsyncThunk(
   }
 );
 
+export const deleteCustomGenome = createAsyncThunk(
+  "genome-hub/delete",
+  async (id: string, thunkApi) => {
+    const genomeHubManager = GenomeHubManager.getInstance();
+    await genomeHubManager.deleteGenome(id);
+
+    thunkApi.dispatch(refreshLocalGenomes());
+  }
+);
+
 export const getBundle = createAsyncThunk(
   "genome-hub/clear-all",
   async (_, thunkApi) => {
