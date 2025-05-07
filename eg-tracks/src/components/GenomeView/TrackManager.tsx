@@ -2394,7 +2394,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             } else {
               combinedData = combinedData
                 .map((item) => {
-                  if (item && "dataCache" in item && item.dataCache) {
+                  if (item && item["dataCacher"]) {
                     return item.dataCache;
                   } else {
                     noData = true;
