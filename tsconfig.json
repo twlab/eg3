@@ -1,9 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable", "ESNext"],
@@ -23,10 +19,14 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "outDir": "./dist" // Ensure output files go to `dist`
+    "outDir": "./dist", // Ensure output files go to `dist`
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
+
   "files": [],
-  "include": ["src", "./src/lib/index.ts"],
   "references": [
     {
       "path": "./tsconfig.app.json"

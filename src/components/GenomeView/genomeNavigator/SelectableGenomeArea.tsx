@@ -6,7 +6,6 @@ import OpenInterval from "../../../models/OpenInterval";
 import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
 import LinearDrawingModel from "../../../models/LinearDrawingModel";
 import { niceBpCount } from "../../../models/util";
-import styles from "./SelectableArea.module.css";
 
 interface SelectableGenomeAreaProps {
   selectableRegion: DisplayedRegionModel; // The region to undergo selection
@@ -63,9 +62,9 @@ export class SelectableGenomeArea extends React.PureComponent<SelectableGenomeAr
   getBoxCaption(xSpan: OpenInterval): JSX.Element {
     const baseSpan = this.getSelectedBases(xSpan);
     return (
-      <div className={styles["SelectableArea-box-text-container"]}>
+      <div>
         <h4 style={{ margin: 0 }}>{niceBpCount(baseSpan.getLength())}</h4>
-        <p className={styles["SelectableArea-box-secondary-text"]}>
+        <p>
           {this.getIsBaseSpanValid(baseSpan) ? "Esc to cancel" : "Too small"}
         </p>
       </div>
