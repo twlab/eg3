@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable", "ESNext"],
@@ -13,14 +17,22 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "declaration": true,
-    "declarationDir": "./dist",  // Ensure declaration files go to `dist`
+    "declarationDir": "./dist", // Ensure declaration files go to `dist`
     "noImplicitAny": false,
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "outDir": "./dist"  // Ensure output files go to `dist`
+    "outDir": "./dist" // Ensure output files go to `dist`
   },
+  "files": [],
   "include": ["src", "./src/lib/index.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

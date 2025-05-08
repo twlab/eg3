@@ -144,11 +144,11 @@ const defaultTracks = [
   //   genome: "mm10",
   //   metadata: { genome: "mm10" },
   // }),
-  new TrackModel({
-    type: "bed",
-    name: "mm10 bed",
-    url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
-  }),
+  // new TrackModel({
+  //   type: "bed",
+  //   name: "mm10 bed",
+  //   url: "https://epgg-test.wustl.edu/d/mm10/mm10_cpgIslands.bed.gz",
+  // }),
   new TrackModel({
     type: "bigwig",
     name: "example bigwig",

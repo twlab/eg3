@@ -8,6 +8,7 @@ import OpenInterval from "../../models/OpenInterval";
 // import "./index.css";
 // import "./DarkMode.css";
 import TrackModel from "../../models/TrackModel";
+import { AccordionDemo } from "../AccordionDemo";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 function GenomeHub(props: any) {
@@ -128,16 +129,19 @@ function GenomeHub(props: any) {
         paddingRight: "2%",
       }}
     >
+      <AccordionDemo />
       <div ref={ref as React.RefObject<HTMLDivElement>}>
-        {genomeList.map((item, index) => (
-          <TrackManager
-            genomeIdx={index}
-            addTrack={addTrack}
-            startBp={startBp}
-            genomeArr={genomeList}
-            windowWidth={size.width}
-          />
-        ))}
+        {size.width > 0
+          ? genomeList.map((item, index) => (
+              <TrackManager
+                genomeIdx={index}
+                addTrack={addTrack}
+                startBp={startBp}
+                genomeArr={genomeList}
+                windowWidth={size.width}
+              />
+            ))
+          : ""}
       </div>
     </div>
   );

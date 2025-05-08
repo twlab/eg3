@@ -48,6 +48,7 @@ import { SelectableArea } from "./genomeNavigator/SelectableArea";
 import ZoomButtons from "./ToolsComponents/ZoomButtons";
 
 import SubToolButtons from "./ToolsComponents/SubToolButtons";
+import { processGenomicData } from "../../getRemoteData/fetchDataWorkerLocal";
 export function objToInstanceAlign(alignment) {
   let visRegionFeatures: Feature[] = [];
 
@@ -294,6 +295,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setDataIdx(Math.ceil(dragX.current! / windowWidth));
     const curBp =
       leftStartCoord.current + -dragX.current * basePerPixel.current;
+    console.log(leftStartCoord.current, -dragX.current, basePerPixel.current);
     let genomeFeatureSegment: Array<FeatureSegment> = genomeArr[
       genomeIdx
     ].navContext.getFeaturesInInterval(curBp, curBp + bpRegionSize.current);
@@ -648,7 +650,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
 
       try {
-        infiniteScrollWorker.current!.postMessage({
+        let res = await processGenomicData({
           primaryGenName: genomeArr[genomeIdx].genome.getName(),
           trackModelArr: activeTrackModels.current,
           visData: newVisData,
@@ -665,14 +667,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           initial,
           bpRegionSize: bpRegionSize.current,
         });
-
+        console.log(res);
         if (initial === 1) {
           //this is why things get missalign if we make a worker in a state, its delayed so it doesn't subtract the initially
           minBp.current = minBp.current - bpRegionSize.current;
         }
-      } catch {}
-      infiniteScrollWorker.current!.onmessage = (event) => {
-        event.data.fetchResults.map((item, index) => {
+
+        res.fetchResults.map((item, index) => {
           tempObj[item.id] = {
             result: item.result,
             metadata: item.metadata,
@@ -682,34 +683,32 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         });
 
-        tempObj["initial"] = event.data.initial;
-        tempObj["side"] = event.data.side;
-        tempObj["location"] = event.data.location;
-        tempObj["xDist"] = event.data.xDist;
+        tempObj["initial"] = res.initial;
+        tempObj["side"] = res.side;
+        tempObj["location"] = res.location;
+        tempObj["xDist"] = res.xDist;
         tempObj["trackState"] = {
           primaryGenName: genomeArr[genomeIdx].genome.getName(),
-          initial: event.data.initial,
-          side: event.data.side,
-          xDist: event.data.xDist,
-          genomicFetchCoord: event.data.genomicFetchCoord,
-          useFineModeNav: event.data.useFineModeNav,
+          initial: res.initial,
+          side: res.side,
+          xDist: res.xDist,
+          genomicFetchCoord: res.genomicFetchCoord,
+          useFineModeNav: res.useFineModeNav,
           regionNavCoord: new DisplayedRegionModel(
             genomeArr[genomeIdx].navContext,
-            event.data.curFetchRegionNav._startBase,
-            event.data.curFetchRegionNav._endBase
+            res.curFetchRegionNav._startBase,
+            res.curFetchRegionNav._endBase
           ),
         };
         console.log(
           tempObj,
-          event.data.genomicLoci,
-          event.data.expandGenomicLoci,
-          "fetched data for all tracks with their id",
-          infiniteScrollWorker.current,
-          "GOTWORKER"
+          res.genomicLoci,
+          res.expandGenomicLoci,
+          "fetched data for all tracks with their id"
         );
         isLoading.current = false;
         setTrackData({ ...tempObj });
-      };
+      } catch {}
     }
   }
   function handleDelete(id: number) {
@@ -844,7 +843,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       bpRegionSize.current = rightStartCoord.current - leftStartCoord.current;
 
       basePerPixel.current = bpRegionSize.current / windowWidth;
-
+      console.log(rightStartCoord.current, leftStartCoord.current, window);
       bpX.current = leftStartCoord.current;
       maxBp.current = genome.defaultRegion.end;
       minBp.current = genome.defaultRegion.start;

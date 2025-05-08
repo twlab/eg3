@@ -4,10 +4,12 @@ import path from "path";
 import dts from "vite-plugin-dts";
 import { fileURLToPath } from "url";
 import url from "@rollup/plugin-url";
+
+import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@": path.resolve(__dirname, "./src"),
     },
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
   },
@@ -38,6 +40,7 @@ export default defineConfig({
   plugins: [
     url(),
     react(),
+    tailwindcss(),
     dts({
       outDir: "dist",
       entryRoot: "src/lib",
