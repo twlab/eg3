@@ -4,7 +4,7 @@ import {
   ITrackContainerState,
   ITrackModel,
 } from "../types";
-import GenomeRoot from "@eg/tracks/src/components/GenomeView/GenomeRoot";
+import GenomeRoot from "../components/GenomeView/GenomeRoot";
 import { useCallback, useMemo, useRef } from "react";
 import { TrackModel } from "../models/TrackModel";
 import NavigationContext from "../models/NavigationContext";
@@ -13,6 +13,7 @@ import GenomeSerializer from "../genome-hub/GenomeSerializer";
 import OpenInterval, { IOpenInterval } from "../models/OpenInterval";
 import RegionSet from "../models/RegionSet";
 import { getGenomeConfig } from "../util";
+import React from "react";
 
 export function TrackContainer(props: ITrackContainerState) {
   return (
@@ -270,33 +271,33 @@ export function TrackContainerRepresentable({
   );
 
   const handleNewRegionSelect = (
-    (startbase: number, endbase: number, highlightSearch: boolean = false) => {
+    startbase: number,
+    endbase: number,
+    highlightSearch: boolean = false
+  ) => {
+    const newRegion = new DisplayedRegionModel(
+      genomeConfig.navContext,
+      startbase,
+      endbase
+    );
+    onNewRegionSelect(
+      startbase,
+      endbase,
+      newRegion.currentRegionAsString() as GenomeCoordinate
+    );
 
-      const newRegion = new DisplayedRegionModel(
-        genomeConfig.navContext,
-        startbase,
-        endbase
-      );
-      onNewRegionSelect(
-        startbase,
-        endbase,
-        newRegion.currentRegionAsString() as GenomeCoordinate
-      );
-
-      if (highlightSearch) {
-        const newHightlight = {
-          start: startbase,
-          end: endbase,
-          display: true,
-          color: "rgba(0, 123, 255, 0.15)",
-          tag: "",
-        };
-        const tmpHighlight = [...highlights, newHightlight];
-        onNewHighlight(tmpHighlight);
-      }
+    if (highlightSearch) {
+      const newHightlight = {
+        start: startbase,
+        end: endbase,
+        display: true,
+        color: "rgba(0, 123, 255, 0.15)",
+        tag: "",
+      };
+      const tmpHighlight = [...highlights, newHightlight];
+      onNewHighlight(tmpHighlight);
     }
-
-  );
+  };
 
   return (
     <div>

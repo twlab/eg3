@@ -1,0 +1,16 @@
+export default CE11;
+declare namespace CE11 {
+    export { genome };
+    export { navContext };
+    export { cytobands };
+    export { defaultRegion };
+    export { defaultTracks };
+    export const twoBitURL: string;
+    export { annotationTracks };
+}
+declare const genome: Genome;
+declare const navContext: import("../../NavigationContext").default;
+declare const defaultRegion: import("../../OpenInterval").default;
+declare const defaultTracks: TrackModel[];
+import Genome from "../../Genome";
+import TrackModel from "../../TrackModel";

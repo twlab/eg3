@@ -160,6 +160,24 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   selectedRegionSet,
   isScreenShotOpen,
 }) {
+  console.log({
+    windowWidth,
+    legendWidth,
+    genomeConfig,
+    userViewRegion,
+    highlights,
+    tracks,
+    onNewRegion,
+    onNewHighlight,
+    onTrackSelected,
+    onNewRegionSelect,
+    onTrackDeleted,
+    tool,
+    showGenomeNav,
+    setScreenshotData,
+    selectedRegionSet,
+    isScreenShotOpen,
+  });
   //useRef to store data between states without re render the component
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
