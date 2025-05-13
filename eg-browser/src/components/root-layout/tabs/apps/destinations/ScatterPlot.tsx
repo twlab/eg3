@@ -10,7 +10,7 @@ import trackFetchFunction from "@eg/tracks/src/getRemoteData/fetchTrackData";
 import ChromosomeInterval from "@eg/tracks/src/models/ChromosomeInterval";
 import { NumericalFeature } from "@eg/tracks/src/models/Feature";
 import { NUMERICAL_TRACK_TYPES } from "./GenePlot";
-import { getGenomeConfig } from "@eg/tracks";
+
 import RegionSet from "@eg/tracks/src/models/RegionSet";
 
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
@@ -30,7 +30,6 @@ const ScatterPlot: React.FC = () => {
   const [markerColor, setMarkerColor] = useState("blue");
   const [markerSize, setMarkerSize] = useState(12);
   const [showModal, setShowModal] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
 
   const currentSession = useAppSelector(selectCurrentSession);
   const _genomeConfig = useCurrentGenome();
@@ -48,7 +47,6 @@ const ScatterPlot: React.FC = () => {
 
   const sets = useMemo(() => {
     if (currentSession) {
-
       return currentSession?.regionSets.map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
@@ -455,7 +453,6 @@ const ScatterPlot: React.FC = () => {
           <div style={{ marginLeft: "-150px" }}>
             <Plot data={[data]} layout={layout} />
           </div>
-
         </>
       ) : (
         ""

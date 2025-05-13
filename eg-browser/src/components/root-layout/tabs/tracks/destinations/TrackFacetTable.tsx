@@ -1,4 +1,4 @@
-import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+import FacetTable from "./FacetTable";
 import TabView from "@/components/ui/tab-view/TabView";
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";

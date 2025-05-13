@@ -25,6 +25,10 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": [
+    "src",
+    "../eg-browser/src/components/root-layout/tabs/apps/destinations/ScreenshotUI.tsx",
+    "../eg-browser/src/components/root-layout/tabs/tracks/destinations/HubTrackTable.tsx"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

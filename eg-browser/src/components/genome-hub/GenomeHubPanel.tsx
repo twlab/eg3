@@ -15,11 +15,10 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 
 import { useNavigation } from "../core-navigation/NavigationStack";
-import ClearAllButton from "../sessions/ClearAllButton";
+
 import Button from "../ui/button/Button";
 import EmptyView from "../ui/empty/EmptyView";
 import Progress from "../ui/progress/Progress";
-import GenomeHubManager from "@eg/tracks/src/genome-hub/GenomeHubManager";
 
 type GroupedGenomes = {
   [key: string]: IGenome[];
@@ -149,12 +148,12 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             Chromosomes:{" "}
             {genome.chromosomes.length > 0
               ? genome.chromosomes
-                .slice(0, 3)
-                .map((chr) => chr.name)
-                .join(", ") +
-              (genome.chromosomes.length > 3
-                ? ` +${genome.chromosomes.length - 3} more`
-                : "")
+                  .slice(0, 3)
+                  .map((chr) => chr.name)
+                  .join(", ") +
+                (genome.chromosomes.length > 3
+                  ? ` +${genome.chromosomes.length - 3} more`
+                  : "")
               : "None"}
           </p>
         </div>

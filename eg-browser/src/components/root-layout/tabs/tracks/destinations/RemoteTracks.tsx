@@ -18,7 +18,7 @@ import {
   addCustomTracksPool,
   selectCustomTracksPool,
 } from "@/lib/redux/slices/hubSlice";
-import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+import FacetTable from "./FacetTable";
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
 export default function RemoteTracks() {

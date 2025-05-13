@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import _ from "lodash";
 // import RegionSetSelector from "../RegionSetSelector";
 import { getTrackConfig } from "@eg/tracks/src/trackConfigs/config-menu-models.tsx/getTrackConfig";
-import ReactModal from "react-modal";
+
 import { COLORS } from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/MetadataIndicator";
 import { HELP_LINKS } from "@eg/tracks/src/models/util";
 import ColorPicker from "@eg/tracks/src/trackConfigs/config-menu-components.tsx/ColorPicker";
@@ -16,7 +16,7 @@ import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import RegionSet from "@eg/tracks/src/models/RegionSet";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
-import { getGenomeConfig } from "@eg/tracks";
+
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
 export const NUMERICAL_TRACK_TYPES = ["bigwig", "bedgraph"]; // the front UI we allow any case of types, in TrackModel only lower case
@@ -44,8 +44,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   const [data, setData] = useState<{ [key: string]: any }>({});
   const [showlegend, setShowLegend] = useState(false);
   const [boxColor, setBoxColor] = useState("rgb(214,12,140)");
-  const [showModal, setShowModal] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const debouncedChangeBoxColor = _.debounce(changeBoxColor, 250);
@@ -69,7 +67,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const sets = useMemo(() => {
     if (currentSession) {
-
       return currentSession?.regionSets.map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
@@ -446,7 +443,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
             </div>
           </div>
         </>
-      ) : <div></div>}
+      ) : (
+        <div></div>
+      )}
     </div>
   );
 };
