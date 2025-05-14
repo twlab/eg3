@@ -270,33 +270,33 @@ export function TrackContainerRepresentable({
   );
 
   const handleNewRegionSelect = (
-    (startbase: number, endbase: number, highlightSearch: boolean = false) => {
+    startbase: number,
+    endbase: number,
+    highlightSearch: boolean = false
+  ) => {
+    const newRegion = new DisplayedRegionModel(
+      genomeConfig.navContext,
+      startbase,
+      endbase
+    );
+    onNewRegionSelect(
+      startbase,
+      endbase,
+      newRegion.currentRegionAsString() as GenomeCoordinate
+    );
 
-      const newRegion = new DisplayedRegionModel(
-        genomeConfig.navContext,
-        startbase,
-        endbase
-      );
-      onNewRegionSelect(
-        startbase,
-        endbase,
-        newRegion.currentRegionAsString() as GenomeCoordinate
-      );
-
-      if (highlightSearch) {
-        const newHightlight = {
-          start: startbase,
-          end: endbase,
-          display: true,
-          color: "rgba(0, 123, 255, 0.15)",
-          tag: "",
-        };
-        const tmpHighlight = [...highlights, newHightlight];
-        onNewHighlight(tmpHighlight);
-      }
+    if (highlightSearch) {
+      const newHightlight = {
+        start: startbase,
+        end: endbase,
+        display: true,
+        color: "rgba(0, 123, 255, 0.15)",
+        tag: "",
+      };
+      const tmpHighlight = [...highlights, newHightlight];
+      onNewHighlight(tmpHighlight);
     }
-
-  );
+  };
 
   return (
     <div>

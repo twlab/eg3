@@ -9,7 +9,6 @@ import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates
 // import TrackLegend from "./commonComponents/TrackLegend";
 
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-import { getGenomeConfig } from "../../../../models/genomes/allGenomes";
 import TrackModel from "../../../../models/TrackModel";
 import TrackLegend from "../commonComponents/TrackLegend";
 
@@ -50,12 +49,12 @@ class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
     const genomeConfig = this.props.genomeConfig;
 
     if (this.props.options && this.props.options.forceSvg) {
-
-
       return (
         <svg
           width={this.props.width / 3}
-          viewBox={`${this.props.viewWindow.start} 0 ${this.props.width / 3} ${HEIGHT}`}
+          viewBox={`${this.props.viewWindow.start} 0 ${
+            this.props.width / 3
+          } ${HEIGHT}`}
           height={HEIGHT}
           display={"block"}
         >

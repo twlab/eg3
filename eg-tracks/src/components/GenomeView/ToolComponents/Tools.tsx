@@ -1,7 +1,3 @@
-import React from "react";
-import PropTypes from "prop-types";
-import ButtonGroup from "./ButtonGroup";
-
 export const Tools = {
   DRAG: {
     buttonContent: "✋",
@@ -33,34 +29,4 @@ export const Tools = {
     buttonContent: "⟳",
     cursor: "pointer",
   },
-
-
 };
-
-ToolButtons.propTypes = {
-  selectedTool: PropTypes.oneOf(Object.values(Tools)),
-  onToolClicked: PropTypes.func.isRequired,
-};
-interface ToolButtonsProps {
-  selectedTool: any;
-  onToolClicked: any;
-  allTools: any;
-}
-export function ToolButtons(props: ToolButtonsProps) {
-  let buttons: Array<any> = [];
-  for (let toolName in Tools) {
-    const tool = Tools[toolName];
-    buttons.push(
-      <button
-        key={toolName}
-        title={tool.title}
-        onClick={() => props.onToolClicked(tool)}
-        className={`border border-gray-300 rounded-md p-2 mx-2 ${tool.isSelected ? "bg-gray-500" : ""}`}
-      >
-        {tool.buttonContent}
-      </button>
-    );
-  }
-
-  return <ButtonGroup buttons={buttons} />;
-}
