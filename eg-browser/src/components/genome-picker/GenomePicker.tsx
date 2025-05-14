@@ -21,8 +21,8 @@ import TabView from "../ui/tab-view/TabView";
 import GenomeHubPanel from "../genome-hub/GenomeHubPanel";
 import AddCustomGenome from "../genome-hub/AddCustomGenome";
 import GenomeSchemaView from "../genome-hub/GenomeSchemaView";
-import { getGenomeConfig } from "@eg/tracks";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import { getGenomeConfig } from "@eg/trackstest";
+import GenomeSerializer from "@eg/trackstest";
 import ImportSession from "../sessions/ImportSession";
 
 type GenomeName = string;

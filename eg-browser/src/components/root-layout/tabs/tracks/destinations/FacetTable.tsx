@@ -3,9 +3,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import _ from "lodash";
 import ReactModal from "react-modal";
 import HubTrackTable from "./HubTrackTable";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
+import TrackModel from "@eg/trackstest";
 import { ITrackModel } from "@eg/trackstest";
-import { variableIsObject } from "@eg/tracks/src/models/util";
+import { variableIsObject } from "@eg/trackstest";
 import "./FacetTable.css";
 
 const DEFAULT_ROW = "Sample";

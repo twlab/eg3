@@ -1,12 +1,12 @@
 import React from "react";
 import FacetTable from "./FacetTable";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
+import TrackModel from "@eg/trackstest";
 
 interface FacetTableUIProps {
-  publicTracksPool: TrackModel[];
-  customTracksPool: TrackModel[];
-  addedTracks: TrackModel[];
-  onTracksAdded?: (tracks: TrackModel[]) => void;
+  publicTracksPool: any[];
+  customTracksPool: any[];
+  addedTracks: any[];
+  onTracksAdded?: (tracks: any[]) => void;
   addedTrackSets: Set<string>;
   addTermToMetaSets?: any;
   contentColorSetup?: any;

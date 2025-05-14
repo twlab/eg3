@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useMemo } from "react";
 import _ from "lodash";
 // import RegionSetSelector from "../RegionSetSelector";
-import { getTrackConfig } from "@eg/tracks/src/trackConfigs/config-menu-models.tsx/getTrackConfig";
+import { getTrackConfig } from "@eg/trackstest";
 
-import { COLORS } from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/MetadataIndicator";
-import { HELP_LINKS } from "@eg/tracks/src/models/util";
-import ColorPicker from "@eg/tracks/src/trackConfigs/config-menu-components.tsx/ColorPicker";
+import { COLORS } from "@eg/trackstest";
+import { HELP_LINKS } from "@eg/trackstest";
+import ColorPicker from "@eg/trackstest";
 import Plot from "react-plotly.js";
 import RegionSetSelector from "./region-set/RegionSetSelector";
-import trackFetchFunction from "@eg/tracks/src/getRemoteData/fetchTrackData";
-import ChromosomeInterval from "@eg/tracks/src/models/ChromosomeInterval";
-import { NumericalFeature } from "@eg/tracks/src/models/Feature";
+import trackFetchFunction from "@eg/trackstest";
+import ChromosomeInterval from "@eg/trackstest";
+import { NumericalFeature } from "@eg/trackstest";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import RegionSet from "@eg/tracks/src/models/RegionSet";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import RegionSet from "@eg/trackstest";
+import GenomeSerializer from "@eg/trackstest";
 
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
