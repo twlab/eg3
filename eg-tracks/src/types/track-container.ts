@@ -1,4 +1,4 @@
-import { BundleProps } from "../components/GenomeView/TabComponents/SessionUI";
+import { BundleProps } from "../../../eg-browser/src/components/root-layout/tabs/apps/destinations/SessionUI";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import TrackModel from "../models/TrackModel";
 import { IGenome } from "./genome-hub";

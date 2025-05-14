@@ -1,0 +1,1 @@
+import { getGenomeConfig } from "@/util";

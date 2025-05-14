@@ -131,7 +131,8 @@ const defaultTracks = [
   // }),
   new TrackModel({
     type: "repeatmasker",
-    name: "RepeatMasker",
+    name: "rmsk_all",
+    options: { label: "RepeatMasker" },
     url: "https://vizhub.wustl.edu/public/hg38/rmsk16.bb",
   }),
   // new TrackModel({
