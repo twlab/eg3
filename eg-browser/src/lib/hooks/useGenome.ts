@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getGenomeConfig } from "@eg/tracks";
-import { IGenome } from "@eg/tracks";
+import { getGenomeConfig } from "@eg/trackstest";
+import { IGenome } from "@eg/trackstest";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import GenomeHubManager from "@eg/tracks/src/genome-hub/GenomeHubManager";
 

@@ -1,6 +1,6 @@
 import { useAppSelector } from "../redux/hooks";
 import { selectCurrentSession } from "../redux/slices/browserSlice";
-import { IGenome } from "@eg/tracks";
+import { IGenome } from "@eg/trackstest";
 import useGenome from "./useGenome";
 
 export default function useCurrentGenome(): IGenome | null {

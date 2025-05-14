@@ -4,7 +4,7 @@ import _ from "lodash";
 import ReactModal from "react-modal";
 import HubTrackTable from "./HubTrackTable";
 import TrackModel from "@eg/tracks/src/models/TrackModel";
-import { ITrackModel } from "@eg/tracks";
+import { ITrackModel } from "@eg/trackstest";
 import { variableIsObject } from "@eg/tracks/src/models/util";
 import "./FacetTable.css";
 

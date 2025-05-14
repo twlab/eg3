@@ -10,7 +10,7 @@ import {
   updateSavedDeleteTrackList,
 } from "@/lib/redux/slices/hubSlice";
 
-import { ITrackModel } from "@eg/tracks";
+import { ITrackModel } from "@eg/trackstest";
 export default function TrackListUi() {
   const savedDeleteTrackList = useAppSelector(selectSavedDeleteTrackList);
   const dispatch = useAppDispatch();

@@ -10,7 +10,7 @@ import {
 
 import FacetTable from "./FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
-import { ITrackModel } from "@eg/tracks";
+import { ITrackModel } from "@eg/trackstest";
 
 import {
   addPublicTracksPool,

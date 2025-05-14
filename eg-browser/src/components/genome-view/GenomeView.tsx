@@ -13,9 +13,8 @@ import {
   GenomeCoordinate,
   IHighlightInterval,
   ITrackModel,
-  TrackContainerRepresentable,
-} from "@eg/tracks";
-
+} from "@eg/trackstest";
+import { TrackContainerRepresentable } from "@eg/trackstest";
 import Toolbar from "./toolbar/Toolbar";
 import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
@@ -23,7 +22,7 @@ import { fetchBundle } from "../../lib/redux/thunk/session";
 import { RootState } from "../../lib/redux/store";
 
 export default function GenomeView() {
-  const prevViewRegion = useRef<any>("")
+  const prevViewRegion = useRef<any>("");
   const currentSession = useAppSelector(selectCurrentSession);
   const currentState = useAppSelector((state: RootState) => {
     return currentSession ? { ...state.browser } : null;
@@ -85,14 +84,13 @@ export default function GenomeView() {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => {
-
     let updatedCoord;
     if (coordinate === prevViewRegion.current) {
       updatedCoord = `${coordinate},${startbase}-${endbase}`;
     } else {
       updatedCoord = coordinate;
     }
-    prevViewRegion.current = updatedCoord
+    prevViewRegion.current = updatedCoord;
     dispatch(
       updateCurrentSession({
         viewRegion: updatedCoord,
@@ -103,7 +101,9 @@ export default function GenomeView() {
 
   // need to check if genomes are the same, for example if we update session bundle it can have a different genome name from genomeConfig because
   // currentSession updates first, but genomeConfig still has the previous genome
-  return currentSession && genomeConfig && (currentSession.genomeId === genomeConfig.name) ? (
+  return currentSession &&
+    genomeConfig &&
+    currentSession.genomeId === genomeConfig.name ? (
     <div>
       <TrackContainerRepresentable
         key={currentSession.id}

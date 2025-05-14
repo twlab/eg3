@@ -149,8 +149,8 @@ export default function GenomePicker() {
           marginLeft: !isSmallScreen ? 5 : 0,
         }}
       >
-        <div className="max-w-2xl mx-auto py-4 h-full" >
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4" >
+        <div className="max-w-2xl mx-auto py-4 h-full">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
             <h2 className="text-3xl">Select a Genome</h2>
             <div className="relative mt-2 sm:mt-0 flex-1 w-full">
               <input
@@ -164,8 +164,9 @@ export default function GenomePicker() {
             </div>
           </div>
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${selectedPath !== null ? "items-center" : ""
-              }`}
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+              selectedPath !== null ? "items-center" : ""
+            }`}
           >
             {(selectedPath === null
               ? filteredGenomes
@@ -173,7 +174,9 @@ export default function GenomePicker() {
             ).map((genome) => (
               <motion.div
                 key={genome.name}
-                className={`rounded-2xl shadow-md dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""}`}
+                className={`rounded-2xl shadow-md dark:bg-dark-surface ${
+                  selectedPath !== null ? "col-start-2" : ""
+                }`}
                 layout
                 initial={{ opacity: 0 }}
                 animate={{
@@ -220,10 +223,11 @@ export default function GenomePicker() {
                         <ChevronRightIcon className="w-4 h-4" />
                       )}
                       <motion.p
-                        className={`${selectedPath !== null
-                          ? "text-center text-xl w-full"
-                          : ""
-                          }`}
+                        className={`${
+                          selectedPath !== null
+                            ? "text-center text-xl w-full"
+                            : ""
+                        }`}
                       >
                         {version}
                       </motion.p>
