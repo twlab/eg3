@@ -23,11 +23,10 @@ import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 // } from "@/lib/redux/slices/searchSlice";
 import { debounce } from "lodash";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import OutsideClickDetector from "@eg/trackstest";
-import IsoformSelection from "@eg/trackstest";
-import Gene from "@eg/trackstest";
-import ChromosomeInterval from "@eg/trackstest";
-import GenomeSerializer from "@eg/trackstest";
+import OutsideClickDetector from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
+import IsoformSelection from "@eg/tracks/src/components/GenomeView/genomeNavigator/IsoformSelection";
+import { Gene, ChromosomeInterval, GenomeSerializer } from "wuepgg3-track";
+
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
 const SNP_ENDPOINTS: any = {
   hg19: "https://grch37.rest.ensembl.org/variation/human",

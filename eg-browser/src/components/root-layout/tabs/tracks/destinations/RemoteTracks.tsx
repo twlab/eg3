@@ -9,7 +9,7 @@ import {
 } from "@/lib/redux/slices/browserSlice";
 import React, { useMemo, useState } from "react";
 import JSON5 from "json5";
-import { ITrackModel } from "@eg/trackstest";
+import { ITrackModel } from "wuepgg3-track";
 import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
 import TrackModel, { mapUrl } from "@eg/tracks/src/models/TrackModel";
 import DataHubParser from "@eg/tracks/src/models/DataHubParser";

@@ -3,7 +3,7 @@ import {
   IGenome,
   IHighlightInterval,
   ITrackModel,
-} from "@eg/trackstest";
+} from "wuepgg3-track";
 import {
   createEntityAdapter,
   createSlice,

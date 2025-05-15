@@ -15,8 +15,7 @@ import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 import { HighlightInterval } from "@eg/tracks/src/components/GenomeView/ToolComponents/HighlightMenu";
 import { ITrackModel } from "@eg/tracks/src/types";
 import { AppStateSaver } from "@eg/tracks/src/models/AppSaveLoad";
-import LinearDrawingModel from "@eg/tracks/src/models/LinearDrawingModel";
-import { ViewExpansion } from "@eg/tracks/src/models/RegionExpander";
+
 export interface BundleProps {
   bundleId: string;
   customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type

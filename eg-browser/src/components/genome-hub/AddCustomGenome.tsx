@@ -1,11 +1,11 @@
 import { useAppDispatch } from "@/lib/redux/hooks";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "../ui/button/Button";
 import { useNavigation } from "../core-navigation/NavigationStack";
 import { addCustomGenome } from "@/lib/redux/thunk/genome-hub";
 import { ArrowDownTrayIcon, PlusIcon } from "@heroicons/react/24/outline";
 import FileInput from "../ui/input/FileInput";
-import GenomeSerializer from "@eg/trackstest";
+import { GenomeSerializer } from "wuepgg3-track";
 
 export default function AddCustomGenome() {
   const dispatch = useAppDispatch();

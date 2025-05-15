@@ -1,21 +1,23 @@
 import React, { useState, useEffect, useMemo } from "react";
 import _ from "lodash";
-// import RegionSetSelector from "../RegionSetSelector";
-import { getTrackConfig } from "@eg/trackstest";
-
-import { COLORS } from "@eg/trackstest";
-import { HELP_LINKS } from "@eg/trackstest";
-import ColorPicker from "@eg/trackstest";
 import Plot from "react-plotly.js";
+
+import {
+  ColorPicker,
+  getTrackConfig,
+  COLORS,
+  HELP_LINKS,
+  trackFetchFunction,
+  ChromosomeInterval,
+  NumericalFeature,
+  RegionSet,
+  GenomeSerializer,
+} from "wuepgg3-track";
+
 import RegionSetSelector from "./region-set/RegionSetSelector";
-import trackFetchFunction from "@eg/trackstest";
-import ChromosomeInterval from "@eg/trackstest";
-import { NumericalFeature } from "@eg/trackstest";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import RegionSet from "@eg/trackstest";
-import GenomeSerializer from "@eg/trackstest";
 
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 

@@ -5,8 +5,8 @@ import {
 } from "../redux/slices/browserSlice";
 import { useAppDispatch } from "../redux/hooks";
 import { useEffect } from "react";
-import { getGenomeConfig, ITrackModel } from "@eg/trackstest";
-import { GenomeCoordinate } from "@eg/trackstest";
+import { getGenomeConfig, ITrackModel } from "wuepgg3-track";
+import { GenomeCoordinate } from "wuepgg3-track";
 import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
 import {
   addSessionsFromBundleId,

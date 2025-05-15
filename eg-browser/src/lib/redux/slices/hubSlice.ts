@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { ITrackModel } from "@eg/trackstest";
+import { ITrackModel } from "wuepgg3-track";
 
 export const hubSlice = createSlice({
   name: "hub",

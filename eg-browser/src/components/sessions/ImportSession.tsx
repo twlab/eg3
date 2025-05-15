@@ -9,7 +9,7 @@ import {
   GenomeCoordinate,
   ITrackModel,
   restoreLegacyViewRegion,
-} from "@eg/trackstest";
+} from "wuepgg3-track";
 import { addSessionsFromBundleId } from "@/lib/redux/thunk/session";
 import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 

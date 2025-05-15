@@ -3,7 +3,7 @@ import React from "react";
 import JSON5 from "json5";
 
 import { HELP_LINKS } from "@eg/tracks/src/models/util";
-import { ITrackModel } from "@eg/trackstest";
+import { ITrackModel } from "wuepgg3-track";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,

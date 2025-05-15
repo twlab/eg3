@@ -1,20 +1,20 @@
 import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
 import _ from "lodash";
 import RegionSetSelector from "./region-set/RegionSetSelector";
-import { getTrackConfig } from "@eg/trackstest";
+import { getTrackConfig } from "@eg/tracks/src/trackConfigs/config-menu-models.tsx/getTrackConfig";
 
-import { HELP_LINKS, pcorr } from "@eg/trackstest";
-import ColorPicker from "@eg/trackstest";
+import { HELP_LINKS, pcorr } from "@eg/tracks/src/models/util";
+import ColorPicker from "@eg/tracks/src/trackConfigs/config-menu-components.tsx/ColorPicker";
 import Plot from "react-plotly.js";
-import trackFetchFunction from "@eg/trackstest";
-import ChromosomeInterval from "@eg/trackstest";
-import { NumericalFeature } from "@eg/trackstest";
+import { trackFetchFunction } from "wuepgg3-track";
+import { ChromosomeInterval } from "wuepgg3-track";
+import { NumericalFeature } from "@eg/tracks/src/models/Feature";
 import { NUMERICAL_TRACK_TYPES } from "./GenePlot";
 
-import RegionSet from "@eg/trackstest";
+import { RegionSet } from "wuepgg3-track";
 
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import GenomeSerializer from "@eg/trackstest";
+import { GenomeSerializer } from "wuepgg3-track";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { useAppSelector } from "@/lib/redux/hooks";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";

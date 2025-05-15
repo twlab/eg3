@@ -2,7 +2,7 @@ import {
   GenomeCoordinate,
   ITrackModel,
   restoreLegacyViewRegion,
-} from "@eg/trackstest";
+} from "wuepgg3-track";
 import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
