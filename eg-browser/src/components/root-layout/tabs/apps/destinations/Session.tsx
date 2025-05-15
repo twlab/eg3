@@ -12,9 +12,9 @@ import {
 import SessionUI from "./SessionUI";
 import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settingsSlice";
 import { BundleProps } from "./SessionUI";
-import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
+
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import { GenomeSerializer, DisplayedRegionModel } from "wuepgg3-track-test";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 const Session: React.FC = () => {
   useExpandedNavigationTab();

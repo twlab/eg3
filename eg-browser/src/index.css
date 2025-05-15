@@ -1,38 +1,58 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-.btn {
-  @apply bg-transparent text-blue-700 px-1 border border-blue-500 rounded;
+@theme {
+  --color-primary: #5f6368;
+  --color-secondary: #e8def8;
+  --color-tint: #75697a;
+  --color-alert: #307868;
+  --color-dark-primary: #ffffff;
+  --color-dark-secondary: #39245b;
+  --color-dark-background: #1c191f;
+  --color-dark-surface: #333333;
+  --color-dark-tint: #775ca2;
 }
 
-[data-theme="dark"] .btn {
-  @apply bg-transparent text-blue-200 px-1 border border-blue-100 rounded;
-}
+/* .btn {
+  background-color: transparent;
+  color: #0077cc;
+  padding: 4px 8px;
+  border: 1px solid #0077cc;
+  border-radius: 4px;
+} */
+
+/* @layer components {
+  .btn {
+    @apply bg-transparent text-blue-700 px-1 border border-blue-500 rounded;
+  }
+
+  [data-theme="dark"] .btn {
+    @apply bg-transparent text-blue-200 px-1 border border-blue-100 rounded;
+  }
+  .TrackContextMenu-body button,
+  select,
+  input {
+    @apply btn;
+  }
+
+  .HighlightMenu button,
+  select,
+  input {
+    @apply btn;
+  }
+
+  .table {
+    @apply w-full border-collapse;
+  }
+} */
 
 /* .btn:hover {
     @apply bg-blue-500 text-white border-transparent;
 } */
-
-.TrackContextMenu-body button,
-select,
-input {
-  @apply btn;
-}
-
-.HighlightMenu button,
-select,
-input {
-  @apply btn;
-}
-
-.table {
-  @apply w-full border-collapse;
-}
 
 :root {
   --dark-fg-color: white;

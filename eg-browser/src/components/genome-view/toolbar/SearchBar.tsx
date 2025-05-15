@@ -23,9 +23,14 @@ import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 // } from "@/lib/redux/slices/searchSlice";
 import { debounce } from "lodash";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import OutsideClickDetector from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
-import IsoformSelection from "@eg/tracks/src/components/GenomeView/genomeNavigator/IsoformSelection";
-import { Gene, ChromosomeInterval, GenomeSerializer } from "wuepgg3-track";
+
+import {
+  Gene,
+  ChromosomeInterval,
+  GenomeSerializer,
+  OutsideClickDetector,
+  IsoformSelection,
+} from "wuepgg3-track-test";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
 const SNP_ENDPOINTS: any = {

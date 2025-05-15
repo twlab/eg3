@@ -10,7 +10,7 @@ import {
 
 import FacetTable from "./FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
-import { ITrackModel } from "wuepgg3-track";
+import { ITrackModel } from "wuepgg3-track-test";
 
 import {
   addPublicTracksPool,
@@ -18,11 +18,12 @@ import {
   selectPublicTracksPool,
   updateLoadedPublicHub,
 } from "@/lib/redux/slices/hubSlice";
-import DataHubParser from "@eg/tracks/src/models/DataHubParser";
-import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
+// Local Hooks
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+
+// wuepgg3-track-test Imports
+import { DataHubParser, Json5Fetcher, TrackModel } from "wuepgg3-track-test";
 
 export default function PublicDataHubs() {
   useExpandedNavigationTab();

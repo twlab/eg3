@@ -1,23 +1,31 @@
 import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
 import _ from "lodash";
-import RegionSetSelector from "./region-set/RegionSetSelector";
-import { getTrackConfig } from "@eg/tracks/src/trackConfigs/config-menu-models.tsx/getTrackConfig";
+import {
+  getTrackConfig,
+  HELP_LINKS,
+  pcorr,
+  ColorPicker,
+  trackFetchFunction,
+  ChromosomeInterval,
+  NumericalFeature,
+  RegionSet,
+  GenomeSerializer,
+} from "wuepgg3-track-test";
 
-import { HELP_LINKS, pcorr } from "@eg/tracks/src/models/util";
-import ColorPicker from "@eg/tracks/src/trackConfigs/config-menu-components.tsx/ColorPicker";
+// React-Plotly
 import Plot from "react-plotly.js";
-import { trackFetchFunction } from "wuepgg3-track";
-import { ChromosomeInterval } from "wuepgg3-track";
-import { NumericalFeature } from "@eg/tracks/src/models/Feature";
+
+// Local Imports
+import RegionSetSelector from "./region-set/RegionSetSelector";
 import { NUMERICAL_TRACK_TYPES } from "./GenePlot";
 
-import { RegionSet } from "wuepgg3-track";
-
+// Custom Hooks
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import { GenomeSerializer } from "wuepgg3-track";
+import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+
+// Redux
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { useAppSelector } from "@/lib/redux/hooks";
-import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
 const ScatterPlot: React.FC = () => {
   useExpandedNavigationTab();

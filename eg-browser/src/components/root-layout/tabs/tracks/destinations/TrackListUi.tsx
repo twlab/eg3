@@ -10,7 +10,7 @@ import {
   updateSavedDeleteTrackList,
 } from "@/lib/redux/slices/hubSlice";
 
-import { ITrackModel } from "wuepgg3-track";
+import { ITrackModel } from "wuepgg3-track-test";
 export default function TrackListUi() {
   const savedDeleteTrackList = useAppSelector(selectSavedDeleteTrackList);
   const dispatch = useAppDispatch();

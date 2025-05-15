@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import _ from "lodash";
-import OpenInterval from "@eg/tracks/src/models/OpenInterval";
-
-import { getDisplayModeFunction } from "@eg/tracks/src/components/GenomeView/TrackComponents/displayModeComponentMap";
-import { trackOptionMap } from "@eg/tracks/src/components/GenomeView/TrackComponents/defaultOptionsMap";
 
 import { ClipLoader } from "react-spinners";
-import { ViewExpansion } from "@eg/tracks/src/models/RegionExpander";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
-import LinearDrawingModel from "@eg/tracks/src/models/LinearDrawingModel";
+import {
+  ViewExpansion,
+  TrackModel,
+  LinearDrawingModel,
+  trackOptionMap,
+  getDisplayModeFunction,
+  OpenInterval,
+} from "wuepgg3-track-test";
+
 interface Highlight {
   start: number;
   end: number;

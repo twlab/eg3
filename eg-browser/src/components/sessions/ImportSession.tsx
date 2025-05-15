@@ -9,9 +9,9 @@ import {
   GenomeCoordinate,
   ITrackModel,
   restoreLegacyViewRegion,
-} from "wuepgg3-track";
+  DisplayedRegionModel,
+} from "wuepgg3-track-test";
 import { addSessionsFromBundleId } from "@/lib/redux/thunk/session";
-import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
 export default function ImportSession() {
   const dispatch = useAppDispatch();

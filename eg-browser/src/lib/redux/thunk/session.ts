@@ -2,13 +2,13 @@ import {
   GenomeCoordinate,
   ITrackModel,
   restoreLegacyViewRegion,
-} from "wuepgg3-track";
+  DisplayedRegionModel,
+} from "wuepgg3-track-test";
 import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/SessionUI";
 import { updateBundle } from "../slices/hubSlice";
-import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",

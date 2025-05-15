@@ -3,7 +3,8 @@ import {
   IGenome,
   IHighlightInterval,
   ITrackModel,
-} from "wuepgg3-track";
+  RegionSet,
+} from "wuepgg3-track-test";
 import {
   createEntityAdapter,
   createSlice,
@@ -11,7 +12,6 @@ import {
 } from "@reduxjs/toolkit";
 
 import { RootState } from "../store";
-import RegionSet from "@eg/tracks/src/models/RegionSet";
 
 export type uuid = string;
 

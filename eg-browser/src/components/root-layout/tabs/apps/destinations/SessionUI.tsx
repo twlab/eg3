@@ -4,17 +4,20 @@ import JSZip from "jszip";
 import _ from "lodash";
 
 import { child, get, getDatabase, ref, remove, set } from "firebase/database";
-import { readFileAsText, HELP_LINKS } from "@eg/tracks/src/models/util";
-import { CopyToClip } from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/CopyToClipboard";
+import {
+  AppStateSaver,
+  ITrackModel,
+  HighlightInterval,
+  DisplayedRegionModel,
+  OpenInterval,
+  getGenomeConfig,
+  readFileAsText,
+  HELP_LINKS,
+  CopyToClip,
+  TrackModel,
+  RegionSet,
+} from "wuepgg3-track-test";
 import "./SessionUI.css";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
-import RegionSet from "@eg/tracks/src/models/RegionSet";
-import { getGenomeConfig } from "@eg/tracks/src/models/genomes/allGenomes";
-import OpenInterval from "@eg/tracks/src/models/OpenInterval";
-import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
-import { HighlightInterval } from "@eg/tracks/src/components/GenomeView/ToolComponents/HighlightMenu";
-import { ITrackModel } from "@eg/tracks/src/types";
-import { AppStateSaver } from "@eg/tracks/src/models/AppSaveLoad";
 
 export interface BundleProps {
   bundleId: string;
