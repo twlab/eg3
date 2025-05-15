@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import TrackModel from "../../../../models/TrackModel";
 
-import "./hoverToolTips/Tooltip.css";
+import "./HoverToolTips/Tooltip.css";
 import { variableIsObject } from "../../../../models/util";
 
 /*
