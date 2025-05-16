@@ -187,7 +187,10 @@ export default function GenomePicker() {
                 <motion.img
                   layout
                   src={
-                    import.meta.env.BASE_URL + (genome.logoUrl ?? placeholder)
+                    !import.meta || !import.meta.env
+                      ? "/browser/"
+                      : import.meta.env.BASE_URL +
+                        (genome.logoUrl ?? placeholder)
                   }
                   alt={genome.name}
                   className="rounded-2xl h-28 w-full object-cover object-top"
