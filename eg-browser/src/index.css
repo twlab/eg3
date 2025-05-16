@@ -25,31 +25,66 @@ body {
   border-radius: 4px;
 } */
 
-/* @layer components {
-  .btn {
-    @apply bg-transparent text-blue-700 px-1 border border-blue-500 rounded;
-  }
+.btn {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
 
-  [data-theme="dark"] .btn {
-    @apply bg-transparent text-blue-200 px-1 border border-blue-100 rounded;
-  }
-  .TrackContextMenu-body button,
-  select,
-  input {
-    @apply btn;
-  }
+[data-theme="dark"] .btn {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
+}
 
-  .HighlightMenu button,
-  select,
-  input {
-    @apply btn;
-  }
+.TrackContextMenu-body button,
+.TrackContextMenu-body select,
+.TrackContextMenu-body input {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
 
-  .table {
-    @apply w-full border-collapse;
-  }
-} */
+[data-theme="dark"] .TrackContextMenu-body button,
+[data-theme="dark"] .TrackContextMenu-body select,
+[data-theme="dark"] .TrackContextMenu-body input {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
+}
 
+.HighlightMenu button,
+.HighlightMenu select,
+.HighlightMenu input {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+[data-theme="dark"] .HighlightMenu button,
+[data-theme="dark"] .HighlightMenu select,
+[data-theme="dark"] .HighlightMenu input {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+.table {
+  width: 100%; /* w-full */
+  border-collapse: collapse; /* border-collapse */
+}
 /* .btn:hover {
     @apply bg-blue-500 text-white border-transparent;
 } */
