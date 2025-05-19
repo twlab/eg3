@@ -97,9 +97,8 @@ export interface Alignment {
 export interface MultiAlignment {
   [genome: string]: Alignment;
 }
-
-self.onmessage = async (event: MessageEvent) => {
-  const objectPromises = event.data.map(async (dataItem) => {
+export async function fetchGenomicData(dataToFetchArr: Array<any>) {
+  const objectPromises = dataToFetchArr.map(async (dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
     const initial = dataItem.initial;
     const fetchResults: Array<any> = [];
@@ -363,5 +362,5 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   const results = await Promise.all(objectPromises);
-  postMessage(results);
-};
+  return results;
+}

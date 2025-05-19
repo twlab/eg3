@@ -1,3 +1,3 @@
-export * from './GenomeSerializer';
-export * from './GenomeHubManager';
-export * from './genome-schema';
+export { default as GenomeSerializer } from "./GenomeSerializer";
+export { default as GenomeHubManager } from "./GenomeHubManager";
+export * from "./genome-schema";

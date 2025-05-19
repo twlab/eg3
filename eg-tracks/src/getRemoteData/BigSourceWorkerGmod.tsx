@@ -31,7 +31,6 @@ class BigSourceWorkerGmod {
    * @override
    */
   async getData(loci, options) {
-
     const promises = loci.map((locus) => {
       let chrom = options.ensemblStyle
         ? locus.chr.replace("chr", "")
@@ -39,6 +38,7 @@ class BigSourceWorkerGmod {
       if (chrom === "M") {
         chrom = "MT";
       }
+
       return this.bw.getFeatures(chrom, locus.start, locus.end);
     });
     const dataForEachLocus = await Promise.all(promises);

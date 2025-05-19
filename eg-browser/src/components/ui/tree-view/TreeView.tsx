@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import _ from "lodash";
-import { ITrackModel, variableIsObject } from "wuepgg3-track-test";
+import { ITrackModel, variableIsObject } from "wuepgg3-track";
 
 const DEFAULT_GROUP = "Sample";
 const UNUSED_META_KEY = "notused";

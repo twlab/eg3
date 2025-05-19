@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchBar from "./SearchBar";
-import { Tool } from "wuepgg3-track-test";
+import { Tool } from "wuepgg3-track";
 
 enum MagnifyingDirection {
   In,

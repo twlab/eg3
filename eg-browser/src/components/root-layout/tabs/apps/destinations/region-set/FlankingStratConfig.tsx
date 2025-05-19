@@ -1,5 +1,5 @@
 import React from "react";
-import { FlankingStrategy } from "wuepgg3-track-test";
+import { FlankingStrategy } from "wuepgg3-track";
 
 interface FlankingStratConfigProps {
   strategy: FlankingStrategy;

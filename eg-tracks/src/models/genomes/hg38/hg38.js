@@ -69,7 +69,6 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
-
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -81,11 +80,11 @@ const defaultTracks = [
     name: "gencodeV39",
     genome: "hg38",
   }),
-  new TrackModel({
-    type: "bigbed",
-    name: "test bigbed",
-    url: "https://www.encodeproject.org/files/ENCFF362EJP/@@download/ENCFF362EJP.bigBed",
-  }),
+  // new TrackModel({
+  //   type: "bigbed",
+  //   name: "test bigbed",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
+  // }),
   // new TrackModel({
   //   "type": "refbed",
   //   "name": "mm10 gencode basic",

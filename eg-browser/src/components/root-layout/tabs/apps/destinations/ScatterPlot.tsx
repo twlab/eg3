@@ -10,7 +10,7 @@ import {
   NumericalFeature,
   RegionSet,
   GenomeSerializer,
-} from "wuepgg3-track-test";
+} from "wuepgg3-track";
 
 // React-Plotly
 import Plot from "react-plotly.js";

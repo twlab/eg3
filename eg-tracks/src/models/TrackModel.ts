@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { variableIsObject } from "./util";
 
-import { TrackOptions } from "@/types";
+import { TrackOptions } from "../types";
 
 interface ITrackModelMetadata {
   "Track Type"?: string;

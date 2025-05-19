@@ -10,7 +10,7 @@ import {
 
 import FacetTable from "./FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
-import { ITrackModel } from "wuepgg3-track-test";
+import { ITrackModel } from "wuepgg3-track";
 
 import {
   addPublicTracksPool,
@@ -22,8 +22,8 @@ import {
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
-// wuepgg3-track-test Imports
-import { DataHubParser, Json5Fetcher, TrackModel } from "wuepgg3-track-test";
+// wuepgg3-track Imports
+import { DataHubParser, Json5Fetcher, TrackModel } from "wuepgg3-track";
 
 export default function PublicDataHubs() {
   useExpandedNavigationTab();

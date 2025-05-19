@@ -4,7 +4,7 @@ import _ from "lodash";
 // React-Table Imports
 import { useTable, useFilters, useSortBy, Column } from "react-table";
 
-// wuepgg3-track-test Imports
+// wuepgg3-track Imports
 import {
   Genome,
   Feature,
@@ -12,7 +12,7 @@ import {
   RegionSet,
   ChromosomeInterval,
   getSymbolRegions,
-} from "wuepgg3-track-test";
+} from "wuepgg3-track";
 
 // Local Component
 import FlankingStratConfig from "./FlankingStratConfig";

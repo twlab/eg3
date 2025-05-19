@@ -13,8 +13,8 @@ import {
   GenomeCoordinate,
   IHighlightInterval,
   ITrackModel,
-} from "wuepgg3-track-test";
-import { TrackContainerRepresentable } from "wuepgg3-track-test";
+} from "wuepgg3-track";
+import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";

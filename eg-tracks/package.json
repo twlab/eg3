@@ -1,20 +1,36 @@
 {
-  "name": "@eg/tracks",
-  "private": true,
-  "version": "0.0.0",
-  "main": "src/index.ts",
-  "type": "module",
+  "name": "wuepgg3-track",
+  "private": false,
+  "version": "1.0.1",
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "vite",
-    "check-build": "tsc && vite build",
+    "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "watch": "vitest"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@eg/core": "0.0.0",
     "@gmod/bam": "^2.0.2",
     "@gmod/bbi": "^4.0.4",
     "@gmod/tabix": "^1.5.13",
@@ -25,6 +41,7 @@
     "@popperjs/core": "^2.11.8",
     "@primer/octicons-react": "^19.11.0",
     "@reduxjs/toolkit": "^2.4.0",
+    "@rollup/plugin-url": "^8.0.2",
     "@types/d3-scale": "^4.0.8",
     "@types/lodash": "^4.17.6",
     "@types/pako": "^2.0.3",
@@ -52,19 +69,18 @@
     "plotly.js": "^2.35.2",
     "point-in-polygon": "^1.1.0",
     "rc-drawer": "^7.2.0",
+    "react": "^19.1.0",
     "react-autosuggest": "^10.1.0",
     "react-color": "^2.19.3",
     "react-compound-slider": "^3.4.0",
     "react-copy-to-clipboard": "^5.1.0",
-    "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-modal": "^3.16.1",
     "react-plotly.js": "^2.6.0",
     "react-popper": "^2.3.0",
-    "react-spinners": "^0.15.0",
-    "react-table": "^7.8.0",
-    "styled-components": "^6.1.16",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "vite-plugin-dts": "^2.1.0",
+    "vite-plugin-node-polyfills": "^0.23.0"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",

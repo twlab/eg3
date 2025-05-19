@@ -50,7 +50,7 @@
     "redux-persist": "^6.0.0",
     "redux-undo": "^1.1.0",
     "tailwindcss": "^4.1.7",
-    "wuepgg3-track-test": "^1.0.1"
+    "wuepgg3-track": "^1.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

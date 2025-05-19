@@ -1,6 +1,6 @@
 import React from "react";
 import FacetTable from "./FacetTable";
-import TrackModel from "wuepgg3-track-test";
+import TrackModel from "wuepgg3-track";
 
 interface FacetTableUIProps {
   publicTracksPool: any[];

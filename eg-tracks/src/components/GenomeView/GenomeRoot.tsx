@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
+
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";
 // import { getGenomeConfig } from "../../models/genomes/allGenomes";
@@ -52,6 +53,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   );
 
   useEffect(() => {
+    console.log(size.width);
     if (size.width > 0) {
       let curGenome;
 
@@ -134,12 +136,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
-        {currentGenomeConfig ? (
+        {currentGenomeConfig && size.width > 0 ? (
           <TrackManager
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width - legendWidth}
+            windowWidth={
+              (!size.width || size.width - legendWidth < 0
+                ? 1500
+                : size.width) - legendWidth
+            }
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={currentGenomeConfig}
