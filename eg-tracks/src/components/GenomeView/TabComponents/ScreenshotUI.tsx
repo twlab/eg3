@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from "react";
 import _ from "lodash";
-import ReactModal from "react-modal";
-import withAutoDimensions from "./withAutoDimensions";
-import HighlightRegion, { getHighlightedXs } from "./HighlightRegion";
+
 import OpenInterval from "../../../models/OpenInterval";
-import { GroupedTrackManager } from "./GroupedTrackManager";
-import {
-  displayModeComponentMap,
-  getDisplayModeFunction,
-} from "../TrackComponents/displayModeComponentMap";
+
+import { getDisplayModeFunction } from "../TrackComponents/displayModeComponentMap";
 import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
-import TrackLegend from "../TrackComponents/commonComponents/TrackLegend";
-import { objToInstanceAlign } from "../TrackManager";
+
 import { ClipLoader } from "react-spinners";
+import { getHighlightedXs } from "./HighlightRegion";
 interface Highlight {
   start: number;
   end: number;
@@ -33,7 +28,6 @@ interface Props {
   retakeScreenshot: any;
   windowWidth: number;
 }
-
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("block");
@@ -62,7 +56,11 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const boxWidth = props.windowWidth + 120;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
+    svgElem.setAttributeNS(
+      null,
+      "viewBox",
+      "0 0 " + boxWidth + " " + boxHeight
+    );
     //add the width of the track and tracklegend to to correctly view all the svg
     const width = props.windowWidth + 120;
 
@@ -104,30 +102,27 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       y = 5;
     tracks.forEach((ele, idx) => {
       const legendWidth = 120;
-      let trackHeight
-      let trackLabelText
-      let trackLegendAxisSvgs
-      let eleSvgs
+      let trackHeight;
+      let trackLabelText;
+      let trackLegendAxisSvgs;
+      let eleSvgs;
       if (ele.children[1]) {
         trackHeight = ele.children[1].children[1].clientHeight + 3;
         trackLabelText = ele.children[1].children[0].textContent;
-        trackLegendAxisSvgs = ele.children[1].children[0].querySelectorAll("svg");
+        trackLegendAxisSvgs =
+          ele.children[1].children[0].querySelectorAll("svg");
 
-        //to DO: legends and element overlap because the legend get query here also, find a way to separate them, 
+        //to DO: legends and element overlap because the legend get query here also, find a way to separate them,
         eleSvgs = ele.children[1].querySelectorAll("svg");
-      }
-      else {
+      } else {
         trackHeight = ele.children[0].children[1].clientHeight + 3;
         trackLabelText = ele.children[0].children[0].textContent;
-        trackLegendAxisSvgs = ele.children[0].children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
+        trackLegendAxisSvgs =
+          ele.children[0].children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
         eleSvgs = ele.children[0].querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
-
-
       }
 
       const yoffset = trackHeight > 20 ? 24 : 14;
-
-
 
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
@@ -191,8 +186,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           yoff += eleSvg.clientHeight; // do this before appendChild
           trackG.appendChild(eleSvg);
         });
-
-
       }
       trackG.setAttributeNS(null, "transform", `translate(${translateX})`);
       svgElemg2.appendChild(trackG);
@@ -273,15 +266,15 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   };
   const styles = {
     container: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',  // Centers children horizontally
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center", // Centers children horizontally
       paddingTop: "20px",
-      height: '100vh',  // Full height to center within the whole view height
+      height: "100vh", // Full height to center within the whole view height
     },
     message: {
-      fontWeight: 'bold',
-      marginBottom: '10px',  // Add some space between the message and the loader
+      fontWeight: "bold",
+      marginBottom: "10px", // Add some space between the message and the loader
     },
   };
   // const downloadPdf = () => {
@@ -345,16 +338,16 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           trackModel,
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
-          genomeConfig: createSVGData.genomeConfig
+          genomeConfig: createSVGData.genomeConfig,
         });
 
-        return <div className={"Track"} key={index}>{svgResult} </div>
-
-          ;
+        return (
+          <div className={"Track"} key={index}>
+            {svgResult}{" "}
+          </div>
+        );
       });
-    setMsg(
-      ""
-    );
+    setMsg("");
     return trackSvgElements;
   };
   function updateScreenshot() {
@@ -384,7 +377,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       return () => clearTimeout(timeoutId);
     }
   }, [msg, props.trackData]);
-
 
   return (
     <div style={{ display, backgroundColor: "var(--bg-color)" }}>
