@@ -71,8 +71,8 @@ export default function RootLayout() {
 
   return (
     <div
-      className={`h-screen w-screen flex flex-col ${darkTheme ? 'dark' : ''}`}
-      data-theme={darkTheme ? 'dark' : 'light'}
+      className={`h-screen w-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+      data-theme={darkTheme ? "dark" : "light"}
     >
       <GoogleAnalytics />
       <motion.div
@@ -86,7 +86,10 @@ export default function RootLayout() {
         }}
       >
         <NavBar />
-        <div className="flex flex-row flex-1 relative bg-black" ref={contentRef}>
+        <div
+          className="flex flex-row flex-1 relative bg-black"
+          ref={contentRef}
+        >
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
