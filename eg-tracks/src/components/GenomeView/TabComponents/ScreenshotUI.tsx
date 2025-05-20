@@ -121,8 +121,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           ele.children[0].children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
         eleSvgs = ele.children[0].querySelectorAll("svg"); // bi-directional numerical track has 2 svgs!
       }
-
-      const yoffset = trackHeight > 20 ? 24 : 14;
+      // this moves the track's label
+      const yoffset = 7;
 
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
