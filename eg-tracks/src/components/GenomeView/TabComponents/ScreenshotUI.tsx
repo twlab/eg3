@@ -50,17 +50,18 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     const boxHeight = tracks.reduce(
       (acc, cur) => acc + cur.clientHeight,
-      tracks.length
+      11 * tracks.length
     );
+
     //tracks[0].clientWidth
     const boxWidth = props.windowWidth + 120;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    svgElem.setAttributeNS(
-      null,
-      "viewBox",
-      "0 0 " + boxWidth + " " + boxHeight
-    );
+    // svgElem.setAttributeNS(
+    //   null,
+    //   "viewBox",
+    //   "0 0 " + boxWidth + " " + boxHeight
+    // );
     //add the width of the track and tracklegend to to correctly view all the svg
     const width = props.windowWidth + 120;
 
@@ -107,7 +108,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       let trackLegendAxisSvgs;
       let eleSvgs;
       if (ele.children[1]) {
-        trackHeight = ele.children[1].children[1].clientHeight + 3;
+        trackHeight = ele.children[1].children[1].clientHeight + 1;
         trackLabelText = ele.children[1].children[0].textContent;
         trackLegendAxisSvgs =
           ele.children[1].children[0].querySelectorAll("svg");
@@ -115,7 +116,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         //to DO: legends and element overlap because the legend get query here also, find a way to separate them,
         eleSvgs = ele.children[1].querySelectorAll("svg");
       } else {
-        trackHeight = ele.children[0].children[1].clientHeight + 3;
+        trackHeight = ele.children[0].children[1].clientHeight + 1;
         trackLabelText = ele.children[0].children[0].textContent;
         trackLegendAxisSvgs =
           ele.children[0].children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
@@ -198,7 +199,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       sepLine.setAttribute("y1", y + "");
       sepLine.setAttribute("x2", boxWidth + "");
       sepLine.setAttribute("y2", y + "");
-      sepLine.setAttribute("stroke", "gray");
+      sepLine.setAttribute("stroke", "#9AA6B2");
       svgElemg.appendChild(sepLine);
       // y += 1;
       x = 0;
@@ -314,8 +315,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   const makeSvgTrackElements = () => {
     const { tracks, trackData } = props;
 
-    document.documentElement.style.setProperty("--bg-color", "white");
-    document.documentElement.style.setProperty("--font-color", "#222");
+    // document.documentElement.style.setProperty("--bg-color", "white");
+    // document.documentElement.style.setProperty("--font-color", "#222");
 
     const trackSvgElements = tracks
       .filter(
@@ -343,7 +344,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
         return (
           <div className={"Track"} key={index}>
-            {svgResult}{" "}
+            {svgResult}
           </div>
         );
       });

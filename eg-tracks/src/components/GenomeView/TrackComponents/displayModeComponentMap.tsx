@@ -127,7 +127,34 @@ export const displayModeComponentMap: { [key: string]: any } = {
         );
       }
       let svgKey = crypto.randomUUID();
+
       if (configOptions.forceSvg) {
+        // const viewStart = trackState.visData.viewWindowRegion._startBase;
+
+        // const viewEnd = trackState.visData.viewWindowRegion._endBase;
+
+        const adjustXSpan = (xSpan, viewWindow) => {
+          return new OpenInterval(
+            xSpan.start - viewWindow.start,
+            xSpan.end - viewWindow.start
+          );
+        };
+
+        const filteredAndAdjustedPlacements = placements
+          .filter(
+            (obj) =>
+              obj.xSpan.start <= trackState.viewWindow.end &&
+              obj.xSpan.end >= trackState.viewWindow.start
+          )
+          .map((obj) => ({
+            ...obj,
+            xSpan: adjustXSpan(obj.xSpan, trackState.viewWindow),
+            placedFeatures: obj.placedFeatures.map((item) => ({
+              ...item,
+              xSpan: adjustXSpan(item.xSpan, trackState.viewWindow),
+            })),
+          }));
+
         return (
           <div style={{ display: "flex" }}>
             <TrackLegend
@@ -145,13 +172,13 @@ export const displayModeComponentMap: { [key: string]: any } = {
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={svgKey}
               width={width / 3}
-              viewBox={`${trackState.viewWindow.start} 0 ${
-                trackState.visWidth / 3
-              } ${height}`}
+              // viewBox={`${trackState.viewWindow.start} 0 ${
+              //   trackState.visWidth / 3
+              // } ${height}`}
               height={height}
               display={"block"}
             >
-              {placements.map(renderAnnotation)}
+              {filteredAndAdjustedPlacements.map(renderAnnotation)}
               {/* <line
                 x1={width / 3}
                 y1={0}
@@ -179,7 +206,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
           key={svgKey}
           width={width}
           height={height}
-          display={"block"}
         >
           {placements.map(renderAnnotation)}
           {/* <line
@@ -211,7 +237,11 @@ export const displayModeComponentMap: { [key: string]: any } = {
           key={index}
           gene={gene}
           xSpan={placedGroup.xSpan}
-          viewWindow={new OpenInterval(0, windowWidth * 3)}
+          viewWindow={
+            configOptions.forceSvg
+              ? trackState.viewWindow
+              : new OpenInterval(0, windowWidth * 3)
+          }
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
@@ -621,6 +651,26 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let featureArrange = new FeatureArranger();
 
     let sortType = SortItemsOptions.NOSORT;
+
+    // let newFormattedData;
+    // if (configOptions.forceSvg) {
+    //   const viewStart = trackState.regionLoci[0].start;
+
+    //   const viewEnd = trackState.regionLoci[0].end;
+
+    //   const adjustXSpan = (xSpan, viewWindow) => {
+    //     return new OpenInterval(
+    //       xSpan.start - viewWindow.start,
+    //       xSpan.end - viewWindow.start
+    //     );
+    //   };
+
+    //   newFormattedData = formattedData.filter(
+    //     (obj) => obj.locus.start <= viewEnd && obj.locus.end >= viewStart
+    //   );
+    // } else {
+    //   newFormattedData = formattedData;
+    // }
     let placeFeatureData = featureArrange.arrange(
       formattedData,
       objToInstanceAlign(trackState.visRegion),
@@ -630,18 +680,18 @@ export const displayModeComponentMap: { [key: string]: any } = {
       sortType
     );
 
-    if (configOptions.forceSvg) {
-      placeFeatureData.placements = placeFeatureData.placements.filter(
-        (feature) => {
-          const curXSpan = feature.xSpan;
+    // if (configOptions.forceSvg) {
+    //   placeFeatureData.placements = placeFeatureData.placements.filter(
+    //     (feature) => {
+    //       const curXSpan = feature.xSpan;
 
-          return !(
-            curXSpan.end < trackState.viewWindow.start ||
-            curXSpan.start > trackState.viewWindow.end
-          );
-        }
-      );
-    }
+    //       return !(
+    //         curXSpan.end < trackState.viewWindow.start ||
+    //         curXSpan.start > trackState.viewWindow.end
+    //       );
+    //     }
+    //   );
+    // }
     let height;
 
     height =
