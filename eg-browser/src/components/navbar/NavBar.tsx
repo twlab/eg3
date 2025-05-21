@@ -36,6 +36,7 @@ import {
   selectDarkTheme,
   setDarkTheme,
 } from "@/lib/redux/slices/settingsSlice";
+import { version } from "../../../package.json";
 
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
@@ -125,7 +126,9 @@ export default function NavBar() {
             >
               <span className="font-medium">WashU </span> Epigenome Browser
             </h1>
+
           ))}
+        <span className="text-xs text-red-500">{version}</span>
       </div>
       <AnimatePresence>
         {currentSession !== null ? (
