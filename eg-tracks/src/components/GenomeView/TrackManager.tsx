@@ -2375,13 +2375,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           curTrackModel = tracks.find(
             (trackModel: any) => trackModel.id === key
           );
-  
+
           if (curTrackModel) {
             configOptions = {
               ...trackOptionMap[`${cacheTrackData.trackType}`].defaultOptions,
               ...curTrackModel.options,
             };
-
           }
         }
         if (
@@ -2794,6 +2793,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [newDrawData]);
   return (
+    //
     <div style={{ backgroundColor: "var(--bg-color)" }}>
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
         <GenomeNavigator
