@@ -1,4 +1,4 @@
-import GenomeHubManager from "@eg/tracks/src/genome-hub/GenomeHubManager";
+import { GenomeHubManager } from "@eg/tracks";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   setCustomGenomes,
@@ -41,16 +41,6 @@ export const clearAllGenomes = createAsyncThunk(
   async (_, thunkApi) => {
     const genomeHubManager = GenomeHubManager.getInstance();
     await genomeHubManager.deleteAllGenomes();
-
-    thunkApi.dispatch(refreshLocalGenomes());
-  }
-);
-
-export const deleteCustomGenome = createAsyncThunk(
-  "genome-hub/delete",
-  async (id: string, thunkApi) => {
-    const genomeHubManager = GenomeHubManager.getInstance();
-    await genomeHubManager.deleteGenome(id);
 
     thunkApi.dispatch(refreshLocalGenomes());
   }

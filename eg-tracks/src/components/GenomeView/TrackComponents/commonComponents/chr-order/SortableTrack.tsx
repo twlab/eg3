@@ -31,7 +31,7 @@ export function SortableList<T extends BaseItem>({
   items,
   onChange,
   renderItem,
-  selectedTracks
+  selectedTracks,
 }: Props<T>) {
   const pointerSensor = useSensor(PointerSensor);
   const keyboardSensor = useSensor(KeyboardSensor, {
@@ -50,27 +50,34 @@ export function SortableList<T extends BaseItem>({
             const overIndex = items.findIndex(({ id }) => id === over.id);
 
             // Collect ids of items to be moved
-            const selectedItems = items.filter(item => item.trackModel.isSelected);
+            const selectedItems = items.filter(
+              (item) => item.trackModel.isSelected
+            );
 
             if (selectedItems.length > 0) {
-              const nonSelectedItems = items.filter(item => !item.trackModel.isSelected);
+              const nonSelectedItems = items.filter(
+                (item) => !item.trackModel.isSelected
+              );
 
               const newItemsArray = [
                 ...nonSelectedItems.slice(0, overIndex),
                 ...selectedItems,
-                ...nonSelectedItems.slice(overIndex)
+                ...nonSelectedItems.slice(overIndex),
               ];
 
               onChange(newItemsArray);
             } else {
               onChange(arrayMove(items, activeIndex, overIndex));
             }
-
           }
         }}
       >
         <SortableContext items={items}>
-          <ul className="SortableList" role="application">
+          <ul
+            className="SortableList"
+            role="application"
+            style={{ padding: 0, margin: 0 }}
+          >
             {items.map((item) => (
               <React.Fragment key={item.id}>{renderItem(item)}</React.Fragment>
             ))}

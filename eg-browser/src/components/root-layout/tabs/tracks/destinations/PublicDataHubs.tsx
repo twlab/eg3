@@ -8,7 +8,7 @@ import {
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 
-import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+import FacetTable from "./FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
 import { ITrackModel } from "@eg/tracks";
 
@@ -18,11 +18,12 @@ import {
   selectPublicTracksPool,
   updateLoadedPublicHub,
 } from "@/lib/redux/slices/hubSlice";
-import DataHubParser from "@eg/tracks/src/models/DataHubParser";
-import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
+// Local Hooks
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+
+// @eg/tracks Imports
+import { DataHubParser, Json5Fetcher, TrackModel } from "@eg/tracks";
 
 export default function PublicDataHubs() {
   useExpandedNavigationTab();
@@ -32,10 +33,12 @@ export default function PublicDataHubs() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadingHubs, setLoadingHubs] = useState<{ [key: string]: boolean }>({});
+  const [loadingHubs, setLoadingHubs] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   const secondaryGenomes: Array<any> = [];
-  let selectedGenomeName = null;
+  let selectedGenomeName: any = null;
   if (currentSession) {
     selectedGenomeName = currentSession!.genomeId;
   }
@@ -118,10 +121,11 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${isLoaded
-                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-                }`}
+              className={`size-6 rounded-md flex items-center justify-center ${
+                isLoaded
+                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+              }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -199,7 +203,7 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>

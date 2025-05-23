@@ -1,26 +1,39 @@
+import React, { useMemo, useState } from "react";
+
+// UI Components
 import Button from "@/components/ui/button/Button";
 import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import TabView from "@/components/ui/tab-view/TabView";
+import FacetTable from "./FacetTable";
+
+// Redux Imports
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   addTracks,
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import React, { useMemo, useState } from "react";
-import JSON5 from "json5";
-import { ITrackModel } from "@eg/tracks";
-import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
-import TrackModel, { mapUrl } from "@eg/tracks/src/models/TrackModel";
-import DataHubParser from "@eg/tracks/src/models/DataHubParser";
-import { HELP_LINKS, readFileAsText } from "@eg/tracks/src/models/util";
 import {
   addCustomTracksPool,
   selectCustomTracksPool,
 } from "@/lib/redux/slices/hubSlice";
-import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+
+// Custom Hooks
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 
+// External Libraries
+import JSON5 from "json5";
+
+// @eg/tracks Imports
+import {
+  ITrackModel,
+  Json5Fetcher,
+  TrackModel,
+  mapUrl,
+  DataHubParser,
+  HELP_LINKS,
+  readFileAsText,
+} from "@eg/tracks";
 export default function RemoteTracks() {
   return (
     <TabView

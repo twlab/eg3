@@ -199,23 +199,9 @@ function SessionListItem({
 
   if (error) {
     return (
-      <div className="flex flex-col text-sm bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden gap-2">
+      <div className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden">
         <h1 className="text-2xl">Genome ID: {session.genomeId}</h1>
         <p className="text-sm">Error loading genome: {error.message}</p>
-        {allowDelete && (
-          <Button
-            backgroundColor={isConfirmingDelete ? "alert" : "tint"}
-            onClick={handleDelete}
-            style={{ flex: 1 }}
-            leftIcon={
-              isConfirmingDelete ? (
-                <ExclamationTriangleIcon className="w-4 h-4" />
-              ) : undefined
-            }
-          >
-            {isConfirmingDelete ? "Confirm Delete" : "Delete"}
-          </Button>
-        )}
       </div>
     );
   }

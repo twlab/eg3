@@ -1,4 +1,4 @@
-import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+import FacetTable from "./FacetTable";
 import TabView from "@/components/ui/tab-view/TabView";
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
@@ -10,7 +10,7 @@ import {
   selectCustomTracksPool,
   selectPublicTracksPool,
 } from "@/lib/redux/slices/hubSlice";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
+import { TrackModel } from "@eg/tracks";
 import { useMemo } from "react";
 
 export default function TrackFacetTable() {

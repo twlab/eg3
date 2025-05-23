@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import _ from "lodash";
 
-import OpenInterval from "../../../models/OpenInterval";
-
-import { getDisplayModeFunction } from "../TrackComponents/displayModeComponentMap";
-import { trackOptionMap } from "../TrackComponents/defaultOptionsMap";
-
 import { ClipLoader } from "react-spinners";
-import { getHighlightedXs } from "./HighlightRegion";
+import {
+  ViewExpansion,
+  TrackModel,
+  LinearDrawingModel,
+  trackOptionMap,
+  getDisplayModeFunction,
+  OpenInterval,
+} from "@eg/tracks";
+
 interface Highlight {
   start: number;
   end: number;

@@ -1,10 +1,7 @@
 import _ from "lodash";
 import { variableIsObject } from "./util";
 
-export interface TrackOptions {
-  label?: string;
-  [k: string]: any;
-}
+import { TrackOptions } from "../types";
 
 interface ITrackModelMetadata {
   "Track Type"?: string;

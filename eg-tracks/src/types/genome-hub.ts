@@ -19,8 +19,6 @@ export interface IGenomeHubSource {
 
   putGenome(genome: IGenome): Promise<uuid>;
 
-  deleteGenome(id: string): Promise<void>;
-
   deleteAllGenomes(): Promise<void>;
 }
 

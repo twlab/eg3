@@ -7,23 +7,18 @@ import {
 import {
   clearAllGenomes,
   refreshLocalGenomes,
-  deleteCustomGenome,
 } from "@/lib/redux/thunk/genome-hub";
 import { IGenome } from "@eg/tracks";
-import {
-  ChevronRightIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/16/solid";
+import { ChevronRightIcon } from "@heroicons/react/16/solid";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 
 import { useNavigation } from "../core-navigation/NavigationStack";
-import ClearAllButton from "../sessions/ClearAllButton";
+
 import Button from "../ui/button/Button";
 import EmptyView from "../ui/empty/EmptyView";
 import Progress from "../ui/progress/Progress";
-import GenomeHubManager from "@eg/tracks/src/genome-hub/GenomeHubManager";
 
 type GroupedGenomes = {
   [key: string]: IGenome[];
@@ -125,7 +120,6 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
   const dispatch = useAppDispatch();
   const [isHovered, setIsHovered] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const handleClick = () => {
     setLoading(true);
@@ -133,27 +127,6 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
       // TODO: preload the genome
       dispatch(createSession({ genome }));
     }, 0);
-  };
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (isConfirmingDelete) {
-      timeoutId = setTimeout(() => {
-        setIsConfirmingDelete(false);
-      }, 2000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isConfirmingDelete]);
-
-  const handleDelete = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (!isConfirmingDelete) {
-      setIsConfirmingDelete(true);
-      return;
-    }
-    dispatch(deleteCustomGenome(genome.id));
   };
 
   const shouldExpand = isHovered && !loading;
@@ -175,12 +148,12 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
             Chromosomes:{" "}
             {genome.chromosomes.length > 0
               ? genome.chromosomes
-                .slice(0, 3)
-                .map((chr) => chr.name)
-                .join(", ") +
-              (genome.chromosomes.length > 3
-                ? ` +${genome.chromosomes.length - 3} more`
-                : "")
+                  .slice(0, 3)
+                  .map((chr) => chr.name)
+                  .join(", ") +
+                (genome.chromosomes.length > 3
+                  ? ` +${genome.chromosomes.length - 3} more`
+                  : "")
               : "None"}
           </p>
         </div>
@@ -234,18 +207,6 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
           )}
           <p>Unique ID:</p>
           <p>{genome.id}</p>
-          <Button
-            backgroundColor={isConfirmingDelete ? "alert" : "tint"}
-            onClick={handleDelete}
-            style={{ flex: 1 }}
-            leftIcon={
-              isConfirmingDelete ? (
-                <ExclamationTriangleIcon className="w-4 h-4" />
-              ) : undefined
-            }
-          >
-            {isConfirmingDelete ? "Confirm Delete" : "Delete"}
-          </Button>
         </div>
       </motion.div>
     </motion.div>

@@ -53,11 +53,6 @@ export default class GenomeHubManager {
     this.genomeCache.set(genome.id, genome);
   }
 
-  async deleteGenome(id: string): Promise<void> {
-    await this.localGenomeRepository.deleteGenome(id);
-    this.genomeCache.delete(id);
-  }
-
   async deleteAllGenomes(): Promise<void> {
     await this.localGenomeRepository.deleteAllGenomes();
     this.genomeCache.clear();

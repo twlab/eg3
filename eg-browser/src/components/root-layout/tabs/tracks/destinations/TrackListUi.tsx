@@ -1,10 +1,9 @@
-
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import TrackList from "@eg/tracks/src/components/GenomeView/TabComponents/TrackList";
+import TrackList from "./TrackList";
 
 import {
   selectSavedDeleteTrackList,

@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 
+// Local Component
 import RegionSetConfig from "./RegionSetConfig";
 
-import RegionSet from "@eg/tracks/src/models/RegionSet";
+// @eg/tracks Imports
+import { RegionSet, GenomeSerializer, DisplayedRegionModel } from "@eg/tracks";
 
+// Redux Imports
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
-import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
-const RegionSetSelector: React.FC = ({ }) => {
+// Custom Hooks
+import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
+const RegionSetSelector: React.FC = ({}) => {
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
   const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
@@ -29,15 +31,17 @@ const RegionSetSelector: React.FC = ({ }) => {
   if (!genome) {
     return "";
   }
-  const sets = currentSession?.regionSets ? currentSession?.regionSets.map((item) => {
-    if (typeof item === "object") {
-      const newRegionSet = RegionSet.deserialize(item);
+  const sets = currentSession?.regionSets
+    ? currentSession?.regionSets.map((item) => {
+        if (typeof item === "object") {
+          const newRegionSet = RegionSet.deserialize(item);
 
-      return newRegionSet;
-    } else {
-      return item;
-    }
-  }) : [];
+          return newRegionSet;
+        } else {
+          return item;
+        }
+      })
+    : [];
 
   const setConfigured = (newSet: RegionSet) => {
     if (indexBeingConfigured < 0 || indexBeingConfigured >= sets.length) {

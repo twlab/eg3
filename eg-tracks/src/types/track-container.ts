@@ -1,4 +1,3 @@
-import { BundleProps } from "../components/GenomeView/TabComponents/SessionUI";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import TrackModel from "../models/TrackModel";
 import { IGenome } from "./genome-hub";
@@ -36,16 +35,16 @@ export interface ITrackContainerRepresentableProps {
   genomeConfig: IGenome;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (startbase: number, endbase: number) => void;
-  onNewHighlight: (highlightState: Array<any>) => void;
-  onTrackSelected: (trackSelected: ITrackModel[]) => void;
-  onTrackDeleted: (currenTracks: ITrackModel[]) => void;
-  onTrackAdded: (trackModels: ITrackModel[]) => void;
+  onNewRegion: (startbase: number, endbase: number) => void | null | undefined;
+  onNewHighlight: (highlightState: Array<any>) => void | null | undefined;
+  onTrackSelected: (trackSelected: ITrackModel[]) => void | null | undefined;
+  onTrackDeleted: (currenTracks: ITrackModel[]) => void | null | undefined;
+  onTrackAdded: (trackModels: ITrackModel[]) => void | null | undefined;
   onNewRegionSelect: (
     startbase: number,
     endbase: number,
     coordinate: GenomeCoordinate
-  ) => void;
+  ) => void | null | undefined;
   viewRegion: GenomeCoordinate | null;
   userViewRegion: { start: number; end: number } | null;
   tool: Tool | null;

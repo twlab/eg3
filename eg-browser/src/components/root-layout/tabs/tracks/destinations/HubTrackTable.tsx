@@ -3,7 +3,7 @@ import { useTable, usePagination, useFilters, Column } from "react-table";
 import Fuse from "fuse.js";
 import _ from "lodash";
 import TrackSearchBox from "./TrackSearchBox";
-import TrackModel from "../../../models/TrackModel";
+import { TrackModel } from "@eg/tracks";
 
 const UNUSED_META_KEY = "notused";
 

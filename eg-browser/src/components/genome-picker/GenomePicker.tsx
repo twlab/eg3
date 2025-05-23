@@ -21,8 +21,8 @@ import TabView from "../ui/tab-view/TabView";
 import GenomeHubPanel from "../genome-hub/GenomeHubPanel";
 import AddCustomGenome from "../genome-hub/AddCustomGenome";
 import GenomeSchemaView from "../genome-hub/GenomeSchemaView";
-import { getGenomeConfig } from "@eg/tracks";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+
+import { GenomeSerializer, getGenomeConfig } from "@eg/tracks";
 import ImportSession from "../sessions/ImportSession";
 
 type GenomeName = string;
@@ -187,7 +187,10 @@ export default function GenomePicker() {
                 <motion.img
                   layout
                   src={
-                    import.meta.env.BASE_URL + (genome.logoUrl ?? placeholder)
+                    !import.meta || !import.meta.env
+                      ? "/browser/"
+                      : import.meta.env.BASE_URL +
+                        (genome.logoUrl ?? placeholder)
                   }
                   alt={genome.name}
                   className="rounded-2xl h-28 w-full object-cover object-top"

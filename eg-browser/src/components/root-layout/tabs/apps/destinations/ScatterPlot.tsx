@@ -1,23 +1,31 @@
 import React, { useState, useEffect, ChangeEvent, useMemo } from "react";
 import _ from "lodash";
-import RegionSetSelector from "./region-set/RegionSetSelector";
-import { getTrackConfig } from "@eg/tracks/src/trackConfigs/config-menu-models.tsx/getTrackConfig";
+import {
+  getTrackConfig,
+  HELP_LINKS,
+  pcorr,
+  ColorPicker,
+  trackFetchFunction,
+  ChromosomeInterval,
+  NumericalFeature,
+  RegionSet,
+  GenomeSerializer,
+} from "@eg/tracks";
 
-import { HELP_LINKS, pcorr } from "@eg/tracks/src/models/util";
-import ColorPicker from "@eg/tracks/src/trackConfigs/config-menu-components.tsx/ColorPicker";
+// React-Plotly
 import Plot from "react-plotly.js";
-import trackFetchFunction from "@eg/tracks/src/getRemoteData/fetchTrackData";
-import ChromosomeInterval from "@eg/tracks/src/models/ChromosomeInterval";
-import { NumericalFeature } from "@eg/tracks/src/models/Feature";
-import { NUMERICAL_TRACK_TYPES } from "./GenePlot";
-import { getGenomeConfig } from "@eg/tracks";
-import RegionSet from "@eg/tracks/src/models/RegionSet";
 
+// Local Imports
+import RegionSetSelector from "./region-set/RegionSetSelector";
+import { NUMERICAL_TRACK_TYPES } from "./GenePlot";
+
+// Custom Hooks
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+
+// Redux
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { useAppSelector } from "@/lib/redux/hooks";
-import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
 const ScatterPlot: React.FC = () => {
   useExpandedNavigationTab();
@@ -30,7 +38,6 @@ const ScatterPlot: React.FC = () => {
   const [markerColor, setMarkerColor] = useState("blue");
   const [markerSize, setMarkerSize] = useState(12);
   const [showModal, setShowModal] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
 
   const currentSession = useAppSelector(selectCurrentSession);
   const _genomeConfig = useCurrentGenome();
@@ -48,7 +55,6 @@ const ScatterPlot: React.FC = () => {
 
   const sets = useMemo(() => {
     if (currentSession) {
-
       return currentSession?.regionSets.map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
@@ -455,7 +461,6 @@ const ScatterPlot: React.FC = () => {
           <div style={{ marginLeft: "-150px" }}>
             <Plot data={[data]} layout={layout} />
           </div>
-
         </>
       ) : (
         ""

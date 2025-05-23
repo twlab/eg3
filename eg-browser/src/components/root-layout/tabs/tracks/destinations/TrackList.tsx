@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useTable, Column, useFilters } from "react-table";
-import { ITrackModel } from "@/types/track-container";
+import { ITrackModel } from "@eg/tracks";
 
 type TrackListProps = {
   addedTracks: ITrackModel[];
@@ -178,8 +178,8 @@ const TrackList: React.FC<TrackListProps> = ({
                 {...restRowProps}
                 style={trStyle}
                 onMouseOver={(e) =>
-                (e.currentTarget.style.backgroundColor =
-                  trHoverStyle.backgroundColor)
+                  (e.currentTarget.style.backgroundColor =
+                    trHoverStyle.backgroundColor)
                 }
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "")}
               >
@@ -240,8 +240,8 @@ const TrackList: React.FC<TrackListProps> = ({
                     {...restRowProps}
                     style={trStyle}
                     onMouseOver={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      trHoverStyle.backgroundColor)
+                      (e.currentTarget.style.backgroundColor =
+                        trHoverStyle.backgroundColor)
                     }
                     onMouseOut={(e) =>
                       (e.currentTarget.style.backgroundColor = "")

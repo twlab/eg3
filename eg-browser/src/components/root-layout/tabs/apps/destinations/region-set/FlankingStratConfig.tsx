@@ -1,5 +1,5 @@
 import React from "react";
-import FlankingStrategy from "@eg/tracks/src/models/FlankingStrategy";
+import { FlankingStrategy } from "@eg/tracks";
 
 interface FlankingStratConfigProps {
   strategy: FlankingStrategy;

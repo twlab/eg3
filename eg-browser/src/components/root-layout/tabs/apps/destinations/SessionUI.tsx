@@ -4,17 +4,21 @@ import JSZip from "jszip";
 import _ from "lodash";
 
 import { child, get, getDatabase, ref, remove, set } from "firebase/database";
-import { readFileAsText, HELP_LINKS } from "../../../models/util";
-import { CopyToClip } from "../TrackComponents/commonComponents/CopyToClipboard";
+import {
+  AppStateSaver,
+  ITrackModel,
+  HighlightInterval,
+  DisplayedRegionModel,
+  OpenInterval,
+  getGenomeConfig,
+  readFileAsText,
+  HELP_LINKS,
+  CopyToClip,
+  TrackModel,
+  RegionSet,
+} from "@eg/tracks";
 import "./SessionUI.css";
-import TrackModel from "../../../models/TrackModel";
-import RegionSet from "../../../models/RegionSet";
-import { getGenomeConfig } from "../../../models/genomes/allGenomes";
-import OpenInterval from "../../../models/OpenInterval";
-import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import { HighlightInterval } from "../ToolComponents/HighlightMenu";
-import { ITrackModel } from "../../../types";
-import { AppStateSaver } from "../../../models/AppSaveLoad";
+
 export interface BundleProps {
   bundleId: string;
   customTracksPool: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
@@ -60,7 +64,6 @@ interface SessionUIProps extends HasBundleId {
 }
 
 export const onRetrieveSession = async (retrieveId: string) => {
-
   if (retrieveId.length === 0) {
     console.log("Session bundle Id cannot be empty.", "error", 2000);
     return null;
@@ -186,15 +189,19 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const downloadSession = (asHub = false) => {
-
     const sessionInJSON = new AppStateSaver().toObject(state);
     const content = asHub ? (sessionInJSON as any).tracks : sessionInJSON;
     const descriptor = asHub ? "hub" : "session";
-    const sessionString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(content));
+    const sessionString =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(content));
     const dl = document.createElement("a");
     document.body.appendChild(dl); // This line makes it work in Firefox.
     dl.setAttribute("href", sessionString);
-    dl.setAttribute("download", `eg-${descriptor}-${bundle.currentId}-${bundle.bundleId}.json`);
+    dl.setAttribute(
+      "download",
+      `eg-${descriptor}-${bundle.currentId}-${bundle.bundleId}.json`
+    );
     dl.click();
     console.log("Session downloaded!", "success", 2000);
   };
@@ -233,7 +240,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
 
   const restoreSession = async (sessionId: string) => {
-
     if (sessionId) {
       const newBundle: any = {
         ...bundle,
@@ -244,10 +250,10 @@ const SessionUI: React.FC<SessionUIProps> = ({
       setLastBundleId(bundle.bundleId);
 
       const curSessionId = newBundle.currentId;
-      const sessionBundle = newBundle.sessionsInBundle[`${curSessionId}`].state
+      const sessionBundle = newBundle.sessionsInBundle[`${curSessionId}`].state;
 
       onRestoreSession(sessionBundle);
-      onRetrieveBundle(newBundle)
+      onRetrieveBundle(newBundle);
       const db = getDatabase();
       try {
         await set(
@@ -357,12 +363,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
   };
   // fix because when download as current session we get back bundleSession which as viewinterval instead of viewregion
   const uploadSession = async (event: ChangeEvent<HTMLInputElement>) => {
-    const contents: any = await readFileAsText(event.target.files![0]) as { [key: string]: any };
-    const bundleSession = JSON.parse(contents as string)
+    const contents: any = (await readFileAsText(event.target.files![0])) as {
+      [key: string]: any;
+    };
+    const bundleSession = JSON.parse(contents as string);
     const bundleRes = await onRetrieveSession(bundleSession.bundleId);
 
     if (bundleRes) {
-
       onRetrieveBundle(bundleRes);
       setBundle(bundleRes);
       const genomeConfig = getGenomeConfig(bundleSession.genomeName);
@@ -381,16 +388,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
             genomeConfig.navContext,
             viewInterval.start,
             viewInterval.end
-          )
+          );
         }
-        onRestoreSession(bundleSession)
-      }
-      else {
-        console.log("Genome not found in session upload")
+        onRestoreSession(bundleSession);
+      } else {
+        console.log("Genome not found in session upload");
       }
     }
-
-
   };
 
   const setRandomLabel = () => {
@@ -421,158 +425,153 @@ const SessionUI: React.FC<SessionUIProps> = ({
   const retrieveSession = async (retrieveId: string) => {
     const bundleRes = await onRetrieveSession(retrieveId);
     if (bundleRes) {
-
       setBundle(bundleRes);
       onRetrieveBundle(bundleRes);
-
     }
-
   };
   const styles = {
     container: {
-      width: '100%',
-      maxWidth: '600px',
-      margin: '0 auto',
-      padding: '20px',
-      background: '#fff',
-      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-      borderRadius: '8px',
+      width: "100%",
+      maxWidth: "600px",
+      margin: "0 auto",
+      padding: "20px",
+      background: "#fff",
+      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+      borderRadius: "8px",
     },
     inputContainer: {
-      marginBottom: '20px',
+      marginBottom: "20px",
     },
     label: {
-      display: 'block',
-      fontWeight: 'bold',
-      marginBottom: '8px',
+      display: "block",
+      fontWeight: "bold",
+      marginBottom: "8px",
     },
     row: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
     },
     input: {
-      padding: '10px',
-      border: '1px solid #ccc',
-      borderRadius: '4px',
-      flex: '1',
+      padding: "10px",
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      flex: "1",
     },
     button: {
-      padding: '10px 15px',
-      border: 'none',
-      borderRadius: '4px',
-      backgroundColor: '#007bff',
-      color: 'white',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '5px',
+      padding: "10px 15px",
+      border: "none",
+      borderRadius: "4px",
+      backgroundColor: "#007bff",
+      color: "white",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: "5px",
     },
     buttonHover: {
-      backgroundColor: '#0056b3',
+      backgroundColor: "#0056b3",
     },
     uploadContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      marginTop: '20px',
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      marginTop: "20px",
     },
     uploadButtonWrapper: {
-      position: 'relative',
+      position: "relative",
     },
     uploadButton: {
-      padding: '10px 15px',
-      border: '1px solid',
-      borderRadius: '4px',
-      backgroundColor: '#5cb85c',
-      color: 'white',
-      cursor: 'pointer',
+      padding: "10px 15px",
+      border: "1px solid",
+      borderRadius: "4px",
+      backgroundColor: "#5cb85c",
+      color: "white",
+      cursor: "pointer",
     },
     uploadButtonHover: {
-      backgroundColor: '#4ca84c',
+      backgroundColor: "#4ca84c",
     },
     uploadInput: {
-      position: 'absolute',
-      left: '0',
-      top: '0',
-      opacity: '0',
-      width: '100%',
-      height: '100%',
-      cursor: 'pointer',
+      position: "absolute",
+      left: "0",
+      top: "0",
+      opacity: "0",
+      width: "100%",
+      height: "100%",
+      cursor: "pointer",
     },
     separator: {
-      borderTop: '1px solid #eee',
-      margin: '20px 0',
+      borderTop: "1px solid #eee",
+      margin: "20px 0",
     },
     additionalActions: {
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '10px',
-      marginTop: '20px',
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "10px",
+      marginTop: "20px",
     },
     actionButton: {
-      padding: '10px 15px',
-      border: '1px solid',
-      borderRadius: '4px',
-      background: 'white',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '5px',
+      padding: "10px 15px",
+      border: "1px solid",
+      borderRadius: "4px",
+      background: "white",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: "5px",
     },
     actionButtonColors: {
       save: {
-        borderColor: '#4285F4',
-        color: '#4285F4',
+        borderColor: "#4285F4",
+        color: "#4285F4",
         hover: {
-          backgroundColor: '#4285F4',
-          color: 'white',
+          backgroundColor: "#4285F4",
+          color: "white",
         },
       },
       downloadSession: {
-        borderColor: '#5CB85C',
-        color: '#5CB85C',
+        borderColor: "#5CB85C",
+        color: "#5CB85C",
         hover: {
-          backgroundColor: '#5CB85C',
-          color: 'white',
+          backgroundColor: "#5CB85C",
+          color: "white",
         },
       },
       downloadHub: {
-        borderColor: '#5BA4CF',
-        color: '#5BA4CF',
+        borderColor: "#5BA4CF",
+        color: "#5BA4CF",
         hover: {
-          backgroundColor: '#5BA4CF',
-          color: 'white',
+          backgroundColor: "#5BA4CF",
+          color: "white",
         },
       },
       downloadBundle: {
-        borderColor: '#F0AD4E',
-        color: '#F0AD4E',
+        borderColor: "#F0AD4E",
+        color: "#F0AD4E",
         hover: {
-          backgroundColor: '#F0AD4E',
-          color: 'white',
+          backgroundColor: "#F0AD4E",
+          color: "white",
         },
       },
     },
     disclaimer: {
-      marginTop: '20px',
-      padding: '10px',
-      background: '#f8f9fa',
-      borderRadius: '4px',
+      marginTop: "20px",
+      padding: "10px",
+      background: "#f8f9fa",
+      borderRadius: "4px",
     },
     emphasis: {
-      fontWeight: 'bold',
+      fontWeight: "bold",
     },
     link: {
-      color: '#007bff',
-      textDecoration: 'none',
+      color: "#007bff",
+      textDecoration: "none",
     },
     linkHover: {
-      color: '#0056b3',
+      color: "#0056b3",
     },
   };
-
-
 
   return (
     <div style={styles.container}>
@@ -588,8 +587,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
           />
           <button
             style={styles.button}
-            onMouseOver={(e) => e.target.style.backgroundColor = styles.buttonHover.backgroundColor}
-            onMouseOut={(e) => e.target.style.backgroundColor = styles.button.backgroundColor}
+            onMouseOver={(e) =>
+              (e.target.style.backgroundColor =
+                styles.buttonHover.backgroundColor)
+            }
+            onMouseOut={(e) =>
+              (e.target.style.backgroundColor = styles.button.backgroundColor)
+            }
             onClick={() => retrieveSession(retrieveId)}
           >
             Retrieve
@@ -601,10 +605,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <button
               style={styles.uploadButton}
               onMouseOver={(e) =>
-                (e.target.style.backgroundColor = styles.uploadButtonHover.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.uploadButtonHover.backgroundColor)
               }
               onMouseOut={(e) =>
-                (e.target.style.backgroundColor = styles.uploadButton.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.uploadButton.backgroundColor)
               }
             >
               Upload
@@ -622,8 +628,11 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <div style={styles.inputContainer}>
               <div style={styles.row}>
                 <p style={styles.label}>
-                  Session bundle Id: {bundle && bundle.bundleId ? bundle.bundleId : ''}{" "}
-                  <CopyToClip value={bundle && bundle.bundleId ? bundle.bundleId : ""} />
+                  Session bundle Id:{" "}
+                  {bundle && bundle.bundleId ? bundle.bundleId : ""}{" "}
+                  <CopyToClip
+                    value={bundle && bundle.bundleId ? bundle.bundleId : ""}
+                  />
                 </p>
               </div>
               <div style={styles.label}>
@@ -632,15 +641,20 @@ const SessionUI: React.FC<SessionUIProps> = ({
                   <input
                     type="text"
                     value={newSessionLabel}
-                    style={{ ...styles.input, width: 'auto', flex: '1' }}
+                    style={{ ...styles.input, width: "auto", flex: "1" }}
                     onChange={(e) => setNewSessionLabel(e.target.value.trim())}
                   />
                   <span>or use a</span>
                   <button
                     type="button"
-                    style={{ ...styles.button, backgroundColor: '#F0AD4E' }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#EC971F'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = styles.button.backgroundColor}
+                    style={{ ...styles.button, backgroundColor: "#F0AD4E" }}
+                    onMouseOver={(e) =>
+                      (e.target.style.backgroundColor = "#EC971F")
+                    }
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor =
+                        styles.button.backgroundColor)
+                    }
                     onClick={() => setNewSessionLabel(getFunName())}
                   >
                     Random name
@@ -650,57 +664,80 @@ const SessionUI: React.FC<SessionUIProps> = ({
             </div>
             <div style={styles.additionalActions}>
               <button
-                style={{ ...styles.actionButton, ...styles.actionButtonColors.save }}
-                onMouseOver={(e) =>
-                (e.target.style.backgroundColor = styles.actionButtonColors.save.hover.backgroundColor,
-                  e.target.style.color = styles.actionButtonColors.save.hover.color)
-                }
-                onMouseOut={(e) =>
-                (e.target.style.backgroundColor = 'white',
-                  e.target.style.color = styles.actionButtonColors.save.color)
-                }
+                style={{
+                  ...styles.actionButton,
+                  ...styles.actionButtonColors.save,
+                }}
+                onMouseOver={(e) => (
+                  (e.target.style.backgroundColor =
+                    styles.actionButtonColors.save.hover.backgroundColor),
+                  (e.target.style.color =
+                    styles.actionButtonColors.save.hover.color)
+                )}
+                onMouseOut={(e) => (
+                  (e.target.style.backgroundColor = "white"),
+                  (e.target.style.color = styles.actionButtonColors.save.color)
+                )}
                 onClick={saveSession}
               >
                 💾 Save session
               </button>
               <button
-                style={{ ...styles.actionButton, ...styles.actionButtonColors.downloadSession }}
-                onMouseOver={(e) =>
-                (e.target.style.backgroundColor = styles.actionButtonColors.downloadSession.hover.backgroundColor,
-                  e.target.style.color = styles.actionButtonColors.downloadSession.hover.color)
-                }
-                onMouseOut={(e) =>
-                (e.target.style.backgroundColor = 'white',
-                  e.target.style.color = styles.actionButtonColors.downloadSession.color)
-                }
+                style={{
+                  ...styles.actionButton,
+                  ...styles.actionButtonColors.downloadSession,
+                }}
+                onMouseOver={(e) => (
+                  (e.target.style.backgroundColor =
+                    styles.actionButtonColors.downloadSession.hover.backgroundColor),
+                  (e.target.style.color =
+                    styles.actionButtonColors.downloadSession.hover.color)
+                )}
+                onMouseOut={(e) => (
+                  (e.target.style.backgroundColor = "white"),
+                  (e.target.style.color =
+                    styles.actionButtonColors.downloadSession.color)
+                )}
                 onClick={downloadAsSession}
               >
                 ⬇ Download current session
               </button>
               <button
-                style={{ ...styles.actionButton, ...styles.actionButtonColors.downloadHub }}
-                onMouseOver={(e) =>
-                (e.target.style.backgroundColor = styles.actionButtonColors.downloadHub.hover.backgroundColor,
-                  e.target.style.color = styles.actionButtonColors.downloadHub.hover.color)
-                }
-                onMouseOut={(e) =>
-                (e.target.style.backgroundColor = 'white',
-                  e.target.style.color = styles.actionButtonColors.downloadHub.color)
-                }
+                style={{
+                  ...styles.actionButton,
+                  ...styles.actionButtonColors.downloadHub,
+                }}
+                onMouseOver={(e) => (
+                  (e.target.style.backgroundColor =
+                    styles.actionButtonColors.downloadHub.hover.backgroundColor),
+                  (e.target.style.color =
+                    styles.actionButtonColors.downloadHub.hover.color)
+                )}
+                onMouseOut={(e) => (
+                  (e.target.style.backgroundColor = "white"),
+                  (e.target.style.color =
+                    styles.actionButtonColors.downloadHub.color)
+                )}
                 onClick={downloadAsHub}
               >
                 ⬇ Download as datahub
               </button>
               <button
-                style={{ ...styles.actionButton, ...styles.actionButtonColors.downloadBundle }}
-                onMouseOver={(e) =>
-                (e.target.style.backgroundColor = styles.actionButtonColors.downloadBundle.hover.backgroundColor,
-                  e.target.style.color = styles.actionButtonColors.downloadBundle.hover.color)
-                }
-                onMouseOut={(e) =>
-                (e.target.style.backgroundColor = 'white',
-                  e.target.style.color = styles.actionButtonColors.downloadBundle.color)
-                }
+                style={{
+                  ...styles.actionButton,
+                  ...styles.actionButtonColors.downloadBundle,
+                }}
+                onMouseOver={(e) => (
+                  (e.target.style.backgroundColor =
+                    styles.actionButtonColors.downloadBundle.hover.backgroundColor),
+                  (e.target.style.color =
+                    styles.actionButtonColors.downloadBundle.hover.color)
+                )}
+                onMouseOut={(e) => (
+                  (e.target.style.backgroundColor = "white"),
+                  (e.target.style.color =
+                    styles.actionButtonColors.downloadBundle.color)
+                )}
                 onClick={downloadWholeBundle}
               >
                 ⬇ Download whole bundle
@@ -710,14 +747,18 @@ const SessionUI: React.FC<SessionUIProps> = ({
         )}
         {renderSavedSessions()}
         <div style={styles.disclaimer}>
-          Disclaimer: please use <span style={styles.emphasis}>sessionFile</span> or <span style={styles.emphasis}>hub</span> URL for publishing using the Browser. Session id is supposed to be shared with trusted people only. Please check our docs for{' '}
+          Disclaimer: please use{" "}
+          <span style={styles.emphasis}>sessionFile</span> or{" "}
+          <span style={styles.emphasis}>hub</span> URL for publishing using the
+          Browser. Session id is supposed to be shared with trusted people only.
+          Please check our docs for{" "}
           <a
             href={HELP_LINKS.publish}
             target="_blank"
             rel="noopener noreferrer"
             style={styles.link}
-            onMouseOver={(e) => e.target.style.color = styles.linkHover.color}
-            onMouseOut={(e) => e.target.style.color = styles.link.color}
+            onMouseOver={(e) => (e.target.style.color = styles.linkHover.color)}
+            onMouseOut={(e) => (e.target.style.color = styles.link.color)}
           >
             Publish with the browser
           </a>

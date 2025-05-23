@@ -1,38 +1,93 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  --color-primary: #5f6368;
+  --color-secondary: #e8def8;
+  --color-tint: #75697a;
+  --color-alert: #307868;
+  --color-dark-primary: #ffffff;
+  --color-dark-secondary: #39245b;
+  --color-dark-background: #1c191f;
+  --color-dark-surface: #333333;
+  --color-dark-tint: #775ca2;
+}
+
+/* .btn {
+  background-color: transparent;
+  color: #0077cc;
+  padding: 4px 8px;
+  border: 1px solid #0077cc;
+  border-radius: 4px;
+} */
 
 .btn {
-  @apply bg-transparent text-blue-700 px-1 border border-blue-500 rounded;
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
 }
 
 [data-theme="dark"] .btn {
-  @apply bg-transparent text-blue-200 px-1 border border-blue-100 rounded;
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
 }
 
-/* .btn:hover {
-    @apply bg-blue-500 text-white border-transparent;
-} */
-
 .TrackContextMenu-body button,
-select,
-input {
-  @apply btn;
+.TrackContextMenu-body select,
+.TrackContextMenu-body input {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+[data-theme="dark"] .TrackContextMenu-body button,
+[data-theme="dark"] .TrackContextMenu-body select,
+[data-theme="dark"] .TrackContextMenu-body input {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
 }
 
 .HighlightMenu button,
-select,
-input {
-  @apply btn;
+.HighlightMenu select,
+.HighlightMenu input {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+[data-theme="dark"] .HighlightMenu button,
+[data-theme="dark"] .HighlightMenu select,
+[data-theme="dark"] .HighlightMenu input {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
 }
 
 .table {
-  @apply w-full border-collapse;
+  width: 100%; /* w-full */
+  border-collapse: collapse; /* border-collapse */
 }
+/* .btn:hover {
+    @apply bg-blue-500 text-white border-transparent;
+} */
 
 :root {
   --dark-fg-color: white;

@@ -2,13 +2,13 @@ import {
   GenomeCoordinate,
   ITrackModel,
   restoreLegacyViewRegion,
+  DisplayedRegionModel,
 } from "@eg/tracks";
 import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
-import { onRetrieveSession } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
+import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/SessionUI";
 import { updateBundle } from "../slices/hubSlice";
-import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
 
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",
@@ -22,7 +22,6 @@ export const importOneSession = createAsyncThunk(
     },
     thunkApi
   ) => {
-
     if (session.genomeName) {
       let parsedViewRegion = restoreLegacyViewRegion(
         session,
@@ -54,9 +53,9 @@ export const importOneSession = createAsyncThunk(
           parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
         userViewRegion: session.viewInterval
           ? {
-            start: parsedViewRegion._startBase,
-            end: parsedViewRegion._endBase,
-          }
+              start: parsedViewRegion._startBase,
+              end: parsedViewRegion._endBase,
+            }
           : null,
         tracks: mappedTracks,
         highlights: session.highlights ?? [],
@@ -79,7 +78,6 @@ export const importOneSession = createAsyncThunk(
     thunkApi.dispatch(upsertSession(session));
 
     if (navigatingToSession) {
-
       thunkApi.dispatch(setCurrentSession(session.id));
     }
   }

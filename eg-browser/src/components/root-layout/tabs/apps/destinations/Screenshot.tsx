@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ScreenshotUI from "@eg/tracks/src/components/GenomeView/TabComponents/ScreenshotUI";
+import ScreenshotUI from "./ScreenshotUI";
 import {
   selectScreenShotData,
   selectScreenShotOpen,
