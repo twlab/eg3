@@ -1,9 +1,6 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "./commonComponents/check-obj-dupe";
+
 import Feature, {
   ColoredFeature,
   Fiber,
