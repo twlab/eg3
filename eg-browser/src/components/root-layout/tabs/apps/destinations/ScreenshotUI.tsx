@@ -31,6 +31,50 @@ interface Props {
   retakeScreenshot: any;
   windowWidth: number;
 }
+export const getHighlightedXs = (
+  interval: OpenInterval,
+  visData: ViewExpansion,
+  legendWidth: number,
+  tracks?: TrackModel[],
+  trackData?: any
+): OpenInterval => {
+  const { viewWindowRegion, viewWindow } = visData;
+  // console.log(trackData)
+  const navBuilds = tracks
+    ? tracks
+        .map((k) => trackData[k.getId()].alignment)
+        .filter((x) => x)
+        .map((x) => x.navContextBuilder)
+        .filter((x) => x)
+    : []; //remove rough mode adjustment
+  // console.log(navBuilds)
+  let start, end;
+  let newIntervalStart = interval.start,
+    newIntervalEnd = interval.end;
+  // navBuilds.forEach(build => {
+  //     newIntervalStart = build.convertOldCoordinates(newIntervalStart);
+  //     newIntervalEnd = build.convertOldCoordinates(newIntervalEnd);
+  //     return; // only execute once - not working
+  // })
+  if (navBuilds.length) {
+    newIntervalStart = navBuilds[0].convertOldCoordinates(newIntervalStart);
+    newIntervalEnd = navBuilds[0].convertOldCoordinates(newIntervalEnd);
+  }
+  const drawModel = new LinearDrawingModel(
+    viewWindowRegion,
+    viewWindow.getLength()
+  );
+  const xRegion = drawModel.baseSpanToXSpan(
+    new OpenInterval(newIntervalStart, newIntervalEnd)
+  );
+  start = Math.max(legendWidth, xRegion.start + legendWidth);
+  end = xRegion.end + legendWidth;
+  if (end <= start) {
+    start = -1;
+    end = 0;
+  }
+  return new OpenInterval(start, end);
+};
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("block");
@@ -53,18 +97,17 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     const boxHeight = tracks.reduce(
       (acc, cur) => acc + cur.clientHeight,
-      11 * tracks.length
+      tracks.length
     );
-
     //tracks[0].clientWidth
     const boxWidth = props.windowWidth + 120;
     const xmlns = "http://www.w3.org/2000/svg";
     const svgElem = document.createElementNS(xmlns, "svg");
-    // svgElem.setAttributeNS(
-    //   null,
-    //   "viewBox",
-    //   "0 0 " + boxWidth + " " + boxHeight
-    // );
+    svgElem.setAttributeNS(
+      null,
+      "viewBox",
+      "0 0 " + boxWidth + " " + boxHeight
+    );
     //add the width of the track and tracklegend to to correctly view all the svg
     const width = props.windowWidth + 120;
 
@@ -111,7 +154,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       let trackLegendAxisSvgs;
       let eleSvgs;
       if (ele.children[1]) {
-        trackHeight = ele.children[1].children[1].clientHeight + 1;
+        trackHeight = ele.children[1].children[1].clientHeight + 3;
         trackLabelText = ele.children[1].children[0].textContent;
         trackLegendAxisSvgs =
           ele.children[1].children[0].querySelectorAll("svg");
@@ -119,7 +162,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         //to DO: legends and element overlap because the legend get query here also, find a way to separate them,
         eleSvgs = ele.children[1].querySelectorAll("svg");
       } else {
-        trackHeight = ele.children[0].children[1].clientHeight + 1;
+        trackHeight = ele.children[0].children[1].clientHeight + 3;
         trackLabelText = ele.children[0].children[0].textContent;
         trackLegendAxisSvgs =
           ele.children[0].children[0].querySelectorAll("svg"); // methylC has 2 svgs in legend
@@ -202,7 +245,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       sepLine.setAttribute("y1", y + "");
       sepLine.setAttribute("x2", boxWidth + "");
       sepLine.setAttribute("y2", y + "");
-      sepLine.setAttribute("stroke", "#9AA6B2");
+      sepLine.setAttribute("stroke", "gray");
       svgElemg.appendChild(sepLine);
       // y += 1;
       x = 0;
@@ -318,8 +361,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   const makeSvgTrackElements = () => {
     const { tracks, trackData } = props;
 
-    // document.documentElement.style.setProperty("--bg-color", "white");
-    // document.documentElement.style.setProperty("--font-color", "#222");
+    document.documentElement.style.setProperty("--bg-color", "white");
+    document.documentElement.style.setProperty("--font-color", "#222");
 
     const trackSvgElements = tracks
       .filter(
@@ -347,7 +390,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
         return (
           <div className={"Track"} key={index}>
-            {svgResult}
+            {svgResult}{" "}
           </div>
         );
       });
