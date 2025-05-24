@@ -114,8 +114,8 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min =
           (xValues2.length
             ? _.min(
-              xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
-            )
+                xToValue2.slice(props.viewWindow.start, props.viewWindow.end)
+              )
             : 0) || 0;
         const maxBoth = Math.max(Math.abs(max), Math.abs(min));
         max = maxBoth;
@@ -397,6 +397,7 @@ const ValuePlot = (props) => {
           value > 0
             ? scales.valueToOpacity(value)
             : scales.valueToOpacityReverse(value);
+        const fillOpacity = opacity === 0 ? 1 : opacity;
         return (
           <rect
             key={x}
@@ -405,7 +406,7 @@ const ValuePlot = (props) => {
             width={1}
             height={height}
             fill={color}
-            fillOpacity={opacity}
+            fillOpacity={fillOpacity}
           />
         );
       }
@@ -420,19 +421,21 @@ const ValuePlot = (props) => {
   );
 
   const { xToValue, height, forceSvg, width, viewWindow } = props;
+  const viewxToValue = forceSvg
+    ? xToValue.slice(Math.floor(viewWindow.start), Math.ceil(viewWindow.end))
+    : xToValue;
 
   return xToValue.length === 0 ? (
     <div style={{ width: width, height: height }}></div>
   ) : (
     <DesignRenderer
       type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-      width={xToValue.length}
+      width={viewxToValue.length}
       height={height}
       forceSvg={forceSvg}
       viewWindow={viewWindow}
-      style={{ display: "block" }} // Added style property
     >
-      {xToValue.map(renderPixel)}
+      {viewxToValue.map(renderPixel)}
     </DesignRenderer>
   );
 };
