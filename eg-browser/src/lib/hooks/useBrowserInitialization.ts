@@ -10,7 +10,7 @@ import {
   GenomeSerializer,
   getGenomeConfig,
   ITrackModel,
-} from "@eg/tracks";
+} from "wuepgg3-track";
 import {
   addSessionsFromBundleId,
   importOneSession,

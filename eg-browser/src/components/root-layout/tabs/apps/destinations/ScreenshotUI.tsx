@@ -9,7 +9,7 @@ import {
   trackOptionMap,
   getDisplayModeFunction,
   OpenInterval,
-} from "@eg/tracks";
+} from "wuepgg3-track";
 
 interface Highlight {
   start: number;

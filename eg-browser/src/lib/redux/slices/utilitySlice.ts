@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Tool } from "@eg/tracks";
+import { Tool } from "wuepgg3-track";
 import { RootState } from "../store";
 
 interface UtilityState {

@@ -22,7 +22,7 @@ import GenomeHubPanel from "../genome-hub/GenomeHubPanel";
 import AddCustomGenome from "../genome-hub/AddCustomGenome";
 import GenomeSchemaView from "../genome-hub/GenomeSchemaView";
 
-import { GenomeSerializer, getGenomeConfig } from "@eg/tracks";
+import { GenomeSerializer, getGenomeConfig } from "wuepgg3-track";
 import ImportSession from "../sessions/ImportSession";
 
 type GenomeName = string;

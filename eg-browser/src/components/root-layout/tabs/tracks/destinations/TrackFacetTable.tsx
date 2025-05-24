@@ -10,7 +10,7 @@ import {
   selectCustomTracksPool,
   selectPublicTracksPool,
 } from "@/lib/redux/slices/hubSlice";
-import { TrackModel } from "@eg/tracks";
+import { TrackModel } from "wuepgg3-track";
 import { useMemo } from "react";
 
 export default function TrackFacetTable() {

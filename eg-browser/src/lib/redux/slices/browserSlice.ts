@@ -4,7 +4,7 @@ import {
   IHighlightInterval,
   ITrackModel,
   RegionSet,
-} from "@eg/tracks";
+} from "wuepgg3-track";
 import {
   createEntityAdapter,
   createSlice,

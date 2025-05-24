@@ -9,8 +9,12 @@ import {
   selectScreenShotOpen,
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
-import { GenomeCoordinate, IHighlightInterval, ITrackModel } from "@eg/tracks";
-import { TrackContainerRepresentable } from "@eg/tracks";
+import {
+  GenomeCoordinate,
+  IHighlightInterval,
+  ITrackModel,
+} from "wuepgg3-track";
+import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";

@@ -24,7 +24,7 @@ import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 // External Libraries
 import JSON5 from "json5";
 
-// @eg/tracks Imports
+// wuepgg3-track Imports
 import {
   ITrackModel,
   Json5Fetcher,
@@ -33,7 +33,7 @@ import {
   DataHubParser,
   HELP_LINKS,
   readFileAsText,
-} from "@eg/tracks";
+} from "wuepgg3-track";
 export default function RemoteTracks() {
   return (
     <TabView

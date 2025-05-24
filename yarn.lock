@@ -6978,9 +6978,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.5.149:
-  version "1.5.156"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.156.tgz#26bc1fe40d0f364410aaa92ffc13a3e9820f6aa5"
-  integrity sha512-QeOqv11TSASsY/3Ft3LUyDqEiEOph5/85srEPFUo9wuGFNTb0/z5fGE/+ZzTrYvSTGoXNkdQLTw3MKRmgyOyGA==
+  version "1.5.157"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.157.tgz#553b122522ac7bba6f1a0dd7d50b14f297736f75"
+  integrity sha512-/0ybgsQd1muo8QlnuTpKwtl0oX5YMlUGbm8xyqgDU00motRkKFFbUJySAQBWcY79rVqNLWIWa87BGVGClwAB2w==
 
 element-size@^1.1.1:
   version "1.1.1"
@@ -7936,9 +7936,9 @@ fraction.js@^4.3.7:
   integrity sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==
 
 framer-motion@^12.12.1:
-  version "12.12.1"
-  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-12.12.1.tgz#b756079cc050be7fa6ae0d093ab0903fd3f15ca1"
-  integrity sha512-PFw4/GCREHI2suK/NlPSUxd+x6Rkp80uQsfCRFSOQNrm5pZif7eGtmG1VaD/UF1fW9tRBy5AaS77StatB3OJDg==
+  version "12.12.2"
+  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-12.12.2.tgz#7aa7925ea828f768453248686a970dee3424ee11"
+  integrity sha512-qCszZCiGWkilL40E3VuhIJJC/CS3SIBl2IHyGK8FU30nOUhTmhBNWPrNFyozAWH/bXxwzi19vJHIGVdALF0LCg==
   dependencies:
     motion-dom "^12.12.1"
     motion-utils "^12.12.1"
@@ -14701,9 +14701,9 @@ webpack-merge@^6.0.1:
     wildcard "^2.0.1"
 
 webpack-sources@^3.2.3:
-  version "3.2.3"
-  resolved "https://registry.yarnpkg.com/webpack-sources/-/webpack-sources-3.2.3.tgz#2d4daab8451fd4b240cc27055ff6a0c2ccea0cde"
-  integrity sha512-/DyMEOrDgLKKIG0fmvtz+4dUX/3Ghozwgm6iPp8KRhvn+eQf9+Q7GWxVNMk3+uCPWfdXYC4ExGBckIXdFEfH1w==
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/webpack-sources/-/webpack-sources-3.3.0.tgz#8d3449f1ed3f254e722a529a0a344a37d2d17048"
+  integrity sha512-77R0RDmJfj9dyv5p3bM5pOHa+X8/ZkO9c7kpDstigkC4nIDobadsfSGCwB4bKhMVxqAok8tajaoR8rirM7+VFQ==
 
 webpack@^5.88.1, webpack@^5.95.0:
   version "5.99.9"

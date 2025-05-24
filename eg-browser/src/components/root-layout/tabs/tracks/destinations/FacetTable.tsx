@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import _ from "lodash";
 import ReactModal from "react-modal";
 import HubTrackTable from "./HubTrackTable";
-import { TrackModel, ITrackModel, variableIsObject } from "@eg/tracks";
+import { TrackModel, ITrackModel, variableIsObject } from "wuepgg3-track";
 
 import "./FacetTable.css";
 

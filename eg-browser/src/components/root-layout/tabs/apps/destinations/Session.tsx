@@ -14,7 +14,7 @@ import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settin
 import { BundleProps } from "./SessionUI";
 
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
-import { GenomeSerializer, DisplayedRegionModel } from "@eg/tracks";
+import { GenomeSerializer, DisplayedRegionModel } from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 const Session: React.FC = () => {
   useExpandedNavigationTab();

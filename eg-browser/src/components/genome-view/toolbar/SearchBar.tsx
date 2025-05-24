@@ -30,7 +30,7 @@ import {
   GenomeSerializer,
   OutsideClickDetector,
   IsoformSelection,
-} from "@eg/tracks";
+} from "wuepgg3-track";
 
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
 const SNP_ENDPOINTS: any = {

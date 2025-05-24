@@ -10,7 +10,7 @@ import {
   ITrackModel,
   restoreLegacyViewRegion,
   DisplayedRegionModel,
-} from "@eg/tracks";
+} from "wuepgg3-track";
 import { addSessionsFromBundleId } from "@/lib/redux/thunk/session";
 
 export default function ImportSession() {

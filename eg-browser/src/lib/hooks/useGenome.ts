@@ -5,7 +5,7 @@ import {
   GenomeSerializer,
   GenomeHubManager,
   getGenomeConfig,
-} from "@eg/tracks";
+} from "wuepgg3-track";
 
 export default function useGenome(genomeId: string) {
   const [genome, setGenome] = useState<IGenome | null>(() => {
