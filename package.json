@@ -5,7 +5,6 @@
   "workspaces": [
     "eg-tracks",
     "eg-browser",
-    "eg-core",
     "docs"
   ]
 }
