@@ -158,8 +158,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         return (
           <div style={{ display: "flex" }}>
             <TrackLegend
-              height={40}
+              height={height}
               trackModel={trackModel}
+              width={120}
               label={
                 configOptions.label
                   ? configOptions.label

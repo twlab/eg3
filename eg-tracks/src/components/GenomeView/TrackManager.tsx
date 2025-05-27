@@ -1897,11 +1897,43 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         convertTrackModelToITrackModel(item)
       );
 
+      const curStartBp = bpX.current;
+      const curEndBp = bpX.current + bpRegionSize.current;
+      const highlightPixelPos: Array<any> = [];
+      for (let i = 0; i < highlightElements.length; i++) {
+        const highlight = highlightElements[i];
+
+        if (
+          (highlight.start >= curStartBp && highlight.start <= curEndBp) ||
+          (highlight.end >= curStartBp && highlight.end <= curEndBp) ||
+          (highlight.start < curStartBp && highlight.end > curEndBp)
+        ) {
+          const highlightStart =
+            highlight.start < curStartBp ? curStartBp : highlight.start;
+
+          const highlightEnd =
+            highlight.end > curEndBp ? curEndBp : highlight.end;
+
+          const windowStart =
+            (highlightStart - curStartBp) * pixelPerBase.current;
+          const windowEnd = (highlightEnd - curStartBp) * pixelPerBase.current;
+          highlightPixelPos.push({
+            start: windowStart,
+            end: windowEnd,
+            color: highlight.color,
+          });
+          // The highlight is within the range
+        } else {
+          continue;
+        }
+      }
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
-        highlights: highlightElements,
+        highlights: highlightPixelPos,
         windowWidth,
+        // primaryView: Object.entries(screenshotDataObj.current)[0].fetchData
+        //   .trackState.visData,
       });
       screenshotDataObj.current = {};
     }
@@ -2258,6 +2290,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const tmpArr = [...trackComponents];
       setTrackComponents(tmpArr);
       queueRegionToFetch(dataIdx);
+      
     } else {
       for (const key in trackFetchedDataCache.current) {
         const curTrack = trackFetchedDataCache.current[key];
@@ -2292,40 +2325,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackToDrawId,
       });
     }
+    let highlightElement = createHighlight(highlights);
+    setHighLightElements([...highlightElement]);
   }
   // MARK: viewWindowConfig
-  function getReDrawViewWindow(viewWindow, dataIdx) {
-    const trackDataObj: { [key: string]: any } = {};
-    const trackToDrawId: { [key: string]: any } = {};
-    let groupScale: {
-      [groupId: number]: { scale: TrackModel; min: {}; max: {} };
-    } | null = null;
-    for (let key in trackFetchedDataCache.current) {
-      if (trackFetchedDataCache.current[key][dataIdx]["xvalues"]) {
-        if (trackFetchedDataCache.current[key].trackType in numericalTracks) {
-          trackDataObj[key] =
-            trackFetchedDataCache.current[key][dataIdx]["xvalues"];
-        }
-        trackToDrawId[key] = "";
-      }
-    }
-    if (!_.isEmpty(trackDataObj)) {
-      groupScale = groupManager.getGroupScaleWithXvalues(
-        tracks,
-        trackDataObj,
-        viewWindow
-      );
-      globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
-        groupScale;
-    }
-
-    setViewWindowConfigChange({
-      dataIdx,
-      viewWindow,
-      groupScale,
-      trackToDrawId,
-    });
-  }
 
   function getWindowViewConfig(viewWindow, dataIdx) {
     if (viewWindow) {
