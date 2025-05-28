@@ -229,15 +229,15 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
 
   const visualizer = hasReverse ? (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-        {!forceSvg ? (
+      {!forceSvg ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+          }}
+        >
           <HoverToolTip
             data={xToValue}
             data2={xToValue2}
@@ -250,10 +250,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             hasReverse={true}
             options={options}
           />
-        ) : (
-          ""
-        )}
-      </div>
+        </div>
+      ) : (
+        ""
+      )}
       {forceSvg ? legend : ""}
       <ValuePlot
         xToValue={xToValue}
@@ -281,15 +281,15 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     </React.Fragment>
   ) : (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-        {!forceSvg ? (
+      {!forceSvg ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+          }}
+        >
           <HoverToolTip
             data={xToValue}
             data2={xToValue2}
@@ -302,10 +302,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             hasReverse={true}
             options={options}
           />
-        ) : (
-          ""
-        )}
-      </div>
+        </div>
+      ) : (
+        ""
+      )}
       <div style={{ display: "flex" }}>
         {forceSvg ? legend : ""}
         <ValuePlot

@@ -159,23 +159,20 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
           flexDirection: "column",
         }}
       >
-        <div style={{ zIndex: 4 }}>
-          <TrackLegend
+        <TrackLegend
+          trackModel={trackModel}
+          height={options.height}
+          axisScale={this.scales.methylToY}
+          noShiftFirstAxisLabel={!options.isCombineStrands}
+        />
+
+        {!options.isCombineStrands && (
+          <ReverseStrandLegend
             trackModel={trackModel}
             height={options.height}
-            axisScale={this.scales.methylToY}
-            noShiftFirstAxisLabel={!options.isCombineStrands}
+            maxMethyl={options.maxMethyl}
           />
-        </div>
-        <div style={{ zIndex: 3 }}>
-          {!options.isCombineStrands && (
-            <ReverseStrandLegend
-              trackModel={trackModel}
-              height={options.height}
-              maxMethyl={options.maxMethyl}
-            />
-          )}
-        </div>
+        )}
       </div>
     );
     if (getNumLegend) {
@@ -183,20 +180,19 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     }
     let strandRenderers, tooltipY;
     if (isCombineStrands) {
-
       strandRenderers = (
         <React.Fragment>
           <div style={{ display: "flex" }}>
             {forceSvg ? legend : ""}
 
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <StrandVisualizer {...childProps} strand="combined" />       </div>
+              <StrandVisualizer {...childProps} strand="combined" />{" "}
+            </div>
           </div>
         </React.Fragment>
       );
       tooltipY = height;
     } else {
-
       strandRenderers = (
         <React.Fragment>
           <div style={{ display: "flex" }}>
@@ -243,9 +239,18 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
   }
 
   render() {
-    const { data, trackModel, viewRegion, width, options, getNumLegend, xvaluesData } =
-      this.props;
-    this.aggregatedRecords = xvaluesData ? xvaluesData : this.aggregateRecords(data, viewRegion, width);
+    const {
+      data,
+      trackModel,
+      viewRegion,
+      width,
+      options,
+      getNumLegend,
+      xvaluesData,
+    } = this.props;
+    this.aggregatedRecords = xvaluesData
+      ? xvaluesData
+      : this.aggregateRecords(data, viewRegion, width);
     this.scales = this.computeScales(
       this.aggregatedRecords,
       options.height,

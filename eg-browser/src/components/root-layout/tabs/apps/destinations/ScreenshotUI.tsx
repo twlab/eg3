@@ -149,25 +149,33 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       let trackHeight = clientHeight + 1;
       let trackLabelText, trackLegendAxisSvgs, eleSvgs;
 
-      if (ele.children[1]) {
-        trackLabelText = ele.children[1].children[0].textContent;
-        trackLegendAxisSvgs = Array.from(
-          ele.children[1].children[0].querySelectorAll("svg")
-        ).map((svg) => svg);
-        eleSvgs = Array.from(ele.children[1].querySelectorAll("svg")).map(
-          (svg) => svg
-        );
-      } else {
-        console.log(ele);
-        trackLabelText = ele.children[0].children[0].textContent;
-        trackLegendAxisSvgs = Array.from(
-          ele.children[0].children[0].querySelectorAll("svg")
-        ).map((svg) => svg);
-        eleSvgs = Array.from(ele.children[0].querySelectorAll("svg")).map(
-          (svg) => svg
-        );
+      // if (ele.children[1]) {
+      //   console.log(ele);
+      //   trackLabelText = ele.children[1].children[0].textContent;
+      //   trackLegendAxisSvgs = Array.from(
+      //     ele.children[1].children[0].querySelectorAll("svg")
+      //   ).map((svg) => svg);
+      //   eleSvgs = Array.from(ele.children[1].querySelectorAll("svg")).map(
+      //     (svg) => svg
+      //   );
+      // } else {
+
+      const children = ele.children[0].children;
+      let svgCount = 0;
+
+      for (let i = 0; i < children.length; i++) {
+        if (children[i].tagName.toLowerCase() === "svg") {
+          svgCount++;
+        }
       }
 
+      console.log(svgCount);
+      console.log(ele.children[0].querySelectorAll("svg").length);
+      // trackLabelText = ele.children[0].children[0].children[0].textContent;
+      // trackLegendAxisSvgs = ele.children[0].children[0].children[1];
+      // eleSvgs = ele.children[0].children[1];
+      // }
+      console.log(ele);
       const yoffset = 7;
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
@@ -180,38 +188,40 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         svgElemg.appendChild(labelSvg);
       }
 
-      if (trackLegendAxisSvgs.length > 0) {
-        const x2 = x + legendWidth - trackLegendAxisSvgs[0].clientWidth;
-        trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
-          trackLegendAxisSvg.setAttribute("x", x2 + "");
-          trackLegendAxisSvg.setAttribute(
-            "y",
-            idx3 * trackLegendAxisSvg.clientHeight + y + ""
-          );
-          svgElemg.appendChild(trackLegendAxisSvg);
-        });
+      if (trackLegendAxisSvgs) {
+        const x2 = legendWidth - 42;
+        // trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
+        trackLegendAxisSvgs.setAttribute("x", x2 + "");
+        trackLegendAxisSvgs.setAttribute(
+          "y",
+          trackLegendAxisSvgs.clientHeight + y + ""
+        );
+        svgElemg.appendChild(trackLegendAxisSvgs);
+        // });
       }
 
       const options = (props.tracks[idx] || {}).options;
       const trackG = document.createElementNS(xmlns, "g");
-      if (eleSvgs.length > 0) {
+      //y here will add space between tracks, it adds more for each track
+      if (eleSvgs) {
         x += legendWidth;
         let yoff = 0;
-        eleSvgs.forEach((eleSvg, idx2) => {
-          eleSvg.setAttribute("x", x + "");
-          eleSvg.setAttribute("y", yoff + y + "");
-          if (options && options.backgroundColor) {
-            const rect = document.createElementNS(xmlns, "rect");
-            rect.setAttribute("x", x + "");
-            rect.setAttribute("y", yoff + y + "");
-            rect.setAttribute("width", eleSvg.clientWidth + "");
-            rect.setAttribute("height", eleSvg.clientHeight + "");
-            rect.setAttribute("fill", options.backgroundColor);
-            trackG.appendChild(rect);
-          }
-          yoff += eleSvg.clientHeight;
-          trackG.appendChild(eleSvg);
-        });
+        // eleSvgs.forEach((eleSvg, idx2) => {
+        eleSvgs.setAttribute("x", x + "");
+        eleSvgs.setAttribute("y", yoff + y + "");
+        if (options && options.backgroundColor) {
+          const rect = document.createElementNS(xmlns, "rect");
+          rect.setAttribute("x", x + "");
+          rect.setAttribute("y", yoff + y + "");
+          rect.setAttribute("width", eleSvgs.clientWidth + "");
+          rect.setAttribute("height", eleSvgs.clientHeight + "");
+          rect.setAttribute("fill", options.backgroundColor);
+          trackG.appendChild(rect);
+        }
+        // console.log(eleSvg.clientHeight, eleSvgs[0].clientHeight);
+        yoff += eleSvgs.clientHeight;
+        trackG.appendChild(eleSvgs);
+        // });
       }
 
       trackG.setAttributeNS(null, "transform", `translate(${translateX})`);
@@ -265,7 +275,6 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
   const downloadSvg = () => {
     const svgContent = prepareSvg();
-    console.log("SVG Content before download:", svgContent);
 
     const preface = '<?xml version="1.0" standalone="no"?>\r\n';
     const svgBlob = new Blob([preface, svgContent], {
@@ -326,7 +335,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   // };
 
   const makeSvgTrackElements = () => {
-    const { tracks, trackData } = props;
+    const { tracks, trackData, highlights } = props;
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
@@ -342,7 +351,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       .map((trackModel, index) => {
         const id = trackModel.id;
         const createSVGData = trackData[`${id}`].fetchData;
-        console.log(createSVGData.windowWidth);
+
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
@@ -367,7 +376,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             }}
           >
             {svgResult}
-            {/* {highlights.length > 0
+            {highlights.length > 0
               ? highlights.map((item, index) => {
                   return (
                     <div
@@ -394,7 +403,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
                     </div>
                   );
                 })
-              : ""} */}
+              : ""}
           </div>
         );
       });
