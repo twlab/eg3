@@ -2290,7 +2290,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const tmpArr = [...trackComponents];
       setTrackComponents(tmpArr);
       queueRegionToFetch(dataIdx);
-      
     } else {
       for (const key in trackFetchedDataCache.current) {
         const curTrack = trackFetchedDataCache.current[key];
@@ -2936,7 +2935,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         trackManagerRef={block}
                         setShow3dGene={setShow3dGene}
                         isThereG3dTrack={isThereG3dTrack.current}
-                        legendRef={item.legendRef}
                         updateGlobalTrackConfig={updateGlobalTrackConfig}
                         applyTrackConfigChange={applyTrackConfigChange}
                         dragX={dragX.current}
@@ -2951,6 +2949,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         viewWindowConfigChange={viewWindowConfigChange}
                         metaSets={metaSets}
                         onColorBoxClick={onColorBoxClick}
+                        userViewRegion={userViewRegion}
                       />
                     </div>
                   </SortableList.Item>

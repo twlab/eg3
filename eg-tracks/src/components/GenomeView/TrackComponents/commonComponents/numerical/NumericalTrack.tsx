@@ -254,30 +254,36 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       ) : (
         ""
       )}
-      {forceSvg ? legend : ""}
-      <ValuePlot
-        xToValue={xToValue}
-        scales={scales}
-        height={scales.zeroLine}
-        color={color}
-        colorOut={colorAboveMax}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-        width={width}
-        viewWindow={props.viewWindow}
-      />
-      <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
-      <ValuePlot
-        xToValue={xToValue2}
-        scales={scales}
-        height={height - scales.zeroLine}
-        color={color2}
-        colorOut={color2BelowMin}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-        width={width}
-        viewWindow={props.viewWindow}
-      />
+
+      <div style={{ display: "flex" }}>
+        {forceSvg ? legend : ""}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <ValuePlot
+            xToValue={xToValue}
+            scales={scales}
+            height={scales.zeroLine}
+            color={color}
+            colorOut={colorAboveMax}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+          <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+
+          <ValuePlot
+            xToValue={xToValue2}
+            scales={scales}
+            height={height - scales.zeroLine}
+            color={color2}
+            colorOut={color2BelowMin}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+        </div>
+      </div>
     </React.Fragment>
   ) : (
     <React.Fragment>

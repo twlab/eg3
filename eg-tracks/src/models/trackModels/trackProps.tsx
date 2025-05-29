@@ -10,6 +10,7 @@ export interface TrackProps {
   side: string;
   highlightElements: any;
   windowWidth: number;
+  userViewRegion?: DisplayedRegionModel;
   handleDelete: (trackIndex: number) => void;
   globalTrackState: any;
   trackFetchedDataCache: any;

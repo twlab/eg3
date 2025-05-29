@@ -29,7 +29,7 @@ interface TrackLegendProps {
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
-const AXIS_WIDTH = 42;
+const AXIS_WIDTH = 32;
 
 /**
  * A box displaying labels, axes, and other important track info.
@@ -129,15 +129,9 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
           .filter((d, i) => i === 2)
           .attr("dy", "-0.1em");
       }
-      select(this.gNode)
-        .selectAll("text")
-        .attr("class", "svg-text-bg");
-      select(this.gNode)
-        .selectAll("line")
-        .attr("class", "svg-line-bg");
-      select(this.gNode)
-        .selectAll("path")
-        .attr("class", "svg-line-bg");
+      select(this.gNode).selectAll("text").attr("class", "svg-text-bg");
+      select(this.gNode).selectAll("line").attr("class", "svg-line-bg");
+      select(this.gNode).selectAll("path").attr("class", "svg-line-bg");
     }
   }
 
@@ -271,12 +265,16 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
           </div>
           {labelList}
 
-          {chromLabel ? <div
-            style={{ fontSize: "11px", alignSelf: "flex-end" }}
-            className="TrackLegend-chrLabel"
-          >
-            {chromLabel}
-          </div> : ""}
+          {chromLabel ? (
+            <div
+              style={{ fontSize: "11px", alignSelf: "flex-end" }}
+              className="TrackLegend-chrLabel"
+            >
+              {chromLabel}
+            </div>
+          ) : (
+            ""
+          )}
         </div>
         {axis}
       </div>

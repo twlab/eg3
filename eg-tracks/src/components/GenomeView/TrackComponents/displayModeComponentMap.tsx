@@ -1,9 +1,5 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "./commonComponents/check-obj-dupe";
 import Feature, {
   ColoredFeature,
   Fiber,
@@ -82,7 +78,7 @@ import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 
 import VcfTrack from "./VcfComponents/VcfTrack";
-import { VcfColorScaleKeys } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+
 import Bedcolor from "./bedComponents/Bedcolor";
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 enum BedColumnIndex {
@@ -276,31 +272,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
           hiddenPixels={configOptions.hiddenPixels}
         />
       ));
-    }
-    function computeColorScales(
-      data: Vcf[],
-      colorKey: string,
-      lowValueColor: any,
-      highValueColor: any
-    ) {
-      let values: any[];
-      if (colorKey === VcfColorScaleKeys.QUAL) {
-        values = data.map((v) => v.variant.QUAL);
-      } else if (colorKey === VcfColorScaleKeys.AF) {
-        values = data.map((v) => {
-          if (v.variant.INFO.hasOwnProperty("AF")) {
-            return v.variant.INFO.AF[0];
-          }
-          return 0;
-        });
-      } else {
-        values = [];
-      }
-      const colorScale = scaleLinear()
-        .domain([0, _.max(values)])
-        .range([lowValueColor, highValueColor])
-        .clamp(true);
-      return colorScale;
     }
 
     const getAnnotationElementMap: { [key: string]: any } = {

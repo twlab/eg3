@@ -77,7 +77,6 @@ interface MethylCTrackProps {
   };
   forceSvg: boolean;
   getNumLegend: any;
-  xValuesData?: any;
   xvaluesData?: any;
 }
 
@@ -128,8 +127,15 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
   };
 
   renderVisualizer() {
-    let { width, options, forceSvg, viewRegion, trackModel, getNumLegend } =
-      this.props;
+    let {
+      width,
+      options,
+      forceSvg,
+      viewRegion,
+      trackModel,
+      getNumLegend,
+      viewWindow,
+    } = this.props;
     let {
       height,
       colorsForContext,
@@ -137,9 +143,15 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       isCombineStrands,
       depthFilter,
     } = options;
-
+    // we only want a section of viewWindow if we take a screenshot
+    const data = forceSvg
+      ? this.aggregatedRecords.slice(
+          Math.floor(viewWindow.start),
+          Math.ceil(viewWindow.end)
+        )
+      : this.aggregatedRecords;
     const childProps = {
-      data: this.aggregatedRecords,
+      data,
       scales: this.scales,
       htmlType: forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS,
       width,
@@ -297,6 +309,7 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
   renderBarElement(x: number) {
     const { data, scales, strand, height, depthFilter } = this.props;
     const pixelData = data[x][strand];
+
     if (!pixelData) {
       return null;
     }
@@ -347,6 +360,7 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
   renderDepthPlot() {
     const { data, scales, strand, depthColor, height, depthFilter } =
       this.props;
+
     let elements: Array<any> = [];
     for (let x = 0; x < data.length - 1; x++) {
       const currentRecord = data[x][strand];
@@ -378,6 +392,7 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
         ? { transform: "scale(1, -1)", borderBottom: "1px solid lightgrey" }
         : undefined;
     let bars: any = [];
+
     for (let x = 0; x < data.length; x++) {
       bars.push(this.renderBarElement(x));
     }

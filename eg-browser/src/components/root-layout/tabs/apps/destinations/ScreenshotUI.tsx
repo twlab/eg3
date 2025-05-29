@@ -85,7 +85,12 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   //   const svgAsXML = new XMLSerializer().serializeToString(svg);
   //   return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
   // };
-
+  function copyComputedStyle(source, target) {
+    const computedStyle = window.getComputedStyle(source);
+    for (let key of computedStyle) {
+      target.style[key] = computedStyle[key];
+    }
+  }
   const prepareSvg = () => {
     const { highlights, needClip, legendWidth, primaryView, darkTheme } = props;
 
@@ -99,6 +104,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
     const tracksData = tracks.map((track) => ({
       clientHeight: track.clientHeight,
       clone: track.cloneNode(true),
+      biDirectional: [],
     }));
 
     const boxHeight = tracks.reduce(
@@ -145,21 +151,24 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       y = 5;
 
     tracksData.forEach(({ clientHeight, clone: ele }, idx) => {
-      const legendWidth = 120;
+      const legendWidth = 120 + 1;
       let trackHeight = clientHeight + 1;
-      let trackLabelText, trackLegendAxisSvgs, eleSvgs;
+      const trackLabelText =
+        ele.children[0].children[0].querySelector(
+          ".TrackLegend-label"
+        ).textContent;
+      const chrLabelText = ele.children[0].querySelector(
+        ".TrackLegend-chrLabel"
+      )
+        ? ele.children[0].querySelector(".TrackLegend-chrLabel").textContent
+        : null;
+      const trackLegendAxisSvgs =
+        ele.children[0].children[0].querySelectorAll("svg");
+      const originalAxis =
+        tracks[idx].children[0].children[0].querySelectorAll("svg");
 
-      // if (ele.children[1]) {
-      //   console.log(ele);
-      //   trackLabelText = ele.children[1].children[0].textContent;
-      //   trackLegendAxisSvgs = Array.from(
-      //     ele.children[1].children[0].querySelectorAll("svg")
-      //   ).map((svg) => svg);
-      //   eleSvgs = Array.from(ele.children[1].querySelectorAll("svg")).map(
-      //     (svg) => svg
-      //   );
-      // } else {
-
+      let eleSvgs: Array<any> = [];
+      let originalSvgs: any = [];
       const children = ele.children[0].children;
       let svgCount = 0;
 
@@ -168,14 +177,20 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           svgCount++;
         }
       }
+      let biDirectHeight: Array<any> = [];
+      // for normal tracks there children[0] has the form [div, svg]
+      if (svgCount > 0) {
+        eleSvgs = [ele.children[0].children[1]];
+        originalSvgs = [tracks[idx].children[0].children[1]];
+        biDirectHeight.push(trackHeight);
+      }
+      // for track with two svg like methylc, has the form [div, div], latter div has 2 svg [svg, svg]
+      else {
+        eleSvgs = ele.children[0].children[1].querySelectorAll("svg");
+        originalSvgs =
+          tracks[idx].children[0].children[1].querySelectorAll("svg");
+      }
 
-      console.log(svgCount);
-      console.log(ele.children[0].querySelectorAll("svg").length);
-      // trackLabelText = ele.children[0].children[0].children[0].textContent;
-      // trackLegendAxisSvgs = ele.children[0].children[0].children[1];
-      // eleSvgs = ele.children[0].children[1];
-      // }
-      console.log(ele);
       const yoffset = 7;
       if (trackLabelText) {
         const labelSvg = document.createElementNS(xmlns, "text");
@@ -187,41 +202,54 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         labelSvg.appendChild(textNode);
         svgElemg.appendChild(labelSvg);
       }
-
-      if (trackLegendAxisSvgs) {
-        const x2 = legendWidth - 42;
-        // trackLegendAxisSvgs.forEach((trackLegendAxisSvg, idx3) => {
-        trackLegendAxisSvgs.setAttribute("x", x2 + "");
-        trackLegendAxisSvgs.setAttribute(
-          "y",
-          trackLegendAxisSvgs.clientHeight + y + ""
-        );
-        svgElemg.appendChild(trackLegendAxisSvgs);
-        // });
+      if (chrLabelText) {
+        const labelSvg = document.createElementNS(xmlns, "text");
+        labelSvg.setAttributeNS(null, "x", x + 15 + "");
+        labelSvg.setAttributeNS(null, "y", y + 35 + "");
+        labelSvg.setAttributeNS(null, "font-size", "12px");
+        const textNode = document.createTextNode(chrLabelText);
+        labelSvg.setAttribute("class", "svg-text-bg");
+        labelSvg.appendChild(textNode);
+        svgElemg.appendChild(labelSvg);
+      }
+      if (trackLegendAxisSvgs.length > 0) {
+        const x2 = legendWidth - originalAxis[0].clientWidth;
+        trackLegendAxisSvgs.forEach((trackLegendAxisSvg, index: number) => {
+          trackLegendAxisSvg.setAttribute("id", "legendAxis" + index + idx);
+          trackLegendAxisSvg.setAttribute("x", x2 + "");
+          trackLegendAxisSvg.setAttribute(
+            "y",
+            index * originalAxis[index].clientHeight + y + ""
+          );
+          svgElemg.appendChild(trackLegendAxisSvg);
+        });
       }
 
       const options = (props.tracks[idx] || {}).options;
       const trackG = document.createElementNS(xmlns, "g");
       //y here will add space between tracks, it adds more for each track
-      if (eleSvgs) {
+
+      if (eleSvgs.length > 0) {
         x += legendWidth;
-        let yoff = 0;
-        // eleSvgs.forEach((eleSvg, idx2) => {
-        eleSvgs.setAttribute("x", x + "");
-        eleSvgs.setAttribute("y", yoff + y + "");
-        if (options && options.backgroundColor) {
-          const rect = document.createElementNS(xmlns, "rect");
-          rect.setAttribute("x", x + "");
-          rect.setAttribute("y", yoff + y + "");
-          rect.setAttribute("width", eleSvgs.clientWidth + "");
-          rect.setAttribute("height", eleSvgs.clientHeight + "");
-          rect.setAttribute("fill", options.backgroundColor);
-          trackG.appendChild(rect);
-        }
-        // console.log(eleSvg.clientHeight, eleSvgs[0].clientHeight);
-        yoff += eleSvgs.clientHeight;
-        trackG.appendChild(eleSvgs);
-        // });
+        let yoff = 0; // when bi-directional numerical track is not symmetric, need a tempory variable to hold y offset
+        eleSvgs.forEach((eleSvg, idx2) => {
+          eleSvg.setAttribute("id", "svg" + idx + idx2);
+          eleSvg.setAttribute("x", x + "");
+          eleSvg.setAttribute("y", yoff + y + "");
+          if (options && options.backgroundColor) {
+            const rect = document.createElementNS(xmlns, "rect");
+            rect.setAttribute("id", "backRect" + idx);
+            rect.setAttribute("x", x + "");
+            rect.setAttribute("y", yoff + y + "");
+            rect.setAttribute("width", originalSvgs[idx2] + "");
+            rect.setAttribute("height", originalSvgs[idx2] + "");
+            rect.setAttribute("fill", options.backgroundColor);
+            trackG.appendChild(rect);
+          }
+
+          yoff += originalSvgs[idx2].clientHeight; // do this before appendChild
+          trackG.appendChild(eleSvg);
+        });
       }
 
       trackG.setAttributeNS(null, "transform", `translate(${translateX})`);

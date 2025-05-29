@@ -29,6 +29,7 @@ interface HeatmapProps {
   isThereG3dTrack?: boolean;
   clampHeight?: boolean;
   options?: any;
+  legend?: any;
 }
 
 class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
@@ -166,6 +167,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       viewWindow,
       fetchViewWindowOnly,
       bothAnchorsInView,
+      legend,
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
@@ -178,27 +180,32 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       .clamp(false);
 
     return (
-      <>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
+      <React.Fragment>
+        {forceSvg ? (
+          ""
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
 
-            zIndex: 3,
-          }}
-        >
-          <HoverToolTip
-            data={this.hmData}
-            windowWidth={width}
-            viewWindow={viewWindow}
-            trackType={"interactionHeatmap"}
-            height={height}
-            hasReverse={true}
-            legendWidth={this.props.legendWidth}
-            options={this.props.options}
-          />
-        </div>
+              zIndex: 3,
+            }}
+          >
+            <HoverToolTip
+              data={this.hmData}
+              windowWidth={width}
+              viewWindow={viewWindow}
+              trackType={"interactionHeatmap"}
+              height={height}
+              hasReverse={true}
+              legendWidth={this.props.legendWidth}
+              options={this.props.options}
+            />
+          </div>
+        )}
+
         {placedInteractions.length === 0 ? (
           <div
             style={{
@@ -207,17 +214,21 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
             }}
           ></div>
         ) : (
-          <DesignRenderer
-            type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-            width={width}
-            height={height}
-            forceSvg={forceSvg}
-            viewWindow={viewWindow}
-          >
-            {placedInteractions.map(this.renderRect)}
-          </DesignRenderer>
+          <div style={{ display: "flex" }}>
+            {forceSvg && legend ? legend : ""}
+
+            <DesignRenderer
+              type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+              width={width}
+              height={height}
+              forceSvg={forceSvg}
+              viewWindow={viewWindow}
+            >
+              {placedInteractions.map(this.renderRect)}
+            </DesignRenderer>
+          </div>
         )}
-      </>
+      </React.Fragment>
     );
   }
 }

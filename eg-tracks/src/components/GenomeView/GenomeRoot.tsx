@@ -53,7 +53,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   );
 
   useEffect(() => {
-    console.log(size.width);
     if (size.width > 0) {
       let curGenome;
 

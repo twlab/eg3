@@ -198,6 +198,7 @@ class InteractionTrackComponent extends React.PureComponent<
     } = this.props;
 
     const filteredData = this.filterData(data);
+
     this.scales = this.computeScale();
     let interactionData = this.featurePlacer.placeInteractions(
       filteredData,
@@ -225,24 +226,7 @@ class InteractionTrackComponent extends React.PureComponent<
       clampHeight: options.clampHeight,
     };
     let visualizer;
-
-    switch (options.displayMode) {
-      case InteractionDisplayMode.HEATMAP:
-        visualizer = <Heatmap {...visualizerProps} getBeamRefs={getBeamRefs} />;
-        break;
-      case InteractionDisplayMode.FLATARC:
-        visualizer = <CubicCurveDisplay {...visualizerProps} />;
-        break;
-      case InteractionDisplayMode.ARC:
-        visualizer = <ArcDisplay {...visualizerProps} />;
-        break;
-      case InteractionDisplayMode.SQUARE:
-        visualizer = <SquareDisplay {...visualizerProps} />;
-        break;
-      default:
-        visualizer = <ArcDisplay {...visualizerProps} />;
-    }
-    let legend = (
+    const legend = (
       <TrackLegend
         trackModel={trackModel}
         height={options.height}
@@ -255,6 +239,28 @@ class InteractionTrackComponent extends React.PureComponent<
     );
     if (getNumLegend) {
       getNumLegend(legend);
+    }
+    switch (options.displayMode) {
+      case InteractionDisplayMode.HEATMAP:
+        visualizer = (
+          <Heatmap
+            {...visualizerProps}
+            getBeamRefs={getBeamRefs}
+            legend={legend}
+          />
+        );
+        break;
+      case InteractionDisplayMode.FLATARC:
+        visualizer = <CubicCurveDisplay {...visualizerProps} legend={legend} />;
+        break;
+      case InteractionDisplayMode.ARC:
+        visualizer = <ArcDisplay {...visualizerProps} legend={legend} />;
+        break;
+      case InteractionDisplayMode.SQUARE:
+        visualizer = <SquareDisplay {...visualizerProps} legend={legend} />;
+        break;
+      default:
+        visualizer = <ArcDisplay {...visualizerProps} legend={legend} />;
     }
 
     return visualizer;
