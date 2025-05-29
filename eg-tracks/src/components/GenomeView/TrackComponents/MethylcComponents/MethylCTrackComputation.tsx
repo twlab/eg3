@@ -128,6 +128,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
 
   renderVisualizer() {
     let {
+      data,
       width,
       options,
       forceSvg,
@@ -144,12 +145,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       depthFilter,
     } = options;
     // we only want a section of viewWindow if we take a screenshot
-    const data = forceSvg
-      ? this.aggregatedRecords.slice(
-          Math.floor(viewWindow.start),
-          Math.ceil(viewWindow.end)
-        )
-      : this.aggregatedRecords;
+
     const childProps = {
       data,
       scales: this.scales,
