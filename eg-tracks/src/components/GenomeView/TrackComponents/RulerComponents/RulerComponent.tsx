@@ -50,15 +50,8 @@ class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
     const genomeConfig = this.props.genomeConfig;
 
     if (this.props.options && this.props.options.forceSvg) {
-
-
       return (
-        <svg
-          width={this.props.width / 3}
-          viewBox={`${this.props.viewWindow.start} 0 ${this.props.width / 3} ${HEIGHT}`}
-          height={HEIGHT}
-          display={"block"}
-        >
+        <svg width={this.props.width} height={HEIGHT} display={"block"}>
           <Chromosomes
             genomeConfig={genomeConfig}
             viewRegion={viewRegion}
@@ -115,17 +108,21 @@ class RulerComponent extends React.Component<RulerComponentProps> {
     if (this.props.getNumLegend) {
       this.props.getNumLegend(legend);
     }
+    console.log(this.props.options.forceSvg, this.props);
     return (
-      <div style={{ display: "flex" }}>
-        {this.props.options.forceSvg ? legend : ""}
-        <RulerVisualizer
-          genomeConfig={this.props.genomeConfig}
-          viewRegion={this.props.viewRegion}
-          viewWindow={this.props.viewWindow}
-          width={this.props.width}
-          options={this.props.options}
-        />
-      </div>
+      <React.Fragment>
+        <div style={{ display: "flex" }}>
+          {this.props.options.forceSvg ? legend : ""}
+          <RulerVisualizer
+            genomeConfig={this.props.genomeConfig}
+            viewRegion={this.props.viewRegion}
+            viewWindow={this.props.viewWindow}
+            width={this.props.width}
+            options={this.props.options}
+            forceSvg={this.props.options.forceSvg}
+          />
+        </div>
+      </React.Fragment>
     );
   }
 }

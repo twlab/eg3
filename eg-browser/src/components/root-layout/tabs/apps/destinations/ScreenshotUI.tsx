@@ -144,7 +144,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     const svgElemg = document.createElementNS(xmlns, "g");
     const svgElemg2 = document.createElementNS(xmlns, "g");
-    const translateX = needClip ? -1760 : 0;
+    const translateX = needClip ? -viewWindow.start : 0;
     const clipDef = document.createElementNS(xmlns, "defs");
     const clipPath = document.createElementNS(xmlns, "clipPath");
     clipPath.setAttributeNS(null, "id", "cutoff-legend-space");

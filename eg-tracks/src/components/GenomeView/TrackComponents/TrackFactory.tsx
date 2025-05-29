@@ -101,6 +101,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       fetchError.current = true;
     }
 
+    xPos.current = curXPos;
+    console.log(xPos.current);
     trackState["viewWindow"] = trackState.viewWindow;
 
     let res = fetchError.current ? (
@@ -153,8 +155,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         //   displayCache.current["density"][cacheDataIdx] = res;
         // }
       }
-
-      xPos.current = curXPos;
+      console.log(curXPos);
     }
   }
   // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
@@ -1599,10 +1600,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           style={{
             position: "absolute",
             lineHeight: 0,
-            right: updateSide.current === "left" ? `${xPos.current}px` : "",
-            left: updateSide.current === "right" ? `${xPos.current}px` : "",
+            // Dynamically set translation based on updateSide
+            transform:
+              updateSide.current === "left"
+                ? `translateX(-${xPos.current}px)`
+                : `translateX(${xPos.current}px)`,
             backgroundColor: configOptions.current.backgroundColor,
-            WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+            WebkitBackfaceVisibility: "hidden", // This stops lag for when there are a lot of SVG components on the screen when using translate3d
             WebkitPerspective: `${windowWidth + 120}px`,
             backfaceVisibility: "hidden",
             perspective: `${windowWidth + 120}px`,

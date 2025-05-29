@@ -152,7 +152,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
         //   }));
 
         return (
-          <div style={{ display: "flex" }}>
+          <div
+            style={{
+              display: "flex",
+              position: "relative",
+
+              overflow: "hidden",
+            }}
+          >
             <TrackLegend
               height={height}
               trackModel={trackModel}
@@ -165,18 +172,24 @@ export const displayModeComponentMap: { [key: string]: any } = {
                   : ""
               }
             />
-            <svg
-              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
-              key={svgKey}
-              width={width}
-              // viewBox={`${trackState.viewWindow.start} 0 ${
-              //   trackState.visWidth / 3
-              // } ${height}`}
-              height={height}
-              display={"block"}
+            <div
+              style={{
+                position: "relative",
+                transform: `translateX(${-trackState.viewWindow.start}px)`,
+              }}
             >
-              {placements.map(renderAnnotation)}
-              {/* <line
+              <svg
+                style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
+                key={svgKey}
+                width={width}
+                // viewBox={`${trackState.viewWindow.start} 0 ${
+                //   trackState.visWidth / 3
+                // } ${height}`}
+                height={height}
+                display={"block"}
+              >
+                {placements.map(renderAnnotation)}
+                {/* <line
                 x1={width / 3}
                 y1={0}
                 x2={width / 3}
@@ -192,7 +205,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 stroke="black"
                 strokeWidth={1}
               /> */}
-            </svg>
+              </svg>
+            </div>
           </div>
         );
       }
