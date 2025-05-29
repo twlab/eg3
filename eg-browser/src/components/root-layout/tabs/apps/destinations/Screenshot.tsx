@@ -48,12 +48,13 @@ export default function Screenshot() {
     <div>
       <ScreenshotUI
         highlights={screenShotData.highlights}
-        needClip={false}
+        needClip={true}
         legendWidth={120}
         primaryView={screenShotData.primaryView}
         darkTheme={
           darkTheme !== null || darkTheme !== undefined ? darkTheme : false
         }
+        viewWindow={screenShotData.viewWindow}
         tracks={screenShotData.tracks}
         trackData={screenShotData.trackData}
         metadataTerms={[]}

@@ -129,27 +129,27 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
         // const viewEnd = trackState.visData.viewWindowRegion._endBase;
 
-        const adjustXSpan = (xSpan, viewWindow) => {
-          return new OpenInterval(
-            xSpan.start - viewWindow.start,
-            xSpan.end - viewWindow.start
-          );
-        };
+        // const adjustXSpan = (xSpan, viewWindow) => {
+        //   return new OpenInterval(
+        //     xSpan.start - viewWindow.start,
+        //     xSpan.end - viewWindow.start
+        //   );
+        // };
 
-        const filteredAndAdjustedPlacements = placements
-          .filter(
-            (obj) =>
-              obj.xSpan.start <= trackState.viewWindow.end &&
-              obj.xSpan.end >= trackState.viewWindow.start
-          )
-          .map((obj) => ({
-            ...obj,
-            xSpan: adjustXSpan(obj.xSpan, trackState.viewWindow),
-            placedFeatures: obj.placedFeatures.map((item) => ({
-              ...item,
-              xSpan: adjustXSpan(item.xSpan, trackState.viewWindow),
-            })),
-          }));
+        // const filteredAndAdjustedPlacements = placements
+        //   .filter(
+        //     (obj) =>
+        //       obj.xSpan.start <= trackState.viewWindow.end &&
+        //       obj.xSpan.end >= trackState.viewWindow.start
+        //   )
+        //   .map((obj) => ({
+        //     ...obj,
+        //     xSpan: adjustXSpan(obj.xSpan, trackState.viewWindow),
+        //     placedFeatures: obj.placedFeatures.map((item) => ({
+        //       ...item,
+        //       xSpan: adjustXSpan(item.xSpan, trackState.viewWindow),
+        //     })),
+        //   }));
 
         return (
           <div style={{ display: "flex" }}>
@@ -168,14 +168,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
             <svg
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={svgKey}
-              width={width / 3}
+              width={width}
               // viewBox={`${trackState.viewWindow.start} 0 ${
               //   trackState.visWidth / 3
               // } ${height}`}
               height={height}
               display={"block"}
             >
-              {filteredAndAdjustedPlacements.map(renderAnnotation)}
+              {placements.map(renderAnnotation)}
               {/* <line
                 x1={width / 3}
                 y1={0}

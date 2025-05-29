@@ -30,6 +30,7 @@ interface Props {
   viewRegion?: any;
   retakeScreenshot: any;
   windowWidth: number;
+  viewWindow: any;
 }
 export const getHighlightedXs = (
   interval: OpenInterval,
@@ -85,15 +86,17 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   //   const svgAsXML = new XMLSerializer().serializeToString(svg);
   //   return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
   // };
-  function copyComputedStyle(source, target) {
-    const computedStyle = window.getComputedStyle(source);
-    for (let key of computedStyle) {
-      target.style[key] = computedStyle[key];
-    }
-  }
-  const prepareSvg = () => {
-    const { highlights, needClip, legendWidth, primaryView, darkTheme } = props;
 
+  const prepareSvg = () => {
+    const {
+      highlights,
+      needClip,
+      legendWidth,
+      primaryView,
+      darkTheme,
+      viewWindow,
+    } = props;
+    console.log(viewWindow);
     const tracks = Array.from(
       document
         .querySelector("#screenshotContainer")
@@ -141,7 +144,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
     const svgElemg = document.createElementNS(xmlns, "g");
     const svgElemg2 = document.createElementNS(xmlns, "g");
-    const translateX = needClip ? -primaryView.viewWindow.start : 0;
+    const translateX = needClip ? -1760 : 0;
     const clipDef = document.createElementNS(xmlns, "defs");
     const clipPath = document.createElementNS(xmlns, "clipPath");
     clipPath.setAttributeNS(null, "id", "cutoff-legend-space");

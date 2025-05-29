@@ -1927,10 +1927,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           continue;
         }
       }
+      let curViewWindow =
+        viewWindowConfigData.current &&
+        viewWindowConfigData.current.dataIdx === dataIdx
+          ? viewWindowConfigData.current.viewWindow
+          : draw.viewWindow;
+      console.log(newDrawData);
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
         highlights: highlightPixelPos,
+        viewWindow: curViewWindow,
         windowWidth,
         // primaryView: Object.entries(screenshotDataObj.current)[0].fetchData
         //   .trackState.visData,

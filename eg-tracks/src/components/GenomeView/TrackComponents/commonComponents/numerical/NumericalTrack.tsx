@@ -427,21 +427,18 @@ const ValuePlot = (props) => {
   );
 
   const { xToValue, height, forceSvg, width, viewWindow } = props;
-  const viewxToValue = forceSvg
-    ? xToValue.slice(Math.floor(viewWindow.start), Math.ceil(viewWindow.end))
-    : xToValue;
 
   return xToValue.length === 0 ? (
     <div style={{ width: width, height: height }}></div>
   ) : (
     <DesignRenderer
       type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-      width={viewxToValue.length}
+      width={xToValue.length}
       height={height}
       forceSvg={forceSvg}
       viewWindow={viewWindow}
     >
-      {viewxToValue.map(renderPixel)}
+      {xToValue.map(renderPixel)}
     </DesignRenderer>
   );
 };
