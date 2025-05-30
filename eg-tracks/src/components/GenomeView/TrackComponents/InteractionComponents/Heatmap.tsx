@@ -178,7 +178,22 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       .domain([0, heightStandard])
       .range([0, height])
       .clamp(false);
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
+
+    console.log(forceSvg, legend);
     return (
       <React.Fragment>
         {forceSvg ? (
@@ -214,18 +229,25 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
             }}
           ></div>
         ) : (
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", ...curParentStyle }}>
             {forceSvg && legend ? legend : ""}
-
-            <DesignRenderer
-              type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-              width={width}
-              height={height}
-              forceSvg={forceSvg}
-              viewWindow={viewWindow}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
             >
-              {placedInteractions.map(this.renderRect)}
-            </DesignRenderer>
+              <DesignRenderer
+                type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+                width={width}
+                height={height}
+                forceSvg={forceSvg}
+                viewWindow={viewWindow}
+              >
+                {placedInteractions.map(this.renderRect)}
+              </DesignRenderer>
+            </div>
           </div>
         )}
       </React.Fragment>

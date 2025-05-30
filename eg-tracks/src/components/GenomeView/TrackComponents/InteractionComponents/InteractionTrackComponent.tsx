@@ -235,6 +235,7 @@ class InteractionTrackComponent extends React.PureComponent<
             ? this.scales.heightScale
             : undefined
         }
+        forceSvg={forceSvg}
       />
     );
     if (getNumLegend) {

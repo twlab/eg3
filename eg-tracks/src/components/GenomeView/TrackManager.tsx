@@ -1932,7 +1932,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         viewWindowConfigData.current.dataIdx === dataIdx
           ? viewWindowConfigData.current.viewWindow
           : draw.viewWindow;
-      console.log(newDrawData);
+      console.log(screenshotDataObj.current);
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
@@ -2374,7 +2374,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) {
           continue;
         }
-
+        console.log(cacheTrackData);
         let combinedData: any = [];
         let noData = false;
         if (!("xvalues" in cacheTrackData[dataIdx])) {
@@ -2403,7 +2403,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             } else {
               combinedData = combinedData
                 .map((item) => {
-                  if (item && item["dataCacher"]) {
+                  if (item && item["dataCache"]) {
                     return item.dataCache;
                   } else {
                     noData = true;

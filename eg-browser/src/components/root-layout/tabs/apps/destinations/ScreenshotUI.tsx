@@ -96,7 +96,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
       darkTheme,
       viewWindow,
     } = props;
-    console.log(viewWindow);
+
     const tracks = Array.from(
       document
         .querySelector("#screenshotContainer")

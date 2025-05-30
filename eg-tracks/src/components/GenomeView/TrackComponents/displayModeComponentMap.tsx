@@ -156,7 +156,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             style={{
               display: "flex",
               position: "relative",
-
+              width: width / 3,
               overflow: "hidden",
             }}
           >
@@ -171,6 +171,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                   ? trackModel.options.label
                   : ""
               }
+              forceSvg={configOptions.forceSvg}
             />
             <div
               style={{
@@ -1221,6 +1222,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 ? drawData.trackModel.options.label
                 : ""
             }
+            forceSvg={drawData.configOptions.forceSvg}
           />
         );
       }
@@ -1253,6 +1255,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
                   ? drawData.trackModel.options.label
                   : ""
               }
+              forceSvg={drawData.configOptions.forceSvg}
             />
             <svg
               style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
@@ -1321,6 +1324,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               ? drawData.trackModel.options.label
               : ""
           }
+          forceSvg={drawData.configOptions.forceSvg}
         />
       );
       const strand = result.plotStrand;
@@ -1408,7 +1412,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     }
   },
 };
-
+// MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   if (drawData.trackModel.type === "ruler") {
     return displayModeComponentMap["ruler"]({

@@ -9,9 +9,9 @@ import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates
 // import TrackLegend from "./commonComponents/TrackLegend";
 
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-import { getGenomeConfig } from "../../../../models/genomes/allGenomes";
 import TrackModel from "../../../../models/TrackModel";
 import TrackLegend from "../commonComponents/TrackLegend";
+import { config } from "process";
 
 const CHROMOSOMES_Y = 60;
 const RULER_Y = 20;
@@ -108,19 +108,38 @@ class RulerComponent extends React.Component<RulerComponentProps> {
     if (this.props.getNumLegend) {
       this.props.getNumLegend(legend);
     }
-    console.log(this.props.options.forceSvg, this.props);
+    const forceSvg = this.props.options.forceSvg;
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
+
+          overflow: "hidden",
+          width: this.props.width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-this.props.viewWindow.start}px)`,
+        }
+      : {};
     return (
       <React.Fragment>
-        <div style={{ display: "flex" }}>
+        <div style={{ display: "flex", ...curParentStyle }}>
           {this.props.options.forceSvg ? legend : ""}
-          <RulerVisualizer
-            genomeConfig={this.props.genomeConfig}
-            viewRegion={this.props.viewRegion}
-            viewWindow={this.props.viewWindow}
-            width={this.props.width}
-            options={this.props.options}
-            forceSvg={this.props.options.forceSvg}
-          />
+          <div
+            style={{
+              ...curEleStyle,
+            }}
+          >
+            <RulerVisualizer
+              genomeConfig={this.props.genomeConfig}
+              viewRegion={this.props.viewRegion}
+              viewWindow={this.props.viewWindow}
+              width={this.props.width}
+              options={this.props.options}
+            />
+          </div>
         </div>
       </React.Fragment>
     );

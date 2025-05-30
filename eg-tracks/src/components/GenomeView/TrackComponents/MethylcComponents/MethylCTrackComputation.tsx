@@ -128,7 +128,6 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
 
   renderVisualizer() {
     let {
-      data,
       width,
       options,
       forceSvg,
@@ -147,7 +146,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     // we only want a section of viewWindow if we take a screenshot
 
     const childProps = {
-      data,
+      data: this.aggregatedRecords,
       scales: this.scales,
       htmlType: forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS,
       width,
@@ -172,6 +171,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
           height={options.height}
           axisScale={this.scales.methylToY}
           noShiftFirstAxisLabel={!options.isCombineStrands}
+          forceSvg={forceSvg}
         />
 
         {!options.isCombineStrands && (
@@ -179,6 +179,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
             trackModel={trackModel}
             height={options.height}
             maxMethyl={options.maxMethyl}
+            forceSvg={forceSvg}
           />
         )}
       </div>
@@ -187,13 +188,34 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       getNumLegend(legend);
     }
     let strandRenderers, tooltipY;
+
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
+
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
     if (isCombineStrands) {
       strandRenderers = (
         <React.Fragment>
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", ...curParentStyle }}>
             {forceSvg ? legend : ""}
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
               <StrandVisualizer {...childProps} strand="combined" />{" "}
             </div>
           </div>
@@ -203,9 +225,15 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
     } else {
       strandRenderers = (
         <React.Fragment>
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", ...curParentStyle }}>
             {forceSvg ? legend : ""}
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
               <StrandVisualizer {...childProps} strand="forward" />
               <StrandVisualizer {...childProps} strand="reverse" />
             </div>
@@ -435,6 +463,7 @@ function ReverseStrandLegend(props) {
       axisScale={scaleLinear()
         .domain([0, props.maxMethyl])
         .range([0, props.height - VERTICAL_PADDING])}
+      forceSvg={props.forceSvg}
     />
   );
 }

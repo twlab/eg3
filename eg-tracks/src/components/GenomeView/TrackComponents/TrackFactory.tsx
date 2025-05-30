@@ -459,7 +459,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
         trackState.viewWindow = viewWindowConfigChange.viewWindow;
         trackState["groupScale"] = viewWindowConfigChange.groupScale;
-
+        console.log("HUH", trackModel.type);
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
           dataIdx,
@@ -493,29 +493,45 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
         if (trackModel.type !== "genomealign") {
-          for (let i = 0; i < 3; i++) {
-            if (!cacheTrackData[currIdx].dataCache) {
-              continue;
-            }
-            if (
-              cacheTrackData[currIdx].dataCache &&
-              "error" in cacheTrackData[currIdx].dataCache
-            ) {
-              hasError = true;
-              combinedData.push(cacheTrackData[currIdx].dataCache.error);
-            } else {
-              combinedData.push(cacheTrackData[currIdx]);
-            }
+          if (
+            !(trackModel.type in { hic: "", biginteraction: "", longrange: "" })
+          ) {
+            for (let i = 0; i < 3; i++) {
+              if (!cacheTrackData[currIdx].dataCache) {
+                continue;
+              }
+              if (
+                cacheTrackData[currIdx].dataCache &&
+                "error" in cacheTrackData[currIdx].dataCache
+              ) {
+                hasError = true;
+                combinedData.push(cacheTrackData[currIdx].dataCache.error);
+              } else {
+                combinedData.push(cacheTrackData[currIdx]);
+              }
 
-            currIdx--;
+              currIdx--;
+            }
+          } else {
+            combinedData = cacheTrackData[dataIdx].dataCache;
+            console.log(combinedData);
+            if (!combinedData) {
+              hasError = true;
+            }
           }
+
           var noData = false;
           if (!hasError) {
             if (
               trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ) {
               combinedData = getDeDupeArrMatPlot(combinedData, false);
-            } else {
+            } else if (
+              !(
+                trackModel.type in
+                { hic: "", biginteraction: "", longrange: "" }
+              )
+            ) {
               combinedData = combinedData
                 .map((item) => {
                   if (item && "dataCache" in item) {
@@ -525,6 +541,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   }
                 })
                 .flat(1);
+            } else if (combinedData && "error" in combinedData) {
+              noData = true;
             }
           }
           if (noData || !combinedData) {
@@ -577,6 +595,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
+        if (trackModel.type === "longrange") {
+          console.log(combinedData);
+        }
         if (combinedData) {
           sentScreenshotData({
             fetchData: {
