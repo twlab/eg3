@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27195171-27202238");
 
 const defaultTracks = [
   new TrackModel({
@@ -69,6 +69,14 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
+  // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  // }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
@@ -143,14 +151,14 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
-  new TrackModel({
-    type: "bigwig",
-    name: "example bigwig",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
-    options: {
-      color: "blue",
-    },
-  }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
 
   // new TrackModel({
   //   type: "bigwig",
@@ -227,36 +235,36 @@ const defaultTracks = [
   //     },
   //   ],
   // }),
-  new TrackModel({
-    type: "dynseq",
-    name: "example dynseq",
-    url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
-    options: {
-      color: "blue",
-      height: 100,
-    },
-  }),
-  new TrackModel({
-    type: "longrange",
-    name: "example longrange",
-    url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-    indexUrl:
-      "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4",
-  }),
-  new TrackModel({
-    type: "methylc",
-    name: "H1",
-    url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
-    options: {
-      label: "Methylation",
-      colorsForContext: {
-        CG: { color: "#648bd8", background: "#d9d9d9" },
-        CHG: { color: "#ff944d", background: "#ffe0cc" },
-        CHH: { color: "#ff00ff", background: "#ffe5ff" },
-      },
-      depthColor: "#01E9FE",
-    },
-  }),
+  // new TrackModel({
+  //   type: "dynseq",
+  //   name: "example dynseq",
+  //   url: "https://target.wustl.edu/dli/tmp/deeplift.example.bw",
+  //   options: {
+  //     color: "blue",
+  //     height: 100,
+  //   },
+  // }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "example longrange",
+  //   url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
+  //   indexUrl:
+  //     "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4",
+  // }),
+  // new TrackModel({
+  //   type: "methylc",
+  //   name: "H1",
+  //   url: "https://vizhub.wustl.edu/public/hg19/methylc2/h1.liftedtohg19.gz",
+  //   options: {
+  //     label: "Methylation",
+  //     colorsForContext: {
+  //       CG: { color: "#648bd8", background: "#d9d9d9" },
+  //       CHG: { color: "#ff944d", background: "#ffe0cc" },
+  //       CHH: { color: "#ff00ff", background: "#ffe5ff" },
+  //     },
+  //     depthColor: "#01E9FE",
+  //   },
+  // }),
   // new TrackModel({
   //   type: "methylc",
   //   name: "H1",
@@ -385,14 +393,6 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  // }),
   // new TrackModel({
   //   name: "hg38topantro5",
   //   label: "query Chimpanzee panTro5 to hg38 blastz",

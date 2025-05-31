@@ -1,5 +1,11 @@
 # Version history
 
+## 55.0.3
+
+- Reworked screenshots - using expanded view only and working with genomealign and interaction
+- Fixed highlight issue in screenshot, causing it to crash
+- Fixed highlight on tracks when resizing window
+
 ## 55.0.2
 
 - Refactor package.json

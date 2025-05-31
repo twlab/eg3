@@ -1210,21 +1210,22 @@ export const displayModeComponentMap: { [key: string]: any } = {
     }
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
+      let legend = (
+        <TrackLegend
+          height={drawData.configOptions.height}
+          trackModel={drawData.trackModel}
+          label={
+            drawData.configOptions.label
+              ? drawData.configOptions.label
+              : drawData.trackModel.options.label
+              ? drawData.trackModel.options.label
+              : ""
+          }
+          forceSvg={drawData.configOptions.forceSvg}
+        />
+      );
       if (drawData.updatedLegend) {
-        drawData.updatedLegend.current = (
-          <TrackLegend
-            height={drawData.configOptions.height}
-            trackModel={drawData.trackModel}
-            label={
-              drawData.configOptions.label
-                ? drawData.configOptions.label
-                : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
-            }
-            forceSvg={drawData.configOptions.forceSvg}
-          />
-        );
+        drawData.updatedLegend.current = legend;
       }
       svgElements = drawDatas.map((item, index) =>
         renderFineAlignment(item, index, drawData.configOptions)
@@ -1241,34 +1242,28 @@ export const displayModeComponentMap: { [key: string]: any } = {
           <div
             style={{
               display: "flex",
-              flexDirection: "row",
-              zIndex: 3,
+              position: "relative",
+              width: drawData.trackState.visWidth / 3,
+              overflow: "hidden",
             }}
           >
-            <TrackLegend
-              height={drawData.configOptions.height}
-              trackModel={drawData.trackModel}
-              label={
-                drawData.configOptions.label
-                  ? drawData.configOptions.label
-                  : drawData.trackModel.options.label
-                  ? drawData.trackModel.options.label
-                  : ""
-              }
-              forceSvg={drawData.configOptions.forceSvg}
-            />
-            <svg
-              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
-              key={crypto.randomUUID()}
-              width={drawData.trackState.visWidth / 3}
-              viewBox={`${drawData.trackState.viewWindow.start} 0 ${
-                drawData.trackState.visWidth / 3
-              } ${drawData.configOptions.height}`}
-              height={drawData.configOptions.height}
-              display={"block"}
+            {legend}
+            <div
+              style={{
+                position: "relative",
+                transform: `translateX(${-drawData.trackState.viewWindow
+                  .start}px)`,
+              }}
             >
-              {svgElements}
-            </svg>{" "}
+              <svg
+                key={crypto.randomUUID()}
+                width={drawData.trackState.visWidth}
+                height={drawData.configOptions.height}
+                display={"block"}
+              >
+                {svgElements}
+              </svg>
+            </div>
           </div>
         );
       } else {

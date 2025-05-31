@@ -196,13 +196,20 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
       const yoffset = 7;
       if (trackLabelText) {
-        const labelSvg = document.createElementNS(xmlns, "text");
-        labelSvg.setAttributeNS(null, "x", x + "");
-        labelSvg.setAttributeNS(null, "y", y + yoffset + "");
-        labelSvg.setAttributeNS(null, "font-size", "8px");
-        const textNode = document.createTextNode(trackLabelText);
-        labelSvg.setAttribute("class", "svg-text-bg");
-        labelSvg.appendChild(textNode);
+        const labelSvg = document.createElementNS(xmlns, "foreignObject");
+        labelSvg.setAttributeNS(null, "x", x);
+        labelSvg.setAttributeNS(null, "y", y);
+        labelSvg.setAttributeNS(null, "width", `${legendWidth - 32}`);
+        labelSvg.setAttributeNS(null, "height", `${trackHeight}`);
+
+        const div = document.createElement("div");
+        div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+        div.style.cssText = `width: ${
+          legendWidth - 42
+        }px; font-size: 9px; white-space: normal; word-wrap: break-word; color: ${fg};`;
+        div.textContent = trackLabelText;
+
+        labelSvg.appendChild(div);
         svgElemg.appendChild(labelSvg);
       }
       if (chrLabelText) {
@@ -366,7 +373,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
   // };
 
   const makeSvgTrackElements = () => {
-    const { tracks, trackData, highlights } = props;
+    const { tracks, trackData, highlights, viewWindow } = props;
 
     // document.documentElement.style.setProperty("--bg-color", "white");
     // document.documentElement.style.setProperty("--font-color", "#222");
@@ -383,10 +390,12 @@ const ScreenshotUI: React.FC<Props> = (props) => {
         const id = trackModel.id;
         const createSVGData = trackData[`${id}`].fetchData;
 
+        const newTrackState = { ...createSVGData.trackState };
+        newTrackState["viewWindow"] = viewWindow;
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
-          trackState: createSVGData.trackState,
+          trackState: newTrackState,
           windowWidth: createSVGData.windowWidth,
           configOptions: createSVGData.configOptions,
           basesByPixel: createSVGData.basesByPixel,

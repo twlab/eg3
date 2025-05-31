@@ -459,7 +459,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         }
         trackState.viewWindow = viewWindowConfigChange.viewWindow;
         trackState["groupScale"] = viewWindowConfigChange.groupScale;
-        console.log("HUH", trackModel.type);
+
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
           dataIdx,
@@ -514,7 +514,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             }
           } else {
             combinedData = cacheTrackData[dataIdx].dataCache;
-            console.log(combinedData);
+
             if (!combinedData) {
               hasError = true;
             }
@@ -595,9 +595,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
-        if (trackModel.type === "longrange") {
-          console.log(combinedData);
-        }
+
         if (combinedData) {
           sentScreenshotData({
             fetchData: {

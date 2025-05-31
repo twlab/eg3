@@ -1900,6 +1900,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       const curStartBp = bpX.current;
       const curEndBp = bpX.current + bpRegionSize.current;
       const highlightPixelPos: Array<any> = [];
+
       for (let i = 0; i < highlightElements.length; i++) {
         const highlight = highlightElements[i];
 
@@ -1931,8 +1932,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         viewWindowConfigData.current &&
         viewWindowConfigData.current.dataIdx === dataIdx
           ? viewWindowConfigData.current.viewWindow
+          : hasGenomeAlign.current
+          ? globalTrackState.current.trackStates[dataIdx].trackState
+              .genomicFetchCoord[genomeConfig.genome.getName()].primaryVisData
+              .viewWindow
           : draw.viewWindow;
-      console.log(screenshotDataObj.current);
+
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
@@ -2374,7 +2379,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ) {
           continue;
         }
-        console.log(cacheTrackData);
+
         let combinedData: any = [];
         let noData = false;
         if (!("xvalues" in cacheTrackData[dataIdx])) {

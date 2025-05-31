@@ -103,6 +103,7 @@ class RulerComponent extends React.Component<RulerComponentProps> {
         trackViewRegion={this.props.viewRegion}
         selectedRegion={this.props.selectedRegion}
         trackWidth={this.props.width}
+        forceSvg={this.props.options.forceSvg}
       />
     );
     if (this.props.getNumLegend) {
