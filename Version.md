@@ -5,6 +5,7 @@
 - Reworked screenshots - using expanded view only and working with genomealign and interaction
 - Fixed highlight issue in screenshot, causing it to crash
 - Fixed highlight on tracks when resizing window
+- Stop the screenshot page from going blank from clicking download svg
 
 ## 55.0.2
 
