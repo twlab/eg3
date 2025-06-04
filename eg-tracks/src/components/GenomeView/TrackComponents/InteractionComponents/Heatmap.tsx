@@ -29,6 +29,7 @@ interface HeatmapProps {
   isThereG3dTrack?: boolean;
   clampHeight?: boolean;
   options?: any;
+  legend?: any;
 }
 
 class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
@@ -166,6 +167,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       viewWindow,
       fetchViewWindowOnly,
       bothAnchorsInView,
+      legend,
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
@@ -176,29 +178,49 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       .domain([0, heightStandard])
       .range([0, height])
       .clamp(false);
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
 
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
+
+    console.log(forceSvg, legend);
     return (
-      <>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            position: "absolute",
+      <React.Fragment>
+        {forceSvg ? (
+          ""
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
 
-            zIndex: 3,
-          }}
-        >
-          <HoverToolTip
-            data={this.hmData}
-            windowWidth={width}
-            viewWindow={viewWindow}
-            trackType={"interactionHeatmap"}
-            height={height}
-            hasReverse={true}
-            legendWidth={this.props.legendWidth}
-            options={this.props.options}
-          />
-        </div>
+              zIndex: 3,
+            }}
+          >
+            <HoverToolTip
+              data={this.hmData}
+              windowWidth={width}
+              viewWindow={viewWindow}
+              trackType={"interactionHeatmap"}
+              height={height}
+              hasReverse={true}
+              legendWidth={this.props.legendWidth}
+              options={this.props.options}
+            />
+          </div>
+        )}
+
         {placedInteractions.length === 0 ? (
           <div
             style={{
@@ -207,17 +229,28 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
             }}
           ></div>
         ) : (
-          <DesignRenderer
-            type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-            width={width}
-            height={height}
-            forceSvg={forceSvg}
-            viewWindow={viewWindow}
-          >
-            {placedInteractions.map(this.renderRect)}
-          </DesignRenderer>
+          <div style={{ display: "flex", ...curParentStyle }}>
+            {forceSvg && legend ? legend : ""}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
+              <DesignRenderer
+                type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
+                width={width}
+                height={height}
+                forceSvg={forceSvg}
+                viewWindow={viewWindow}
+              >
+                {placedInteractions.map(this.renderRect)}
+              </DesignRenderer>
+            </div>
+          </div>
         )}
-      </>
+      </React.Fragment>
     );
   }
 }

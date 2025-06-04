@@ -1925,11 +1925,55 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         convertTrackModelToITrackModel(item)
       );
 
+      const curStartBp = bpX.current;
+      const curEndBp = bpX.current + bpRegionSize.current;
+      const highlightPixelPos: Array<any> = [];
+
+      for (let i = 0; i < highlightElements.length; i++) {
+        const highlight = highlightElements[i];
+
+        if (
+          (highlight.start >= curStartBp && highlight.start <= curEndBp) ||
+          (highlight.end >= curStartBp && highlight.end <= curEndBp) ||
+          (highlight.start < curStartBp && highlight.end > curEndBp)
+        ) {
+          const highlightStart =
+            highlight.start < curStartBp ? curStartBp : highlight.start;
+
+          const highlightEnd =
+            highlight.end > curEndBp ? curEndBp : highlight.end;
+
+          const windowStart =
+            (highlightStart - curStartBp) * pixelPerBase.current;
+          const windowEnd = (highlightEnd - curStartBp) * pixelPerBase.current;
+          highlightPixelPos.push({
+            start: windowStart,
+            end: windowEnd,
+            color: highlight.color,
+          });
+          // The highlight is within the range
+        } else {
+          continue;
+        }
+      }
+      let curViewWindow =
+        viewWindowConfigData.current &&
+        viewWindowConfigData.current.dataIdx === dataIdx
+          ? viewWindowConfigData.current.viewWindow
+          : hasGenomeAlign.current
+          ? globalTrackState.current.trackStates[dataIdx].trackState
+              .genomicFetchCoord[genomeConfig.genome.getName()].primaryVisData
+              .viewWindow
+          : draw.viewWindow;
+
       setScreenshotData({
         tracks: convertedITrackModel,
         trackData: screenshotDataObj.current,
-        highlights: highlightElements,
+        highlights: highlightPixelPos,
+        viewWindow: curViewWindow,
         windowWidth,
+        // primaryView: Object.entries(screenshotDataObj.current)[0].fetchData
+        //   .trackState.visData,
       });
       screenshotDataObj.current = {};
     }
@@ -2316,40 +2360,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackToDrawId,
       });
     }
+    let highlightElement = createHighlight(highlights);
+    setHighLightElements([...highlightElement]);
   }
   // MARK: viewWindowConfig
-  function getReDrawViewWindow(viewWindow, dataIdx) {
-    const trackDataObj: { [key: string]: any } = {};
-    const trackToDrawId: { [key: string]: any } = {};
-    let groupScale: {
-      [groupId: number]: { scale: TrackModel; min: {}; max: {} };
-    } | null = null;
-    for (let key in trackFetchedDataCache.current) {
-      if (trackFetchedDataCache.current[key][dataIdx]["xvalues"]) {
-        if (trackFetchedDataCache.current[key].trackType in numericalTracks) {
-          trackDataObj[key] =
-            trackFetchedDataCache.current[key][dataIdx]["xvalues"];
-        }
-        trackToDrawId[key] = "";
-      }
-    }
-    if (!_.isEmpty(trackDataObj)) {
-      groupScale = groupManager.getGroupScaleWithXvalues(
-        tracks,
-        trackDataObj,
-        viewWindow
-      );
-      globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
-        groupScale;
-    }
-
-    setViewWindowConfigChange({
-      dataIdx,
-      viewWindow,
-      groupScale,
-      trackToDrawId,
-    });
-  }
 
   function getWindowViewConfig(viewWindow, dataIdx) {
     if (viewWindow) {
@@ -2418,7 +2432,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             } else {
               combinedData = combinedData
                 .map((item) => {
-                  if (item && item["dataCacher"]) {
+                  if (item && item["dataCache"]) {
                     return item.dataCache;
                   } else {
                     noData = true;
@@ -2946,7 +2960,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         trackManagerRef={block}
                         setShow3dGene={setShow3dGene}
                         isThereG3dTrack={isThereG3dTrack.current}
-                        legendRef={item.legendRef}
                         updateGlobalTrackConfig={updateGlobalTrackConfig}
                         applyTrackConfigChange={applyTrackConfigChange}
                         dragX={dragX.current}
@@ -2961,6 +2974,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         viewWindowConfigChange={viewWindowConfigChange}
                         metaSets={metaSets}
                         onColorBoxClick={onColorBoxClick}
+                        userViewRegion={userViewRegion}
                       />
                     </div>
                   </SortableList.Item>

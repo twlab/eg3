@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27195171-27202238");
 
 const defaultTracks = [
   new TrackModel({
@@ -70,16 +70,24 @@ const defaultTracks = [
     genome: "hg38",
   }),
   // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  // }),
+  // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",
   //   genome: "hg38",
   //   url: "https://wangftp.wustl.edu/~jmacias/SMaHT_HapMap_Truth_Set/SMaHT_MCGB_Graph_VCFs/9188e8.vcf.gz",
   // }),
-  new TrackModel({
-    type: "geneAnnotation",
-    name: "gencodeV39",
-    genome: "hg38",
-  }),
+  // new TrackModel({
+  //   type: "geneAnnotation",
+  //   name: "gencodeV39",
+  //   genome: "hg38",
+  // }),
   // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",
@@ -123,12 +131,12 @@ const defaultTracks = [
   //   name: "snp",
   //   genome: "hg38",
   // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "MANE_select_1.4",
-  //   label: "MANE selection v1.4",
-  //   genome: "hg38",
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "MANE_select_1.4",
+    label: "MANE selection v1.4",
+    genome: "hg38",
+  }),
   new TrackModel({
     type: "repeatmasker",
     name: "rmsk_all",
@@ -240,7 +248,8 @@ const defaultTracks = [
   //   type: "longrange",
   //   name: "example longrange",
   //   url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-  //   indexUrl: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4"
+  //   indexUrl:
+  //     "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4",
   // }),
   // new TrackModel({
   //   type: "methylc",
@@ -384,14 +393,6 @@ const defaultTracks = [
   //   genome: "hg38",
   // }),
 
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  // }),
   // new TrackModel({
   //   name: "hg38topantro5",
   //   label: "query Chimpanzee panTro5 to hg38 blastz",

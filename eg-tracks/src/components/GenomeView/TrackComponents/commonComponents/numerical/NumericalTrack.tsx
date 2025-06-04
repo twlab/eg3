@@ -69,6 +69,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     getNumLegend,
     groupScale,
     xvaluesData,
+    viewWindow,
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
@@ -220,24 +221,35 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       axisScale={isDrawingBars ? scales.axisScale : undefined}
       axisLegend={unit}
       label={options.label}
+      forceSvg={forceSvg}
     />
   );
 
   if (getNumLegend) {
     getNumLegend(legend);
   }
+  let curParentStyle: any = forceSvg
+    ? {
+        position: "relative",
 
+        overflow: "hidden",
+        width: width / 3,
+      }
+    : {};
+  let curEleStyle: any = forceSvg
+    ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
+    : {};
   const visualizer = hasReverse ? (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-        {!forceSvg ? (
+      {!forceSvg ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+          }}
+        >
           <HoverToolTip
             data={xToValue}
             data2={xToValue2}
@@ -250,46 +262,54 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             hasReverse={true}
             options={options}
           />
-        ) : (
-          ""
-        )}
+        </div>
+      ) : (
+        ""
+      )}
+
+      <div style={{ display: "flex", ...curParentStyle }}>
+        {forceSvg ? legend : ""}
+        <div
+          style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
+        >
+          <ValuePlot
+            xToValue={xToValue}
+            scales={scales}
+            height={scales.zeroLine}
+            color={color}
+            colorOut={colorAboveMax}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+          <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+
+          <ValuePlot
+            xToValue={xToValue2}
+            scales={scales}
+            height={height - scales.zeroLine}
+            color={color2}
+            colorOut={color2BelowMin}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+        </div>
       </div>
-      {forceSvg ? legend : ""}
-      <ValuePlot
-        xToValue={xToValue}
-        scales={scales}
-        height={scales.zeroLine}
-        color={color}
-        colorOut={colorAboveMax}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-        width={width}
-        viewWindow={props.viewWindow}
-      />
-      <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
-      <ValuePlot
-        xToValue={xToValue2}
-        scales={scales}
-        height={height - scales.zeroLine}
-        color={color2}
-        colorOut={color2BelowMin}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-        width={width}
-        viewWindow={props.viewWindow}
-      />
     </React.Fragment>
   ) : (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-        {!forceSvg ? (
+      {!forceSvg ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+          }}
+        >
           <HoverToolTip
             data={xToValue}
             data2={xToValue2}
@@ -302,40 +322,37 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             hasReverse={true}
             options={options}
           />
-        ) : (
-          ""
-        )}
-      </div>
-      <div style={{ display: "flex" }}>
+        </div>
+      ) : (
+        ""
+      )}
+      <div style={{ display: "flex", ...curParentStyle }}>
         {forceSvg ? legend : ""}
-        <ValuePlot
-          xToValue={xToValue}
-          scales={scales}
-          height={scales.zeroLine}
-          color={color}
-          colorOut={colorAboveMax}
-          isDrawingBars={isDrawingBars}
-          forceSvg={forceSvg}
-          width={width}
-          viewWindow={props.viewWindow}
-        />
+        <div
+          style={{
+            ...curEleStyle,
+          }}
+        >
+          <ValuePlot
+            xToValue={xToValue}
+            scales={scales}
+            height={scales.zeroLine}
+            color={color}
+            colorOut={colorAboveMax}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+        </div>
       </div>
     </React.Fragment>
   );
+
   xvalues = [];
   return visualizer;
 };
-interface ValueTrackProps {
-  xToValue: any[]; // Replace 'any' with the actual type for xToValue
-  scales: Record<string, any>; // Replace 'any' with the actual type for scales
-  height: number;
-  color?: string;
-  isDrawingBars?: boolean;
-  colorOut?: any;
-  forceSvg?: any;
-  width: any;
-  viewWindow: any;
-}
+
 const ValuePlot = (props) => {
   const renderPixel = useCallback(
     (value, x) => {
@@ -421,21 +438,18 @@ const ValuePlot = (props) => {
   );
 
   const { xToValue, height, forceSvg, width, viewWindow } = props;
-  const viewxToValue = forceSvg
-    ? xToValue.slice(Math.floor(viewWindow.start), Math.ceil(viewWindow.end))
-    : xToValue;
 
   return xToValue.length === 0 ? (
     <div style={{ width: width, height: height }}></div>
   ) : (
     <DesignRenderer
       type={forceSvg ? RenderTypes.SVG : RenderTypes.CANVAS}
-      width={viewxToValue.length}
+      width={xToValue.length}
       height={height}
       forceSvg={forceSvg}
       viewWindow={viewWindow}
     >
-      {viewxToValue.map(renderPixel)}
+      {xToValue.map(renderPixel)}
     </DesignRenderer>
   );
 };

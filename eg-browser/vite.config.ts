@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import dts from "vite-plugin-dts";
@@ -6,6 +7,7 @@ import dts from "vite-plugin-dts";
 import tailwindcss from "@tailwindcss/vite";
 import url from "@rollup/plugin-url";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
+
 export default defineConfig({
   resolve: {
     alias: {

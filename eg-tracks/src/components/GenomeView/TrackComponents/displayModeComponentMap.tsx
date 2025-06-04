@@ -1,9 +1,5 @@
 import { ReactNode } from "react";
 import ChromosomeInterval from "../../../models/ChromosomeInterval";
-import {
-  removeDuplicates,
-  removeDuplicatesWithoutId,
-} from "./commonComponents/check-obj-dupe";
 import Feature, {
   ColoredFeature,
   Fiber,
@@ -82,7 +78,7 @@ import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 
 import VcfTrack from "./VcfComponents/VcfTrack";
-import { VcfColorScaleKeys } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
+
 import Bedcolor from "./bedComponents/Bedcolor";
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 enum BedColumnIndex {
@@ -133,33 +129,41 @@ export const displayModeComponentMap: { [key: string]: any } = {
 
         // const viewEnd = trackState.visData.viewWindowRegion._endBase;
 
-        const adjustXSpan = (xSpan, viewWindow) => {
-          return new OpenInterval(
-            xSpan.start - viewWindow.start,
-            xSpan.end - viewWindow.start
-          );
-        };
+        // const adjustXSpan = (xSpan, viewWindow) => {
+        //   return new OpenInterval(
+        //     xSpan.start - viewWindow.start,
+        //     xSpan.end - viewWindow.start
+        //   );
+        // };
 
-        const filteredAndAdjustedPlacements = placements
-          .filter(
-            (obj) =>
-              obj.xSpan.start <= trackState.viewWindow.end &&
-              obj.xSpan.end >= trackState.viewWindow.start
-          )
-          .map((obj) => ({
-            ...obj,
-            xSpan: adjustXSpan(obj.xSpan, trackState.viewWindow),
-            placedFeatures: obj.placedFeatures.map((item) => ({
-              ...item,
-              xSpan: adjustXSpan(item.xSpan, trackState.viewWindow),
-            })),
-          }));
+        // const filteredAndAdjustedPlacements = placements
+        //   .filter(
+        //     (obj) =>
+        //       obj.xSpan.start <= trackState.viewWindow.end &&
+        //       obj.xSpan.end >= trackState.viewWindow.start
+        //   )
+        //   .map((obj) => ({
+        //     ...obj,
+        //     xSpan: adjustXSpan(obj.xSpan, trackState.viewWindow),
+        //     placedFeatures: obj.placedFeatures.map((item) => ({
+        //       ...item,
+        //       xSpan: adjustXSpan(item.xSpan, trackState.viewWindow),
+        //     })),
+        //   }));
 
         return (
-          <div style={{ display: "flex" }}>
+          <div
+            style={{
+              display: "flex",
+              position: "relative",
+              width: width / 3,
+              overflow: "hidden",
+            }}
+          >
             <TrackLegend
-              height={40}
+              height={height}
               trackModel={trackModel}
+              width={120}
               label={
                 configOptions.label
                   ? configOptions.label
@@ -167,19 +171,26 @@ export const displayModeComponentMap: { [key: string]: any } = {
                   ? trackModel.options.label
                   : ""
               }
+              forceSvg={configOptions.forceSvg}
             />
-            <svg
-              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
-              key={svgKey}
-              width={width / 3}
-              // viewBox={`${trackState.viewWindow.start} 0 ${
-              //   trackState.visWidth / 3
-              // } ${height}`}
-              height={height}
-              display={"block"}
+            <div
+              style={{
+                position: "relative",
+                transform: `translateX(${-trackState.viewWindow.start}px)`,
+              }}
             >
-              {filteredAndAdjustedPlacements.map(renderAnnotation)}
-              {/* <line
+              <svg
+                style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
+                key={svgKey}
+                width={width}
+                // viewBox={`${trackState.viewWindow.start} 0 ${
+                //   trackState.visWidth / 3
+                // } ${height}`}
+                height={height}
+                display={"block"}
+              >
+                {placements.map(renderAnnotation)}
+                {/* <line
                 x1={width / 3}
                 y1={0}
                 x2={width / 3}
@@ -195,7 +206,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
                 stroke="black"
                 strokeWidth={1}
               /> */}
-            </svg>
+              </svg>
+            </div>
           </div>
         );
       }
@@ -275,31 +287,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
           hiddenPixels={configOptions.hiddenPixels}
         />
       ));
-    }
-    function computeColorScales(
-      data: Vcf[],
-      colorKey: string,
-      lowValueColor: any,
-      highValueColor: any
-    ) {
-      let values: any[];
-      if (colorKey === VcfColorScaleKeys.QUAL) {
-        values = data.map((v) => v.variant.QUAL);
-      } else if (colorKey === VcfColorScaleKeys.AF) {
-        values = data.map((v) => {
-          if (v.variant.INFO.hasOwnProperty("AF")) {
-            return v.variant.INFO.AF[0];
-          }
-          return 0;
-        });
-      } else {
-        values = [];
-      }
-      const colorScale = scaleLinear()
-        .domain([0, _.max(values)])
-        .range([lowValueColor, highValueColor])
-        .clamp(true);
-      return colorScale;
     }
 
     const getAnnotationElementMap: { [key: string]: any } = {
@@ -1223,20 +1210,22 @@ export const displayModeComponentMap: { [key: string]: any } = {
     }
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
+      let legend = (
+        <TrackLegend
+          height={drawData.configOptions.height}
+          trackModel={drawData.trackModel}
+          label={
+            drawData.configOptions.label
+              ? drawData.configOptions.label
+              : drawData.trackModel.options.label
+              ? drawData.trackModel.options.label
+              : ""
+          }
+          forceSvg={drawData.configOptions.forceSvg}
+        />
+      );
       if (drawData.updatedLegend) {
-        drawData.updatedLegend.current = (
-          <TrackLegend
-            height={drawData.configOptions.height}
-            trackModel={drawData.trackModel}
-            label={
-              drawData.configOptions.label
-                ? drawData.configOptions.label
-                : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
-            }
-          />
-        );
+        drawData.updatedLegend.current = legend;
       }
       svgElements = drawDatas.map((item, index) =>
         renderFineAlignment(item, index, drawData.configOptions)
@@ -1253,33 +1242,28 @@ export const displayModeComponentMap: { [key: string]: any } = {
           <div
             style={{
               display: "flex",
-              flexDirection: "row",
-              zIndex: 3,
+              position: "relative",
+              width: drawData.trackState.visWidth / 3,
+              overflow: "hidden",
             }}
           >
-            <TrackLegend
-              height={drawData.configOptions.height}
-              trackModel={drawData.trackModel}
-              label={
-                drawData.configOptions.label
-                  ? drawData.configOptions.label
-                  : drawData.trackModel.options.label
-                  ? drawData.trackModel.options.label
-                  : ""
-              }
-            />
-            <svg
-              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
-              key={crypto.randomUUID()}
-              width={drawData.trackState.visWidth / 3}
-              viewBox={`${drawData.trackState.viewWindow.start} 0 ${
-                drawData.trackState.visWidth / 3
-              } ${drawData.configOptions.height}`}
-              height={drawData.configOptions.height}
-              display={"block"}
+            {legend}
+            <div
+              style={{
+                position: "relative",
+                transform: `translateX(${-drawData.trackState.viewWindow
+                  .start}px)`,
+              }}
             >
-              {svgElements}
-            </svg>{" "}
+              <svg
+                key={crypto.randomUUID()}
+                width={drawData.trackState.visWidth}
+                height={drawData.configOptions.height}
+                display={"block"}
+              >
+                {svgElements}
+              </svg>
+            </div>
           </div>
         );
       } else {
@@ -1335,6 +1319,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               ? drawData.trackModel.options.label
               : ""
           }
+          forceSvg={drawData.configOptions.forceSvg}
         />
       );
       const strand = result.plotStrand;
@@ -1422,7 +1407,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     }
   },
 };
-
+// MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   if (drawData.trackModel.type === "ruler") {
     return displayModeComponentMap["ruler"]({
