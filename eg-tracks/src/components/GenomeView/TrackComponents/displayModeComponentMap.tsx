@@ -734,7 +734,16 @@ export const displayModeComponentMap: { [key: string]: any } = {
         }
       }
     }
-
+    console.log(
+      formattedData,
+      trackState,
+      windowWidth,
+      configOptions,
+      updatedLegend,
+      trackModel,
+      groupScale,
+      xvaluesData
+    );
     let canvasElements = (
       <NumericalTrack
         data={formattedData}

@@ -8,6 +8,7 @@ import { ITrackContainerState } from "../../types";
 import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
+import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
@@ -133,6 +134,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
+      <div>
+        <GenomeViewer
+          genomeName={"hg38"}
+          viewRegion={"chr7:27053397-27373765"}
+          type={"bigwig"}
+          url={"https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig"}
+        />
+      </div>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && size.width > 0 ? (

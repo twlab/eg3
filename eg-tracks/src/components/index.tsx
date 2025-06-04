@@ -4,13 +4,22 @@ import { TrackState } from "./GenomeView/TrackComponents/CommonTrackStateChangeF
 import { TrackModel } from "../models/TrackModel";
 import { GenomeConfig } from "../models/genomes/GenomeConfig";
 import { getGenomeConfig } from "../models/genomes/allGenomes";
-import { DisplayedRegionModel, trackOptionMap } from "../models";
+import {
+  ChromosomeInterval,
+  DisplayedRegionModel,
+  formatDataByType,
+  getDisplayModeFunction,
+  OpenInterval,
+  trackOptionMap,
+  twoDataTypeTracks,
+} from "../models";
 import { GenomeCoordinate } from "@/types";
 import NavigationContext from "@/models/NavigationContext";
-import { fetchGenomicData } from "@/getRemoteData/fetchDataFunction";
+import { fetchGenomicData } from "../getRemoteData/fetchDataFunction";
 interface GenomeVisualizationProps {
   genomeName: string;
   type: string;
+  url?: string;
   options?: { [key: string]: any }; // Adjust as needed
   viewRegion?: any;
   windowWidth?: number;
@@ -19,14 +28,14 @@ interface GenomeVisualizationProps {
 const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
   function GenomeViewer({
     genomeName,
-    options,
     type,
-    viewRegion,
+    url = "",
+    options,
+
+    viewRegion = "chr7:27053397-27373765",
     windowWidth = 1200,
   }) {
-    const [drawData, setDrawData] = useState<{ [key: string]: any } | null>(
-      null
-    );
+    const [drawData, setDrawData] = useState<any>(null);
     useEffect(() => {
       //         genomeName,
       // genesArr,
@@ -77,46 +86,117 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       //           })
       //         : "",
       //     };
+      async function handle() {
+        if (!drawData) {
+          const genomeConfig = getGenomeConfig(genomeName);
+          if (genomeConfig && type) {
+            const newDrawData: { [key: string]: any } = {};
+            newDrawData["genomeConfig"] = genomeConfig;
+            newDrawData["options"] = options
+              ? {
+                  ...trackOptionMap[type].defaultOptions,
+                  ...options,
+                  forceSvg: true,
+                }
+              : { ...trackOptionMap[type].defaultOptions, forceSvg: true };
+            const userViewRegion = genomeConfig.navContext.parse(
+              viewRegion as GenomeCoordinate
+            );
 
-      if (!drawData) {
-        const genomeConfig = getGenomeConfig(genomeName);
-        if (genomeConfig && type) {
-          const newDrawData: { [key: string]: any } = {};
-          newDrawData["genomeConfig"] = genomeConfig;
-          newDrawData["options"] = options
-            ? { ...trackOptionMap[type], ...options }
-            : { ...trackOptionMap[type] };
-          const userViewRegion = genomeConfig.navContext.parse(
-            viewRegion as GenomeCoordinate
-          );
+            const navContext = genomeConfig.navContext as NavigationContext;
 
-          const navContext = genomeConfig.navContext as NavigationContext;
+            newDrawData["userViewRegion"] = new DisplayedRegionModel(
+              navContext,
+              ...userViewRegion
+            );
+            newDrawData["id"] = crypto.randomUUID();
+            newDrawData["primaryGenName"] = genomeName;
+            newDrawData["basesByPixel"] =
+              windowWidth / (userViewRegion.end - userViewRegion.start);
+            newDrawData["genomicLoci"] = [ChromosomeInterval.parse(viewRegion)];
+            newDrawData["trackModelArr"] = [
+              new TrackModel({
+                type,
+                name: "example bigwig",
+                url,
+                options: {
+                  color: "blue",
+                },
+              }),
+            ];
 
-          newDrawData["userViewRegion"] = new DisplayedRegionModel(
-            navContext,
-            ...userViewRegion
-          );
-          newDrawData["basesByPixel"] =
-            windowWidth / (userViewRegion.end - userViewRegion.start);
+            newDrawData["viewWindow"] = new OpenInterval(0, windowWidth);
+            newDrawData["visData"] = {
+              visWidth: windowWidth,
+              visRegion: new DisplayedRegionModel(
+                genomeConfig.navContext,
+                userViewRegion.start,
+                userViewRegion.end
+              ),
+              viewWindow: new OpenInterval(0, windowWidth),
+              viewWindowRegion: new DisplayedRegionModel(
+                genomeConfig.navContext,
+                userViewRegion.start,
+                userViewRegion.end
+              ),
+            };
+
+            const fetchDrawData = await fetchGenomicData([newDrawData]);
+            console.log(fetchDrawData);
+            newDrawData["genesArr"] = formatDataByType(
+              fetchDrawData[0].fetchResults[0].result,
+              type
+            );
+            const newTrackState: { [key: string]: any } = {};
+            newTrackState["viewWindow"] = new OpenInterval(0, windowWidth);
+            newTrackState["startWindow"] = 0;
+            newTrackState["visRegion"] = newDrawData.visData.visRegion;
+            newTrackState["visWidth"] = windowWidth;
+            newDrawData["trackState"] = newTrackState;
+
+            const genomeElement = getDisplayModeFunction({
+              genomeName: genomeName,
+              genesArr: newDrawData.genesArr,
+              trackState: newTrackState,
+              windowWidth: windowWidth,
+              configOptions: newDrawData.options,
+              basesByPixel: newDrawData.basesByPixel,
+              trackModel: newDrawData["trackModelArr"][0],
+              getGenePadding: trackOptionMap[`${type}`].getGenePadding,
+              ROW_HEIGHT: trackOptionMap[`${type}`].ROW_HEIGHT,
+              genomeConfig: genomeConfig,
+            });
+            setDrawData(genomeElement);
+          }
         }
       }
+      handle();
     }, []);
 
-    useEffect(() => {
-      if (drawData) {
-      }
-    }, [genomeName]);
+    // useEffect(() => {
+    //   if (drawData) {
+    //   }
+    // }, [genomeName]);
 
-    useEffect(() => {
-      if (drawData) {
-      }
-    }, [viewRegion]);
+    // useEffect(() => {
+    //   if (drawData) {
+    //   }
+    // }, [viewRegion]);
     return (
-      <div>
-        {/* Component implementation using props */}
-        <h1>{genomeName}</h1>
-        {/* Render genesArr, trackState, and other properties as needed */}
-      </div>
+      <>
+        {!drawData ? (
+          ""
+        ) : (
+          <div
+            style={{
+              borderBottom: "1px solid #d3d3d3",
+              width: windowWidth + 120,
+            }}
+          >
+            {drawData}
+          </div>
+        )}
+      </>
     );
   }
 );

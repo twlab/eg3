@@ -41,7 +41,7 @@ interface ITrackModel {
   fileObj?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
-  id: string | number;
+  id?: string | number;
   label?: string;
   files?: any;
   details?: any;

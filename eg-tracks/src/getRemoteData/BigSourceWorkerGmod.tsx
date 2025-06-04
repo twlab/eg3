@@ -16,6 +16,7 @@ class BigSourceWorkerGmod {
    * @param {string} url - the URL from which to fetch data
    */
   constructor(url) {
+    console.log(url);
     this.url = url;
     this.bw = new BigWig({
       filehandle: new RemoteFile(url, { fetch }),
@@ -31,7 +32,7 @@ class BigSourceWorkerGmod {
    * @override
    */
   async getData(loci, options) {
-
+    console.log(loci, options);
     const promises = loci.map((locus) => {
       let chrom = options.ensemblStyle
         ? locus.chr.replace("chr", "")
