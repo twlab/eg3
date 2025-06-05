@@ -96,8 +96,12 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
               ? {
                   ...trackOptionMap[type].defaultOptions,
                   ...options,
+                  packageVersion: true,
                 }
-              : { ...trackOptionMap[type].defaultOptions };
+              : {
+                  ...trackOptionMap[type].defaultOptions,
+                  packageVersion: true,
+                };
             const userViewRegion = genomeConfig.navContext.parse(
               viewRegion as GenomeCoordinate
             );
@@ -121,6 +125,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
                 options: {
                   color: "blue",
                 },
+                id: newDrawData["id"],
               }),
             ];
 

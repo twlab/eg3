@@ -302,6 +302,7 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
           let curRespond;
 
           try {
+            console.log(trackModel);
             if (trackModel.type in { geneannotation: "", snp: "" }) {
               curRespond = await Promise.all(
                 curFetchNav[i].map(async (nav) => {

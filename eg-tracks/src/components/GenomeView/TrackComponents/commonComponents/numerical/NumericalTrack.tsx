@@ -239,6 +239,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   let curEleStyle: any = forceSvg
     ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
     : {};
+  let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
   const visualizer = hasReverse ? (
     <React.Fragment>
       {!forceSvg ? (
@@ -248,6 +249,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             flexDirection: "row",
             position: "absolute",
             zIndex: 3,
+            ...hoverStyle,
           }}
         >
           <HoverToolTip
@@ -268,7 +270,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       )}
 
       <div style={{ display: "flex", ...curParentStyle }}>
-        {forceSvg ? legend : ""}
+        {forceSvg || options.packageVersion ? legend : ""}
         <div
           style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
         >
@@ -308,6 +310,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             flexDirection: "row",
             position: "absolute",
             zIndex: 3,
+            ...hoverStyle,
           }}
         >
           <HoverToolTip
@@ -327,7 +330,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         ""
       )}
       <div style={{ display: "flex", ...curParentStyle }}>
-        {forceSvg ? legend : ""}
+        {forceSvg || options.packageVersion ? legend : ""}
         <div
           style={{
             ...curEleStyle,
