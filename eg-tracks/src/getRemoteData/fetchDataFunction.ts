@@ -131,7 +131,6 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
     let leftOverTrackModels = trackDefaults.filter(
       (items) => items && items.type !== "genomealign"
     );
-    console.log(leftOverTrackModels);
     await Promise.all(
       leftOverTrackModels.map(async (item) => {
         const trackType = item?.type || item?.metadata["Track type"];

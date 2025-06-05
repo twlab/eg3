@@ -96,9 +96,8 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
               ? {
                   ...trackOptionMap[type].defaultOptions,
                   ...options,
-                  forceSvg: true,
                 }
-              : { ...trackOptionMap[type].defaultOptions, forceSvg: true };
+              : { ...trackOptionMap[type].defaultOptions };
             const userViewRegion = genomeConfig.navContext.parse(
               viewRegion as GenomeCoordinate
             );
@@ -142,7 +141,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             };
 
             const fetchDrawData = await fetchGenomicData([newDrawData]);
-            console.log(fetchDrawData);
+
             newDrawData["genesArr"] = formatDataByType(
               fetchDrawData[0].fetchResults[0].result,
               type

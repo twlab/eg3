@@ -193,7 +193,6 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
         }
       : {};
 
-    console.log(forceSvg, legend);
     return (
       <React.Fragment>
         {forceSvg ? (
