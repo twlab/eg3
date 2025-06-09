@@ -1,8 +1,5 @@
-import Gene from "../models/TrackModel";
 import { memo, useEffect, useState } from "react";
-import { TrackState } from "./GenomeView/TrackComponents/CommonTrackStateChangeFunctions.tsx/createNewTrackState";
 import { TrackModel } from "../models/TrackModel";
-import { GenomeConfig } from "../models/genomes/GenomeConfig";
 import { getGenomeConfig } from "../models/genomes/allGenomes";
 import {
   ChromosomeInterval,
@@ -11,196 +8,253 @@ import {
   getDisplayModeFunction,
   OpenInterval,
   trackOptionMap,
-  twoDataTypeTracks,
 } from "../models";
 import { GenomeCoordinate } from "@/types";
 import NavigationContext from "@/models/NavigationContext";
 import { fetchGenomicData } from "../getRemoteData/fetchDataFunction";
+import { testCustomGenome } from "./testCustomGenome";
+import { GenomeSerializer } from "../genome-hub";
+
+interface DataSource {
+  url: string;
+  options?: { [key: string]: any };
+}
+
 interface GenomeVisualizationProps {
-  genomeName: string;
-  type: string;
-  url?: string;
-  options?: { [key: string]: any }; // Adjust as needed
+  genomeName?: string;
+  type?: string;
+  dataSources: DataSource[];
   viewRegion?: any;
   windowWidth?: number;
+  customGenome?: string;
 }
+
+const DEFAULT_WINDOW_WIDTH = 1200;
 
 const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
   function GenomeViewer({
     genomeName,
     type,
-    url = "",
-    options,
-
-    viewRegion = "chr7:27053397-27373765",
-    windowWidth = 1200,
+    dataSources,
+    viewRegion,
+    windowWidth,
   }) {
     const [drawData, setDrawData] = useState<any>(null);
-    useEffect(() => {
-      //         genomeName,
-      // genesArr,
-      // trackState,
-      // windowWidth,
-      // configOptions,
-      // basesByPixel,
-      // trackModel,
-      // getGenePadding,
-      // ROW_HEIGHT = 2,
-      // genomeConfig,
 
-      //   type: "bigwig",
-      //   name: "example bigwig",
-      //   url: "",
-      //   options: {
-      //     color: "blue",
-      //   },
-      // }
-
-      // {
-      //       primaryGenName: genomeConfig.genome.getName(),
-      //    not need   initial: initial,
-      //   not need    side: trackSide,
-      //   not need    xDist: curDragX,
-      //  not need     genomicFetchCoord: genomicFetchCoord,
-      //       regionLoci: regionLoci,
-      //       visData: newVisData,
-      //  not nneed regionExpandLoci: regionExpandLoci,
-      //       viewWindow: viewWindow,
-      //    not need  initVisData: initial
-      //         ? initExpandBpLoci.map((item, index) => {
-      //             return {
-      //               visRegion: new DisplayedRegionModel(
-      //                 genomeConfig.navContext,
-      //                 item.start,
-      //                 item.end
-      //               ),
-      //               viewWindowRegion: new DisplayedRegionModel(
-      //                 genomeConfig.navContext,
-      //                 initBpLoci[index].start,
-      //                 initBpLoci[index].end
-      //               ),
-      //               visWidth: trackWindowWidth * 3,
-
-      //               viewWindow: curViewWindow,
-      //             };
-      //           })
-      //         : "",
-      //     };
-      async function handle() {
-        if (!drawData) {
-          const genomeConfig = getGenomeConfig(genomeName);
-          if (genomeConfig && type) {
-            const newDrawData: { [key: string]: any } = {};
-            newDrawData["genomeConfig"] = genomeConfig;
-            newDrawData["options"] = options
-              ? {
-                  ...trackOptionMap[type].defaultOptions,
-                  ...options,
-                  packageVersion: true,
-                }
-              : {
-                  ...trackOptionMap[type].defaultOptions,
-                  packageVersion: true,
-                };
-            const userViewRegion = genomeConfig.navContext.parse(
-              viewRegion as GenomeCoordinate
-            );
-
-            const navContext = genomeConfig.navContext as NavigationContext;
-
-            newDrawData["userViewRegion"] = new DisplayedRegionModel(
-              navContext,
-              ...userViewRegion
-            );
-            newDrawData["id"] = crypto.randomUUID();
-            newDrawData["primaryGenName"] = genomeName;
-            newDrawData["basesByPixel"] =
-              windowWidth / (userViewRegion.end - userViewRegion.start);
-            newDrawData["genomicLoci"] = [ChromosomeInterval.parse(viewRegion)];
-            newDrawData["trackModelArr"] = [
-              new TrackModel({
-                type,
-                name: "example bigwig",
-                url,
-                options: {
-                  color: "blue",
-                },
-                id: newDrawData["id"],
-              }),
-            ];
-
-            newDrawData["viewWindow"] = new OpenInterval(0, windowWidth);
-            newDrawData["visData"] = {
-              visWidth: windowWidth,
-              visRegion: new DisplayedRegionModel(
-                genomeConfig.navContext,
-                userViewRegion.start,
-                userViewRegion.end
-              ),
-              viewWindow: new OpenInterval(0, windowWidth),
-              viewWindowRegion: new DisplayedRegionModel(
-                genomeConfig.navContext,
-                userViewRegion.start,
-                userViewRegion.end
-              ),
-            };
-
-            const fetchDrawData = await fetchGenomicData([newDrawData]);
-
-            newDrawData["genesArr"] = formatDataByType(
-              fetchDrawData[0].fetchResults[0].result,
-              type
-            );
-            const newTrackState: { [key: string]: any } = {};
-            newTrackState["viewWindow"] = new OpenInterval(0, windowWidth);
-            newTrackState["startWindow"] = 0;
-            newTrackState["visRegion"] = newDrawData.visData.visRegion;
-            newTrackState["visWidth"] = windowWidth;
-            newDrawData["trackState"] = newTrackState;
-
-            const genomeElement = getDisplayModeFunction({
-              genomeName: genomeName,
-              genesArr: newDrawData.genesArr,
-              trackState: newTrackState,
-              windowWidth: windowWidth,
-              configOptions: newDrawData.options,
-              basesByPixel: newDrawData.basesByPixel,
-              trackModel: newDrawData["trackModelArr"][0],
-              getGenePadding: trackOptionMap[`${type}`].getGenePadding,
-              ROW_HEIGHT: trackOptionMap[`${type}`].ROW_HEIGHT,
-              genomeConfig: genomeConfig,
-            });
-            setDrawData(genomeElement);
-          }
+    // Helper: Get genome config (custom or named)
+    function getConfig() {
+      if (testCustomGenome) {
+        try {
+          return GenomeSerializer.deserialize(testCustomGenome);
+        } catch {
+          return null;
         }
       }
-      handle();
-    }, []);
+      if (genomeName) {
+        return getGenomeConfig(genomeName);
+      }
+      return null;
+    }
 
-    // useEffect(() => {
-    //   if (drawData) {
-    //   }
-    // }, [genomeName]);
+    // Helper: Get region (from props or genome default)
+    function getRegion(genomeConfig: any) {
+      if (viewRegion) return viewRegion;
+      if (genomeConfig?.defaultRegion) return genomeConfig.defaultRegion;
+      return null;
+    }
 
-    // useEffect(() => {
-    //   if (drawData) {
-    //   }
-    // }, [viewRegion]);
-    return (
-      <>
-        {!drawData ? (
-          ""
-        ) : (
+    // Helper: Get options (spread with default)
+    function getOptions(type: string, userOptions?: any) {
+      const defaults = trackOptionMap[type]?.defaultOptions || {};
+      return userOptions
+        ? { ...defaults, ...userOptions, packageVersion: true }
+        : { ...defaults, packageVersion: true };
+    }
+
+    // Create draw data for fetch
+    function createDrawData(
+      genomeConfig: any,
+      region: any,
+      type: string,
+      dataSources: DataSource[],
+      width: number,
+      genomeViewId: string
+    ) {
+      const navContext = genomeConfig.navContext as NavigationContext;
+      const parsedRegion = genomeConfig.navContext.parse(
+        region as GenomeCoordinate
+      );
+      const userViewRegion = new DisplayedRegionModel(
+        navContext,
+        ...parsedRegion
+      );
+
+      let trackModelArr: TrackModel[];
+      if (customElements && genomeConfig.defaultTracks && !dataSources) {
+        trackModelArr = genomeConfig.defaultTracks
+          .map((track, idx) => {
+            if (track.type && track.type === type) {
+              track.id = `${genomeViewId}-${idx}`;
+              track.options = getOptions(
+                type,
+                track.options ? track.options : {}
+              );
+              return track;
+            }
+            return undefined;
+          })
+          .filter(Boolean); // removes undefined entries
+      } else {
+        // Create TrackModel array for each data source
+        trackModelArr = dataSources.map(
+          (source, idx) =>
+            new TrackModel({
+              type,
+              name: `track ${idx + 1}`,
+              url: source.url,
+              options: getOptions(type, source.options),
+              id: `${genomeViewId}-${idx}`,
+            })
+        );
+      }
+
+      return {
+        genomeConfig,
+        userViewRegion,
+        primaryGenName: genomeConfig.genome?.getName?.() || genomeName,
+        basesByPixel: width / (parsedRegion.end - parsedRegion.start),
+        genomicLoci: [ChromosomeInterval.parse(region)],
+        trackModelArr,
+        viewWindow: new OpenInterval(0, width),
+        visData: {
+          visWidth: width,
+          visRegion: new DisplayedRegionModel(
+            navContext,
+            parsedRegion.start,
+            parsedRegion.end
+          ),
+          viewWindow: new OpenInterval(0, width),
+          viewWindowRegion: new DisplayedRegionModel(
+            navContext,
+            parsedRegion.start,
+            parsedRegion.end
+          ),
+        },
+      };
+    }
+
+    // Fetch data
+    async function fetchDrawData(drawData: any, type: string, width: number) {
+      const fetchResult = await fetchGenomicData([drawData]);
+      const trackData = fetchResult[0].fetchResults.map((item) => {
+        const trackState = {
+          viewWindow: drawData.viewWindow,
+          startWindow: 0,
+          visRegion: drawData.visData.visRegion,
+          visWidth: width,
+        };
+        return {
+          genomeName: drawData.primaryGenName,
+          genesArr: formatDataByType(item.result, type),
+          trackState,
+          windowWidth: width,
+          configOptions: item.trackModel.options,
+          basesByPixel: drawData.basesByPixel,
+          trackModel: item.trackModel,
+          getGenePadding: trackOptionMap[type]?.getGenePadding,
+          ROW_HEIGHT: trackOptionMap[`${type}`].ROW_HEIGHT,
+          genomeConfig: drawData.genomeConfig,
+        };
+      });
+
+      return trackData;
+    }
+
+    // Make genome element
+    function makeGenomeElement(trackDrawData: any) {
+      return trackDrawData.map((item) => {
+        const svgResult = getDisplayModeFunction(item);
+
+        return (
           <div
+            key={item.trackModel.id}
             style={{
               borderBottom: "1px solid #d3d3d3",
-              width: windowWidth + 120,
+              width: (windowWidth || DEFAULT_WINDOW_WIDTH) + 120,
             }}
           >
-            {drawData}
+            {svgResult}
           </div>
-        )}
-      </>
+        );
+      });
+    }
+
+    useEffect(() => {
+      async function handle() {
+        // 1. Get genome config
+        const genomeConfig = getConfig();
+
+        if (!genomeConfig) {
+          setDrawData("Invalid genome");
+          return;
+        }
+
+        // 2. Get region
+        const region = getRegion(genomeConfig);
+        if (!region) {
+          setDrawData("Invalid region");
+          return;
+        }
+
+        // 3. Check type and dataSources
+        if (
+          !dataSources ||
+          !Array.isArray(dataSources) ||
+          dataSources.length === 0
+        ) {
+          setDrawData("Invalid data source");
+          return;
+        }
+        if (!type || !trackOptionMap[type]) {
+          setDrawData("Invalid type");
+          return;
+        }
+
+        if (dataSources.some((source) => !source.url)) {
+          setDrawData("All dataSources must have a url");
+          return;
+        }
+
+        // 4. Get window width
+        const width = windowWidth || DEFAULT_WINDOW_WIDTH;
+
+        // 5. Create draw data
+        const drawDataObj = createDrawData(
+          genomeConfig,
+          region,
+          type,
+          dataSources,
+          width,
+          crypto.randomUUID()
+        );
+
+        // 6. Fetch and format data
+        const trackDrawData = await fetchDrawData(drawDataObj, type, width);
+
+        // 7. Make element
+        const element = makeGenomeElement(trackDrawData);
+
+        setDrawData(element);
+      }
+      handle();
+    }, [genomeName, type, dataSources, viewRegion, windowWidth]);
+
+    return !drawData ? (
+      ""
+    ) : typeof drawData === "string" ? (
+      <div style={{ color: "red" }}>{drawData}</div>
+    ) : (
+      drawData
     );
   }
 );

@@ -139,7 +139,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           genomeName={"hg38"}
           viewRegion={"chr7:27053397-27373765"}
           type={"bigwig"}
-          url={"https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig"}
+          dataSources={[
+            { url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig" },
+          ]}
         />
       </div>
 
@@ -148,9 +150,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           genomeName={"hg38"}
           viewRegion={"chr7:27053397-27373765"}
           type={"bigwig"}
-          url={
-            "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig"
-          }
+          dataSources={[
+            {
+              url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+            },
+          ]}
         />
       </div>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
