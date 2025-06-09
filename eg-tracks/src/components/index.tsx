@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { TrackModel } from "../models/TrackModel";
 import { getGenomeConfig } from "../models/genomes/allGenomes";
 import {
@@ -39,9 +39,10 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
     viewRegion,
     windowWidth,
   }) {
-    const [drawData, setDrawData] = useState<any>(null);
+    const latestGenomeNameRef = useRef(genomeName);
+    const [viewerElement, setViewerElement] = useState<any>(null);
 
-    // Helper: Get genome config (custom or named)
+    // MARK: Config/Region/Options
     function getConfig() {
       if (testCustomGenome) {
         try {
@@ -56,14 +57,12 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       return null;
     }
 
-    // Helper: Get region (from props or genome default)
     function getRegion(genomeConfig: any) {
       if (viewRegion) return viewRegion;
       if (genomeConfig?.defaultRegion) return genomeConfig.defaultRegion;
       return null;
     }
 
-    // Helper: Get options (spread with default)
     function getOptions(type: string, userOptions?: any) {
       const defaults = trackOptionMap[type]?.defaultOptions || {};
       return userOptions
@@ -71,8 +70,8 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         : { ...defaults, packageVersion: true };
     }
 
-    // Create draw data for fetch
-    function createDrawData(
+    // MARK: ViewData / TrackModel
+    function createViewRegionData(
       genomeConfig: any,
       region: any,
       type: string,
@@ -143,36 +142,40 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       };
     }
 
-    // Fetch data
-    async function fetchDrawData(drawData: any, type: string, width: number) {
-      const fetchResult = await fetchGenomicData([drawData]);
+    // MARK: Fetch/format
+    async function fetchDrawData(
+      viewRegionData: any,
+      type: string,
+      width: number
+    ) {
+      const fetchResult = await fetchGenomicData([viewRegionData]);
       const trackData = fetchResult[0].fetchResults.map((item) => {
         const trackState = {
-          viewWindow: drawData.viewWindow,
+          viewWindow: viewRegionData.viewWindow,
           startWindow: 0,
-          visRegion: drawData.visData.visRegion,
+          visRegion: viewRegionData.visData.visRegion,
           visWidth: width,
         };
         return {
-          genomeName: drawData.primaryGenName,
+          genomeName: viewRegionData.primaryGenName,
           genesArr: formatDataByType(item.result, type),
           trackState,
           windowWidth: width,
           configOptions: item.trackModel.options,
-          basesByPixel: drawData.basesByPixel,
+          basesByPixel: viewRegionData.basesByPixel,
           trackModel: item.trackModel,
           getGenePadding: trackOptionMap[type]?.getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${type}`].ROW_HEIGHT,
-          genomeConfig: drawData.genomeConfig,
+          genomeConfig: viewRegionData.genomeConfig,
         };
       });
 
       return trackData;
     }
 
-    // Make genome element
-    function makeGenomeElement(trackDrawData: any) {
-      return trackDrawData.map((item) => {
+    // MARK: Create element
+    function createGenomeViewElement(genomeDrawData: any) {
+      return genomeDrawData.map((item) => {
         const svgResult = getDisplayModeFunction(item);
 
         return (
@@ -188,21 +191,21 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         );
       });
     }
-
+    // MARK: UseEffects
     useEffect(() => {
       async function handle() {
         // 1. Get genome config
         const genomeConfig = getConfig();
 
         if (!genomeConfig) {
-          setDrawData("Invalid genome");
+          setViewerElement("Invalid genome");
           return;
         }
 
         // 2. Get region
         const region = getRegion(genomeConfig);
         if (!region) {
-          setDrawData("Invalid region");
+          setViewerElement("Invalid region");
           return;
         }
 
@@ -212,16 +215,16 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
           !Array.isArray(dataSources) ||
           dataSources.length === 0
         ) {
-          setDrawData("Invalid data source");
+          setViewerElement("Invalid data source");
           return;
         }
         if (!type || !trackOptionMap[type]) {
-          setDrawData("Invalid type");
+          setViewerElement("Invalid type");
           return;
         }
 
         if (dataSources.some((source) => !source.url)) {
-          setDrawData("All dataSources must have a url");
+          setViewerElement("All dataSources must have a url");
           return;
         }
 
@@ -229,7 +232,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         const width = windowWidth || DEFAULT_WINDOW_WIDTH;
 
         // 5. Create draw data
-        const drawDataObj = createDrawData(
+        const viewRegionData = createViewRegionData(
           genomeConfig,
           region,
           type,
@@ -239,22 +242,44 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         );
 
         // 6. Fetch and format data
-        const trackDrawData = await fetchDrawData(drawDataObj, type, width);
+        const genomeDrawData = await fetchDrawData(viewRegionData, type, width);
 
         // 7. Make element
-        const element = makeGenomeElement(trackDrawData);
+        const element = createGenomeViewElement(genomeDrawData);
 
-        setDrawData(element);
+        setViewerElement({ element, genomeDrawData });
       }
       handle();
-    }, [genomeName, type, dataSources, viewRegion, windowWidth]);
+    }, [genomeName, customElements]);
+    // MARK: Non-initial useEffects
+    useEffect(() => {
+      if (viewerElement) {
+        async function handle() {}
+        handle();
+      }
+    }, [viewRegion, type]);
 
-    return !drawData ? (
+    useEffect(() => {
+      if (viewerElement) {
+        async function handle() {}
+        handle();
+      }
+    }, [dataSources]);
+
+    useEffect(() => {
+      if (viewerElement) {
+        async function handle() {}
+        handle();
+      }
+    }, [windowWidth]);
+
+    // MARK: Render
+    return !viewerElement ? (
       ""
-    ) : typeof drawData === "string" ? (
-      <div style={{ color: "red" }}>{drawData}</div>
+    ) : typeof viewerElement === "string" ? (
+      <div style={{ color: "red" }}>{viewerElement}</div>
     ) : (
-      drawData
+      viewerElement.element
     );
   }
 );
