@@ -134,7 +134,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
-      <div>
+      {/* <div>
         <GenomeViewer
           genomeName={"hg38"}
           viewRegion={"chr7:27053397-27373765"}
@@ -156,7 +156,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             },
           ]}
         />
-      </div>
+      </div> */}
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && size.width > 0 ? (
