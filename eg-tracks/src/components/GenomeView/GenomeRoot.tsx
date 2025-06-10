@@ -8,7 +8,7 @@ import { ITrackContainerState } from "../../types";
 import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-import GenomeViewer from "..";
+// import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
