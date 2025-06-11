@@ -23,6 +23,7 @@ import MetadataIndicator from "./commonComponents/MetadataIndicator";
 import VcfDetail from "./VcfComponents/VcfDetail";
 import Vcf from "./VcfComponents/Vcf";
 import { numericalTracks } from "./GroupedTrackManager";
+import Loading from "./commonComponents/Loading";
 const AUTO_HEATMAP_THRESHOLD = 21;
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
@@ -1599,6 +1600,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         {legend}
       </div>
 
+      <Loading buttonLabel="Options">
+        <div>
+          <p>This is the popover content.</p>
+          <button>Action</button>
+        </div>
+      </Loading>
       <div
         ref={posRef}
         style={{
@@ -1669,6 +1676,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : ""
         }
       </div>
+
       <div
         style={{
           position: "absolute",
