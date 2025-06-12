@@ -1605,7 +1605,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
         Button 60
       </div> */}
-      <Loading buttonLabel="Options">
+      <Loading
+        buttonLabel="Options"
+        height={
+          configOptions.current.displayMode === "full"
+            ? !fetchError.current
+              ? svgHeight.current
+              : 40
+            : !fetchError.current
+            ? configOptions.current.height
+            : 40
+        }
+        xOffset={windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200}
+      >
         <div>
           <p>This is the popover content.</p>
           <button>Action</button>

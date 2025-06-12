@@ -5,12 +5,16 @@ interface PopoverProps {
   buttonLabel: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  height: number;
+  xOffset: number;
 }
 
 const Loading: React.FC<PopoverProps> = ({
   buttonLabel,
   children,
   className,
+  height,
+  xOffset,
 }) => {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -32,19 +36,23 @@ const Loading: React.FC<PopoverProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [open]);
-
+  console.log("height", height);
   return (
     <div
       ref={popoverRef}
       className={`popover-root ${className || ""}`}
       //need to margin left the
-      style={{ position: "absolute", marginLeft: "121px" }}
+      style={{
+        position: "absolute",
+        marginTop: height - 16,
+        marginLeft: xOffset,
+      }}
     >
       <button
         type="button"
         className={`popover-btn${open ? " open" : ""}`}
         onClick={() => setOpen((prev) => !prev)}
-        style={{ position: "relative", zIndex: 9994 }}
+        style={{ zIndex: 9994 }}
       >
         <div style={{ fontStyle: "italic" }}>Loading </div>
         <div className="loader"></div>

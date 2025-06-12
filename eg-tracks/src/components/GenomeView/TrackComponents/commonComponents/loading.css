@@ -1,7 +1,6 @@
 .popover-root {
   display: inline-block;
   position: relative;
-  height: 0px;
 }
 
 /* CSS */
@@ -40,12 +39,12 @@
   gap: 0.8em;
   align-items: center;
   appearance: none;
-  background-color: #fff;
+  background-color: rgba(255, 255, 255, 0.7);
   /* border: 1px solid #dbdbdb; */
   border-radius: 0 0 0.2em 0; /* top-left, top-right, bottom-right, bottom-left */
 
   border-right: 1px solid #dbdbdb;
-  border-bottom: 1px solid #dbdbdb;
+  border-top: 1px solid #dbdbdb;
   box-shadow: none;
   box-sizing: border-box;
   color: #363636;
@@ -55,7 +54,7 @@
     Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica,
     Arial, sans-serif;
   font-size: 0.8rem;
-  height: 1.3em;
+  height: 16px;
   justify-content: center;
   line-height: 1.5;
   padding: calc(0.5em - 1px) 0.5em;
