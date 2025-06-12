@@ -2786,6 +2786,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const start = tmpStart - windowWidth + startViewWindow.start;
         const end = start + windowWidth;
         curViewWindow = new OpenInterval(start, end);
+      } else if (
+        selectedRegionSet &&
+        bpRegionSize.current === genomeConfig.navContext._totalBases
+      ) {
+        curViewWindow = new OpenInterval(0, windowWidth);
       } else {
         curViewWindow = globalTrackState.current.viewWindow;
       }
@@ -2962,6 +2967,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         metaSets={metaSets}
                         onColorBoxClick={onColorBoxClick}
                         userViewRegion={userViewRegion}
+                        selectedRegionSet={selectedRegionSet}
                       />
                     </div>
                   </SortableList.Item>

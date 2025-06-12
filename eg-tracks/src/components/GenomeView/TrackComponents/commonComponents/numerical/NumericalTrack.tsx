@@ -110,6 +110,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         //   props.viewWindow.start + props.width / 3,
         //   props.viewWindow.end - props.width / 3
         // );
+
         max = _.max(visibleValues) || 1;
         xValues2 = xToValue2.filter((x) => x);
         min =
@@ -135,7 +136,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min < 0
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
           : height;
-
+      console.log(min, max, zeroLine);
       if (
         xValues2.length &&
         (yScale === ScaleChoices.AUTO ||
@@ -365,6 +366,7 @@ const ValuePlot = (props) => {
       const { isDrawingBars, scales, height, color, colorOut } = props;
       const y =
         value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
+
       let drawY = value > 0 ? y : 0;
       let drawHeight = value > 0 ? height - y : y;
 

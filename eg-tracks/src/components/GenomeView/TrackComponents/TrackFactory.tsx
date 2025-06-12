@@ -1600,12 +1600,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         {legend}
       </div>
 
-      <Loading buttonLabel="Options">
+      {/* <Loading buttonLabel="Options">
         <div>
           <p>This is the popover content.</p>
           <button>Action</button>
         </div>
-      </Loading>
+      </Loading> */}
       <div
         ref={posRef}
         style={{
