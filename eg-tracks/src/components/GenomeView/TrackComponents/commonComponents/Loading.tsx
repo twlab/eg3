@@ -34,14 +34,20 @@ const Loading: React.FC<PopoverProps> = ({
   }, [open]);
 
   return (
-    <div ref={popoverRef} className={`popover-root ${className || ""}`}>
+    <div
+      ref={popoverRef}
+      className={`popover-root ${className || ""}`}
+      //need to margin left the
+      style={{ position: "absolute", marginLeft: "121px" }}
+    >
       <button
         type="button"
         className={`popover-btn${open ? " open" : ""}`}
         onClick={() => setOpen((prev) => !prev)}
         style={{ position: "relative", zIndex: 9994 }}
       >
-        {buttonLabel}
+        <div style={{ fontStyle: "italic" }}>Loading </div>
+        <div className="loader"></div>
         <span className={`popover-arrow${open ? " open" : ""}`} />
       </button>
       <div

@@ -4,43 +4,93 @@
   height: 0px;
 }
 
+/* CSS */
+
+.popover-btn:active {
+  border-color: #4a4a4a;
+  outline: 0;
+}
+/* HTML: <div class="loader"></div> */
+.loader {
+  width: 10px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  animation: l5 1s infinite linear alternate;
+  margin-top: 0.4em;
+}
+@keyframes l5 {
+  0% {
+    box-shadow: 20px 0 #000, -20px 0 #0002;
+    background: #000;
+  }
+  33% {
+    box-shadow: 20px 0 #000, -20px 0 #0002;
+    background: #0002;
+  }
+  66% {
+    box-shadow: 20px 0 #0002, -20px 0 #000;
+    background: #0002;
+  }
+  100% {
+    box-shadow: 20px 0 #0002, -20px 0 #000;
+    background: #000;
+  }
+}
 .popover-btn {
-  display: flex;
+  gap: 0.8em;
   align-items: center;
-  /* gap: 8px; */
-  background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  /* height: 30px; */
-  padding: 0.2em 0.4em;
-  font-size: 1rem;
-  font-weight: 500;
+  appearance: none;
+  background-color: #fff;
+  /* border: 1px solid #dbdbdb; */
+  border-radius: 0 0 0.2em 0; /* top-left, top-right, bottom-right, bottom-left */
+
+  border-right: 1px solid #dbdbdb;
+  border-bottom: 1px solid #dbdbdb;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: #363636;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(60, 60, 120, 0.08);
-  transition: background 0.2s, box-shadow 0.2s;
-  outline: none;
+  display: inline-flex;
+  font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica,
+    Arial, sans-serif;
+  font-size: 0.8rem;
+  height: 1.3em;
+  justify-content: center;
+  line-height: 1.5;
+  padding: calc(0.5em - 1px) 0.5em;
+  position: relative;
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: top;
+  white-space: nowrap;
 }
 
-.popover-btn:hover,
+.popover-btn:hover {
+  border-color: #b5b5b5;
+}
 .popover-btn:focus {
-  background: linear-gradient(90deg, #818cf8 0%, #38bdf8 100%);
-  box-shadow: 0 4px 16px rgba(60, 60, 120, 0.12);
+  border-color: #485fc7;
+  outline: 0;
 }
 
+.popover-btn:focus:not(:active) {
+  box-shadow: rgba(72, 95, 199, 0.25) 0 0 0 0.125em;
+}
 .popover-arrow {
+  margin-left: 0.3em;
+  border: solid black;
+  border-width: 0 1.5px 1.5px 0;
   display: inline-block;
-  width: 1em;
-  height: 1em;
-  border-right: 2.5px solid #fff;
-  border-bottom: 2.5px solid #fff;
-  margin-left: 4px;
-  transform: rotate(45deg);
+  padding: 2px;
+  transform: rotate(-45deg);
   transition: transform 0.25s ease, border-color 0.2s;
 }
 
 .popover-arrow.open {
-  transform: rotate(135deg);
+  transform: rotate(45deg);
 }
 
 .popover-panel {

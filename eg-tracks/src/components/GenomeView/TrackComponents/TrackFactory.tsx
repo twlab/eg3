@@ -19,11 +19,13 @@ const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
+import { ClipLoader } from "react-spinners";
 
 import VcfDetail from "./VcfComponents/VcfDetail";
 import Vcf from "./VcfComponents/Vcf";
 import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
+import "./commonComponents/loading.css";
 const AUTO_HEATMAP_THRESHOLD = 21;
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
@@ -1600,12 +1602,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         {legend}
       </div>
 
-      {/* <Loading buttonLabel="Options">
+      {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
+        Button 60
+      </div> */}
+      <Loading buttonLabel="Options">
         <div>
           <p>This is the popover content.</p>
           <button>Action</button>
         </div>
-      </Loading> */}
+      </Loading>
       <div
         ref={posRef}
         style={{
@@ -1629,9 +1634,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             left: updateSide.current === "right" ? `${xPos.current}px` : "",
             backgroundColor: configOptions.current.backgroundColor,
             WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-            WebkitPerspective: `${windowWidth + 120}px`,
+            WebkitPerspective: `${windowWidth * 3 + 120}px`,
             backfaceVisibility: "hidden",
-            perspective: `${windowWidth + 120}px`,
+            perspective: `${windowWidth * 3 + 120}px`,
           }}
         >
           {configOptions.current.displayMode === "full"

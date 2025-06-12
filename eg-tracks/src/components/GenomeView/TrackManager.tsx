@@ -325,6 +325,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       return;
     }
     isWorkerBusy.current = true;
+    console.log([...messageQueue.current]);
     const message = messageQueue.current.pop();
     infiniteScrollWorker.current!.postMessage(message);
   };
@@ -1266,6 +1267,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const idxArr = [regionIdx - 1, regionIdx, regionIdx + 1];
     const curIdx = regionIdx;
     let needToFetchGenAlign = false;
+
     for (const [key, curTrackCache] of Object.entries(
       trackFetchedDataCache.current
     )) {
@@ -1338,7 +1340,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 ? globalTrackState.current.trackStates[curDataIdx].trackState
                 : "";
             if (curTrackModel) {
-              trackFetchedDataCache.current[key]["dataCache"] = null;
+              trackFetchedDataCache.current[key][curDataIdx]["dataCache"] =
+                null;
               trackToFetch.push(curTrackModel);
             }
           }
@@ -1423,13 +1426,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       ) {
         configOptions = globalTrackConfig.current[fetchRes.id];
       } else {
-        const curTrackModel = tracks.find(
+        let foundTrack = tracks.find(
           (trackModel: any) => trackModel.id === fetchRes.id
         );
+        const curTrackModel = foundTrack ? foundTrack : fetchRes.trackModel;
 
         if (curTrackModel && trackOptionMap[`${fetchRes.trackType}`]) {
           configOptions = {
-            ...trackOptionMap[`${fetchRes.trackType}`],
+            ...trackOptionMap[`${fetchRes.trackType}`].defaultOptions,
             ...curTrackModel.options,
           };
         }
@@ -1449,6 +1453,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
+        console.log(fetchRes, configOptions, "hic fetchRes");
         result = await fetchInstances.current[
           `${fetchRes.trackModel.url}`
         ].getData(
@@ -2755,7 +2760,50 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [viewWindowConfigData.current]);
   useEffect(() => {
-    if (newDrawData.curDataIdx === dataIdx) {
+    const cacheKeysWithData: { [key: string]: any } = {};
+    const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
+
+    if (newDrawData) {
+      for (let trackToDrawKey in newDrawData.trackToDrawId) {
+        const cache = trackFetchedDataCache.current[trackToDrawKey];
+        if (
+          cache &&
+          ((draw.trackToDrawId && !draw.trackToDrawId[trackToDrawKey]) ||
+            Object.keys(draw).length === 0)
+        ) {
+          if (useFineModeNav.current || cache.useExpandedLoci) {
+            if (cache[dataIdx]) {
+              cacheKeysWithData[trackToDrawKey] = "";
+            }
+          } else {
+            let hasAllRegionData = true;
+            for (let idx of idxArr) {
+              if (!cache[idx]) {
+                hasAllRegionData = false;
+                break;
+              }
+            }
+            if (hasAllRegionData) {
+              cacheKeysWithData[trackToDrawKey] = "";
+            }
+          }
+        }
+      }
+    }
+    const combinedTrackToDrawId =
+      Object.keys(draw).length === 0
+        ? cacheKeysWithData
+        : {
+            ...draw.trackToDrawId,
+            ...cacheKeysWithData,
+          };
+    newDrawData.trackToDrawId = combinedTrackToDrawId;
+    console.log(
+      trackFetchedDataCache.current,
+      newDrawData,
+      "newDrawData in trackmanager"
+    );
+    if (Object.keys(cacheKeysWithData).length > 0) {
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
       if (
@@ -2910,6 +2958,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               style={{
                 display: "flex",
                 flexDirection: "row",
+
                 width: `${windowWidth + 120}px`,
               }}
             >

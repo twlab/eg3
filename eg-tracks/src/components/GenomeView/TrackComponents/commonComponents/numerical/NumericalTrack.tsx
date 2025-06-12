@@ -80,7 +80,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     : aggregator.xToValueMaker(data, viewRegion, width, options);
 
   let [xToValue, xToValue2, hasReverse] = xvalues;
-
+  console.log(viewWindow);
   const computeScales = useMemo(() => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
       const { yScale, yMin, yMax } = options;
@@ -136,7 +136,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         min < 0
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
           : height;
-      console.log(min, max, zeroLine);
+
       if (
         xValues2.length &&
         (yScale === ScaleChoices.AUTO ||

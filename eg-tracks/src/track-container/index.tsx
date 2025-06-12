@@ -321,7 +321,6 @@ export function TrackContainerRepresentable({
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
-        Toolbar={Toolbar}
       />
       {Toolbar ? (
         <div

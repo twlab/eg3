@@ -8,6 +8,50 @@
   --light-container-color: white;
 }
 
+/* HTML: <div class="loader"></div> */
+.loader {
+  width: 4px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  animation: l5 1s infinite linear alternate;
+}
+@keyframes l5 {
+  0% {
+    box-shadow: 9px 0 #000, -9px 0 #0002;
+    background: #000;
+  }
+  33% {
+    box-shadow: 9px 0 #000, -9px 0 #0002;
+    background: #0002;
+  }
+  66% {
+    box-shadow: 9px 0 #0002, -9px 0 #000;
+    background: #0002;
+  }
+  100% {
+    box-shadow: 9px 0 #0002, -9px 0 #000;
+    background: #000;
+  }
+}
+/* .loader {
+  width: 60px;
+  aspect-ratio: 4;
+  --_g: no-repeat radial-gradient(circle closest-side, #000 90%, #0000);
+  background: var(--_g) 0% 50%, var(--_g) 50% 50%, var(--_g) 100% 50%;
+  background-size: calc(100% / 3) 100%;
+  animation: l7 1s infinite linear;
+}
+@keyframes l7 {
+  33% {
+    background-size: calc(100% / 3) 0%, calc(100% / 3) 100%, calc(100% / 3) 100%;
+  }
+  50% {
+    background-size: calc(100% / 3) 100%, calc(100% / 3) 0%, calc(100% / 3) 100%;
+  }
+  66% {
+    background-size: calc(100% / 3) 100%, calc(100% / 3) 100%, calc(100% / 3) 0%;
+  }
+} */
 @keyframes borderPulse {
   0% {
     border-bottom: 1px solid #f89581;

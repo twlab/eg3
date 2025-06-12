@@ -10,7 +10,7 @@ import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
 // import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
-
+import "./track.css";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
