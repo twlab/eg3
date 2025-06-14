@@ -36,7 +36,7 @@ const Loading: React.FC<PopoverProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [open]);
-  console.log("height", height);
+
   return (
     <div
       ref={popoverRef}
@@ -54,7 +54,7 @@ const Loading: React.FC<PopoverProps> = ({
         onClick={() => setOpen((prev) => !prev)}
         style={{ zIndex: 9994 }}
       >
-        <div style={{ fontStyle: "italic" }}>Loading </div>
+        <div style={{ fontStyle: "italic" }}>{buttonLabel} </div>
         <div className="loader"></div>
         <span className={`popover-arrow${open ? " open" : ""}`} />
       </button>

@@ -255,7 +255,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // New data are fetched only if the user drags to the either ends of the track
   const [newDrawData, setNewDrawData] = useState<{ [key: string]: any }>({});
   const [initialStart, setInitialStart] = useState("workerNotReady");
-
+  const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
   const [show3dGene, setShow3dGene] = useState();
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
 
@@ -309,9 +309,42 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onNewRegionSelect(startbase, endbase, highlightSearch);
     }, 400)
   );
+  function getMessageData() {
+    const lociMap: {
+      [trackId: string]: Array<{
+        missingIdx: any;
+        genomicLoci: any;
+      }>;
+    } = {};
 
+    messageQueue.current.forEach((messageArr: any) => {
+      if (messageArr && Array.isArray(messageArr)) {
+        // If missingIdx and genomicLoci are properties of the array itself
+
+        messageArr.forEach((message: any) => {
+          if (message.trackModelArr && Array.isArray(message.trackModelArr)) {
+            message.trackModelArr.forEach((trackModel: any) => {
+              if (trackModel && trackModel.id) {
+                if (!lociMap[trackModel.id]) {
+                  lociMap[trackModel.id] = [];
+                }
+                lociMap[trackModel.id].push({
+                  missingIdx: message.missingIdx,
+                  genomicLoci: message.genomicLoci,
+                });
+              }
+            });
+            return;
+          }
+        });
+      }
+    });
+
+    return lociMap;
+  }
   const enqueueMessage = (message: Array<any>) => {
     messageQueue.current.push(message);
+
     processQueue();
   };
   const enqueueGenomeAlignMessage = (message: { [key: string]: any }) => {
@@ -322,10 +355,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const processQueue = () => {
     if (isWorkerBusy.current || messageQueue.current.length === 0) {
+      setMessageData({});
       return;
     }
     isWorkerBusy.current = true;
-    console.log([...messageQueue.current]);
+
+    setMessageData(getMessageData());
     const message = messageQueue.current.pop();
     infiniteScrollWorker.current!.postMessage(message);
   };
@@ -1453,7 +1488,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
-        console.log(fetchRes, configOptions, "hic fetchRes");
         result = await fetchInstances.current[
           `${fetchRes.trackModel.url}`
         ].getData(
@@ -2798,11 +2832,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             ...cacheKeysWithData,
           };
     newDrawData.trackToDrawId = combinedTrackToDrawId;
-    console.log(
-      trackFetchedDataCache.current,
-      newDrawData,
-      "newDrawData in trackmanager"
-    );
+
     if (Object.keys(cacheKeysWithData).length > 0) {
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
@@ -3016,7 +3046,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         metaSets={metaSets}
                         onColorBoxClick={onColorBoxClick}
                         userViewRegion={userViewRegion}
-                        selectedRegionSet={selectedRegionSet}
+                        messageData={messageData}
                       />
                     </div>
                   </SortableList.Item>

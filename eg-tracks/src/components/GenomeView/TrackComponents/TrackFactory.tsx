@@ -1,4 +1,4 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
@@ -19,14 +19,12 @@ const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
-import { ClipLoader } from "react-spinners";
-
 import VcfDetail from "./VcfComponents/VcfDetail";
 import Vcf from "./VcfComponents/Vcf";
 import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
-const AUTO_HEATMAP_THRESHOLD = 21;
+
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -54,6 +52,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   viewWindowConfigData,
   metaSets,
   onColorBoxClick,
+  messageData,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -70,8 +69,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   const xPos = useRef(0);
 
-  const [svgComponents, setSvgComponents] = useState<any>(null);
-  const [canvasComponents, setCanvasComponents] = useState<any>(null);
+  const [viewComponent, setViewComponent] = useState<{
+    [key: string]: any;
+  } | null>(null);
+
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [legend, setLegend] = useState<any>();
@@ -145,17 +146,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       signalTrackLoadComplete(id);
       updateSide.current = side;
 
-      if (configOptions.current.displayMode === "full") {
-        setSvgComponents(res);
-        // if (!(cacheDataIdx in displayCache.current["full"])) {
-        //   displayCache.current["full"][cacheDataIdx] = res;
-        // }
-      } else {
-        setCanvasComponents(res);
-        // if (!(cacheDataIdx in displayCache.current["density"])) {
-        //   displayCache.current["density"][cacheDataIdx] = res;
-        // }
-      }
+      setViewComponent({ component: res, dataIdx: cacheDataIdx });
 
       xPos.current = curXPos;
     }
@@ -211,10 +202,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    if (svgComponents || canvasComponents) {
+    if (viewComponent) {
       setLegend(updatedLegend.current);
     }
-  }, [svgComponents, canvasComponents]);
+  }, [viewComponent]);
 
   // MARK:[newDrawDat
   useEffect(() => {
@@ -350,7 +341,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK: [applyConfig]
   useEffect(() => {
-    if (svgComponents !== null || canvasComponents !== null) {
+    if (viewComponent !== null) {
       if (id in applyTrackConfigChange) {
         configOptions.current = {
           ...configOptions.current,
@@ -1583,6 +1574,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       );
     },
   };
+  // MARK: RENDER
 
   return (
     <div
@@ -1605,24 +1597,43 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
         Button 60
       </div> */}
-      <Loading
-        buttonLabel="Options"
-        height={
-          configOptions.current.displayMode === "full"
-            ? !fetchError.current
-              ? svgHeight.current
+      {trackModel.id in messageData ||
+      !viewComponent ||
+      (viewComponent && dataIdx !== viewComponent.dataIdx) ? (
+        <Loading
+          buttonLabel={
+            (viewComponent && dataIdx !== viewComponent.dataIdx) ||
+            !viewComponent
+              ? "Loading View"
+              : "Getting Data"
+          }
+          height={
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
               : 40
-            : !fetchError.current
-            ? configOptions.current.height
-            : 40
-        }
-        xOffset={windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200}
-      >
-        <div>
-          <p>This is the popover content.</p>
-          <button>Action</button>
-        </div>
-      </Loading>
+          }
+          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+          xOffset={0}
+        >
+          <div>
+            {trackModel.id in messageData
+              ? messageData[`${trackModel.id}`].map((item, index) => {
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      {item.genomicLoci.map((item) => item.toString())}{" "}
+                    </div>
+                  );
+                })
+              : ""}
+          </div>
+        </Loading>
+      ) : (
+        ""
+      )}
       <div
         ref={posRef}
         style={{
@@ -1651,9 +1662,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             perspective: `${windowWidth * 3 + 120}px`,
           }}
         >
-          {configOptions.current.displayMode === "full"
-            ? svgComponents
-            : canvasComponents}
+          {viewComponent ? viewComponent.component : ""}
         </div>
 
         <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>

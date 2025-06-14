@@ -40,4 +40,5 @@ export interface TrackProps {
   viewWindowConfigChange?: any;
   metaSets: any;
   onColorBoxClick: any;
+  messageData: any;
 }
