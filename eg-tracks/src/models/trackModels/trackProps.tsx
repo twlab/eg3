@@ -41,4 +41,5 @@ export interface TrackProps {
   metaSets: any;
   onColorBoxClick: any;
   messageData: any;
+  Toolbar: { [key: string]: any };
 }

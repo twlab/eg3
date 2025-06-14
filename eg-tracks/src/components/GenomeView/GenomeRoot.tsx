@@ -24,6 +24,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   onNewRegionSelect,
   currentState,
   tool,
+  Toolbar,
   viewRegion,
   userViewRegion,
   setScreenshotData,
@@ -178,6 +179,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             onTrackSelected={onTrackSelected}
             onTrackDeleted={onTrackDeleted}
             tool={tool}
+            Toolbar={Toolbar}
             viewRegion={viewRegion}
             showGenomeNav={showGenomeNav}
             setScreenshotData={setScreenshotData}

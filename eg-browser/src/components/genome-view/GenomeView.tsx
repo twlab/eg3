@@ -16,9 +16,10 @@ import {
 } from "wuepgg3-track";
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
+import { Skeleton } from "../ui/skeleton";
 import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
-
+import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { RootState } from "../../lib/redux/store";
 
 export default function GenomeView() {
@@ -124,7 +125,7 @@ export default function GenomeView() {
         viewRegion={currentSession?.viewRegion}
         userViewRegion={currentSession.userViewRegion}
         tool={tool}
-        Toolbar={Toolbar}
+        Toolbar={{ toolbar: Toolbar, skeleton: TrackPlaceHolder }}
         selectedRegionSet={currentSession?.selectedRegionSet}
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}

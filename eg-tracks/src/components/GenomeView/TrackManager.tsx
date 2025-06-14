@@ -136,6 +136,7 @@ interface TrackManagerProps {
     highlightSearch: boolean
   ) => void;
   tool: any;
+  Toolbar: { [key: string]: any };
   viewRegion?: any;
   showGenomeNav: boolean;
   setScreenshotData: any;
@@ -155,6 +156,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   onNewRegionSelect,
   onTrackDeleted,
   tool,
+  Toolbar,
   showGenomeNav,
   setScreenshotData,
   selectedRegionSet,
@@ -2887,6 +2889,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           onRegionSelected={onRegionSelected}
         />
       )}
+
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
         <div
           className="flex flex-row py-10 items-center justify-center"
@@ -3047,6 +3050,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         onColorBoxClick={onColorBoxClick}
                         userViewRegion={userViewRegion}
                         messageData={messageData}
+                        Toolbar={Toolbar}
                       />
                     </div>
                   </SortableList.Item>

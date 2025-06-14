@@ -31,6 +31,7 @@ export function TrackContainer(props: ITrackContainerState) {
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
       tool={props.tool}
+      Toolbar={props.Toolbar}
       selectedRegionSet={props.selectedRegionSet}
       setScreenshotData={props.setScreenshotData}
       isScreenShotOpen={props.isScreenShotOpen}
@@ -60,7 +61,7 @@ export function TrackContainerRepresentable({
   viewRegion,
   userViewRegion,
   tool,
-  Toolbar,
+  Toolbar = {},
   selectedRegionSet,
   genomeName,
   setScreenshotData,
@@ -317,12 +318,13 @@ export function TrackContainerRepresentable({
         viewRegion={convertedViewRegion}
         userViewRegion={convertedUserViewRegion}
         tool={tool}
+        Toolbar={Toolbar}
         selectedRegionSet={selectedRegionSet}
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
       />
-      {Toolbar ? (
+      {Toolbar.toolbar ? (
         <div
           id="toolbar-container"
           style={{
@@ -333,7 +335,7 @@ export function TrackContainerRepresentable({
             zIndex: 50,
           }}
         >
-          <Toolbar
+          <Toolbar.toolbar
             highlights={highlights}
             onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
             onNewRegionSelect={

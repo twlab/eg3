@@ -53,6 +53,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   metaSets,
   onColorBoxClick,
   messageData,
+  Toolbar,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -1582,6 +1583,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         display: "flex",
       }}
     >
+      {Toolbar.skeleton ? (
+        <div
+          style={{
+            display: "flex",
+          }}
+        >
+          <Toolbar.skeleton width={windowWidth} />
+        </div>
+      ) : (
+        ""
+      )}
       <div
         style={{
           zIndex: 2,
@@ -1623,7 +1635,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             {trackModel.id in messageData
               ? messageData[`${trackModel.id}`].map((item, index) => {
                   return (
-                    <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div
+                      key={`${trackModel.index}loading-` + `${index}`}
+                      style={{ display: "flex", flexDirection: "column" }}
+                    >
                       {item.genomicLoci.map((item) => item.toString())}{" "}
                     </div>
                   );

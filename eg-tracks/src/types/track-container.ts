@@ -22,6 +22,7 @@ export interface ITrackContainerState {
   viewRegion: DisplayedRegionModel | undefined;
   userViewRegion: DisplayedRegionModel;
   tool: Tool | null | string;
+  Toolbar: { [key: string]: any };
   selectedRegionSet: any;
   setScreenshotData: any;
   isScreenShotOpen: boolean;
