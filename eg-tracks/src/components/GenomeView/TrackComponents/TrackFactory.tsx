@@ -1583,17 +1583,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         display: "flex",
       }}
     >
-      {Toolbar.skeleton ? (
-        <div
-          style={{
-            display: "flex",
-          }}
-        >
-          <Toolbar.skeleton width={windowWidth} />
-        </div>
-      ) : (
-        ""
-      )}
       <div
         style={{
           zIndex: 2,
@@ -1629,7 +1618,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : 40
           }
           // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-          xOffset={0}
+          // xOffset={0}
         >
           <div>
             {trackModel.id in messageData
@@ -1646,6 +1635,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : ""}
           </div>
         </Loading>
+      ) : (
+        ""
+      )}
+      {Toolbar.skeleton && !viewComponent ? (
+        <div style={{}}>
+          <Toolbar.skeleton width={windowWidth} height={40} />
+        </div>
       ) : (
         ""
       )}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
@@ -10,11 +10,9 @@ interface TrackPlaceHolderProps {
   style?: React.CSSProperties;
 }
 
-const DEFAULT_HEIGHT = 80;
+const DEFAULT_HEIGHT = 40;
 const DEFAULT_WIDTH = 250;
-const DEFAULT_BAR_COUNT = 25;
-
-const BAR_HEIGHTS = [40, 70, 60, 80, 50, 65, 40, 55, 75, 30]; // You can adjust or randomize
+const DEFAULT_BAR_COUNT = 5;
 
 export const TrackPlaceHolder: React.FC<TrackPlaceHolderProps> = ({
   width = DEFAULT_WIDTH,
@@ -22,43 +20,54 @@ export const TrackPlaceHolder: React.FC<TrackPlaceHolderProps> = ({
   barCount = DEFAULT_BAR_COUNT,
   style = {},
 }) => {
-  const darkTheme = useAppSelector(selectDarkTheme);
-  const barWidth = Math.floor(width / barCount) - 10; // 20px gap
-  // Repeat or slice BAR_HEIGHTS to match barCount
-  const heights = Array.from(
-    { length: barCount },
-    (_, i) => BAR_HEIGHTS[i % BAR_HEIGHTS.length]
+  // const darkTheme = useAppSelector(selectDarkTheme);
+
+  // Only generate bars when width or barCount changes
+  const bars = useMemo(
+    () =>
+      Array.from({ length: barCount }, (_, i) => {
+        const barWidth = Math.floor(width * (0.4 + Math.random() * 0.6));
+        const align = Math.random() > 0.5 ? "flex-start" : "flex-end";
+        const color = ["#60a5fa", "#3b82f6", "#2563eb"][i % 3];
+        return { barWidth, align, color, key: i };
+      }),
+    [width, barCount]
   );
 
   return (
     <div
-      className={`bg-white dark:bg-dark-background  ${darkTheme ? "dark" : ""}`}
-      data-theme={darkTheme ? "dark" : "light"}
+      className={`bg-white dark:bg-dark-background `}
+      data-theme={"light"}
       style={{
         display: "flex",
-        alignItems: "flex-end",
+        flexDirection: "column",
+        justifyContent: "flex-end",
         height,
         width,
         backgroundColor: "var(--bg-color)",
-        borderRadius: "0.75rem",
-        padding: 0,
-        position: "relative",
-        overflow: "hidden",
         gap: "4px",
-        ...style,
+        // ...style,
       }}
     >
-      {heights.map((barHeight, i) => (
-        <Skeleton
-          key={i}
+      {bars.map(({ barWidth, align, color, key }) => (
+        <div
+          key={key}
           style={{
-            width: `${barWidth}px`,
-            height: `${barHeight}px`,
-            borderRadius: ".9rem",
-            backgroundColor: ["#60a5fa", "#3b82f6", "#2563eb"][i % 3],
-            opacity: 0.8,
+            display: "flex",
+            width: "100%",
+            justifyContent: align,
           }}
-        />
+        >
+          <Skeleton
+            style={{
+              width: `${barWidth}px`,
+              height: `6px`,
+              backgroundColor: color,
+              opacity: 0.8,
+              borderRadius: "1rem",
+            }}
+          />
+        </div>
       ))}
     </div>
   );
