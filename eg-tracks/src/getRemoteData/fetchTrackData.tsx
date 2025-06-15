@@ -40,7 +40,7 @@ export const trackFetchFunction: { [key: string]: any } = {
       method: "GET",
     });
 
-    return await genRefResponse.json();
+    return genRefResponse.json();
   },
   snp: async function snpFetch(regionData: any) {
     const SNP_REGION_API: { [key: string]: any } = {

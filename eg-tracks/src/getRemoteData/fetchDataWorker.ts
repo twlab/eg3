@@ -168,7 +168,8 @@ self.onmessage = async (event: MessageEvent) => {
             result: [],
           });
         } else if (trackType === "geneannotation") {
-          let genRefResponses: Array<any> = await fetchData(item);
+          // Only await the fetchData call, not the array
+          let genRefResponses = await fetchData(item);
           fetchResults.push({
             name: trackType,
             result: genRefResponses[0],
@@ -219,16 +220,17 @@ self.onmessage = async (event: MessageEvent) => {
             dynamiclongrange: "",
           }
         ) {
+          // Parallelize track fetches
           let hasError = false;
           let tmpResults = await Promise.all(
-            item.tracks.map(async (trackItem) => {
-              const result = (await fetchData(trackItem)).flat(1);
-              if (typeof result[0] === "object" && "error" in result[0]) {
-                hasError = true;
-              }
-
-              return result;
-            })
+            item.tracks.map((trackItem) =>
+              fetchData(trackItem).then((result) => {
+                if (typeof result[0] === "object" && "error" in result[0]) {
+                  hasError = true;
+                }
+                return result;
+              })
+            )
           );
 
           fetchResults.push({
@@ -243,7 +245,8 @@ self.onmessage = async (event: MessageEvent) => {
             trackModel: item,
           });
         } else {
-          let responses: Array<any> = await fetchData(item);
+          // Only await fetchData once
+          let responses = await fetchData(item);
           fetchResults.push({
             name: trackType,
             result: responses[0],
@@ -255,6 +258,7 @@ self.onmessage = async (event: MessageEvent) => {
       })
     );
 
+    // Optimize fetchData: use Promise.all for parallel fetches
     async function fetchData(trackModel): Promise<Array<any>> {
       let responses: Array<any> = [];
       let curFetchNav;
@@ -273,19 +277,24 @@ self.onmessage = async (event: MessageEvent) => {
 
       const isLocalFetch = trackModel.fileObj instanceof File;
       if (isLocalFetch && trackModel.url === "") {
-        for (let i = 0; i < curFetchNav.length; i++) {
-          const curRespond = trackModel.isText
-            ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
-            : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              });
-
+        // Parallelize local fetches
+        const localFetches = curFetchNav.map((nav, i) => {
+          if (trackModel.isText) {
+            return textFetchFunction[trackModel.type]({
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav,
+              trackModel,
+            });
+          } else {
+            return localTrackFetchFunction[trackModel.type]({
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav,
+              trackModel,
+            });
+          }
+        });
+        const localResults = await Promise.all(localFetches);
+        for (const curRespond of localResults) {
           if (
             curRespond &&
             typeof curRespond === "object" &&
@@ -299,50 +308,39 @@ self.onmessage = async (event: MessageEvent) => {
           }
         }
       } else if (!isLocalFetch) {
-        for (let i = 0; i < curFetchNav.length; i++) {
-          let curRespond;
-
-          try {
-            if (trackModel.type in { geneannotation: "", snp: "" }) {
-              curRespond = await Promise.all(
-                curFetchNav[i].map(async (nav) => {
-                  return await trackFetchFunction[trackModel.type]({
-                    genomeName:
-                      "genome" in trackModel.metadata
-                        ? trackModel.metadata.genome
-                        : trackModel.genome
-                        ? trackModel.genome
-                        : primaryGenName,
-                    name: trackModel.name,
-                    chr: nav.chr,
-                    start: nav.start,
-                    end: nav.end,
-                    nav,
-                    trackModel,
-                    trackType: trackModel.type,
-                  });
-                })
-              );
-            } else {
-              curRespond = await Promise.all([
-                trackFetchFunction[trackModel.type]({
-                  basesPerPixel: bpRegionSize / windowWidth,
-                  nav: curFetchNav[i],
+        // Parallelize remote fetches
+        const remoteFetches = curFetchNav.map((nav, i) => {
+          if (trackModel.type in { geneannotation: "", snp: "" }) {
+            return Promise.all(
+              nav.map(async (n) => {
+                return trackFetchFunction[trackModel.type]({
+                  genomeName:
+                    "genome" in trackModel.metadata
+                      ? trackModel.metadata.genome
+                      : trackModel.genome
+                      ? trackModel.genome
+                      : primaryGenName,
+                  name: trackModel.name,
+                  chr: n.chr,
+                  start: n.start,
+                  end: n.end,
+                  nav: n,
                   trackModel,
-                }),
-              ]);
-            }
-
-            responses.push(_.flatten(curRespond));
-          } catch (error) {
-            console.error(
-              `Error fetching data for track model type ${trackModel.type}:`,
-              error
-            );
-            responses.push({
-              error: "Data fetch failed. Reload page or change view to retry",
+                  trackType: trackModel.type,
+                });
+              })
+            ).then((result) => _.flatten(result));
+          } else {
+            return trackFetchFunction[trackModel.type]({
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav,
+              trackModel,
             });
           }
+        });
+        const remoteResults = await Promise.all(remoteFetches);
+        for (const curRespond of remoteResults) {
+          responses.push(_.flatten([curRespond]));
         }
       } else {
         responses.push({
