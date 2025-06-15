@@ -7,7 +7,6 @@ import JasparSource from "./JasparSource";
 import VcfSource from "./VcfSource";
 import BigSourceWorker from "./BigSourceWorker";
 
-const AWS_API = "https://lambda.epigenomegateway.org/v3";
 let cachedFetchInstance: { [key: string]: any } = {};
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
 

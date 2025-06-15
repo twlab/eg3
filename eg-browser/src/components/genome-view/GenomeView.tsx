@@ -61,17 +61,10 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ highlights }));
   };
 
-  const handleTrackSelected = (tracks: ITrackModel[]) => {
+  const handleTracksChange = (tracks: ITrackModel[]) => {
     dispatch(updateCurrentSession({ tracks }));
   };
 
-  const handleTrackDeleted = (tracks: ITrackModel[]) => {
-    dispatch(updateCurrentSession({ tracks }));
-  };
-
-  const handleTrackAdded = (tracks: ITrackModel[]) => {
-    dispatch(updateCurrentSession({ tracks }));
-  };
   const handleNewRegion = (startbase: number, endbase: number) => {
     dispatch(
       updateCurrentSession({
@@ -118,9 +111,7 @@ export default function GenomeView() {
         showGenomeNav={isNavigatorVisible}
         onNewRegion={handleNewRegion}
         onNewHighlight={handleNewHighlight}
-        onTrackSelected={handleTrackSelected}
-        onTrackDeleted={handleTrackDeleted}
-        onTrackAdded={handleTrackAdded}
+        onTracksChange={handleTracksChange}
         onNewRegionSelect={handleNewRegionSelect}
         viewRegion={currentSession?.viewRegion}
         userViewRegion={currentSession.userViewRegion}

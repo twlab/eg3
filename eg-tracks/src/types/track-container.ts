@@ -11,9 +11,8 @@ export interface ITrackContainerState {
   showGenomeNav: boolean;
   onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
-  onTrackSelected: (trackSelected: TrackModel[]) => void;
-  onTrackDeleted: (currenTracks: TrackModel[]) => void;
-  onTrackAdded: (trackModels: TrackModel[]) => void;
+  onTracksChange: (trackSelected: TrackModel[]) => void;
+
   onNewRegionSelect: (
     startbase: number,
     endbase: number,
@@ -38,9 +37,8 @@ export interface ITrackContainerRepresentableProps {
   showGenomeNav: boolean;
   onNewRegion: (startbase: number, endbase: number) => void | null | undefined;
   onNewHighlight: (highlightState: Array<any>) => void | null | undefined;
-  onTrackSelected: (trackSelected: ITrackModel[]) => void | null | undefined;
-  onTrackDeleted: (currenTracks: ITrackModel[]) => void | null | undefined;
-  onTrackAdded: (trackModels: ITrackModel[]) => void | null | undefined;
+  onTracksChange: (trackSelected: ITrackModel[]) => void | null | undefined;
+
   onNewRegionSelect: (
     startbase: number,
     endbase: number,
@@ -83,7 +81,7 @@ export interface ITrackModel {
   name: string;
   type?: string;
   filetype?: string;
-  options: TrackOptions;
+  options?: TrackOptions;
   url: string;
   indexUrl?: string;
   metadata: ITrackModelMetadata;

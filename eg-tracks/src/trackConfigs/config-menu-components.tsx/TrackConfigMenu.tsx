@@ -1,9 +1,13 @@
 import { Manager, Reference, Popper } from "react-popper";
-import { MenuTitle, RemoveOption, TrackMoreInfo } from "./TrackContextMenu";
+import {
+  MenuTitle,
+  RemoveOption,
+  TrackMoreInfo,
+  MatplotMenu,
+} from "./TrackContextMenu";
 import "./TrackContextMenu.css";
 
 import OutsideClickDetector from "../../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
-import React from "react";
 
 function ConfigMenuComponent(props: any) {
   let menuData = props.menuData;
@@ -14,7 +18,7 @@ function ConfigMenuComponent(props: any) {
   // ReactDOM.createPortal(
   // need to set id matching the track component so it rememebers each specific
   // track config settings
-
+  console.log(menuData);
   return (
     <Manager>
       <Reference>
@@ -27,7 +31,7 @@ function ConfigMenuComponent(props: any) {
               // measured from bottom to top of the component
               top: menuData.pageY - blockPosData.height,
               backgroundColor: "var(--bg-container-color)",
-              color: "var(--font-color)"
+              color: "var(--font-color)",
             }}
           >
             <Popper placement="right-end">
@@ -52,9 +56,10 @@ function ConfigMenuComponent(props: any) {
                         title={
                           menuData.selectCount > 1
                             ? menuData.selectCount + " tracks selected"
-                            : menuData.trackModel.options.label
-                              ? menuData.trackModel.options.label
-                              : "(unnamed track)"
+                            : menuData.selectCount === 1 &&
+                              menuData.tracks[0].options.label
+                            ? menuData.tracks[0].options.label
+                            : "(unnamed track)"
                         }
                         numTracks={menuData.selectCount}
                       />
@@ -84,8 +89,12 @@ function ConfigMenuComponent(props: any) {
                         )}
                         numTracks={menuData.selectCount}
                       />
-                      {menuData.trackModel ? (
-                        <TrackMoreInfo track={menuData.trackModel} />
+                      <MatplotMenu
+                        tracks={menuData.tracks}
+                        onApplyMatplot={menuData.handleAdd}
+                      />
+                      {menuData.tracks.length === 1 ? (
+                        <TrackMoreInfo track={menuData.tracks[0]} />
                       ) : (
                         ""
                       )}

@@ -14,7 +14,26 @@ export function MenuTitle(props) {
       : `${props.numTracks} tracks selected`;
   return <div style={{ paddingLeft: 5, fontWeight: "bold" }}>{text}</div>;
 }
-
+export function MatplotMenu(props) {
+  const numTracks = props.tracks.length;
+  if (numTracks === 1) {
+    return null;
+  }
+  const trackTypes = props.tracks.map((tk) => tk.type);
+  if (trackTypes.some((type) => !NUMERRICAL_TRACK_TYPES.includes(type))) {
+    return null;
+  }
+  return (
+    <div className="TrackContextMenu-item">
+      <button
+        className="btn btn-info btn-sm btn-tight"
+        onClick={() => props.onApplyMatplot(props.tracks, "matplot")}
+      >
+        Apply matplot
+      </button>
+    </div>
+  );
+}
 export function RemoveOption(props) {
   return (
     <div

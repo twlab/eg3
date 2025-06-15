@@ -19,8 +19,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   showGenomeNav,
   onNewRegion,
   onNewHighlight,
-  onTrackSelected,
-  onTrackDeleted,
+  onTracksChange,
   onNewRegionSelect,
   currentState,
   tool,
@@ -176,8 +175,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             onNewRegion={onNewRegion}
             onNewRegionSelect={onNewRegionSelect}
             onNewHighlight={onNewHighlight}
-            onTrackSelected={onTrackSelected}
-            onTrackDeleted={onTrackDeleted}
+            onTracksChange={onTracksChange}
             tool={tool}
             Toolbar={Toolbar}
             viewRegion={viewRegion}
@@ -187,7 +185,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             selectedRegionSet={selectedRegionSet}
           />
         ) : (
-          "Loading..."
+          ""
         )}
       </div>
     </div>

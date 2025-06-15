@@ -34,7 +34,7 @@ interface ITrackModel {
   name: string;
   type?: string;
   filetype?: string;
-  options: TrackOptions;
+  options?: TrackOptions;
   url?: string;
   indexUrl?: string;
   metadata?: ITrackModelMetadata;
@@ -46,6 +46,7 @@ interface ITrackModel {
   files?: any;
   details?: any;
   isSelected?: any;
+  tracks?: any;
 }
 
 /**
@@ -65,7 +66,7 @@ export class TrackModel {
   type!: string;
   label!: string;
   filetype?: string;
-  options!: TrackOptions;
+  options?: TrackOptions;
   url!: string;
   indexUrl?: string;
   metadata!: ITrackModelMetadata;

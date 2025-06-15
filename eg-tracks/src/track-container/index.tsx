@@ -24,10 +24,8 @@ export function TrackContainer(props: ITrackContainerState) {
       showGenomeNav={props.showGenomeNav}
       onNewRegion={props.onNewRegion}
       onNewHighlight={props.onNewHighlight}
-      onTrackSelected={props.onTrackSelected}
-      onTrackDeleted={props.onTrackDeleted}
+      onTracksChange={props.onTracksChange}
       onNewRegionSelect={props.onNewRegionSelect}
-      onTrackAdded={props.onTrackAdded}
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
       tool={props.tool}
@@ -54,9 +52,7 @@ export function TrackContainerRepresentable({
   showGenomeNav,
   onNewRegion,
   onNewHighlight,
-  onTrackSelected,
-  onTrackDeleted,
-  onTrackAdded,
+  onTracksChange,
   onNewRegionSelect,
   viewRegion,
   userViewRegion,
@@ -242,25 +238,23 @@ export function TrackContainerRepresentable({
     }
   }, [userViewRegion, _genomeConfig, overrideViewRegion, selectedRegionSet]);
 
-  const handleTrackSelected = useCallback(
+  const handleTracksChange = useCallback(
     (selectedTracks: TrackModel[]) => {
-      onTrackSelected(selectedTracks.map(convertTrackModelToITrackModel));
+      onTracksChange(
+        selectedTracks.map((item) => {
+          const newITrackModel = convertTrackModelToITrackModel(item);
+          if (item.tracks) {
+            // check if there is a track that has multi source, like matplot, dynamic
+            newITrackModel["tracks"] = item.tracks.map(
+              convertTrackModelToITrackModel
+            );
+          }
+          return newITrackModel;
+        })
+      );
     },
-    [onTrackSelected, convertTrackModelToITrackModel]
-  );
 
-  const handleTrackDeleted = useCallback(
-    (currentTracks: TrackModel[]) => {
-      onTrackDeleted(currentTracks.map(convertTrackModelToITrackModel));
-    },
-    [onTrackDeleted, convertTrackModelToITrackModel]
-  );
-
-  const handleTrackAdded = useCallback(
-    (addedTracks: TrackModel[]) => {
-      onTrackAdded(addedTracks.map(convertTrackModelToITrackModel));
-    },
-    [onTrackAdded, convertTrackModelToITrackModel]
+    [onTracksChange, convertTrackModelToITrackModel]
   );
 
   const handleNewRegion = useCallback(
@@ -309,9 +303,7 @@ export function TrackContainerRepresentable({
         showGenomeNav={showGenomeNav}
         onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
         onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
-        onTrackSelected={!onTrackSelected ? () => {} : handleTrackSelected}
-        onTrackDeleted={!onTrackDeleted ? () => {} : handleTrackDeleted}
-        onTrackAdded={!onTrackAdded ? () => {} : handleTrackAdded}
+        onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
         onNewRegionSelect={
           !onNewRegionSelect ? () => {} : handleNewRegionSelect
         }

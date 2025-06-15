@@ -110,7 +110,7 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
-
+        console.log(changes);
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
