@@ -12,15 +12,14 @@ interface TrackPlaceHolderProps {
 
 const DEFAULT_HEIGHT = 40;
 const DEFAULT_WIDTH = 250;
-const DEFAULT_BAR_COUNT = 5;
+const DEFAULT_BAR_COUNT = 3;
 
 export const TrackPlaceHolder: React.FC<TrackPlaceHolderProps> = ({
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
   barCount = DEFAULT_BAR_COUNT,
-  style = {},
 }) => {
-  // const darkTheme = useAppSelector(selectDarkTheme);
+  const darkTheme = useAppSelector(selectDarkTheme);
 
   // Only generate bars when width or barCount changes
   const bars = useMemo(
@@ -36,8 +35,8 @@ export const TrackPlaceHolder: React.FC<TrackPlaceHolderProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-dark-background `}
-      data-theme={"light"}
+      className={`bg-white dark:bg-dark-background ${darkTheme ? "dark" : ""}`}
+      data-theme={darkTheme ? "dark" : "light"}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -45,7 +44,7 @@ export const TrackPlaceHolder: React.FC<TrackPlaceHolderProps> = ({
         height,
         width,
         backgroundColor: "var(--bg-color)",
-        gap: "4px",
+        gap: "2px",
         // ...style,
       }}
     >
@@ -61,7 +60,7 @@ export const TrackPlaceHolder: React.FC<TrackPlaceHolderProps> = ({
           <Skeleton
             style={{
               width: `${barWidth}px`,
-              height: `6px`,
+              height: `10px`,
               backgroundColor: color,
               opacity: 0.8,
               borderRadius: "1rem",

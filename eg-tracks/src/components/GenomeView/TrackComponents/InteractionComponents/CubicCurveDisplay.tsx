@@ -7,7 +7,6 @@ import DesignRenderer, {
 } from "../commonComponents/art/DesignRenderer";
 import { moveTo, cubicCurveTo } from "./ArcDisplay";
 import { ScaleLinear } from "d3-scale";
-import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 
 interface CubicCurveDisplayProps {
   placedInteractions: PlacedInteraction[];
