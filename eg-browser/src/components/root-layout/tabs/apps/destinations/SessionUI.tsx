@@ -432,7 +432,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   const styles = {
     container: {
       width: "100%",
-      maxWidth: "600px",
+      maxWidth: "800px",
       margin: "0 auto",
       padding: "20px",
       background: "#fff",

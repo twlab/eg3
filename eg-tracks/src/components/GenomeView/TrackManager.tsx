@@ -2214,6 +2214,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       preload.current = true;
 
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
+
       refreshState();
       initializeTracks();
     }
@@ -2566,13 +2567,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
-    if (!genomeConfig.isInitial && tracks) {
+    if (
+      !genomeConfig.isInitial &&
+      tracks &&
+      !tracks.every((item) => item.waitToUpdate)
+    ) {
       if (
         !arraysHaveSameTrackModels(tracks, [
           ...trackComponents.map((item) => item.trackModel),
           ...g3dtrackComponents.map((item) => item.trackModel),
         ])
       ) {
+        console.log(tracks, "inside update");
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
           newTrackId[`${trackModel.id}`] = {};
@@ -2749,6 +2755,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(tracks);
     }
+    console.log(tracks, "outside");
   }, [tracks]);
 
   useEffect(() => {

@@ -32,3 +32,4 @@ export { default as TrackModel, mapUrl } from "./TrackModel";
 export { default as ColorPicker } from "../trackConfigs/config-menu-components.tsx/ColorPicker";
 export { default as IsoformSelection } from "../components/GenomeView/genomeNavigator/IsoformSelection";
 export { default as OutsideClickDetector } from "../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
+export { default as TwoBitSource } from "../getRemoteData/TwoBitSource";

@@ -75,7 +75,10 @@ const Session: React.FC = () => {
         start: sessionBundle.viewRegion._startBase,
         end: sessionBundle.viewRegion._endBase,
       },
-      tracks: sessionBundle.tracks,
+      tracks: sessionBundle.tracks.map((item) => {
+        item.waitToUpdate = true;
+        return item;
+      }),
       highlights: sessionBundle.highlights ?? [],
       metadataTerms: sessionBundle.metadataTerms ?? [],
       selectedRegionSet: sessionBundle.regionSetView ?? null,

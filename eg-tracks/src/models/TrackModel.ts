@@ -47,6 +47,7 @@ interface ITrackModel {
   details?: any;
   isSelected?: any;
   tracks?: any;
+  waitToUpdate?: boolean;
 }
 
 /**
@@ -83,6 +84,7 @@ export class TrackModel {
   queryEndpoint?: QueryEndpoint;
   legendWidth?: any;
   details?: any;
+  waitToUpdate: boolean = false;
   constructor(plainObject: ITrackModel) {
     const data = {
       ...plainObject,
@@ -117,6 +119,7 @@ export class TrackModel {
     this.textConfig = this.textConfig || {};
     this.apiConfig = this.apiConfig || {};
     this.queryEndpoint = this.queryEndpoint || {};
+    this.waitToUpdate = this.waitToUpdate;
     if (plainObject.querygenome) {
       // only set if there is value
       this.querygenome = plainObject.querygenome;

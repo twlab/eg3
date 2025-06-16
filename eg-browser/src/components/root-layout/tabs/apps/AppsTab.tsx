@@ -75,7 +75,6 @@ export default function AppsTab() {
     []
   );
 
-
   return (
     <NavigationStack
       destinations={destinations}
@@ -101,7 +100,7 @@ export default function AppsTab() {
           path="session"
           title="Session"
           description="Manage and share your browser sessions"
-        // onClick={() => dispatch(setSessionPanelOpen(true))}
+          // onClick={() => dispatch(setSessionPanelOpen(true))}
         />
         {/* <DescriptiveNavigationLink
           path="go-live"
@@ -113,16 +112,12 @@ export default function AppsTab() {
           title="Screenshot"
           description="Capture and export browser views as images"
         />
-        {/* <DescriptiveNavigationLink
-          path="dynamic-record"
-          title="Dynamic Record"
-          description="Record and replay browser interactions"
-        />
+
         <DescriptiveNavigationLink
           path="fetch-sequence"
           title="Fetch Sequence"
           description="Retrieve and analyze genomic sequences"
-        /> */}
+        />
         {/* <DescriptiveNavigationLink
           path="session"
           title="Session"
