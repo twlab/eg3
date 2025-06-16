@@ -28,15 +28,19 @@ body {
 .btn {
   background-color: transparent;
   color: #1d4ed8; /* text-blue-700 */
-  padding: 0.25rem; /* px-1 */
+  /* padding: 0.25rem; px-1 */
   border: 1px solid #3b82f6; /* border-blue-500 */
   border-radius: 0.25rem; /* rounded */
+}
+
+.btn-sm {
+  padding: 2px;
 }
 
 [data-theme="dark"] .btn {
   background-color: transparent;
   color: #bfdbfe; /* text-blue-200 */
-  padding: 0.25rem; /* px-1 */
+  /* padding: 0.25rem; px-1 */
   border: 1px solid #e0f2fe; /* border-blue-100 */
   border-radius: 0.25rem; /* rounded */
 }
@@ -370,4 +374,11 @@ body {
 
   /* top, bottom, left, right.  Corners selected in preparation for clockwise rotation. */
   background-position: left top, right bottom, left bottom, right top;
+}
+
+.ReactModal__Content input {
+  border: #1eb7e9 1px solid;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 2px;
 }
