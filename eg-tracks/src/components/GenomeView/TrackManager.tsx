@@ -565,7 +565,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let optionsObjects: Array<any> = [];
     const tracks: Array<any> = [];
     const selectCount = Object.keys(selectedTracks.current).length;
-
+    let fileInfos: { [key: string]: any } = {};
     for (const config in selectedTracks.current) {
       let trackModel = _.cloneDeep(
         trackManagerState.current.tracks.find(
@@ -578,7 +578,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (value) {
         trackModel.options.displayMode = value;
       }
-
+      if (trackModel.type === "hic") {
+        fileInfos[`${trackModel.id}`] =
+          fetchInstances.current[`${trackModel.id}`].getFileInfo();
+      }
       trackModel.options["trackId"] = config;
       const trackConfig = getTrackConfig(trackModel);
       const menuItems = trackConfig.getMenuComponents();
@@ -604,6 +607,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onConfigChange,
       blockRef: block,
       tracks: tracks,
+      fileInfos: fileInfos,
       trackId: trackId,
     };
   }
@@ -613,15 +617,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     value: string | number,
     trackId: string | null = null
   ) {
+    let newSelected: { [key: string]: any } = {};
     if (key === "displayMode") {
       setConfigMenu(createConfigMenuData(trackId, value));
     }
+
     if (key === "label" && trackId) {
       trackManagerState.current.tracks.map((item) => {
         if (item.id === trackId) {
           let oldOption = _.cloneDeep(item.options);
           let newVal = _.cloneDeep(value);
           item.options = { ...oldOption, [key]: newVal };
+          newSelected[`${trackId}`] = { [key]: value };
         }
       });
     } else {
@@ -630,21 +637,47 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           let oldOption = _.cloneDeep(item.options);
           let newVal = _.cloneDeep(value);
           item.options = { ...oldOption, [key]: newVal };
+          newSelected[`${item.id}`] = { [key]: value };
+          if (key === "normalization" || key === "binSize") {
+            updateGlobalTrackConfig({
+              configOptions: {
+                ...globalTrackConfig.current[`${item.id}`].configOptions,
+                ...item.options,
+              },
+              trackModel: item,
+              id: item.id,
+              usePrimaryNav: false,
+            });
+
+            const trackToDrawId = {};
+            for (const key in trackFetchedDataCache.current) {
+              if (key in selectedTracks.current) {
+                trackToDrawId[key] = {};
+                const curTrack = trackFetchedDataCache.current[key];
+
+                for (const cacheDataIdx in curTrack) {
+                  if (isInteger(cacheDataIdx)) {
+                    if (
+                      "dataCache" in
+                      trackFetchedDataCache.current[key][cacheDataIdx]
+                    ) {
+                      delete trackFetchedDataCache.current[key][cacheDataIdx]
+                        .dataCache;
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       });
     }
-    onTracksChange([...trackManagerState.current.tracks]);
-
-    let newSelected: { [key: string]: any } = {};
-    if (key === "label" && trackId) {
-      newSelected[`${trackId}`] = { [key]: value };
+    if (key === "normalization" || key === "binSize") {
+      queueRegionToFetch(dataIdx);
     } else {
-      for (const selected in selectedTracks.current) {
-        newSelected[`${selected}`] = { [key]: value };
-      }
+      setApplyTrackConfigChange(newSelected);
     }
-
-    setApplyTrackConfigChange(newSelected);
+    onTracksChange([...trackManagerState.current.tracks]);
   }
 
   function renderTrackSpecificConfigMenu(
@@ -757,7 +790,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         tracks,
       });
     }
-    console.log(tracks, newTrack);
+
     if (newTrack) {
       trackManagerState.current.tracks = [
         ...trackManagerState.current.tracks,
@@ -1409,11 +1442,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let result;
     if (fetchRes.trackType in { hic: "", dynamichic: "", bam: "" }) {
       let configOptions;
-      if (
-        fetchRes.id in globalTrackConfig.current &&
-        globalTrackConfig.current[`${fetchRes.id}`]
-      ) {
-        configOptions = globalTrackConfig.current[fetchRes.id];
+      if (globalTrackConfig.current[`${fetchRes.id}`]) {
+        configOptions = globalTrackConfig.current[fetchRes.id].configOptions;
       } else {
         let foundTrack = tracks.find(
           (trackModel: any) => trackModel.id === fetchRes.id
@@ -1442,8 +1472,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
+        console.log(configOptions);
         result = await fetchInstances.current[
-          `${fetchRes.trackModel.url}`
+          `${fetchRes.trackModel.id}`
         ].getData(
           objToInstanceAlign(visRegion),
           basePerPixel.current,
@@ -1736,9 +1767,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       if (trackManagerState.current.tracks[i].type === "hic") {
         if (
-          !fetchInstances.current[`${trackManagerState.current.tracks[i].url}`]
+          !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
         ) {
-          fetchInstances.current[`${trackManagerState.current.tracks[i].url}`] =
+          fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
             new HicSource(trackManagerState.current.tracks[i].url);
         }
       } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
@@ -2608,8 +2639,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             // for tracks like hic and bam where we create an  instance obj
             // that we reuse to fetch data
             else if (curTrackModel.type === "hic") {
-              if (!fetchInstances.current[`${curTrackModel.url}`]) {
-                fetchInstances.current[`${curTrackModel.url}`] = new HicSource(
+              if (!fetchInstances.current[`${curTrackModel.id}`]) {
+                fetchInstances.current[`${curTrackModel.id}`] = new HicSource(
                   curTrackModel.url
                 );
               }
@@ -2623,7 +2654,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               curTrackModel.type in
               { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
             ) {
-              console.log("YUEER", tracks);
               curTrackModel.tracks?.map((trackModel, index) => {
                 trackModel.id = `${curTrackModel.id}` + "subtrack" + `${index}`;
               });

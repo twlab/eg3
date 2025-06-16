@@ -3,9 +3,10 @@ import Collapsible from "./Collapsible";
 import "./TrackContextMenu.css";
 import { CopyToClip } from "../../components/GenomeView/TrackComponents/commonComponents/CopyToClipboard";
 import React from "react";
-import { variableIsObject } from "../../models/util";
+import { niceCount, variableIsObject } from "../../models/util";
+import SelectConfig from "./SelectConfig";
+import { getTrackConfig } from "../config-menu-models.tsx/getTrackConfig";
 export const NUMERRICAL_TRACK_TYPES = ["bigwig", "bedgraph"]; // the front UI we allow any case of types, in TrackModel only lower case
-export const ITEM_PROP_TYPES = {};
 
 export function MenuTitle(props) {
   const text =
@@ -43,6 +44,51 @@ export function RemoveOption(props) {
       {/* eslint-disable-next-line jsx-a11y/accessible-emoji */}❌{" "}
       {props.numTracks > 1 ? `Remove ${props.numTracks} tracks` : "Remove"}
     </div>
+  );
+}
+
+export function HicBinSizeNormOptionConfig(props) {
+  const { tracks, fileInfos, onOptionSet } = props;
+  const trackConfigs = tracks.map(getTrackConfig);
+  const optionsObjects = trackConfigs.map((config) => config.getOptions());
+  const isHicTracks = trackConfigs.map((config) => config.isHicTrack());
+  if (!_.every(isHicTracks, Boolean)) {
+    return null;
+  }
+  const allResolutions: Array<any> = [],
+    allNormOptions: Array<any> = [];
+
+  Object.keys(fileInfos).forEach((trackId) => {
+    allResolutions.push(fileInfos[trackId].resolutions);
+    allNormOptions.push(fileInfos[trackId].normOptions);
+  });
+  const commonResolutions = _.intersection(...allResolutions);
+  const commonNormOptions = _.intersection(...allNormOptions);
+  const commonResolutionsObj = { AUTO: 0 },
+    commonNormOptionsObj = { NONE: "NONE" };
+  commonResolutions.forEach(
+    (r) => (commonResolutionsObj[niceCount(r as number)] = r)
+  );
+  commonNormOptions.forEach((r) => (commonNormOptionsObj[r as string] = r));
+  return (
+    <>
+      <SelectConfig
+        optionName="binSize"
+        label="Bin size:"
+        defaultValue={commonResolutionsObj.AUTO}
+        choices={commonResolutionsObj}
+        optionsObjects={optionsObjects}
+        onOptionSet={onOptionSet}
+      />
+      <SelectConfig
+        optionName="normalization"
+        label="Normalization"
+        defaultValue={commonNormOptionsObj.NONE}
+        choices={commonNormOptionsObj}
+        optionsObjects={optionsObjects}
+        onOptionSet={onOptionSet}
+      />
+    </>
   );
 }
 export function ObjectAsTable(props) {
