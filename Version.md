@@ -1,5 +1,16 @@
 # Version history
 
+## 55.0.4
+
+- Added loading indicator and track placeholder
+- Added fetch seq in the top menu tab
+- Implement apply matplot in right click menu
+- Implement bin and norm for hic track
+- Fixed track fetching the same regions when scrolling too fast or slow internet
+- Fixed session upload where tracks is updated before genomeconfig
+- Fixed regionSet bug
+- refactor fetchworker
+
 ## 55.0.3
 
 - Reworked screenshots - using expanded view only and working with genomealign and interaction
