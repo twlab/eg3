@@ -1472,7 +1472,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState["visRegion"] = visRegion;
 
       if (fetchRes.trackType === "hic") {
-        console.log(configOptions);
         result = await fetchInstances.current[
           `${fetchRes.trackModel.id}`
         ].getData(
@@ -2578,7 +2577,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...g3dtrackComponents.map((item) => item.trackModel),
         ])
       ) {
-        console.log(tracks, "inside update");
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
           newTrackId[`${trackModel.id}`] = {};
@@ -2755,7 +2753,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(tracks);
     }
-    console.log(tracks, "outside");
   }, [tracks]);
 
   useEffect(() => {
