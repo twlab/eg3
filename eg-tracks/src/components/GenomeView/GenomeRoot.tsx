@@ -11,6 +11,7 @@ import TrackManager from "./TrackManager";
 // import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
+import GenomeViewer from "../../components";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -134,7 +135,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
-      {/* <div>
+      <div>
         <GenomeViewer
           genomeName={"hg38"}
           viewRegion={"chr7:27053397-27373765"}
@@ -156,7 +157,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             },
           ]}
         />
-      </div> */}
+      </div>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && size.width > 0 ? (

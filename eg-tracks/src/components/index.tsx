@@ -14,7 +14,7 @@ import NavigationContext from "@/models/NavigationContext";
 import { fetchGenomicData } from "../getRemoteData/fetchDataFunction";
 import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
-
+import { zoomFactors } from "./GenomeView/TrackManager";
 interface DataSource {
   url: string;
   options?: { [key: string]: any };
@@ -27,6 +27,7 @@ interface GenomeVisualizationProps {
   viewRegion?: any;
   windowWidth?: number;
   customGenome?: string;
+  zoom?: number;
 }
 
 const DEFAULT_WINDOW_WIDTH = 1200;
@@ -38,11 +39,15 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
     dataSources,
     viewRegion,
     windowWidth,
+    zoom,
   }) {
     const latestGenomeKey = useRef(genomeName);
     const [viewerElement, setViewerElement] = useState<any>(null);
 
-    // MARK: Config/Region/Options
+    function zoomTrack() {
+      return "";
+    }
+    // MARK:Con/Reg/Opt
     function getConfig() {
       if (testCustomGenome) {
         try {
@@ -123,7 +128,8 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       }
       return trackModelArr;
     }
-    // MARK: ViewData / TrackModel
+    // MARK: View/Track
+
     function createViewRegionData(
       genomeConfig: any,
       region: any,
@@ -221,7 +227,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       }
     }
 
-    // MARK: Create element
+    // MARK: Create
     function createGenomeViewElement(genomeDrawData: any) {
       return genomeDrawData.map((item) => {
         const svgResult = getDisplayModeFunction(item);
@@ -292,6 +298,15 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         }
         const region = getRegion(genomeConfig);
         const width = windowWidth || DEFAULT_WINDOW_WIDTH;
+        // const navContext = genomeConfig.navContext as NavigationContext;
+        // const parsedRegion = genomeConfig.navContext.parse(
+        //   region as GenomeCoordinate
+        // );
+        // const userViewRegion = new DisplayedRegionModel(
+        //   navContext,
+        //   ...parsedRegion
+        // );
+        // console.log(userViewRegion.zoom(1));
 
         await updateViewerElement({
           genomeConfig,
@@ -369,6 +384,21 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       }
     }, [windowWidth]);
 
+    useEffect(() => {
+      if (
+        viewerElement &&
+        latestGenomeKey.current === viewerElement.genomeKey &&
+        zoom
+      ) {
+        async function handle() {
+          const genomeConfig = viewerElement.genomeConfig;
+          const region = getRegion(genomeConfig);
+          const width = windowWidth || DEFAULT_WINDOW_WIDTH;
+          const res = region.zoom(zoom);
+        }
+        handle();
+      }
+    }, [zoom]);
     // MARK: Render
     return !viewerElement ? (
       ""
