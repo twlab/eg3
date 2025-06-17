@@ -48,7 +48,6 @@ export const FetchSequence: React.FC = () => {
     return null;
   }, [genomeConfig, userViewRegion]);
 
-  // Keep twoBitSourceRef in sync with genomeConfig.twoBitURL
   const twoBitSourceRef = useRef<TwoBitSource | null>(null);
   const handleClearCurrentSeq = () => {
     setCurrentRegionSeq("");
@@ -119,7 +118,7 @@ export const FetchSequence: React.FC = () => {
           return fetchSequence(reg);
         }
       } catch (error) {
-        return Promise.resolve(""); // skip invalid
+        return Promise.resolve("");
       }
       return Promise.resolve("");
     });

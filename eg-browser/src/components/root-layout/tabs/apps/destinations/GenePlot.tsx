@@ -104,10 +104,18 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const renderTrackList = () => {
     const trackList = tracks
-      .filter((item) => NUMERICAL_TRACK_TYPES.includes(item.type))
+      .filter((item) =>
+        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : "")
+      )
       .map((item, index) => (
         <option key={index} value={item.name}>
-          {item.label}
+          {item.label
+            ? item.label
+            : item.options && item.options.label
+            ? item.options.label
+            : item.name
+            ? item.name
+            : "track position " + index}
         </option>
       ));
 
