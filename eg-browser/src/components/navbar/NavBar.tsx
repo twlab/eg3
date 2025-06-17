@@ -243,7 +243,7 @@ export default function NavBar() {
               }
               active={currentTab === "tracks"}
             >
-              Use Previous Version
+              Previous Version
             </Button>
           </motion.div>
         )}

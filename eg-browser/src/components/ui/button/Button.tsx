@@ -29,7 +29,7 @@ export default function Button({
       className={classNames(
         "px-2 py-2 rounded-2xl flex items-center justify-center text-primary dark:text-dark-primary",
         active && "bg-secondary dark:bg-dark-secondary",
-        disabled && "bg-slate-200",
+        disabled && "bg-slate-400",
         outlined && "border border-primary",
         backgroundColor === "tint" && "bg-tint dark:bg-dark-tint text-white",
         backgroundColor === "alert" && "bg-alert text-white"

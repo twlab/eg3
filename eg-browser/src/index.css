@@ -12,10 +12,10 @@ body {
   --color-tint: #75697a;
   --color-alert: #307868;
   --color-dark-primary: #ffffff;
-  --color-dark-secondary: #39245b;
+  --color-dark-secondary: #44404a;
   --color-dark-background: #1c191f;
   --color-dark-surface: #333333;
-  --color-dark-tint: #775ca2;
+  --color-dark-tint: #5f5b67;
 }
 
 /* .btn {
