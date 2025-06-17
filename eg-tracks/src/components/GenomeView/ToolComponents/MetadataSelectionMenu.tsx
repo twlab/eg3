@@ -55,7 +55,7 @@ const MetadataSelectionMenu: React.FC<MetadataSelectionMenuProps> = ({
         {terms.map((term) => (
           <li key={term}>
             <button
-              className="btn btn-sm btn-danger dense-button"
+              className="btn btn-sm btn-danger"
               onClick={() => removeTerm(term)}
             >
               -
@@ -80,7 +80,7 @@ const MetadataSelectionMenu: React.FC<MetadataSelectionMenuProps> = ({
             !currentTerms.has(term) && (
               <li key={term}>
                 <button
-                  className="btn btn-sm btn-success dense-button"
+                  className="btn btn-sm btn-success"
                   onClick={() => addTerm(term)}
                 >
                   +
@@ -105,7 +105,7 @@ const MetadataSelectionMenu: React.FC<MetadataSelectionMenuProps> = ({
         value={customTerm}
         onChange={(event) => setCustomTerm(event.target.value)}
       />
-      <button onClick={handleAddCustomTerm}>+</button>
+      <button className="btn btn-sm" onClick={handleAddCustomTerm}>+</button>
     </div>
   );
 };

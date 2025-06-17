@@ -28,8 +28,8 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
           onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
           className={
             isShowingEditMenu
-              ? "btn btn-sm btn-danger dense-button"
-              : "btn btn-sm btn-success dense-button"
+              ? "btn btn-sm btn-danger"
+              : "btn btn-sm btn-success"
           }
           style={{ width: "95px" }}
         >

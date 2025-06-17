@@ -29,15 +29,19 @@ body {
 .btn {
   background-color: transparent;
   color: #1d4ed8; /* text-blue-700 */
-  padding: 0.25rem; /* px-1 */
+  /* padding: 0.25rem; px-1 */
   border: 1px solid #3b82f6; /* border-blue-500 */
   border-radius: 0.25rem; /* rounded */
+}
+
+.btn-sm {
+  padding: 2px;
 }
 
 [data-theme="dark"] .btn {
   background-color: transparent;
   color: #bfdbfe; /* text-blue-200 */
-  padding: 0.25rem; /* px-1 */
+  /* padding: 0.25rem; px-1 */
   border: 1px solid #e0f2fe; /* border-blue-100 */
   border-radius: 0.25rem; /* rounded */
 }
