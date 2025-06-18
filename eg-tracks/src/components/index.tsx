@@ -15,6 +15,8 @@ import { fetchGenomicData } from "../getRemoteData/fetchDataFunction";
 import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
 import { zoomFactors } from "./GenomeView/TrackManager";
+import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickTooltipMap";
+import ReactDOM from "react-dom";
 interface DataSource {
   url?: string;
   name?: string;
@@ -44,7 +46,14 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
   }) {
     const latestGenomeKey = useRef(genomeName);
     const [viewerElement, setViewerElement] = useState<any>(null);
+    const [toolTip, setToolTip] = useState<any>(null);
+    const [toolTipVisible, setToolTipVisible] = useState(false);
+    const [show3dGene, setShow3dGene] = useState<any>(null);
+    const configOptions = useRef<any>({ current: {} });
 
+    function onClose() {
+      setToolTip(null);
+    }
     function zoomTrack() {
       return "";
     }
@@ -82,17 +91,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       if (!type || !trackOptionMap[type]) {
         return "Invalid type";
       }
-      console.log(
-        !(
-          type === "geneannotation" &&
-          dataSources.some(
-            (source) =>
-              source.name &&
-              source.name in
-                { "MANE_select_1.4": "", gencodeV47: "", refGene: "" }
-          )
-        )
-      );
+
       if (
         !(
           type === "geneannotation" &&
@@ -212,6 +211,63 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             visRegion: viewRegionData.visData.visRegion,
             visWidth: width,
           };
+
+          function renderTooltip(event, gene) {
+            if (viewerElement) {
+              const genomeConfig = viewRegionData.genomeConfig;
+              const currtooltip = geneClickToolTipMap[
+                `${item.trackModel.type}`
+              ]({
+                gene,
+                feature: gene,
+                snp: gene,
+                vcf: gene,
+                trackModel: item.trackModel,
+                pageX: event.pageX,
+                pageY: event.pageY,
+                name: genomeConfig.genome._name,
+                onClose: onClose,
+                isThereG3dTrack: false,
+                setShow3dGene: setShow3dGene,
+                configOptions: configOptions.current,
+              });
+              setToolTipVisible(true);
+              setToolTip(ReactDOM.createPortal(currtooltip, document.body));
+            }
+          }
+
+          function renderTooltipModbed(
+            event,
+            feature,
+            bs,
+            type,
+            onCount = "",
+            onPct = "",
+            total = ""
+          ) {
+            let currtooltip;
+            if (type === "norm") {
+              currtooltip = geneClickToolTipMap["normModbed"]({
+                bs,
+                pageX: event.pageX,
+                pageY: event.pageY,
+                feature,
+                onClose,
+              });
+            } else {
+              currtooltip = geneClickToolTipMap["barModbed"]({
+                feature,
+                pageX: event.pageX,
+                pageY: event.pageY,
+                onCount,
+                onPct,
+                total,
+                onClose,
+              });
+            }
+            setToolTipVisible(true);
+            setToolTip(currtooltip);
+          }
           return {
             genomeName: viewRegionData.primaryGenName,
             genesArr: formatDataByType(item.result, type),
@@ -430,7 +486,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
               navContext,
               ...parsedRegion
             );
-            console.log(userViewRegion.zoom(zoomValue));
           }
         }
         handle();
@@ -442,7 +497,10 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
     ) : typeof viewerElement === "string" ? (
       <div style={{ color: "red" }}>{viewerElement}</div>
     ) : (
-      viewerElement.element
+      <div>
+        {viewerElement.element}
+        <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
+      </div>
     );
   }
 );

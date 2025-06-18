@@ -1362,9 +1362,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
 };
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
-  if (drawData.trackModel.type === "omeroidr") {
-    console.log(drawData);
-  }
   if (drawData.trackModel.type === "ruler") {
     return displayModeComponentMap["ruler"]({
       trackState: drawData.trackState,
