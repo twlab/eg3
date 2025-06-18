@@ -122,10 +122,11 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
               name: `track ${idx + 1}`,
               url: source.url,
               options: getOptions(type, source.options),
-              id: `${genomeViewId}-${idx}`,
+              id: crypto.randomUUID(),
             })
         );
       }
+      console.log(trackModelArr);
       return trackModelArr;
     }
     // MARK: View/Track
@@ -274,7 +275,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         prevGenomeDrawData
       );
       const element = createGenomeViewElement(genomeDrawData);
-      console.log(element, genomeDrawData, "WUT");
+
       setViewerElement({
         element,
         genomeDrawData,
