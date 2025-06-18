@@ -253,12 +253,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       type,
       genomeKey,
       prevGenomeDrawData,
-      setViewerElement,
-      getTrackModels,
-      createViewRegionData,
-      fetchDrawData,
-      createGenomeViewElement,
-      validateInputs,
     }) {
       const checkInput = validateInputs(region);
       if (checkInput) {
@@ -280,7 +274,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         prevGenomeDrawData
       );
       const element = createGenomeViewElement(genomeDrawData);
-
+      console.log(element, genomeDrawData, "WUT");
       setViewerElement({
         element,
         genomeDrawData,
@@ -315,12 +309,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
           type,
           genomeKey: latestGenomeKey.current,
           prevGenomeDrawData: undefined,
-          setViewerElement,
-          getTrackModels,
-          createViewRegionData,
-          fetchDrawData,
-          createGenomeViewElement,
-          validateInputs,
         });
       }
       handle();
@@ -343,12 +331,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             type,
             genomeKey: viewerElement.genomeKey,
             prevGenomeDrawData: undefined,
-            setViewerElement,
-            getTrackModels,
-            createViewRegionData,
-            fetchDrawData,
-            createGenomeViewElement,
-            validateInputs,
           });
         }
         handle();
@@ -372,12 +354,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             type,
             genomeKey: viewerElement.genomeKey,
             prevGenomeDrawData: viewerElement.genomeDrawData,
-            setViewerElement,
-            getTrackModels,
-            createViewRegionData,
-            fetchDrawData,
-            createGenomeViewElement,
-            validateInputs,
           });
         }
         handle();
@@ -393,8 +369,40 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         async function handle() {
           const genomeConfig = viewerElement.genomeConfig;
           const region = getRegion(genomeConfig);
-          const width = windowWidth || DEFAULT_WINDOW_WIDTH;
-          const res = region.zoom(zoom);
+          let zoomValue = 1;
+          let zoomNum = zoom;
+
+          // Try to convert string to number if needed
+          if (typeof zoom === "string") {
+            zoomNum = Number(zoom);
+          }
+
+          if (
+            zoomNum &&
+            Number.isInteger(zoomNum) &&
+            zoomNum >= -5 &&
+            zoomNum <= 5
+          ) {
+            if (zoomNum === -1) {
+              zoomValue = 0.5;
+            } else if (zoomNum === 1) {
+              zoomValue = 2;
+            } else if (zoomNum <= -2 && zoomNum >= -5) {
+              zoomValue = 1 / Math.abs(zoomNum);
+            } else if (zoomNum >= 2 && zoomNum <= 5) {
+              zoomValue = zoomNum;
+            }
+
+            const navContext = genomeConfig.navContext as NavigationContext;
+            const parsedRegion = genomeConfig.navContext.parse(
+              region as GenomeCoordinate
+            );
+            const userViewRegion = new DisplayedRegionModel(
+              navContext,
+              ...parsedRegion
+            );
+            console.log(userViewRegion.zoom(zoomValue));
+          }
         }
         handle();
       }
