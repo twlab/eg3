@@ -138,6 +138,7 @@ body {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --bg-secondary: oklch(0.93 0 0);
 }
 
 @keyframes borderPulse {
@@ -488,4 +489,30 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.ReactModal__Content input {
+  border: #1eb7e9 1px solid;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 2px;
+}
+
+.mybtn {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 2px; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+[data-theme="dark"] .mybtn {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 2px; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+button:hover {
+  cursor: pointer;
 }

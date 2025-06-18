@@ -25,7 +25,7 @@ export default function TabView<T extends string>({
 
   return (
     <div className="flex flex-col gap-1 h-full">
-      <div className="flex flex-row items-center justify-between gap-1 bg-gray-100 dark:bg-dark-surface rounded-lg p-1 relative">
+      <div className="flex flex-row items-center justify-between gap-1 bg-gray-300 dark:bg-dark-surface rounded-lg p-1 relative">
         <div
           className="absolute h-[calc(100%-8px)] transition-all duration-300 ease-out bg-secondary dark:bg-dark-secondary rounded-lg"
           style={{

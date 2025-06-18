@@ -1,6 +1,6 @@
 # Version history
 
-## 55.0.4
+## 55.1.0
 
 - Added loading indicator and track placeholder
 - Added fetch seq in the top menu tab
