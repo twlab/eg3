@@ -16,7 +16,8 @@ import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
 import { zoomFactors } from "./GenomeView/TrackManager";
 interface DataSource {
-  url: string;
+  url?: string;
+  name?: string;
   options?: { [key: string]: any };
 }
 
@@ -81,8 +82,31 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       if (!type || !trackOptionMap[type]) {
         return "Invalid type";
       }
-      if (dataSources.some((source) => !source.url)) {
-        return "All dataSources must have a url";
+      console.log(
+        !(
+          type === "geneannotation" &&
+          dataSources.some(
+            (source) =>
+              source.name &&
+              source.name in
+                { "MANE_select_1.4": "", gencodeV47: "", refGene: "" }
+          )
+        )
+      );
+      if (
+        !(
+          type === "geneannotation" &&
+          dataSources.some(
+            (source) =>
+              source.name &&
+              source.name in
+                { "MANE_select_1.4": "", gencodeV47: "", refGene: "" }
+          )
+        ) &&
+        type !== "geneannotation" &&
+        dataSources.some((source) => !source.url)
+      ) {
+        return "All dataSources must have a url and name";
       }
       return null;
     }
@@ -119,14 +143,14 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
           (source, idx) =>
             new TrackModel({
               type,
-              name: `track ${idx + 1}`,
+              name: source.name ? source.name : `track ${idx + 1}`,
               url: source.url,
               options: getOptions(type, source.options),
               id: crypto.randomUUID(),
             })
         );
       }
-      console.log(trackModelArr);
+
       return trackModelArr;
     }
     // MARK: View/Track
@@ -199,6 +223,10 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             getGenePadding: trackOptionMap[type]?.getGenePadding,
             ROW_HEIGHT: trackOptionMap[`${type}`].ROW_HEIGHT,
             genomeConfig: viewRegionData.genomeConfig,
+            renderTooltip:
+              item.trackModel.type === "modbed"
+                ? renderTooltipModbed
+                : renderTooltip,
           };
         });
 

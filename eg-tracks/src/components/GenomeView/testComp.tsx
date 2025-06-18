@@ -25,7 +25,7 @@ export default function GenomeViewerTest() {
         onClick={() =>
           setViewRegion((prev) =>
             prev === "chr7:27053397-27373765"
-              ? "chr2:5000-8000"
+              ? "chr7:27962252-28282620"
               : "chr7:27053397-27373765"
           )
         }
@@ -35,22 +35,34 @@ export default function GenomeViewerTest() {
       <button
         style={buttonStyle}
         onClick={() =>
-          setDataSource([
-            {
-              url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-            },
-          ])
+          setDataSource((prev) =>
+            prev[0].url ===
+            "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig"
+              ? [
+                  {
+                    url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+                  },
+                ]
+              : [
+                  {
+                    url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
+                  },
+                ]
+          )
         }
       >
         Change dataSource
       </button>
-      <button style={buttonStyle} onClick={() => setZoom(1)}>
+      <button
+        style={buttonStyle}
+        onClick={() => setZoom((prev) => (prev === 1 ? -1 : 1))}
+      >
         Change zoom
       </button>
       <button
         style={buttonStyle}
         onClick={() =>
-          setType((prev) => (prev === "linear" ? "circular" : "linear"))
+          setType((prev) => (prev === "bigwig" ? "geneannotation" : "linear"))
         }
       >
         Change type
@@ -63,13 +75,26 @@ export default function GenomeViewerTest() {
       >
         Change genomeName
       </button>
-      <GenomeViewer
-        viewRegion={viewRegion}
-        dataSources={dataSources}
-        zoom={zoom}
-        type={type}
-        genomeName={genomeName}
-      />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <GenomeViewer
+          viewRegion={viewRegion}
+          dataSources={dataSources}
+          zoom={zoom}
+          type={type}
+          genomeName={genomeName}
+        />
+        <GenomeViewer
+          viewRegion={viewRegion}
+          dataSources={[
+            {
+              name: "gencodeV47",
+            },
+          ]}
+          zoom={zoom}
+          type={"geneannotation"}
+          genomeName={genomeName}
+        />
+      </div>
     </div>
   );
 }

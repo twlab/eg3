@@ -2868,6 +2868,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
+      console.log(trackFetchedDataCache.current);
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
     }
   }, [newDrawData]);

@@ -12,7 +12,6 @@ import {
   localTrackFetchFunction,
   textFetchFunction,
 } from "../getLocalData/localFetchData";
-import { left } from "@popperjs/core";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
