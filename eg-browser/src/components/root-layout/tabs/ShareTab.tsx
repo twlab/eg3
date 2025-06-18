@@ -89,7 +89,7 @@ export default function ShareTab() {
                     <Button
                         onClick={generateShortLink}
                         disabled={isGenerating}
-                        style={{ marginLeft: '0.5rem', color: "#5F6368" }}
+                        style={{ marginLeft: '0.5rem', color: "#5F6368", border: "1px solid #3b82f6", borderRadius: "0.25rem" }}
                     >
                         {isGenerating ? "Generating..." : "Generate New Link"}
                     </Button>
@@ -109,7 +109,7 @@ export default function ShareTab() {
             </p>
             <div className="flex items-center gap-2">
                 <p>Or copy the {isLinkOutdated ? "outdated " : ""}shortened link:</p>
-                <Button onClick={() => copyToClipboard(linkToShare)}>
+                <Button style={{ border: "1px solid #3b82f6", borderRadius: "0.25rem" }} onClick={() => copyToClipboard(linkToShare)}>
                     {copied ? "Copied!" : "Copy Link"}
                 </Button>
             </div>
@@ -124,7 +124,7 @@ export default function ShareTab() {
                 value={iframeContent}
                 readOnly
             />
-            <Button onClick={() => copyToClipboard(iframeContent)} >
+            <Button style={{ border: "1px solid #3b82f6", borderRadius: "0.25rem" }} onClick={() => copyToClipboard(iframeContent)} >
                 {copied ? "Copied!" : "Copy Embed Code"}
             </Button>
         </div>
