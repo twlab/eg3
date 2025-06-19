@@ -626,7 +626,6 @@ export const geneClickToolTipMap: { [key: string]: any } = {
     name: string;
     onClose: () => void;
   }) {
-    console.log(feature);
     const contentStyle = Object.assign({
       marginTop: ARROW_SIZE,
       pointerEvents: "auto",

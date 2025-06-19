@@ -25,7 +25,6 @@ import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
-console.log(Object.keys(geneClickToolTipMap));
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -697,6 +696,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               ? configOptions.current.height
               : 40,
           position: "relative",
+          WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+          WebkitPerspective: `${windowWidth * 3 + 120}px`,
+          backfaceVisibility: "hidden",
+          perspective: `${windowWidth * 3 + 120}px`,
         }}
       >
         <div
@@ -706,10 +709,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             right: updateSide.current === "left" ? `${xPos.current}px` : "",
             left: updateSide.current === "right" ? `${xPos.current}px` : "",
             backgroundColor: configOptions.current.backgroundColor,
-            WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-            WebkitPerspective: `${windowWidth * 3 + 120}px`,
-            backfaceVisibility: "hidden",
-            perspective: `${windowWidth * 3 + 120}px`,
           }}
         >
           {viewComponent ? viewComponent.component : ""}

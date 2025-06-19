@@ -71,11 +71,11 @@ const defaultTracks = [
     name: "RepeatMasker",
     url: "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
   }),
-  new TrackModel({
-    type: "bam",
-    name: "Test bam",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
-  }),
+  // new TrackModel({
+  //   type: "bam",
+  //   name: "Test bam",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+  // }),
   // new TrackModel({
   //   type: "bigbed",
   //   name: "test bigbed",
