@@ -34,6 +34,7 @@ interface QueryGenomePiece {
 const componentMap: { [key: string]: any } = {
   geneannotation: "",
   bed: "",
+  bedcolor: "",
   bigwig: "",
   dynseq: "",
   methylc: "",
@@ -98,7 +99,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  const objectPromises = event.data.map(async (dataItem) => {
+  const objectPromises = event.data.map((dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
     const initial = dataItem.initial;
     const fetchResults: Array<any> = [];
@@ -108,30 +109,25 @@ self.onmessage = async (event: MessageEvent) => {
     const trackDefaults = dataItem.trackModelArr;
     const bpRegionSize = dataItem.bpRegionSize;
     const windowWidth = dataItem.windowWidth;
-    const trackToDrawId = dataItem.trackToDrawId ? dataItem.trackToDrawId : {};
+    const trackToDrawId = dataItem.trackToDrawId || {};
     const trackDataIdx = dataItem.trackDataIdx;
     const missingIdx = dataItem.missingIdx;
     const useFineModeNav = dataItem.useFineModeNav;
-    let genomicFetchCoord;
-
-    if (dataItem.genomicFetchCoord) {
-      genomicFetchCoord = dataItem.genomicFetchCoord;
-    } else {
-      genomicFetchCoord = {};
-      genomicFetchCoord[`${primaryGenName}`] = {
+    let genomicFetchCoord = dataItem.genomicFetchCoord || {
+      [primaryGenName]: {
         genomicLoci,
         regionExpandLoci,
         initGenomicLoci,
-      };
-      genomicFetchCoord[`${primaryGenName}`]["primaryVisData"] =
-        dataItem.visData;
-    }
+        primaryVisData: dataItem.visData,
+      },
+    };
 
-    let leftOverTrackModels = trackDefaults.filter(
+    const leftOverTrackModels = trackDefaults.filter(
       (items) => items && items.type !== "genomealign"
     );
 
-    await Promise.all(
+    // No await here, just return the promise
+    return Promise.all(
       leftOverTrackModels.map(async (item) => {
         const trackType = item?.type || item?.metadata["Track type"];
         const id = item.id;
@@ -167,7 +163,8 @@ self.onmessage = async (event: MessageEvent) => {
             result: [],
           });
         } else if (trackType === "geneannotation") {
-          let genRefResponses: Array<any> = await fetchData(item);
+          // Only await here, not in the map above
+          const genRefResponses = await fetchData(item);
           fetchResults.push({
             name: trackType,
             result: genRefResponses[0],
@@ -177,7 +174,6 @@ self.onmessage = async (event: MessageEvent) => {
           });
         } else if (trackType === "bam") {
           let curFetchNav;
-
           if (
             "genome" in item.metadata &&
             item.metadata.genome !== undefined &&
@@ -185,21 +181,20 @@ self.onmessage = async (event: MessageEvent) => {
           ) {
             curFetchNav =
               genomicFetchCoord[
-                `${item.metadata.genome === ""
+                item.metadata.genome === ""
                   ? primaryGenName
                   : item.metadata.genome
-                }`
               ].queryGenomicCoord;
           } else if (
             useFineModeNav ||
             item.type === "longrange" ||
             item.type === "biginteract"
           ) {
-            curFetchNav = new Array(regionExpandLoci);
+            curFetchNav = Array(regionExpandLoci);
           } else if (initial === 1) {
             curFetchNav = initGenomicLoci;
           } else {
-            curFetchNav = new Array(genomicLoci);
+            curFetchNav = Array(genomicLoci);
           }
           fetchResults.push({
             name: trackType,
@@ -217,21 +212,28 @@ self.onmessage = async (event: MessageEvent) => {
             dynamiclongrange: "",
           }
         ) {
-          let tmpResults = await Promise.all(
-            item.tracks.map(async (trackItem) =>
-              (await fetchData(trackItem)).flat(1)
-            )
+          let hasError = false;
+          // Use Promise.all for all tracks, no await inside map
+          const tmpResults = await Promise.all(
+            item.tracks.map(async (trackItem) => {
+              const result = (await fetchData(trackItem)).flat(1);
+              if (typeof result[0] === "object" && "error" in result[0]) {
+                hasError = true;
+              }
+              return result;
+            })
           );
-
           fetchResults.push({
             name: trackType,
-            result: tmpResults,
+            result: hasError
+              ? { error: "Fetch failed: data source is not valid" }
+              : tmpResults,
             id: id,
             metadata: item.metadata,
             trackModel: item,
           });
         } else {
-          let responses: Array<any> = await fetchData(item);
+          const responses = await fetchData(item);
           fetchResults.push({
             name: trackType,
             result: responses[0],
@@ -241,8 +243,15 @@ self.onmessage = async (event: MessageEvent) => {
           });
         }
       })
-    );
+    ).then(() => ({
+      fetchResults,
+      trackDataIdx,
+      genomicFetchCoord,
+      trackToDrawId,
+      missingIdx,
+    }));
 
+    // fetchData function remains unchanged
     async function fetchData(trackModel): Promise<Array<any>> {
       let responses: Array<any> = [];
       let curFetchNav;
@@ -254,9 +263,9 @@ self.onmessage = async (event: MessageEvent) => {
         trackModel.type === "longrange" ||
         trackModel.type === "biginteract"
       ) {
-        curFetchNav = new Array(regionExpandLoci);
+        curFetchNav = Array(regionExpandLoci);
       } else {
-        curFetchNav = new Array(genomicLoci);
+        curFetchNav = Array(genomicLoci);
       }
 
       const isLocalFetch = trackModel.fileObj instanceof File;
@@ -264,15 +273,15 @@ self.onmessage = async (event: MessageEvent) => {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            });
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              });
 
           if (
             curRespond &&
@@ -289,7 +298,6 @@ self.onmessage = async (event: MessageEvent) => {
       } else if (!isLocalFetch) {
         for (let i = 0; i < curFetchNav.length; i++) {
           let curRespond;
-
           try {
             if (trackModel.type in { geneannotation: "", snp: "" }) {
               curRespond = await Promise.all(
@@ -298,7 +306,9 @@ self.onmessage = async (event: MessageEvent) => {
                     genomeName:
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
-                        : trackModel.genome ? trackModel.genome : primaryGenName,
+                        : trackModel.genome
+                        ? trackModel.genome
+                        : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,
@@ -318,7 +328,6 @@ self.onmessage = async (event: MessageEvent) => {
                 }),
               ]);
             }
-
             responses.push(_.flatten(curRespond));
           } catch (error) {
             console.error(
@@ -335,17 +344,8 @@ self.onmessage = async (event: MessageEvent) => {
           error: "Fetch failed: data source is not valid",
         });
       }
-
       return responses;
     }
-
-    return {
-      fetchResults,
-      trackDataIdx,
-      genomicFetchCoord,
-      trackToDrawId,
-      missingIdx,
-    };
   });
 
   const results = await Promise.all(objectPromises);

@@ -4,7 +4,7 @@ import {
   ITrackContainerState,
   ITrackModel,
 } from "../types";
-import GenomeRoot from "@eg/tracks/src/components/GenomeView/GenomeRoot";
+import GenomeRoot from "../components/GenomeView/GenomeRoot";
 import { useCallback, useMemo, useRef } from "react";
 import { TrackModel } from "../models/TrackModel";
 import NavigationContext from "../models/NavigationContext";
@@ -24,13 +24,12 @@ export function TrackContainer(props: ITrackContainerState) {
       showGenomeNav={props.showGenomeNav}
       onNewRegion={props.onNewRegion}
       onNewHighlight={props.onNewHighlight}
-      onTrackSelected={props.onTrackSelected}
-      onTrackDeleted={props.onTrackDeleted}
+      onTracksChange={props.onTracksChange}
       onNewRegionSelect={props.onNewRegionSelect}
-      onTrackAdded={props.onTrackAdded}
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
       tool={props.tool}
+      Toolbar={props.Toolbar}
       selectedRegionSet={props.selectedRegionSet}
       setScreenshotData={props.setScreenshotData}
       isScreenShotOpen={props.isScreenShotOpen}
@@ -53,14 +52,12 @@ export function TrackContainerRepresentable({
   showGenomeNav,
   onNewRegion,
   onNewHighlight,
-  onTrackSelected,
-  onTrackDeleted,
-  onTrackAdded,
+  onTracksChange,
   onNewRegionSelect,
   viewRegion,
   userViewRegion,
   tool,
-  Toolbar,
+  Toolbar = {},
   selectedRegionSet,
   genomeName,
   setScreenshotData,
@@ -133,7 +130,6 @@ export function TrackContainerRepresentable({
         cache.delete(key);
       }
     }
-
     return result;
   }, [tracks]);
   genomeConfig["defaultTracks"] = convertedTracks;
@@ -241,25 +237,23 @@ export function TrackContainerRepresentable({
     }
   }, [userViewRegion, _genomeConfig, overrideViewRegion, selectedRegionSet]);
 
-  const handleTrackSelected = useCallback(
+  const handleTracksChange = useCallback(
     (selectedTracks: TrackModel[]) => {
-      onTrackSelected(selectedTracks.map(convertTrackModelToITrackModel));
+      onTracksChange(
+        selectedTracks.map((item) => {
+          const newITrackModel = convertTrackModelToITrackModel(item);
+          if (item.tracks) {
+            // check if there is a track that has multi source, like matplot, dynamic
+            newITrackModel["tracks"] = item.tracks.map(
+              convertTrackModelToITrackModel
+            );
+          }
+          return newITrackModel;
+        })
+      );
     },
-    [onTrackSelected, convertTrackModelToITrackModel]
-  );
 
-  const handleTrackDeleted = useCallback(
-    (currentTracks: TrackModel[]) => {
-      onTrackDeleted(currentTracks.map(convertTrackModelToITrackModel));
-    },
-    [onTrackDeleted, convertTrackModelToITrackModel]
-  );
-
-  const handleTrackAdded = useCallback(
-    (addedTracks: TrackModel[]) => {
-      onTrackAdded(addedTracks.map(convertTrackModelToITrackModel));
-    },
-    [onTrackAdded, convertTrackModelToITrackModel]
+    [onTracksChange, convertTrackModelToITrackModel]
   );
 
   const handleNewRegion = useCallback(
@@ -269,43 +263,34 @@ export function TrackContainerRepresentable({
     [onNewRegion]
   );
 
-  const handleNewRegionSelect = useCallback(
-    (startbase: number, endbase: number, highlightSearch: boolean = false) => {
-      if (lastViewRegion.current) {
-        const newRegion = lastViewRegion.current
-          .clone()
-          .setRegion(startbase, endbase);
-        onNewRegionSelect(
-          startbase,
-          endbase,
-          newRegion.currentRegionAsString() as GenomeCoordinate
-        );
-      } else {
-        const newRegion = new DisplayedRegionModel(
-          genomeConfig.navContext,
-          startbase,
-          endbase
-        );
-        onNewRegionSelect(
-          startbase,
-          endbase,
-          newRegion.currentRegionAsString() as GenomeCoordinate
-        );
-      }
-      if (highlightSearch) {
-        const newHightlight = {
-          start: startbase,
-          end: endbase,
-          display: true,
-          color: "rgba(0, 123, 255, 0.15)",
-          tag: "",
-        };
-        const tmpHighlight = [...highlights, newHightlight];
-        onNewHighlight(tmpHighlight);
-      }
-    },
-    [lastViewRegion, onNewRegionSelect]
-  );
+  const handleNewRegionSelect = (
+    startbase: number,
+    endbase: number,
+    highlightSearch: boolean = false
+  ) => {
+    const newRegion = new DisplayedRegionModel(
+      genomeConfig.navContext,
+      startbase,
+      endbase
+    );
+    onNewRegionSelect(
+      startbase,
+      endbase,
+      newRegion.currentRegionAsString() as GenomeCoordinate
+    );
+
+    if (highlightSearch) {
+      const newHightlight = {
+        start: startbase,
+        end: endbase,
+        display: true,
+        color: "rgba(0, 123, 255, 0.15)",
+        tag: "",
+      };
+      const tmpHighlight = [...highlights, newHightlight];
+      onNewHighlight(tmpHighlight);
+    }
+  };
 
   return (
     <div>
@@ -315,21 +300,22 @@ export function TrackContainerRepresentable({
         genomeConfig={genomeConfig}
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
-        onNewRegion={handleNewRegion}
-        onNewHighlight={onNewHighlight}
-        onTrackSelected={handleTrackSelected}
-        onTrackDeleted={handleTrackDeleted}
-        onTrackAdded={handleTrackAdded}
-        onNewRegionSelect={handleNewRegionSelect}
+        onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
+        onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
+        onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
+        onNewRegionSelect={
+          !onNewRegionSelect ? () => {} : handleNewRegionSelect
+        }
         viewRegion={convertedViewRegion}
         userViewRegion={convertedUserViewRegion}
         tool={tool}
+        Toolbar={Toolbar}
         selectedRegionSet={selectedRegionSet}
         setScreenshotData={setScreenshotData}
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
       />
-      {Toolbar ? (
+      {Toolbar.toolbar ? (
         <div
           id="toolbar-container"
           style={{
@@ -340,10 +326,12 @@ export function TrackContainerRepresentable({
             zIndex: 50,
           }}
         >
-          <Toolbar
+          <Toolbar.toolbar
             highlights={highlights}
-            onNewHighlight={onNewHighlight}
-            onNewRegionSelect={handleNewRegionSelect}
+            onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
+            onNewRegionSelect={
+              !onNewRegionSelect ? () => {} : handleNewRegionSelect
+            }
           />
         </div>
       ) : (

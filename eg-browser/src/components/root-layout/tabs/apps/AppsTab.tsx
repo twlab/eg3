@@ -10,7 +10,6 @@ import GoLive from "./destinations/GoLive";
 import Screenshot from "./destinations/Screenshot";
 import DynamicRecord from "./destinations/DynamicRecord";
 import FetchSequence from "./destinations/FetchSequence";
-import { useAppDispatch } from "@/lib/redux/hooks";
 import RegionSetSelector from "./destinations/region-set/RegionSetSelector";
 
 export default function AppsTab() {
@@ -76,8 +75,6 @@ export default function AppsTab() {
     []
   );
 
-  const dispatch = useAppDispatch();
-
   return (
     <NavigationStack
       destinations={destinations}
@@ -115,16 +112,12 @@ export default function AppsTab() {
           title="Screenshot"
           description="Capture and export browser views as images"
         />
-        {/* <DescriptiveNavigationLink
-          path="dynamic-record"
-          title="Dynamic Record"
-          description="Record and replay browser interactions"
-        />
+
         <DescriptiveNavigationLink
           path="fetch-sequence"
           title="Fetch Sequence"
           description="Retrieve and analyze genomic sequences"
-        /> */}
+        />
         {/* <DescriptiveNavigationLink
           path="session"
           title="Session"

@@ -7,8 +7,8 @@ import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 
 import React from "react";
 import JSON5 from "json5";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
-import { readFileAsText } from "@eg/tracks/src/models/util";
+
+import { readFileAsText, TrackModel } from "wuepgg3-track";
 
 export default function LocalTracks() {
   return (

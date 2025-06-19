@@ -77,6 +77,7 @@ interface MethylCTrackProps {
   };
   forceSvg: boolean;
   getNumLegend: any;
+  xvaluesData?: any;
 }
 
 class MethylCTrack extends PureComponent<MethylCTrackProps> {
@@ -126,8 +127,15 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
   };
 
   renderVisualizer() {
-    let { width, options, forceSvg, viewRegion, trackModel, getNumLegend } =
-      this.props;
+    let {
+      width,
+      options,
+      forceSvg,
+      viewRegion,
+      trackModel,
+      getNumLegend,
+      viewWindow,
+    } = this.props;
     let {
       height,
       colorsForContext,
@@ -135,6 +143,7 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
       isCombineStrands,
       depthFilter,
     } = options;
+    // we only want a section of viewWindow if we take a screenshot
 
     const childProps = {
       data: this.aggregatedRecords,
@@ -157,49 +166,74 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
           flexDirection: "column",
         }}
       >
-        <div style={{ zIndex: 4 }}>
-          <TrackLegend
+        <TrackLegend
+          trackModel={trackModel}
+          height={options.height}
+          axisScale={this.scales.methylToY}
+          noShiftFirstAxisLabel={!options.isCombineStrands}
+          forceSvg={forceSvg}
+        />
+
+        {!options.isCombineStrands && (
+          <ReverseStrandLegend
             trackModel={trackModel}
             height={options.height}
-            axisScale={this.scales.methylToY}
-            noShiftFirstAxisLabel={!options.isCombineStrands}
+            maxMethyl={options.maxMethyl}
+            forceSvg={forceSvg}
           />
-        </div>
-        <div style={{ zIndex: 3 }}>
-          {!options.isCombineStrands && (
-            <ReverseStrandLegend
-              trackModel={trackModel}
-              height={options.height}
-              maxMethyl={options.maxMethyl}
-            />
-          )}
-        </div>
+        )}
       </div>
     );
     if (getNumLegend) {
       getNumLegend(legend);
     }
     let strandRenderers, tooltipY;
-    if (isCombineStrands) {
 
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
+
+          overflow: "hidden",
+          width: width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-viewWindow.start}px)`,
+        }
+      : {};
+    if (isCombineStrands) {
       strandRenderers = (
         <React.Fragment>
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", ...curParentStyle }}>
             {forceSvg ? legend : ""}
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <StrandVisualizer {...childProps} strand="combined" />       </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
+              <StrandVisualizer {...childProps} strand="combined" />{" "}
+            </div>
           </div>
         </React.Fragment>
       );
       tooltipY = height;
     } else {
-
       strandRenderers = (
         <React.Fragment>
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", ...curParentStyle }}>
             {forceSvg ? legend : ""}
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
               <StrandVisualizer {...childProps} strand="forward" />
               <StrandVisualizer {...childProps} strand="reverse" />
             </div>
@@ -241,9 +275,18 @@ class MethylCTrack extends PureComponent<MethylCTrackProps> {
   }
 
   render() {
-    const { data, trackModel, viewRegion, width, options, getNumLegend } =
-      this.props;
-    this.aggregatedRecords = this.aggregateRecords(data, viewRegion, width);
+    const {
+      data,
+      trackModel,
+      viewRegion,
+      width,
+      options,
+      getNumLegend,
+      xvaluesData,
+    } = this.props;
+    this.aggregatedRecords = xvaluesData
+      ? xvaluesData
+      : this.aggregateRecords(data, viewRegion, width);
     this.scales = this.computeScales(
       this.aggregatedRecords,
       options.height,
@@ -290,6 +333,7 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
   renderBarElement(x: number) {
     const { data, scales, strand, height, depthFilter } = this.props;
     const pixelData = data[x][strand];
+
     if (!pixelData) {
       return null;
     }
@@ -340,6 +384,7 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
   renderDepthPlot() {
     const { data, scales, strand, depthColor, height, depthFilter } =
       this.props;
+
     let elements: Array<any> = [];
     for (let x = 0; x < data.length - 1; x++) {
       const currentRecord = data[x][strand];
@@ -371,6 +416,7 @@ class StrandVisualizer extends PureComponent<StrandVisualizerProps> {
         ? { transform: "scale(1, -1)", borderBottom: "1px solid lightgrey" }
         : undefined;
     let bars: any = [];
+
     for (let x = 0; x < data.length; x++) {
       bars.push(this.renderBarElement(x));
     }
@@ -406,6 +452,8 @@ function ReverseStrandLegend(props) {
   const mockTrackModel = new TrackModel({
     name: " ",
     isSelected: props.trackModel.isSelected,
+    id: "mock-id",
+    options: {},
   });
   return (
     <TrackLegend
@@ -415,6 +463,7 @@ function ReverseStrandLegend(props) {
       axisScale={scaleLinear()
         .domain([0, props.maxMethyl])
         .range([0, props.height - VERTICAL_PADDING])}
+      forceSvg={props.forceSvg}
     />
   );
 }

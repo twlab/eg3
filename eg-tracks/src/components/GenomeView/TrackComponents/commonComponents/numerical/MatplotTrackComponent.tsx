@@ -18,6 +18,7 @@ import { ScaleChoices } from "../../../../../models/ScaleChoices";
 import Feature from "../../../../../models/Feature";
 import TrackModel from "../../../../../models/TrackModel";
 import TrackLegend from "../TrackLegend";
+import HoverToolTip from "../HoverToolTips/HoverToolTip";
 
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -42,6 +43,7 @@ interface MatplotTrackProps {
   width: any;
   forceSvg: any;
   getNumLegend: any;
+  xvaluesData?: any; // Add xvaluesData property to the interface
 }
 const TOP_PADDING = 2;
 
@@ -82,7 +84,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
 
     this.aggregateFeatures = memoizeOne(this.aggregateFeatures);
     this.computeScales = memoizeOne(this.computeScales);
-    this.renderTooltip = this.renderTooltip.bind(this);
+    // this.renderTooltip = this.renderTooltip.bind(this);
   }
 
   aggregateFeatures(data, viewRegion, width, aggregatorId) {
@@ -93,6 +95,7 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
 
   computeScales(xToValue, height) {
     const { yScale, yMin, yMax } = this.props.options;
+
     if (yMin > yMax) {
       // notify.show('Y-axis min must less than max', 'error', 2000);
     }
@@ -133,40 +136,40 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
    * @param {number} value -
    * @return {JSX.Element} tooltip to render
    */
-  renderTooltip(relativeX) {
-    const { trackModel, viewRegion, width, unit } = this.props;
-    const values = this.xToValue.map((value) => value[Math.round(relativeX)]);
-    const stringValues = values.map((value) => {
-      return typeof value === "number" && !Number.isNaN(value)
-        ? value.toFixed(2)
-        : "(no data)";
-    });
+  // renderTooltip(relativeX) {
+  //   const { trackModel, viewRegion, width, unit } = this.props;
+  //   const values = this.xToValue.map((value) => value[Math.round(relativeX)]);
+  //   const stringValues = values.map((value) => {
+  //     return typeof value === "number" && !Number.isNaN(value)
+  //       ? value.toFixed(2)
+  //       : "(no data)";
+  //   });
 
-    const divs = stringValues.map((value, i) => {
-      const color = trackModel.tracks[i].options.color || "blue";
-      return (
-        <div key={i}>
-          <span style={{ color: color }}>
-            {trackModel.tracks[i].label} {value}
-          </span>
-          {unit && <span className="Tooltip-minor-text">{unit}</span>}
-        </div>
-      );
-    });
-    return (
-      <div>
-        {divs}
-        <div className="Tooltip-minor-text">
-          <GenomicCoordinates
-            viewRegion={viewRegion}
-            width={width}
-            x={relativeX}
-          />
-        </div>
-        <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
-      </div>
-    );
-  }
+  //   const divs = stringValues.map((value, i) => {
+  //     const color = trackModel.tracks[i].options.color || "blue";
+  //     return (
+  //       <div key={i}>
+  //         <span style={{ color: color }}>
+  //           {trackModel.tracks[i].label} {value}
+  //         </span>
+  //         {unit && <span className="Tooltip-minor-text">{unit}</span>}
+  //       </div>
+  //     );
+  //   });
+  //   return (
+  //     <div>
+  //       {divs}
+  //       <div className="Tooltip-minor-text">
+  //         <GenomicCoordinates
+  //           viewRegion={viewRegion}
+  //           width={width}
+  //           x={relativeX}
+  //         />
+  //       </div>
+  //       <div className="Tooltip-minor-text">{trackModel.getDisplayLabel()}</div>
+  //     </div>
+  //   );
+  // }
 
   render() {
     const {
@@ -179,12 +182,14 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       forceSvg,
       getNumLegend,
       viewWindow,
+      xvaluesData
     } = this.props;
 
     const { height, aggregateMethod, smooth, lineWidth } = options;
     const aggreagatedData = data.map((d) =>
       this.aggregateFeatures(d, viewRegion, width, aggregateMethod)
     );
+
     this.xToValue =
       smooth === 0
         ? aggreagatedData
@@ -204,18 +209,48 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
 
     const visualizer = (
       // <HoverTooltipContext tooltipRelativeY={height} getTooltipContents={this.renderTooltip} >
-      <LinePlot
-        trackModel={trackModel}
-        xToValue={this.xToValue}
-        scales={this.scales}
-        height={height}
-        forceSvg={forceSvg}
-        lineWidth={lineWidth}
-        width={width}
-        viewWindow={viewWindow}
-      />
+      <React.Fragment>
+        <div style={{ display: "flex" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+            }}
+          >
+            {!forceSvg ? (
+              <HoverToolTip
+                data={this.xToValue}
+                scale={this.scales}
+                windowWidth={width}
+                trackType={"matplot"}
+                trackModel={trackModel}
+                height={height}
+                viewRegion={viewRegion}
+                unit={unit ? unit : ""}
+                hasReverse={true}
+                options={options}
+              />
+            ) : (
+              ""
+            )}
+          </div>
+          {forceSvg ? legend : ""}
+          <LinePlot
+            trackModel={trackModel}
+            xToValue={this.xToValue}
+            scales={this.scales}
+            height={height}
+            forceSvg={forceSvg}
+            lineWidth={lineWidth}
+            width={width}
+            viewWindow={viewWindow}
+          />
+        </div>
+      </React.Fragment>
     );
-    // </HoverTooltipContext>
+
     return visualizer;
   }
 }
@@ -293,6 +328,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
         height={height}
         forceSvg={forceSvg}
         viewWindow={viewWindow}
+        style={{}}
       >
         {xToValue.map(this.renderLine)}
       </DesignRenderer>

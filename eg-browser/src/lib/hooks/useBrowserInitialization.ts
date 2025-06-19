@@ -5,14 +5,16 @@ import {
 } from "../redux/slices/browserSlice";
 import { useAppDispatch } from "../redux/hooks";
 import { useEffect } from "react";
-import { getGenomeConfig, ITrackModel } from "@eg/tracks";
-import { GenomeCoordinate } from "@eg/tracks";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import {
+  GenomeCoordinate,
+  GenomeSerializer,
+  getGenomeConfig,
+  ITrackModel,
+} from "wuepgg3-track";
 import {
   addSessionsFromBundleId,
   importOneSession,
 } from "../redux/thunk/session";
-
 
 const IDEMPOTENCY_STORAGE_KEY = "_eg-query-idempotency-key";
 
@@ -29,6 +31,32 @@ export default function useBrowserInitialization() {
     const sessionFile = searchParams.get("sessionFile");
     const idempotencyToken = searchParams.get("idempotencyToken");
 
+    // MARK: - Legacy URL Handling
+    const session = searchParams.get("session");
+    const statusId = searchParams.get("statusId");
+    const datahub = searchParams.get("datahub");
+    const coordinate = searchParams.get("coordinate");
+    const publichub = searchParams.get("publichub");
+
+    if (session) {
+      window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&session=${session}&statusId=${statusId}`;
+      return;
+    }
+    if (datahub) {
+      if (coordinate) {
+        window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}&coordinate=${coordinate}`;
+      } else {
+        window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&datahub=${datahub}`;
+      }
+      return;
+    }
+    if (publichub) {
+      window.location.href = `https://epigenomegateway.wustl.edu/legacy/?genome=${genome}&publichub=${publichub}`;
+      return;
+    }
+
+    // MARK: - Idempotency Check
+
     if (idempotencyToken) {
       const currentIdempotencyToken = localStorage.getItem(
         IDEMPOTENCY_STORAGE_KEY
@@ -38,6 +66,8 @@ export default function useBrowserInitialization() {
         return;
       }
     }
+
+    // MARK: - Session Loading
 
     if (sessionFile) {
       (async () => {
@@ -85,18 +115,23 @@ export default function useBrowserInitialization() {
           let additionalTracks: ITrackModel[] = [];
 
           if (hub) {
-            const hubData = await fetch(hub)
-              .then((r) => r.json())
-              .then((tracks) =>
-                tracks.filter((t: any) => t.showOnHubLoad === true)
-              );
+            try {
+              const hubData = await fetch(hub)
+                .then((r) => r.json())
+                .then((tracks) =>
+                  tracks.filter((t: any) => t.showOnHubLoad === true)
+                );
 
-            additionalTracks = hubData.map((t: any) => ({
-              ...t,
-              id: crypto.randomUUID(),
-              genome: genome,
-              isSelected: false,
-            }));
+              additionalTracks = hubData.map((t: any) => ({
+                ...t,
+                id: crypto.randomUUID(),
+                genome: genome,
+                isSelected: false,
+              }));
+            } catch (error) {
+              console.error("Failed to load hub data:", error);
+              alert("Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead.");
+            }
           }
 
           genome.defaultTracks = genome.defaultTracks?.map((t) =>

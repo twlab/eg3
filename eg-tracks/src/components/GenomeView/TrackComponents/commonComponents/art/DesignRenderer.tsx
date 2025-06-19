@@ -11,7 +11,7 @@ const DEFAULT_STYLE = { display: "block" }; // display: block prevents extra bot
 interface DesignRendererProps {
   children: React.ReactNode;
   type: any;
-  style: any;
+  style?: any;
   width: any;
   height: number;
   viewWindow?: any;
@@ -30,18 +30,13 @@ interface CanvasRendererProps {
  * @author Silas Hsu
  */
 export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
-  static propTypes = {
-    type: PropTypes.oneOf([RenderTypes.CANVAS, RenderTypes.SVG]),
-    style: PropTypes.object, // CSS.  Will be merged with default styles.
-    // Remaining props get passed directly to the rendered element
-  };
-
   static defaultProps = {
     type: RenderTypes.SVG,
+    style: {},
   };
 
   render() {
-    const { type, style, ...otherProps } = this.props;
+    const { type, style } = this.props;
 
     const mergedStyle = Object.assign({}, DEFAULT_STYLE, style);
     switch (type) {
@@ -56,20 +51,13 @@ export class DesignRenderer extends React.PureComponent<DesignRendererProps> {
         );
       case RenderTypes.SVG:
         if (this.props.forceSvg) {
-          let start = this.props.viewWindow.start
-
-          let end = this.props.viewWindow.end
-
-          let svgWidth = end - start;
-
           return (
             <svg
               children={this.props.children}
               style={mergedStyle}
-              width={this.props.width / 3}
-              viewBox={`${start} 0 ${svgWidth} ${this.props.height}`}
+              width={this.props.width}
+              // viewBox={`${start} 0 ${svgWidth} ${this.props.height}`}
               height={this.props.height}
-              display={"block"}
             />
           );
         } else {

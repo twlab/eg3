@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 import { ColorConfig } from "./ColorConfig";
 import ColorPicker from "./ColorPicker";
-import { ITEM_PROP_TYPES } from "./TrackContextMenu";
 
 import "./MethylColorConfig.css";
 
@@ -15,7 +14,6 @@ interface MethylColorConfigProps {
 }
 export class MethylColorConfig extends React.Component<MethylColorConfigProps> {
   static propTypes = {
-    ...ITEM_PROP_TYPES,
     optionsObjects: PropTypes.arrayOf(PropTypes.object).isRequired,
     onOptionSet: PropTypes.func.isRequired,
   };

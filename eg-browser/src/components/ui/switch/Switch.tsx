@@ -18,8 +18,8 @@ export default function Switch({
       className={classNames(
         "flex items-center gap-2 w-14 h-8 rounded-full p-1 cursor-pointer transition-all duration-300",
         checked
-          ? "bg-secondary dark:bg-dark-secondary outline-none"
-          : "bg-gray-100 dark:bg-dark-surface outline outline-2 outline-gray-400"
+          ? "bg-secondary dark:bg-dark-secondary"
+          : "bg-gray-300 dark:bg-dark-surface"
       )}
       onClick={() => onChange(!checked)}
     >

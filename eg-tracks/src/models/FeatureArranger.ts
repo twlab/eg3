@@ -135,11 +135,28 @@ export class FeatureArranger {
     );
 
     const results: PlacedFeatureGroup[] = [];
+    const featureTracker = {};
+
+
     for (const feature of visibleFeatures) {
+      // Generate the ID to use for uniqueness check
+      let featureId = feature.id;
+      if (featureId === undefined || featureId === null) {
+        featureId = `${feature.locus.start}-${feature.locus.end}`;
+      }
+
+      // Skip this feature if the ID already exists
+      if (featureTracker[featureId]) {
+        continue;
+      }
+
+      // Mark this ID as seen
+      featureTracker[featureId] = true;
+
+      // Place features and process results
       const placements = FEATURE_PLACER.placeFeatures([feature], viewRegion, width);
       results.push(...this._combineAdjacent(placements));
     }
-
     const numRowsAssigned = this._assignRows(results, padding, sortItems);
 
     return {

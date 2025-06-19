@@ -64,10 +64,10 @@ export class HicTrackConfig extends TrackConfig {
     if (this.getOptions().displayMode !== InteractionDisplayMode.HEATMAP) {
       items.splice(1, 0, LineWidthConfig);
     }
-    if (this.getOptions().displayMode === InteractionDisplayMode.HEATMAP) {
-      items.splice(1, 0, BinSizeConfig);
-      items.splice(1, 0, HicNormalizationConfig);
-    }
+    // if (this.getOptions().displayMode === InteractionDisplayMode.HEATMAP) {
+    //   items.splice(1, 0, BinSizeConfig);
+    //   items.splice(1, 0, HicNormalizationConfig);
+    // }
 
     if (
       this.getOptions().displayMode === InteractionDisplayMode.HEATMAP ||

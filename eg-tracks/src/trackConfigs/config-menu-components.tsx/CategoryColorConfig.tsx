@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import ColorPicker from "./ColorPicker";
-import { ITEM_PROP_TYPES } from "./TrackContextMenu";
 
 import "./CategoryColorConfig.css";
 
@@ -14,7 +13,6 @@ interface CategoricalColorConfigProps {
 }
 export class CategoryColorConfig extends React.Component<CategoricalColorConfigProps> {
   static propTypes = {
-    ...ITEM_PROP_TYPES,
     optionsObjects: PropTypes.arrayOf(PropTypes.object).isRequired,
     onOptionSet: PropTypes.func.isRequired,
   };

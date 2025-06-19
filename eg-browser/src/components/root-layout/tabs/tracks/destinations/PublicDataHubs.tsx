@@ -8,9 +8,9 @@ import {
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 
-import FacetTable from "@eg/tracks/src/components/GenomeView/TabComponents/FacetTable";
+import FacetTable from "./FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
-import { ITrackModel } from "@eg/tracks";
+import { ITrackModel } from "wuepgg3-track";
 
 import {
   addPublicTracksPool,
@@ -18,11 +18,12 @@ import {
   selectPublicTracksPool,
   updateLoadedPublicHub,
 } from "@/lib/redux/slices/hubSlice";
-import DataHubParser from "@eg/tracks/src/models/DataHubParser";
-import Json5Fetcher from "@eg/tracks/src/models/Json5Fetcher";
+// Local Hooks
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
-import TrackModel from "@eg/tracks/src/models/TrackModel";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+
+// wuepgg3-track Imports
+import { DataHubParser, Json5Fetcher, TrackModel } from "wuepgg3-track";
 
 export default function PublicDataHubs() {
   useExpandedNavigationTab();
@@ -32,10 +33,12 @@ export default function PublicDataHubs() {
   const dispatch = useAppDispatch();
   const currentSession = useAppSelector(selectCurrentSession);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadingHubs, setLoadingHubs] = useState<{ [key: string]: boolean }>({});
+  const [loadingHubs, setLoadingHubs] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   const secondaryGenomes: Array<any> = [];
-  let selectedGenomeName = null;
+  let selectedGenomeName: any = null;
   if (currentSession) {
     selectedGenomeName = currentSession!.genomeId;
   }
@@ -113,14 +116,14 @@ export default function PublicDataHubs() {
         </span>
         <div className="flex-shrink-0 ml-2">
           {isLoading ? (
-            <div className="size-6 rounded-md bg-gray-100 flex items-center justify-center">
+            <div className="size-6 rounded-md bg-gray-200 flex items-center justify-center">
               <div className="size-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <button
               className={`size-6 rounded-md flex items-center justify-center ${isLoaded
-                ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
-                : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
+                  ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
+                  : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
                 }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}

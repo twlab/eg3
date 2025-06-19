@@ -1,4 +1,4 @@
-import React, { memo, ReactNode } from "react";
+import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
@@ -18,15 +18,13 @@ const ARROW_SIZE = 16;
 const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
-import { groups, scaleLinear } from "d3";
-import TrackLegend from "./commonComponents/TrackLegend";
-import { ScaleChoices } from "../../../models/ScaleChoices";
-import { NumericalDisplayModes } from "../../../trackConfigs/config-menu-models.tsx/DisplayModes";
-
+import MetadataIndicator from "./commonComponents/MetadataIndicator";
 import VcfDetail from "./VcfComponents/VcfDetail";
 import Vcf from "./VcfComponents/Vcf";
 import { numericalTracks } from "./GroupedTrackManager";
-const AUTO_HEATMAP_THRESHOLD = 21;
+import Loading from "./commonComponents/Loading";
+import "./commonComponents/loading.css";
+import { geneClickToolTipMap } from "./renderClickTooltipMap";
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -52,6 +50,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   posRef,
   highlightElements,
   viewWindowConfigData,
+  metaSets,
+  onColorBoxClick,
+  messageData,
+  Toolbar,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -64,12 +66,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   const updatedLegend = useRef<any>(undefined);
   const fetchError = useRef<boolean>(false);
 
-  const straw = useRef<{ [key: string]: any }>({});
-
   const xPos = useRef(0);
 
-  const [svgComponents, setSvgComponents] = useState<any>(null);
-  const [canvasComponents, setCanvasComponents] = useState<any>(null);
+  const [viewComponent, setViewComponent] = useState<{
+    [key: string]: any;
+  } | null>(null);
+
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
   const [legend, setLegend] = useState<any>();
@@ -134,7 +136,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         getHeight,
         ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
         groupScale: trackState.groupScale,
-        xvalues: xvalues,
+        xvaluesData: xvalues,
+        onClose,
       })
     );
 
@@ -142,31 +145,30 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       signalTrackLoadComplete(id);
       updateSide.current = side;
 
-      if (configOptions.current.displayMode === "full") {
-        setSvgComponents(res);
-        // if (!(cacheDataIdx in displayCache.current["full"])) {
-        //   displayCache.current["full"][cacheDataIdx] = res;
-        // }
-      } else {
-        setCanvasComponents(res);
-        // if (!(cacheDataIdx in displayCache.current["density"])) {
-        //   displayCache.current["density"][cacheDataIdx] = res;
-        // }
-      }
+      setViewComponent({ component: res, dataIdx: cacheDataIdx });
 
       xPos.current = curXPos;
     }
   }
-  // Function to create individual feature element from the GeneAnnotation track, passed to full visualizer
-
+  function onClose() {
+    setToolTip(null);
+  }
+  // MARK: clickTool
   function renderTooltip(event, gene) {
-    const currtooltip = geneClickToolTipMap[`${trackModel.type}`](
+    const currtooltip = geneClickToolTipMap[`${trackModel.type}`]({
       gene,
-      event.pageX,
-      event.pageY,
-      genomeConfig.genome._name,
-      onClose
-    );
+      feature: gene,
+      snp: gene,
+      vcf: gene,
+      trackModel,
+      pageX: event.pageX,
+      pageY: event.pageY,
+      name: genomeConfig.genome._name,
+      onClose: onClose,
+      isThereG3dTrack: false,
+      setShow3dGene: setShow3dGene,
+      configOptions: configOptions.current,
+    });
     setToolTipVisible(true);
     setToolTip(ReactDOM.createPortal(currtooltip, document.body));
   }
@@ -182,35 +184,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   ) {
     let currtooltip;
     if (type === "norm") {
-      currtooltip = geneClickToolTipMap["normModbed"](
+      currtooltip = geneClickToolTipMap["normModbed"]({
         bs,
-        event.pageX,
-        event.pageY,
-        feature
-      );
-    } else {
-      currtooltip = geneClickToolTipMap["barModbed"](
+        pageX: event.pageX,
+        pageY: event.pageY,
         feature,
-        event.pageX,
-        event.pageY,
+        onClose,
+      });
+    } else {
+      currtooltip = geneClickToolTipMap["barModbed"]({
+        feature,
+        pageX: event.pageX,
+        pageY: event.pageY,
         onCount,
         onPct,
-        total
-      );
+        total,
+        onClose,
+      });
     }
     setToolTipVisible(true);
     setToolTip(currtooltip);
   }
-  function onClose() {
-    setToolTipVisible(false);
-  }
 
   useEffect(() => {
-    if (svgComponents || canvasComponents) {
-      console.log(updatedLegend.current);
+    if (viewComponent) {
       setLegend(updatedLegend.current);
     }
-  }, [svgComponents, canvasComponents]);
+  }, [viewComponent]);
 
   // MARK:[newDrawDat
   useEffect(() => {
@@ -224,21 +224,19 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-
+      const primaryVisData =
+        trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
       if (cacheTrackData.trackType !== "genomealign") {
-        const primaryVisData =
-          trackState.genomicFetchCoord[trackState.primaryGenName]
-            .primaryVisData;
         let visRegion = !cacheTrackData.usePrimaryNav
           ? trackState.genomicFetchCoord[
               trackFetchedDataCache.current[`${id}`].queryGenome
             ].queryRegion
           : primaryVisData.visRegion;
         trackState["visRegion"] = visRegion;
-        trackState["visWidth"] = primaryVisData.visWidth
-          ? primaryVisData.visWidth
-          : windowWidth * 3;
       }
+      trackState["visWidth"] = primaryVisData.visWidth
+        ? primaryVisData.visWidth
+        : windowWidth * 3;
 
       if (initTrackStart.current) {
         // use previous data before resetState
@@ -348,7 +346,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK: [applyConfig]
   useEffect(() => {
-    if (svgComponents !== null || canvasComponents !== null) {
+    if (viewComponent !== null) {
       if (id in applyTrackConfigChange) {
         configOptions.current = {
           ...configOptions.current,
@@ -378,6 +376,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : primaryVisData.visRegion;
           trackState["visRegion"] = visRegion;
         }
+        if (viewWindowConfigData.current) {
+          trackState.viewWindow = viewWindowConfigData.current.viewWindow;
+        }
 
         getConfigChangeData({
           fetchedDataCache: trackFetchedDataCache.current[`${id}`],
@@ -397,27 +398,51 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (
       viewWindowConfigChange &&
       id in viewWindowConfigChange.trackToDrawId &&
-      trackModel.type in numericalTracks
+      (trackModel.type in numericalTracks ||
+        configOptions.current.displayMode === "density")
     ) {
+      if (trackModel.type in { hic: "", longrange: "" }) {
+        if (
+          !configOptions.current.fetchViewWindowOnly &&
+          !configOptions.current.bothAnchorsInView
+        ) {
+          return;
+        }
+      }
       let trackState = _.cloneDeep(
         globalTrackState.current.trackStates[dataIdx].trackState
       );
       let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-      let curIdx = dataIdx + 1;
       let noData = false;
-      for (let i = 0; i < 3; i++) {
-        if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
+      if (!cacheTrackData.useExpandedLoci) {
+        let curIdx = dataIdx + 1;
+
+        for (let i = 0; i < 3; i++) {
+          if (!cacheTrackData[curIdx] || !cacheTrackData[curIdx].dataCache) {
+            noData = true;
+          }
+          if (
+            cacheTrackData[curIdx].dataCache &&
+            "error" in cacheTrackData[curIdx].dataCache
+          ) {
+            fetchError.current = true;
+          } else {
+            fetchError.current = false;
+          }
+          curIdx--;
+        }
+      } else {
+        const combinedData = cacheTrackData[dataIdx]
+          ? cacheTrackData[dataIdx].dataCache
+          : null;
+        if (combinedData) {
+          if (typeof combinedData === "object" && "error" in combinedData) {
+            fetchError.current = true;
+            noData = true;
+          }
+        } else {
           noData = true;
         }
-        if (
-          cacheTrackData[curIdx].dataCache &&
-          "error" in cacheTrackData[curIdx].dataCache
-        ) {
-          fetchError.current = true;
-        } else {
-          fetchError.current = false;
-        }
-        curIdx--;
       }
       if (!noData) {
         if (cacheTrackData.trackType !== "genomealign") {
@@ -444,13 +469,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         });
       }
     }
-    //   // setCanvasComponents(
-    //   //   <div>
-    //   //     <ReactComp options={tmpObj} />
-    //   //   </div>
-    //   // );
-
-    // }
   }, [viewWindowConfigChange]);
 
   // MARK: Screenshot
@@ -467,29 +485,45 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
         if (trackModel.type !== "genomealign") {
-          for (let i = 0; i < 3; i++) {
-            if (!cacheTrackData[currIdx].dataCache) {
-              continue;
-            }
-            if (
-              cacheTrackData[currIdx].dataCache &&
-              "error" in cacheTrackData[currIdx].dataCache
-            ) {
-              hasError = true;
-              combinedData.push(cacheTrackData[currIdx].dataCache.error);
-            } else {
-              combinedData.push(cacheTrackData[currIdx]);
-            }
+          if (
+            !(trackModel.type in { hic: "", biginteraction: "", longrange: "" })
+          ) {
+            for (let i = 0; i < 3; i++) {
+              if (!cacheTrackData[currIdx].dataCache) {
+                continue;
+              }
+              if (
+                cacheTrackData[currIdx].dataCache &&
+                "error" in cacheTrackData[currIdx].dataCache
+              ) {
+                hasError = true;
+                combinedData.push(cacheTrackData[currIdx].dataCache.error);
+              } else {
+                combinedData.push(cacheTrackData[currIdx]);
+              }
 
-            currIdx--;
+              currIdx--;
+            }
+          } else {
+            combinedData = cacheTrackData[dataIdx].dataCache;
+
+            if (!combinedData) {
+              hasError = true;
+            }
           }
+
           var noData = false;
           if (!hasError) {
             if (
               trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
             ) {
               combinedData = getDeDupeArrMatPlot(combinedData, false);
-            } else {
+            } else if (
+              !(
+                trackModel.type in
+                { hic: "", biginteraction: "", longrange: "" }
+              )
+            ) {
               combinedData = combinedData
                 .map((item) => {
                   if (item && "dataCache" in item) {
@@ -499,6 +533,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   }
                 })
                 .flat(1);
+            } else if (combinedData && "error" in combinedData) {
+              noData = true;
             }
           }
           if (noData || !combinedData) {
@@ -551,6 +587,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
+
         if (combinedData) {
           sentScreenshotData({
             fetchData: {
@@ -576,878 +613,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
   }, [isScreenShotOpen]);
 
-  const geneClickToolTipMap: { [key: string]: any } = {
-    bigbed: function bedClickToolTip(
-      feature: any,
-      pageX,
-      pageY,
-      name,
-      onClose
-    ) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail
-                    feature={feature}
-                    category={undefined}
-                    queryEndpoint={undefined}
-                  />
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    geneannotation: function refGeneClickTooltip(
-      gene: any,
-      pageX,
-      pageY,
-      name,
-      onClose
-    ) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      const tooltipElement = (
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <GeneDetail
-                    gene={gene}
-                    collectionName={name}
-                    queryEndpoint={{}}
-                  />
-                  {isThereG3dTrack ? (
-                    <div>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => setShow3dGene(gene)}
-                      >
-                        Show in 3D
-                      </button>
-                    </div>
-                  ) : (
-                    ""
-                  )}
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>
-      );
-
-      return tooltipElement;
-    },
-    refbed: function refGeneClickTooltip(
-      gene: any,
-      pageX,
-      pageY,
-      name,
-      onClose
-    ) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <GeneDetail
-                    gene={gene}
-                    collectionName={name}
-                    queryEndpoint={{}}
-                  />
-                  {isThereG3dTrack ? (
-                    <div>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => setShow3dGene(gene)}
-                      >
-                        Show in 3D
-                      </button>
-                      {/* {" "}
-                    <button className="btn btn-sm btn-secondary" onClick={this.clearGene3d}>
-                        Clear in 3D
-                    </button> */}
-                    </div>
-                  ) : (
-                    ""
-                  )}
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    bed: function bedClickTooltip(feature: any, pageX, pageY, name, onClose) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail
-                    feature={feature}
-                    category={undefined}
-                    queryEndpoint={undefined}
-                  />
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    repeatmasker: function repeatMaskLeftClick(
-      feature: any,
-      pageX,
-      pageY,
-      name,
-      onClose
-    ) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <div>
-                    <div>
-                      <span
-                        className="Tooltip-major-text"
-                        style={{ marginRight: 5 }}
-                      >
-                        {feature.getName()}
-                      </span>
-                      <span className="Tooltip-minor-text">
-                        {feature.getClassDetails()}
-                      </span>
-                    </div>
-                    <div>
-                      {feature.getLocus().toString()} (
-                      {feature.getLocus().getLength()}bp)
-                    </div>
-                    <div>(1 - divergence%) = {feature.value.toFixed(2)}</div>
-                    <div>strand: {feature.strand}</div>
-                    <div className="Tooltip-minor-text">
-                      {trackModel.getDisplayLabel()}
-                    </div>
-                  </div>
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    omeroidr: function omeroidrClickToolTip(snp: any, pageX, pageY, onClose) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <SnpDetail snp={snp} />
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    bam: function bamClickTooltip(feature: any, pageX, pageY, name, onClose) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-      const alignment = feature.getAlignment();
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail
-                    feature={feature}
-                    category={undefined}
-                    queryEndpoint={undefined}
-                  />
-                  <div style={{ fontFamily: "monospace", whiteSpace: "pre" }}>
-                    <div>Ref {alignment.reference}</div>
-                    <div> {alignment.lines}</div>
-                    <div>Read {alignment.read}</div>
-                  </div>
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    snp: function SnpClickToolTip(snp: any, pageX, pageY, onClose) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <SnpDetail snp={snp} />
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    categorical: function featureClickTooltip(
-      feature: any,
-      pageX,
-      pageY,
-      name,
-      onClose
-    ) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <FeatureDetail
-                    feature={feature}
-                    category={configOptions.current.category}
-                    queryEndpoint={undefined}
-                  />
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    vcf: function VcfClickToolTip(vcf: any, pageX, pageY, name, onClose) {
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <VcfDetail vcf={vcf as Vcf} />
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    jaspar: function JasparClickTooltip(
-      feature: any,
-      pageX,
-      pageY,
-      name,
-      onClose
-    ) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <OutsideClickDetector onOutsideClick={onClose}>
-                  <JasparDetail feature={feature} />
-                </OutsideClickDetector>
-                {ReactDOM.createPortal(
-                  <div
-                    ref={arrowProps.ref}
-                    style={{
-                      ...arrowProps.style,
-                      width: 0,
-                      height: 0,
-                      position: "absolute",
-                      left: pageX - 8,
-                      top: pageY,
-                      borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderRight: `${ARROW_SIZE / 2}px solid transparent`,
-                      borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
-                    }}
-                  />,
-                  document.body
-                )}
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-    normModbed: function normToolTip(bs: any, pageX, pageY, feature) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-
-          <div
-            style={{
-              ...contentStyle,
-              zIndex: 1001,
-            }}
-            className="Tooltip"
-          >
-            <div>
-              {bs && `position ${bs} in`} {feature.getName()} read
-            </div>
-          </div>
-        </Manager>,
-        document.body
-      );
-    },
-
-    barModbed: function barTooltip(
-      feature: any,
-      pageX,
-      pageY,
-      onCount,
-      onPct,
-      total
-    ) {
-      const contentStyle = Object.assign({
-        marginTop: ARROW_SIZE,
-        pointerEvents: "auto",
-      });
-
-      return ReactDOM.createPortal(
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                style={{
-                  position: "absolute",
-                  left: pageX - 8 * 2,
-                  top: pageY,
-                }}
-              />
-            )}
-          </Reference>
-          <Popper
-            placement="bottom-start"
-            modifiers={[{ name: "flip", enabled: false }]}
-          >
-            {({ ref, style, placement, arrowProps }) => (
-              <div
-                ref={ref}
-                style={{
-                  ...style,
-                  ...contentStyle,
-                  zIndex: 1001,
-                }}
-                className="Tooltip"
-              >
-                <div>
-                  {onCount}/{total} ({`${(onPct * 100).toFixed(2)}%`})
-                </div>
-                <div>{feature.getName()}</div>
-              </div>
-            )}
-          </Popper>
-        </Manager>,
-        document.body
-      );
-    },
-  };
+  // MARK: RENDER
 
   return (
     <div
@@ -1457,17 +623,66 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     >
       <div
         style={{
-          zIndex: 10,
+          zIndex: 2,
           width: 120,
-          backgroundColor: trackModel.isSelected
-            ? "#FFD0C7"
-            : "var(--bg-color)",
-
+          backgroundColor: trackModel.isSelected ? "yellow" : "var(--bg-color)",
           color: trackModel.isSelected ? "black" : "var(--font-color)",
+          marginBottom: "1px", // we need 1 px margin here for tracklegend axis, since it uses the full height and we are using outline
         }}
       >
         {legend}
       </div>
+
+      {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
+        Button 60
+      </div> */}
+      {trackModel.id in messageData ||
+      !viewComponent ||
+      (viewComponent && dataIdx !== viewComponent.dataIdx) ? (
+        <Loading
+          buttonLabel={
+            (viewComponent && dataIdx !== viewComponent.dataIdx) ||
+            !viewComponent
+              ? "Loading View"
+              : "Getting Data"
+          }
+          height={
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
+              : 40
+          }
+          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+          // xOffset={0}
+        >
+          <div>
+            {trackModel.id in messageData
+              ? messageData[`${trackModel.id}`].map((item, index) => {
+                  return (
+                    <div
+                      key={`${trackModel.index}loading-` + `${index}`}
+                      style={{ display: "flex", flexDirection: "column" }}
+                    >
+                      {item.genomicLoci.map((item) => item.toString())}{" "}
+                    </div>
+                  );
+                })
+              : ""}
+          </div>
+        </Loading>
+      ) : (
+        ""
+      )}
+      {Toolbar.skeleton && !viewComponent ? (
+        <div style={{}}>
+          <Toolbar.skeleton width={windowWidth} height={40} />
+        </div>
+      ) : (
+        ""
+      )}
       <div
         ref={posRef}
         style={{
@@ -1481,6 +696,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               ? configOptions.current.height
               : 40,
           position: "relative",
+          WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+          WebkitPerspective: `${windowWidth * 3 + 120}px`,
+          backfaceVisibility: "hidden",
+          perspective: `${windowWidth * 3 + 120}px`,
         }}
       >
         <div
@@ -1490,49 +709,78 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             right: updateSide.current === "left" ? `${xPos.current}px` : "",
             left: updateSide.current === "right" ? `${xPos.current}px` : "",
             backgroundColor: configOptions.current.backgroundColor,
-            WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-            WebkitPerspective: `${windowWidth + 120}px`,
-            backfaceVisibility: "hidden",
-            perspective: `${windowWidth + 120}px`,
           }}
         >
-          {configOptions.current.displayMode === "full"
-            ? svgComponents
-            : canvasComponents}
+          {viewComponent ? viewComponent.component : ""}
         </div>
 
-        {toolTipVisible ? toolTip : ""}
+        <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
 
-        {highlightElements.length > 0
-          ? highlightElements.map((item, index) => {
-              if (item.display) {
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      display: "flex",
-                      position: "relative",
-                      height: "100%",
-                    }}
-                  >
+        {
+          // highlight element is inside the track component because it has pixel relative to bp location, so we have to set them within the
+          // track
+          highlightElements.length > 0
+            ? highlightElements.map((item, index) => {
+                if (item.display) {
+                  return (
                     <div
                       key={index}
                       style={{
-                        position: "absolute",
-                        backgroundColor: item.color,
-                        top: "0",
+                        display: "flex",
+                        position: "relative",
                         height: "100%",
-                        left: item.side === "right" ? `${item.xPos}px` : "",
-                        right: item.side === "left" ? `${item.xPos}px` : "",
-                        width: item.width,
-                        pointerEvents: "none", // This makes the highlighted area non-interactive
                       }}
-                    ></div>
-                  </div>
-                );
-              }
-            })
-          : ""}
+                    >
+                      <div
+                        key={index}
+                        style={{
+                          position: "absolute",
+                          backgroundColor: item.color,
+                          top: "0",
+                          height: "100%",
+                          left: item.side === "right" ? `${item.xPos}px` : "",
+                          right: item.side === "left" ? `${item.xPos}px` : "",
+                          width: item.width,
+                          pointerEvents: "none", // This makes the highlighted area non-interactive
+                        }}
+                      ></div>
+                    </div>
+                  );
+                }
+              })
+            : ""
+        }
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          zIndex: 3,
+          height:
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
+              : 40,
+          left: windowWidth + (120 - (15 * metaSets.terms.length - 1)), // add legendwidth to push element to correct position but need to subtract 15 and * number of terms because width of colorbox
+        }}
+      >
+        <MetadataIndicator
+          track={trackModel}
+          terms={metaSets.terms}
+          onClick={onColorBoxClick}
+          height={
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
+              : 40
+          }
+        />
       </div>
     </div>
   );

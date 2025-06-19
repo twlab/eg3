@@ -1,22 +1,24 @@
 import React, { useState, useEffect, useMemo } from "react";
 import _ from "lodash";
-// import RegionSetSelector from "../RegionSetSelector";
-import { getTrackConfig } from "@eg/tracks/src/trackConfigs/config-menu-models.tsx/getTrackConfig";
-import ReactModal from "react-modal";
-import { COLORS } from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/MetadataIndicator";
-import { HELP_LINKS } from "@eg/tracks/src/models/util";
-import ColorPicker from "@eg/tracks/src/trackConfigs/config-menu-components.tsx/ColorPicker";
 import Plot from "react-plotly.js";
+
+import {
+  ColorPicker,
+  getTrackConfig,
+  COLORS,
+  HELP_LINKS,
+  trackFetchFunction,
+  ChromosomeInterval,
+  NumericalFeature,
+  RegionSet,
+  GenomeSerializer,
+} from "wuepgg3-track";
+
 import RegionSetSelector from "./region-set/RegionSetSelector";
-import trackFetchFunction from "@eg/tracks/src/getRemoteData/fetchTrackData";
-import ChromosomeInterval from "@eg/tracks/src/models/ChromosomeInterval";
-import { NumericalFeature } from "@eg/tracks/src/models/Feature";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import RegionSet from "@eg/tracks/src/models/RegionSet";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
-import { getGenomeConfig } from "@eg/tracks";
+
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
 export const NUMERICAL_TRACK_TYPES = ["bigwig", "bedgraph"]; // the front UI we allow any case of types, in TrackModel only lower case
@@ -44,14 +46,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
   const [data, setData] = useState<{ [key: string]: any }>({});
   const [showlegend, setShowLegend] = useState(false);
   const [boxColor, setBoxColor] = useState("rgb(214,12,140)");
-  const [showModal, setShowModal] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
-  function handleCloseModal() {
-    setShowModal(false);
-  }
-  function handleOpenModal() {
-    setShowModal(true);
-  }
+
   useEffect(() => {
     const debouncedChangeBoxColor = _.debounce(changeBoxColor, 250);
     return () => {
@@ -77,9 +72,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       return currentSession?.regionSets.map((item) => {
         if (typeof item === "object") {
           const newRegionSet = RegionSet.deserialize(item);
-          newRegionSet["genome"] = genome
-            ? genome
-            : getGenomeConfig(item.genomeName).genome;
           newRegionSet["id"] = item.id;
           return newRegionSet;
         } else {
@@ -112,10 +104,18 @@ const Geneplot: React.FC<GeneplotProps> = () => {
 
   const renderTrackList = () => {
     const trackList = tracks
-      .filter((item) => NUMERICAL_TRACK_TYPES.includes(item.type))
+      .filter((item) =>
+        NUMERICAL_TRACK_TYPES.includes(item.type ? item.type : "")
+      )
       .map((item, index) => (
         <option key={index} value={item.name}>
-          {item.label}
+          {item.label
+            ? item.label
+            : item.options && item.options.label
+            ? item.options.label
+            : item.name
+            ? item.name
+            : "track position " + index}
         </option>
       ));
 
@@ -262,7 +262,6 @@ const Geneplot: React.FC<GeneplotProps> = () => {
       heatmap: heatmapData,
     });
     setPlotMsg("");
-    handleOpenModal();
   };
 
   const groupDataToBins = (data, bins, rights) => {
@@ -393,7 +392,7 @@ const Geneplot: React.FC<GeneplotProps> = () => {
           </p>
           <RegionSetSelector />
         </div>
-      ) : currentSession && showModal ? (
+      ) : currentSession ? (
         <>
           <div>
             <div>
@@ -454,7 +453,9 @@ const Geneplot: React.FC<GeneplotProps> = () => {
             </div>
           </div>
         </>
-      ) : null}
+      ) : (
+        <div></div>
+      )}
     </div>
   );
 };

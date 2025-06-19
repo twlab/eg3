@@ -8,15 +8,16 @@ const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("KM034562.1:0-18957");
 const defaultTracks = [
     new TrackModel({
+        type: "ruler",
+        name: "Ruler",
+    }),
+    new TrackModel({
         type: "geneAnnotation",
         name: "ncbiGene",
         label: "NCBI genes",
         genome: "Ebola",
     }),
-    // new TrackModel({
-    //     type: "ruler",
-    //     name: "Ruler",
-    // }),
+
     new TrackModel({
         type: "bedgraph",
         name: "GC Percentage",

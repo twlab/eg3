@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { ITrackModel } from "@eg/tracks";
+import { ITrackModel } from "wuepgg3-track";
 
 export const hubSlice = createSlice({
   name: "hub",
@@ -94,8 +94,9 @@ export const selectScreenShotData = (state: RootState) =>
   state.hub.screenshotData;
 export const selectScreenShotOpen = (state: RootState) =>
   state.hub.screenShotOpen;
-export const selectLoadedPublicHub = (state: RootState): { [key: string]: boolean } =>
-  state.hub.loadedPublicHub;
+export const selectLoadedPublicHub = (
+  state: RootState
+): { [key: string]: boolean } => state.hub.loadedPublicHub;
 export const selectBundle = (state: RootState) => state.hub.bundle;
 export const selectSavedDeleteTrackList = (state: RootState) =>
   state.hub.savedDeleteTrackList;

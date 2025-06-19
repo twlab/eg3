@@ -10,6 +10,7 @@ export interface TrackProps {
   side: string;
   highlightElements: any;
   windowWidth: number;
+  userViewRegion?: DisplayedRegionModel;
   handleDelete: (trackIndex: number) => void;
   globalTrackState: any;
   trackFetchedDataCache: any;
@@ -37,4 +38,8 @@ export interface TrackProps {
   applyTrackConfigChange: any;
   containerRef: any;
   viewWindowConfigChange?: any;
+  metaSets: any;
+  onColorBoxClick: any;
+  messageData: any;
+  Toolbar: { [key: string]: any };
 }

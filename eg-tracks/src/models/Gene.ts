@@ -5,6 +5,7 @@ import OpenInterval from "./OpenInterval";
 import { FeatureSegment } from "./FeatureSegment";
 
 export interface IdbRecord {
+  score?: any;
   id: string;
   name?: string;
   chrom: string;
@@ -48,7 +49,8 @@ class Gene extends Feature {
       dbRecord.txStart,
       dbRecord.txEnd
     );
-    super(dbRecord.name!, locus, dbRecord.strand);
+    const value = dbRecord.score;
+    super(dbRecord.name!, locus, dbRecord.strand, value);
     this.dbRecord = dbRecord;
     this.id = dbRecord.id;
     this.name = dbRecord.name!;

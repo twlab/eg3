@@ -9,9 +9,9 @@ import GenomicCoordinates from "../commonComponents/numerical/GenomicCoordinates
 // import TrackLegend from "./commonComponents/TrackLegend";
 
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
-import { getGenomeConfig } from "../../../../models/genomes/allGenomes";
 import TrackModel from "../../../../models/TrackModel";
 import TrackLegend from "../commonComponents/TrackLegend";
+import { config } from "process";
 
 const CHROMOSOMES_Y = 60;
 const RULER_Y = 20;
@@ -50,15 +50,8 @@ class RulerVisualizer extends React.PureComponent<RulerVisualizerProps> {
     const genomeConfig = this.props.genomeConfig;
 
     if (this.props.options && this.props.options.forceSvg) {
-
-
       return (
-        <svg
-          width={this.props.width / 3}
-          viewBox={`${this.props.viewWindow.start} 0 ${this.props.width / 3} ${HEIGHT}`}
-          height={HEIGHT}
-          display={"block"}
-        >
+        <svg width={this.props.width} height={HEIGHT} display={"block"}>
           <Chromosomes
             genomeConfig={genomeConfig}
             viewRegion={viewRegion}
@@ -110,22 +103,46 @@ class RulerComponent extends React.Component<RulerComponentProps> {
         trackViewRegion={this.props.viewRegion}
         selectedRegion={this.props.selectedRegion}
         trackWidth={this.props.width}
+        forceSvg={this.props.options.forceSvg}
       />
     );
     if (this.props.getNumLegend) {
       this.props.getNumLegend(legend);
     }
+    const forceSvg = this.props.options.forceSvg;
+    let curParentStyle: any = forceSvg
+      ? {
+          position: "relative",
+
+          overflow: "hidden",
+          width: this.props.width / 3,
+        }
+      : {};
+    let curEleStyle: any = forceSvg
+      ? {
+          position: "relative",
+          transform: `translateX(${-this.props.viewWindow.start}px)`,
+        }
+      : {};
     return (
-      <div style={{ display: "flex" }}>
-        {this.props.options.forceSvg ? legend : ""}
-        <RulerVisualizer
-          genomeConfig={this.props.genomeConfig}
-          viewRegion={this.props.viewRegion}
-          viewWindow={this.props.viewWindow}
-          width={this.props.width}
-          options={this.props.options}
-        />
-      </div>
+      <React.Fragment>
+        <div style={{ display: "flex", ...curParentStyle }}>
+          {this.props.options.forceSvg ? legend : ""}
+          <div
+            style={{
+              ...curEleStyle,
+            }}
+          >
+            <RulerVisualizer
+              genomeConfig={this.props.genomeConfig}
+              viewRegion={this.props.viewRegion}
+              viewWindow={this.props.viewWindow}
+              width={this.props.width}
+              options={this.props.options}
+            />
+          </div>
+        </div>
+      </React.Fragment>
     );
   }
 }

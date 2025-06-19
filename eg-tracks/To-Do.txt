@@ -1,24 +1,19 @@
-To-Do, 3/12/2025
-1. public track facets (finish)
-2. local tracks  (finish)
-3. text local tracks   (finish)
-4. check remote track for bugs and fix (finish)
-5. region set view 
-6. gene plot
-7. scatter plot
-8. screen shot
-9. dynamic record
-10. fetch sequence
-11. custom Track facets (finish)
-12. fix config menu (finish)
-13. fix facet bugs (finish)
-14. random tool bugs (finish)
+To-Do, 6/15/2025
+1. check matplot  _done
+2. implement combine into matplot _done
+3. skeleton loading _done
+4. takeout loading from mainmenu _done
+5. Tutorial
+6. check hic and options
+7. legendWidth change
+
 ______________________
 11. implement g3d
-    - get g3d working (finish)
-    - display with tabs below the tracks OR next to the element
+    - get g3d working (finish) _done
+    - display with tabs below the tracks OR next to the element _done
+    - implement old ui
 ______________________
-12. after sending - work on npm
-    - supports custom genome and datahub with tracks
-    - worker will only work if it purely just scripts no imports/ recreate worker into fetch functions 
-    - got test npm working, use its config (finish)
+12. after sending - work on npm 
+    - working individual tracks npm package _done
+    - connect track into browser npm package
+    - allow exports in browser

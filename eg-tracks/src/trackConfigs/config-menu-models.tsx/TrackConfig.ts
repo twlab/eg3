@@ -14,6 +14,11 @@ export class TrackConfig {
     this.trackModel = trackModel;
     this.defaultOptions = {};
   }
+
+  isHicTrack(): boolean {
+    return this.trackModel.type === "hic";
+  }
+
   getOptions(): TrackOptions {
     return Object.assign({}, this.defaultOptions, this.trackModel.options);
   }

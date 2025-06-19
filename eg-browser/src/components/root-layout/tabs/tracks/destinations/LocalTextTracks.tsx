@@ -2,8 +2,7 @@ import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import React from "react";
 import JSON5 from "json5";
 
-import { HELP_LINKS } from "@eg/tracks/src/models/util";
-import { ITrackModel } from "@eg/tracks";
+import { ITrackModel, HELP_LINKS } from "wuepgg3-track";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,

@@ -4,7 +4,6 @@ import { AnnotationTrackConfig } from "./AnnotationTrackConfig";
 
 import HiddenPixelsConfig from "../config-menu-components.tsx/HiddenPixelsConfig";
 import YscaleConfig from "../config-menu-components.tsx/YscaleConfig";
-import Feature from "../../../models/Feature";
 import AlwaysDrawLabelConfig from "../config-menu-components.tsx/AlwaysDrawLabelConfig";
 // import AlwaysDrawLabelConfig from "components/trackContextMenu/AlwaysDrawLabelConfig";
 

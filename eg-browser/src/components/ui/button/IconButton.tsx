@@ -25,7 +25,7 @@ export default function IconButton({
             className={classNames(
                 "text-primary p-2 rounded-2xl flex items-center justify-center",
                 active && "bg-secondary",
-                disabled && "bg-slate-200",
+                // disabled && "bg-slate-400",
                 className
             )}
             onClick={_onClick}

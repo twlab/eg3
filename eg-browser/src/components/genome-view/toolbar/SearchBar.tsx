@@ -23,11 +23,15 @@ import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 // } from "@/lib/redux/slices/searchSlice";
 import { debounce } from "lodash";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-import OutsideClickDetector from "@eg/tracks/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
-import IsoformSelection from "@eg/tracks/src/components/GenomeView/genomeNavigator/IsoformSelection";
-import Gene from "@eg/tracks/src/models/Gene";
-import ChromosomeInterval from "@eg/tracks/src/models/ChromosomeInterval";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+
+import {
+  Gene,
+  ChromosomeInterval,
+  GenomeSerializer,
+  OutsideClickDetector,
+  IsoformSelection,
+} from "wuepgg3-track";
+
 export const AWS_API = "https://lambda.epigenomegateway.org/v3";
 const SNP_ENDPOINTS: any = {
   hg19: "https://grch37.rest.ensembl.org/variation/human",
@@ -236,13 +240,14 @@ export default function SearchBar({
   onSearchFocusChange,
   onNewRegionSelect,
 }: SearchBarProps) {
-  const { ref: searchContainerRef, height: searchHeight } =
-    useElementGeometry({ shouldRespondToResize: false });
+  const { ref: searchContainerRef, height: searchHeight } = useElementGeometry({
+    shouldRespondToResize: false,
+  });
 
   const currentGenome = useCurrentGenome();
 
   const snpSearchEnabled = useMemo(() => {
-    return currentGenome?.id === 'hg19' || currentGenome?.id === 'hg38';
+    return currentGenome?.id === "hg19" || currentGenome?.id === "hg38";
   }, [currentGenome]);
 
   const highlightSearch = useRef(false);
@@ -438,7 +443,9 @@ export default function SearchBar({
             onClick={() => setActiveCommand(command)}
           >
             <span className="text-xl">{typeToEmoji[command]}</span>
-            <span className="text-sm text-gray-600 dark:text-dark-primary">/{command}</span>
+            <span className="text-sm text-gray-600 dark:text-dark-primary">
+              /{command}
+            </span>
           </motion.div>
         );
       });
@@ -593,7 +600,7 @@ export default function SearchBar({
       >
         <AnimatePresence>
           {isSearchFocused &&
-            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute bottom-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mb-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: 10, height: 0 }}
@@ -612,7 +619,9 @@ export default function SearchBar({
           <div className="flex flex-row items-center px-2 py-2 pb-3.5 w-full">
             {activeCommand ? (
               <div className="flex items-center bg-secondary dark:bg-dark-secondary px-2 py-1 rounded-lg -ml-1">
-                <span className="text-sm text-tint dark:text-dark-primary">/{activeCommand}</span>
+                <span className="text-sm text-tint dark:text-dark-primary">
+                  /{activeCommand}
+                </span>
               </div>
             ) : (
               <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />

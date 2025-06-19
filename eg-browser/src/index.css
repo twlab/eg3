@@ -1,34 +1,98 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-.btn {
-  @apply bg-transparent text-blue-700 px-1 border border-blue-500 rounded;
+@theme {
+  --color-primary: #5f6368;
+  --color-secondary: #e8def8;
+  --color-tint: #75697a;
+  --color-alert: #307868;
+  --color-dark-primary: #ffffff;
+  --color-dark-secondary: #44404a;
+  --color-dark-background: #1c191f;
+  --color-dark-surface: #333333;
+  --color-dark-tint: #5f5b67;
 }
 
-/* .btn:hover {
-    @apply bg-blue-500 text-white border-transparent;
+/* .btn {
+  background-color: transparent;
+  color: #0077cc;
+  padding: 4px 8px;
+  border: 1px solid #0077cc;
+  border-radius: 4px;
 } */
 
+.btn {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  /* padding: 0.25rem; px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+.btn-sm {
+  padding: 2px;
+}
+
+[data-theme="dark"] .btn {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  /* padding: 0.25rem; px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
+}
+
 .TrackContextMenu-body button,
-select,
-input {
-  @apply btn;
+.TrackContextMenu-body select,
+.TrackContextMenu-body input {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+[data-theme="dark"] .TrackContextMenu-body button,
+[data-theme="dark"] .TrackContextMenu-body select,
+[data-theme="dark"] .TrackContextMenu-body input {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
 }
 
 .HighlightMenu button,
-select,
-input {
-  @apply btn;
+.HighlightMenu select,
+.HighlightMenu input {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+[data-theme="dark"] .HighlightMenu button,
+[data-theme="dark"] .HighlightMenu select,
+[data-theme="dark"] .HighlightMenu input {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 0.25rem; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
 }
 
 .table {
-  @apply w-full border-collapse;
+  width: 100%; /* w-full */
+  border-collapse: collapse; /* border-collapse */
 }
+/* .btn:hover {
+    @apply bg-blue-500 text-white border-transparent;
+} */
 
 :root {
   --dark-fg-color: white;
@@ -41,7 +105,40 @@ input {
   --light-bg-color: white;
   --light-container-color: white;
   --light-container-fg-color: #5f6368;
-  --light-fg-tint-color: #75697A;
+  --light-fg-tint-color: #75697a;
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  --bg-secondary: oklch(0.93 0 0);
 }
 
 @keyframes borderPulse {
@@ -133,8 +230,8 @@ input {
   --bg-color: var(--dark-bg-color);
   --bg-container-color: var(--dark-container-color);
   --font-container-color: var(--dark-container-fg-color);
-  --font-tint-color: var(--dark-fg-tint-color)
-    /* --link-color: #3bd1ff; */
+  --font-tint-color: var(--dark-fg-tint-color);
+  /* --link-color: #3bd1ff; */
 }
 
 [data-theme="light"] {
@@ -142,8 +239,8 @@ input {
   --bg-color: var(--light-bg-color);
   --bg-container-color: var(--light-container-color);
   --font-container-color: var(--light-container-fg-color);
-  --font-tint-color: var(--light-fg-tint-color)
-    /* --link-color: #3f51b5; */
+  --font-tint-color: var(--light-fg-tint-color);
+  /* --link-color: #3f51b5; */
 }
 
 .bg {
@@ -288,4 +385,134 @@ input {
 
 #shareUI .MuiTab-textColorSecondary {
   color: unset;
+}
+.Track-border-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5; /*  above the child component so animated border will display */
+  pointer-events: none; /* Make sure it doesn't interfere with interactions */
+  /* outline: 1px solid #9aa6b2; */
+  border-bottom: 1px solid lightgray;
+}
+
+.Track-selected-border {
+  background-image: url("./assets/border-anim-h.gif"),
+    url("./assets/border-anim-h.gif"), url("./assets/border-anim-v.gif"),
+    url("./assets/border-anim-v.gif");
+
+  /* Repeat horizontally for the horizontal dashes, vertically for the vertical dashes */
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+
+  /* top, bottom, left, right.  Corners selected in preparation for clockwise rotation. */
+  background-position: left top, right bottom, left bottom, right top;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.ReactModal__Content input {
+  border: #1eb7e9 1px solid;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 2px;
+}
+
+.mybtn {
+  background-color: transparent;
+  color: #1d4ed8; /* text-blue-700 */
+  padding: 2px; /* px-1 */
+  border: 1px solid #3b82f6; /* border-blue-500 */
+  border-radius: 0.25rem; /* rounded */
+}
+[data-theme="dark"] .mybtn {
+  background-color: transparent;
+  color: #bfdbfe; /* text-blue-200 */
+  padding: 2px; /* px-1 */
+  border: 1px solid #e0f2fe; /* border-blue-100 */
+  border-radius: 0.25rem; /* rounded */
+}
+
+button:hover {
+  cursor: pointer;
 }

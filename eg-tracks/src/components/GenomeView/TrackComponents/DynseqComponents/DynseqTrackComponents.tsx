@@ -63,6 +63,7 @@ interface DynseqTrackProps {
   getNumLegend: any;
   basesByPixel: number;
   genomeConfig: any;
+  xvaluesData: any;
 }
 
 class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
@@ -197,35 +198,42 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       unit,
       genomeConfig,
       basesByPixel,
+      xvaluesData,
+      forceSvg,
     } = this.props;
     const { height, aggregateMethod } = options;
-    const dataForward = data.filter(
-      (feature) => feature.value === undefined || feature.value >= 0
-    );
-    const dataReverse = data.filter((feature) => feature.value < 0);
-
-    if (dataReverse.length > 0) {
-      this.hasReverse = true;
-      this.xToValue2! = this.aggregateFeatures(
-        dataReverse,
-        viewRegion,
-        width,
-        aggregateMethod
+    if (!xvaluesData) {
+      const dataForward = data.filter(
+        (feature) => feature.value === undefined || feature.value >= 0
       );
+      const dataReverse = data.filter((feature) => feature.value < 0);
+
+      if (dataReverse.length > 0) {
+        this.hasReverse = true;
+        this.xToValue2! = this.aggregateFeatures(
+          dataReverse,
+          viewRegion,
+          width,
+          aggregateMethod
+        );
+      } else {
+        this.xToValue2 = [];
+      }
+
+      this.xToValue! =
+        dataForward.length > 0
+          ? this.aggregateFeatures(
+              dataForward,
+              viewRegion,
+              width,
+              aggregateMethod
+            )
+          : [];
     } else {
-      this.xToValue2 = [];
+      this.xToValue = xvaluesData[0];
+      this.xToValue2 = xvaluesData[1];
+      this.hasReverse = xvaluesData[2];
     }
-
-    this.xToValue! =
-      dataForward.length > 0
-        ? this.aggregateFeatures(
-            dataForward,
-            viewRegion,
-            width,
-            aggregateMethod
-          )
-        : [];
-
     this.scales = this.computeScales(this.xToValue!, this.xToValue2!, height);
     this.drawHeights = this.xToValue!.map(
       (x) => this.scales.valueToHeight(x) || 0
@@ -257,49 +265,63 @@ class DynseqTrackComponents extends PureComponent<DynseqTrackProps> {
       if (this.props.getNumLegend) {
         this.props.getNumLegend(legend);
       }
+
       const visualizer = (
         <React.Fragment>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              position: "absolute",
+          {forceSvg === false ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                position: "absolute",
 
-              zIndex: 3,
-            }}
-          >
-            <HoverToolTip
-              data={this.xToValue}
-              data2={this.xToValue2}
-              windowWidth={width}
-              trackType={"numerical"}
-              trackModel={trackModel}
-              height={DEFAULT_OPTIONS.height}
-              viewRegion={viewRegion}
-              unit={unit}
-              hasReverse={true}
-            />{" "}
+                zIndex: 3,
+              }}
+            >
+              <HoverToolTip
+                data={this.xToValue}
+                data2={this.xToValue2}
+                windowWidth={width}
+                trackType={"numerical"}
+                trackModel={trackModel}
+                height={DEFAULT_OPTIONS.height}
+                viewRegion={viewRegion}
+                unit={unit}
+                hasReverse={true}
+                options={options}
+              />
+            </div>
+          ) : (
+            ""
+          )}
+          <div style={{ display: "flex" }}>
+            {forceSvg ? legend : ""}
+
+            <svg width={width} height={height} style={{ display: "block" }}>
+              <Chromosomes
+                genomeConfig={genomeConfig}
+                viewRegion={viewRegion}
+                width={width}
+                labelOffset={CHROMOSOMES_Y}
+                hideChromName={true}
+                drawHeights={this.drawHeights}
+                zeroLine={this.scales.zeroLine}
+                height={height}
+                hideCytoband={true}
+                minXwidthPerBase={2}
+              />
+            </svg>
           </div>
-          <svg width={width} height={height} style={{ display: "block" }}>
-            {" "}
-            <Chromosomes
-              genomeConfig={genomeConfig}
-              viewRegion={viewRegion}
-              width={width}
-              labelOffset={CHROMOSOMES_Y}
-              hideChromName={true}
-              drawHeights={this.drawHeights}
-              zeroLine={this.scales.zeroLine}
-              height={height}
-              hideCytoband={true}
-              minXwidthPerBase={2}
-            />
-          </svg>
         </React.Fragment>
       );
       return visualizer;
     } else {
-      return <NumericalTrack {...this.props} />;
+      return (
+        <NumericalTrack
+          {...this.props}
+          xvaluesData={[this.xToValue, this.xToValue2, this.hasReverse]}
+        />
+      );
     }
   }
 }

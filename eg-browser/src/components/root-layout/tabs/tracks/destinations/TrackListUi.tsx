@@ -1,17 +1,16 @@
-
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import TrackList from "@eg/tracks/src/components/GenomeView/TabComponents/TrackList";
+import TrackList from "./TrackList";
 
 import {
   selectSavedDeleteTrackList,
   updateSavedDeleteTrackList,
 } from "@/lib/redux/slices/hubSlice";
 
-import { ITrackModel } from "@eg/tracks";
+import { ITrackModel } from "wuepgg3-track";
 export default function TrackListUi() {
   const savedDeleteTrackList = useAppSelector(selectSavedDeleteTrackList);
   const dispatch = useAppDispatch();

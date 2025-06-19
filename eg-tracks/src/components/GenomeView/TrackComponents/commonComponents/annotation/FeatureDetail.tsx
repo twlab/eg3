@@ -30,7 +30,7 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
     let linkOut;
     if (feature.id) {
       if (_.isEmpty(queryEndpoint)) {
-        if (feature.id.startsWith("ENS")) {
+        if (String(feature.id).startsWith("ENS")) {
           // given the ensembl naming pattern: https://uswest.ensembl.org/info/genome/stable_ids/index.html
           const ensemblURL = `http://www.ensembl.org/Multi/Search/Results?q=${feature.id}`;
           linkOut = (
@@ -42,8 +42,11 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
             </a>
           );
         } else {
-          const ncbiURL = `https://www.ncbi.nlm.nih.gov/gene/?term=${feature.id.split(".")[0]
-            }`;
+
+          const ncbiURL = `https://www.ncbi.nlm.nih.gov/gene/?term=${
+            String(feature.id).split(".")[0]
+          }`;
+
           linkOut = (
             <a href={ncbiURL} target="_blank" rel="noopener noreferrer">
               NCBI
@@ -54,7 +57,7 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
           );
         }
       } else {
-        const queryURL = `${queryEndpoint.endpoint}${feature.id}`;
+        const queryURL = `${queryEndpoint.endpoint}${String(feature.id)}`;
         linkOut = (
           <a href={queryURL} target="_blank" rel="noopener noreferrer">
             {queryEndpoint.name}

@@ -3,7 +3,8 @@ import {
   IGenome,
   IHighlightInterval,
   ITrackModel,
-} from "@eg/tracks";
+  RegionSet,
+} from "wuepgg3-track";
 import {
   createEntityAdapter,
   createSlice,
@@ -11,7 +12,6 @@ import {
 } from "@reduxjs/toolkit";
 
 import { RootState } from "../store";
-import RegionSet from "@eg/tracks/src/models/RegionSet";
 
 export type uuid = string;
 
@@ -110,7 +110,6 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
-
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
@@ -204,9 +203,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-      state,
-      state.browser.present.currentSession
-    )
+        state,
+        state.browser.present.currentSession
+      )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

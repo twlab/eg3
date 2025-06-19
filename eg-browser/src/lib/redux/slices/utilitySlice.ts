@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Tool } from "@eg/tracks";
+import { Tool } from "wuepgg3-track";
 import { RootState } from "../store";
 
 interface UtilityState {
@@ -21,7 +21,10 @@ export const utilitySlice = createSlice({
     setTool: (state, action: PayloadAction<Tool | null>) => {
       state.tool = action.payload;
     },
-    setShortLink: (state, action: PayloadAction<{ shortLink: string; fullUrl: string }>) => {
+    setShortLink: (
+      state,
+      action: PayloadAction<{ shortLink: string; fullUrl: string }>
+    ) => {
       state.shortLink = action.payload.shortLink;
       state.fullUrlForShortLink = action.payload.fullUrl;
     },
@@ -36,6 +39,7 @@ export const { setTool, setShortLink, clearShortLink } = utilitySlice.actions;
 
 export const selectTool = (state: RootState) => state.utility.tool;
 export const selectShortLink = (state: RootState) => state.utility.shortLink;
-export const selectFullUrlForShortLink = (state: RootState) => state.utility.fullUrlForShortLink;
+export const selectFullUrlForShortLink = (state: RootState) =>
+  state.utility.fullUrlForShortLink;
 
 export default utilitySlice.reducer;

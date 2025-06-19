@@ -1,4 +1,10 @@
 export * from "./track-container";
 export * from "./genome-hub";
 export * from "./types";
-export * from "./util";
+export * from "./models";
+export {
+  getGenomeDefaultState,
+  getGenomeConfig,
+  restoreLegacyViewRegion,
+  fetchDataHubTracks,
+} from "./util";

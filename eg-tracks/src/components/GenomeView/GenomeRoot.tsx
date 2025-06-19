@@ -1,14 +1,18 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
+
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";
 // import { getGenomeConfig } from "../../models/genomes/allGenomes";
 import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
+// import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
+import "./track.css";
 
+// import GenomeViewerTest from "./testComp";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -17,11 +21,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   showGenomeNav,
   onNewRegion,
   onNewHighlight,
-  onTrackSelected,
-  onTrackDeleted,
+  onTracksChange,
   onNewRegionSelect,
   currentState,
   tool,
+  Toolbar,
   viewRegion,
   userViewRegion,
   setScreenshotData,
@@ -44,11 +48,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     };
   };
+
   const throttledSetConfig = useRef(
     throttle((curGenome) => {
       setCurrentGenomeConfig(curGenome);
     }, 200)
   );
+
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -74,7 +80,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           userViewRegion._endBase!
         );
       }
-      setCurrentGenomeConfig(curGenome);
+
+      throttledSetConfig.current(curGenome);
     }
   }, [size.width]);
 
@@ -90,6 +97,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = false;
+
         setCurrentGenomeConfig(curGenome);
       }
     }
@@ -128,29 +136,51 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
+      {/* <div>
+        <GenomeViewerTest />
+      </div> */}
+
+      {/* <div>
+        <GenomeViewer
+          genomeName={"hg38"}
+          viewRegion={"chr7:27053397-27373765"}
+          type={"bigwig"}
+          dataSources={[
+            {
+              url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+            },
+          ]}
+        />
+      </div> */}
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
-        {currentGenomeConfig && (
+        {currentGenomeConfig && size.width > 0 ? (
           <TrackManager
             key={currentGenomeConfig.genomeID}
             tracks={tracks}
             legendWidth={legendWidth}
-            windowWidth={size.width - legendWidth - 20}
+            windowWidth={
+              (!size.width || size.width - legendWidth < 0
+                ? 1500
+                : size.width) - legendWidth
+            }
             userViewRegion={userViewRegion}
             highlights={highlights}
             genomeConfig={currentGenomeConfig}
             onNewRegion={onNewRegion}
             onNewRegionSelect={onNewRegionSelect}
             onNewHighlight={onNewHighlight}
-            onTrackSelected={onTrackSelected}
-            onTrackDeleted={onTrackDeleted}
+            onTracksChange={onTracksChange}
             tool={tool}
+            Toolbar={Toolbar}
             viewRegion={viewRegion}
             showGenomeNav={showGenomeNav}
             setScreenshotData={setScreenshotData}
             isScreenShotOpen={isScreenShotOpen}
             selectedRegionSet={selectedRegionSet}
           />
+        ) : (
+          ""
         )}
       </div>
     </div>

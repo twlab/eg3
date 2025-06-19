@@ -54,8 +54,9 @@ interface VcfTrackProps {
   updatedLegend: any;
   getGenePadding: any;
   getHeight: any;
-  xvaluesData: any;
+  xvaluesData?: any;
   getNumLegend: any;
+
 }
 
 /**
@@ -151,6 +152,7 @@ class VcfTrack extends React.Component<VcfTrackProps> {
       updatedLegend,
       getGenePadding,
       getHeight,
+      xvaluesData
     } = this.props;
 
     const currentViewLength =
@@ -162,11 +164,13 @@ class VcfTrack extends React.Component<VcfTrackProps> {
     };
     if (options.displayMode === VcfDisplayModes.AUTO) {
       if (currentViewLength > 100000) {
+
         return (
           <NumericalTrack
             {...this.props}
             unit="feature density"
             options={numericalOptions}
+            xvaluesData={xvaluesData}
           />
         );
       }
@@ -202,6 +206,7 @@ class VcfTrack extends React.Component<VcfTrackProps> {
             {...this.props}
             unit="feature density"
             options={numericalOptions}
+            xvaluesData={xvaluesData}
           />
         );
       }

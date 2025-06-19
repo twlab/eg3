@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ScreenshotUI from "@eg/tracks/src/components/GenomeView/TabComponents/ScreenshotUI";
+import ScreenshotUI from "./ScreenshotUI";
 import {
   selectScreenShotData,
   selectScreenShotOpen,
@@ -8,9 +8,11 @@ import {
 } from "@/lib/redux/slices/hubSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
+import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
 
 export default function Screenshot() {
   useExpandedNavigationTab();
+  const darkTheme = useAppSelector(selectDarkTheme);
   const screenShotData = useAppSelector(selectScreenShotData);
   const isOpen = useAppSelector(selectScreenShotOpen);
   const isRetakeScreenshot = useRef<boolean>(false);
@@ -46,10 +48,13 @@ export default function Screenshot() {
     <div>
       <ScreenshotUI
         highlights={screenShotData.highlights}
-        needClip={false}
+        needClip={true}
         legendWidth={120}
         primaryView={screenShotData.primaryView}
-        darkTheme={true}
+        darkTheme={
+          darkTheme !== null || darkTheme !== undefined ? darkTheme : false
+        }
+        viewWindow={screenShotData.viewWindow}
         tracks={screenShotData.tracks}
         trackData={screenShotData.trackData}
         metadataTerms={[]}

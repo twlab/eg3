@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { getGenomeConfig } from "@eg/tracks";
-import { IGenome } from "@eg/tracks";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
-import GenomeHubManager from "@eg/tracks/src/genome-hub/GenomeHubManager";
+
+import {
+  IGenome,
+  GenomeSerializer,
+  GenomeHubManager,
+  getGenomeConfig,
+} from "wuepgg3-track";
 
 export default function useGenome(genomeId: string) {
   const [genome, setGenome] = useState<IGenome | null>(() => {

@@ -4,16 +4,17 @@ import {
   updateCurrentSession,
 } from "../../../../../lib/redux/slices/browserSlice";
 import {
+  resetState,
   selectBundle,
   selectCustomTracksPool,
   updateBundle,
 } from "../../../../../lib/redux/slices/hubSlice";
-import SessionUI from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
+import SessionUI from "./SessionUI";
 import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settingsSlice";
-import { BundleProps } from "@eg/tracks/src/components/GenomeView/TabComponents/SessionUI";
-import DisplayedRegionModel from "@eg/tracks/src/models/DisplayedRegionModel";
+import { BundleProps } from "./SessionUI";
+
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
-import GenomeSerializer from "@eg/tracks/src/genome-hub/GenomeSerializer";
+import { GenomeSerializer, DisplayedRegionModel } from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 const Session: React.FC = () => {
   useExpandedNavigationTab();
@@ -50,19 +51,18 @@ const Session: React.FC = () => {
       tracks,
       viewRegion: userViewRegion
         ? new DisplayedRegionModel(
-          genomeConfig.navContext,
-          userViewRegion?.start,
-          userViewRegion?.end
-        )
+            genomeConfig.navContext,
+            userViewRegion?.start,
+            userViewRegion?.end
+          )
         : new DisplayedRegionModel(
-          genomeConfig.navContext,
-          ...genomeConfig.defaultRegion
-        ),
+            genomeConfig.navContext,
+            ...genomeConfig.defaultRegion
+          ),
     };
   }
   //provide data to genomeTracks to new current bundle session
   function onRestoreSession(sessionBundle: any) {
-
     const session = {
       genomeId: sessionBundle.genomeName,
       createdAt: Date.now(),
@@ -75,16 +75,19 @@ const Session: React.FC = () => {
         start: sessionBundle.viewRegion._startBase,
         end: sessionBundle.viewRegion._endBase,
       },
-      tracks: sessionBundle.tracks,
+      tracks: sessionBundle.tracks.map((item) => {
+        item.waitToUpdate = true;
+        return item;
+      }),
       highlights: sessionBundle.highlights ?? [],
       metadataTerms: sessionBundle.metadataTerms ?? [],
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
 
+    dispatch(resetState());
     dispatch(updateCurrentSession(session));
   }
-
 
   //set the bundleid for this session to the retreive id and bundle to new bundle
   function onRetrieveBundle(newBundle: any) {
@@ -111,7 +114,6 @@ const Session: React.FC = () => {
       bundleId={bundle.bundleId ? bundle.bundleId : ""}
       curBundle={bundle}
       state={curUserState}
-
     />
   );
 };

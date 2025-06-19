@@ -95,10 +95,8 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
       setBadInputMessage("");
     }
     onRegionSelected(
-      selectedRegion._startBase
-        ? selectedRegion._startBase
-        : parsedRegion!.start,
-      selectedRegion._endBase ? selectedRegion._endBase : parsedRegion!.end,
+      parsedRegion ? parsedRegion.start : selectedRegion._startBase,
+      parsedRegion ? parsedRegion.end : selectedRegion._endBase,
       "isJump",
       doHighlight
     );

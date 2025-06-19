@@ -16,6 +16,7 @@ interface TrackLegendProps {
   trackModel: TrackModel; // Track metadata
   width: number; // Legend width
   height: number; // Legend height
+  forceSvg: any;
   axisScale?: ScaleLinear<number, number>; // A d3 scale function, used for drawing axes
   axisScaleReverse?: ScaleLinear<number, number>; // A d3 scale function, used for drawing axes
   style?: object;
@@ -29,7 +30,7 @@ interface TrackLegendProps {
 }
 
 // const NUM_TICKS_SUGGESTION = 2;
-const AXIS_WIDTH = 42;
+const AXIS_WIDTH = 32;
 
 /**
  * A box displaying labels, axes, and other important track info.
@@ -39,6 +40,7 @@ const AXIS_WIDTH = 42;
 class TrackLegend extends React.PureComponent<TrackLegendProps> {
   static defaultProps = {
     width: 120,
+    forceSvg: false,
   };
 
   private gNode: any;
@@ -94,7 +96,7 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       select(this.gNode)
         .selectAll("text")
         .filter((d, i) => i === 0)
-        .attr("dy", "0.6em");
+        .attr("dy", "0.8em");
       select(this.gNode)
         .selectAll("text")
         .filter((d, i) => i === 1)
@@ -129,15 +131,9 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
           .filter((d, i) => i === 2)
           .attr("dy", "-0.1em");
       }
-      select(this.gNode)
-        .selectAll("text")
-        .attr("class", "svg-text-bg");
-      select(this.gNode)
-        .selectAll("line")
-        .attr("class", "svg-line-bg");
-      select(this.gNode)
-        .selectAll("path")
-        .attr("class", "svg-line-bg");
+      select(this.gNode).selectAll("text").attr("class", "svg-text-bg");
+      select(this.gNode).selectAll("line").attr("class", "svg-line-bg");
+      select(this.gNode).selectAll("path").attr("class", "svg-line-bg");
     }
   }
 
@@ -174,25 +170,29 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
       trackWidth,
       selectedRegion,
       label,
+      forceSvg,
     } = this.props;
     if (height <= 0) {
       return null;
     }
 
     const axisHeight = axisScaleReverse ? height * 0.5 : height;
-    const divStyle = Object.assign(
-      {
-        display: "flex",
-        width,
-        minWidth: width,
-        height,
-        // backgroundColor: "var(--bg-color)",
+    const styleObj = {
+      display: "flex",
+      width,
+      minWidth: width,
+      height: axisHeight,
 
-        // color: "var(--font-color)",
-        justifyContent: "space-between",
-      },
-      style
-    );
+      zIndex: 10,
+      //         backgroundColor: "var(--bg-color)",
+      // color: "var(--font-color)",
+      justifyContent: "space-between",
+    };
+    if (forceSvg) {
+      styleObj["backgroundColor"] = "var(--bg-color)";
+      styleObj["color"] = "var(--font-color)";
+    }
+    const divStyle = Object.assign(styleObj, style);
     const pStyle = {
       width: this.getLabelWidth(),
       maxHeight: height,
@@ -270,12 +270,17 @@ class TrackLegend extends React.PureComponent<TrackLegendProps> {
             {plotLegend && this.plotATCGLegend()}
           </div>
           {labelList}
-          <div
-            style={{ fontSize: "11px", alignSelf: "flex-end" }}
-            className="TrackLegend-chrLabel"
-          >
-            {chromLabel}
-          </div>
+
+          {chromLabel ? (
+            <div
+              style={{ fontSize: "11px", alignSelf: "flex-end" }}
+              className="TrackLegend-chrLabel"
+            >
+              {chromLabel}
+            </div>
+          ) : (
+            ""
+          )}
         </div>
         {axis}
       </div>

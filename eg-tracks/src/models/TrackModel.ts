@@ -1,10 +1,7 @@
 import _ from "lodash";
 import { variableIsObject } from "./util";
 
-export interface TrackOptions {
-  label?: string;
-  [k: string]: any;
-}
+import { TrackOptions } from "../types";
 
 interface ITrackModelMetadata {
   "Track Type"?: string;
@@ -37,17 +34,20 @@ interface ITrackModel {
   name: string;
   type?: string;
   filetype?: string;
-  options: TrackOptions;
+  options?: TrackOptions;
   url?: string;
   indexUrl?: string;
   metadata?: ITrackModelMetadata;
   fileObj?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
-  id: string | number;
+  id?: string | number;
   label?: string;
   files?: any;
   details?: any;
+  isSelected?: any;
+  tracks?: any;
+  waitToUpdate?: boolean;
 }
 
 /**
@@ -67,7 +67,7 @@ export class TrackModel {
   type!: string;
   label!: string;
   filetype?: string;
-  options!: TrackOptions;
+  options?: TrackOptions;
   url!: string;
   indexUrl?: string;
   metadata!: ITrackModelMetadata;
@@ -84,6 +84,7 @@ export class TrackModel {
   queryEndpoint?: QueryEndpoint;
   legendWidth?: any;
   details?: any;
+  waitToUpdate: boolean = false;
   constructor(plainObject: ITrackModel) {
     const data = {
       ...plainObject,
@@ -118,6 +119,7 @@ export class TrackModel {
     this.textConfig = this.textConfig || {};
     this.apiConfig = this.apiConfig || {};
     this.queryEndpoint = this.queryEndpoint || {};
+    this.waitToUpdate = this.waitToUpdate;
     if (plainObject.querygenome) {
       // only set if there is value
       this.querygenome = plainObject.querygenome;

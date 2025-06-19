@@ -30,7 +30,7 @@ interface NumericalTrackProps {
   width?: any;
   forceSvg?: any;
   getNumLegend?: any;
-  xvaluesData: Array<any>;
+  xvaluesData?: Array<any>;
 }
 export const DEFAULT_OPTIONS = {
   aggregateMethod: DefaultAggregators.types.MEAN,
@@ -69,6 +69,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     getNumLegend,
     groupScale,
     xvaluesData,
+    viewWindow,
   } = props;
   const { height, color, color2, colorAboveMax, color2BelowMin } = options;
 
@@ -79,7 +80,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
     : aggregator.xToValueMaker(data, viewRegion, width, options);
 
   let [xToValue, xToValue2, hasReverse] = xvalues;
-
   const computeScales = useMemo(() => {
     return memoizeOne((xToValue: any[], xToValue2: any[], height: number) => {
       const { yScale, yMin, yMax } = options;
@@ -109,6 +109,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         //   props.viewWindow.start + props.width / 3,
         //   props.viewWindow.end - props.width / 3
         // );
+
         max = _.max(visibleValues) || 1;
         xValues2 = xToValue2.filter((x) => x);
         min =
@@ -220,24 +221,37 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       axisScale={isDrawingBars ? scales.axisScale : undefined}
       axisLegend={unit}
       label={options.label}
+      forceSvg={forceSvg}
     />
   );
 
   if (getNumLegend) {
     getNumLegend(legend);
   }
+  let curParentStyle: any = forceSvg
+    ? {
+        position: "relative",
 
+        overflow: "hidden",
+        width: width / 3,
+      }
+    : {};
+  let curEleStyle: any = forceSvg
+    ? { position: "relative", transform: `translateX(${-viewWindow.start}px)` }
+    : {};
+  let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
   const visualizer = hasReverse ? (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-        {!forceSvg ? (
+      {!forceSvg ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+            ...hoverStyle,
+          }}
+        >
           <HoverToolTip
             data={xToValue}
             data2={xToValue2}
@@ -250,46 +264,55 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             hasReverse={true}
             options={options}
           />
-        ) : (
-          ""
-        )}
+        </div>
+      ) : (
+        ""
+      )}
+
+      <div style={{ display: "flex", ...curParentStyle }}>
+        {forceSvg || options.packageVersion ? legend : ""}
+        <div
+          style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
+        >
+          <ValuePlot
+            xToValue={xToValue}
+            scales={scales}
+            height={scales.zeroLine}
+            color={color}
+            colorOut={colorAboveMax}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+          <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+
+          <ValuePlot
+            xToValue={xToValue2}
+            scales={scales}
+            height={height - scales.zeroLine}
+            color={color2}
+            colorOut={color2BelowMin}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+        </div>
       </div>
-      {forceSvg ? legend : ""}
-      <ValuePlot
-        xToValue={xToValue}
-        scales={scales}
-        height={scales.zeroLine}
-        color={color}
-        colorOut={colorAboveMax}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-        width={width}
-        viewWindow={props.viewWindow}
-      />
-      <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
-      <ValuePlot
-        xToValue={xToValue2}
-        scales={scales}
-        height={height - scales.zeroLine}
-        color={color2}
-        colorOut={color2BelowMin}
-        isDrawingBars={isDrawingBars}
-        forceSvg={forceSvg}
-        width={width}
-        viewWindow={props.viewWindow}
-      />
     </React.Fragment>
   ) : (
     <React.Fragment>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          position: "absolute",
-          zIndex: 3,
-        }}
-      >
-        {!forceSvg ? (
+      {!forceSvg ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            position: "absolute",
+            zIndex: 3,
+            ...hoverStyle,
+          }}
+        >
           <HoverToolTip
             data={xToValue}
             data2={xToValue2}
@@ -302,40 +325,37 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
             hasReverse={true}
             options={options}
           />
-        ) : (
-          ""
-        )}
-      </div>
-      <div style={{ display: "flex" }}>
-        {forceSvg ? legend : ""}
-        <ValuePlot
-          xToValue={xToValue}
-          scales={scales}
-          height={scales.zeroLine}
-          color={color}
-          colorOut={colorAboveMax}
-          isDrawingBars={isDrawingBars}
-          forceSvg={forceSvg}
-          width={width}
-          viewWindow={props.viewWindow}
-        />
+        </div>
+      ) : (
+        ""
+      )}
+      <div style={{ display: "flex", ...curParentStyle }}>
+        {forceSvg || options.packageVersion ? legend : ""}
+        <div
+          style={{
+            ...curEleStyle,
+          }}
+        >
+          <ValuePlot
+            xToValue={xToValue}
+            scales={scales}
+            height={scales.zeroLine}
+            color={color}
+            colorOut={colorAboveMax}
+            isDrawingBars={isDrawingBars}
+            forceSvg={forceSvg}
+            width={width}
+            viewWindow={props.viewWindow}
+          />
+        </div>
       </div>
     </React.Fragment>
   );
+
   xvalues = [];
   return visualizer;
 };
-interface ValueTrackProps {
-  xToValue: any[]; // Replace 'any' with the actual type for xToValue
-  scales: Record<string, any>; // Replace 'any' with the actual type for scales
-  height: number;
-  color?: string;
-  isDrawingBars?: boolean;
-  colorOut?: any;
-  forceSvg?: any;
-  width: any;
-  viewWindow: any;
-}
+
 const ValuePlot = (props) => {
   const renderPixel = useCallback(
     (value, x) => {
@@ -345,6 +365,7 @@ const ValuePlot = (props) => {
       const { isDrawingBars, scales, height, color, colorOut } = props;
       const y =
         value > 0 ? scales.valueToY(value) : scales.valueToYReverse(value);
+
       let drawY = value > 0 ? y : 0;
       let drawHeight = value > 0 ? height - y : y;
 
@@ -397,6 +418,7 @@ const ValuePlot = (props) => {
           value > 0
             ? scales.valueToOpacity(value)
             : scales.valueToOpacityReverse(value);
+        const fillOpacity = opacity === 0 ? 1 : opacity;
         return (
           <rect
             key={x}
@@ -405,7 +427,7 @@ const ValuePlot = (props) => {
             width={1}
             height={height}
             fill={color}
-            fillOpacity={opacity}
+            fillOpacity={fillOpacity}
           />
         );
       }
@@ -430,7 +452,6 @@ const ValuePlot = (props) => {
       height={height}
       forceSvg={forceSvg}
       viewWindow={viewWindow}
-      style={{ display: "block" }} // Added style property
     >
       {xToValue.map(renderPixel)}
     </DesignRenderer>

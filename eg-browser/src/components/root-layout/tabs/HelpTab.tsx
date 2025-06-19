@@ -18,12 +18,12 @@ export default function HelpTab() {
                 <ExternalLink
                     title="2nd Gen Browser"
                     description="Visit the 2nd generation of WashU Epigenome Browser"
-                    href="http://epigenomegateway.wustl.edu/browser2022"
+                    href="https://epigenomegateway.wustl.edu/browser2022"
                 />
                 <ExternalLink
                     title="1st Gen Browser"
                     description="Visit the classic version of WashU Epigenome Browser"
-                    href="http://epigenomegateway.wustl.edu/legacy"
+                    href="https://epigenomegateway.wustl.edu/legacy"
                 />
                 <ExternalLink
                     title="Discord Server"

@@ -1,7 +1,6 @@
 import React from "react";
 import { Slider, Rail, Handles, Tracks } from "react-compound-slider";
 import PropTypes from "prop-types";
-import { ITEM_PROP_TYPES } from "./TrackContextMenu";
 
 import "./TrackContextMenu.css";
 
@@ -51,7 +50,7 @@ function Track({ source, target, getTrackProps }) {
         width: `${target.percent - source.percent}%`,
       }}
       {
-      ...getTrackProps() /* this will set up events if you want it to be clickeable (optional) */
+        ...getTrackProps() /* this will set up events if you want it to be clickeable (optional) */
       }
     />
   );
@@ -110,14 +109,17 @@ class SliderConfig extends React.PureComponent<
   SliderConfigProps,
   SliderConfigState
 > {
-  static propTypes = Object.assign({}, ITEM_PROP_TYPES, {
-    optionName: PropTypes.string.isRequired, // The prop to change of a TrackModel's options object.
-    label: PropTypes.string.isRequired, // Label for the input
-    mode: PropTypes.number.isRequired, // Number of slider handles
-    step: PropTypes.number.isRequired, // Slider step size
-    domain: PropTypes.array.isRequired, // Range of the slider
-    values: PropTypes.array.isRequired, // Values of the slider handles
-  });
+  static propTypes = Object.assign(
+    {},
+    {
+      optionName: PropTypes.string.isRequired, // The prop to change of a TrackModel's options object.
+      label: PropTypes.string.isRequired, // Label for the input
+      mode: PropTypes.number.isRequired, // Number of slider handles
+      step: PropTypes.number.isRequired, // Slider step size
+      domain: PropTypes.array.isRequired, // Range of the slider
+      values: PropTypes.array.isRequired, // Values of the slider handles
+    }
+  );
 
   static defaultProps = {
     label: "Slider",
