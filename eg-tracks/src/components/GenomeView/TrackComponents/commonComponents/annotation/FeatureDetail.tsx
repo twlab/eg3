@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import _ from "lodash";
 import Feature from "../../../../../models/Feature";
-import "../hoverToolTips/Tooltip.css";
+import "../HoverToolTips/Tooltip.css";
 import { CopyToClip } from "../CopyToClipboard";
 
 /**
@@ -42,9 +42,11 @@ class FeatureDetail extends React.PureComponent<FeatureDetailProps> {
             </a>
           );
         } else {
+
           const ncbiURL = `https://www.ncbi.nlm.nih.gov/gene/?term=${
             String(feature.id).split(".")[0]
           }`;
+
           linkOut = (
             <a href={ncbiURL} target="_blank" rel="noopener noreferrer">
               NCBI

@@ -1,6 +1,8 @@
 import React, { useState, FC } from "react";
 import TrackModel from "../../../../models/TrackModel";
+
 import "./hoverToolTips/Tooltip.css";
+
 import { variableIsObject } from "../../../../models/util";
 
 export const COLORS = [
