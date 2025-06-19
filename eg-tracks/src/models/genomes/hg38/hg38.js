@@ -302,13 +302,7 @@ const defaultTracks = [
   //     height: 100,
   //   },
   // }),
-  // new TrackModel({
-  //   type: "longrange",
-  //   name: "example longrange",
-  //   url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-  //   indexUrl:
-  //     "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4",
-  // }),
+
   // new TrackModel({
   //   type: "methylc",
   //   name: "H1",
@@ -522,35 +516,7 @@ const defaultTracks = [
   //   name: "ES-E14 ChIA-PET",
   //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
   // }),
-  // new TrackModel({
-  //   type: "longrange",
-  //   name: "Test 1 longrange file",
-  //   url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-  //   indexUrl:
-  //     "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4",
-  // }),
 
-  // new TrackModel({
-  //   name: "dynamic hic",
-  //   type: "dynamichic",
-  //   options: {
-  //     dynamicColors: ["red", "blue"],
-  //     useDynamicColors: true,
-  //   },
-  //   tracks: [
-  //     {
-  //       type: "longrange",
-  //       url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  //     },
-  //     {
-  //       type: "longrange",
-  //       name: "Test 1 longrange file",
-  //       url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-  //       indexUrl: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4"
-  //     },
-  //   ],
-  //   showOnHubLoad: true,
-  // }),
   // new TrackModel({
   //   type: "biginteract",
   //   name: "test bigInteract",

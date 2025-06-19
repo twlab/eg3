@@ -149,7 +149,9 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                   <div>
                     <button
                       className="btn btn-sm btn-primary"
-                      onClick={() => setShow3dGene(gene)}
+                      onClick={() =>
+                        setShow3dGene ? setShow3dGene(gene) : () => {}
+                      }
                     >
                       Show in 3D
                     </button>
@@ -244,7 +246,9 @@ export const geneClickToolTipMap: { [key: string]: any } = {
                   <div>
                     <button
                       className="btn btn-sm btn-primary"
-                      onClick={() => setShow3dGene(gene)}
+                      onClick={() =>
+                        setShow3dGene ? setShow3dGene(gene) : () => {}
+                      }
                     >
                       Show in 3D
                     </button>

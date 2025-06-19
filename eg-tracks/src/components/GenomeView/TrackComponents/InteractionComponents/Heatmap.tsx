@@ -168,6 +168,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
       fetchViewWindowOnly,
       bothAnchorsInView,
       legend,
+      options,
     } = this.props;
     const heightStandard =
       fetchViewWindowOnly || bothAnchorsInView
@@ -192,18 +193,17 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
           transform: `translateX(${-viewWindow.start}px)`,
         }
       : {};
+    let hoverStyle: any = options.packageVersion ? { marginLeft: 120 } : {};
 
     return (
       <React.Fragment>
-        {forceSvg ? (
-          ""
-        ) : (
+        {!forceSvg ? (
           <div
             style={{
               display: "flex",
               flexDirection: "row",
               position: "absolute",
-
+              ...hoverStyle,
               zIndex: 3,
             }}
           >
@@ -218,6 +218,8 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
               options={this.props.options}
             />
           </div>
+        ) : (
+          ""
         )}
 
         {placedInteractions.length === 0 ? (
@@ -229,7 +231,7 @@ class HeatmapNoLegendWidth extends React.PureComponent<HeatmapProps> {
           ></div>
         ) : (
           <div style={{ display: "flex", ...curParentStyle }}>
-            {forceSvg && legend ? legend : ""}
+            {forceSvg || options.packageVersion ? legend : ""}
             <div
               style={{
                 display: "flex",

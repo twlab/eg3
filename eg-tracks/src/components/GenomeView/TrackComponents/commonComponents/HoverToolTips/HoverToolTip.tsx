@@ -771,7 +771,7 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
     >
       {isVisible ? (
         <>
-          {options && "trackManagerRef" in options
+          {options && options.trackManagerRef
             ? ReactDOM.createPortal(
                 rectPosition.beams,
                 options.trackManagerRef.current

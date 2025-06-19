@@ -9,14 +9,16 @@ import {
   OpenInterval,
   trackOptionMap,
 } from "../models";
-import { GenomeCoordinate } from "@/types";
-import NavigationContext from "@/models/NavigationContext";
+import { GenomeCoordinate } from "../types";
+import NavigationContext from "../models/NavigationContext";
 import { fetchGenomicData } from "../getRemoteData/fetchDataFunction";
+import { HicSource } from "../getRemoteData/hicSource";
 import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
 import { zoomFactors } from "./GenomeView/TrackManager";
 import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickTooltipMap";
 import ReactDOM from "react-dom";
+import BamSource from "../getRemoteData/BamSource";
 interface DataSource {
   url?: string;
   name?: string;
@@ -48,9 +50,9 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
     const [viewerElement, setViewerElement] = useState<any>(null);
     const [toolTip, setToolTip] = useState<any>(null);
     const [toolTipVisible, setToolTipVisible] = useState(false);
-    const [show3dGene, setShow3dGene] = useState<any>(null);
-    const configOptions = useRef<any>({ current: {} });
+    const fetchInstances = useRef<{ [key: string]: any }>({});
 
+    const block = useRef<HTMLInputElement>(null);
     function onClose() {
       setToolTip(null);
     }
@@ -112,8 +114,23 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
     function getOptions(type: string, userOptions?: any) {
       const defaults = trackOptionMap[type]?.defaultOptions || {};
       return userOptions
-        ? { ...defaults, ...userOptions, packageVersion: true }
-        : { ...defaults, packageVersion: true };
+        ? {
+            ...defaults,
+            ...userOptions,
+            packageVersion: true,
+            trackManagerRef:
+              type in { hic: "", longrange: "", biginteract: "" }
+                ? block
+                : null,
+          }
+        : {
+            ...defaults,
+            packageVersion: true,
+            trackManagerRef:
+              type in { hic: "", longrange: "", biginteract: "" }
+                ? block
+                : null,
+          };
     }
     function getTrackModels(genomeConfig: any, genomeViewId: string) {
       let trackModelArr: TrackModel[] = [];
@@ -149,7 +166,29 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             })
         );
       }
-
+      if (type === "hic" || type === "bam") {
+        trackModelArr.forEach((track) => {
+          if (type === "hic") {
+            if (!fetchInstances.current[`${track.id}`]) {
+              fetchInstances.current[`${track.id}`] = new HicSource(track.url);
+            }
+          } else if (track.type === "dynamichic") {
+            track.tracks?.map((_item: any, index: string | number) => {
+              fetchInstances.current[`${track.id}` + "subtrack" + `${index}`] =
+                new HicSource(track.tracks![index].url);
+            });
+          } else if (
+            track.type in
+            { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+          ) {
+            track.tracks?.map((trackModel: any, index: any) => {
+              trackModel.id = `${track.id}` + "subtrack" + `${index}`;
+            });
+          } else if (track.type === "bam") {
+            fetchInstances.current[`${track.id}`] = new BamSource(track.url);
+          }
+        });
+      }
       return trackModelArr;
     }
     // MARK: View/Track
@@ -203,8 +242,39 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       prevFetchResults?: any
     ) {
       if (!prevFetchResults) {
-        const fetchResult = await fetchGenomicData([viewRegionData]);
-        const trackData = fetchResult[0].fetchResults.map((item) => {
+        let fetchResult;
+        if (type !== "hic" && type !== "bam") {
+          const results = await fetchGenomicData([viewRegionData]);
+          fetchResult = results[0].fetchResults;
+        } else if (type === "hic") {
+          const tmpRawData: Array<Promise<any>> =
+            viewRegionData.trackModelArr.map((track: any) =>
+              fetchInstances.current[`${track.id}`]
+                .getData(
+                  viewRegionData.visData.visRegion,
+                  viewRegionData.visData.visRegion.getWidth() / width
+                    ? width
+                    : DEFAULT_WINDOW_WIDTH,
+                  track.options
+                )
+                .then((res: any) => ({ result: res, trackModel: track }))
+            );
+          fetchResult = await Promise.all(tmpRawData);
+        } else if (type === "bam") {
+          // Build an array of promises
+          const tmpRawData: Array<Promise<any>> =
+            viewRegionData.trackModelArr.map((track: any) =>
+              fetchInstances.current[`${track.id}`]
+                .getData(viewRegionData.genomicLoci)
+                .then((res: any) => ({ result: res, trackModel: track }))
+            );
+
+          fetchResult = await Promise.all(tmpRawData);
+
+          // if (!tmpTrackState.initial) {
+        }
+
+        const trackData = fetchResult.map((item) => {
           const trackState = {
             viewWindow: viewRegionData.viewWindow,
             startWindow: 0,
@@ -228,8 +298,8 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
                 name: genomeConfig.genome._name,
                 onClose: onClose,
                 isThereG3dTrack: false,
-                setShow3dGene: setShow3dGene,
-                configOptions: configOptions.current,
+                setShow3dGene: null,
+                configOptions: item.trackModel.options,
               });
               setToolTipVisible(true);
               setToolTip(ReactDOM.createPortal(currtooltip, document.body));
@@ -268,6 +338,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             setToolTipVisible(true);
             setToolTip(currtooltip);
           }
+
           return {
             genomeName: viewRegionData.primaryGenName,
             genesArr: formatDataByType(item.result, type),
@@ -312,7 +383,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       }
     }
 
-    // MARK: Create
+    // MARK: CreateSvg
     function createGenomeViewElement(genomeDrawData: any) {
       return genomeDrawData.map((item) => {
         const svgResult = getDisplayModeFunction(item);
@@ -377,15 +448,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
         }
         const region = getRegion(genomeConfig);
         const width = windowWidth || DEFAULT_WINDOW_WIDTH;
-        // const navContext = genomeConfig.navContext as NavigationContext;
-        // const parsedRegion = genomeConfig.navContext.parse(
-        //   region as GenomeCoordinate
-        // );
-        // const userViewRegion = new DisplayedRegionModel(
-        //   navContext,
-        //   ...parsedRegion
-        // );
-        // console.log(userViewRegion.zoom(1));
 
         await updateViewerElement({
           genomeConfig,
@@ -398,7 +460,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       }
       handle();
     }, [genomeName, customElements]);
-    // MARK: Non-initial useEffects
+    // MARK: NonInit UE
     useEffect(() => {
       if (
         viewerElement &&
@@ -492,14 +554,28 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       }
     }, [zoom]);
     // MARK: Render
-    return !viewerElement ? (
-      ""
-    ) : typeof viewerElement === "string" ? (
-      <div style={{ color: "red" }}>{viewerElement}</div>
-    ) : (
-      <div>
-        {viewerElement.element}
-        <div className={toolTipVisible ? "visible" : "hidden"}>{toolTip}</div>
+    return (
+      <div
+        ref={block}
+        style={{
+          display: "flex",
+
+          position: "relative",
+        }}
+      >
+        {" "}
+        {!viewerElement ? (
+          ""
+        ) : typeof viewerElement === "string" ? (
+          <div style={{ color: "red" }}>{viewerElement}</div>
+        ) : (
+          <div>
+            {viewerElement.element}
+            <div className={toolTipVisible ? "visible" : "hidden"}>
+              {toolTip}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

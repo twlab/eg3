@@ -94,6 +94,43 @@ export default function GenomeViewerTest() {
           type={"geneannotation"}
           genomeName={genomeName}
         />
+
+        <GenomeViewer
+          viewRegion={"chr7:27181545-27245617"}
+          dataSources={[
+            {
+              url: "https://egg.wustl.edu/d/hg19/GSM832458.gz",
+              name: "lonragetest",
+            },
+          ]}
+          zoom={zoom}
+          type={"longrange"}
+          genomeName={"hg19"}
+        />
+        <GenomeViewer
+          viewRegion={"chr7:27181545-27245617"}
+          dataSources={[
+            {
+              url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+              name: "bamtest",
+            },
+          ]}
+          zoom={zoom}
+          type={"bam"}
+          genomeName={"hg19"}
+        />
+        <GenomeViewer
+          viewRegion={viewRegion}
+          dataSources={[
+            {
+              url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
+              name: "hictest",
+            },
+          ]}
+          zoom={zoom}
+          type={"hic"}
+          genomeName={"hg19"}
+        />
       </div>
     </div>
   );
