@@ -14,6 +14,7 @@ import {
   IHighlightInterval,
   ITrackModel,
 } from "wuepgg3-track";
+import "wuepgg3-track/style.css";
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 
@@ -21,6 +22,7 @@ import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { RootState } from "../../lib/redux/store";
+import GenomeViewerTest from "./testComp";
 
 export default function GenomeView() {
   const prevViewRegion = useRef<any>("");
@@ -99,7 +101,8 @@ export default function GenomeView() {
     genomeConfig &&
     currentSession.genomeId === genomeConfig.name ? (
     <div>
-      <TrackContainerRepresentable
+      <GenomeViewerTest />
+      {/* <TrackContainerRepresentable
         key={currentSession.id}
         genomeName={
           currentSession?.genomeId ? currentSession?.genomeId : "hg38"
@@ -122,7 +125,7 @@ export default function GenomeView() {
         isScreenShotOpen={isScreenShotOpen}
         overrideViewRegion={currentSession?.overrideViewRegion}
         currentState={currentState}
-      />
+      /> */}
     </div>
   ) : null;
 }

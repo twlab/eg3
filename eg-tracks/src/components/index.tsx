@@ -11,7 +11,7 @@ import {
 } from "../models";
 import { GenomeCoordinate } from "../types";
 import NavigationContext from "../models/NavigationContext";
-import { fetchGenomicData } from "../getRemoteData/fetchDataFunction";
+import { fetchGenomicData } from "../getRemoteData/fetchData";
 import { HicSource } from "../getRemoteData/hicSource";
 import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
@@ -54,6 +54,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
 
     const block = useRef<HTMLInputElement>(null);
     function onClose() {
+      console.log("Close ");
       setToolTip(null);
     }
     function zoomTrack() {
@@ -241,6 +242,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       width: number,
       prevFetchResults?: any
     ) {
+      console.log(viewRegionData);
       if (!prevFetchResults) {
         let fetchResult;
         if (type !== "hic" && type !== "bam") {
@@ -283,27 +285,24 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
           };
 
           function renderTooltip(event, gene) {
-            if (viewerElement) {
-              const genomeConfig = viewRegionData.genomeConfig;
-              const currtooltip = geneClickToolTipMap[
-                `${item.trackModel.type}`
-              ]({
-                gene,
-                feature: gene,
-                snp: gene,
-                vcf: gene,
-                trackModel: item.trackModel,
-                pageX: event.pageX,
-                pageY: event.pageY,
-                name: genomeConfig.genome._name,
-                onClose: onClose,
-                isThereG3dTrack: false,
-                setShow3dGene: null,
-                configOptions: item.trackModel.options,
-              });
-              setToolTipVisible(true);
-              setToolTip(ReactDOM.createPortal(currtooltip, document.body));
-            }
+            const genomeConfig = viewRegionData.genomeConfig;
+            const currtooltip = geneClickToolTipMap[`${item.trackModel.type}`]({
+              gene,
+              feature: gene,
+              snp: gene,
+              vcf: gene,
+              trackModel: item.trackModel,
+              pageX: event.pageX,
+              pageY: event.pageY,
+              name: genomeConfig.genome._name,
+              onClose: onClose,
+              isThereG3dTrack: false,
+              setShow3dGene: null,
+              configOptions: item.trackModel.options,
+            });
+            setToolTipVisible(true);
+            console.log("open");
+            setToolTip(ReactDOM.createPortal(currtooltip, document.body));
           }
 
           function renderTooltipModbed(
@@ -563,17 +562,16 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
           position: "relative",
         }}
       >
-        {" "}
         {!viewerElement ? (
           ""
         ) : typeof viewerElement === "string" ? (
           <div style={{ color: "red" }}>{viewerElement}</div>
         ) : (
           <div>
-            {viewerElement.element}
             <div className={toolTipVisible ? "visible" : "hidden"}>
               {toolTip}
             </div>
+            {viewerElement.element}
           </div>
         )}
       </div>
