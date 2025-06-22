@@ -619,6 +619,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     <div
       style={{
         display: "flex",
+        position: "relative",
       }}
     >
       <div

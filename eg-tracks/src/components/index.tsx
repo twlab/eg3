@@ -15,7 +15,7 @@ import { fetchGenomicData } from "../getRemoteData/fetchData";
 import { HicSource } from "../getRemoteData/hicSource";
 import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
-import { zoomFactors } from "./GenomeView/TrackManager";
+
 import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickTooltipMap";
 import ReactDOM from "react-dom";
 import BamSource from "../getRemoteData/BamSource";
@@ -23,6 +23,7 @@ interface DataSource {
   url?: string;
   name?: string;
   options?: { [key: string]: any };
+  type: string;
 }
 
 interface GenomeVisualizationProps {
@@ -32,20 +33,12 @@ interface GenomeVisualizationProps {
   viewRegion?: any;
   windowWidth?: number;
   customGenome?: string;
-  zoom?: number;
 }
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 
 const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
-  function GenomeViewer({
-    genomeName,
-    type,
-    dataSources,
-    viewRegion,
-    windowWidth,
-    zoom,
-  }) {
+  function GenomeViewer({ genomeName, dataSources, viewRegion, windowWidth }) {
     const latestGenomeKey = useRef(genomeName);
     const [viewerElement, setViewerElement] = useState<any>(null);
     const [toolTip, setToolTip] = useState<any>(null);
@@ -54,12 +47,9 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
 
     const block = useRef<HTMLInputElement>(null);
     function onClose() {
-      console.log("Close ");
       setToolTip(null);
     }
-    function zoomTrack() {
-      return "";
-    }
+
     // MARK:Con/Reg/Opt
     function getConfig() {
       if (testCustomGenome) {
@@ -91,25 +81,7 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       ) {
         return "Invalid data source";
       }
-      if (!type || !trackOptionMap[type]) {
-        return "Invalid type";
-      }
 
-      if (
-        !(
-          type === "geneannotation" &&
-          dataSources.some(
-            (source) =>
-              source.name &&
-              source.name in
-                { "MANE_select_1.4": "", gencodeV47: "", refGene: "" }
-          )
-        ) &&
-        type !== "geneannotation" &&
-        dataSources.some((source) => !source.url)
-      ) {
-        return "All dataSources must have a url and name";
-      }
       return null;
     }
     function getOptions(type: string, userOptions?: any) {
@@ -135,18 +107,13 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
     }
     function getTrackModels(genomeConfig: any, genomeViewId: string) {
       let trackModelArr: TrackModel[] = [];
-      if (
-        customElements &&
-        genomeConfig.defaultTracks &&
-        !dataSources &&
-        type
-      ) {
+      if (customElements && genomeConfig.defaultTracks && !dataSources) {
         trackModelArr = genomeConfig.defaultTracks
           .map((track, idx) => {
-            if (track.type && track.type === type) {
+            if (track.type) {
               track.id = `${genomeViewId}-${idx}`;
               track.options = getOptions(
-                type,
+                track.type,
                 track.options ? track.options : {}
               );
               return track;
@@ -154,42 +121,42 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             return undefined;
           })
           .filter(Boolean); // removes undefined entries
-      } else if (type) {
-        // Create TrackModel array for each data source
+      }
+      // Create TrackModel array for each data source
+      else
         trackModelArr = dataSources.map(
-          (source, idx) =>
+          (track, idx) =>
             new TrackModel({
-              type,
-              name: source.name ? source.name : `track ${idx + 1}`,
-              url: source.url,
-              options: getOptions(type, source.options),
+              type: track.type,
+              name: track.name ? track.name : `track ${idx + 1}`,
+              url: track.url,
+              options: getOptions(track.type, track.options),
               id: crypto.randomUUID(),
             })
         );
-      }
-      if (type === "hic" || type === "bam") {
-        trackModelArr.forEach((track) => {
-          if (type === "hic") {
-            if (!fetchInstances.current[`${track.id}`]) {
-              fetchInstances.current[`${track.id}`] = new HicSource(track.url);
-            }
-          } else if (track.type === "dynamichic") {
-            track.tracks?.map((_item: any, index: string | number) => {
-              fetchInstances.current[`${track.id}` + "subtrack" + `${index}`] =
-                new HicSource(track.tracks![index].url);
-            });
-          } else if (
-            track.type in
-            { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
-          ) {
-            track.tracks?.map((trackModel: any, index: any) => {
-              trackModel.id = `${track.id}` + "subtrack" + `${index}`;
-            });
-          } else if (track.type === "bam") {
-            fetchInstances.current[`${track.id}`] = new BamSource(track.url);
+
+      trackModelArr.forEach((track) => {
+        if (track.type === "hic") {
+          if (!fetchInstances.current[`${track.id}`]) {
+            fetchInstances.current[`${track.id}`] = new HicSource(track.url);
           }
-        });
-      }
+        } else if (track.type === "dynamichic") {
+          track.tracks?.map((_item: any, index: string | number) => {
+            fetchInstances.current[`${track.id}` + "subtrack" + `${index}`] =
+              new HicSource(track.tracks![index].url);
+          });
+        } else if (
+          track.type in
+          { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
+        ) {
+          track.tracks?.map((trackModel: any, index: any) => {
+            trackModel.id = `${track.id}` + "subtrack" + `${index}`;
+          });
+        } else if (track.type === "bam") {
+          fetchInstances.current[`${track.id}`] = new BamSource(track.url);
+        }
+      });
+
       return trackModelArr;
     }
     // MARK: View/Track
@@ -238,45 +205,40 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
     // MARK: Fetch/format
     async function fetchDrawData(
       viewRegionData: any,
-      type: string,
       width: number,
       prevFetchResults?: any
     ) {
-      console.log(viewRegionData);
       if (!prevFetchResults) {
-        let fetchResult;
-        if (type !== "hic" && type !== "bam") {
-          const results = await fetchGenomicData([viewRegionData]);
-          fetchResult = results[0].fetchResults;
-        } else if (type === "hic") {
-          const tmpRawData: Array<Promise<any>> =
-            viewRegionData.trackModelArr.map((track: any) =>
-              fetchInstances.current[`${track.id}`]
+        const results = await fetchGenomicData([viewRegionData]);
+        const fetchPromises: Array<Promise<void>> = [];
+        results[0].fetchResults.forEach((track) => {
+          if (track.trackModel.type === "hic") {
+            fetchPromises.push(
+              fetchInstances.current[`${track.trackModel.id}`]
                 .getData(
                   viewRegionData.visData.visRegion,
                   viewRegionData.visData.visRegion.getWidth() / width
                     ? width
                     : DEFAULT_WINDOW_WIDTH,
-                  track.options
+                  track.trackModel.options
                 )
-                .then((res: any) => ({ result: res, trackModel: track }))
+                .then((res: any) => {
+                  track.result = res;
+                })
             );
-          fetchResult = await Promise.all(tmpRawData);
-        } else if (type === "bam") {
-          // Build an array of promises
-          const tmpRawData: Array<Promise<any>> =
-            viewRegionData.trackModelArr.map((track: any) =>
-              fetchInstances.current[`${track.id}`]
+          } else if (track.trackModel.type === "bam") {
+            fetchPromises.push(
+              fetchInstances.current[`${track.trackModel.id}`]
                 .getData(viewRegionData.genomicLoci)
-                .then((res: any) => ({ result: res, trackModel: track }))
+                .then((res: any) => {
+                  track.result = res;
+                })
             );
+          }
+        });
+        await Promise.all(fetchPromises);
 
-          fetchResult = await Promise.all(tmpRawData);
-
-          // if (!tmpTrackState.initial) {
-        }
-
-        const trackData = fetchResult.map((item) => {
+        const trackData = results[0].fetchResults.map((item) => {
           const trackState = {
             viewWindow: viewRegionData.viewWindow,
             startWindow: 0,
@@ -301,7 +263,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
               configOptions: item.trackModel.options,
             });
             setToolTipVisible(true);
-            console.log("open");
             setToolTip(ReactDOM.createPortal(currtooltip, document.body));
           }
 
@@ -340,14 +301,16 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
 
           return {
             genomeName: viewRegionData.primaryGenName,
-            genesArr: formatDataByType(item.result, type),
+            genesArr: formatDataByType(item.result, item.trackModel.type),
             trackState,
             windowWidth: width,
             configOptions: item.trackModel.options,
             basesByPixel: viewRegionData.basesByPixel,
             trackModel: item.trackModel,
-            getGenePadding: trackOptionMap[type]?.getGenePadding,
-            ROW_HEIGHT: trackOptionMap[`${type}`].ROW_HEIGHT,
+            getGenePadding:
+              trackOptionMap[`${item.trackModel.type}`]?.getGenePadding,
+            ROW_HEIGHT:
+              trackOptionMap[`${`${item.trackModel.type}`}`].ROW_HEIGHT,
             genomeConfig: viewRegionData.genomeConfig,
             renderTooltip:
               item.trackModel.type === "modbed"
@@ -373,8 +336,9 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             configOptions: item.trackModel.options,
             basesByPixel: viewRegionData.basesByPixel,
             trackModel: item.trackModel,
-            getGenePadding: trackOptionMap[type]?.getGenePadding,
-            ROW_HEIGHT: trackOptionMap[`${type}`].ROW_HEIGHT,
+            getGenePadding:
+              trackOptionMap[`${item.trackModel.type}`]?.getGenePadding,
+            ROW_HEIGHT: trackOptionMap[`${item.trackModel.type}`].ROW_HEIGHT,
             genomeConfig: viewRegionData.genomeConfig,
           };
         });
@@ -405,7 +369,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       genomeConfig,
       region,
       width,
-      type,
       genomeKey,
       prevGenomeDrawData,
     }) {
@@ -424,7 +387,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       );
       const genomeDrawData = await fetchDrawData(
         viewRegionData,
-        type,
         width,
         prevGenomeDrawData
       );
@@ -452,7 +414,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
           genomeConfig,
           region,
           width,
-          type,
           genomeKey: latestGenomeKey.current,
           prevGenomeDrawData: undefined,
         });
@@ -474,14 +435,13 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             genomeConfig,
             region,
             width,
-            type,
             genomeKey: viewerElement.genomeKey,
             prevGenomeDrawData: undefined,
           });
         }
         handle();
       }
-    }, [viewRegion, type, dataSources]);
+    }, [viewRegion, dataSources]);
 
     useEffect(() => {
       if (
@@ -497,7 +457,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
             genomeConfig,
             region,
             width,
-            type,
             genomeKey: viewerElement.genomeKey,
             prevGenomeDrawData: viewerElement.genomeDrawData,
           });
@@ -506,52 +465,6 @@ const GenomeViewer: React.FC<GenomeVisualizationProps> = memo(
       }
     }, [windowWidth]);
 
-    useEffect(() => {
-      if (
-        viewerElement &&
-        latestGenomeKey.current === viewerElement.genomeKey &&
-        zoom
-      ) {
-        async function handle() {
-          const genomeConfig = viewerElement.genomeConfig;
-          const region = getRegion(genomeConfig);
-          let zoomValue = 1;
-          let zoomNum = zoom;
-
-          // Try to convert string to number if needed
-          if (typeof zoom === "string") {
-            zoomNum = Number(zoom);
-          }
-
-          if (
-            zoomNum &&
-            Number.isInteger(zoomNum) &&
-            zoomNum >= -5 &&
-            zoomNum <= 5
-          ) {
-            if (zoomNum === -1) {
-              zoomValue = 0.5;
-            } else if (zoomNum === 1) {
-              zoomValue = 2;
-            } else if (zoomNum <= -2 && zoomNum >= -5) {
-              zoomValue = 1 / Math.abs(zoomNum);
-            } else if (zoomNum >= 2 && zoomNum <= 5) {
-              zoomValue = zoomNum;
-            }
-
-            const navContext = genomeConfig.navContext as NavigationContext;
-            const parsedRegion = genomeConfig.navContext.parse(
-              region as GenomeCoordinate
-            );
-            const userViewRegion = new DisplayedRegionModel(
-              navContext,
-              ...parsedRegion
-            );
-          }
-        }
-        handle();
-      }
-    }, [zoom]);
     // MARK: Render
     return (
       <div
