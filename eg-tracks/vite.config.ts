@@ -45,5 +45,4 @@ export default defineConfig({
       entryRoot: "src",
     }),
   ],
-  worker: { format: "es" },
 });
