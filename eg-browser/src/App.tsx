@@ -1,7 +1,7 @@
-import { MotionConfig } from 'framer-motion';
-import RootLayout from './components/root-layout/RootLayout';
-import ReduxProvider from './lib/redux/provider';
-
+import { MotionConfig } from "framer-motion";
+import RootLayout from "./components/root-layout/RootLayout";
+import ReduxProvider from "./lib/redux/provider";
+import "./index.css";
 export default function App() {
   return (
     <MotionConfig transition={snappyTransition}>
@@ -9,12 +9,12 @@ export default function App() {
         <RootLayout />
       </ReduxProvider>
     </MotionConfig>
-  )
+  );
 }
 
 const snappyTransition = {
-  type: 'spring',
+  type: "spring",
   damping: 35,
   stiffness: 400,
-  mass: 0.8
-}
+  mass: 0.8,
+};
