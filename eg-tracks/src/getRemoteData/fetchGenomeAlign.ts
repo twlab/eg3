@@ -2,7 +2,6 @@ import _ from "lodash";
 import JSON5 from "json5";
 import { SequenceSegment } from "../models/AlignmentStringUtils";
 import AlignmentRecord from "../models/AlignmentRecord";
-
 import { AlignmentSegment } from "../models/AlignmentSegment";
 import { NavContextBuilder } from "../models/NavContextBuilder";
 import ChromosomeInterval from "../models/ChromosomeInterval";
@@ -13,7 +12,10 @@ import { ViewExpansion } from "../models/RegionExpander";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
-
+import {
+  localTrackFetchFunction,
+  textFetchFunction,
+} from "../getLocalData/localFetchData";
 import { niceBpCount } from "../models/util";
 
 export interface PlacedAlignment {
@@ -69,17 +71,17 @@ export interface MultiAlignment {
   [genome: string]: Alignment;
 }
 
-self.onmessage = async (event: MessageEvent) => {
-  const regionExpandLoci = event.data.regionExpandLoci;
-  const trackToFetch = event.data.trackToFetch;
-  const genomicLoci = event.data.genomicLoci;
+export async function fetchGenomeAlignData (dataToFetchObj: {[key:string]: any}) {
+  const regionExpandLoci = dataToFetchObj.regionExpandLoci;
+  const trackToFetch = dataToFetchObj.trackToFetch;
+  const genomicLoci = dataToFetchObj.genomicLoci;
 
   const fetchResults = {};
   const trackToDrawId = {};
   const genomicFetchCoord = {};
-  const useFineModeNav = event.data.useFineModeNav;
-  const primaryGenName = event.data.primaryGenName;
-  const initGenomicLoci = event.data.initGenomicLoci;
+  const useFineModeNav = dataToFetchObj.useFineModeNav;
+  const primaryGenName = dataToFetchObj.primaryGenName;
+  const initGenomicLoci = dataToFetchObj.initGenomicLoci;
 
   genomicFetchCoord[`${primaryGenName}`] = {
     genomicLoci,
@@ -91,13 +93,13 @@ self.onmessage = async (event: MessageEvent) => {
   const fetchArrNav = [regionExpandLoci];
 
   if (genomeAlignTracks.length > 0) {
-    await getGenomeAlignment(event.data.visData.visRegion, genomeAlignTracks);
+    await getGenomeAlignment(dataToFetchObj.visData.visRegion, genomeAlignTracks);
   }
 
   async function getGenomeAlignment(curVisData, genomeAlignTracks) {
     let visRegionFeatures: Feature[] = [];
 
-    for (let feature of event.data.visData.visRegion._navContext._features) {
+    for (let feature of dataToFetchObj.visData.visRegion._navContext._features) {
       let newChr = new ChromosomeInterval(
         feature.locus.chr,
         feature.locus.start,
@@ -107,7 +109,7 @@ self.onmessage = async (event: MessageEvent) => {
     }
 
     let visRegionNavContext = new NavigationContext(
-      event.data.visData.visRegion._navContext._name,
+      dataToFetchObj.visData.visRegion._navContext._name,
       visRegionFeatures
     );
 
@@ -119,7 +121,7 @@ self.onmessage = async (event: MessageEvent) => {
 
     let viewWindowRegionFeatures: Feature[] = [];
 
-    for (let feature of event.data.visData.viewWindowRegion._navContext
+    for (let feature of dataToFetchObj.visData.viewWindowRegion._navContext
       ._features) {
       let newChr = new ChromosomeInterval(
         feature.locus.chr,
@@ -130,23 +132,23 @@ self.onmessage = async (event: MessageEvent) => {
     }
 
     let viewWindowRegionNavContext = new NavigationContext(
-      event.data.visData.viewWindowRegion._navContext._name,
+      dataToFetchObj.visData.viewWindowRegion._navContext._name,
       viewWindowRegionFeatures
     );
 
     let viewWindowRegion = new DisplayedRegionModel(
       viewWindowRegionNavContext,
-      event.data.visData.viewWindowRegion._startBase,
-      event.data.visData.viewWindowRegion._endBase
+      dataToFetchObj.visData.viewWindowRegion._startBase,
+      dataToFetchObj.visData.viewWindowRegion._endBase
     );
 
     let visData: ViewExpansion = {
-      visWidth: event.data.visData.visWidth,
+      visWidth: dataToFetchObj.visData.visWidth,
 
       visRegion,
       viewWindow: new OpenInterval(
-        event.data.windowWidth,
-        event.data.windowWidth * 2
+        dataToFetchObj.windowWidth,
+        dataToFetchObj.windowWidth * 2
       ),
 
       viewWindowRegion,
@@ -230,7 +232,7 @@ self.onmessage = async (event: MessageEvent) => {
     }
 
     let multiCalInstance = new MultiAlignmentViewCalculator(
-      event.data.primaryGenName
+      dataToFetchObj.primaryGenName
     );
 
     let alignment = multiCalInstance.multiAlign(visData, successFetch);
@@ -371,19 +373,19 @@ self.onmessage = async (event: MessageEvent) => {
     return { chr, start, end };
   }
 
-  postMessage({
+  return {
     fetchResults,
 
     navData: {
-      ...event.data,
+      ...dataToFetchObj,
       genomicFetchCoord,
       trackToDrawId,
       regionSetStartBp:
-        event.data.visData.visRegion._endBase -
-          event.data.visData.visRegion._startBase ===
-        event.data.bpRegionSize
+        dataToFetchObj.visData.visRegion._endBase -
+          dataToFetchObj.visData.visRegion._startBase ===
+        dataToFetchObj.bpRegionSize
           ? 0
           : null,
     },
-  });
+  }
 };

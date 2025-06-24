@@ -33,7 +33,7 @@
     "axios": "^1.10.0",
     "color-rgba": "^3.0.0",
     "d3": "^7.9.0",
-    "flexlayout-react": "^0.8.1",
+    "flexlayout-react": "^0.3.11",
     "fuse.js": "^7.0.0",
     "generic-filehandle": "^3.1.2",
     "grommet": "^2.37.0",

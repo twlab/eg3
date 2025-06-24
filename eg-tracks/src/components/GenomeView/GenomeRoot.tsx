@@ -1,6 +1,29 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
+import FlexLayout from "flexlayout-react";
+
+var json = {
+  global: {},
+  borders: [],
+  layout: {
+    type: "row",
+    weight: 100,
+    children: [
+      {
+        type: "tabset",
+        weight: 50,
+        children: [
+          {
+            type: "tab",
+            name: "One",
+            component: "placeholder",
+          },
+        ],
+      },
+    ],
+  },
+};
 
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";
@@ -11,8 +34,8 @@ import TrackManager from "./TrackManager";
 // import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
-import GenomeViewer from "../../components";
-import GenomeViewerTest from "./testComp";
+
+// import GenomeViewerTest from "./testComp";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -36,6 +59,37 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
+  const model = FlexLayout.Model.fromJson(json);
+  const factory = (node) => {
+    var component = node.getComponent();
+    if (component === "placeholder") {
+      return (
+        <TrackManager
+          key="main-track-manager"
+          tracks={tracks}
+          legendWidth={legendWidth}
+          windowWidth={
+            (!size.width || size.width - legendWidth < 0 ? 1500 : size.width) -
+            legendWidth
+          }
+          userViewRegion={userViewRegion}
+          highlights={highlights}
+          genomeConfig={currentGenomeConfig}
+          onNewRegion={onNewRegion}
+          onNewRegionSelect={onNewRegionSelect}
+          onNewHighlight={onNewHighlight}
+          onTracksChange={onTracksChange}
+          tool={tool}
+          Toolbar={Toolbar}
+          viewRegion={viewRegion}
+          showGenomeNav={showGenomeNav}
+          setScreenshotData={setScreenshotData}
+          isScreenShotOpen={isScreenShotOpen}
+          selectedRegionSet={selectedRegionSet}
+        />
+      );
+    }
+  };
 
   const throttle = (callback, limit) => {
     let timeoutId: any = null;
@@ -133,52 +187,17 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       prevViewRegion.current.end = userViewRegion._endBase!;
     }
   }, [userViewRegion]);
-
+  useEffect(() => {
+    return () => {
+      console.log("GenomeRoot unmounted");
+    };
+  }, []);
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
-      <div>
-        <GenomeViewerTest />
-      </div>
-
-      {/* <div>
-        <GenomeViewer
-          genomeName={"hg38"}
-          viewRegion={"chr7:27053397-27373765"}
-          type={"bigwig"}
-          dataSources={[
-            {
-              url: "https://vizhub.wustl.edu/public/tmp/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
-            },
-          ]}
-        />
-      </div> */}
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
-        {currentGenomeConfig && size.width > 0 ? (
-          <TrackManager
-            key={currentGenomeConfig.genomeID}
-            tracks={tracks}
-            legendWidth={legendWidth}
-            windowWidth={
-              (!size.width || size.width - legendWidth < 0
-                ? 1500
-                : size.width) - legendWidth
-            }
-            userViewRegion={userViewRegion}
-            highlights={highlights}
-            genomeConfig={currentGenomeConfig}
-            onNewRegion={onNewRegion}
-            onNewRegionSelect={onNewRegionSelect}
-            onNewHighlight={onNewHighlight}
-            onTracksChange={onTracksChange}
-            tool={tool}
-            Toolbar={Toolbar}
-            viewRegion={viewRegion}
-            showGenomeNav={showGenomeNav}
-            setScreenshotData={setScreenshotData}
-            isScreenShotOpen={isScreenShotOpen}
-            selectedRegionSet={selectedRegionSet}
-          />
+        {currentGenomeConfig && size.width ? (
+          <FlexLayout.Layout model={model} factory={factory} />
         ) : (
           ""
         )}

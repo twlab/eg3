@@ -80,6 +80,7 @@ import Vcf from "./VcfComponents/Vcf";
 import VcfTrack from "./VcfComponents/VcfTrack";
 
 import Bedcolor from "./bedComponents/Bedcolor";
+import { config } from "process";
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 enum BedColumnIndex {
   CATEGORY = 3,
@@ -105,7 +106,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
       width,
       height,
       rowHeight,
-      maxRows
+      maxRows,
+      legend
     ) {
       // FullVisualizer class from eg2
       function renderAnnotation(placedGroup: PlacedFeatureGroup, i: number) {
@@ -124,101 +126,51 @@ export const displayModeComponentMap: { [key: string]: any } = {
       }
       let svgKey = crypto.randomUUID();
 
-      if (configOptions.forceSvg) {
-        // const viewStart = trackState.visData.viewWindowRegion._startBase;
+      if (configOptions.forceSvg || configOptions.packageVersion) {
+        let curParentStyle: any = configOptions.forceSvg
+          ? {
+              position: "relative",
 
-        // const viewEnd = trackState.visData.viewWindowRegion._endBase;
-
-        // const adjustXSpan = (xSpan, viewWindow) => {
-        //   return new OpenInterval(
-        //     xSpan.start - viewWindow.start,
-        //     xSpan.end - viewWindow.start
-        //   );
-        // };
-
-        // const filteredAndAdjustedPlacements = placements
-        //   .filter(
-        //     (obj) =>
-        //       obj.xSpan.start <= trackState.viewWindow.end &&
-        //       obj.xSpan.end >= trackState.viewWindow.start
-        //   )
-        //   .map((obj) => ({
-        //     ...obj,
-        //     xSpan: adjustXSpan(obj.xSpan, trackState.viewWindow),
-        //     placedFeatures: obj.placedFeatures.map((item) => ({
-        //       ...item,
-        //       xSpan: adjustXSpan(item.xSpan, trackState.viewWindow),
-        //     })),
-        //   }));
+              overflow: "hidden",
+              width: width / 3,
+            }
+          : {};
+        let curEleStyle: any = configOptions.forceSvg
+          ? {
+              position: "relative",
+              transform: `translateX(${-trackState.viewWindow.start}px)`,
+            }
+          : {};
 
         return (
-          <div
-            style={{
-              display: "flex",
-              position: "relative",
-              width: width / 3,
-              overflow: "hidden",
-            }}
-          >
-            <TrackLegend
-              height={height}
-              trackModel={trackModel}
-              width={120}
-              label={
-                configOptions.label
-                  ? configOptions.label
-                  : trackModel.options.label
-                  ? trackModel.options.label
-                  : ""
-              }
-              forceSvg={configOptions.forceSvg}
-            />
-            <div
-              style={{
-                position: "relative",
-                transform: `translateX(${-trackState.viewWindow.start}px)`,
-              }}
-            >
-              <svg
-                style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
-                key={svgKey}
-                width={width}
-                // viewBox={`${trackState.viewWindow.start} 0 ${
-                //   trackState.visWidth / 3
-                // } ${height}`}
-                height={height}
-                display={"block"}
+          <React.Fragment>
+            <div style={{ display: "flex", ...curParentStyle }}>
+              {configOptions.forceSvg || configOptions.packageVersion
+                ? legend
+                : ""}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  ...curEleStyle,
+                }}
               >
-                {placements.map(renderAnnotation)}
-                {/* <line
-                x1={width / 3}
-                y1={0}
-                x2={width / 3}
-                y2={height}
-                stroke="black"
-                strokeWidth={1}
-              />
-              <line
-                x1={(2 * width) / 3}
-                y1={0}
-                x2={(2 * width) / 3}
-                y2={height}
-                stroke="black"
-                strokeWidth={1}
-              /> */}
-              </svg>
+                <svg
+                  key={svgKey}
+                  width={width}
+                  height={height}
+                  display={"block"}
+                >
+                  {placements.map(renderAnnotation)}
+                </svg>
+              </div>
             </div>
-          </div>
+          </React.Fragment>
         );
       }
 
       return (
-        <svg
-          style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
-          key={svgKey}
-          width={width}
-          height={height}
-        >
+        <svg key={svgKey} width={width} height={height}>
           {placements.map(renderAnnotation)}
           {/* <line
             x1={width / 3}
@@ -686,21 +638,24 @@ export const displayModeComponentMap: { [key: string]: any } = {
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
 
+    const legend = (
+      <TrackLegend
+        height={height}
+        trackModel={trackModel}
+        label={
+          configOptions.label
+            ? configOptions.label
+            : trackModel.options.label
+            ? trackModel.options.label
+            : ""
+        }
+        forceSvg={configOptions.forceSvg}
+      />
+    );
     if (updatedLegend) {
       // component doesn't update because trackModel doesn't trigger anything so component doesn;t change state need to give prop label that changes
-      updatedLegend.current = (
-        <TrackLegend
-          height={height}
-          trackModel={trackModel}
-          label={
-            configOptions.label
-              ? configOptions.label
-              : trackModel.options.label
-              ? trackModel.options.label
-              : ""
-          }
-        />
-      );
+
+      updatedLegend.current = legend;
     }
 
     var svgDATA = createFullVisualizer(
@@ -708,7 +663,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
       trackState.visWidth,
       height,
       ROW_HEIGHT,
-      configOptions.maxRows
+      configOptions.maxRows,
+      legend
     );
     if (svgHeight) {
       svgHeight.current = height;
@@ -1293,7 +1249,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
             </div>
 
             <svg
-              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               key={crypto.randomUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
@@ -1360,7 +1315,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
         let svgWidth = end - start;
         element = (
           <svg
-            style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
             width={drawData.trackState.visWidth / 3}
             viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
             height={drawData.configOptions.height}
@@ -1392,7 +1346,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
             </div>
 
             <svg
-              style={{ WebkitTransform: "translate3d(0, 0, 0)" }}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
               display={"block"}
@@ -1435,18 +1388,20 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
       xvaluesData: drawData.xvaluesData,
     });
   } else if (
-    drawData.configOptions.displayMode === "full" &&
-    !(
-      drawData.trackModel.type in
-      {
-        genomealign: "",
-        dynamicbed: "",
-        dbedgraph: "",
-        dynamic: "",
-        dynamiclongrange: "",
-        dynamichic: "",
-      }
-    )
+    (drawData.configOptions.displayMode === "full" &&
+      !(
+        drawData.trackModel.type in
+        {
+          genomealign: "",
+          dynamicbed: "",
+          dbedgraph: "",
+          dynamic: "",
+          dynamiclongrange: "",
+          dynamichic: "",
+        }
+      )) ||
+    (drawData.trackModel.type === "omeroidr" &&
+      drawData.configOptions.displayMode !== "density")
   ) {
     const formattedData = drawData.genesArr;
 

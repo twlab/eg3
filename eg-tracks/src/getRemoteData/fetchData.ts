@@ -12,7 +12,6 @@ import {
   localTrackFetchFunction,
   textFetchFunction,
 } from "../getLocalData/localFetchData";
-import { left } from "@popperjs/core";
 
 export interface PlacedAlignment {
   record: AlignmentRecord;
@@ -196,7 +195,11 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
             item.type === "longrange" ||
             item.type === "biginteract"
           ) {
-            curFetchNav = new Array(regionExpandLoci);
+            if (regionExpandLoci) {
+              curFetchNav = new Array(regionExpandLoci);
+            } else {
+              curFetchNav = new Array(genomicLoci);
+            }
           } else if (initial === 1) {
             curFetchNav = initGenomicLoci;
           } else {
@@ -265,7 +268,11 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
         trackModel.type === "longrange" ||
         trackModel.type === "biginteract"
       ) {
-        curFetchNav = new Array(regionExpandLoci);
+        if (regionExpandLoci) {
+          curFetchNav = new Array(regionExpandLoci);
+        } else {
+          curFetchNav = new Array(genomicLoci);
+        }
       } else {
         curFetchNav = new Array(genomicLoci);
       }

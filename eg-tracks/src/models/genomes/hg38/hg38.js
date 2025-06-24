@@ -94,18 +94,18 @@ const defaultTracks = [
   //   url: "https://vizhub.wustl.edu/hubSample/hg19/bigBed1",
   // }),
   // new TrackModel({
-  //   "type": "refbed",
-  //   "name": "mm10 gencode basic",
-  //   "url": "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
-  //   "options": {
-  //     "categoryColors": {
-  //       "coding": "rgb(101,1,168)",
-  //       "nonCoding": "rgb(1,193,75)",
-  //       "pseudo": "rgb(230,0,172)",
-  //       "problem": "rgb(224,2,2)",
-  //       "other": "rgb(128,128,128)"
-  //     }
-  //   }
+  //   type: "refbed",
+  //   name: "mm10 gencode basic",
+  //   url: "https://vizhub.wustl.edu/public/tmp/gencodeM18_load_basic_Gene.bed.gz",
+  //   options: {
+  //     categoryColors: {
+  //       coding: "rgb(101,1,168)",
+  //       nonCoding: "rgb(1,193,75)",
+  //       pseudo: "rgb(230,0,172)",
+  //       problem: "rgb(224,2,2)",
+  //       other: "rgb(128,128,128)",
+  //     },
+  //   },
   // }),
   //   new TrackModel({
   //     type: "g3d",
@@ -302,13 +302,7 @@ const defaultTracks = [
   //     height: 100,
   //   },
   // }),
-  // new TrackModel({
-  //   type: "longrange",
-  //   name: "example longrange",
-  //   url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-  //   indexUrl:
-  //     "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4",
-  // }),
+
   // new TrackModel({
   //   type: "methylc",
   //   name: "H1",
@@ -423,15 +417,15 @@ const defaultTracks = [
   //   ],
   // }),
 
-  // new TrackModel({
-  //   type: "hic",
-  //   name: "test hic",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
-  //   // "options": {
-  //   //     "displayMode": "arc"
-  //   // }
-  //   // metadata: { genome: "mm10" },
-  // }),
+  new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    // "options": {
+    //     "displayMode": "arc"
+    // }
+    // metadata: { genome: "mm10" },
+  }),
   // new TrackModel({
 
   //   type: "geneAnnotation",
@@ -522,35 +516,7 @@ const defaultTracks = [
   //   name: "ES-E14 ChIA-PET",
   //   url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
   // }),
-  // new TrackModel({
-  //   type: "longrange",
-  //   name: "Test 1 longrange file",
-  //   url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-  //   indexUrl:
-  //     "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4",
-  // }),
 
-  // new TrackModel({
-  //   name: "dynamic hic",
-  //   type: "dynamichic",
-  //   options: {
-  //     dynamicColors: ["red", "blue"],
-  //     useDynamicColors: true,
-  //   },
-  //   tracks: [
-  //     {
-  //       type: "longrange",
-  //       url: "https://egg.wustl.edu/d/mm9/GSE28247_st3c.gz",
-  //     },
-  //     {
-  //       type: "longrange",
-  //       name: "Test 1 longrange file",
-  //       url: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/FVGOYF",
-  //       indexUrl: "https://dataverse.ucla.edu/api/access/datafile/:persistentId?persistentId=doi:10.25346/S6/FVWWDJ/9NYEB4"
-  //     },
-  //   ],
-  //   showOnHubLoad: true,
-  // }),
   // new TrackModel({
   //   type: "biginteract",
   //   name: "test bigInteract",
