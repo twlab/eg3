@@ -2,7 +2,7 @@ import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
 import FlexLayout from "flexlayout-react";
-
+import "./AppLayout.css";
 var json = {
   global: {},
   borders: [],
@@ -18,6 +18,19 @@ var json = {
             type: "tab",
             name: "One",
             component: "placeholder",
+            enableClose: true,
+          },
+        ],
+      },
+      {
+        type: "tabset",
+        weight: 50,
+        children: [
+          {
+            type: "tab",
+            name: "two",
+            component: "placeholder2",
+            enableClose: true,
           },
         ],
       },
@@ -59,7 +72,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
-  const model = FlexLayout.Model.fromJson(json);
+  const modelRef = useRef(FlexLayout.Model.fromJson(json));
+
   const factory = (node) => {
     var component = node.getComponent();
     if (component === "placeholder") {
@@ -88,6 +102,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           selectedRegionSet={selectedRegionSet}
         />
       );
+    } else {
+      return <div>HI 2</div>;
     }
   };
 
@@ -197,7 +213,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && size.width ? (
-          <FlexLayout.Layout model={model} factory={factory} />
+          <FlexLayout.Layout model={modelRef.current} factory={factory} />
         ) : (
           ""
         )}
