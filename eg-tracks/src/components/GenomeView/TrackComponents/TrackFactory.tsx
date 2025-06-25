@@ -74,7 +74,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-  const [legend, setLegend] = useState<any>();
+  const [legend, setLegend] = useState<any>(null);
 
   function getHeight(numRows: number): number {
     let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
@@ -677,7 +677,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) : (
         ""
       )}
-      {Toolbar.skeleton && !viewComponent ? (
+      {Toolbar.skeleton && !legend ? (
         <div style={{}}>
           <Toolbar.skeleton width={windowWidth} height={40} />
         </div>

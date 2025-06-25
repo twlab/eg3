@@ -144,6 +144,8 @@ interface TrackManagerProps {
   isScreenShotOpen: boolean;
   selectedRegionSet: any;
   setShow3dGene: any;
+  infiniteScrollWorker: React.MutableRefObject<Worker | null>;
+  fetchGenomeAlignWorker: React.MutableRefObject<Worker | null>;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -163,10 +165,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   selectedRegionSet,
   isScreenShotOpen,
   setShow3dGene,
+  infiniteScrollWorker,
+  fetchGenomeAlignWorker,
 }) {
   //useRef to store data between states without re render the component
-  const infiniteScrollWorker = useRef<Worker | null>(null);
-  const fetchGenomeAlignWorker = useRef<Worker | null>(null);
+
   const useFineModeNav = useRef(false);
   const prevWindowWidth = useRef<number>(0);
   const trackManagerId = useRef("");
@@ -2424,11 +2427,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     }
   }, [tool]);
-  useEffect(() => {
-    if (initialStart === "workerReady") {
-      initializeTracks();
-    }
-  }, [initialStart]);
+
   // MARK: [GenConfig]
   useEffect(() => {
     // on GenomeRoot first creation we add the default state to StateArr in genomeroot
@@ -2451,27 +2450,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
       if (initialStart === "workerNotReady") {
-        infiniteScrollWorker.current = new Worker(
-          new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
-          {
-            type: "module",
-          }
-        );
+        // infiniteScrollWorker.current = new Worker(
+        //   new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+        //   {
+        //     type: "module",
+        //   }
+        // );
         createInfiniteOnMessage();
         if (hasGenomeAlign.current) {
-          fetchGenomeAlignWorker.current = new Worker(
-            new URL(
-              "../../getRemoteData/fetchGenomeAlignWorker.ts",
-              import.meta.url
-            ),
-            {
-              type: "module",
-            }
-          );
+          // fetchGenomeAlignWorker.current = new Worker(
+          //   new URL(
+          //     "../../getRemoteData/fetchGenomeAlignWorker.ts",
+          //     import.meta.url
+          //   ),
+          //   {
+          //     type: "module",
+          //   }
+          // );
           createGenomeAlignOnMessage();
         }
-
-        setInitialStart("workerReady");
+        initializeTracks();
+        // setInitialStart("workerReady");
       }
       preload.current = true;
     } else if (genomeConfig.sizeChange) {

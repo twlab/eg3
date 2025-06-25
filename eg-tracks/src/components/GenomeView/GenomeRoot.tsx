@@ -71,6 +71,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   selectedRegionSet,
 }) {
   const [resizeRef, size] = useResizeObserver();
+  const infiniteScrollWorker = useRef<Worker | null>(null);
+  const fetchGenomeAlignWorker = useRef<Worker | null>(null);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
@@ -183,6 +185,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           isScreenShotOpen={isScreenShotOpen}
           selectedRegionSet={selectedRegionSet}
           setShow3dGene={setShow3dGene}
+          infiniteScrollWorker={infiniteScrollWorker}
+          fetchGenomeAlignWorker={fetchGenomeAlignWorker}
         />
       );
     } else {
@@ -286,7 +290,30 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       prevViewRegion.current.end = userViewRegion._endBase!;
     }
   }, [userViewRegion]);
-
+  useEffect(() => {
+    if (!infiniteScrollWorker.current) {
+      infiniteScrollWorker.current = new Worker(
+        new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+        { type: "module" }
+      );
+    }
+    if (
+      tracks.some((t) => t.type === "genomealign") &&
+      !fetchGenomeAlignWorker.current
+    ) {
+      fetchGenomeAlignWorker.current = new Worker(
+        new URL(
+          "../../getRemoteData/fetchGenomeAlignWorker.ts",
+          import.meta.url
+        ),
+        { type: "module" }
+      );
+    }
+    return () => {
+      infiniteScrollWorker.current?.terminate();
+      fetchGenomeAlignWorker.current?.terminate();
+    };
+  }, [tracks]);
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
@@ -319,6 +346,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               isScreenShotOpen={isScreenShotOpen}
               selectedRegionSet={selectedRegionSet}
               setShow3dGene={setShow3dGene}
+              infiniteScrollWorker={infiniteScrollWorker}
+              fetchGenomeAlignWorker={fetchGenomeAlignWorker}
             />
           )
         ) : (
