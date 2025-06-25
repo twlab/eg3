@@ -2902,16 +2902,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 useFineModeNav.current = true;
               }
               hasGenomeAlign.current = true;
-              if (hasGenomeAlign.current && !fetchGenomeAlignWorker.current) {
-                fetchGenomeAlignWorker.current = new Worker(
-                  new URL(
-                    "../../getRemoteData/fetchGenomeAlignWorker.ts",
-                    import.meta.url
-                  ),
-                  {
-                    type: "module",
-                  }
-                );
+              if (hasGenomeAlign.current) {
                 createGenomeAlignOnMessage();
               }
             }

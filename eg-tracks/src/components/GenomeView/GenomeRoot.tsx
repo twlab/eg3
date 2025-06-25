@@ -3,41 +3,8 @@ import _ from "lodash";
 import { ITrackContainerState } from "../../types";
 import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
+import { initialLayout } from "../../models/layoutUtils";
 import "./AppLayout.css";
-var json = {
-  global: {},
-  borders: [],
-  layout: {
-    type: "row",
-    weight: 100,
-    children: [
-      {
-        type: "tabset",
-        weight: 50,
-        children: [
-          {
-            type: "tab",
-            name: "One",
-            component: "Browser",
-            enableClose: true,
-          },
-        ],
-      },
-      {
-        type: "tabset",
-        weight: 50,
-        children: [
-          {
-            type: "tab",
-            name: "two",
-            component: "placeholder2",
-            enableClose: true,
-          },
-        ],
-      },
-    ],
-  },
-};
 
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";
@@ -76,7 +43,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
-  const modelRef = useRef(FlexLayout.Model.fromJson(json));
+  const layoutRef = useRef(_.cloneDeep(initialLayout));
+  const modelRef = useRef(FlexLayout.Model.fromJson(layoutRef.current));
   const [show3dGene, setShow3dGene] = useState();
   const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
   const factory = (node) => {
@@ -163,7 +131,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     if (component === "Browser") {
       return (
         <TrackManager
-          key="main-track-manager"
+          key={trackManagerId.current}
           tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
           legendWidth={legendWidth}
           windowWidth={
@@ -211,6 +179,27 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }, 200)
   );
+
+  useEffect(() => {
+    if (!infiniteScrollWorker.current) {
+      infiniteScrollWorker.current = new Worker(
+        new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+        { type: "module" }
+      );
+    }
+    if (
+      tracks.some((t) => t.type === "genomealign") &&
+      !fetchGenomeAlignWorker.current
+    ) {
+      fetchGenomeAlignWorker.current = new Worker(
+        new URL(
+          "../../getRemoteData/fetchGenomeAlignWorker.ts",
+          import.meta.url
+        ),
+        { type: "module" }
+      );
+    }
+  }, [tracks]);
 
   useEffect(() => {
     if (size.width > 0) {
@@ -291,27 +280,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }
   }, [userViewRegion]);
 
-  useEffect(() => {
-    if (!infiniteScrollWorker.current) {
-      infiniteScrollWorker.current = new Worker(
-        new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
-        { type: "module" }
-      );
-    }
-    if (
-      tracks.some((t) => t.type === "genomealign") &&
-      !fetchGenomeAlignWorker.current
-    ) {
-      fetchGenomeAlignWorker.current = new Worker(
-        new URL(
-          "../../getRemoteData/fetchGenomeAlignWorker.ts",
-          import.meta.url
-        ),
-        { type: "module" }
-      );
-    }
-  }, [tracks]);
-
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
@@ -321,7 +289,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             <FlexLayout.Layout model={modelRef.current} factory={factory} />
           ) : (
             <TrackManager
-              key="main-track-manager"
+              key={trackManagerId.current}
               tracks={tracks}
               legendWidth={legendWidth}
               windowWidth={
