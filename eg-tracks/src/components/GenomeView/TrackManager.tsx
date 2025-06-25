@@ -143,6 +143,7 @@ interface TrackManagerProps {
   setScreenshotData: any;
   isScreenShotOpen: boolean;
   selectedRegionSet: any;
+  setShow3dGene: any;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -161,6 +162,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   setScreenshotData,
   selectedRegionSet,
   isScreenShotOpen,
+  setShow3dGene,
 }) {
   //useRef to store data between states without re render the component
   const infiniteScrollWorker = useRef<Worker | null>(null);
@@ -258,10 +260,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const [newDrawData, setNewDrawData] = useState<{ [key: string]: any }>({});
   const [initialStart, setInitialStart] = useState("workerNotReady");
   const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
-  const [show3dGene, setShow3dGene] = useState();
+
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
 
-  const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
   const [selectedTool, setSelectedTool] = useState<{ [key: string]: any }>({
     isSelected: false,
     title: "none",
@@ -2004,9 +2005,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     rightSectionSize.current = [windowWidth];
     leftSectionSize.current = [];
 
-    setShow3dGene(undefined);
     // setTrackComponents([]);
-    setG3dTrackComponents([]);
+
     setNewDrawData({});
     // setSelectedTool({ ...tool });
 
@@ -2091,30 +2091,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       trackManagerState.current.tracks[i]["legendWidth"] = legendWidth;
 
-      if (trackManagerState.current.tracks[i].type !== "g3d") {
-        newTrackComponents.push({
-          trackIdx: i,
-          id: trackManagerState.current.tracks[i].id,
-          component: TrackFactory,
-          posRef: newPosRef,
-          legendRef: newLegendRef,
-          trackModel: trackManagerState.current.tracks[i],
-          hasAllRegionData: false,
-        });
-      } else {
-        isThereG3dTrack.current = true;
-
-        newG3dComponents.push({
-          id: trackManagerState.current.tracks[i].id,
-          component: ThreedmolContainer,
-
-          trackModel: trackManagerState.current.tracks[i],
-        });
-      }
-    }
-
-    if (newG3dComponents.length > 0) {
-      setG3dTrackComponents(newG3dComponents);
+      newTrackComponents.push({
+        trackIdx: i,
+        id: trackManagerState.current.tracks[i].id,
+        component: TrackFactory,
+        posRef: newPosRef,
+        legendRef: newLegendRef,
+        trackModel: trackManagerState.current.tracks[i],
+        hasAllRegionData: false,
+      });
     }
 
     setTrackComponents(newTrackComponents);
@@ -2860,7 +2845,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (
         !arraysHaveSameTrackModels(tracks, [
           ...trackComponents.map((item) => item.trackModel),
-          ...g3dtrackComponents.map((item) => item.trackModel),
         ])
       ) {
         const newTrackId: { [key: string]: any } = {};
@@ -2997,7 +2981,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         trackManagerState.current.tracks = tracks;
         addTermToMetaSets(newAddedTrackModel);
-        setG3dTrackComponents(newG3dComponents);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx);
       } else {
@@ -3022,11 +3005,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 trackComponent.trackModel.isSelected = curTrackModel.isSelected;
                 needToToUpdate = true;
               }
-              if (curTrackModel.type === "g3d") {
-                newG3dComponents.push(trackComponent);
-              } else {
-                newTrackComponents.push(trackComponent);
-              }
+
+              newTrackComponents.push(trackComponent);
             }
           }
         }
@@ -3034,7 +3014,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (needToToUpdate) {
           trackManagerState.current.tracks = tracks;
           setTrackComponents(newTrackComponents);
-          setG3dTrackComponents(newG3dComponents);
         }
       }
       addTermToMetaSets(tracks);
@@ -3384,45 +3363,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ""
         )}
       </OutsideClickDetector>
-
-      {g3dtrackComponents.length > 0 ? (
-        <div
-          style={{
-            display: "flex",
-            backgroundColor: "var(--bg-color)",
-            WebkitBackfaceVisibility: "hidden",
-            WebkitPerspective: `${windowWidth + 120}px`,
-            backfaceVisibility: "hidden",
-            perspective: `${windowWidth + 120}px`,
-            border: "1px solid #d3d3d3",
-            borderRadius: "10px",
-            boxShadow: "0 2px 3px 0 rgba(0, 0, 0, 0.2)",
-            padding: "5px",
-            flexWrap: "wrap",
-          }}
-        >
-          {g3dtrackComponents.map((item, index) => {
-            const Component = item.component;
-            return (
-              trackManagerState.current.viewRegion && (
-                <div key={item.id} style={{ width: "50%" }}>
-                  <Component
-                    handleDelete={handleDelete}
-                    tracks={tracks}
-                    g3dtrack={item.trackModel}
-                    viewRegion={trackManagerState.current.viewRegion}
-                    width={windowWidth / 2}
-                    genomeConfig={genomeConfig}
-                    geneFor3d={show3dGene}
-                  />
-                </div>
-              )
-            );
-          })}
-        </div>
-      ) : (
-        ""
-      )}
     </div>
   );
 });
