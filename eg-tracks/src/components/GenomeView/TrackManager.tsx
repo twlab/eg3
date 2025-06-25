@@ -431,6 +431,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     setMessageData(getMessageData());
     const message = messageQueue.current.pop();
+
     infiniteScrollWorker.current!.postMessage(message);
   };
   const processGenomeAlignQueue = () => {
@@ -1717,7 +1718,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
 
-    if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
+    if (
+      Object.keys(trackToDrawId).length > 0 &&
+      !needToFetchGenAlign &&
+      !genomeConfig.isInitial
+    ) {
       setNewDrawData({
         curDataIdx: dataIdx,
         isInitial: 0,
@@ -2595,6 +2600,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       const tmpArr = [...trackComponents];
       setTrackComponents(tmpArr);
+
       queueRegionToFetch(dataIdx);
     } else {
       for (const key in trackFetchedDataCache.current) {
@@ -2984,7 +2990,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         queueRegionToFetch(dataIdx);
       } else {
         const newTrackComponents: Array<any> = [];
-        const newG3dComponents: Array<any> = [];
+
         let needToToUpdate = false;
 
         for (let i = 0; i < tracks.length; i++) {

@@ -290,6 +290,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       prevViewRegion.current.end = userViewRegion._endBase!;
     }
   }, [userViewRegion]);
+
   useEffect(() => {
     if (!infiniteScrollWorker.current) {
       infiniteScrollWorker.current = new Worker(
@@ -309,11 +310,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         { type: "module" }
       );
     }
-    return () => {
-      infiniteScrollWorker.current?.terminate();
-      fetchGenomeAlignWorker.current?.terminate();
-    };
   }, [tracks]);
+
   return (
     <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>

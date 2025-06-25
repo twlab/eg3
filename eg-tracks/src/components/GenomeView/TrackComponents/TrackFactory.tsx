@@ -208,6 +208,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   useEffect(() => {
     if (viewComponent) {
+      console.log("HUH", viewComponent);
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
@@ -677,7 +678,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) : (
         ""
       )}
-      {Toolbar.skeleton && !legend ? (
+      {Toolbar.skeleton && !viewComponent ? (
         <div style={{}}>
           <Toolbar.skeleton width={windowWidth} height={40} />
         </div>
