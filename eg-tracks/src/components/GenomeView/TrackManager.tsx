@@ -44,6 +44,7 @@ import {
 import MetadataHeader from "./ToolComponents/MetadataHeader";
 import { fetchGenomicData } from "../../getRemoteData/fetchData";
 import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
+import { arraysHaveSameTrackModels } from "../../util";
 
 const groupManager = new GroupedTrackManager();
 
@@ -2807,39 +2808,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     return str !== null && !isNaN(num) && Number.isInteger(num);
   }
-  function arraysHaveSameTrackModels(
-    array1: Array<TrackModel>,
-    array2: Array<TrackModel>
-  ): boolean {
-    // Check if the lengths are different. If they are, return false.
-    if (array1.length !== array2.length) {
-      return false;
-    }
-
-    // Use a map to keep track of the count of each id in the first array.
-    const idCounts = new Map();
-
-    for (let item of array1) {
-      // Increment the count for each id in the first array.
-      idCounts.set(item.id, (idCounts.get(item.id) || 0) + 1);
-    }
-
-    for (let item of array2) {
-      // Decrement the count for each id in the second array.
-      if (!idCounts.has(item.id)) {
-        return false;
-      }
-      const newCount = idCounts.get(item.id) - 1;
-      if (newCount === 0) {
-        idCounts.delete(item.id);
-      } else {
-        idCounts.set(item.id, newCount);
-      }
-    }
-
-    // If idCounts is empty, it means both arrays have the same ids with the same counts.
-    return idCounts.size === 0;
-  }
 
   useEffect(() => {
     if (
@@ -3129,7 +3097,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [newDrawData]);
   return (
-    <div style={{ backgroundColor: "var(--bg-color)" }}>
+    <div
+      style={{
+        backgroundColor: "var(--bg-color)",
+        paddingLeft: "20px",
+      }}
+    >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
         <GenomeNavigator
           selectedRegion={userViewRegion}

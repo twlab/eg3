@@ -143,7 +143,6 @@ interface ComponentState {
   spinReverse: boolean;
 }
 interface ComponentProps {
-  handleDelete: any;
   onToggleSync3d?: any;
   sync3d?: any;
   tracks: TrackModel[];
@@ -1471,19 +1470,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-          cartoon: {
-            color: highlightingColor,
-            style: "trace",
-            thickness: cartoonThickness,
-          },
-        }
+            cartoon: {
+              color: highlightingColor,
+              style: "trace",
+              thickness: cartoonThickness,
+            },
+          }
         : {
-          sphere: {
-            color: highlightingColor,
-            opacity: 1,
-            radius: cartoonThickness,
-          },
-        };
+            sphere: {
+              color: highlightingColor,
+              opacity: 1,
+              radius: cartoonThickness,
+            },
+          };
     let validateRegion = false;
     // console.log(regionRange);
     Object.keys(curModelDisplayConfig).forEach((hap) => {
@@ -1492,8 +1491,9 @@ class ThreedmolContainer extends React.Component<
           regionRange[hap][region.chrom][0] !== undefined &&
           regionRange[hap][region.chrom][1] !== undefined
         ) {
-          const resiSelect = `${regionRange[hap][region.chrom][0]}-${regionRange[hap][region.chrom][1]
-            }`;
+          const resiSelect = `${regionRange[hap][region.chrom][0]}-${
+            regionRange[hap][region.chrom][1]
+          }`;
           this.viewer.setStyle(
             {
               chain: region.chrom,
@@ -1686,19 +1686,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-          cartoon: {
-            colorfunc: colorByValue,
-            style: "trace",
-            thickness: cartoonThickness,
-          },
-        }
+            cartoon: {
+              colorfunc: colorByValue,
+              style: "trace",
+              thickness: cartoonThickness,
+            },
+          }
         : {
-          sphere: {
-            colorfunc: colorByValue,
-            opacity: 1,
-            radius: cartoonThickness,
-          },
-        };
+            sphere: {
+              colorfunc: colorByValue,
+              opacity: 1,
+              radius: cartoonThickness,
+            },
+          };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -1934,7 +1934,6 @@ class ThreedmolContainer extends React.Component<
   };
 
   parseUploadedFile = async (fileobj) => {
-
     try {
       const gzipFile = /gzip/;
       let dataString;
@@ -2468,19 +2467,19 @@ class ThreedmolContainer extends React.Component<
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
-          cartoon: {
-            colorfunc: colorByAnnotation,
-            style: "trace",
-            thickness: cartoonThickness,
-          },
-        }
+            cartoon: {
+              colorfunc: colorByAnnotation,
+              style: "trace",
+              thickness: cartoonThickness,
+            },
+          }
         : {
-          sphere: {
-            colorfunc: colorByAnnotation,
-            opacity: 1,
-            radius: cartoonThickness,
-          },
-        };
+            sphere: {
+              colorfunc: colorByAnnotation,
+              opacity: 1,
+              radius: cartoonThickness,
+            },
+          };
     if (chooseRegion === "region") {
       const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
       const resString = resolution.toString();
@@ -3042,7 +3041,7 @@ class ThreedmolContainer extends React.Component<
         if (locus) {
           return { label, locus };
         }
-      } catch (error) { }
+      } catch (error) {}
       return getSymbolRegions(genomeName, symbol);
     });
     const parsed = await Promise.all(promise);
@@ -3118,9 +3117,7 @@ class ThreedmolContainer extends React.Component<
   setMessage = (message) => {
     this.setState({ message });
   };
-  deleteTrack = (id) => {
-    this.props.handleDelete([id]);
-  };
+
   render() {
     const {
       legendMax,
@@ -3189,18 +3186,11 @@ class ThreedmolContainer extends React.Component<
       onSetSelected,
       selectedSet,
       genomeConfig,
-      handleDelete,
       g3dtrack,
     } = this.props;
 
-    let deleteFunction;
-    if (handleDelete) {
-      deleteFunction = handleDelete;
-    } else {
-      deleteFunction = null;
-    }
 
-    const bwTracks = tracks.filter((track) => { });
+    const bwTracks = tracks.filter((track) => {});
     return (
       <div id="threed-mol-container">
         {childShow && (
@@ -4091,21 +4081,17 @@ class ThreedmolContainer extends React.Component<
           </Drawer>
         )}
 
-        <div style={{ position: "relative" }}>
+        <div
+          style={{
+            position: "relative",
+            WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+            WebkitPerspective: `${1200 * 3 + 120}px`,
+            backfaceVisibility: "hidden",
+            perspective: `${1200 * 3 + 120}px`,
+          }}
+        >
           <div className="placement-container">
             <div className="text-left">
-              <div>
-                {deleteFunction ? (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => deleteFunction([g3dtrack.id])}
-                  >
-                    Close tab
-                  </button>
-                ) : (
-                  ""
-                )}
-              </div>
               <div>
                 <button
                   className="btn btn-primary btn-sm"
@@ -4153,12 +4139,12 @@ class ThreedmolContainer extends React.Component<
 
             {(paintMethod === "compartment" ||
               paintMethod === "annotation") && (
-                <CategoryLegend
-                  categories={categories}
-                  onUpdateLegendColor={this.updateLegendColor}
-                  fullWidth={paintMethod === "annotation"}
-                />
-              )}
+              <CategoryLegend
+                categories={categories}
+                onUpdateLegendColor={this.updateLegendColor}
+                fullWidth={paintMethod === "annotation"}
+              />
+            )}
           </div>
           <div id="static-legend">
             <StaticLegend categories={staticCategories} />
@@ -4180,7 +4166,14 @@ class ThreedmolContainer extends React.Component<
             />
             <div
               className="box1"
-              style={{ width: mainBoxWidth, height: 500 }}
+              style={{
+                width: mainBoxWidth,
+                height: 500,
+                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+                WebkitPerspective: `${1200 * 3 + 120}px`,
+                backfaceVisibility: "hidden",
+                perspective: `${1200 * 3 + 120}px`,
+              }}
               ref={this.myRef}
             ></div>
             <div
@@ -4189,6 +4182,10 @@ class ThreedmolContainer extends React.Component<
                 width: thumbBoxWidth,
                 height: thumbBoxHeight,
                 display: thumbStyle === "hide" ? "none" : "block",
+                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+                WebkitPerspective: `${1200 * 3 + 120}px`,
+                backfaceVisibility: "hidden",
+                perspective: `${1200 * 3 + 120}px`,
               }}
               ref={this.myRef2}
             ></div>

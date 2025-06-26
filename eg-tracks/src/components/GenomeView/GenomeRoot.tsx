@@ -1,11 +1,12 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
-import FlexLayout from "flexlayout-react";
+import * as FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
-import { initialLayout } from "../../models/layoutUtils";
+import { addTabSetToLayout, initialLayout } from "../../models/layoutUtils";
 import "./AppLayout.css";
-
+import { arraysHaveSameTrackModels } from "../../util";
+import { diffTrackModels } from "../../util";
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";
 // import { getGenomeConfig } from "../../models/genomes/allGenomes";
@@ -16,6 +17,7 @@ import TrackManager from "./TrackManager";
 // import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
+import TrackModel from "../../models/TrackModel";
 
 // import GenomeViewerTest from "./testComp";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
@@ -43,90 +45,53 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
-  const layoutRef = useRef(_.cloneDeep(initialLayout));
-  const modelRef = useRef(FlexLayout.Model.fromJson(layoutRef.current));
+  const layout = useRef(_.cloneDeep(initialLayout));
+  const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
   const [show3dGene, setShow3dGene] = useState();
-  const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
+
+  function renderG3dTrackComponents(node) {
+    const model = node.getModel();
+
+    const config = node.getConfig();
+    const { x, y, width, height } = node.getRect();
+    const g3dtrack = TrackModel.deserialize(config.trackModel);
+    g3dtrack.id = config.trackId;
+    const origG3d = tracks.filter((tk) => tk.getId() === g3dtrack.id);
+    g3dtrack.fileObj = origG3d.length ? origG3d[0].fileObj : null;
+    // const currentTrackIds = tracks.map((tk) => tk.getId());
+    // if (!currentTrackIds.includes(g3dtrack.id)) {
+    //     const newTracks = [...tracks, g3dtrack];
+    //     this.props.onTracksChanged(newTracks);
+    // }
+
+    node.setEventListener("close", () => {
+      onTracksChange(
+        tracks.filter((item, _index) => {
+          return !(String(item.id) === g3dtrack.id);
+        })
+      );
+
+      // const layout = deleteTabByIdFromModel(model, config.tabId);
+      // this.props.onSetLayout(layout);
+    });
+    // node.setEventListener("resize", () => this.handleNodeResize(node));
+    return (
+      <ThreedmolContainer
+        key={g3dtrack.id}
+        tracks={tracks}
+        g3dtrack={g3dtrack}
+        viewRegion={userViewRegion}
+        width={width}
+        height={height}
+        x={x}
+        y={y}
+        genomeConfig={currentGenomeConfig}
+        geneFor3d={show3dGene}
+      />
+    );
+  }
   const factory = (node) => {
     var component = node.getComponent();
-    // newG3dComponents.push({
-    //   id: trackManagerState.current.tracks[i].id,
-    //   component: ThreedmolContainer,
-
-    //   trackModel: trackManagerState.current.tracks[i],
-    // });
-    //     for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
-    //   if (trackManagerState.current.tracks[i].type === "genomealign") {
-    //     if (basePerPixel.current < 10) {
-    //       useFineModeNav.current = true;
-    //     }
-    //   }
-    //   if (trackManagerState.current.tracks[i].type === "hic") {
-    //     if (
-    //       !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
-    //     ) {
-    //       fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
-    //         new HicSource(trackManagerState.current.tracks[i].url);
-    //     }
-    //   } else if (trackManagerState.current.tracks[i].type === "dynamichic") {
-    //     trackManagerState.current.tracks[i].tracks?.map(
-    //       (_item: any, index: string | number) => {
-    //         fetchInstances.current[
-    //           `${trackManagerState.current.tracks[i].id}` +
-    //             "subtrack" +
-    //             `${index}`
-    //         ] = new HicSource(
-    //           trackManagerState.current.tracks[i].tracks![index].url
-    //         );
-    //       }
-    //     );
-    //   } else if (
-    //     trackManagerState.current.tracks[i].type in
-    //     { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
-    //   ) {
-    //     trackManagerState.current.tracks[i].tracks?.map(
-    //       (trackModel: { id: string }, index: any) => {
-    //         trackModel.id =
-    //           `${trackManagerState.current.tracks[i].id}` +
-    //           "subtrack" +
-    //           `${index}`;
-    //       }
-    //     );
-    //   } else if (trackManagerState.current.tracks[i].type === "bam") {
-    //     fetchInstances.current[`${trackManagerState.current.tracks[i].id}`] =
-    //       new BamSource(trackManagerState.current.tracks[i].url);
-    //   }
-
-    //   const newPosRef = createRef();
-    //   const newLegendRef = createRef();
-
-    //   trackManagerState.current.tracks[i]["legendWidth"] = legendWidth;
-
-    //   if (trackManagerState.current.tracks[i].type !== "g3d") {
-    //     newTrackComponents.push({
-    //       trackIdx: i,
-    //       id: trackManagerState.current.tracks[i].id,
-    //       component: TrackFactory,
-    //       posRef: newPosRef,
-    //       legendRef: newLegendRef,
-    //       trackModel: trackManagerState.current.tracks[i],
-    //       hasAllRegionData: false,
-    //     });
-    //   } else {
-    //     isThereG3dTrack.current = true;
-
-    //     newG3dComponents.push({
-    //       id: trackManagerState.current.tracks[i].id,
-    //       component: ThreedmolContainer,
-
-    //       trackModel: trackManagerState.current.tracks[i],
-    //     });
-    //   }
-    // }
-
-    // if (newG3dComponents.length > 0) {
-    //   setG3dTrackComponents(newG3dComponents);
-    // }
 
     if (component === "Browser") {
       return (
@@ -136,7 +101,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           legendWidth={legendWidth}
           windowWidth={
             (!size.width || size.width - legendWidth < 0 ? 1500 : size.width) -
-            legendWidth
+            legendWidth -
+            60
+            // 20 px from padding left moving element inside flexlayout 20px over, 20px from scrollbar, 20px to add the gap
+            // this make the width of the browser fit the screen
           }
           userViewRegion={userViewRegion}
           highlights={highlights}
@@ -158,7 +126,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         />
       );
     } else {
-      return <div>HI 2</div>;
+      const g3dComp = renderG3dTrackComponents(node);
+      return g3dComp;
     }
   };
 
@@ -198,6 +167,48 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         ),
         { type: "module" }
       );
+    }
+    const curG3dTracks = layout.current.layout.children.flatMap((item: any) => {
+      const tracks: any[] = [];
+      if (item.trackModel && item.trackModel.type === "g3d") {
+        tracks.push(item.trackModel);
+      }
+      if (Array.isArray(item.children)) {
+        item.children.forEach((child: any) => {
+          if (
+            child.config &&
+            child.config.trackModel &&
+            child.config.trackModel.type === "g3d"
+          ) {
+            tracks.push(child.config.trackModel);
+          }
+        });
+      }
+      return tracks;
+    });
+    const newG3dTracks = tracks.filter((track) => track.type === "g3d");
+
+    if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
+      const diffTracks = diffTrackModels(curG3dTracks, newG3dTracks);
+      layout.current = _.cloneDeep(initialLayout);
+      for (let track of newG3dTracks) {
+        const newLayout = {
+          type: "tabset",
+          children: [
+            {
+              type: "tab",
+              name: track.getDisplayLabel(),
+              component: "g3d",
+
+              config: { trackModel: track, trackId: track.id },
+              enableClose: true,
+            },
+          ],
+        };
+        layout.current = addTabSetToLayout(newLayout, layout.current);
+      }
+
+      setModel(FlexLayout.Model.fromJson(layout.current));
     }
   }, [tracks]);
 
@@ -281,12 +292,18 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [userViewRegion]);
 
   return (
-    <div style={{ paddingLeft: "20px", paddingRight: "20px" }}>
+    <div>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {currentGenomeConfig && size.width > 0 ? (
+          <FlexLayout.Layout model={model} factory={factory} />
+        ) : (
+          ""
+        )}
+
+        {/* {currentGenomeConfig && size.width > 0 ? (
           tracks && tracks.some((obj) => obj.type === "g3d") ? (
-            <FlexLayout.Layout model={modelRef.current} factory={factory} />
+            <FlexLayout.Layout model={model} factory={factory} />
           ) : (
             <TrackManager
               key={trackManagerId.current}
@@ -318,7 +335,43 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           )
         ) : (
           ""
-        )}
+        )} */}
+
+        {/* {currentGenomeConfig && size.width > 0 ? (
+          tracks && tracks.some((obj) => obj.type === "g3d") ? (
+            <FlexLayout.Layout model={model} factory={factory} />
+          ) : (
+            <TrackManager
+              key={trackManagerId.current}
+              tracks={tracks}
+              legendWidth={legendWidth}
+              windowWidth={
+                (!size.width || size.width - legendWidth < 0
+                  ? 1500
+                  : size.width) - legendWidth
+              }
+              userViewRegion={userViewRegion}
+              highlights={highlights}
+              genomeConfig={currentGenomeConfig}
+              onNewRegion={onNewRegion}
+              onNewRegionSelect={onNewRegionSelect}
+              onNewHighlight={onNewHighlight}
+              onTracksChange={onTracksChange}
+              tool={tool}
+              Toolbar={Toolbar}
+              viewRegion={viewRegion}
+              showGenomeNav={showGenomeNav}
+              setScreenshotData={setScreenshotData}
+              isScreenShotOpen={isScreenShotOpen}
+              selectedRegionSet={selectedRegionSet}
+              setShow3dGene={setShow3dGene}
+              infiniteScrollWorker={infiniteScrollWorker}
+              fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+            />
+          )
+        ) : (
+          ""
+        )} */}
       </div>
     </div>
   );

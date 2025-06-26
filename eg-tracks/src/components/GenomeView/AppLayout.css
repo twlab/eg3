@@ -2,9 +2,11 @@
   left: 0;
   top: 0;
   right: 0;
+
   bottom: 0;
   position: absolute;
-  overflow: hidden;
+  /* overflow: visible; */
+
   /* --flexlayout_test: {top:12}; */
 }
 
@@ -180,9 +182,11 @@
 [data-theme="light"] .flexlayout__tab_header_inner {
   position: absolute;
   left: 0;
+  display: flex;
+  justify-content: center;
+
   top: 0;
   bottom: 0;
-  width: 10000px;
 }
 
 [data-theme="light"] .flexlayout__tabset-selected {

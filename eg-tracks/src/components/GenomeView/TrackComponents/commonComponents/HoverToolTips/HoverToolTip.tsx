@@ -386,9 +386,11 @@ export const getHoverTooltip = {
 
         const left = xSpan1.start;
         const right = xSpan2.start;
-
-        const fullSiteLeft = parentPos.left + left - 20 + "px";
-        const fullSiteRight = parentPos.left + right - 20 + "px";
+        // old cal wrong when theres padding or component moves
+        // const fullSiteLeft = parentPos.left + left - 20 + "px";
+        // const fullSiteRight = parentPos.left + right - 20 + "px";
+        const fullSiteLeft = left - dataObj.viewWindow.start + 120 + "px";
+        const fullSiteRight = right - dataObj.viewWindow.start + 120 + "px";
         const packageLeft = left + 120 + "px";
         const packageRight = right + 120 + "px";
         const leftWidth = Math.max(xSpan1.getLength(), 1);
