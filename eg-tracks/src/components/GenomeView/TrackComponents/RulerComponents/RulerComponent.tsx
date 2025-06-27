@@ -96,6 +96,7 @@ interface RulerComponentProps {
 }
 class RulerComponent extends React.Component<RulerComponentProps> {
   render() {
+    console.log(this.props);
     let legend = (
       <TrackLegend
         height={HEIGHT}
@@ -127,7 +128,7 @@ class RulerComponent extends React.Component<RulerComponentProps> {
     return (
       <React.Fragment>
         <div style={{ display: "flex", ...curParentStyle }}>
-          {this.props.options.forceSvg ? legend : ""}
+          {forceSvg || this.props.options.packageVersion ? legend : ""}
           <div
             style={{
               ...curEleStyle,

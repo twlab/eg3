@@ -163,6 +163,32 @@ interface ComponentProps {
   darkTheme?: any;
   onGetViewer3dAndNumFrames?: any;
 }
+
+function AccordionSection({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = React.useState(defaultOpen);
+  return (
+    <div className={`card custom-accordion-section${open ? " open" : ""}`}>
+      <div
+        className="card-header custom-accordion-header"
+        onClick={() => setOpen((v) => !v)}
+        style={{ cursor: "pointer", userSelect: "none" }}
+      >
+        <h5 className="mb-0">
+          <span>{title}</span>
+          <span style={{ float: "right" }}>{open ? "▲" : "▼"}</span>
+        </h5>
+      </div>
+      <div
+        className="custom-accordion-content"
+        style={{
+          display: open ? "block" : "none",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 class ThreedmolContainer extends React.Component<
   ComponentProps,
   ComponentState
@@ -3187,8 +3213,9 @@ class ThreedmolContainer extends React.Component<
       selectedSet,
       genomeConfig,
       g3dtrack,
+      height,
+      width,
     } = this.props;
-
 
     const bwTracks = tracks.filter((track) => {});
     return (
@@ -3209,874 +3236,648 @@ class ThreedmolContainer extends React.Component<
               <div className="closeMenu-3d" onClick={this.onSwitch}>
                 &times;
               </div>
-              <div
-                className="card"
-                style={{ color: this.modalfg, backgroundColor: this.modalbg }}
-              >
-                <div className="card-header" id="headingOne">
-                  <h5 className="mb-0">
-                    <button
-                      className="btn btn-link btn-block text-left"
-                      data-toggle="collapse"
-                      data-target="#collapseOne"
-                      aria-expanded="true"
-                      aria-controls="collapseOne"
-                    >
-                      Model data
-                    </button>
-                  </h5>
-                </div>
-                <div
-                  id="collapseOne"
-                  className="collapse show"
-                  aria-labelledby="headingOne"
-                >
-                  <div className="card-body">
-                    <div>
-                      <ResolutionList
-                        resolution={resolution}
-                        resolutions={resolutions}
-                        onUpdateResolution={this.updateResolution}
-                      />
-                    </div>
-                    <div>
-                      <ModelListMenu
-                        modelDisplay={modelDisplayConfig}
-                        onToggleModelDisplay={this.toggleModelDisplay}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="envelop">
-                        Show envelop:{" "}
-                        <input
-                          type="checkbox"
-                          name="envelop"
-                          checked={showEnvelop}
-                          onChange={this.toggleDisplayEnvelop}
+              {/* Custom Accordion Menu */}
+              {[
+                {
+                  key: "model",
+                  title: "Model data",
+                  content: (
+                    <div className="card-body">
+                      <div>
+                        <ResolutionList
+                          resolution={resolution}
+                          resolutions={resolutions}
+                          onUpdateResolution={this.updateResolution}
                         />
-                      </label>
+                      </div>
+                      <div>
+                        <ModelListMenu
+                          modelDisplay={modelDisplayConfig}
+                          onToggleModelDisplay={this.toggleModelDisplay}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="envelop">
+                          Show envelop:{" "}
+                          <input
+                            type="checkbox"
+                            name="envelop"
+                            checked={showEnvelop}
+                            onChange={this.toggleDisplayEnvelop}
+                          />
+                        </label>
+                      </div>
+                      <div
+                        style={{
+                          display: showEnvelop ? "flex" : "none",
+                          alignItems: "center",
+                        }}
+                      >
+                        <label style={{ display: "flex" }}>
+                          <span>envelop color:</span>
+                          <ColorPicker
+                            onUpdateLegendColor={this.updateLegendColor}
+                            colorKey={"envelopColor"}
+                            initColor={envelopColor}
+                          />
+                        </label>
+                        <label>
+                          opacity:{" "}
+                          <input
+                            type="number"
+                            min={0}
+                            max={1}
+                            step={0.1}
+                            value={envelopOpacity}
+                            onChange={this.handleEnvelopOpacityChange}
+                          />
+                        </label>
+                      </div>
+                      <div>
+                        <label htmlFor="spin">
+                          Spin:{" "}
+                          <input
+                            type="checkbox"
+                            name="spin"
+                            checked={spinning}
+                            onChange={this.toggleSpin}
+                          />
+                        </label>
+                        <span style={{ display: spinning ? "inline" : "none" }}>
+                          <label>
+                            Direction:{" "}
+                            <select
+                              value={spinDirection}
+                              onChange={this.setSpinDirection}
+                            >
+                              <option value="x">x</option>
+                              <option value="y">y</option>
+                              <option value="z">z</option>
+                            </select>
+                          </label>
+                          <label>
+                            Speed:{" "}
+                            <select
+                              value={spinSpeed}
+                              onChange={this.setSpinSpeed}
+                            >
+                              <option value="1">normal</option>
+                              <option value="2">fast</option>
+                              <option value="3">faster</option>
+                            </select>
+                          </label>
+                          <label htmlFor="spinReverse">
+                            Reverse:{" "}
+                            <input
+                              type="checkbox"
+                              name="spinReverse"
+                              checked={spinReverse}
+                              onChange={this.toggleSpinReverse}
+                            />
+                          </label>
+                        </span>
+                      </div>
                     </div>
-                    <div
-                      style={{
-                        display: showEnvelop ? "flex" : "none",
-                        alignItems: "center",
-                      }}
-                    >
-                      <label style={{ display: "flex" }}>
-                        <span>envelop color:</span>
+                  ),
+                },
+                {
+                  key: "layout",
+                  title: "Layout",
+                  content: (
+                    <div className="card-body">
+                      <div>
+                        <strong>Viewers:</strong>
+                        <ul>
+                          <li>
+                            <label>
+                              <input
+                                type="radio"
+                                value="picture"
+                                name="layout"
+                                checked={layout === "picture"}
+                                onChange={this.onLayoutChange}
+                              />
+                              <span>Picture in picture</span>
+                            </label>
+                          </li>
+                          <li>
+                            <label>
+                              <input
+                                type="radio"
+                                name="layout"
+                                value="side"
+                                checked={layout === "side"}
+                                onChange={this.onLayoutChange}
+                              />
+                              <span>Side by side</span>
+                            </label>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="thumb-control">
+                        <strong>Thumbnail structure:</strong>
+                        <label>
+                          <input
+                            name="thumbStyle"
+                            type="radio"
+                            value="cartoon"
+                            checked={this.state.thumbStyle === "cartoon"}
+                            onChange={this.handleThumbStyleChange}
+                          />
+                          Cartoon
+                        </label>
+                        <label>
+                          <input
+                            name="thumbStyle"
+                            type="radio"
+                            value="sphere"
+                            checked={this.state.thumbStyle === "sphere"}
+                            onChange={this.handleThumbStyleChange}
+                          />
+                          Sphere
+                        </label>
+                        <label>
+                          <input
+                            name="thumbStyle"
+                            type="radio"
+                            value="cross"
+                            checked={this.state.thumbStyle === "cross"}
+                            onChange={this.handleThumbStyleChange}
+                          />
+                          Cross
+                        </label>
+                        <label>
+                          <input
+                            name="thumbStyle"
+                            type="radio"
+                            value="line"
+                            checked={this.state.thumbStyle === "line"}
+                            onChange={this.handleThumbStyleChange}
+                          />
+                          Line
+                        </label>
+                        <label>
+                          <input
+                            name="thumbStyle"
+                            type="radio"
+                            value="hide"
+                            checked={this.state.thumbStyle === "hide"}
+                            onChange={this.handleThumbStyleChange}
+                          />
+                          Hide
+                        </label>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "highlight",
+                  title: "Highlighting & Labeling",
+                  content: (
+                    <div className="card-body">
+                      <OpacityThickness
+                        opacity={lineOpacity}
+                        thickness={cartoonThickness}
+                        highlightStyle={highlightStyle}
+                        onUpdate={this.updateLegendColor}
+                      />
+                      <div
+                        style={{ display: "flex", alignItems: "flex-start" }}
+                      >
                         <ColorPicker
                           onUpdateLegendColor={this.updateLegendColor}
-                          colorKey={"envelopColor"}
-                          initColor={envelopColor}
+                          colorKey={"highlightingColor"}
+                          initColor={highlightingColor}
                         />
-                      </label>
-                      <label>
-                        opacity:{" "}
-                        <input
-                          type="number"
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          value={envelopOpacity}
-                          onChange={this.handleEnvelopOpacityChange}
-                        />
-                      </label>
-                    </div>
-                    <div>
-                      <label htmlFor="spin">
-                        Spin:{" "}
-                        <input
-                          type="checkbox"
-                          name="spin"
-                          checked={spinning}
-                          onChange={this.toggleSpin}
-                        />
-                      </label>
-                      <span style={{ display: spinning ? "inline" : "none" }}>
-                        <label>
-                          Direction:{" "}
-                          <select
-                            value={spinDirection}
-                            onChange={this.setSpinDirection}
-                          >
-                            <option value="x">x</option>
-                            <option value="y">y</option>
-                            <option value="z">z</option>
-                          </select>
-                        </label>
-                        <label>
-                          Speed:{" "}
-                          <select
-                            value={spinSpeed}
-                            onChange={this.setSpinSpeed}
-                          >
-                            <option value="1">normal</option>
-                            <option value="2">fast</option>
-                            <option value="3">faster</option>
-                          </select>
-                        </label>
-                        <label htmlFor="spinReverse">
-                          Reverse:{" "}
-                          <input
-                            type="checkbox"
-                            name="spinReverse"
-                            checked={spinReverse}
-                            onChange={this.toggleSpinReverse}
-                          />
-                        </label>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                className="card"
-                style={{ color: this.modalfg, backgroundColor: this.modalbg }}
-              >
-                <div className="card-header" id="headingTwo">
-                  <h5 className="mb-0">
-                    <button
-                      className="btn btn-link btn-block text-left"
-                      data-toggle="collapse"
-                      data-target="#collapseTwo"
-                      aria-expanded="true"
-                      aria-controls="collapseTwo"
-                    >
-                      Layout
-                    </button>
-                  </h5>
-                </div>
-                <div
-                  id="collapseTwo"
-                  className="collapse show"
-                  aria-labelledby="headingTwo"
-                >
-                  <div className="card-body">
-                    <div>
-                      <strong>Viewers:</strong>
-                      <ul>
-                        <li>
-                          <label>
-                            <input
-                              type="radio"
-                              value="picture"
-                              name="layout"
-                              checked={layout === "picture"}
-                              onChange={this.onLayoutChange}
-                            />
-                            <span>Picture in picture</span>
-                          </label>
-                        </li>
-
-                        <li>
-                          <label>
-                            <input
-                              type="radio"
-                              name="layout"
-                              value="side"
-                              checked={layout === "side"}
-                              onChange={this.onLayoutChange}
-                            />
-                            <span>Side by side</span>
-                          </label>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="thumb-control">
-                      <strong>Thumbnail structure:</strong>
-                      <label>
-                        <input
-                          name="thumbStyle"
-                          type="radio"
-                          value="cartoon"
-                          checked={this.state.thumbStyle === "cartoon"}
-                          onChange={this.handleThumbStyleChange}
-                        />
-                        Cartoon
-                      </label>
-                      <label>
-                        <input
-                          name="thumbStyle"
-                          type="radio"
-                          value="sphere"
-                          checked={this.state.thumbStyle === "sphere"}
-                          onChange={this.handleThumbStyleChange}
-                        />
-                        Sphere
-                      </label>
-                      <label>
-                        <input
-                          name="thumbStyle"
-                          type="radio"
-                          value="cross"
-                          checked={this.state.thumbStyle === "cross"}
-                          onChange={this.handleThumbStyleChange}
-                        />
-                        Cross
-                      </label>
-                      <label>
-                        <input
-                          name="thumbStyle"
-                          type="radio"
-                          value="line"
-                          checked={this.state.thumbStyle === "line"}
-                          onChange={this.handleThumbStyleChange}
-                        />
-                        Line
-                      </label>
-                      <label>
-                        <input
-                          name="thumbStyle"
-                          type="radio"
-                          value="hide"
-                          checked={this.state.thumbStyle === "hide"}
-                          onChange={this.handleThumbStyleChange}
-                        />
-                        Hide
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="card"
-                style={{ color: this.modalfg, backgroundColor: this.modalbg }}
-              >
-                <div className="card-header" id="headingThree">
-                  <h5 className="mb-0">
-                    <button
-                      className="btn btn-link btn-block text-left"
-                      data-toggle="collapse"
-                      data-target="#collapseThree"
-                      aria-expanded="true"
-                      aria-controls="collapseThree"
-                    >
-                      Highlighting &amp; Labeling
-                    </button>
-                  </h5>
-                </div>
-                <div
-                  id="collapseThree"
-                  className="collapse show"
-                  aria-labelledby="headingThree"
-                >
-                  <div className="card-body">
-                    <OpacityThickness
-                      opacity={lineOpacity}
-                      thickness={cartoonThickness}
-                      highlightStyle={highlightStyle}
-                      onUpdate={this.updateLegendColor}
-                    />
-                    <div style={{ display: "flex", alignItems: "flex-start" }}>
-                      <ColorPicker
-                        onUpdateLegendColor={this.updateLegendColor}
-                        colorKey={"highlightingColor"}
-                        initColor={highlightingColor}
-                      />
-
-                      <button
-                        className="btn btn-primary btn-sm"
-                        disabled={highlightingOn && !highlightingColorChanged}
-                        onClick={this.highlightRegions}
-                      >
-                        Highlight
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        disabled={!highlightingOn}
-                        onClick={this.removeHighlightRegions}
-                      >
-                        Remove highlight
-                      </button>
-                    </div>
-                    <div>
-                      <label style={{ marginBottom: 0 }}>
-                        <strong>Labeling style</strong>{" "}
-                        <select
-                          value={labelStyle}
-                          onChange={this.setLabelStyle}
-                        >
-                          <option value="shape">shape</option>
-                          <option value="arrow">arrow</option>
-                        </select>
-                      </label>
-                    </div>
-                    <p>
-                      <strong>Gene labeling</strong>
-                    </p>
-                    <div>
-                      <GeneSearchBox3D
-                        setGeneCallback={this.addGeneToMyShapes}
-                        color={this.modalfg}
-                        background={this.modalbg}
-                      />
-                    </div>
-                    <p>
-                      <strong>Region labeling</strong>
-                    </p>
-                    <div style={{ display: "flex", alignItems: "baseline" }}>
-                      <span>Region:</span>{" "}
-                      <input
-                        type="text"
-                        placeholder="chr start end"
-                        value={myShapeRegion}
-                        onChange={this.handleMyShapeRegionChange}
-                      />
-                    </div>
-                    <div style={{ display: "flex", alignItems: "baseline" }}>
-                      <span>Label:</span>{" "}
-                      <input
-                        type="text"
-                        placeholder="my region"
-                        value={myShapeLabel}
-                        onChange={this.handleMyShapeLabelChange}
-                      />
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={this.addRegionToMyShapes}
-                      >
-                        Add
-                      </button>
-                    </div>
-
-                    <div>
-                      Upload a text file with genes/regions:
-                      <input
-                        type="file"
-                        onChange={this.handleRegionFileUpload}
-                      />
-                    </div>
-
-                    {/* <div>
-                                            Upload file with domain/loop anchors:
-                                            <input type="file" onChange={this.handleLoopFileUpload} />
-                                        </div> */}
-
-                    <div>
-                      <ShapeList
-                        shapes={myShapes}
-                        onUpdateMyShapes={this.updateMyShapes}
-                        onDeleteShapeByKey={this.deleteShapeByKey}
-                        onSetMessage={this.setMessage}
-                      />
-                    </div>
-                    <div>
-                      <ArrowList
-                        arrows={myArrows}
-                        onUpdateMyArrows={this.updateMyArrows}
-                        onDeleteArrowByKey={this.deleteArrowByKey}
-                        onSetMessage={this.setMessage}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="card"
-                style={{ color: this.modalfg, backgroundColor: this.modalbg }}
-              >
-                <div className="card-header" id="heading4">
-                  <h5 className="mb-0">
-                    <button
-                      className="btn btn-link btn-block text-left"
-                      data-toggle="collapse"
-                      data-target="#collapse4"
-                      aria-expanded="true"
-                      aria-controls="collapse4"
-                    >
-                      Numerical Painting
-                    </button>
-                  </h5>
-                </div>
-                <div
-                  id="collapse4"
-                  className="collapse show"
-                  aria-labelledby="heading4"
-                >
-                  <div className="card-body">
-                    <p>
-                      <span>Data:</span>{" "}
-                      <select
-                        name="numFormat"
-                        defaultValue={numFormat}
-                        onChange={this.handleNumFormatChange}
-                      >
-                        <option value="bwtrack">Bigwig track</option>
-                        <option value="geneexp">Gene expression</option>
-                      </select>
-                    </p>
-                    <div
-                      style={{
-                        display: numFormat === "bwtrack" ? "block" : "none",
-                      }}
-                    >
-                      <label>
-                        <input
-                          type="checkbox"
-                          name="useBw"
-                          checked={useExistingBigwig === true}
-                          onChange={this.toggleUseBigWig}
-                        />
-                        <span>Use loaded tracks</span>
-                      </label>
-                      {useExistingBigwig ? (
-                        bwTracks.length ? (
-                          <select
-                            name="bwUrlList"
-                            onChange={this.handleBigWigUrlChange}
-                            defaultValue={bigWigUrl}
-                          >
-                            <option value="">--</option>
-                            {bwTracks.map((tk, idx) => (
-                              <option key={idx} value={tk.url}>
-                                {tk.getDisplayLabel() || tk.url}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="text-danger font-italic text-sm-left">
-                            No loaded bigwig track, please uncheck the option
-                            above and use a bigwig file URL.
-                          </span>
-                        )
-                      ) : (
-                        <input
-                          type="text"
-                          placeholder="bigwig url"
-                          value={bigWigInputUrl}
-                          onChange={this.handleBigWigInputUrlChange}
-                        />
-                      )}
-                    </div>
-                    <input
-                      style={{
-                        display: numFormat === "geneexp" ? "block" : "none",
-                      }}
-                      type="file"
-                      name="numFile"
-                      onChange={this.handleNumFileUpload}
-                      key={numFormat}
-                    />
-                    <OpacityThickness
-                      opacity={lineOpacity}
-                      thickness={cartoonThickness}
-                      highlightStyle={highlightStyle}
-                      onUpdate={this.updateLegendColor}
-                    />
-                    {colorScale && (
-                      <div>
-                        <label>
-                          auto scale:{" "}
-                          <input
-                            type="checkbox"
-                            checked={autoLegendScale}
-                            onChange={this.handleAutoLegendScaleChange}
-                          />
-                          current data: (min {legendMin}: max: {legendMax})
-                        </label>
-                        <div>
-                          <label>
-                            min:{" "}
-                            <input
-                              style={{ width: "9ch" }}
-                              type="number"
-                              value={useLegengMin}
-                              onChange={this.setUseLegendMin}
-                              disabled={autoLegendScale}
-                            />
-                          </label>
-                          <label>
-                            max:{" "}
-                            <input
-                              style={{ width: "9ch" }}
-                              type="number"
-                              value={useLegengMax}
-                              onChange={this.setUseLegendMax}
-                              disabled={autoLegendScale}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    )}
-                    <p>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        disabled={paintRegion === "region"}
-                        onClick={() => this.paintBigwig("region")}
-                      >
-                        Paint region
-                      </button>
-                      <button
-                        className="btn btn-success btn-sm"
-                        disabled={paintRegion === "chrom"}
-                        onClick={() => this.paintBigwig("chrom")}
-                      >
-                        Paint chromosome
-                      </button>
-                      <button
-                        className="btn btn-info btn-sm"
-                        disabled={paintRegion === "genome"}
-                        onClick={() => this.paintBigwig("genome")}
-                      >
-                        Paint genome
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        disabled={paintRegion === "none"}
-                        onClick={this.removePaint}
-                      >
-                        Remove paint
-                      </button>
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {/* 
-                            <div className="card" style={{ color: this.modalfg, backgroundColor: this.modalbg }}>
-                                <div className="card-header" id="heading5">
-                                    <h5 className="mb-0">
-                                        <button
-                                            className="btn btn-link btn-block text-left"
-                                            data-toggle="collapse"
-                                            data-target="#collapse5"
-                                            aria-expanded="true"
-                                            aria-controls="collapse5"
-                                        >
-                                            Compartment Painting
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapse5" className="collapse show" aria-labelledby="heading5">
-                                    <div className="card-body">
-                                        <div>
-                                            <p>
-                                                <strong>Compartment data:</strong>{" "}
-                                                <span className="font-italic">
-                                                    <a
-                                                        href={HELP_LINKS.threed}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                    >
-                                                        formats requirement
-                                                    </a>
-                                                </span>
-                                            </p>
-                                            <label>
-                                                <input
-                                                    type="checkbox"
-                                                    name="useAnnot"
-                                                    checked={uploadCompartmentFile === false}
-                                                    onChange={this.toggleUseCompartment}
-                                                />
-                                                <span>Use File URL</span>
-                                            </label>
-                                        </div>
-                                        <input
-                                            style={{ display: uploadCompartmentFile ? "block" : "none" }}
-                                            type="file"
-                                            name="annotFile"
-                                            onChange={this.handleCompartmentFileUpload}
-                                        />
-                                        <div style={{ display: uploadCompartmentFile ? "none" : "block" }}>
-                                            <input
-                                                type="text"
-                                                placeholder="compartment file url"
-                                                value={compartmentFileUrl}
-                                                onChange={this.handleCompartmentFileUrlChange}
-                                            />
-                                            <button
-                                                style={{ display: uploadCompartmentFile ? "none" : "block" }}
-                                                className="btn btn-warning btn-sm"
-                                                onClick={this.set4DNExampleURL}
-                                            >
-                                                Example
-                                            </button>
-                                        </div>
-                                        <OpacityThickness
-                                            opacity={lineOpacity}
-                                            thickness={cartoonThickness}
-                                            onUpdate={this.updateLegendColor}
-                                        />
-                                        <p>
-                                            <button
-                                                className="btn btn-primary btn-sm"
-                                                disabled={paintCompartmentRegion === "region"}
-                                                onClick={() => this.paintCompartment("region")}
-                                            >
-                                                Paint region
-                                            </button>
-                                            <button
-                                                className="btn btn-success btn-sm"
-                                                disabled={paintCompartmentRegion === "chrom"}
-                                                onClick={() => this.paintCompartment("chrom")}
-                                            >
-                                                Paint chromosome
-                                            </button>
-                                            <button
-                                                className="btn btn-info btn-sm"
-                                                disabled={paintCompartmentRegion === "genome"}
-                                                onClick={() => this.paintCompartment("genome")}
-                                            >
-                                                Paint genome
-                                            </button>
-                                            <button
-                                                className="btn btn-secondary btn-sm"
-                                                disabled={paintCompartmentRegion === "none"}
-                                                onClick={this.removeCompartmentPaint}
-                                            >
-                                                Remove paint
-                                            </button>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div> */}
-
-              <div
-                className="card"
-                style={{ color: this.modalfg, backgroundColor: this.modalbg }}
-              >
-                <div className="card-header" id="heading8">
-                  <h5 className="mb-0">
-                    <button
-                      className="btn btn-link btn-block text-left"
-                      data-toggle="collapse"
-                      data-target="#collapse8"
-                      aria-expanded="true"
-                      aria-controls="collapse8"
-                    >
-                      Annotation Painting
-                    </button>
-                  </h5>
-                </div>
-                <div
-                  id="collapse8"
-                  className="collapse show"
-                  aria-labelledby="heading8"
-                >
-                  <div className="card-body">
-                    <div>
-                      <p>
-                        <strong>Annotation data:</strong>{" "}
-                        <span className="font-italic">
-                          <a
-                            href={HELP_LINKS.threed}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            formats requirement
-                          </a>
-                        </span>
-                      </p>
-                      <p>
-                        <span>File format:</span>{" "}
-                        <select
-                          name="annoFormat"
-                          defaultValue={annoFormat}
-                          onChange={this.handleAnnoFormatChange}
-                        >
-                          <option value="cytoband">Ideogram cytoband</option>
-                          <option value="refgene">UCSC refGene</option>
-                          <option value="bedrgb">Bed (9 columns)</option>
-                          <option value="bed4">Bed color (4 columns)</option>
-                          <option value="4dn">4DN compartment</option>
-                          <option value="cell2014">
-                            Rao et.al compartment
-                          </option>
-                        </select>
-                      </p>
-                    </div>
-                    <input
-                      style={{
-                        display: annoFormat === "cytoband" ? "none" : "block",
-                      }}
-                      type="file"
-                      name="annoFile"
-                      onChange={this.handleAnnotationFileUpload}
-                      key={annoFormat}
-                    />
-                    <OpacityThickness
-                      opacity={lineOpacity}
-                      thickness={cartoonThickness}
-                      highlightStyle={highlightStyle}
-                      onUpdate={this.updateLegendColor}
-                    />
-                    <label
-                      style={{
-                        display: annoFormat === "refgene" ? "block" : "none",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        name="usePromoter"
-                        checked={annoUsePromoter === true}
-                        onChange={this.toggleUsePromoter}
-                      />
-                      <span>Use promoter only</span>
-                    </label>
-                    <p>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        disabled={paintAnnotationRegion === "region"}
-                        onClick={() => this.paintAnnotation("region")}
-                      >
-                        Paint region
-                      </button>
-                      <button
-                        className="btn btn-success btn-sm"
-                        disabled={paintAnnotationRegion === "chrom"}
-                        onClick={() => this.paintAnnotation("chrom")}
-                      >
-                        Paint chromosome
-                      </button>
-                      <button
-                        className="btn btn-info btn-sm"
-                        disabled={paintAnnotationRegion === "genome"}
-                        onClick={() => this.paintAnnotation("genome")}
-                      >
-                        Paint genome
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        disabled={paintAnnotationRegion === "none"}
-                        onClick={this.removeAnnotationPaint}
-                      >
-                        Remove paint
-                      </button>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="card"
-                style={{ color: this.modalfg, backgroundColor: this.modalbg }}
-              >
-                <div className="card-header" id="heading6">
-                  <h5 className="mb-0">
-                    <button
-                      className="btn btn-link btn-block text-left"
-                      data-toggle="collapse"
-                      data-target="#collapse6"
-                      aria-expanded="true"
-                      aria-controls="collapse6"
-                    >
-                      Animation
-                    </button>
-                  </h5>
-                </div>
-                <div
-                  id="collapse6"
-                  className="collapse show"
-                  aria-labelledby="heading6"
-                >
-                  <div className="card-body">
-                    <FrameListMenu frameList={frameLabels} />
-                    <div style={{ display: "flex" }}>
-                      <input
-                        type="text"
-                        placeholder="new g3d url"
-                        value={newG3dUrl}
-                        onChange={this.handleNewG3dUrlChange}
-                      />
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={this.prepareModelFrames}
-                      >
-                        Add
-                      </button>
-                    </div>
-                    {frameLabels.length > 1 ? (
-                      <div>
                         <button
-                          className="btn btn-success btn-sm"
-                          onClick={this.animate}
-                          disabled={sync3d}
+                          className="btn btn-primary btn-sm"
+                          disabled={highlightingOn && !highlightingColorChanged}
+                          onClick={this.highlightRegions}
                         >
-                          Play
+                          Highlight
                         </button>
                         <button
                           className="btn btn-secondary btn-sm"
-                          onClick={this.stopAnimate}
-                          disabled={sync3d}
+                          disabled={!highlightingOn}
+                          onClick={this.removeHighlightRegions}
                         >
-                          Stop
-                        </button>
-                        <button
-                          className="btn btn-info btn-sm"
-                          onClick={this.resetAnimate}
-                          disabled={sync3d}
-                        >
-                          Reset
+                          Remove highlight
                         </button>
                       </div>
-                    ) : (
-                      <div>add 2 and more models for animation</div>
-                    )}
-                    <div>
-                      <button
-                        className="btn btn-warning btn-sm"
-                        onClick={this.syncHic}
-                        disabled={sync3d}
-                      >
-                        Sync dynamic HiC
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={this.stopSync}
-                        disabled={!sync3d}
-                      >
-                        Stop sync
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="card"
-                style={{ color: this.modalfg, backgroundColor: this.modalbg }}
-              >
-                <div className="card-header" id="heading7">
-                  <h5 className="mb-0">
-                    <button
-                      className="btn btn-link btn-block text-left"
-                      data-toggle="collapse"
-                      data-target="#collapse7"
-                      aria-expanded="true"
-                      aria-controls="collapse7"
-                    >
-                      Export
-                    </button>
-                  </h5>
-                </div>
-                <div
-                  id="collapse7"
-                  className="collapse show"
-                  aria-labelledby="heading7"
-                >
-                  <div className="card-body">
-                    <div>
-                      Save main and thumbnail viewer as image.
                       <div>
+                        <label style={{ marginBottom: 0 }}>
+                          <strong>Labeling style</strong>{" "}
+                          <select
+                            value={labelStyle}
+                            onChange={this.setLabelStyle}
+                          >
+                            <option value="shape">shape</option>
+                            <option value="arrow">arrow</option>
+                          </select>
+                        </label>
+                      </div>
+                      <p>
+                        <strong>Gene labeling</strong>
+                      </p>
+                      <div>
+                        <GeneSearchBox3D
+                          setGeneCallback={this.addGeneToMyShapes}
+                          color={this.modalfg}
+                          background={this.modalbg}
+                        />
+                      </div>
+                      <p>
+                        <strong>Region labeling</strong>
+                      </p>
+                      <div style={{ display: "flex", alignItems: "baseline" }}>
+                        <span>Region:</span>{" "}
+                        <input
+                          type="text"
+                          placeholder="chr start end"
+                          value={myShapeRegion}
+                          onChange={this.handleMyShapeRegionChange}
+                        />
+                      </div>
+                      <div style={{ display: "flex", alignItems: "baseline" }}>
+                        <span>Label:</span>{" "}
+                        <input
+                          type="text"
+                          placeholder="my region"
+                          value={myShapeLabel}
+                          onChange={this.handleMyShapeLabelChange}
+                        />
                         <button
                           className="btn btn-primary btn-sm"
-                          onClick={() => this.saveImage(this.viewer)}
+                          onClick={this.addRegionToMyShapes}
                         >
-                          Save main
+                          Add
+                        </button>
+                      </div>
+                      <div>
+                        Upload a text file with genes/regions:
+                        <input
+                          type="file"
+                          onChange={this.handleRegionFileUpload}
+                        />
+                      </div>
+                      <div>
+                        <ShapeList
+                          shapes={myShapes}
+                          onUpdateMyShapes={this.updateMyShapes}
+                          onDeleteShapeByKey={this.deleteShapeByKey}
+                          onSetMessage={this.setMessage}
+                        />
+                      </div>
+                      <div>
+                        <ArrowList
+                          arrows={myArrows}
+                          onUpdateMyArrows={this.updateMyArrows}
+                          onDeleteArrowByKey={this.deleteArrowByKey}
+                          onSetMessage={this.setMessage}
+                        />
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "numerical",
+                  title: "Numerical Painting",
+                  content: (
+                    <div className="card-body">
+                      <p>
+                        <span>Data:</span>{" "}
+                        <select
+                          name="numFormat"
+                          defaultValue={numFormat}
+                          onChange={this.handleNumFormatChange}
+                        >
+                          <option value="bwtrack">Bigwig track</option>
+                          <option value="geneexp">Gene expression</option>
+                        </select>
+                      </p>
+                      <div
+                        style={{
+                          display: numFormat === "bwtrack" ? "block" : "none",
+                        }}
+                      >
+                        <label>
+                          <input
+                            type="checkbox"
+                            name="useBw"
+                            checked={useExistingBigwig === true}
+                            onChange={this.toggleUseBigWig}
+                          />
+                          <span>Use loaded tracks</span>
+                        </label>
+                        {useExistingBigwig ? (
+                          bwTracks.length ? (
+                            <select
+                              name="bwUrlList"
+                              onChange={this.handleBigWigUrlChange}
+                              defaultValue={bigWigUrl}
+                            >
+                              <option value="">--</option>
+                              {bwTracks.map((tk, idx) => (
+                                <option key={idx} value={tk.url}>
+                                  {tk.getDisplayLabel() || tk.url}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-danger font-italic text-sm-left">
+                              No loaded bigwig track, please uncheck the option
+                              above and use a bigwig file URL.
+                            </span>
+                          )
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder="bigwig url"
+                            value={bigWigInputUrl}
+                            onChange={this.handleBigWigInputUrlChange}
+                          />
+                        )}
+                      </div>
+                      <input
+                        style={{
+                          display: numFormat === "geneexp" ? "block" : "none",
+                        }}
+                        type="file"
+                        name="numFile"
+                        onChange={this.handleNumFileUpload}
+                        key={numFormat}
+                      />
+                      <OpacityThickness
+                        opacity={lineOpacity}
+                        thickness={cartoonThickness}
+                        highlightStyle={highlightStyle}
+                        onUpdate={this.updateLegendColor}
+                      />
+                      {colorScale && (
+                        <div>
+                          <label>
+                            auto scale:{" "}
+                            <input
+                              type="checkbox"
+                              checked={autoLegendScale}
+                              onChange={this.handleAutoLegendScaleChange}
+                            />
+                            current data: (min {legendMin}: max: {legendMax})
+                          </label>
+                          <div>
+                            <label>
+                              min:{" "}
+                              <input
+                                style={{ width: "9ch" }}
+                                type="number"
+                                value={useLegengMin}
+                                onChange={this.setUseLegendMin}
+                                disabled={autoLegendScale}
+                              />
+                            </label>
+                            <label>
+                              max:{" "}
+                              <input
+                                style={{ width: "9ch" }}
+                                type="number"
+                                value={useLegengMax}
+                                onChange={this.setUseLegendMax}
+                                disabled={autoLegendScale}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                      <p>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          disabled={paintRegion === "region"}
+                          onClick={() => this.paintBigwig("region")}
+                        >
+                          Paint region
                         </button>
                         <button
                           className="btn btn-success btn-sm"
-                          onClick={() => this.saveImage(this.viewer2)}
+                          disabled={paintRegion === "chrom"}
+                          onClick={() => this.paintBigwig("chrom")}
                         >
-                          Save thumbnail
+                          Paint chromosome
+                        </button>
+                        <button
+                          className="btn btn-info btn-sm"
+                          disabled={paintRegion === "genome"}
+                          onClick={() => this.paintBigwig("genome")}
+                        >
+                          Paint genome
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          disabled={paintRegion === "none"}
+                          onClick={this.removePaint}
+                        >
+                          Remove paint
+                        </button>
+                      </p>
+                    </div>
+                  ),
+                },
+                {
+                  key: "annotation",
+                  title: "Annotation Painting",
+                  content: (
+                    <div className="card-body">
+                      <div>
+                        <p>
+                          <strong>Annotation data:</strong>{" "}
+                          <span className="font-italic">
+                            <a
+                              href={HELP_LINKS.threed}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              formats requirement
+                            </a>
+                          </span>
+                        </p>
+                        <p>
+                          <span>File format:</span>{" "}
+                          <select
+                            name="annoFormat"
+                            defaultValue={annoFormat}
+                            onChange={this.handleAnnoFormatChange}
+                          >
+                            <option value="cytoband">Ideogram cytoband</option>
+                            <option value="refgene">UCSC refGene</option>
+                            <option value="bedrgb">Bed (9 columns)</option>
+                            <option value="bed4">Bed color (4 columns)</option>
+                            <option value="4dn">4DN compartment</option>
+                            <option value="cell2014">
+                              Rao et.al compartment
+                            </option>
+                          </select>
+                        </p>
+                      </div>
+                      <input
+                        style={{
+                          display: annoFormat === "cytoband" ? "none" : "block",
+                        }}
+                        type="file"
+                        name="annoFile"
+                        onChange={this.handleAnnotationFileUpload}
+                        key={annoFormat}
+                      />
+                      <OpacityThickness
+                        opacity={lineOpacity}
+                        thickness={cartoonThickness}
+                        highlightStyle={highlightStyle}
+                        onUpdate={this.updateLegendColor}
+                      />
+                      <label
+                        style={{
+                          display: annoFormat === "refgene" ? "block" : "none",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          name="usePromoter"
+                          checked={annoUsePromoter === true}
+                          onChange={this.toggleUsePromoter}
+                        />
+                        <span>Use promoter only</span>
+                      </label>
+                      <p>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          disabled={paintAnnotationRegion === "region"}
+                          onClick={() => this.paintAnnotation("region")}
+                        >
+                          Paint region
+                        </button>
+                        <button
+                          className="btn btn-success btn-sm"
+                          disabled={paintAnnotationRegion === "chrom"}
+                          onClick={() => this.paintAnnotation("chrom")}
+                        >
+                          Paint chromosome
+                        </button>
+                        <button
+                          className="btn btn-info btn-sm"
+                          disabled={paintAnnotationRegion === "genome"}
+                          onClick={() => this.paintAnnotation("genome")}
+                        >
+                          Paint genome
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          disabled={paintAnnotationRegion === "none"}
+                          onClick={this.removeAnnotationPaint}
+                        >
+                          Remove paint
+                        </button>
+                      </p>
+                    </div>
+                  ),
+                },
+                {
+                  key: "animation",
+                  title: "Animation",
+                  content: (
+                    <div className="card-body">
+                      <FrameListMenu frameList={frameLabels} />
+                      <div style={{ display: "flex" }}>
+                        <input
+                          type="text"
+                          placeholder="new g3d url"
+                          value={newG3dUrl}
+                          onChange={this.handleNewG3dUrlChange}
+                        />
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={this.prepareModelFrames}
+                        >
+                          Add
+                        </button>
+                      </div>
+                      {frameLabels.length > 1 ? (
+                        <div>
+                          <button
+                            className="btn btn-success btn-sm"
+                            onClick={this.animate}
+                            disabled={sync3d}
+                          >
+                            Play
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={this.stopAnimate}
+                            disabled={sync3d}
+                          >
+                            Stop
+                          </button>
+                          <button
+                            className="btn btn-info btn-sm"
+                            onClick={this.resetAnimate}
+                            disabled={sync3d}
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      ) : (
+                        <div>add 2 and more models for animation</div>
+                      )}
+                      <div>
+                        <button
+                          className="btn btn-warning btn-sm"
+                          onClick={this.syncHic}
+                          disabled={sync3d}
+                        >
+                          Sync dynamic HiC
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={this.stopSync}
+                          disabled={!sync3d}
+                        >
+                          Stop sync
                         </button>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  ),
+                },
+                {
+                  key: "export",
+                  title: "Export",
+                  content: (
+                    <div className="card-body">
+                      <div>
+                        Save main and thumbnail viewer as image.
+                        <div>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => this.saveImage(this.viewer)}
+                          >
+                            Save main
+                          </button>
+                          <button
+                            className="btn btn-success btn-sm"
+                            onClick={() => this.saveImage(this.viewer2)}
+                          >
+                            Save thumbnail
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                },
+              ].map((section, idx) => (
+                <AccordionSection
+                  key={section.key}
+                  title={section.title}
+                  defaultOpen={idx === 0}
+                >
+                  {section.content}
+                </AccordionSection>
+              ))}
             </div>
           </Drawer>
         )}
@@ -4168,11 +3969,7 @@ class ThreedmolContainer extends React.Component<
               className="box1"
               style={{
                 width: mainBoxWidth,
-                height: 500,
-                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-                WebkitPerspective: `${1200 * 3 + 120}px`,
-                backfaceVisibility: "hidden",
-                perspective: `${1200 * 3 + 120}px`,
+                height: height,
               }}
               ref={this.myRef}
             ></div>
@@ -4182,10 +3979,6 @@ class ThreedmolContainer extends React.Component<
                 width: thumbBoxWidth,
                 height: thumbBoxHeight,
                 display: thumbStyle === "hide" ? "none" : "block",
-                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-                WebkitPerspective: `${1200 * 3 + 120}px`,
-                backfaceVisibility: "hidden",
-                perspective: `${1200 * 3 + 120}px`,
               }}
               ref={this.myRef2}
             ></div>

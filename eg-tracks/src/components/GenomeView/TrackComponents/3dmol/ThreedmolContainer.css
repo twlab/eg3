@@ -1,8 +1,8 @@
 #threed-mol-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* #box1 {
@@ -14,93 +14,93 @@
 } */
 
 .picture {
-    position: relative;
-    display: block;
+  position: relative;
+  display: block;
 }
 
 .side {
-    position: relative;
-    display: flex;
+  position: relative;
+  display: flex;
 }
 .picture .box1 {
-    position: relative;
+  position: relative;
 }
 .picture .box2 {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    border: 1px black solid;
-    z-index: 2;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  border: 1px black solid;
+  z-index: 2;
 }
 .side .box1 {
-    position: relative;
+  position: relative;
 }
 .side .box2 {
-    position: relative;
-    border-left: 1px black solid;
+  position: relative;
+  border-left: 1px black solid;
 }
 
 #accordion p {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 #accordion ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
 }
 
 #accordion input[type="text"] {
-    width: 100%;
+  width: 100%;
 }
 
 #accordion input,
 #accordion button,
 #accordion select {
-    margin-right: 1ch;
-    margin-bottom: 1ch;
+  margin-right: 1ch;
+  margin-bottom: 1ch;
 }
 
 #accordion select {
-    margin-left: 1ch;
+  margin-left: 1ch;
 }
 
 .thumb-control label {
-    display: block;
+  display: block;
 }
 
 .toggle-model-container {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 2px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
 }
 
 .toggle-model-container:hover {
-    border-bottom: 1px solid orange;
+  border-bottom: 1px solid orange;
 }
 
 .toggle-model:hover {
-    background-color: orange;
-    cursor: pointer;
+  background-color: orange;
+  cursor: pointer;
 }
 
 .card-body {
-    padding: 0.75rem;
+  padding: 0.75rem;
 }
 
 #accordion {
-    display: flex;
+  display: flex;
 }
 
 .placement-container {
-    position: absolute;
-    left: 2px;
-    top: 2px;
-    z-index: 1;
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  z-index: 1;
 }
 
 .placement-container span {
-    display: inline-block;
+  display: inline-block;
 }
 
 /* .drawer {
@@ -125,45 +125,45 @@
 } */
 
 .card-header button {
-    margin-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .card-header {
-    padding: 0;
+  padding: 0;
 }
 
 .FrameListMenu label {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .FrameListMenu ol {
-    list-style-type: circle;
+  list-style-type: circle;
 }
 
 .hoverButtons button {
-    margin: 2px 0;
-    display: block;
+  margin: 2px 0;
+  display: block;
 }
 
 .closeMenu-3d {
-    font-size: 36px;
-    cursor: pointer;
-    color: red;
-    position: absolute;
-    right: 10px;
-    top: -8px;
-    z-index: 5;
+  font-size: 36px;
+  cursor: pointer;
+  color: red;
+  position: absolute;
+  right: 10px;
+  top: -8px;
+  z-index: 5;
 }
 
 .arrow-list input[type="number"] {
-    margin-bottom: 0 !important;
-    margin-right: 2px !important;
-    width: 8ch;
+  margin-bottom: 0 !important;
+  margin-right: 2px !important;
+  width: 8ch;
 }
 
 #static-legend {
-    position: absolute;
-    z-index: 4;
-    left: 10px;
-    bottom: 50px;
+  position: absolute;
+  z-index: 4;
+  left: 10px;
+  bottom: 50px;
 }

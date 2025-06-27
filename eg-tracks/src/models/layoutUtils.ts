@@ -29,7 +29,7 @@ export const initialLayout = {
           {
             config: { trackModel: null },
             type: "tab",
-            name: "One",
+            name: "Browser",
             component: "Browser",
             enableClose: false,
           },

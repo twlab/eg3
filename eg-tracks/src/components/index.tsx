@@ -141,7 +141,11 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
         (track, idx) =>
           new TrackModel({
             type: track.type,
-            name: track.name ? track.name : `track ${idx + 1}`,
+            name: track.name
+              ? track.name
+              : track.type === "ruler"
+              ? "ruler"
+              : `track ${idx + 1}`,
             url: track.url,
             options: getOptions(track.type, track.options),
             id: crypto.randomUUID(),

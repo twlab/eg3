@@ -7935,12 +7935,10 @@ flatten-vertex-data@^1.0.2:
   dependencies:
     dtype "^2.0.0"
 
-flexlayout-react@^0.6.9:
-  version "0.6.10"
-  resolved "https://registry.yarnpkg.com/flexlayout-react/-/flexlayout-react-0.6.10.tgz#94542651d280ab91506bb71d38a323654d367904"
-  integrity sha512-LuMC0TIpmleEyhU3vbiMPUwq9bLrg8TjO6Y0NeLQBi0PGdtSh+tcDWHp3pUHYUalBa+n54f9CYgZIwjsQc/Sgg==
-  dependencies:
-    uuid "^8.3.2"
+flexlayout-react@^0.7.15:
+  version "0.7.15"
+  resolved "https://registry.yarnpkg.com/flexlayout-react/-/flexlayout-react-0.7.15.tgz#9b6a06e8dec82db78d61bd246f1f002ddf3f74f4"
+  integrity sha512-ydTMdEoQO5BniylxVkSxa59rEY0+96lqqRII+QK+yq6028eHywPuxZawt4g45y5pMb9ptP4N9HPAQXAFsxwowQ==
 
 follow-redirects@^1.0.0, follow-redirects@^1.15.6:
   version "1.15.9"
@@ -14618,7 +14616,7 @@ uuid@^11.1.0:
 
 uuid@^8.3.2:
   version "8.3.2"
-  resolved "https://registry.npmjs.org/uuid/-/uuid-8.3.2.tgz"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 validator@^13.7.0:

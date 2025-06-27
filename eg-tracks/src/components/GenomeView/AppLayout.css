@@ -143,9 +143,9 @@
 [data-theme="light"]
   .flexlayout__tab_button--selected
   .flexlayout__tab_button_trailing {
-  background: transparent
+  /* background: transparent
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px;
+    no-repeat center/9px 9px; */
 }
 
 [data-theme="light"] .flexlayout__tab_button_overflow {
@@ -348,9 +348,9 @@
 [data-theme="light"]
   .flexlayout__border_button--selected
   .flexlayout__border_button_trailing {
-  background: transparent
+  /* background: transparent
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px;
+    no-repeat center/9px 9px; */
 }
 
 [data-theme="light"] .flexlayout__border_toolbar_left {
@@ -545,9 +545,9 @@
 [data-theme="dark"]
   .flexlayout__tab_button--selected
   .flexlayout__tab_button_trailing {
-  background: transparent
+  /* background: transparent
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px;
+    no-repeat center/9px 9px; */
 }
 
 [data-theme="dark"] .flexlayout__tab_button_overflow {
@@ -749,9 +749,9 @@
 [data-theme="dark"]
   .flexlayout__border_button--selected
   .flexlayout__border_button_trailing {
-  background: transparent
+  /* background: transparent
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px;
+    no-repeat center/9px 9px; */
 }
 
 [data-theme="dark"] .flexlayout__border_toolbar_left {

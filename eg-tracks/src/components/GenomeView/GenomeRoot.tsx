@@ -1,10 +1,11 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
-import * as FlexLayout from "flexlayout-react";
+import { Layout, Model } from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import { addTabSetToLayout, initialLayout } from "../../models/layoutUtils";
 import "./AppLayout.css";
+// import "flexlayout-react/style/light.css";
 import { arraysHaveSameTrackModels } from "../../util";
 import { diffTrackModels } from "../../util";
 // import "./track.css";
@@ -14,10 +15,10 @@ import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
 
-// import GenomeViewer from "..";
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
+// import GenomeViewerTest from "../testComp";
 
 // import GenomeViewerTest from "./testComp";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
@@ -46,7 +47,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
   const layout = useRef(_.cloneDeep(initialLayout));
-  const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
+  const [model, setModel] = useState(Model.fromJson(layout.current));
   const [show3dGene, setShow3dGene] = useState();
 
   function renderG3dTrackComponents(node) {
@@ -75,6 +76,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       // this.props.onSetLayout(layout);
     });
     // node.setEventListener("resize", () => this.handleNodeResize(node));
+
     return (
       <ThreedmolContainer
         key={g3dtrack.id}
@@ -146,7 +148,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const throttledSetConfig = useRef(
     throttle((curGenome) => {
       setCurrentGenomeConfig(curGenome);
-    }, 200)
+    }, 100)
   );
 
   useEffect(() => {
@@ -187,35 +189,34 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       return tracks;
     });
     const newG3dTracks = tracks.filter((track) => track.type === "g3d");
+    if (tracks.length > 0) {
+      if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
+        layout.current = _.cloneDeep(initialLayout);
+        for (let track of newG3dTracks) {
+          const newLayout = {
+            type: "tabset",
+            children: [
+              {
+                type: "tab",
+                name: track.getDisplayLabel(),
+                component: "g3d",
 
-    if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
-      const diffTracks = diffTrackModels(curG3dTracks, newG3dTracks);
-      layout.current = _.cloneDeep(initialLayout);
-      for (let track of newG3dTracks) {
-        const newLayout = {
-          type: "tabset",
-          children: [
-            {
-              type: "tab",
-              name: track.getDisplayLabel(),
-              component: "g3d",
+                config: { trackModel: track, trackId: track.id },
+                enableClose: true,
+              },
+            ],
+          };
+          layout.current = addTabSetToLayout(newLayout, layout.current);
+        }
 
-              config: { trackModel: track, trackId: track.id },
-              enableClose: true,
-            },
-          ],
-        };
-        layout.current = addTabSetToLayout(newLayout, layout.current);
+        setModel(Model.fromJson(layout.current));
       }
-
-      setModel(FlexLayout.Model.fromJson(layout.current));
     }
   }, [tracks]);
 
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
-
       if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
         curGenome["genomeID"] = trackManagerId.current;
@@ -226,6 +227,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = true;
+        throttledSetConfig.current(curGenome);
       } else {
         trackManagerId.current = crypto.randomUUID();
         curGenome = { ...genomeConfig };
@@ -236,9 +238,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           userViewRegion._startBase!,
           userViewRegion._endBase!
         );
+        setCurrentGenomeConfig(curGenome);
       }
-
-      throttledSetConfig.current(curGenome);
     }
   }, [size.width]);
 
@@ -295,8 +296,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     <div>
       <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
+        {/* <GenomeViewerTest /> */}
         {currentGenomeConfig && size.width > 0 ? (
-          <FlexLayout.Layout model={model} factory={factory} />
+          <Layout model={model} factory={factory} />
         ) : (
           ""
         )}
@@ -378,42 +380,3 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 });
 
 export default GenomeRoot;
-
-// {g3dtrackComponents.length > 0 ? (
-//   <div
-//     style={{
-//       display: "flex",
-//       backgroundColor: "var(--bg-color)",
-//       WebkitBackfaceVisibility: "hidden",
-//       WebkitPerspective: `${windowWidth + 120}px`,
-//       backfaceVisibility: "hidden",
-//       perspective: `${windowWidth + 120}px`,
-//       border: "1px solid #d3d3d3",
-//       borderRadius: "10px",
-//       boxShadow: "0 2px 3px 0 rgba(0, 0, 0, 0.2)",
-//       padding: "5px",
-//       flexWrap: "wrap",
-//     }}
-//   >
-//     {g3dtrackComponents.map((item, index) => {
-//       const Component = item.component;
-//       return (
-//         trackManagerState.current.viewRegion && (
-//           <div key={item.id} style={{ width: "50%" }}>
-//             <Component
-//               handleDelete={handleDelete}
-//               tracks={tracks}
-//               g3dtrack={item.trackModel}
-//               viewRegion={trackManagerState.current.viewRegion}
-//               width={windowWidth / 2}
-//               genomeConfig={genomeConfig}
-//               geneFor3d={show3dGene}
-//             />
-//           </div>
-//         )
-//       );
-//     })}
-//   </div>
-// ) : (
-//   ""
-// )}

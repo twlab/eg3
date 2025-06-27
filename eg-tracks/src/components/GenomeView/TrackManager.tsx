@@ -2054,6 +2054,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     // loop through trackmanager checking to see if the track is already created else if create a new one with default valuies
     for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
+      if (trackManagerState.current.tracks[i].type === "g3d") {
+        continue;
+      }
       if (trackManagerState.current.tracks[i].type === "genomealign") {
         if (basePerPixel.current < 10) {
           useFineModeNav.current = true;
