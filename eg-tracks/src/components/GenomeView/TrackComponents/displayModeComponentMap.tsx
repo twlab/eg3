@@ -1139,10 +1139,14 @@ export const displayModeComponentMap: { [key: string]: any } = {
         viewRegion={objToInstanceAlign(trackState.visRegion)}
         width={trackState.visWidth}
         trackModel={trackModel}
-        selectedRegion={objToInstanceAlign(
-          trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
-            .viewWindowRegion
-        )}
+        selectedRegion={
+          trackState.genomicFetchCoord
+            ? objToInstanceAlign(
+                trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+                  .viewWindowRegion
+              )
+            : trackState.visRegion
+        }
         viewWindow={
           trackState.viewWindow
             ? trackState.viewWindow
