@@ -42,8 +42,8 @@ import {
   twoDataTypeTracks,
 } from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
-import { fetchGenomicData } from "../../getRemoteData/fetchData";
-import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
+// import { fetchGenomicData } from "../../getRemoteData/fetchData";
+// import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
 import { arraysHaveSameTrackModels } from "../../util";
 
 const groupManager = new GroupedTrackManager();
@@ -2819,9 +2819,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       !tracks.every((item) => item.waitToUpdate)
     ) {
       if (
-        !arraysHaveSameTrackModels(tracks, [
-          ...trackComponents.map((item) => item.trackModel),
-        ])
+        !arraysHaveSameTrackModels(
+          tracks.filter((item, _index) => {
+            return item.type !== "g3d";
+          }),
+          [...trackComponents.map((item) => item.trackModel)]
+        )
       ) {
         const newTrackId: { [key: string]: any } = {};
         for (const trackModel of tracks) {
@@ -2847,7 +2850,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           for (let trackComponent of trackComponents) {
             if (trackComponent.trackModel.id === curTrackModel.id) {
               if (curTrackModel.type === "g3d") {
-                newG3dComponents.push(trackComponent);
+                continue;
               } else {
                 newTrackComponents.push(trackComponent);
               }
@@ -2951,6 +2954,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx);
       } else {
+        console.log("HUHU");
         const newTrackComponents: Array<any> = [];
 
         let needToToUpdate = false;

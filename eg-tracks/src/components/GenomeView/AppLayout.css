@@ -133,8 +133,8 @@
   display: inline-block;
   margin-left: 7px;
   margin-top: 3px;
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
 [data-theme="light"]
@@ -143,9 +143,9 @@
 [data-theme="light"]
   .flexlayout__tab_button--selected
   .flexlayout__tab_button_trailing {
-  /* background: transparent
+  background: transparent
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px; */
+    no-repeat center/9px 9px;
 }
 
 [data-theme="light"] .flexlayout__tab_button_overflow {
@@ -334,25 +334,6 @@
   outline: none;
 }
 
-[data-theme="light"] .flexlayout__tab_button_trailing {
-  display: inline-block;
-  margin-left: 7px;
-  margin-top: 3px;
-  width: 8px;
-  height: 8px;
-}
-
-[data-theme="light"]
-  .flexlayout__border_button:hover
-  .flexlayout__border_button_trailing,
-[data-theme="light"]
-  .flexlayout__border_button--selected
-  .flexlayout__border_button_trailing {
-  /* background: transparent
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px; */
-}
-
 [data-theme="light"] .flexlayout__border_toolbar_left {
   position: absolute;
   display: flex;
@@ -530,24 +511,23 @@
   outline: none;
 }
 
-[data-theme="dark"] .flexlayout__tab_button_trailing {
-  float: left;
+[data-theme="light"] .flexlayout__tab_button_trailing {
   display: inline-block;
-  margin-left: 5px;
-  margin-top: 3px;
-  width: 8px;
-  height: 8px;
+  margin-left: 3px;
+  margin-top: 4px;
+  width: 15px;
+  height: 15px;
 }
 
-[data-theme="dark"]
-  .flexlayout__tab_button:hover
-  .flexlayout__tab_button_trailing,
-[data-theme="dark"]
-  .flexlayout__tab_button--selected
-  .flexlayout__tab_button_trailing {
-  /* background: transparent
+[data-theme="light"]
+  .flexlayout__border_button:hover
+  .flexlayout__border_button_trailing,
+[data-theme="light"]
+  .flexlayout__border_button--selected
+  .flexlayout__border_button_trailing {
+  background: transparent
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px; */
+    no-repeat center/9px 9px;
 }
 
 [data-theme="dark"] .flexlayout__tab_button_overflow {
@@ -579,7 +559,6 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 10000px;
 }
 
 [data-theme="dark"] .flexlayout__tab_header_outer {
@@ -749,9 +728,9 @@
 [data-theme="dark"]
   .flexlayout__border_button--selected
   .flexlayout__border_button_trailing {
-  /* background: transparent
+  background: transparent
     url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10" stroke="red" stroke-width="2"/><line x1="10" y1="2" x2="2" y2="10" stroke="red" stroke-width="2"/></svg>')
-    no-repeat center/9px 9px; */
+    no-repeat center/9px 9px;
 }
 
 [data-theme="dark"] .flexlayout__border_toolbar_left {

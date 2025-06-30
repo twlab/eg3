@@ -61,7 +61,7 @@
     "uuid": "^11.1.0",
     "vite-plugin-dts": "^2.1.0",
     "vite-plugin-node-polyfills": "^0.23.0",
-    "flexlayout-react": "^0.7.15"
+    "flexlayout-react": "^0.3.11"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",

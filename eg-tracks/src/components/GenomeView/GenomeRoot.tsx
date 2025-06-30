@@ -1,11 +1,11 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import _ from "lodash";
 import { ITrackContainerState } from "../../types";
-import { Layout, Model } from "flexlayout-react";
+import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import { addTabSetToLayout, initialLayout } from "../../models/layoutUtils";
 import "./AppLayout.css";
-// import "flexlayout-react/style/light.css";
+
 import { arraysHaveSameTrackModels } from "../../util";
 import { diffTrackModels } from "../../util";
 // import "./track.css";
@@ -47,7 +47,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
   const layout = useRef(_.cloneDeep(initialLayout));
-  const [model, setModel] = useState(Model.fromJson(layout.current));
+  const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
   const [show3dGene, setShow3dGene] = useState();
 
   function renderG3dTrackComponents(node) {
@@ -209,7 +209,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           layout.current = addTabSetToLayout(newLayout, layout.current);
         }
 
-        setModel(Model.fromJson(layout.current));
+        setModel(FlexLayout.Model.fromJson(layout.current));
       }
     }
   }, [tracks]);
@@ -298,7 +298,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       <div style={{ display: "flex", flexDirection: "column" }}>
         {/* <GenomeViewerTest /> */}
         {currentGenomeConfig && size.width > 0 ? (
-          <Layout model={model} factory={factory} />
+          <FlexLayout.Layout model={model} factory={factory} />
         ) : (
           ""
         )}

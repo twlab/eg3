@@ -1230,11 +1230,11 @@ class ThreedmolContainer extends React.Component<
       {},
       { line: { colorscheme: "chrom", opacity: lineOpacity } }
     );
-    this.viewer.zoomTo();
+
     this.viewer.render();
     // this.viewer.zoom(1.2, 1000);
-    const zoomFactor = 1.1;
-    this.viewer.zoom(1.2, 1000);
+    this.viewer.zoomTo();
+    // this.viewer.zoom(1.05, 400);
     // console.log(this.viewer, this.model)
     // element.style.border='1px red solid';
     // element2.style.border='1px black solid';
@@ -3970,6 +3970,10 @@ class ThreedmolContainer extends React.Component<
               style={{
                 width: mainBoxWidth,
                 height: height,
+                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+                WebkitPerspective: `${1200 * 3 + 120}px`,
+                backfaceVisibility: "hidden",
+                perspective: `${1200 * 3 + 120}px`,
               }}
               ref={this.myRef}
             ></div>
@@ -3979,6 +3983,10 @@ class ThreedmolContainer extends React.Component<
                 width: thumbBoxWidth,
                 height: thumbBoxHeight,
                 display: thumbStyle === "hide" ? "none" : "block",
+                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
+                WebkitPerspective: `${1200 * 3 + 120}px`,
+                backfaceVisibility: "hidden",
+                perspective: `${1200 * 3 + 120}px`,
               }}
               ref={this.myRef2}
             ></div>

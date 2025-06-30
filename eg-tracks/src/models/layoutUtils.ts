@@ -10,13 +10,14 @@ export const global0 = {
   tabSetHeaderHeight: 0,
   tabSetTabStripHeight: 0,
   splitterSize: 0,
+  tabSetEnableTabStrip: false,
 };
 export const global25 = {
   tabSetHeaderHeight: 25,
   tabSetTabStripHeight: 25,
   splitterSize: 8,
+  tabSetEnableTabStrip: true,
 };
-
 export const initialLayout = {
   global: global0,
   layout: {
