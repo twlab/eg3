@@ -115,18 +115,23 @@ export default function useBrowserInitialization() {
           let additionalTracks: ITrackModel[] = [];
 
           if (hub) {
-            const hubData = await fetch(hub)
-              .then((r) => r.json())
-              .then((tracks) =>
-                tracks.filter((t: any) => t.showOnHubLoad === true)
-              );
+            try {
+              const hubData = await fetch(hub)
+                .then((r) => r.json())
+                .then((tracks) =>
+                  tracks.filter((t: any) => t.showOnHubLoad === true)
+                );
 
-            additionalTracks = hubData.map((t: any) => ({
-              ...t,
-              id: crypto.randomUUID(),
-              genome: genome,
-              isSelected: false,
-            }));
+              additionalTracks = hubData.map((t: any) => ({
+                ...t,
+                id: crypto.randomUUID(),
+                genome: genome,
+                isSelected: false,
+              }));
+            } catch (error) {
+              console.error("Failed to load hub data:", error);
+              alert("Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead.");
+            }
           }
 
           genome.defaultTracks = genome.defaultTracks?.map((t) =>
