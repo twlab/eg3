@@ -216,7 +216,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       genomeConfig.defaultRegion.end
     ),
     trackLegendWidth: legendWidth,
-    tracks: tracks && tracks.length >= 0 ? tracks : genomeConfig.defaultTracks,
+    tracks:
+      tracks && tracks.length >= 0
+        ? tracks.filter((trackModel) => trackModel.type !== "g3d")
+        : genomeConfig.defaultTracks.filter(
+            (trackModel) => trackModel.type !== "g3d"
+          ),
   });
 
   const configMenuPos = useRef<{ [key: string]: any }>({});
@@ -262,7 +267,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
   const [newDrawData, setNewDrawData] = useState<{ [key: string]: any }>({});
-  const [initialStart, setInitialStart] = useState("workerNotReady");
   const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
 
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
@@ -635,7 +639,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   ) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
-    const tracks: Array<any> = [];
+    const curtracks: Array<any> = [];
     const selectCount = Object.keys(selectedTracks.current).length;
     let fileInfos: { [key: string]: any } = {};
     for (const config in selectedTracks.current) {
@@ -663,7 +667,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       menuComponents.push(menuItems);
       optionsObjects.push(trackModel.options);
-      tracks.push(trackModel);
+      curtracks.push(trackModel);
     }
 
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
@@ -681,7 +685,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       items: commonMenuComponents,
       onConfigChange,
       blockRef: block,
-      tracks: tracks,
+      tracks: curtracks,
       fileInfos: fileInfos,
       trackId: trackId,
     };
@@ -753,7 +757,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else {
       setApplyTrackConfigChange(newSelected);
     }
-    onTracksChange([...trackManagerState.current.tracks]);
+
+    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
 
   function renderTrackSpecificConfigMenu(
@@ -819,7 +824,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
 
       selectedTracks.current[`${trackDetails.trackModel.id}`] = "";
-      onTracksChange([...trackManagerState.current.tracks]);
+
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
       renderTrackSpecificConfigMenu(
         e.pageX,
         e.pageY,
@@ -838,8 +844,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackModel.isSelected = false;
       });
 
-      onTracksChange(trackManagerState.current.tracks);
       selectedTracks.current = {};
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
     }
   }
 
@@ -850,7 +856,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     );
 
-    onTracksChange([...trackManagerState.current.tracks]);
+    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
 
     if (id.length > 0) {
       onConfigMenuClose();
@@ -873,7 +879,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newTrack,
       ];
 
-      onTracksChange([...trackManagerState.current.tracks]);
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
       onConfigMenuClose();
     }
 
@@ -894,6 +900,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackManagerState.current.tracks = _.cloneDeep(newOrder);
 
     // console.log(trackManagerState.current.tracks, newOrder, "order")
+
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
 
@@ -2034,7 +2041,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setConfigMenu(null);
     setApplyTrackConfigChange({});
   };
-
+  console.log(trackManagerState.current.tracks, "track length");
   function initializeTracks() {
     // set initial track manager control values and create fetch instance for track that can't use worker like hic.
 
@@ -2054,9 +2061,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     // loop through trackmanager checking to see if the track is already created else if create a new one with default valuies
     for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
-      if (trackManagerState.current.tracks[i].type === "g3d") {
-        continue;
-      }
       if (trackManagerState.current.tracks[i].type === "genomealign") {
         if (basePerPixel.current < 10) {
           useFineModeNav.current = true;
@@ -2126,7 +2130,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
     addTermToMetaSets(trackManagerState.current.tracks);
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
-
+    console.log(trackManagerState.current.tracks);
     queueRegionToFetch(0);
   }
   // MARK: sigTrackLoad
@@ -2458,29 +2462,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       // create the worker and trigger state change before we can actually use them takes one re render to acutally
       // start working.Thats why we need the initialStart state.
-      if (initialStart === "workerNotReady") {
-        // infiniteScrollWorker.current = new Worker(
-        //   new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+
+      // infiniteScrollWorker.current = new Worker(
+      //   new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+      //   {
+      //     type: "module",
+      //   }
+      // );
+      createInfiniteOnMessage();
+      if (hasGenomeAlign.current) {
+        // fetchGenomeAlignWorker.current = new Worker(
+        //   new URL(
+        //     "../../getRemoteData/fetchGenomeAlignWorker.ts",
+        //     import.meta.url
+        //   ),
         //   {
         //     type: "module",
         //   }
         // );
-        createInfiniteOnMessage();
-        if (hasGenomeAlign.current) {
-          // fetchGenomeAlignWorker.current = new Worker(
-          //   new URL(
-          //     "../../getRemoteData/fetchGenomeAlignWorker.ts",
-          //     import.meta.url
-          //   ),
-          //   {
-          //     type: "module",
-          //   }
-          // );
-          createGenomeAlignOnMessage();
-        }
-        initializeTracks();
+        createGenomeAlignOnMessage();
+
         // setInitialStart("workerReady");
       }
+      initializeTracks();
       preload.current = true;
     } else if (genomeConfig.sizeChange) {
       // refreshState();
@@ -2818,16 +2822,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       tracks &&
       !tracks.every((item) => item.waitToUpdate)
     ) {
+      const filteredTracks = tracks.filter(
+        (trackModel) => trackModel.type !== "g3d"
+      );
+
       if (
-        !arraysHaveSameTrackModels(
-          tracks.filter((item, _index) => {
-            return item.type !== "g3d";
-          }),
-          [...trackComponents.map((item) => item.trackModel)]
-        )
+        !arraysHaveSameTrackModels(filteredTracks, [
+          ...trackComponents.map((item) => item.trackModel),
+        ])
       ) {
         const newTrackId: { [key: string]: any } = {};
-        for (const trackModel of tracks) {
+        for (const trackModel of filteredTracks) {
           newTrackId[`${trackModel.id}`] = {};
         }
         // check if a track inside trackmanager was deleted
@@ -2841,8 +2846,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const newG3dComponents: Array<any> = [];
         const newAddedTrackModel: Array<any> = [];
         let checkHasGenAlign = false;
-        for (let i = 0; i < tracks.length; i++) {
-          const curTrackModel = tracks[i];
+        for (let i = 0; i < filteredTracks.length; i++) {
+          const curTrackModel = filteredTracks[i];
 
           let foundComp = false;
 
@@ -2949,18 +2954,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           hasGenomeAlign.current = false;
         }
 
-        trackManagerState.current.tracks = tracks;
+        trackManagerState.current.tracks = filteredTracks;
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx);
       } else {
-        console.log("HUHU");
         const newTrackComponents: Array<any> = [];
 
         let needToToUpdate = false;
 
-        for (let i = 0; i < tracks.length; i++) {
-          const curTrackModel = tracks[i];
+        for (let i = 0; i < filteredTracks.length; i++) {
+          const curTrackModel = filteredTracks[i];
           if (curTrackModel.id !== trackComponents[i].trackModel.id) {
             needToToUpdate = true;
           }
@@ -2983,11 +2987,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         if (needToToUpdate) {
-          trackManagerState.current.tracks = tracks;
+          trackManagerState.current.tracks = filteredTracks;
           setTrackComponents(newTrackComponents);
         }
       }
-      addTermToMetaSets(tracks);
+      addTermToMetaSets(filteredTracks);
     }
   }, [tracks]);
 
@@ -3108,6 +3112,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       style={{
         backgroundColor: "var(--bg-color)",
         paddingLeft: "20px",
+        marginBottom: "50px",
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (

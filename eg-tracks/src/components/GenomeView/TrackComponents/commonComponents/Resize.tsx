@@ -8,10 +8,12 @@ const useResizeObserver = () => {
   const prevSize = useRef({ width: 0, height: 0 });
   const initialWidth = useRef(true);
   const initialHeight = useRef(true);
+
   useEffect(() => {
     const handleResize = debounce((entries: ResizeObserverEntry[]) => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
+
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
         if (
           initialWidth.current ||

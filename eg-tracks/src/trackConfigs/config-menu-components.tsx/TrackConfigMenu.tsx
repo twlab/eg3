@@ -13,12 +13,9 @@ import OutsideClickDetector from "../../components/GenomeView/TrackComponents/co
 function ConfigMenuComponent(props: any) {
   const menuData = props.menuData;
 
-  // Memoize block position data to avoid recalculating unless ref changes
-  const blockPosData = useMemo(
-    () => menuData.blockRef.current.getBoundingClientRect(),
-    [menuData.blockRef]
-  );
-  const leftMargin = blockPosData.left;
+  // Use mouse coordinates for positioning
+  const left = menuData.pageX || 0;
+  const top = menuData.pageY || 0;
 
   // Memoize menu items to avoid unnecessary re-renders
   const menuItems = useMemo(
@@ -42,7 +39,8 @@ function ConfigMenuComponent(props: any) {
       menuData.trackId,
     ]
   );
-
+  // left: menuData.pageX - leftMargin,
+  // top: menuData.pageY - blockPosData.height,
   return (
     <Manager>
       <Reference>
@@ -50,11 +48,12 @@ function ConfigMenuComponent(props: any) {
           <div
             ref={ref}
             style={{
-              position: "absolute",
-              left: menuData.pageX - leftMargin,
-              top: menuData.pageY - blockPosData.height,
+              position: "fixed", // Use fixed so it's relative to the viewport
+              left,
+              top,
               backgroundColor: "var(--bg-container-color)",
               color: "var(--font-color)",
+              zIndex: 1000,
             }}
           >
             <Popper placement="right-end">

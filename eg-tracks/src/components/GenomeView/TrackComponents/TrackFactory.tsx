@@ -208,7 +208,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   useEffect(() => {
     if (viewComponent) {
-      console.log("HUH", viewComponent);
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
