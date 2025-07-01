@@ -165,7 +165,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       pageY: event.pageY,
       name: genomeConfig.genome._name,
       onClose: onClose,
-      isThereG3dTrack: false,
+      isThereG3dTrack: isThereG3dTrack,
       setShow3dGene: setShow3dGene,
       configOptions: configOptions.current,
     });

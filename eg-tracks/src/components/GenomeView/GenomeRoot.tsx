@@ -29,6 +29,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   onNewHighlight,
   onTracksChange,
   onNewRegionSelect,
+  onSetSelected,
   currentState,
   tool,
   Toolbar,
@@ -47,38 +48,37 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
   const [show3dGene, setShow3dGene] = useState();
-  const g3dTracks = useRef(
-    tracks.filter((trackModel) => trackModel.type === "g3d")
-  );
+  //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
+  const g3dTracks = useRef<Array<any>>([]);
 
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
   }
-  function handleNodeResize(node) {
-    const model = node.getModel();
-    if (model) {
-      // const tabIds = Object.keys(model._idMap);
-      // tabIds.forEach((tabId) => {
-      //     const node = model._idMap[tabId];
-      //     if (node.type === "tab") {
-      //     }
-      // });
-      // const app = model.getNodeById("app");
-      // console.log(app.getId(), app.getParent().getWeight());
-      // model.doAction(
-      //     FlexLayout.Actions.updateNodeAttributes(app.getParent().getId(), { weight: app.getParent().getWeight() })
-      // );
-      const parent = node.getParent();
-      // console.log(node.getId(), parent.getWeight());
-      model.doAction(
-        FlexLayout.Actions.updateNodeAttributes(parent.getId(), {
-          weight: parent.getWeight(),
-        })
-      );
-      // console.log(model);
-      setModel(model);
-    }
-  }
+  // function handleNodeResize(node) {
+  //   const model = node.getModel();
+  //   if (model) {
+  //     // const tabIds = Object.keys(model._idMap);
+  //     // tabIds.forEach((tabId) => {
+  //     //     const node = model._idMap[tabId];
+  //     //     if (node.type === "tab") {
+  //     //     }
+  //     // });
+  //     // const app = model.getNodeById("app");
+  //     // console.log(app.getId(), app.getParent().getWeight());
+  //     // model.doAction(
+  //     //     FlexLayout.Actions.updateNodeAttributes(app.getParent().getId(), { weight: app.getParent().getWeight() })
+  //     // );
+  //     const parent = node.getParent();
+  //     // console.log(node.getId(), parent.getWeight());
+  //     model.doAction(
+  //       FlexLayout.Actions.updateNodeAttributes(parent.getId(), {
+  //         weight: parent.getWeight(),
+  //       })
+  //     );
+  //     // console.log(model);
+  //     setModel(model);
+  //   }
+  // }
   function renderG3dTrackComponents(node) {
     // const model = node.getModel();
 
@@ -96,7 +96,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         })
       );
     });
-    node.setEventListener("resize", () => handleNodeResize(node));
+    // node.setEventListener("resize", () => handleNodeResize(node));
 
     return (
       <ThreedmolContainer
@@ -110,6 +110,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         y={y}
         genomeConfig={currentGenomeConfig}
         geneFor3d={show3dGene}
+        onSetSelected={onSetSelected}
+        onNewViewRegion={onNewRegionSelect}
+        selectedSet={selectedRegionSet ? selectedRegionSet : null}
       />
     );
   }
@@ -118,7 +121,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     var component = node.getComponent();
     // node.setEventListener("resize", () => handleNodeResize(node));
     if (component === "Browser") {
-      node.setEventListener("resize", () => handleNodeResize(node));
+      // node.setEventListener("resize", () => handleNodeResize(node));
 
       return (
         <TrackManager
@@ -143,6 +146,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           Toolbar={Toolbar}
           viewRegion={viewRegion}
           showGenomeNav={showGenomeNav}
+          isThereG3dTrack={g3dTracks.current.length > 0 ? true : false}
           setScreenshotData={setScreenshotData}
           isScreenShotOpen={isScreenShotOpen}
           selectedRegionSet={selectedRegionSet}
@@ -215,7 +219,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       );
     }
     const curG3dTracks = findAllG3dTabs(layout.current);
-    const newG3dTracks = tracks.filter((track) => track.type === "g3d");
+    const newG3dTracks: Array<any> = tracks.filter(
+      (track) => track.type === "g3d"
+    );
 
     if (tracks.length > 0) {
       if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {

@@ -349,6 +349,7 @@ class ThreedmolContainer extends React.Component<
 
   async componentDidMount() {
     const { width, height, viewRegion, g3dtrack } = this.props;
+
     this.setState({ mainBoxHeight: height, mainBoxWidth: width });
     const features = viewRegion.getNavigationContext().getFeatures();
     features.forEach(
@@ -439,6 +440,7 @@ class ThreedmolContainer extends React.Component<
       spinSpeed,
       spinReverse,
     } = this.state;
+
     const { width, height } = this.props;
     const halftWidth = width! * 0.5;
     if (
@@ -573,6 +575,7 @@ class ThreedmolContainer extends React.Component<
         this.removeImageLabel();
       }
     }
+
     if (prevProps.viewRegion !== this.props.viewRegion) {
       const chroms = this.viewRegionToChroms();
       const prevChroms = prevProps.viewRegion
@@ -1070,9 +1073,8 @@ class ThreedmolContainer extends React.Component<
     const regions = viewRegion.getFeatureSegments();
     const navContext = genomeConfig.navContext;
 
-    // console.log(regions);
     return regions.map((region) => {
-      if (navContext.hasFeatureWithName(region.feature)) {
+      if (!this.props.selectedSet) {
         return {
           chrom: region.getName(),
           start: region.relativeStart,
@@ -1453,6 +1455,7 @@ class ThreedmolContainer extends React.Component<
       curModelDisplayConfig = modelDisplayConfig;
     }
     const regions = this.viewRegionToRegions();
+    console.log(regions, "highlight");
     // console.log(regions);
     // const colorByRegion = function (atom, region) {
     //     if (
@@ -2394,6 +2397,7 @@ class ThreedmolContainer extends React.Component<
       return;
     }
     const regions = this.viewRegionToRegions();
+
     const chroms = this.viewRegionToChroms();
     this.viewer.setStyle(
       {},
@@ -3885,10 +3889,6 @@ class ThreedmolContainer extends React.Component<
         <div
           style={{
             position: "relative",
-            WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-            WebkitPerspective: `${1200 * 3 + 120}px`,
-            backfaceVisibility: "hidden",
-            perspective: `${1200 * 3 + 120}px`,
           }}
         >
           <div className="placement-container">
@@ -3970,10 +3970,6 @@ class ThreedmolContainer extends React.Component<
               style={{
                 width: mainBoxWidth,
                 height: height,
-                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-                WebkitPerspective: `${1200 * 3 + 120}px`,
-                backfaceVisibility: "hidden",
-                perspective: `${1200 * 3 + 120}px`,
               }}
               ref={this.myRef}
             ></div>
@@ -3983,10 +3979,6 @@ class ThreedmolContainer extends React.Component<
                 width: thumbBoxWidth,
                 height: thumbBoxHeight,
                 display: thumbStyle === "hide" ? "none" : "block",
-                WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-                WebkitPerspective: `${1200 * 3 + 120}px`,
-                backfaceVisibility: "hidden",
-                perspective: `${1200 * 3 + 120}px`,
               }}
               ref={this.myRef2}
             ></div>

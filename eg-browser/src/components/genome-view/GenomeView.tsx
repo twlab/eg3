@@ -10,9 +10,12 @@ import {
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
 import {
+  DisplayedRegionModel,
   GenomeCoordinate,
+  GenomeSerializer,
   IHighlightInterval,
   ITrackModel,
+  RegionSet,
 } from "wuepgg3-track";
 import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
@@ -92,7 +95,29 @@ export default function GenomeView() {
       })
     );
   };
-
+  function handleSetSelected(set: RegionSet | null) {
+    let start;
+    let end;
+    if (set) {
+      const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
+      start = newVisData._startBase;
+      end = newVisData._endBase;
+    } else {
+      const serilizeGenomeConfig = genomeConfig
+        ? GenomeSerializer.deserialize(genomeConfig)
+        : null;
+      start = serilizeGenomeConfig?.defaultRegion.start;
+      end = serilizeGenomeConfig?.defaultRegion.end;
+    }
+    if (currentSession?.selectedRegionSet || set) {
+      dispatch(
+        updateCurrentSession({
+          selectedRegionSet: set,
+          userViewRegion: { start, end },
+        })
+      );
+    }
+  }
   // need to check if genomes are the same, for example if we update session bundle it can have a different genome name from genomeConfig because
   // currentSession updates first, but genomeConfig still has the previous genome
   return currentSession &&
@@ -113,6 +138,7 @@ export default function GenomeView() {
         onNewHighlight={handleNewHighlight}
         onTracksChange={handleTracksChange}
         onNewRegionSelect={handleNewRegionSelect}
+        onSetSelected={handleSetSelected}
         viewRegion={currentSession?.viewRegion}
         userViewRegion={currentSession.userViewRegion}
         tool={tool}

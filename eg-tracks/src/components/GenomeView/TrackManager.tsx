@@ -147,6 +147,7 @@ interface TrackManagerProps {
   setShow3dGene: any;
   infiniteScrollWorker: React.MutableRefObject<Worker | null>;
   fetchGenomeAlignWorker: React.MutableRefObject<Worker | null>;
+  isThereG3dTrack: boolean;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -155,6 +156,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   userViewRegion,
   highlights,
   tracks,
+
   onNewRegion,
   onNewHighlight,
   onTracksChange,
@@ -162,6 +164,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   tool,
   Toolbar,
   showGenomeNav,
+  isThereG3dTrack,
   setScreenshotData,
   selectedRegionSet,
   isScreenShotOpen,
@@ -226,7 +229,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const lastDragX = useRef(0);
-  const isThereG3dTrack = useRef(false);
 
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
@@ -1266,7 +1268,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
   }
 
-  // MARK: onmessGenAl
+  // MARK: fetchNonWorker
   async function processGenomeAlignFetchData(rawData) {
     const regionDrawIdx = rawData.navData.trackDataIdx;
 
@@ -1773,7 +1775,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ].queryRegion
         : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
-
+      console.log("STARTHICFETCH");
       if (fetchRes.trackType === "hic") {
         result = await fetchInstances.current[
           `${fetchRes.trackModel.id}`
@@ -1782,6 +1784,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           basePerPixel.current,
           configOptions
         );
+        console.log("ENDHICFETCH");
       } else if (fetchRes.trackType === "dynamichic") {
         const curStraw = fetchRes.trackModel.tracks.map(
           (_hicTrack: any, index: any) => {
@@ -2041,7 +2044,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setConfigMenu(null);
     setApplyTrackConfigChange({});
   };
-  console.log(trackManagerState.current.tracks, "track length");
+
   function initializeTracks() {
     // set initial track manager control values and create fetch instance for track that can't use worker like hic.
 
@@ -2067,6 +2070,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
       if (trackManagerState.current.tracks[i].type === "hic") {
+        console.log("startCREATEHIC");
         if (
           !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
         ) {
@@ -2085,6 +2089,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             );
           }
         );
+        console.log("engCREATEHIC");
       } else if (
         trackManagerState.current.tracks[i].type in
         { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
@@ -2130,7 +2135,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
     addTermToMetaSets(trackManagerState.current.tracks);
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
-    console.log(trackManagerState.current.tracks);
+
     queueRegionToFetch(0);
   }
   // MARK: sigTrackLoad
@@ -3267,7 +3272,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         dataIdx={dataIdx}
                         trackManagerRef={block}
                         setShow3dGene={setShow3dGene}
-                        isThereG3dTrack={isThereG3dTrack.current}
+                        isThereG3dTrack={isThereG3dTrack}
                         updateGlobalTrackConfig={updateGlobalTrackConfig}
                         applyTrackConfigChange={applyTrackConfigChange}
                         dragX={dragX.current}
