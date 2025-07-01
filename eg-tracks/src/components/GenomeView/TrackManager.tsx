@@ -63,6 +63,7 @@ export const convertTrackModelToITrackModel = (
   id: track.id,
   isSelected: track.isSelected,
 });
+const HIC_TYPES = { hic: "", dynamichic: "", bam: "" };
 
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
@@ -145,9 +146,13 @@ interface TrackManagerProps {
   isScreenShotOpen: boolean;
   selectedRegionSet: any;
   setShow3dGene: any;
-  infiniteScrollWorker: React.MutableRefObject<Worker | null>;
+  infiniteScrollWorkers: React.MutableRefObject<{
+    worker: Worker[];
+    instance: Worker[];
+  }>;
   fetchGenomeAlignWorker: React.MutableRefObject<Worker | null>;
   isThereG3dTrack: boolean;
+  infiniteScrollWorkerInt: React.MutableRefObject<Worker | null>;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -169,8 +174,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   selectedRegionSet,
   isScreenShotOpen,
   setShow3dGene,
-  infiniteScrollWorker,
+  infiniteScrollWorkers,
   fetchGenomeAlignWorker,
+  infiniteScrollWorkerInt,
 }) {
   //useRef to store data between states without re render the component
 
@@ -418,6 +424,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     return lociMap;
   }
+
+  function getInstanceData(message) {
+    const instanceTracks = message.trackModelArr.filter(
+      (track) => track.type in { hic: "", dynamichic: "", bam: "" }
+    );
+  }
+
   const enqueueMessage = (message: Array<any>) => {
     messageQueue.current.push(message);
 
@@ -428,7 +441,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     processGenomeAlignQueue();
   };
-
   const processQueue = () => {
     if (isWorkerBusy.current || messageQueue.current.length === 0) {
       setMessageData({});
@@ -439,7 +451,86 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setMessageData(getMessageData());
     const message = messageQueue.current.pop();
 
-    infiniteScrollWorker.current!.postMessage(message);
+    // Split message by trackModelArr type
+    const hicTypes = { hic: "", dynamichic: "", bam: "" };
+
+    // message is an array of objects
+    const intMessages = [];
+    const normalMessages = [];
+
+    message.forEach((msgObj) => {
+      if (
+        Array.isArray(msgObj.trackModelArr) &&
+        msgObj.trackModelArr.length > 0
+      ) {
+        // Split trackModelArr by type
+        const intTrackModels = msgObj.trackModelArr.filter(
+          (track) => track.type in hicTypes
+        );
+        const normalTrackModels = msgObj.trackModelArr.filter(
+          (track) => !(track.type in hicTypes)
+        );
+
+        if (intTrackModels.length > 0) {
+          intMessages.push({
+            ...msgObj,
+            trackModelArr: intTrackModels,
+          });
+        }
+        if (normalTrackModels.length > 0) {
+          normalMessages.push({
+            ...msgObj,
+            trackModelArr: normalTrackModels,
+          });
+        }
+      }
+    });
+
+    // Helper to split an array into N chunks
+    function splitArrayIntoChunks(arr, numChunks) {
+      const chunks = Array.from({ length: numChunks }, () => []);
+      arr.forEach((item, idx) => {
+        chunks[idx % numChunks].push(item);
+      });
+      return chunks;
+    }
+
+    // Send intMessages to instance workers
+    if (
+      intMessages.length > 0 &&
+      infiniteScrollWorkers.current.instance.length > 0
+    ) {
+      intMessages.forEach((msgObj) => {
+        const numWorkers = infiniteScrollWorkers.current.instance.length;
+        const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
+        chunks.forEach((chunk, i) => {
+          if (chunk.length > 0) {
+            infiniteScrollWorkers.current.instance[i].postMessage([
+              { ...msgObj, trackModelArr: chunk },
+            ]);
+          }
+        });
+      });
+    }
+
+    // Send normalMessages to worker workers
+    if (
+      normalMessages.length > 0 &&
+      infiniteScrollWorkers.current.worker.length > 0
+    ) {
+      normalMessages.forEach((msgObj) => {
+        const numWorkers = infiniteScrollWorkers.current.worker.length;
+        const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
+        console.log(chunks);
+        chunks.forEach((chunk, i) => {
+          if (chunk.length > 0) {
+            infiniteScrollWorkers.current.worker[i].postMessage([
+              { ...msgObj, trackModelArr: chunk },
+            ]);
+          }
+        });
+      });
+    }
   };
   const processGenomeAlignQueue = () => {
     if (
@@ -1360,135 +1451,124 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   // MARK: onmessInfin
-  function createInfiniteOnMessage() {
-    infiniteScrollWorker.current!.onmessage = (event) => {
-      // Process each object in the array individually
-      Promise.all(
-        event.data.map(async (dataItem) => {
-          const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
-            ? dataItem.trackToDrawId
-            : {};
-          const regionDrawIdx = dataItem.trackDataIdx;
 
-          const curTrackState = {
-            ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
-            primaryGenName: genomeConfig.genome.getName(),
-          };
+  const createInfiniteOnMessage = (event: MessageEvent) => {
+    Promise.all(
+      event.data.map(async (dataItem: any) => {
+        const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
+          ? dataItem.trackToDrawId
+          : {};
+        const regionDrawIdx = dataItem.trackDataIdx;
 
-          await Promise.all(
-            dataItem.fetchResults.map(
-              async (
-                item: {
-                  id: any;
-                  name: string;
-                  result: any;
-                  metadata: any;
-                  trackModel: any;
-                  curFetchNav: any;
-                },
-                _index: any
-              ) => {
-                trackToDrawId[`${item.id}`] = "";
-                // Need to await the function finishes for BAM and Hi-C that use fetch instances
-                await createCache({
-                  trackState: curTrackState,
-                  result: item.result,
-                  id: item.id,
-                  trackType: item.trackModel.type
-                    ? item.trackModel.type
-                    : item.name
-                    ? item.name
-                    : "",
-                  metadata: item.metadata,
-                  trackModel: item.trackModel,
-                  curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-                  missingIdx: dataItem.missingIdx,
-                });
-              }
-            )
-          );
+        const curTrackState = {
+          ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
+          primaryGenName: genomeConfig.genome.getName(),
+        };
 
-          const browserMemorySize: { [key: string]: any } = window.performance;
+        await Promise.all(
+          dataItem.fetchResults.map(
+            async (
+              item: {
+                id: any;
+                name: string;
+                result: any;
+                metadata: any;
+                trackModel: any;
+                curFetchNav: any;
+              },
+              _index: any
+            ) => {
+              trackToDrawId[`${item.id}`] = "";
+              await createCache({
+                trackState: curTrackState,
+                result: item.result,
+                id: item.id,
+                trackType: item.trackModel.type
+                  ? item.trackModel.type
+                  : item.name
+                  ? item.name
+                  : "",
+                metadata: item.metadata,
+                trackModel: item.trackModel,
+                curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+                missingIdx: dataItem.missingIdx,
+              });
+            }
+          )
+        );
 
-          // Check memory usage and free up if necessary
-          if (
-            browserMemorySize["memory"] &&
-            browserMemorySize["memory"].usedJSHeapSize >
-              browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-          ) {
-            for (const key in trackFetchedDataCache.current) {
-              const curTrack = trackFetchedDataCache.current[key];
+        const browserMemorySize: { [key: string]: any } = window.performance;
 
-              for (const cacheDataIdx in curTrack) {
-                if (
-                  curTrack.trackType in trackUsingExpandedLoci &&
-                  isInteger(cacheDataIdx)
-                ) {
-                  if (Number(cacheDataIdx) !== regionDrawIdx) {
+        // Check memory usage and free up if necessary
+        if (
+          browserMemorySize["memory"] &&
+          browserMemorySize["memory"].usedJSHeapSize >
+            browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+        ) {
+          for (const key in trackFetchedDataCache.current) {
+            const curTrack = trackFetchedDataCache.current[key];
+
+            for (const cacheDataIdx in curTrack) {
+              if (
+                curTrack.trackType in trackUsingExpandedLoci &&
+                isInteger(cacheDataIdx)
+              ) {
+                if (Number(cacheDataIdx) !== regionDrawIdx) {
+                  delete trackFetchedDataCache.current[key][cacheDataIdx]
+                    .dataCache;
+                  if (
+                    "records" in
+                    trackFetchedDataCache.current[key][cacheDataIdx]
+                  ) {
                     delete trackFetchedDataCache.current[key][cacheDataIdx]
-                      .dataCache;
-                    if (
-                      "records" in
-                      trackFetchedDataCache.current[key][cacheDataIdx]
-                    ) {
-                      delete trackFetchedDataCache.current[key][cacheDataIdx]
-                        .records;
-                    }
-                    if (
-                      "xvalues" in
-                      trackFetchedDataCache.current[key][cacheDataIdx]
-                    ) {
-                      delete trackFetchedDataCache.current[key][cacheDataIdx]
-                        .xvalues;
-                    }
+                      .records;
+                  }
+                  if (
+                    "xvalues" in
+                    trackFetchedDataCache.current[key][cacheDataIdx]
+                  ) {
+                    delete trackFetchedDataCache.current[key][cacheDataIdx]
+                      .xvalues;
                   }
                 }
               }
             }
           }
+        }
 
-          // Return necessary data for setNewDrawData
-          return {
-            trackDataIdx: dataItem.trackDataIdx,
-            initial: dataItem.initial,
-            trackToDrawId: trackToDrawId,
-            missingIdx: dataItem.missingIdx,
+        return {
+          trackDataIdx: dataItem.trackDataIdx,
+          initial: dataItem.initial,
+          trackToDrawId: trackToDrawId,
+          missingIdx: dataItem.missingIdx,
+        };
+      })
+    )
+      .then((drawData) => {
+        let curDrawData;
+        let combineTrackToDrawId = {};
+        for (let item of drawData) {
+          curDrawData = item;
+          combineTrackToDrawId = {
+            ...combineTrackToDrawId,
+            ...item.trackToDrawId,
           };
-        })
-      )
-        .then((drawData) => {
-          // const curDrawData = drawData.find(
-          //   (item) => item.trackToDrawId === item.missingIdx
-          // );
+        }
 
-          let curDrawData;
-          let combineTrackToDrawId = {};
-          for (let item of drawData) {
-            curDrawData = item;
+        if (curDrawData) {
+          curDrawData["trackToDrawId"] = combineTrackToDrawId;
+          curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
+          setNewDrawData(curDrawData);
+        }
 
-            combineTrackToDrawId = {
-              ...combineTrackToDrawId,
-              ...item.trackToDrawId,
-            };
-          }
+        isWorkerBusy.current = false;
+        processQueue();
+      })
+      .catch((error) => {
+        console.error("An error occurred trying to fetch data:", error);
+      });
+  };
 
-          if (curDrawData) {
-            curDrawData["trackToDrawId"] = combineTrackToDrawId;
-            curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
-
-            setNewDrawData(curDrawData);
-          }
-
-          isWorkerBusy.current = false;
-
-          // Once we finish with a fetch, check if there are more requests in the queue
-          processQueue();
-        })
-        .catch((error) => {
-          console.error("An error occurred trying to fetch data:", error);
-        });
-    };
-  }
   //MARK: onmessGenAl;
   function createGenomeAlignOnMessage() {
     fetchGenomeAlignWorker.current!.onmessage = (event) => {
@@ -1775,7 +1855,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ].queryRegion
         : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
-      console.log("STARTHICFETCH");
+
       if (fetchRes.trackType === "hic") {
         result = await fetchInstances.current[
           `${fetchRes.trackModel.id}`
@@ -1784,7 +1864,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           basePerPixel.current,
           configOptions
         );
-        console.log("ENDHICFETCH");
       } else if (fetchRes.trackType === "dynamichic") {
         const curStraw = fetchRes.trackModel.tracks.map(
           (_hicTrack: any, index: any) => {
@@ -2070,7 +2149,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
       if (trackManagerState.current.tracks[i].type === "hic") {
-        console.log("startCREATEHIC");
         if (
           !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
         ) {
@@ -2089,7 +2167,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             );
           }
         );
-        console.log("engCREATEHIC");
       } else if (
         trackManagerState.current.tracks[i].type in
         { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
@@ -2390,9 +2467,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       parentElement.addEventListener("mouseleave", handleMouseLeave);
     }
     return () => {
-      if (infiniteScrollWorker.current) {
-        infiniteScrollWorker.current!.terminate();
-      }
+      // if (infiniteScrollWorker.current) {
+      //   infiniteScrollWorker.current!.terminate();
+      // }
       if (fetchGenomeAlignWorker.current) {
         fetchGenomeAlignWorker.current!.terminate();
       }
@@ -2474,7 +2551,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       //     type: "module",
       //   }
       // );
-      createInfiniteOnMessage();
+      if (infiniteScrollWorkers.current) {
+        infiniteScrollWorkers.current.worker?.forEach((w) => {
+          w.onmessage = createInfiniteOnMessage;
+        });
+        infiniteScrollWorkers.current.instance?.forEach((w) => {
+          w.onmessage = createInfiniteOnMessage;
+        });
+      }
       if (hasGenomeAlign.current) {
         // fetchGenomeAlignWorker.current = new Worker(
         //   new URL(
@@ -3051,7 +3135,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 break;
               }
             }
-            if (hasAllRegionData) {
+            if (
+              hasAllRegionData &&
+              (!draw.trackToDrawId || !(trackToDrawKey in draw.trackToDrawId))
+            ) {
               cacheKeysWithData[trackToDrawKey] = "";
             }
           }
@@ -3062,7 +3149,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       Object.keys(draw).length === 0
         ? cacheKeysWithData
         : {
-            ...draw.trackToDrawId,
             ...cacheKeysWithData,
           };
     newDrawData.trackToDrawId = combinedTrackToDrawId;
@@ -3108,7 +3194,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
-
+      console.log(newDrawData);
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
     }
   }, [newDrawData]);

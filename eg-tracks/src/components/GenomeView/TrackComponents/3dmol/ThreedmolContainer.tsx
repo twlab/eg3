@@ -1455,7 +1455,7 @@ class ThreedmolContainer extends React.Component<
       curModelDisplayConfig = modelDisplayConfig;
     }
     const regions = this.viewRegionToRegions();
-    console.log(regions, "highlight");
+
     // console.log(regions);
     // const colorByRegion = function (atom, region) {
     //     if (

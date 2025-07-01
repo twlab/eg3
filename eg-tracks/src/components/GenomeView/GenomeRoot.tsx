@@ -12,7 +12,8 @@ import { arraysHaveSameTrackModels } from "../../util";
 import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-
+const MAX_WORKERS = 4;
+const HIC_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -41,6 +42,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 }) {
   const [resizeRef, size] = useResizeObserver();
   const infiniteScrollWorker = useRef<Worker | null>(null);
+  const infiniteScrollWorkers = useRef<{
+    instance: Worker[];
+    worker: Worker[];
+  }>({
+    instance: [],
+    worker: [],
+  });
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
@@ -151,7 +159,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           isScreenShotOpen={isScreenShotOpen}
           selectedRegionSet={selectedRegionSet}
           setShow3dGene={setShow3dGene}
-          infiniteScrollWorker={infiniteScrollWorker}
+          infiniteScrollWorkers={infiniteScrollWorkers}
           fetchGenomeAlignWorker={fetchGenomeAlignWorker}
         />
       );
@@ -200,11 +208,33 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     return result;
   }
   useEffect(() => {
-    if (!infiniteScrollWorker.current) {
-      infiniteScrollWorker.current = new Worker(
-        new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
-        { type: "module" }
-      );
+    // Count tracks by type
+    const normalTracks = tracks.filter((t) => !(t.type in HIC_TYPES));
+    const hicTracks = tracks.filter((t) => t.type in HIC_TYPES);
+
+    // Create up to MAX_WORKERS for each type, but do not exceed 4 in the ref
+    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    const hicCount = Math.min(hicTracks.length, MAX_WORKERS);
+
+    for (let i = 0; i < normalCount; i++) {
+      if (infiniteScrollWorkers.current.worker.length < MAX_WORKERS) {
+        infiniteScrollWorkers.current.worker.push(
+          new Worker(
+            new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+            { type: "module" }
+          )
+        );
+      }
+    }
+    for (let i = 0; i < hicCount; i++) {
+      if (infiniteScrollWorkers.current.instance.length < MAX_WORKERS) {
+        infiniteScrollWorkers.current.instance.push(
+          new Worker(
+            new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+            { type: "module" }
+          )
+        );
+      }
     }
     if (
       tracks.some((t) => t.type === "genomealign") &&
