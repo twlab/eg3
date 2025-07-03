@@ -320,7 +320,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const throttleOnNewRegionSelect = useRef(
     throttleViewRegion((startbase, endbase, highlightSearch) => {
       onNewRegionSelect(startbase, endbase, highlightSearch);
-    }, 400)
+    }, 150)
   );
 
   // const enqueueMessage = (message: Array<any>) => {
@@ -1775,7 +1775,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ].queryRegion
         : primaryVisData.visRegion;
       trackState["visRegion"] = visRegion;
-      console.log("STARTHICFETCH");
+
       if (fetchRes.trackType === "hic") {
         result = await fetchInstances.current[
           `${fetchRes.trackModel.id}`
@@ -1784,7 +1784,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           basePerPixel.current,
           configOptions
         );
-        console.log("ENDHICFETCH");
       } else if (fetchRes.trackType === "dynamichic") {
         const curStraw = fetchRes.trackModel.tracks.map(
           (_hicTrack: any, index: any) => {
@@ -2070,7 +2069,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
       if (trackManagerState.current.tracks[i].type === "hic") {
-        console.log("startCREATEHIC");
         if (
           !fetchInstances.current[`${trackManagerState.current.tracks[i].id}`]
         ) {
@@ -2089,7 +2087,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             );
           }
         );
-        console.log("engCREATEHIC");
       } else if (
         trackManagerState.current.tracks[i].type in
         { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
