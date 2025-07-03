@@ -3111,6 +3111,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
   }, [viewWindowConfigData.current]);
+  // create a useRef object, that keep track of the current dataidx most current view
+  // if data Idx from new fetch is diff then, go back to empty object.
+  // each track that gets finish get put into the useref
+  // setDrawData of the current tracks id that has data ready so {'id': true, 'id2:false}:,
+  // check in trackfactory if the track is already drawn  bhy checking the object if its null, nulll means when
+  // another track updates and the current track is already drawn we ignore it .
   useEffect(() => {
     const cacheKeysWithData: { [key: string]: any } = {};
     const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
