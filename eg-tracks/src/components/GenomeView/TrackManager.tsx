@@ -179,7 +179,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   infiniteScrollWorkerInt,
 }) {
   //useRef to store data between states without re render the component
-  const completedFetchedRegion = useRef<{ [key: string]: any }>({ key: -0 });
+  const completedFetchedRegion = useRef<{ [key: string]: any }>({
+    key: -0,
+    done: {},
+  });
   const useFineModeNav = useRef(false);
   const prevWindowWidth = useRef<number>(0);
   const trackManagerId = useRef("");
@@ -1562,7 +1565,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
 
         isWorkerBusy.current = false;
-        processQueue();
       })
       .catch((error) => {
         console.error("An error occurred trying to fetch data:", error);
@@ -3116,6 +3118,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
 
     if (newDrawData) {
+      if (completedFetchedRegion.current.done === 0) {
+        completedFetchedRegion.current.key = newDrawData.curDataIdx;
+      }
       for (let trackToDrawKey in newDrawData.trackToDrawId) {
         const cache = trackFetchedDataCache.current[trackToDrawKey];
         if (
@@ -3130,15 +3135,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           } else {
             let hasAllRegionData = true;
             for (let idx of idxArr) {
-              if (!cache[idx]) {
+              if (!cache[idx] || cache[idx] === null) {
                 hasAllRegionData = false;
                 break;
               }
             }
-            if (
-              hasAllRegionData &&
-              (!draw.trackToDrawId || !(trackToDrawKey in draw.trackToDrawId))
-            ) {
+            if (hasAllRegionData) {
               cacheKeysWithData[trackToDrawKey] = "";
             }
           }
@@ -3195,11 +3197,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
       if (newDrawData["curDataIdx"] === completedFetchedRegion.current.key) {
-        completedFetchedRegion.current = { ...completedFetchedRegion.current };
+        completedFetchedRegion.current.done = {
+          ...completedFetchedRegion.current.done,
+          ...newDrawData.trackToDrawId,
+        };
       }
-      completedFetchedRegion.current;
+      if (
+        Object.keys(completedFetchedRegion.current.done).length ===
+        trackComponents.length
+      ) {
+        completedFetchedRegion.current.done = {};
+        processQueue();
+      }
+
+      // if (newDrawData.curDataIdx === dataIdx) {
       console.log({ ...newDrawData }, dataIdx, "index");
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
+      // }
     }
   }, [newDrawData]);
   return (
