@@ -214,7 +214,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
-    console.log(newDrawData);
     // if (
     //   (newDrawData.trackToDrawId && id in newDrawData.trackToDrawId) ||
     //   (viewComponent && dataIdx !== viewComponent.dataIdx) ||

@@ -179,7 +179,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   infiniteScrollWorkerInt,
 }) {
   //useRef to store data between states without re render the component
-
+  const completedFetchedRegion = useRef<{ [key: string]: any }>({ key: -0 });
   const useFineModeNav = useRef(false);
   const prevWindowWidth = useRef<number>(0);
   const trackManagerId = useRef("");
@@ -521,7 +521,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       normalMessages.forEach((msgObj) => {
         const numWorkers = infiniteScrollWorkers.current.worker.length;
         const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
-        console.log(chunks);
+
         chunks.forEach((chunk, i) => {
           if (chunk.length > 0) {
             infiniteScrollWorkers.current.worker[i].postMessage([
@@ -1910,12 +1910,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (isInteger(fetchRes.missingIdx)) {
-      // this means that we just fetched data from a region that we already visited
-      // - we already have trackState, this includes, regionloci + expandloci
-      // - new fetch data will have its visRegion deleled or replaced here
-      // - we just need to set a visRegion, visRegion is used to draw components we have to set it for the newly fetched data
-      // - we also set the datacache with its trackModel Id and missingIdx datacoord to store.
-      // - we don't use cacheFetchedData because we don't want to update the rightIdx / leftIdx cause both have latest info already.
       const formattedData =
         fetchRes.trackType in twoDataTypeTracks
           ? result
@@ -3200,7 +3194,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
-      console.log(newDrawData);
+      if (newDrawData["curDataIdx"] === completedFetchedRegion.current.key) {
+        completedFetchedRegion.current = { ...completedFetchedRegion.current };
+      }
+      completedFetchedRegion.current;
+      console.log({ ...newDrawData }, dataIdx, "index");
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
     }
   }, [newDrawData]);

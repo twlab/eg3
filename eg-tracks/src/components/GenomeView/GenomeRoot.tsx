@@ -213,7 +213,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     const hicTracks = tracks.filter((t) => t.type in HIC_TYPES);
 
     // Create up to MAX_WORKERS for each type, but do not exceed 4 in the ref
-    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    // const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    const normalCount = 4;
     const hicCount = Math.min(hicTracks.length, MAX_WORKERS);
 
     for (let i = 0; i < normalCount; i++) {
