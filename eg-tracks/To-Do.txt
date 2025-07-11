@@ -21,3 +21,12 @@ finished
 5. working tab ui react layers 
 6. fixed conditionally display in genomeroot
 7. fixed loading placeholder
+
+
+To Do, 7/10/2025
+1. update readme of package
+2. update readme of main branch eg3
+3. update readme of embed eg3 
+4. work on multi worker system. give new process id each time a message is poped to be fetched and 
+    make sure the draw state is updated for all fetched data
+5. 

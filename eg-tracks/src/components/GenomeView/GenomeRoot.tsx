@@ -18,7 +18,6 @@ export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
 // import GenomeViewerTest from "../testComp";
-
 // import GenomeViewerTest from "./testComp";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
@@ -41,7 +40,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   selectedRegionSet,
 }) {
   const [resizeRef, size] = useResizeObserver();
-  const infiniteScrollWorker = useRef<Worker | null>(null);
+
   const infiniteScrollWorkers = useRef<{
     instance: Worker[];
     worker: Worker[];
@@ -130,7 +129,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     // node.setEventListener("resize", () => handleNodeResize(node));
     if (component === "Browser") {
       // node.setEventListener("resize", () => handleNodeResize(node));
-
       return (
         <TrackManager
           key={trackManagerId.current}
@@ -186,6 +184,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }, 100)
   );
+
   function findAllG3dTabs(layout: any) {
     const result: any[] = [];
 
