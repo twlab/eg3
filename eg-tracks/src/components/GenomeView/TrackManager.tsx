@@ -1544,15 +1544,50 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
 
       if (curDrawData) {
-        if (dataIdx.current === curDrawData.trackDataIdx) {
-          for (let id in combineTrackToDrawId) {
-            combineTrackToDrawId[`${id}`] = false;
+        const idxArr = [
+          dataIdx.current - 1,
+          dataIdx.current,
+          dataIdx.current + 1,
+        ];
+        const cacheKeysWithData = {};
+        for (let trackToDrawKey in combineTrackToDrawId) {
+          const cache = trackFetchedDataCache.current[trackToDrawKey];
+
+          if (cache) {
+            if (useFineModeNav.current || cache.useExpandedLoci) {
+              if (cache[dataIdx.current]) {
+                cacheKeysWithData[trackToDrawKey] = "";
+              }
+            } else {
+              let hasAllRegionData = true;
+              for (let idx of idxArr) {
+                if (!cache[idx] || cache[idx].dataCache === null) {
+                  hasAllRegionData = false;
+                  break;
+                }
+              }
+              if (hasAllRegionData) {
+                cacheKeysWithData[trackToDrawKey] = "";
+              }
+            }
           }
-          completedFetchedRegion.current.done = {
-            ...completedFetchedRegion.current.done,
-            ...combineTrackToDrawId,
-          };
         }
+        for (let id in cacheKeysWithData) {
+          cacheKeysWithData[`${id}`] = false;
+        }
+        if (completedFetchedRegion.current.key !== dataIdx.current) {
+          completedFetchedRegion.current.key = dataIdx.current;
+          completedFetchedRegion.current.done = {};
+        }
+        completedFetchedRegion.current.done = {
+          ...completedFetchedRegion.current.done,
+          ...cacheKeysWithData,
+        };
+        console.log(
+          dataIdx.current,
+          { ...completedFetchedRegion.current.done },
+          "chunks"
+        );
         curDrawData["trackToDrawId"] = combineTrackToDrawId;
         curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
         setNewDrawData({ ...curDrawData });
@@ -3102,9 +3137,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const idxArr = [dataIdx.current - 1, dataIdx.current, dataIdx.current + 1];
 
     if (newDrawData) {
+      console.log(
+        "_________________________________________________",
+        { ...completedFetchedRegion.current },
+        dataIdx.current
+      );
       if (completedFetchedRegion.current.key !== dataIdx.current) {
         completedFetchedRegion.current.key = dataIdx.current;
         completedFetchedRegion.current.done = {};
+        console.log(
+          "_________________________________________________",
+          newDrawData,
+          dataIdx.current
+        );
       }
 
       for (let trackToDrawKey in newDrawData.trackToDrawId) {
@@ -3195,7 +3240,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       for (let id in completedFetchedRegion.current.done) {
         if (!completedFetchedRegion.current.done[id]) {
-          console.log({ ...completedFetchedRegion.current.done }, "check");
           newDrawData.trackToDrawId[id] = true;
         }
       }
@@ -3203,10 +3247,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ...completedFetchedRegion.current.done,
         ...newDrawData.trackToDrawId,
       };
-      console.log(
-        { ...newDrawData.trackToDrawId },
-        { ...completedFetchedRegion.current.done }
-      );
+
       newDrawData.trackToDrawId = newDrawData.trackToDrawId;
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
 
