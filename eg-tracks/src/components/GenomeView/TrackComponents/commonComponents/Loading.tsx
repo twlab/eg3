@@ -6,7 +6,7 @@ interface PopoverProps {
   children: React.ReactNode;
   className?: string;
   height: number;
-  xOffset: number;
+  xOffset?: number;
 }
 
 const Loading: React.FC<PopoverProps> = ({
@@ -44,8 +44,8 @@ const Loading: React.FC<PopoverProps> = ({
       //need to margin left the
       style={{
         position: "absolute",
-        marginTop: height - 16, // 16 is the number of tracks - one more
-        marginLeft: xOffset,
+        marginTop: height - 16, // 16 is the height of the loading box other its below the tracklegend
+        // marginLeft: xOffset,
       }}
     >
       <button

@@ -61,34 +61,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
   }
-  // function handleNodeResize(node) {
-  //   const model = node.getModel();
-  //   if (model) {
-  //     // const tabIds = Object.keys(model._idMap);
-  //     // tabIds.forEach((tabId) => {
-  //     //     const node = model._idMap[tabId];
-  //     //     if (node.type === "tab") {
-  //     //     }
-  //     // });
-  //     // const app = model.getNodeById("app");
-  //     // console.log(app.getId(), app.getParent().getWeight());
-  //     // model.doAction(
-  //     //     FlexLayout.Actions.updateNodeAttributes(app.getParent().getId(), { weight: app.getParent().getWeight() })
-  //     // );
-  //     const parent = node.getParent();
-  //     // console.log(node.getId(), parent.getWeight());
-  //     model.doAction(
-  //       FlexLayout.Actions.updateNodeAttributes(parent.getId(), {
-  //         weight: parent.getWeight(),
-  //       })
-  //     );
-  //     // console.log(model);
-  //     setModel(model);
-  //   }
-  // }
-  function renderG3dTrackComponents(node) {
-    // const model = node.getModel();
 
+  function renderG3dTrackComponents(node) {
     const config = node.getConfig();
     const { x, y, width, height } = node.getRect();
     const g3dtrack = TrackModel.deserialize(config.trackModel);
@@ -213,7 +187,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
     // Create up to MAX_WORKERS for each type, but do not exceed 4 in the ref
     // const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-    const normalCount = 4;
+    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
     const hicCount = Math.min(hicTracks.length, MAX_WORKERS);
 
     for (let i = 0; i < normalCount; i++) {

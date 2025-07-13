@@ -2,29 +2,21 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
-import { Manager, Popper, Reference } from "react-popper";
-import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import { getDisplayModeFunction } from "./displayModeComponentMap";
 import OpenInterval from "../../../models/OpenInterval";
-import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
-import SnpDetail from "./SnpComponents/SnpDetail";
-import JasparDetail from "./commonComponents/annotation/JasparDetail";
 import { getDeDupeArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
-const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
-const ARROW_SIZE = 16;
-const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
-import VcfDetail from "./VcfComponents/VcfDetail";
-import Vcf from "./VcfComponents/Vcf";
 import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
+
+const TOP_PADDING = 2;
+
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -473,7 +465,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let cacheDataIdx = dataIdx;
 
         let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-        let combinedData: Array<any> | undefined = [];
+        let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
         let trackState = _.cloneDeep(
@@ -519,15 +511,17 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                 { hic: "", biginteraction: "", longrange: "" }
               )
             ) {
-              combinedData = combinedData
-                .map((item) => {
-                  if (item && "dataCache" in item) {
-                    return item.dataCache;
-                  } else {
-                    noData = true;
-                  }
-                })
-                .flat(1);
+              if (combinedData) {
+                combinedData = combinedData
+                  .map((item) => {
+                    if (item && "dataCache" in item) {
+                      return item.dataCache;
+                    } else {
+                      noData = true;
+                    }
+                  })
+                  .flat(1);
+              }
             } else if (combinedData && "error" in combinedData) {
               noData = true;
             }

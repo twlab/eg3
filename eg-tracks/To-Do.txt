@@ -28,5 +28,10 @@ To Do, 7/10/2025
 2. update readme of main branch eg3
 3. update readme of embed eg3 
 4. work on multi worker system. give new process id each time a message is poped to be fetched and 
-    make sure the draw state is updated for all fetched data
-5. 
+    make sure the draw state is updated for all fetched data (DONEEE)
+
+To Do whenever, 7/12/2025
+1. add hover Tooltip to ruler 
+2. add history tab 
+3. fix metadata hover 
+4. 

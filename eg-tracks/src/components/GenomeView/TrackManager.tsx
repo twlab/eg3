@@ -152,7 +152,6 @@ interface TrackManagerProps {
   }>;
   fetchGenomeAlignWorker: React.MutableRefObject<Worker | null>;
   isThereG3dTrack: boolean;
-  infiniteScrollWorkerInt: React.MutableRefObject<Worker | null>;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -176,7 +175,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   setShow3dGene,
   infiniteScrollWorkers,
   fetchGenomeAlignWorker,
-  infiniteScrollWorkerInt,
 }) {
   //useRef to store data between states without re render the component
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
@@ -277,7 +275,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const showTrackMetaSet = useState<boolean>(false);
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-  const [newDrawData, setNewDrawData] = useState<{ [key: string]: any }>({});
+  const [newDrawData, setNewDrawData] = useState<{ [key: string]: any } | null>(
+    null
+  );
   const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
 
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
@@ -454,34 +454,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const intMessages: Array<any> = [];
     const normalMessages: Array<any> = [];
 
-    // for (const msgObj of message) {
-    //   if (
-    //     Array.isArray(msgObj.trackModelArr) &&
-    //     msgObj.trackModelArr.length > 0
-    //   ) {
-    //     const intTrackModels: any[] = [];
-    //     const normalTrackModels: any[] = [];
-    //     for (const track of msgObj.trackModelArr) {
-    //       if (track.type in hicTypes) {
-    //         intTrackModels.push(track);
-    //       } else {
-    //         normalTrackModels.push(track);
-    //       }
-    //     }
-    //     if (intTrackModels.length > 0) {
-    //       intMessages.push({
-    //         ...msgObj,
-    //         trackModelArr: intTrackModels,
-    //       });
-    //     }
-    //     if (normalTrackModels.length > 0) {
-    //       normalMessages.push({
-    //         ...msgObj,
-    //         trackModelArr: normalTrackModels,
-    //       });
-    //     }
-    //   }
-    // }
+    for (const msgObj of message) {
+      if (
+        Array.isArray(msgObj.trackModelArr) &&
+        msgObj.trackModelArr.length > 0
+      ) {
+        const intTrackModels: any[] = [];
+        const normalTrackModels: any[] = [];
+        for (const track of msgObj.trackModelArr) {
+          if (track.type in hicTypes) {
+            intTrackModels.push(track);
+          } else {
+            normalTrackModels.push(track);
+          }
+        }
+        if (intTrackModels.length > 0) {
+          intMessages.push({
+            ...msgObj,
+            trackModelArr: intTrackModels,
+          });
+        }
+        if (normalTrackModels.length > 0) {
+          normalMessages.push({
+            ...msgObj,
+            trackModelArr: normalTrackModels,
+          });
+        }
+      }
+    }
 
     // Helper to split an array into N chunks
     function splitArrayIntoChunks(arr, numChunks) {
@@ -497,26 +497,33 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       intMessages.length > 0 &&
       infiniteScrollWorkers.current.instance.length > 0
     ) {
-      intMessages.forEach((msgObj) => {
-        const numWorkers = infiniteScrollWorkers.current.instance.length;
-        const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
-        chunks.forEach((chunk, i) => {
-          if (chunk.length > 0) {
-            infiniteScrollWorkers.current.instance[i].postMessage([
-              { ...msgObj, trackModelArr: chunk },
-            ]);
+      const numWorkers = infiniteScrollWorkers.current.instance.length;
+      for (let i = 0; i < numWorkers; i++) {
+        const messagesForWorker: Array<any> = [];
+        for (const msgObj of intMessages) {
+          const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
+          if (chunks[i].length > 0) {
+            messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
           }
-        });
-      });
+        }
+        if (messagesForWorker.length > 0) {
+          infiniteScrollWorkers.current.instance[i].postMessage(
+            messagesForWorker
+          );
+        }
+      }
     }
 
     // Send normalMessages to worker workers
 
-    if (message.length > 0 && infiniteScrollWorkers.current.worker.length > 0) {
+    if (
+      normalMessages.length > 0 &&
+      infiniteScrollWorkers.current.worker.length > 0
+    ) {
       const numWorkers = infiniteScrollWorkers.current.worker.length;
       for (let i = 0; i < numWorkers; i++) {
-        const messagesForWorker = [];
-        for (const msgObj of message) {
+        const messagesForWorker: Array<any> = [];
+        for (const msgObj of normalMessages) {
           const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
           if (chunks[i].length > 0) {
             messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
@@ -1451,7 +1458,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: onmessInfin
 
   const createInfiniteOnMessage = async (event: MessageEvent) => {
-    event.data.forEach((dataItem: any) => {
+    event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
         : {};
@@ -1462,34 +1469,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         primaryGenName: genomeConfig.genome.getName(),
       };
 
-      dataItem.fetchResults.map(
-        (
-          item: {
-            id: any;
-            name: string;
-            result: any;
-            metadata: any;
-            trackModel: any;
-            curFetchNav: any;
-          },
-          _index: any
-        ) => {
-          trackToDrawId[`${item.id}`] = "";
-          createCache({
-            trackState: curTrackState,
-            result: item.result,
-            id: item.id,
-            trackType: item.trackModel.type
-              ? item.trackModel.type
-              : item.name
-              ? item.name
-              : "",
-            metadata: item.metadata,
-            trackModel: item.trackModel,
-            curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-            missingIdx: dataItem.missingIdx,
-          });
-        }
+      await Promise.all(
+        dataItem.fetchResults.map(
+          async (
+            item: {
+              id: any;
+              name: string;
+              result: any;
+              metadata: any;
+              trackModel: any;
+              curFetchNav: any;
+            },
+            _index: any
+          ) => {
+            trackToDrawId[`${item.id}`] = "";
+            await createCache({
+              trackState: curTrackState,
+              result: item.result,
+              id: item.id,
+              trackType: item.trackModel.type
+                ? item.trackModel.type
+                : item.name
+                ? item.name
+                : "",
+              metadata: item.metadata,
+              trackModel: item.trackModel,
+              curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+              missingIdx: dataItem.missingIdx,
+            });
+          }
+        )
       );
 
       const browserMemorySize: { [key: string]: any } = window.performance;
@@ -1927,6 +1936,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
 
         result = (await Promise.all(tmpRawData)).flat();
+
         // if (!tmpTrackState.initial) {
 
         // }
@@ -3133,57 +3143,61 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // check in trackfactory if the track is already drawn  bhy checking the object if its null, nulll means when
   // another track updates and the current track is already drawn we ignore it .
   useEffect(() => {
-    const cacheKeysWithData: { [key: string]: any } = {};
-    const idxArr = [dataIdx.current - 1, dataIdx.current, dataIdx.current + 1];
+    // const cacheKeysWithData: { [key: string]: any } = {};
+    // const idxArr = [dataIdx.current - 1, dataIdx.current, dataIdx.current + 1];
 
-    if (newDrawData) {
-      console.log(
-        "_________________________________________________",
-        { ...completedFetchedRegion.current },
-        dataIdx.current
-      );
-      if (completedFetchedRegion.current.key !== dataIdx.current) {
-        completedFetchedRegion.current.key = dataIdx.current;
-        completedFetchedRegion.current.done = {};
-        console.log(
-          "_________________________________________________",
-          newDrawData,
-          dataIdx.current
-        );
-      }
+    // if (newDrawData) {
+    //   console.log(
+    //     "_________________________________________________",
+    //     { ...completedFetchedRegion.current },
+    //     dataIdx.current
+    //   );
+    //   if (completedFetchedRegion.current.key !== dataIdx.current) {
+    //     completedFetchedRegion.current.key = dataIdx.current;
+    //     completedFetchedRegion.current.done = {};
+    //     console.log(
+    //       "_________________________________________________",
+    //       newDrawData,
+    //       dataIdx.current
+    //     );
+    //   }
 
-      for (let trackToDrawKey in newDrawData.trackToDrawId) {
-        const cache = trackFetchedDataCache.current[trackToDrawKey];
+    //   for (let trackToDrawKey in newDrawData.trackToDrawId) {
+    //     const cache = trackFetchedDataCache.current[trackToDrawKey];
 
-        if (cache) {
-          if (useFineModeNav.current || cache.useExpandedLoci) {
-            if (cache[dataIdx.current]) {
-              cacheKeysWithData[trackToDrawKey] = "";
-            }
-          } else {
-            let hasAllRegionData = true;
-            for (let idx of idxArr) {
-              if (!cache[idx] || cache[idx].dataCache === null) {
-                hasAllRegionData = false;
-                break;
-              }
-            }
-            if (hasAllRegionData) {
-              cacheKeysWithData[trackToDrawKey] = "";
-            }
-          }
-        }
-      }
-    }
+    //     if (cache) {
+    //       if (useFineModeNav.current || cache.useExpandedLoci) {
+    //         if (cache[dataIdx.current]) {
+    //           cacheKeysWithData[trackToDrawKey] = "";
+    //         }
+    //       } else {
+    //         let hasAllRegionData = true;
+    //         for (let idx of idxArr) {
+    //           if (!cache[idx] || cache[idx].dataCache === null) {
+    //             hasAllRegionData = false;
+    //             break;
+    //           }
+    //         }
+    //         if (hasAllRegionData) {
+    //           cacheKeysWithData[trackToDrawKey] = "";
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
-    if (Object.keys(cacheKeysWithData).length > 0) {
-      // if (
-      //   Object.keys(completedFetchedRegion.current.done).length ===
-      //   trackComponents.length
-      // ) {
-      //   setMessageData({});
-      // }
-
+    // if (Object.keys(cacheKeysWithData).length > 0) {
+    // if (
+    //   Object.keys(completedFetchedRegion.current.done).length ===
+    //   trackComponents.length
+    // ) {
+    //   setMessageData({});
+    // }
+    if (
+      newDrawData &&
+      completedFetchedRegion.current.key === dataIdx.current &&
+      Object.keys(completedFetchedRegion.current.done).length > 0
+    ) {
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
       if (
