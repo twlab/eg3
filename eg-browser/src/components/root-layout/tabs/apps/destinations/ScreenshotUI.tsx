@@ -403,6 +403,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
           genomeConfig: createSVGData.genomeConfig,
+          groupScale: newTrackState.groupScale,
         });
 
         return (

@@ -587,7 +587,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
-
+        trackState["groupScale"] =
+          globalTrackState.current.trackStates[dataIdx].trackState[
+            "groupScale"
+          ];
         if (combinedData) {
           sentScreenshotData({
             fetchData: {
