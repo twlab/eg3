@@ -7,6 +7,7 @@
 - moved workers to genomeroot, decreasing init load times
 - fixed where configmenu appears, so it doesn't get cut off
 - refactor states in trackmanager
+- fixed bug where groupscale are not applying in screenshot
 
 ## 55.1.0
 
