@@ -659,6 +659,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       if (value && key === "scoreScale") {
         trackModel.options.scoreScale = value;
       }
+      if (value && key === "yScale") {
+        trackModel.options.yScale = value;
+      }
       if (trackModel.type === "hic") {
         fileInfos[`${trackModel.id}`] =
           fetchInstances.current[`${trackModel.id}`].getFileInfo();
@@ -699,8 +702,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackId: string | null = null
   ) {
     let newSelected: { [key: string]: any } = {};
-
-    if (key === "displayMode" || key === "scoreScale") {
+    console.log(key);
+    if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));
     }
 
