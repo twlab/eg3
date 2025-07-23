@@ -103,7 +103,7 @@ interface ComponentState {
   useExistingBigwig: boolean;
   bigWigUrl: string;
   bigWigInputUrl: string;
-
+  paintCompartmentRegion: any;
   uploadCompartmentFile: boolean;
   compartmentFileUrl: string;
   compartmentFileObject: any; // Replace 'any' with a more specific type if known
@@ -246,8 +246,8 @@ class ThreedmolContainer extends React.Component<
     this.newAtoms = {}; // holder for addtional models for animation, key: file name, value {hap: [list of atoms]}
     this.atomKeeper = {}; // resolution string as key, value: {hap: keeper}
     this.envelop = null;
-    // this.mol.chrom = {};
-    // this.mol.chrom.atom = chromColors;
+    this.mol.chrom = {};
+    this.mol.chrom.atom = chromColors;
     this.bedLegend = {};
     this.chromHash = {}; // key: chrom, value: length
     this.mol.builtinColorSchemes.chrom = { prop: "chain", map: chromColors };
@@ -274,7 +274,7 @@ class ThreedmolContainer extends React.Component<
       hoveringY: 0,
       paintMethod: "score", // other ways are compartmemt, annotation
       paintRegion: "none", // region, chrom, genome, or new when switch bw url
-      // paintCompartmentRegion: "none",
+      paintCompartmentRegion: "none",
       paintAnnotationRegion: "none",
       A: "green", //  color for compartment A, same as below
       B: "red",
@@ -341,7 +341,7 @@ class ThreedmolContainer extends React.Component<
       spinReverse: false,
     };
     this.paintWithBigwig = _.debounce(this.paintWithBigwig, 150);
-    // this.paintWithComparment = _.debounce(this.paintWithComparment, 150);
+    this.paintWithComparment = _.debounce(this.paintWithComparment, 150);
     this.paintWithAnnotation = _.debounce(this.paintWithAnnotation, 150);
     this.modalfg = " #222 ";
     this.modalbg = "white";
@@ -397,7 +397,7 @@ class ThreedmolContainer extends React.Component<
       bigWigUrl,
       bigWigInputUrl,
       useExistingBigwig,
-      // paintCompartmentRegion,
+      paintCompartmentRegion,
       frameLabels,
       animateMode,
       modelDisplayConfig,
@@ -449,18 +449,18 @@ class ThreedmolContainer extends React.Component<
     ) {
       await this.paintBigwig(paintRegion);
     }
-    // if (
-    //     A !== prevState.A ||
-    //     B !== prevState.B ||
-    //     A1 !== prevState.A1 ||
-    //     A2 !== prevState.A2 ||
-    //     B1 !== prevState.B1 ||
-    //     B2 !== prevState.B2 ||
-    //     B3 !== prevState.B3 ||
-    //     B4 !== prevState.B4
-    // ) {
-    //     await this.paintCompartment(paintCompartmentRegion);
-    // }
+    if (
+      A !== prevState.A ||
+      B !== prevState.B ||
+      A1 !== prevState.A1 ||
+      A2 !== prevState.A2 ||
+      B1 !== prevState.B1 ||
+      B2 !== prevState.B2 ||
+      B3 !== prevState.B3 ||
+      B4 !== prevState.B4
+    ) {
+      await this.paintCompartment(paintCompartmentRegion);
+    }
     if (showEnvelop !== prevState.showEnvelop) {
       if (showEnvelop) {
         this.displayEnvelop();
@@ -598,13 +598,13 @@ class ThreedmolContainer extends React.Component<
           await this.paintBigwig("chrom");
         }
       }
-      // if (paintCompartmentRegion === "region") {
-      //     await this.paintCompartment("region");
-      // } else if (paintRegion === "chrom") {
-      //     if (!arraysEqual(prevChroms, chroms)) {
-      //         await this.paintCompartment("chrom");
-      //     }
-      // }
+      if (paintCompartmentRegion === "region") {
+        await this.paintCompartment("region");
+      } else if (paintRegion === "chrom") {
+        if (!arraysEqual(prevChroms, chroms)) {
+          await this.paintCompartment("chrom");
+        }
+      }
       if (paintAnnotationRegion === "region") {
         await this.paintAnnotation("region");
       } else if (paintRegion === "chrom") {
@@ -675,7 +675,7 @@ class ThreedmolContainer extends React.Component<
       this.setState({
         highlightingColorChanged: true,
         paintRegion: "none",
-        // paintCompartmentRegion: "none",
+        paintCompartmentRegion: "none",
         paintAnnotationRegion: "none",
       });
     }
@@ -1445,6 +1445,7 @@ class ThreedmolContainer extends React.Component<
       cartoonThickness,
       resolution,
       lineOpacity,
+      highlightingChromColor,
       modelDisplayConfig,
       showEnvelop,
     } = this.state;
@@ -1457,17 +1458,17 @@ class ThreedmolContainer extends React.Component<
     const regions = this.viewRegionToRegions();
     console.log(regions, "highlight");
     // console.log(regions);
-    // const colorByRegion = function (atom, region) {
-    //     if (
-    //         atom.chain === region.chrom &&
-    //         atom.properties.start >= region.start &&
-    //         atom.properties.start <= region.end
-    //     ) {
-    //         return highlightingColor;
-    //     } else {
-    //         return highlightingChromColor;
-    //     }
-    // };
+    const colorByRegion = function (atom, region) {
+      if (
+        atom.chain === region.chrom &&
+        atom.properties.start >= region.start &&
+        atom.properties.start <= region.end
+      ) {
+        return highlightingColor;
+      } else {
+        return highlightingChromColor;
+      }
+    };
     const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
     const resString = resolution.toString();
     Object.keys(curModelDisplayConfig).forEach((hap) => {
@@ -1490,12 +1491,12 @@ class ThreedmolContainer extends React.Component<
       {},
       { line: { colorscheme: "chrom", opacity: lineOpacity } }
     ); //remove existing style
-    // regions.forEach((region) => {
-    //     this.viewer.setStyle(
-    //         { chain: region.chrom },
-    //         { cartoon: { colorfunc: (atom) => colorByRegion(atom, region), style: "trace", thickness: 1 } }
-    //     );
-    // });
+    regions.forEach((region) => {
+        this.viewer.setStyle(
+            { chain: region.chrom },
+            { cartoon: { colorfunc: (atom) => colorByRegion(atom, region), style: "trace", thickness: 1 } }
+        );
+    });
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
@@ -2061,137 +2062,183 @@ class ThreedmolContainer extends React.Component<
     return comp;
   };
 
-  // paintCompartment = async (chooseRegion) => {
-  //     const { lineOpacity } = this.state;
-  //     this.setState({
-  //         paintCompartmentRegion: chooseRegion,
-  //         paintMethod: "compartment",
-  //         message: "compartment painting...",
-  //     });
-  //     const comp = await this.getCompartmentData();
-  //     if (_.isEmpty(comp)) {
-  //         this.setState({
-  //             message: "file empty or error parse compartment file, please check your file 2",
-  //             paintCompartmentRegion: "none",
-  //         });
-  //         return;
-  //     }
-  //     const regions = this.viewRegionToRegions();
-  //     const chroms = this.viewRegionToChroms();
-  //     this.viewer.setStyle({}, { line: { colorscheme: "chrom", opacity: lineOpacity } });
-  //     switch (chooseRegion) {
-  //         case "region":
-  //             this.paintWithComparment(comp, regions, chooseRegion);
-  //             break;
-  //         case "chrom":
-  //             this.paintWithComparment(comp, chroms, chooseRegion);
-  //             break;
-  //         case "genome":
-  //             this.paintWithComparment(comp, Object.keys(this.chromHash), chooseRegion);
-  //             break;
-  //         default:
-  //             break;
-  //     }
-  //     this.setState({ message: "" });
-  // };
+  paintCompartment = async (chooseRegion) => {
+    const { lineOpacity } = this.state;
+    this.setState({
+      paintCompartmentRegion: chooseRegion,
+      paintMethod: "compartment",
+      message: "compartment painting...",
+    });
+    const comp = await this.getCompartmentData();
+    if (_.isEmpty(comp)) {
+      this.setState({
+        message:
+          "file empty or error parse compartment file, please check your file 2",
+        paintCompartmentRegion: "none",
+      });
+      return;
+    }
+    const regions = this.viewRegionToRegions();
+    const chroms = this.viewRegionToChroms();
+    this.viewer.setStyle(
+      {},
+      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+    );
+    switch (chooseRegion) {
+      case "region":
+        this.paintWithComparment(comp, regions, chooseRegion);
+        break;
+      case "chrom":
+        this.paintWithComparment(comp, chroms, chooseRegion);
+        break;
+      case "genome":
+        this.paintWithComparment(
+          comp,
+          Object.keys(this.chromHash),
+          chooseRegion
+        );
+        break;
+      default:
+        break;
+    }
+    this.setState({ message: "" });
+  };
 
-  // paintWithComparment = (comp, regions, chooseRegion) => {
-  //     const { A, B, A1, A2, B1, B2, B3, B4, NA, compFormat, resolution, cartoonThickness, modelDisplayConfig } =
-  //         this.state; // resolution for atom end pos
-  //     const queryChroms = chooseRegion === "region" ? regions.map((r) => r.chrom) : regions;
-  //     const filterRegions = {}; // key, chrom, value, list of [start, end] , for GSV later
-  //     if (chooseRegion === "region") {
-  //         regions.forEach((r) => {
-  //             if (!filterRegions.hasOwnProperty(r.chrom)) {
-  //                 filterRegions[r.chrom] = [];
-  //             }
-  //             filterRegions[r.chrom].push([r.start, r.end]);
-  //         });
-  //     } else {
-  //         regions.forEach((chrom) => {
-  //             if (!filterRegions.hasOwnProperty(chrom)) {
-  //                 filterRegions[chrom] = [];
-  //             }
-  //             filterRegions[chrom].push([0, this.chromHash[chrom]]);
-  //         });
-  //     }
-  //     // console.log(filterRegions);
-  //     const overlapFunc = compFormat === "4dn" ? getBigwigValueForAtom : getCompartmentNameForAtom;
-  //     const colorByCompartment = (atom) => {
-  //         if (atomInFilterRegions(atom, filterRegions)) {
-  //             const value = overlapFunc(comp, atom, resolution);
-  //             if (value !== undefined) {
-  //                 if (typeof value === "number") {
-  //                     return value >= 0 ? A : B;
-  //                 } else {
-  //                     return value.startsWith("#") ? value : colorAsNumber(this.state[value]);
-  //                 }
-  //             } else {
-  //                 return "grey";
-  //             }
-  //         } else {
-  //             return "grey";
-  //         }
-  //     };
-  //     if (chooseRegion === "region") {
-  //         const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
-  //         const resString = resolution.toString();
-  //         Object.keys(modelDisplayConfig).forEach((hap) => {
-  //             regions.forEach((reg) => {
-  //                 const leftResi = getClosestValueIndex(
-  //                     this.atomStartsByChrom[resString][hap][reg.chrom],
-  //                     reg.start
-  //                 )[1];
-  //                 const rightResi = getClosestValueIndex(
-  //                     this.atomStartsByChrom[resString][hap][reg.chrom],
-  //                     reg.end
-  //                 )[0];
-  //                 regionRange[hap] = {};
-  //                 regionRange[hap][reg.chrom] = [leftResi, rightResi];
-  //             });
-  //         });
-  //         Object.keys(modelDisplayConfig).forEach((hap) => {
-  //             queryChroms.forEach((chrom) => {
-  //                 if (regionRange[hap][chrom][0] !== undefined && regionRange[hap][chrom][1] !== undefined) {
-  //                     const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
-  //                     this.viewer.setStyle(
-  //                         { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
-  //                         { cartoon: { colorfunc: colorByCompartment, style: "trace", thickness: cartoonThickness } }
-  //                     );
-  //                 }
-  //             });
-  //         });
-  //     } else {
-  //         queryChroms.forEach((chrom) => {
-  //             this.viewer.setStyle(
-  //                 { chain: chrom },
-  //                 { cartoon: { colorfunc: colorByCompartment, style: "trace", thickness: cartoonThickness } }
-  //             );
-  //         });
-  //     }
-  //     this.viewer.render();
-  //     if (compFormat === "4dn") {
-  //         this.setState({ categories: { A, B }, staticCategories: { "no data": "grey" } });
-  //     } else if (compFormat === "cell") {
-  //         this.setState({ categories: { A1, A2, B1, B2, B3, B4, NA } });
-  //     }
-  //     if (compFormat !== "cell") {
-  //         // cell data already has NA
-  //         this.setState({ staticCategories: { "no data": "grey" } });
-  //     }
-  // };
+  paintWithComparment = (comp, regions, chooseRegion) => {
+    const {
+      A,
+      B,
+      A1,
+      A2,
+      B1,
+      B2,
+      B3,
+      B4,
+      NA,
+      compFormat,
+      resolution,
+      cartoonThickness,
+      modelDisplayConfig,
+    } = this.state; // resolution for atom end pos
+    const queryChroms =
+      chooseRegion === "region" ? regions.map((r) => r.chrom) : regions;
+    const filterRegions = {}; // key, chrom, value, list of [start, end] , for GSV later
+    if (chooseRegion === "region") {
+      regions.forEach((r) => {
+        if (!filterRegions.hasOwnProperty(r.chrom)) {
+          filterRegions[r.chrom] = [];
+        }
+        filterRegions[r.chrom].push([r.start, r.end]);
+      });
+    } else {
+      regions.forEach((chrom) => {
+        if (!filterRegions.hasOwnProperty(chrom)) {
+          filterRegions[chrom] = [];
+        }
+        filterRegions[chrom].push([0, this.chromHash[chrom]]);
+      });
+    }
+    // console.log(filterRegions);
+    const overlapFunc =
+      compFormat === "4dn" ? getBigwigValueForAtom : getCompartmentNameForAtom;
+    const colorByCompartment = (atom) => {
+      if (atomInFilterRegions(atom, filterRegions)) {
+        const value = overlapFunc(comp, atom, resolution);
+        if (value !== undefined) {
+          if (typeof value === "number") {
+            return value >= 0 ? A : B;
+          } else {
+            return value.startsWith("#")
+              ? value
+              : colorAsNumber(this.state[value]);
+          }
+        } else {
+          return "grey";
+        }
+      } else {
+        return "grey";
+      }
+    };
+    if (chooseRegion === "region") {
+      const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
+      const resString = resolution.toString();
+      Object.keys(modelDisplayConfig).forEach((hap) => {
+        regions.forEach((reg) => {
+          const leftResi = getClosestValueIndex(
+            this.atomStartsByChrom[resString][hap][reg.chrom],
+            reg.start
+          )[1];
+          const rightResi = getClosestValueIndex(
+            this.atomStartsByChrom[resString][hap][reg.chrom],
+            reg.end
+          )[0];
+          regionRange[hap] = {};
+          regionRange[hap][reg.chrom] = [leftResi, rightResi];
+        });
+      });
+      Object.keys(modelDisplayConfig).forEach((hap) => {
+        queryChroms.forEach((chrom) => {
+          if (
+            regionRange[hap][chrom][0] !== undefined &&
+            regionRange[hap][chrom][1] !== undefined
+          ) {
+            const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
+            this.viewer.setStyle(
+              { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
+              {
+                cartoon: {
+                  colorfunc: colorByCompartment,
+                  style: "trace",
+                  thickness: cartoonThickness,
+                },
+              }
+            );
+          }
+        });
+      });
+    } else {
+      queryChroms.forEach((chrom) => {
+        this.viewer.setStyle(
+          { chain: chrom },
+          {
+            cartoon: {
+              colorfunc: colorByCompartment,
+              style: "trace",
+              thickness: cartoonThickness,
+            },
+          }
+        );
+      });
+    }
+    this.viewer.render();
+    if (compFormat === "4dn") {
+      this.setState({
+        categories: { A, B },
+        staticCategories: { "no data": "grey" },
+      });
+    } else if (compFormat === "cell") {
+      this.setState({ categories: { A1, A2, B1, B2, B3, B4, NA } });
+    }
+    if (compFormat !== "cell") {
+      // cell data already has NA
+      this.setState({ staticCategories: { "no data": "grey" } });
+    }
+  };
 
-  // removeCompartmentPaint = () => {
-  //     const { lineOpacity } = this.state;
-  //     this.setState({ paintCompartmentRegion: "none" });
-  //     this.viewer.setStyle({}, { line: { colorscheme: "chrom", opacity: lineOpacity } });
-  //     this.viewer.render();
-  //     this.setState({
-  //         highlightingOn: false,
-  //         categories: null,
-  //         staticCategories: null,
-  //     });
-  // };
+  removeCompartmentPaint = () => {
+    const { lineOpacity } = this.state;
+    this.setState({ paintCompartmentRegion: "none" });
+    this.viewer.setStyle(
+      {},
+      { line: { colorscheme: "chrom", opacity: lineOpacity } }
+    );
+    this.viewer.render();
+    this.setState({
+      highlightingOn: false,
+      categories: null,
+      staticCategories: null,
+    });
+  };
 
   formatCytoband = () => {
     const { genomeConfig } = this.props;
@@ -3174,9 +3221,9 @@ class ThreedmolContainer extends React.Component<
       bigWigUrl,
       bigWigInputUrl,
       paintRegion,
-      // uploadCompartmentFile,
-      // compartmentFileUrl,
-      // paintCompartmentRegion,
+      uploadCompartmentFile,
+      compartmentFileUrl,
+      paintCompartmentRegion,
       categories,
       staticCategories,
       newG3dUrl,
