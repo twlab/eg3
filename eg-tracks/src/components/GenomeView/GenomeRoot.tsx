@@ -57,25 +57,17 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // function handleNodeResize(node) {
   //   const model = node.getModel();
   //   if (model) {
-  //     // const tabIds = Object.keys(model._idMap);
-  //     // tabIds.forEach((tabId) => {
-  //     //     const node = model._idMap[tabId];
-  //     //     if (node.type === "tab") {
-  //     //     }
-  //     // });
-  //     // const app = model.getNodeById("app");
-  //     // console.log(app.getId(), app.getParent().getWeight());
-  //     // model.doAction(
-  //     //     FlexLayout.Actions.updateNodeAttributes(app.getParent().getId(), { weight: app.getParent().getWeight() })
-  //     // );
   //     const parent = node.getParent();
   //     // console.log(node.getId(), parent.getWeight());
+  //     console.log(size.width);
   //     model.doAction(
   //       FlexLayout.Actions.updateNodeAttributes(parent.getId(), {
+  //         width: size.width,
   //         weight: parent.getWeight(),
   //       })
   //     );
-  //     // console.log(model);
+  //     // console.log(parent.getWeight());
+  //     // console.log("HUHUH", parent);
   //     setModel(model);
   //   }
   // }
@@ -119,7 +111,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const factory = (node) => {
     var component = node.getComponent();
-    // node.setEventListener("resize", () => handleNodeResize(node));
+
     if (component === "Browser") {
       // node.setEventListener("resize", () => handleNodeResize(node));
 
@@ -328,13 +320,17 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [userViewRegion]);
 
   return (
-    <div>
-      <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
+    <div
+      style={{ height: "100%" }}
+      ref={resizeRef as React.RefObject<HTMLDivElement>}
+    >
+      {/* <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div> */}
       <div
         style={{
           display: "flex",
-
           flexDirection: "column",
+          width: size.width,
+          height: size.height,
         }}
       >
         {/* <GenomeViewerTest /> */}
