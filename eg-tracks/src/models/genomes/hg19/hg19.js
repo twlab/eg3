@@ -71,6 +71,13 @@ const defaultTracks = [
     name: "RepeatMasker",
     url: "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
   }),
+
+  // new TrackModel({
+  //   type: "g3d",
+  //   url: "https://target.wustl.edu/dli/tmp/test2.g3d",
+  //   name: "example github g3d",
+  //   showOnHubLoad: true,
+  // }),
   // new TrackModel({
   //   type: "bam",
   //   name: "Test bam",

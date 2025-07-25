@@ -81,7 +81,7 @@ export default function GenomeView() {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => {
-    let updatedCoord;
+    let updatedCoord: any;
     if (coordinate === prevViewRegion.current) {
       updatedCoord = `${coordinate},${startbase}-${endbase}`;
     } else {

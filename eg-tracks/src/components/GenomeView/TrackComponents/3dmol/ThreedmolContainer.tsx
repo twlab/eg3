@@ -9,7 +9,6 @@ import TrackModel from "../../../../models/TrackModel";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 import ChromosomeInterval from "../../../../models/ChromosomeInterval";
 import GeneSearchBox3D from "../../genomeNavigator/GeneSearchBox3D";
-// import { BigwigSource } from "./BigwigSource";
 import { CORS_PROXY } from "../imageTrackComponents/OmeroSvgVisualizer";
 import {
   chromColors,
@@ -50,7 +49,7 @@ import {
 import "rc-drawer/assets/index.css";
 import "./ThreedmolContainer.css";
 import { inflate } from "pako";
-import { BigwigSource } from "./BigwigSource";
+import { BigwigSource } from "../../../../getRemoteData/BigwigSource";
 
 /**
  * the container for holding 3D structure rendered by 3Dmol.js
@@ -293,8 +292,8 @@ class ThreedmolContainer extends React.Component<
       highlightingOn: false,
       highlightingColor: "#ffff00", // yellow
       highlightingColorChanged: false,
-      // highlightingChromColor: "grey",
-      highlightingChromColor: "#f2f2f2",
+      highlightingChromColor: "grey",
+      // highlightingChromColor: "#f2f2f2",
       mainBoxWidth: 600,
       mainBoxHeight: 400,
       thumbBoxWidth: 300,
@@ -341,7 +340,7 @@ class ThreedmolContainer extends React.Component<
       spinReverse: false,
     };
     this.paintWithBigwig = _.debounce(this.paintWithBigwig, 150);
-    this.paintWithComparment = _.debounce(this.paintWithComparment, 150);
+    // this.paintWithComparment = _.debounce(this.paintWithComparment, 150);
     this.paintWithAnnotation = _.debounce(this.paintWithAnnotation, 150);
     this.modalfg = " #222 ";
     this.modalbg = "white";
@@ -449,18 +448,18 @@ class ThreedmolContainer extends React.Component<
     ) {
       await this.paintBigwig(paintRegion);
     }
-    if (
-      A !== prevState.A ||
-      B !== prevState.B ||
-      A1 !== prevState.A1 ||
-      A2 !== prevState.A2 ||
-      B1 !== prevState.B1 ||
-      B2 !== prevState.B2 ||
-      B3 !== prevState.B3 ||
-      B4 !== prevState.B4
-    ) {
-      await this.paintCompartment(paintCompartmentRegion);
-    }
+    // if (
+    //   A !== prevState.A ||
+    //   B !== prevState.B ||
+    //   A1 !== prevState.A1 ||
+    //   A2 !== prevState.A2 ||
+    //   B1 !== prevState.B1 ||
+    //   B2 !== prevState.B2 ||
+    //   B3 !== prevState.B3 ||
+    //   B4 !== prevState.B4
+    // ) {
+    //   await this.paintCompartment(paintCompartmentRegion);
+    // }
     if (showEnvelop !== prevState.showEnvelop) {
       if (showEnvelop) {
         this.displayEnvelop();
@@ -598,13 +597,13 @@ class ThreedmolContainer extends React.Component<
           await this.paintBigwig("chrom");
         }
       }
-      if (paintCompartmentRegion === "region") {
-        await this.paintCompartment("region");
-      } else if (paintRegion === "chrom") {
-        if (!arraysEqual(prevChroms, chroms)) {
-          await this.paintCompartment("chrom");
-        }
-      }
+      // if (paintCompartmentRegion === "region") {
+      //   await this.paintCompartment("region");
+      // } else if (paintRegion === "chrom") {
+      //   if (!arraysEqual(prevChroms, chroms)) {
+      //     await this.paintCompartment("chrom");
+      //   }
+      // }
       if (paintAnnotationRegion === "region") {
         await this.paintAnnotation("region");
       } else if (paintRegion === "chrom") {
@@ -1456,7 +1455,7 @@ class ThreedmolContainer extends React.Component<
       curModelDisplayConfig = modelDisplayConfig;
     }
     const regions = this.viewRegionToRegions();
-    console.log(regions, "highlight");
+
     // console.log(regions);
     const colorByRegion = function (atom, region) {
       if (
@@ -1491,12 +1490,18 @@ class ThreedmolContainer extends React.Component<
       {},
       { line: { colorscheme: "chrom", opacity: lineOpacity } }
     ); //remove existing style
-    regions.forEach((region) => {
-        this.viewer.setStyle(
-            { chain: region.chrom },
-            { cartoon: { colorfunc: (atom) => colorByRegion(atom, region), style: "trace", thickness: 1 } }
-        );
-    });
+    // regions.forEach((region) => {
+    //   this.viewer.setStyle(
+    //     { chain: region.chrom },
+    //     {
+    //       cartoon: {
+    //         colorfunc: (atom) => colorByRegion(atom, region),
+    //         style: "trace",
+    //         thickness: 1,
+    //       },
+    //     }
+    //   );
+    // });
     const usedHighlightStyle =
       highlightStyle === "cartoon"
         ? {
@@ -1605,6 +1610,7 @@ class ThreedmolContainer extends React.Component<
         });
       });
     }
+
     return values.length
       ? percentile([5, 95], values).map((n) => n.toFixed(2))
       : [0, 0]; // use percentile instead for better visual
@@ -1625,6 +1631,7 @@ class ThreedmolContainer extends React.Component<
       highlightStyle,
     } = this.state;
     let keepers = {};
+
     const queryChroms =
       chooseRegion === "region" ? regions.map((r) => r.chrom) : regions;
     if (numFormat === "bwtrack") {
@@ -1634,6 +1641,7 @@ class ThreedmolContainer extends React.Component<
       if (!this.bwData.hasOwnProperty(key)) {
         this.bwData[key] = {};
       }
+
       queryChroms.forEach((chrom) => {
         if (!this.bwData[key].hasOwnProperty(chrom)) {
           fetchedChroms.push(chrom);
@@ -1644,6 +1652,7 @@ class ThreedmolContainer extends React.Component<
       });
 
       const fetchedData = await Promise.all(promises);
+
       for (let i = 0; i < fetchedChroms.length; i++) {
         if (fetchedData[i]) {
           // only assign value is there is something
@@ -1655,6 +1664,7 @@ class ThreedmolContainer extends React.Component<
     if (numFormat === "geneexp") {
       keepers = await this.getGeneexpData();
     }
+
     if (_.isEmpty(keepers)) {
       this.setState({
         message:
@@ -1663,6 +1673,7 @@ class ThreedmolContainer extends React.Component<
       });
       return;
     }
+
     const [minScore, maxScore] = this.minMaxOfKeepers(
       keepers,
       regions,
@@ -1876,6 +1887,7 @@ class ThreedmolContainer extends React.Component<
     }
     const regions = this.viewRegionToRegions();
     const chroms = this.viewRegionToChroms();
+
     this.viewer.setStyle(
       {},
       { line: { colorscheme: "chrom", opacity: lineOpacity } }
@@ -1911,7 +1923,9 @@ class ThreedmolContainer extends React.Component<
     try {
       const keeper = {};
       const bw = new BigwigSource(bwUrl);
-      const bwData = await bw.getData(chrom, 0, this.chromHash[chrom], {
+
+      const loci = [{ chr: chrom, start: 0, end: this.chromHash[chrom] }];
+      const bwData = await bw.getData(loci, {
         scale: 1 / resolution,
       });
 
@@ -2062,183 +2076,183 @@ class ThreedmolContainer extends React.Component<
     return comp;
   };
 
-  paintCompartment = async (chooseRegion) => {
-    const { lineOpacity } = this.state;
-    this.setState({
-      paintCompartmentRegion: chooseRegion,
-      paintMethod: "compartment",
-      message: "compartment painting...",
-    });
-    const comp = await this.getCompartmentData();
-    if (_.isEmpty(comp)) {
-      this.setState({
-        message:
-          "file empty or error parse compartment file, please check your file 2",
-        paintCompartmentRegion: "none",
-      });
-      return;
-    }
-    const regions = this.viewRegionToRegions();
-    const chroms = this.viewRegionToChroms();
-    this.viewer.setStyle(
-      {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
-    );
-    switch (chooseRegion) {
-      case "region":
-        this.paintWithComparment(comp, regions, chooseRegion);
-        break;
-      case "chrom":
-        this.paintWithComparment(comp, chroms, chooseRegion);
-        break;
-      case "genome":
-        this.paintWithComparment(
-          comp,
-          Object.keys(this.chromHash),
-          chooseRegion
-        );
-        break;
-      default:
-        break;
-    }
-    this.setState({ message: "" });
-  };
+  // paintCompartment = async (chooseRegion) => {
+  //   const { lineOpacity } = this.state;
+  //   this.setState({
+  //     paintCompartmentRegion: chooseRegion,
+  //     paintMethod: "compartment",
+  //     message: "compartment painting...",
+  //   });
+  //   const comp = await this.getCompartmentData();
+  //   if (_.isEmpty(comp)) {
+  //     this.setState({
+  //       message:
+  //         "file empty or error parse compartment file, please check your file 2",
+  //       paintCompartmentRegion: "none",
+  //     });
+  //     return;
+  //   }
+  //   const regions = this.viewRegionToRegions();
+  //   const chroms = this.viewRegionToChroms();
+  //   this.viewer.setStyle(
+  //     {},
+  //     { line: { colorscheme: "chrom", opacity: lineOpacity } }
+  //   );
+  //   switch (chooseRegion) {
+  //     case "region":
+  //       this.paintWithComparment(comp, regions, chooseRegion);
+  //       break;
+  //     case "chrom":
+  //       this.paintWithComparment(comp, chroms, chooseRegion);
+  //       break;
+  //     case "genome":
+  //       this.paintWithComparment(
+  //         comp,
+  //         Object.keys(this.chromHash),
+  //         chooseRegion
+  //       );
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  //   this.setState({ message: "" });
+  // };
 
-  paintWithComparment = (comp, regions, chooseRegion) => {
-    const {
-      A,
-      B,
-      A1,
-      A2,
-      B1,
-      B2,
-      B3,
-      B4,
-      NA,
-      compFormat,
-      resolution,
-      cartoonThickness,
-      modelDisplayConfig,
-    } = this.state; // resolution for atom end pos
-    const queryChroms =
-      chooseRegion === "region" ? regions.map((r) => r.chrom) : regions;
-    const filterRegions = {}; // key, chrom, value, list of [start, end] , for GSV later
-    if (chooseRegion === "region") {
-      regions.forEach((r) => {
-        if (!filterRegions.hasOwnProperty(r.chrom)) {
-          filterRegions[r.chrom] = [];
-        }
-        filterRegions[r.chrom].push([r.start, r.end]);
-      });
-    } else {
-      regions.forEach((chrom) => {
-        if (!filterRegions.hasOwnProperty(chrom)) {
-          filterRegions[chrom] = [];
-        }
-        filterRegions[chrom].push([0, this.chromHash[chrom]]);
-      });
-    }
-    // console.log(filterRegions);
-    const overlapFunc =
-      compFormat === "4dn" ? getBigwigValueForAtom : getCompartmentNameForAtom;
-    const colorByCompartment = (atom) => {
-      if (atomInFilterRegions(atom, filterRegions)) {
-        const value = overlapFunc(comp, atom, resolution);
-        if (value !== undefined) {
-          if (typeof value === "number") {
-            return value >= 0 ? A : B;
-          } else {
-            return value.startsWith("#")
-              ? value
-              : colorAsNumber(this.state[value]);
-          }
-        } else {
-          return "grey";
-        }
-      } else {
-        return "grey";
-      }
-    };
-    if (chooseRegion === "region") {
-      const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
-      const resString = resolution.toString();
-      Object.keys(modelDisplayConfig).forEach((hap) => {
-        regions.forEach((reg) => {
-          const leftResi = getClosestValueIndex(
-            this.atomStartsByChrom[resString][hap][reg.chrom],
-            reg.start
-          )[1];
-          const rightResi = getClosestValueIndex(
-            this.atomStartsByChrom[resString][hap][reg.chrom],
-            reg.end
-          )[0];
-          regionRange[hap] = {};
-          regionRange[hap][reg.chrom] = [leftResi, rightResi];
-        });
-      });
-      Object.keys(modelDisplayConfig).forEach((hap) => {
-        queryChroms.forEach((chrom) => {
-          if (
-            regionRange[hap][chrom][0] !== undefined &&
-            regionRange[hap][chrom][1] !== undefined
-          ) {
-            const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
-            this.viewer.setStyle(
-              { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
-              {
-                cartoon: {
-                  colorfunc: colorByCompartment,
-                  style: "trace",
-                  thickness: cartoonThickness,
-                },
-              }
-            );
-          }
-        });
-      });
-    } else {
-      queryChroms.forEach((chrom) => {
-        this.viewer.setStyle(
-          { chain: chrom },
-          {
-            cartoon: {
-              colorfunc: colorByCompartment,
-              style: "trace",
-              thickness: cartoonThickness,
-            },
-          }
-        );
-      });
-    }
-    this.viewer.render();
-    if (compFormat === "4dn") {
-      this.setState({
-        categories: { A, B },
-        staticCategories: { "no data": "grey" },
-      });
-    } else if (compFormat === "cell") {
-      this.setState({ categories: { A1, A2, B1, B2, B3, B4, NA } });
-    }
-    if (compFormat !== "cell") {
-      // cell data already has NA
-      this.setState({ staticCategories: { "no data": "grey" } });
-    }
-  };
+  // paintWithComparment = (comp, regions, chooseRegion) => {
+  //   const {
+  //     A,
+  //     B,
+  //     A1,
+  //     A2,
+  //     B1,
+  //     B2,
+  //     B3,
+  //     B4,
+  //     NA,
+  //     compFormat,
+  //     resolution,
+  //     cartoonThickness,
+  //     modelDisplayConfig,
+  //   } = this.state; // resolution for atom end pos
+  //   const queryChroms =
+  //     chooseRegion === "region" ? regions.map((r) => r.chrom) : regions;
+  //   const filterRegions = {}; // key, chrom, value, list of [start, end] , for GSV later
+  //   if (chooseRegion === "region") {
+  //     regions.forEach((r) => {
+  //       if (!filterRegions.hasOwnProperty(r.chrom)) {
+  //         filterRegions[r.chrom] = [];
+  //       }
+  //       filterRegions[r.chrom].push([r.start, r.end]);
+  //     });
+  //   } else {
+  //     regions.forEach((chrom) => {
+  //       if (!filterRegions.hasOwnProperty(chrom)) {
+  //         filterRegions[chrom] = [];
+  //       }
+  //       filterRegions[chrom].push([0, this.chromHash[chrom]]);
+  //     });
+  //   }
+  //   // console.log(filterRegions);
+  //   const overlapFunc =
+  //     compFormat === "4dn" ? getBigwigValueForAtom : getCompartmentNameForAtom;
+  //   const colorByCompartment = (atom) => {
+  //     if (atomInFilterRegions(atom, filterRegions)) {
+  //       const value = overlapFunc(comp, atom, resolution);
+  //       if (value !== undefined) {
+  //         if (typeof value === "number") {
+  //           return value >= 0 ? A : B;
+  //         } else {
+  //           return value.startsWith("#")
+  //             ? value
+  //             : colorAsNumber(this.state[value]);
+  //         }
+  //       } else {
+  //         return "grey";
+  //       }
+  //     } else {
+  //       return "grey";
+  //     }
+  //   };
+  //   if (chooseRegion === "region") {
+  //     const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
+  //     const resString = resolution.toString();
+  //     Object.keys(modelDisplayConfig).forEach((hap) => {
+  //       regions.forEach((reg) => {
+  //         const leftResi = getClosestValueIndex(
+  //           this.atomStartsByChrom[resString][hap][reg.chrom],
+  //           reg.start
+  //         )[1];
+  //         const rightResi = getClosestValueIndex(
+  //           this.atomStartsByChrom[resString][hap][reg.chrom],
+  //           reg.end
+  //         )[0];
+  //         regionRange[hap] = {};
+  //         regionRange[hap][reg.chrom] = [leftResi, rightResi];
+  //       });
+  //     });
+  //     Object.keys(modelDisplayConfig).forEach((hap) => {
+  //       queryChroms.forEach((chrom) => {
+  //         if (
+  //           regionRange[hap][chrom][0] !== undefined &&
+  //           regionRange[hap][chrom][1] !== undefined
+  //         ) {
+  //           const resiSelect = `${regionRange[hap][chrom][0]}-${regionRange[hap][chrom][1]}`;
+  //           this.viewer.setStyle(
+  //             { chain: chrom, resi: [resiSelect], properties: { hap: hap } },
+  //             {
+  //               cartoon: {
+  //                 colorfunc: colorByCompartment,
+  //                 style: "trace",
+  //                 thickness: cartoonThickness,
+  //               },
+  //             }
+  //           );
+  //         }
+  //       });
+  //     });
+  //   } else {
+  //     queryChroms.forEach((chrom) => {
+  //       this.viewer.setStyle(
+  //         { chain: chrom },
+  //         {
+  //           cartoon: {
+  //             colorfunc: colorByCompartment,
+  //             style: "trace",
+  //             thickness: cartoonThickness,
+  //           },
+  //         }
+  //       );
+  //     });
+  //   }
+  //   this.viewer.render();
+  //   if (compFormat === "4dn") {
+  //     this.setState({
+  //       categories: { A, B },
+  //       staticCategories: { "no data": "grey" },
+  //     });
+  //   } else if (compFormat === "cell") {
+  //     this.setState({ categories: { A1, A2, B1, B2, B3, B4, NA } });
+  //   }
+  //   if (compFormat !== "cell") {
+  //     // cell data already has NA
+  //     this.setState({ staticCategories: { "no data": "grey" } });
+  //   }
+  // };
 
-  removeCompartmentPaint = () => {
-    const { lineOpacity } = this.state;
-    this.setState({ paintCompartmentRegion: "none" });
-    this.viewer.setStyle(
-      {},
-      { line: { colorscheme: "chrom", opacity: lineOpacity } }
-    );
-    this.viewer.render();
-    this.setState({
-      highlightingOn: false,
-      categories: null,
-      staticCategories: null,
-    });
-  };
+  // removeCompartmentPaint = () => {
+  //   const { lineOpacity } = this.state;
+  //   this.setState({ paintCompartmentRegion: "none" });
+  //   this.viewer.setStyle(
+  //     {},
+  //     { line: { colorscheme: "chrom", opacity: lineOpacity } }
+  //   );
+  //   this.viewer.render();
+  //   this.setState({
+  //     highlightingOn: false,
+  //     categories: null,
+  //     staticCategories: null,
+  //   });
+  // };
 
   formatCytoband = () => {
     const { genomeConfig } = this.props;
@@ -3268,7 +3282,7 @@ class ThreedmolContainer extends React.Component<
       width,
     } = this.props;
 
-    const bwTracks = tracks.filter((track) => {});
+    const bwTracks = tracks.filter((track) => track.type === "bigwig");
     return (
       <div id="threed-mol-container">
         {childShow && (
