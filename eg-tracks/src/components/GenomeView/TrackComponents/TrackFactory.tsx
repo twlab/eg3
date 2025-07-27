@@ -207,7 +207,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    if (viewComponent) {
+    if (viewComponent && viewComponent.dataIdx === dataIdx) {
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
@@ -267,8 +267,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
+        var noData = false;
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
+            noData = true;
             continue;
           }
           if (
@@ -284,7 +286,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           currIdx--;
         }
 
-        var noData = false;
         if (!hasError) {
           if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
             combinedData = getDeDupeArrMatPlot(combinedData, false);
