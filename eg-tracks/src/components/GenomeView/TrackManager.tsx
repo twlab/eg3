@@ -39,6 +39,8 @@ import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
 import {
   formatDataByType,
+  instanceFetchTracks,
+  interactionTracks,
   twoDataTypeTracks,
 } from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
@@ -46,7 +48,7 @@ import { fetchGenomicData } from "../../getRemoteData/fetchData";
 import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
 
 const groupManager = new GroupedTrackManager();
-
+const allowedTools = new Set([0, 1, 2, 3]);
 export const convertTrackModelToITrackModel = (
   track: TrackModel
 ): ITrackModel => ({
@@ -1726,7 +1728,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   async function createCache(fetchRes: { [key: string]: any }) {
     const tmpTrackState = { ...fetchRes.trackState };
     let result;
-    if (fetchRes.trackType in { hic: "", dynamichic: "", bam: "" }) {
+    if (instanceFetchTracks.has(fetchRes.trackType)) {
       let configOptions;
       if (globalTrackConfig.current[`${fetchRes.id}`]) {
         configOptions = globalTrackConfig.current[fetchRes.id].configOptions;
@@ -2143,7 +2145,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         preload.current = false;
         if (genomeConfig.isInitial) {
           setSelectedTool((prevState) => {
-            if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
+            if (tool && allowedTools.has(tool)) {
               const newSelectedTool = toolSelect(tool);
               return newSelectedTool;
             } else {
@@ -2665,7 +2667,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (!trackOptionMap[`${cacheTrackData.trackType}`]) {
           continue;
         }
-        if (cacheTrackData.trackType in { hic: "", longrange: "" }) {
+        if (interactionTracks.has(cacheTrackData.trackType)) {
           trackToDrawId[key] = "";
           continue;
         }

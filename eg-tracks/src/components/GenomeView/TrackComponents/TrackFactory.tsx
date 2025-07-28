@@ -2,25 +2,22 @@ import React, { memo } from "react";
 import { useEffect, useRef, useState } from "react";
 import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
-import { Manager, Popper, Reference } from "react-popper";
-import OutsideClickDetector from "./commonComponents/OutsideClickDetector";
-import GeneDetail from "./geneAnnotationTrackComponents/GeneDetail";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
-import { getDisplayModeFunction } from "./displayModeComponentMap";
+import {
+  anchorTracks,
+  dynamicMatplotTracks,
+  getDisplayModeFunction,
+  interactionTracks,
+} from "./displayModeComponentMap";
 import OpenInterval from "../../../models/OpenInterval";
-import FeatureDetail from "./commonComponents/annotation/FeatureDetail";
-import SnpDetail from "./SnpComponents/SnpDetail";
-import JasparDetail from "./commonComponents/annotation/JasparDetail";
 import { getDeDupeArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
-const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
-const ARROW_SIZE = 16;
+
 const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
-import VcfDetail from "./VcfComponents/VcfDetail";
-import Vcf from "./VcfComponents/Vcf";
+
 import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
@@ -241,10 +238,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (initTrackStart.current) {
         // use previous data before resetState
 
-        if (
-          trackModel.type in
-          { hic: "", biginteract: "", longrange: "", dynamichic: "" }
-        ) {
+        if (interactionTracks.has(trackModel.type)) {
           configOptions.current["trackManagerRef"] = trackManagerRef;
         }
 
@@ -286,7 +280,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         var noData = false;
         if (!hasError) {
-          if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+          if (dynamicMatplotTracks.has(trackModel.type)) {
             combinedData = getDeDupeArrMatPlot(combinedData, false);
           } else {
             combinedData = combinedData
@@ -401,7 +395,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       (trackModel.type in numericalTracks ||
         configOptions.current.displayMode === "density")
     ) {
-      if (trackModel.type in { hic: "", longrange: "" }) {
+      if (anchorTracks.has(trackModel.type)) {
         if (
           !configOptions.current.fetchViewWindowOnly &&
           !configOptions.current.bothAnchorsInView
@@ -485,9 +479,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
         if (trackModel.type !== "genomealign") {
-          if (
-            !(trackModel.type in { hic: "", biginteraction: "", longrange: "" })
-          ) {
+          if (!interactionTracks.has(trackModel.type)) {
             for (let i = 0; i < 3; i++) {
               if (!cacheTrackData[currIdx].dataCache) {
                 continue;
@@ -514,16 +506,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           var noData = false;
           if (!hasError) {
-            if (
-              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
-            ) {
+            if (dynamicMatplotTracks.has(trackModel.type)) {
               combinedData = getDeDupeArrMatPlot(combinedData, false);
-            } else if (
-              !(
-                trackModel.type in
-                { hic: "", biginteraction: "", longrange: "" }
-              )
-            ) {
+            } else if (!interactionTracks.has(trackModel.type)) {
               combinedData = combinedData
                 .map((item) => {
                   if (item && "dataCache" in item) {

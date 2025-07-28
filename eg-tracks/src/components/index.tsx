@@ -6,6 +6,7 @@ import {
   DisplayedRegionModel,
   formatDataByType,
   getDisplayModeFunction,
+  interactionTracks,
   OpenInterval,
   trackOptionMap,
 } from "../models";
@@ -108,14 +109,12 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
           ...defaults,
           ...userOptions,
           packageVersion: true,
-          trackManagerRef:
-            type in { hic: "", longrange: "", biginteract: "" } ? block : null,
+          trackManagerRef: interactionTracks.has(type) ? block : null,
         }
       : {
           ...defaults,
           packageVersion: true,
-          trackManagerRef:
-            type in { hic: "", longrange: "", biginteract: "" } ? block : null,
+          trackManagerRef: interactionTracks.has(type) ? block : null,
         };
   }
   function getTrackModels(genomeConfig: any, genomeViewId: string) {

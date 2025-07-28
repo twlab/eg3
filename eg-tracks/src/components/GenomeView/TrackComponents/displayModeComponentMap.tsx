@@ -79,12 +79,23 @@ import Vcf from "./VcfComponents/Vcf";
 import VcfTrack from "./VcfComponents/VcfTrack";
 
 import Bedcolor from "./bedComponents/Bedcolor";
-import { config } from "process";
+
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 enum BedColumnIndex {
   CATEGORY = 3,
 }
 const TOP_PADDING = 2;
+export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
+export const bigWithNavTracks = new Set(["repeat", "jaspar", "bigbed"]);
+export const instanceFetchTracks = new Set(["hic", "dynamichic", "bam"]);
+export const dynamicMatplotTracks = new Set([
+  "matplot",
+  "dynamic",
+  "dynamicbed",
+]);
+export const anchorTracks = new Set(["hic", "longrange"]);
+export const densityTracks = new Set(["bigwig", "qbed", "bedgraph"]);
+
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
     formattedData,
@@ -633,7 +644,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let height;
 
     height =
-      trackModel.type in { repeatmasker: "" }
+      trackModel.type === "repeatmasker"
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
 
@@ -1462,9 +1473,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     });
 
     return elements;
-  } else if (
-    drawData.trackModel.type in { hic: "", biginteract: "", longrange: "" }
-  ) {
+  } else if (interactionTracks.has(drawData.trackModel.type)) {
     let formattedData: any = [];
 
     formattedData = drawData.genesArr;
@@ -1515,7 +1524,10 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     });
 
     return canvasElements;
-  } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
+  } else if (
+    drawData.trackModel.type === "methylc" ||
+    drawData.trackModel.type === "dynseq"
+  ) {
     let formattedData = drawData.genesArr;
 
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
@@ -1570,7 +1582,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
 
     return canvasElements;
   } else if (
-    drawData.trackModel.type in { bigwig: "", qbed: "", bedgraph: "" } ||
+    densityTracks.has(drawData.trackModel.type) ||
     drawData.configOptions.displayMode === "density"
   ) {
     let formattedData;

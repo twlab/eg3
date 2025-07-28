@@ -1,3 +1,4 @@
+import { dynamicMatplotTracks } from "../displayModeComponentMap";
 import { getDeDupeArrMatPlot } from "./cacheFetchedData";
 import { trackUsingExpandedLoci } from "./cacheFetchedData";
 
@@ -35,7 +36,6 @@ export function getConfigChangeData({
   let newIntanceTrackState = trackState;
   if (trackType in trackUsingExpandedLoci || !usePrimaryNav) {
     viewData = fetchedDataCache[dataIdx!].dataCache;
-
   } else {
     viewData = [
       fetchedDataCache[dataIdx! + 1],
@@ -43,9 +43,8 @@ export function getConfigChangeData({
       fetchedDataCache[dataIdx! - 1],
     ];
 
-    if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
+    if (dynamicMatplotTracks.has(trackType)) {
       viewData = getDeDupeArrMatPlot(viewData, false);
-
     } else {
       viewData = viewData.map((item) => item.dataCache).flat(1);
     }

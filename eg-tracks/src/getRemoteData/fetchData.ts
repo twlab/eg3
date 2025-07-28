@@ -139,7 +139,7 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
 
         if (
           (item.metadata.genome &&
-            !(item.metadata.genome in genomicFetchCoord)) ||
+            !item.metadata.genome[`${genomicFetchCoord}`]) ||
           !componentSet.has(trackType)
         ) {
           foundInvalidTrack = true;
@@ -152,7 +152,7 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
             trackModel: item,
             result: { error: "This track type is currently not supported" },
           });
-        } else if (trackType in { "hic": "", "dynamichic": "" }) {
+        } else if (trackType === "hic" || trackType === "dynamichic") {
           fetchResults.push({
             name: trackType,
             id: id,
@@ -180,7 +180,7 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
           let curFetchNav;
 
           if (
-            "genome" in item.metadata &&
+            item.metadata["genome"] &&
             item.metadata.genome !== undefined &&
             item.metadata.genome !== primaryGenName
           ) {
@@ -227,7 +227,7 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
           let tmpResults = await Promise.all(
             item.tracks.map(async (trackItem) => {
               const result = (await fetchData(trackItem)).flat(1);
-              if (typeof result[0] === "object" && "error" in result[0]) {
+              if (typeof result[0] === "object" && result[0]["error"]) {
                 hasError = true;
               }
 
@@ -311,16 +311,18 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
           let curRespond;
 
           try {
-            if (trackModel.type in { geneannotation: "", snp: "" }) {
+            if (
+              trackModel.type === "geneannotation" ||
+              trackModel.type === "snp"
+            ) {
               curRespond = await Promise.all(
                 curFetchNav[i].map(async (nav) => {
                   return await trackFetchFunction[trackModel.type]({
-                    genomeName:
-                      "genome" in trackModel.metadata
-                        ? trackModel.metadata.genome
-                        : trackModel.genome
-                        ? trackModel.genome
-                        : primaryGenName,
+                    genomeName: trackModel.metadata["genome"]
+                      ? trackModel.metadata.genome
+                      : trackModel.genome
+                      ? trackModel.genome
+                      : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,
@@ -343,7 +345,6 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
 
             responses.push(_.flatten(curRespond));
           } catch (error) {
-
             console.error(
               `Error fetching data for track model type ${trackModel.type}:`,
               error

@@ -1,3 +1,4 @@
+import { dynamicMatplotTracks } from "../displayModeComponentMap";
 import { getDeDupeArrMatPlot, trackUsingExpandedLoci } from "./cacheTrackData";
 interface GetCacheDataParams {
   rightIdx: number;
@@ -123,7 +124,7 @@ export function getCacheData({
           fetchedDataCache[dataIdx! - 1],
         ];
 
-        if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+        if (dynamicMatplotTracks.has(trackModel.type)) {
           viewData = getDeDupeArrMatPlot(viewData, isError!);
         } else {
           viewData = viewData.map((item) => item.dataCache).flat(1);
