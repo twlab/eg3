@@ -9,7 +9,7 @@ import BigSourceWorker from "./BigSourceWorker";
 
 let cachedFetchInstance: { [key: string]: any } = {};
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
-
+const separateBigTrackType = { "repeat": "", "jaspar": "", "bigbed": "" }
 export const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
     let genomeName;
@@ -187,8 +187,8 @@ function getRemoteData(regionData: any, trackType: string) {
     }
   }
   let fetchInstance = cachedFetchInstance[`${regionData.trackModel.id}`];
-
-  if (trackType in { repeat: "", jaspar: "", bigbed: "" }) {
+  
+ if (trackType in separateBigTrackType) {
     return fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,

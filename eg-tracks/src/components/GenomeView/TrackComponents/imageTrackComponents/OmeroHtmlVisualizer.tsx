@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Model, Actions } from "flexlayout-react"; // Import named exports
 import OpenInterval from "../../../../models/OpenInterval";
 import { MAX_NUMBER_THUMBNAILS } from "./OmeroTrackComponents";
 import {

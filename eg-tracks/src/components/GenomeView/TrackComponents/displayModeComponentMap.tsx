@@ -50,7 +50,6 @@ import FiberAnnotation from "./bedComponents/FiberAnnotation";
 import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotTrackComponent";
 import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
-import { Model } from "flexlayout-react";
 import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
 import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
 

@@ -1,6 +1,5 @@
 import React from "react";
 import _ from "lodash";
-import { Model, Actions } from "flexlayout-react"; // Use named imports based on what's available
 import { v4 as uuidv4 } from "uuid";
 
 /**

@@ -31,39 +31,39 @@ interface QueryGenomePiece {
   queryFeature: Feature;
   queryXSpan: OpenInterval;
 }
-const componentMap: { [key: string]: any } = {
-  geneannotation: "",
-  bed: "",
-  bedcolor: "",
-  bigwig: "",
-  dynseq: "",
-  methylc: "",
-  hic: "",
-  genomealign: "",
-  vcf: "",
-  categorical: "",
-  longrange: "",
-  biginteract: "",
-  repeatmasker: "",
-  bigbed: "",
-  refbed: "",
-  matplot: "",
-  ruler: "",
-  modbed: "",
-  dynamic: "",
-  bedgraph: "",
-  qbed: "",
-  boxplot: "",
-  jaspar: "",
-  dynamichic: "",
-  dynamicbed: "",
-  dbedgraph: "",
-  dynamiclongrange: "",
-  snp: "",
-  bam: "",
-  omeroidr: "",
-  error: "",
-};
+const componentSet = new Set([
+  "geneannotation",
+  "bed",
+  "bedcolor",
+  "bigwig",
+  "dynseq",
+  "methylc",
+  "hic",
+  "genomealign",
+  "vcf",
+  "categorical",
+  "longrange",
+  "biginteract",
+  "repeatmasker",
+  "bigbed",
+  "refbed",
+  "matplot",
+  "ruler",
+  "modbed",
+  "dynamic",
+  "bedgraph",
+  "qbed",
+  "boxplot",
+  "jaspar",
+  "dynamichic",
+  "dynamicbed",
+  "dbedgraph",
+  "dynamiclongrange",
+  "snp",
+  "bam",
+  "omeroidr",
+  "error",
+]);
 export interface PlacedMergedAlignment extends QueryGenomePiece {
   segments: PlacedAlignment[];
   targetXSpan: OpenInterval;
@@ -135,10 +135,12 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
         const trackType = item?.type || item?.metadata["Track type"];
         const id = item.id;
         let foundInvalidTrack = false;
+        // HAS TO HJAS CONSOLE OR in DOESNT WORK?????????
+
         if (
           (item.metadata.genome &&
             !(item.metadata.genome in genomicFetchCoord)) ||
-          !(item.type in componentMap)
+          !componentSet.has(trackType)
         ) {
           foundInvalidTrack = true;
         }
@@ -150,7 +152,7 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
             trackModel: item,
             result: { error: "This track type is currently not supported" },
           });
-        } else if (trackType in { hic: "", dynamichic: "" }) {
+        } else if (trackType in { "hic": "", "dynamichic": "" }) {
           fetchResults.push({
             name: trackType,
             id: id,
@@ -341,6 +343,7 @@ export async function fetchGenomicData(dataToFetchArr: Array<any>) {
 
             responses.push(_.flatten(curRespond));
           } catch (error) {
+
             console.error(
               `Error fetching data for track model type ${trackModel.type}:`,
               error

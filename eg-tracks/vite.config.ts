@@ -12,14 +12,7 @@ export default defineConfig({
     },
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
   },
-  define: {
-    "process.env": {},
-  },
-  server: {
-    fs: {
-      allow: [fileURLToPath(new URL(".", import.meta.url))],
-    },
-  },
+
   build: {
     lib: {
       entry: path.resolve(__dirname, "src/index.ts"),
@@ -27,11 +20,12 @@ export default defineConfig({
       fileName: (format) => `index.${format}.js`,
     },
     rollupOptions: {
-      external: ["react", "react-dom"],
+      external: ["react", "react-dom", "react/jsx-runtime"],
       output: {
         globals: {
+          "react-dom": "ReactDom",
           react: "React",
-          "react-dom": "ReactDOM",
+          "react/jsx-runtime": "ReactJsxRuntime",
         },
       },
     },
