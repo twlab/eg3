@@ -101,8 +101,7 @@ export default function GenomeView() {
     genomeConfig &&
     currentSession.genomeId === genomeConfig.name ? (
     <div>
-      <GenomeViewerTest />
-      {/* <TrackContainerRepresentable
+      <TrackContainerRepresentable
         key={currentSession.id}
         genomeName={
           currentSession?.genomeId ? currentSession?.genomeId : "hg38"
@@ -125,7 +124,7 @@ export default function GenomeView() {
         isScreenShotOpen={isScreenShotOpen}
         overrideViewRegion={currentSession?.overrideViewRegion}
         currentState={currentState}
-      /> */}
+      />
     </div>
   ) : null;
 }

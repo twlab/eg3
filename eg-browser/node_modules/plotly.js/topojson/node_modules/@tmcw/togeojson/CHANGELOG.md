@@ -1,0 +1,432 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [5.6.2](https://github.com/placemark/togeojson/compare/v5.6.1...v5.6.2) (2023-05-30)
+
+
+### Bug Fixes
+
+* Zero elevation data in GPX should still be included ([6457106](https://github.com/placemark/togeojson/commit/6457106b98f174d7b3d1299748168351ae649696))
+
+### [5.6.1](https://github.com/placemark/togeojson/compare/v5.6.0...v5.6.1) (2023-05-05)
+
+
+### Bug Fixes
+
+* adds types definitions to exports in package.json ([#109](https://github.com/placemark/togeojson/issues/109)) ([f382d30](https://github.com/placemark/togeojson/commit/f382d30126104433b203acc70e14d056f57df0d2))
+
+## [5.6.0](https://github.com/placemark/togeojson/compare/v5.5.0...v5.6.0) (2022-12-30)
+
+
+### Features
+
+* Support LinearRing as direct descendent of a Placemark element ([#105](https://github.com/placemark/togeojson/issues/105)) ([3673a7f](https://github.com/placemark/togeojson/commit/3673a7fa4c7c2d8ed0403b94fb663654016200f7))
+
+
+### Bug Fixes
+
+* Export F type ([#106](https://github.com/placemark/togeojson/issues/106)) ([c9870b2](https://github.com/placemark/togeojson/commit/c9870b27f5043f24effcc9dce89ce4f2c633ca60))
+
+## [5.5.0](https://github.com/placemark/togeojson/compare/v5.4.0...v5.5.0) (2022-11-12)
+
+
+### Features
+
+* Add support for Schema tag and convert properties to correct datatype ([#100](https://github.com/placemark/togeojson/issues/100)) ([22479aa](https://github.com/placemark/togeojson/commit/22479aa3723d26f789561c1f4fb369fdc3be8085)), closes [#69](https://github.com/placemark/togeojson/issues/69)
+
+## [5.4.0](https://github.com/placemark/togeojson/compare/v5.3.0...v5.4.0) (2022-10-31)
+
+
+### Features
+
+* Ground overlays ([#98](https://github.com/placemark/togeojson/issues/98)) ([43d357d](https://github.com/placemark/togeojson/commit/43d357db277db069caa2d543ba88f9f7ef862ad0))
+
+## [5.3.0](https://github.com/placemark/togeojson/compare/v5.2.1...v5.3.0) (2022-10-23)
+
+
+### Features
+
+* Import visibility ([#94](https://github.com/placemark/togeojson/issues/94)) ([920c869](https://github.com/placemark/togeojson/commit/920c869f4233d5f0dba04e6ba7cbc5739d8cca86))
+
+
+### Bug Fixes
+
+* properly support KMLs with sibling MultiGeometries ([#96](https://github.com/placemark/togeojson/issues/96)) ([f0e978a](https://github.com/placemark/togeojson/commit/f0e978a2932268cc5b1f9e023882a32d16fe6abd))
+
+### [5.2.2](https://github.com/placemark/togeojson/compare/v5.2.1...v5.2.2) (2022-08-09)
+
+### [5.2.1](https://github.com/placemarkio/togeojson/compare/v5.2.0...v5.2.1) (2022-06-15)
+
+
+### Bug Fixes
+
+* Limit extracted coordinates to 3 ([#91](https://github.com/placemarkio/togeojson/issues/91)) ([b35d5a2](https://github.com/placemarkio/togeojson/commit/b35d5a2b21dfd392dee816f22caf4dd000aa6b91))
+
+## [5.2.0](https://github.com/placemarkio/togeojson/compare/v5.1.3...v5.2.0) (2022-06-12)
+
+
+### Features
+
+* Handle HTML in description tags ([#90](https://github.com/placemarkio/togeojson/issues/90)) ([1d2dbfe](https://github.com/placemarkio/togeojson/commit/1d2dbfe160d6b998fd945d2c6194451a7928ed02))
+
+## [5.2.0-1](https://github.com/placemarkio/togeojson/compare/v5.2.0-0...v5.2.0-1) (2022-06-12)
+
+
+### Bug Fixes
+
+* Fix typo ([4a9a57a](https://github.com/placemarkio/togeojson/commit/4a9a57a9cc6f9ec63a2df1cc2944dbb763a19b1c))
+
+## [5.2.0-0](https://github.com/placemarkio/togeojson/compare/v5.1.3...v5.2.0-0) (2022-06-12)
+
+
+### Features
+
+* Handle HTML in description tags ([e156191](https://github.com/placemarkio/togeojson/commit/e156191780ba5618a63d6787ae481fd50bc0c075))
+
+### [5.1.3](https://github.com/placemarkio/togeojson/compare/v5.1.2...v5.1.3) (2022-05-22)
+
+
+### Bug Fixes
+
+* Switch ESM entry point to use .mjs ending to fix Node.js native ESM support ([cd366b8](https://github.com/placemarkio/togeojson/commit/cd366b8b497a53803451221ebd8704d72e4c6e4a))
+
+### [5.1.3-0](https://github.com/placemarkio/togeojson/compare/v5.1.2...v5.1.3-0) (2022-05-22)
+
+### [5.1.2](https://github.com/placemarkio/togeojson/compare/v5.1.0...v5.1.2) (2022-04-24)
+
+
+### Bug Fixes
+
+* Add fixtures, block invalid GPX inputs ([#80](https://github.com/placemarkio/togeojson/issues/80)) ([d57cd80](https://github.com/placemarkio/togeojson/commit/d57cd80757deb34e5442973f4ab44acb1d4660c8))
+
+### [5.1.1](https://github.com/placemarkio/togeojson/compare/v5.1.0...v5.1.1) (2022-04-24)
+
+
+### Bug Fixes
+
+* Add fixtures, block invalid GPX inputs ([#80](https://github.com/placemarkio/togeojson/issues/80)) ([d57cd80](https://github.com/placemarkio/togeojson/commit/d57cd80757deb34e5442973f4ab44acb1d4660c8))
+
+## [5.1.0](https://github.com/placemarkio/togeojson/compare/v5.0.0...v5.1.0) (2022-04-23)
+
+
+### Features
+
+* Translate hotspot units ([#79](https://github.com/placemarkio/togeojson/issues/79)) ([114dcea](https://github.com/placemarkio/togeojson/commit/114dceac3844e430d6d38ad24e77d85b0ecfc99b))
+
+## [5.0.0](https://github.com/placemarkio/togeojson/compare/v5.0.0-5...v5.0.0) (2022-04-22)
+
+
+### Bug Fixes
+
+* Fix color extraction ([#77](https://github.com/placemarkio/togeojson/issues/77)) ([5712bc3](https://github.com/placemarkio/togeojson/commit/5712bc3f40a49e31a279643c102f832d4216797a))
+
+## [5.0.0-5](https://github.com/placemarkio/togeojson/compare/v5.0.0-4...v5.0.0-5) (2022-03-19)
+
+
+### Bug Fixes
+
+* Folder structure fixes ([#72](https://github.com/placemarkio/togeojson/issues/72)) ([ef0e3fe](https://github.com/placemarkio/togeojson/commit/ef0e3fe4109e4d2b08ea9517f5866a760d806613))
+
+## [5.0.0-4](https://github.com/placemarkio/togeojson/compare/v5.0.0-3...v5.0.0-4) (2022-03-15)
+
+
+### Bug Fixes
+
+* Allow meta object to contain new values ([6dd282e](https://github.com/placemarkio/togeojson/commit/6dd282e33755699dbc95b4455fe06fdfbe8692cb))
+
+## [5.0.0-3](https://github.com/placemarkio/togeojson/compare/v5.0.0-2...v5.0.0-3) (2022-03-15)
+
+
+### Bug Fixes
+
+* Export Folder and Root types ([b9fa7f0](https://github.com/placemarkio/togeojson/commit/b9fa7f0827d8417addbaca76dc9f440495cc5336))
+
+## [5.0.0-2](https://github.com/placemarkio/togeojson/compare/v5.0.0-1...v5.0.0-2) (2022-03-14)
+
+## [5.0.0-1](https://github.com/placemarkio/togeojson/compare/v5.0.0-0...v5.0.0-1) (2022-03-14)
+
+## [5.0.0-0](https://github.com/tmcw/togeojson/compare/v4.8.0-0...v5.0.0-0) (2022-03-14)
+
+## [4.8.0-0](https://github.com/tmcw/togeojson/compare/v4.7.0...v4.8.0-0) (2022-03-14)
+
+
+### Features
+
+* Folders and TypeScript ([6f36fd3](https://github.com/tmcw/togeojson/commit/6f36fd381798377909632eae11efef9e8b9be596))
+
+### [4.7.1-0](https://github.com/tmcw/togeojson/compare/v4.7.0...v4.7.1-0) (2022-03-09)
+
+## [4.7.0](https://github.com/tmcw/togeojson/compare/v4.6.1...v4.7.0) (2022-03-08)
+
+
+### Features
+
+* Support gx:CascadingStyle ([600c542](https://github.com/tmcw/togeojson/commit/600c542b016684066fb31107c5896bedad0b5329))
+
+### [4.6.1](https://github.com/tmcw/togeojson/compare/v4.6.1-1...v4.6.1) (2022-03-07)
+
+### [4.6.1-1](https://github.com/tmcw/togeojson/compare/v4.6.1-0...v4.6.1-1) (2022-03-07)
+
+
+### Bug Fixes
+
+* Typo ([9cb1ed0](https://github.com/tmcw/togeojson/commit/9cb1ed06ffcd60954c629838d0cc5ba8df3aa953))
+
+### [4.6.1-0](https://github.com/tmcw/togeojson/compare/v4.6.0...v4.6.1-0) (2022-03-07)
+
+
+### Bug Fixes
+
+* Make module system more convoluted ([845ff7a](https://github.com/tmcw/togeojson/commit/845ff7a2c08220d8b87860231b262709d8db070a))
+
+## [4.6.0](https://github.com/tmcw/togeojson/compare/v4.5.0...v4.6.0) (2022-03-07)
+
+
+### Features
+
+* Support additional GPX extensions ([ae2f00f](https://github.com/tmcw/togeojson/commit/ae2f00f685f5fd1e74b19864b0bba8211310d31a))
+
+## [4.5.0](https://github.com/tmcw/togeojson/compare/v4.4.1...v4.5.0) (2021-08-03)
+
+
+### Features
+
+* Load TCX Courses ([#53](https://github.com/tmcw/togeojson/issues/53)) ([8924925](https://github.com/tmcw/togeojson/commit/89249255bd86d8c38e855f14b62fffad3f556abf))
+
+### [4.4.1](https://github.com/tmcw/togeojson/compare/v4.4.0...v4.4.1) (2021-04-27)
+
+
+### Bug Fixes
+
+* Rename heartRates coordinate property to heart ([#48](https://github.com/tmcw/togeojson/issues/48)) ([8fc03f2](https://github.com/tmcw/togeojson/commit/8fc03f2a65ab01a53b81564f7ed6fac2a66452ad))
+
+## [4.4.0](https://github.com/tmcw/togeojson/compare/v4.3.0...v4.4.0) (2021-03-31)
+
+
+### Features
+
+* Add coordinate properties  for times and heartRates ([#47](https://github.com/tmcw/togeojson/issues/47)) ([5e3958b](https://github.com/tmcw/togeojson/commit/5e3958b18509a85eba4b9b78ef5095b01d7dc213))
+
+## [4.3.0](https://github.com/tmcw/togeojson/compare/v4.2.0...v4.3.0) (2020-12-28)
+
+
+### Features
+
+* Add heartRates to geojson properties for tcx files ([#42](https://github.com/tmcw/togeojson/issues/42)) ([ecde092](https://github.com/tmcw/togeojson/commit/ecde09219abdb507527f70358a400c799b01c2d1))
+
+## [4.2.0](https://github.com/tmcw/togeojson/compare/v4.1.0...v4.2.0) (2020-09-05)
+
+
+### Features
+
+* Preserve GPX linestring type in a _gpxType property that is either rte or trk ([54fa558](https://github.com/tmcw/togeojson/commit/54fa5581a99095f87ccfe937c6da539f6b7d9995))
+* TCX Support ([6df0878](https://github.com/tmcw/togeojson/commit/6df087891dffa06474479b17fc0595110ff76b3e))
+
+## [4.1.0](https://github.com/tmcw/togeojson/compare/v4.0.0...v4.1.0) (2020-06-13)
+
+
+### Features
+
+* Add LabelStyle support and complete IconStyle support for KML ([f920b16](https://github.com/tmcw/togeojson/commit/f920b16493a79b7d5370a940387ae77386a00771))
+
+## [4.0.0](https://github.com/tmcw/togeojson/compare/v3.2.0...v4.0.0) (2020-04-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Previously, togeojson would ignore Placemarks that did not have
+associated geometry. [Per the GeoJSON
+specification](https://tools.ietf.org/html/rfc7946#section-3.2),
+Feature objects can have null geometries. After this change, togeojson
+will output features with null geometries as the translation of KML
+Placemarks with no geometry, instead of ommitting those items entirely.
+
+## [3.2.0](https://github.com/tmcw/togeojson/compare/v3.1.0...v3.2.0) (2019-12-29)
+
+
+### Features
+
+* add garmin extension handling ([2e95798](https://github.com/tmcw/togeojson/commit/2e9579839bc294ad08cf83127e498bc27749eb81))
+
+<a name="3.1.0"></a>
+# [3.1.0](https://github.com/tmcw/togeojson/compare/v3.0.1...v3.1.0) (2019-12-25)
+
+
+### Features
+
+* Add parsing of GPX extensions speed, course, hAcc, vAcc ([#18](https://github.com/tmcw/togeojson/issues/18)) ([99301bd](https://github.com/tmcw/togeojson/commit/99301bd))
+
+
+
+<a name="3.0.1"></a>
+## [3.0.1](https://github.com/tmcw/togeojson/compare/v3.0.0...v3.0.1) (2019-06-17)
+
+
+### Bug Fixes
+
+* Typo in rollup configuration ([1af08f6](https://github.com/tmcw/togeojson/commit/1af08f6))
+
+
+
+<a name="3.0.0"></a>
+# [3.0.0](https://github.com/tmcw/togeojson/compare/v2.0.0...v3.0.0) (2019-03-28)
+
+
+### Code Refactoring
+
+* switch from initializeArray to Array.fill ([#11](https://github.com/tmcw/togeojson/issues/11)) ([dac617a](https://github.com/tmcw/togeojson/commit/dac617a)), closes [#10](https://github.com/tmcw/togeojson/issues/10)
+
+
+### BREAKING CHANGES
+
+* this may modify browser support if you’re using
+an old browser. See the MDN page for full details:
+
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+
+
+
+<a name="2.0.0"></a>
+# [2.0.0](https://github.com/tmcw/togeojson/compare/v1.0.0...v2.0.0) (2019-03-08)
+
+
+### Features
+
+* Generator methods, removed CLI ([f37a30b](https://github.com/tmcw/togeojson/commit/f37a30b))
+
+
+### BREAKING CHANGES
+
+* the cli that was previously installed along with togeojson has been removed, and will be installable as @tmcw/togeojson-cli
+
+Other changes in this pass:
+
+- Switch from microbundle to rollup to build
+- Remove dependencies
+- Remove reliance on XMLSerializer. This will make togeojson work in worker contexts.
+
+
+
+<a name="1.0.0"></a>
+# [1.0.0](https://github.com/tmcw/togeojson/compare/v1.0.0-alpha.1...v1.0.0) (2019-01-18)
+
+
+
+<a name="1.0.0-alpha.1"></a>
+# [1.0.0-alpha.1](https://github.com/tmcw/togeojson/compare/v1.0.0-alpha.0...v1.0.0-alpha.1) (2019-01-18)
+
+
+
+<a name="1.0.0-alpha.0"></a>
+# [1.0.0-alpha.0](https://github.com/tmcw/togeojson/compare/v0.16.0...v1.0.0-alpha.0) (2019-01-18)
+
+
+
+## 0.16.0
+
+* Supports the `link` tag in GPX data.
+* Supports the `type` tag for waypoints in GPX data.
+
+## 0.15.0
+
+* Supports the `cmt` (comment) tag in GPX data.
+
+## 0.14.2
+
+* Fixes a potential crash with QGIS-generated GPX files.
+
+## 0.14.0
+
+* Now includes TimeStamp property from Placemarks, if it exists.
+
+## 0.13.0
+
+* Added support for StyleMap elements in Google-flavored KML
+* Improved test coverage
+* Made `#` prefix for internal style references optional
+* Uses `eslint` for code style uniformity
+
+## 0.12.2
+
+* Fix `#` prefix on exported hex colors
+
+## 0.12.1
+
+* Fix trackpoints with elevation=0 having their elevation skipped
+
+## 0.12.0
+
+* Fix rte based GPX based tracks
+* Add CDATA support to KML
+
+## 0.11.0
+
+* Add heartrate support for GPX tracks
+* Fix elevation support
+* Fix test runner
+
+## 0.10.1
+
+* Fix an IE9 error: IE9 'supports' `XMLSerializer` inasmuch as it will create
+  an instance that fails always and hard.
+
+## 0.10.0
+
+* Encode timestamps along lines in GPX and KML as a `coordTimes` property.
+
+## 0.9.0
+
+* Encode KML id attributes on Placemarks as GeoJSON Feature id properties.
+
+## 0.8.0
+
+* Support for the `gx:Track` and `gx:MultiTrack` extensions to GPX
+
+## 0.7.0
+
+* GPX conversion creates MultiLineString geometries when given multiple track segments.
+
+## 0.6.0
+
+* Support for [simplestyle spec](https://github.com/mapbox/simplestyle-spec) 1.1.0
+* Tests in [tape](https://github.com/substack/tape) rather than mocha/expect.js
+
+## 0.5.0
+
+* Elevation values along linestrings and in points for GPX are now parsed
+  correctly into `Z` coordinate values in GeoJSON.
+
+## 0.4.2
+
+* No longer bundles xmldom for browsers
+
+## 0.3.1
+
+* Stricter check for browser versus browserify when requiring `xmldom`
+
+## 0.3.0
+
+* Support for pipes and streams
+
+```sh
+echo "LineString(0 0, 10 10)" | wellknown | tokml | togeojson > map.geojson
+```
+
+## 0.2.0
+
+* Improve documentation
+* Make style hashing on by default, remove options object
+
+## 0.1.1
+
+* Fix global leak.
+
+## 0.1.0
+
+* Comments
+* GPX Support
+
+## 0.0.1
+
+* Support GeometryCollections as themselves.
