@@ -172,6 +172,8 @@
 .enhanced-drawer {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(8px);
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 .enhanced-accordion {
@@ -311,6 +313,12 @@
   background: #ffffff;
 }
 
+/* When accordion is open, ensure proper overflow handling */
+.enhanced-accordion-section.open .enhanced-accordion-content {
+  max-height: none;
+  overflow: visible;
+}
+
 .accordion-content-inner {
   padding: 18px;
 }
@@ -346,7 +354,7 @@
   transition: none;
   position: relative;
   overflow: visible;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .control-group:not(:last-child)::after {
@@ -877,29 +885,56 @@
 }
 .enhanced-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
   background: #ffffff;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .enhanced-input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.enhanced-input:hover {
+  border-color: #9ca3af;
 }
 
 .enhanced-input.small {
   width: 80px;
 }
 
+/* Modern Input Style - used in the component */
+.modern-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.modern-input:hover {
+  border-color: #9ca3af;
+}
+
 .input-group {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .input-group .enhanced-input {
@@ -909,19 +944,24 @@
 /* Enhanced Select */
 .enhanced-select {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
   background: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .enhanced-select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.enhanced-select:hover {
+  border-color: #9ca3af;
 }
 
 /* Opacity Slider */
@@ -968,15 +1008,22 @@
   width: 100%;
   padding: 8px;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .file-input:hover {
   border-color: #3b82f6;
   background: #ffffff;
+}
+
+.file-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Message Styles */
