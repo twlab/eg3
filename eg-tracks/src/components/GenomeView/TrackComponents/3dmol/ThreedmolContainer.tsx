@@ -28,6 +28,7 @@ import { OpacityThickness } from "./OpacityThickness";
 import ColorPicker from "./ColorPicker";
 import { ArrowList } from "./ArrowList";
 import { StaticLegend } from "./StaticLegend";
+
 // import * as $3Dmol from "3dmol/build/3Dmol.js";
 import {
   reg2bin,
@@ -163,27 +164,64 @@ interface ComponentProps {
   onGetViewer3dAndNumFrames?: any;
 }
 
-function AccordionSection({ title, children, defaultOpen = false }) {
+function AccordionSection({ title, children, defaultOpen = true }) {
   const [open, setOpen] = React.useState(defaultOpen);
+  const [isInitialized, setIsInitialized] = React.useState(false);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    // Initialize the accordion content height
+    const timer = setTimeout(() => {
+      if (contentRef.current) {
+        if (open) {
+          contentRef.current.style.maxHeight =
+            contentRef.current.scrollHeight + "px";
+        } else {
+          contentRef.current.style.maxHeight = "0px";
+        }
+        setIsInitialized(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  React.useEffect(() => {
+    if (contentRef.current && isInitialized) {
+      if (open) {
+        contentRef.current.style.maxHeight =
+          contentRef.current.scrollHeight + "px";
+      } else {
+        contentRef.current.style.maxHeight = "0px";
+      }
+    }
+  }, [open, isInitialized]);
+
   return (
-    <div className={`card custom-accordion-section${open ? " open" : ""}`}>
+    <div className={`enhanced-accordion-section${open ? " open" : ""}`}>
       <div
-        className="card-header custom-accordion-header"
+        className="enhanced-accordion-header"
         onClick={() => setOpen((v) => !v)}
-        style={{ cursor: "pointer", userSelect: "none" }}
       >
-        <h5 className="mb-0">
+        <h5 className="accordion-title">
           <span>{title}</span>
-          <span style={{ float: "right" }}>{open ? "▲" : "▼"}</span>
+          <div className="accordion-arrow">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className={`arrow-icon ${open ? "open" : ""}`}
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </div>
         </h5>
       </div>
-      <div
-        className="custom-accordion-content"
-        style={{
-          display: open ? "block" : "none",
-        }}
-      >
-        {children}
+      <div ref={contentRef} className="enhanced-accordion-content">
+        <div className="accordion-content-inner">{children}</div>
       </div>
     </div>
   );
@@ -3235,9 +3273,9 @@ class ThreedmolContainer extends React.Component<
       bigWigUrl,
       bigWigInputUrl,
       paintRegion,
-      uploadCompartmentFile,
-      compartmentFileUrl,
-      paintCompartmentRegion,
+      // uploadCompartmentFile,
+      // compartmentFileUrl,
+      // paintCompartmentRegion,
       categories,
       staticCategories,
       newG3dUrl,
@@ -3291,116 +3329,233 @@ class ThreedmolContainer extends React.Component<
             width={this.state.width}
             height={this.state.height}
             open={childShow}
+            className="enhanced-drawer"
           >
             <div
               id="accordion"
+              className="enhanced-accordion"
               style={{
                 flexDirection: menuFlexDirection,
+                padding: "16px",
+                background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+                minHeight: "100%",
               }}
             >
-              <div className="closeMenu-3d" onClick={this.onSwitch}>
-                &times;
+              <div className="drawer-header">
+                <h3 className="drawer-title">3D Viewer Settings</h3>
+                <button
+                  className="close-button"
+                  onClick={this.onSwitch}
+                  aria-label="Close menu"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              {/* Custom Accordion Menu */}
+
+              {/* Modern Accordion Menu */}
               {[
                 {
                   key: "model",
-                  title: "Model data",
+                  title: "Model Data",
                   content: (
-                    <div className="card-body">
-                      <div>
-                        <ResolutionList
-                          resolution={resolution}
-                          resolutions={resolutions}
-                          onUpdateResolution={this.updateResolution}
-                        />
-                      </div>
-                      <div>
-                        <ModelListMenu
-                          modelDisplay={modelDisplayConfig}
-                          onToggleModelDisplay={this.toggleModelDisplay}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="envelop">
-                          Show envelop:{" "}
-                          <input
-                            type="checkbox"
-                            name="envelop"
-                            checked={showEnvelop}
-                            onChange={this.toggleDisplayEnvelop}
-                          />
-                        </label>
-                      </div>
-                      <div
-                        style={{
-                          display: showEnvelop ? "flex" : "none",
-                          alignItems: "center",
-                        }}
-                      >
-                        <label style={{ display: "flex" }}>
-                          <span>envelop color:</span>
-                          <ColorPicker
-                            onUpdateLegendColor={this.updateLegendColor}
-                            colorKey={"envelopColor"}
-                            initColor={envelopColor}
-                          />
-                        </label>
-                        <label>
-                          opacity:{" "}
-                          <input
-                            type="number"
-                            min={0}
-                            max={1}
-                            step={0.1}
-                            value={envelopOpacity}
-                            onChange={this.handleEnvelopOpacityChange}
-                          />
-                        </label>
-                      </div>
-                      <div>
-                        <label htmlFor="spin">
-                          Spin:{" "}
-                          <input
-                            type="checkbox"
-                            name="spin"
-                            checked={spinning}
-                            onChange={this.toggleSpin}
-                          />
-                        </label>
-                        <span style={{ display: spinning ? "inline" : "none" }}>
-                          <label>
-                            Direction:{" "}
-                            <select
-                              value={spinDirection}
-                              onChange={this.setSpinDirection}
-                            >
-                              <option value="x">x</option>
-                              <option value="y">y</option>
-                              <option value="z">z</option>
-                            </select>
-                          </label>
-                          <label>
-                            Speed:{" "}
-                            <select
-                              value={spinSpeed}
-                              onChange={this.setSpinSpeed}
-                            >
-                              <option value="1">normal</option>
-                              <option value="2">fast</option>
-                              <option value="3">faster</option>
-                            </select>
-                          </label>
-                          <label htmlFor="spinReverse">
-                            Reverse:{" "}
-                            <input
-                              type="checkbox"
-                              name="spinReverse"
-                              checked={spinReverse}
-                              onChange={this.toggleSpinReverse}
+                    <div className="section-content">
+                      <div className="control-group">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "12px",
+                          }}
+                        >
+                          <h4
+                            className="subsection-title"
+                            style={{
+                              margin: 0,
+                              flex: "0 0 auto",
+                              lineHeight: "1.2",
+                              display: "flex",
+                              alignItems: "center",
+                              height: "32px",
+                            }}
+                          >
+                            Choose resolution:
+                          </h4>
+                          <div
+                            style={{
+                              flex: "0 0 auto",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <ResolutionList
+                              resolution={resolution}
+                              resolutions={resolutions}
+                              onUpdateResolution={this.updateResolution}
                             />
+                          </div>
+                        </div>
+                        <div style={{ marginTop: "12px" }}>
+                          <h4 className="subsection-title">Models:</h4>
+                          <ModelListMenu
+                            modelDisplay={modelDisplayConfig}
+                            onToggleModelDisplay={this.toggleModelDisplay}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="control-group">
+                        <div className="toggle-control">
+                          <label className="toggle-label" htmlFor="envelop">
+                            <span className="label-text">Show Envelope:</span>
+                            <div className="toggle-wrapper">
+                              <input
+                                type="checkbox"
+                                id="envelop"
+                                name="envelop"
+                                className="toggle-input"
+                                checked={showEnvelop}
+                                onChange={this.toggleDisplayEnvelop}
+                              />
+                              <span className="toggle-slider"></span>
+                            </div>
                           </label>
-                        </span>
+                        </div>
+
+                        <div
+                          className="envelope-controls"
+                          style={{
+                            display: showEnvelop ? "flex" : "none",
+                            gap: "12px",
+                            alignItems: "center",
+                            marginTop: "12px",
+                            padding: "12px",
+                            background: "#ffffff",
+                            borderRadius: "8px",
+                            border: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <div className="color-control">
+                            <span className="control-label">Color:</span>
+                            <ColorPicker
+                              onUpdateLegendColor={this.updateLegendColor}
+                              colorKey={"envelopColor"}
+                              initColor={envelopColor}
+                            />
+                          </div>
+                          <div className="opacity-control">
+                            <label className="control-label">
+                              Opacity:
+                              <input
+                                type="range"
+                                min={0}
+                                max={1}
+                                step={0.1}
+                                value={envelopOpacity}
+                                onChange={this.handleEnvelopOpacityChange}
+                                className="opacity-slider"
+                              />
+                              <span className="opacity-value">
+                                {envelopOpacity}
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="control-group">
+                        <div className="toggle-control">
+                          <label className="toggle-label" htmlFor="spin">
+                            <span className="label-text">Spin:</span>
+                            <div className="toggle-wrapper">
+                              <input
+                                type="checkbox"
+                                id="spin"
+                                name="spin"
+                                className="toggle-input"
+                                checked={spinning}
+                                onChange={this.toggleSpin}
+                              />
+                              <span className="toggle-slider"></span>
+                            </div>
+                          </label>
+                        </div>
+
+                        <div
+                          className="spin-controls"
+                          style={{
+                            display: spinning ? "grid" : "none",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "12px",
+                            marginTop: "12px",
+                            padding: "12px",
+                            background: "#ffffff",
+                            borderRadius: "8px",
+                            border: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <div className="select-control">
+                            <label className="control-label">
+                              Direction:
+                              <select
+                                value={spinDirection}
+                                onChange={this.setSpinDirection}
+                                className="enhanced-select"
+                              >
+                                <option value="x">X-Axis</option>
+                                <option value="y">Y-Axis</option>
+                                <option value="z">Z-Axis</option>
+                              </select>
+                            </label>
+                          </div>
+                          <div className="select-control">
+                            <label className="control-label">
+                              Speed:
+                              <select
+                                value={spinSpeed}
+                                onChange={this.setSpinSpeed}
+                                className="enhanced-select"
+                              >
+                                <option value="1">Normal</option>
+                                <option value="2">Fast</option>
+                                <option value="3">Faster</option>
+                              </select>
+                            </label>
+                          </div>
+                          <div
+                            className="toggle-control"
+                            style={{ gridColumn: "span 2" }}
+                          >
+                            <label
+                              className="toggle-label"
+                              htmlFor="spinReverse"
+                            >
+                              <span className="label-text">
+                                Reverse direction
+                              </span>
+                              <div className="toggle-wrapper">
+                                <input
+                                  type="checkbox"
+                                  id="spinReverse"
+                                  name="spinReverse"
+                                  className="toggle-input"
+                                  checked={spinReverse}
+                                  onChange={this.toggleSpinReverse}
+                                />
+                                <span className="toggle-slider"></span>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ),
@@ -3409,88 +3564,67 @@ class ThreedmolContainer extends React.Component<
                   key: "layout",
                   title: "Layout",
                   content: (
-                    <div className="card-body">
-                      <div>
-                        <strong>Viewers:</strong>
-                        <ul>
-                          <li>
-                            <label>
-                              <input
-                                type="radio"
-                                value="picture"
-                                name="layout"
-                                checked={layout === "picture"}
-                                onChange={this.onLayoutChange}
-                              />
-                              <span>Picture in picture</span>
-                            </label>
-                          </li>
-                          <li>
-                            <label>
-                              <input
-                                type="radio"
-                                name="layout"
-                                value="side"
-                                checked={layout === "side"}
-                                onChange={this.onLayoutChange}
-                              />
-                              <span>Side by side</span>
-                            </label>
-                          </li>
-                        </ul>
+                    <div className="section-content">
+                      <div className="control-group">
+                        <h4 className="subsection-title">Viewer:</h4>
+                        <div className="radio-group compact">
+                          <label className="radio-option">
+                            <input
+                              type="radio"
+                              value="picture"
+                              name="layout"
+                              checked={layout === "picture"}
+                              onChange={this.onLayoutChange}
+                              className="radio-input"
+                            />
+                            <span className="radio-custom"></span>
+                            <span className="radio-label">
+                              Picture in Picture
+                            </span>
+                          </label>
+                          <label className="radio-option">
+                            <input
+                              type="radio"
+                              name="layout"
+                              value="side"
+                              checked={layout === "side"}
+                              onChange={this.onLayoutChange}
+                              className="radio-input"
+                            />
+                            <span className="radio-custom"></span>
+                            <span className="radio-label">Side by Side</span>
+                          </label>
+                        </div>
                       </div>
-                      <div className="thumb-control">
-                        <strong>Thumbnail structure:</strong>
-                        <label>
-                          <input
-                            name="thumbStyle"
-                            type="radio"
-                            value="cartoon"
-                            checked={this.state.thumbStyle === "cartoon"}
-                            onChange={this.handleThumbStyleChange}
-                          />
-                          Cartoon
-                        </label>
-                        <label>
-                          <input
-                            name="thumbStyle"
-                            type="radio"
-                            value="sphere"
-                            checked={this.state.thumbStyle === "sphere"}
-                            onChange={this.handleThumbStyleChange}
-                          />
-                          Sphere
-                        </label>
-                        <label>
-                          <input
-                            name="thumbStyle"
-                            type="radio"
-                            value="cross"
-                            checked={this.state.thumbStyle === "cross"}
-                            onChange={this.handleThumbStyleChange}
-                          />
-                          Cross
-                        </label>
-                        <label>
-                          <input
-                            name="thumbStyle"
-                            type="radio"
-                            value="line"
-                            checked={this.state.thumbStyle === "line"}
-                            onChange={this.handleThumbStyleChange}
-                          />
-                          Line
-                        </label>
-                        <label>
-                          <input
-                            name="thumbStyle"
-                            type="radio"
-                            value="hide"
-                            checked={this.state.thumbStyle === "hide"}
-                            onChange={this.handleThumbStyleChange}
-                          />
-                          Hide
-                        </label>
+
+                      <div className="control-group">
+                        <h4 className="subsection-title">
+                          Thumbnail Structure:
+                        </h4>
+                        <div className="radio-group compact">
+                          {[
+                            { value: "cartoon", label: "Cartoon" },
+                            { value: "sphere", label: "Sphere" },
+                            { value: "cross", label: "Cross" },
+                            { value: "line", label: "Line" },
+                            { value: "hide", label: "Hide" },
+                          ].map((option) => (
+                            <label key={option.value} className="radio-option">
+                              <input
+                                name="thumbStyle"
+                                type="radio"
+                                value={option.value}
+                                checked={this.state.thumbStyle === option.value}
+                                onChange={this.handleThumbStyleChange}
+                                className="radio-input"
+                              />
+                              <span className="radio-custom"></span>
+                              <span className="radio-label">
+                                {option.label}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ),
@@ -3499,93 +3633,114 @@ class ThreedmolContainer extends React.Component<
                   key: "highlight",
                   title: "Highlighting & Labeling",
                   content: (
-                    <div className="card-body">
-                      <OpacityThickness
-                        opacity={lineOpacity}
-                        thickness={cartoonThickness}
-                        highlightStyle={highlightStyle}
-                        onUpdate={this.updateLegendColor}
-                      />
-                      <div
-                        style={{ display: "flex", alignItems: "flex-start" }}
-                      >
-                        <ColorPicker
-                          onUpdateLegendColor={this.updateLegendColor}
-                          colorKey={"highlightingColor"}
-                          initColor={highlightingColor}
+                    <div className="section-content">
+                      <div className="control-group">
+                        <h4 className="subsection-title">
+                          Highlight Controls:
+                        </h4>
+                        <OpacityThickness
+                          opacity={lineOpacity}
+                          thickness={cartoonThickness}
+                          highlightStyle={highlightStyle}
+                          onUpdate={this.updateLegendColor}
                         />
-                        <button
-                          className="btn btn-primary btn-sm"
-                          disabled={highlightingOn && !highlightingColorChanged}
-                          onClick={this.highlightRegions}
+
+                        <div
+                          className="highlight-controls"
+                          style={{ marginTop: "12px" }}
                         >
-                          Highlight
-                        </button>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          disabled={!highlightingOn}
-                          onClick={this.removeHighlightRegions}
-                        >
-                          Remove highlight
-                        </button>
+                          <ColorPicker
+                            onUpdateLegendColor={this.updateLegendColor}
+                            colorKey={"highlightingColor"}
+                            initColor={highlightingColor}
+                          />
+                          <div className="button-group">
+                            <button
+                              className="enhanced-btn primary"
+                              disabled={
+                                highlightingOn && !highlightingColorChanged
+                              }
+                              onClick={this.highlightRegions}
+                            >
+                              Highlight
+                            </button>
+                            <button
+                              className="enhanced-btn secondary"
+                              disabled={!highlightingOn}
+                              onClick={this.removeHighlightRegions}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label style={{ marginBottom: 0 }}>
-                          <strong>Labeling style</strong>{" "}
+
+                      <div className="control-group">
+                        <h4 className="subsection-title">Label Style:</h4>
+                        <label className="control-label">
                           <select
                             value={labelStyle}
                             onChange={this.setLabelStyle}
+                            className="enhanced-select"
                           >
-                            <option value="shape">shape</option>
-                            <option value="arrow">arrow</option>
+                            <option value="shape">Shape</option>
+                            <option value="arrow">Arrow</option>
                           </select>
                         </label>
                       </div>
-                      <p>
-                        <strong>Gene labeling</strong>
-                      </p>
-                      <div>
+
+                      <div className="control-group">
+                        <h4 className="subsection-title">Gene Labeling:</h4>
                         <GeneSearchBox3D
                           setGeneCallback={this.addGeneToMyShapes}
                           color={this.modalfg}
                           background={this.modalbg}
                         />
                       </div>
-                      <p>
-                        <strong>Region labeling</strong>
-                      </p>
-                      <div style={{ display: "flex", alignItems: "baseline" }}>
-                        <span>Region:</span>{" "}
-                        <input
-                          type="text"
-                          placeholder="chr start end"
-                          value={myShapeRegion}
-                          onChange={this.handleMyShapeRegionChange}
-                        />
+
+                      <div className="control-group">
+                        <h4 className="subsection-title">Region Labeling:</h4>
+                        <div className="input-group">
+                          <label className="input-label">Region:</label>
+                          <input
+                            type="text"
+                            placeholder="chr start end"
+                            value={myShapeRegion}
+                            onChange={this.handleMyShapeRegionChange}
+                            className="modern-input"
+                          />
+                        </div>
+                        <div className="input-group">
+                          <label className="input-label">Label:</label>
+                          <input
+                            type="text"
+                            placeholder="my region"
+                            value={myShapeLabel}
+                            onChange={this.handleMyShapeLabelChange}
+                            className="modern-input"
+                          />
+                          <button
+                            className="enhanced-btn primary small"
+                            onClick={this.addRegionToMyShapes}
+                          >
+                            Add
+                          </button>
+                        </div>
+
+                        <div className="file-upload-group">
+                          <label className="file-upload-label">
+                            Upload genes/regions file:
+                            <input
+                              type="file"
+                              onChange={this.handleRegionFileUpload}
+                              className="file-input"
+                            />
+                          </label>
+                        </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "baseline" }}>
-                        <span>Label:</span>{" "}
-                        <input
-                          type="text"
-                          placeholder="my region"
-                          value={myShapeLabel}
-                          onChange={this.handleMyShapeLabelChange}
-                        />
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={this.addRegionToMyShapes}
-                        >
-                          Add
-                        </button>
-                      </div>
-                      <div>
-                        Upload a text file with genes/regions:
-                        <input
-                          type="file"
-                          onChange={this.handleRegionFileUpload}
-                        />
-                      </div>
-                      <div>
+
+                      <div className="control-group">
+                        <h4 className="subsection-title">Shape Management:</h4>
                         <ShapeList
                           shapes={myShapes}
                           onUpdateMyShapes={this.updateMyShapes}
@@ -3593,7 +3748,9 @@ class ThreedmolContainer extends React.Component<
                           onSetMessage={this.setMessage}
                         />
                       </div>
-                      <div>
+
+                      <div className="control-group">
+                        <h4 className="subsection-title">Arrow Management:</h4>
                         <ArrowList
                           arrows={myArrows}
                           onUpdateMyArrows={this.updateMyArrows}
@@ -3608,40 +3765,57 @@ class ThreedmolContainer extends React.Component<
                   key: "numerical",
                   title: "Numerical Painting",
                   content: (
-                    <div className="card-body">
-                      <p>
-                        <span>Data:</span>{" "}
-                        <select
-                          name="numFormat"
-                          defaultValue={numFormat}
-                          onChange={this.handleNumFormatChange}
-                        >
-                          <option value="bwtrack">Bigwig track</option>
-                          <option value="geneexp">Gene expression</option>
-                        </select>
-                      </p>
+                    <div className="section-content">
+                      <div className="control-group">
+                        <h4 className="subsection-title">Data Source:</h4>
+                        <label className="control-label">
+                          <select
+                            name="numFormat"
+                            defaultValue={numFormat}
+                            onChange={this.handleNumFormatChange}
+                            className="enhanced-select"
+                          >
+                            <option value="bwtrack">BigWig Track</option>
+                            <option value="geneexp">Gene Expression</option>
+                          </select>
+                        </label>
+                      </div>
+
                       <div
+                        className={`control-group ${
+                          numFormat === "bwtrack" ? "info" : ""
+                        }`}
                         style={{
                           display: numFormat === "bwtrack" ? "block" : "none",
                         }}
                       >
-                        <label>
-                          <input
-                            type="checkbox"
-                            name="useBw"
-                            checked={useExistingBigwig === true}
-                            onChange={this.toggleUseBigWig}
-                          />
-                          <span>Use loaded tracks</span>
-                        </label>
+                        <div className="toggle-control">
+                          <label className="toggle-label">
+                            <span className="label-text">
+                              Use loaded tracks:
+                            </span>
+                            <div className="toggle-wrapper">
+                              <input
+                                type="checkbox"
+                                name="useBw"
+                                className="toggle-input"
+                                checked={useExistingBigwig === true}
+                                onChange={this.toggleUseBigWig}
+                              />
+                              <span className="toggle-slider"></span>
+                            </div>
+                          </label>
+                        </div>
+
                         {useExistingBigwig ? (
                           bwTracks.length ? (
                             <select
                               name="bwUrlList"
                               onChange={this.handleBigWigUrlChange}
                               defaultValue={bigWigUrl}
+                              className="enhanced-select"
                             >
-                              <option value="">--</option>
+                              <option value="">Select a track...</option>
                               {bwTracks.map((tk, idx) => (
                                 <option key={idx} value={tk.url}>
                                   {tk.getDisplayLabel() || tk.url}
@@ -3649,100 +3823,135 @@ class ThreedmolContainer extends React.Component<
                               ))}
                             </select>
                           ) : (
-                            <span className="text-danger font-italic text-sm-left">
-                              No loaded bigwig track, please uncheck the option
-                              above and use a bigwig file URL.
-                            </span>
+                            <div className="warning-message">
+                              ⚠️ No BigWig tracks loaded. Please uncheck the
+                              option above and use a BigWig file URL.
+                            </div>
                           )
                         ) : (
                           <input
                             type="text"
-                            placeholder="bigwig url"
+                            placeholder="BigWig URL"
                             value={bigWigInputUrl}
                             onChange={this.handleBigWigInputUrlChange}
+                            className="modern-input"
                           />
                         )}
                       </div>
-                      <input
+
+                      <div
+                        className={`control-group ${
+                          numFormat === "geneexp" ? "info" : ""
+                        }`}
                         style={{
                           display: numFormat === "geneexp" ? "block" : "none",
                         }}
-                        type="file"
-                        name="numFile"
-                        onChange={this.handleNumFileUpload}
-                        key={numFormat}
-                      />
-                      <OpacityThickness
-                        opacity={lineOpacity}
-                        thickness={cartoonThickness}
-                        highlightStyle={highlightStyle}
-                        onUpdate={this.updateLegendColor}
-                      />
-                      {colorScale && (
-                        <div>
-                          <label>
-                            auto scale:{" "}
+                      >
+                        <h4 className="subsection-title">
+                          Gene Expression File
+                        </h4>
+                        <div className="file-upload-group">
+                          <label className="file-upload-label">
+                            Upload gene expression file:
                             <input
-                              type="checkbox"
-                              checked={autoLegendScale}
-                              onChange={this.handleAutoLegendScaleChange}
+                              type="file"
+                              name="numFile"
+                              onChange={this.handleNumFileUpload}
+                              key={numFormat}
+                              className="file-input"
                             />
-                            current data: (min {legendMin}: max: {legendMax})
                           </label>
-                          <div>
-                            <label>
-                              min:{" "}
-                              <input
-                                style={{ width: "9ch" }}
-                                type="number"
-                                value={useLegengMin}
-                                onChange={this.setUseLegendMin}
-                                disabled={autoLegendScale}
-                              />
-                            </label>
-                            <label>
-                              max:{" "}
-                              <input
-                                style={{ width: "9ch" }}
-                                type="number"
-                                value={useLegengMax}
-                                onChange={this.setUseLegendMax}
-                                disabled={autoLegendScale}
-                              />
-                            </label>
+                        </div>
+                      </div>
+
+                      <div className="control-group">
+                        <OpacityThickness
+                          opacity={lineOpacity}
+                          thickness={cartoonThickness}
+                          highlightStyle={highlightStyle}
+                          onUpdate={this.updateLegendColor}
+                        />
+                      </div>
+
+                      {colorScale && (
+                        <div className="control-group">
+                          <h4 className="subsection-title">Scale Controls</h4>
+                          <div className="scale-controls">
+                            <div className="toggle-control">
+                              <label className="toggle-label">
+                                <span className="label-text">Auto scale</span>
+                                <div className="toggle-wrapper">
+                                  <input
+                                    type="checkbox"
+                                    className="toggle-input"
+                                    checked={autoLegendScale}
+                                    onChange={this.handleAutoLegendScaleChange}
+                                  />
+                                  <span className="toggle-slider"></span>
+                                </div>
+                              </label>
+                            </div>
+                            <div className="scale-info">
+                              Current data range: {legendMin} to {legendMax}
+                            </div>
+                            <div className="scale-inputs">
+                              <div className="input-group">
+                                <label className="input-label">Min:</label>
+                                <input
+                                  type="number"
+                                  value={useLegengMin}
+                                  onChange={this.setUseLegendMin}
+                                  disabled={autoLegendScale}
+                                  className="modern-input small"
+                                />
+                              </div>
+                              <div className="input-group">
+                                <label className="input-label">Max:</label>
+                                <input
+                                  type="number"
+                                  value={useLegengMax}
+                                  onChange={this.setUseLegendMax}
+                                  disabled={autoLegendScale}
+                                  className="modern-input small"
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
-                      <p>
-                        <button
-                          className="btn btn-primary btn-sm"
-                          disabled={paintRegion === "region"}
-                          onClick={() => this.paintBigwig("region")}
-                        >
-                          Paint region
-                        </button>
-                        <button
-                          className="btn btn-success btn-sm"
-                          disabled={paintRegion === "chrom"}
-                          onClick={() => this.paintBigwig("chrom")}
-                        >
-                          Paint chromosome
-                        </button>
-                        <button
-                          className="btn btn-info btn-sm"
-                          disabled={paintRegion === "genome"}
-                          onClick={() => this.paintBigwig("genome")}
-                        >
-                          Paint genome
-                        </button>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          disabled={paintRegion === "none"}
-                          onClick={this.removePaint}
-                        >
-                          Remove paint
-                        </button>
-                      </p>
+
+                      <div className="control-group">
+                        <div className="button-group-grid">
+                          <button
+                            className="enhanced-btn primary"
+                            disabled={paintRegion === "region"}
+                            onClick={() => this.paintBigwig("region")}
+                          >
+                            Paint Region
+                          </button>
+                          <button
+                            className="enhanced-btn success"
+                            disabled={paintRegion === "chrom"}
+                            onClick={() => this.paintBigwig("chrom")}
+                          >
+                            Paint Chromosome
+                          </button>
+                          <button
+                            className="enhanced-btn info"
+                            disabled={paintRegion === "genome"}
+                            onClick={() => this.paintBigwig("genome")}
+                          >
+                            Paint Genome
+                          </button>
+                          <button
+                            className="enhanced-btn secondary"
+                            disabled={paintRegion === "none"}
+                            onClick={this.removePaint}
+                          >
+                            Remove Paint
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ),
                 },
@@ -3750,96 +3959,132 @@ class ThreedmolContainer extends React.Component<
                   key: "annotation",
                   title: "Annotation Painting",
                   content: (
-                    <div className="card-body">
-                      <div>
-                        <p>
-                          <strong>Annotation data:</strong>{" "}
-                          <span className="font-italic">
-                            <a
-                              href={HELP_LINKS.threed}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              formats requirement
-                            </a>
-                          </span>
-                        </p>
-                        <p>
-                          <span>File format:</span>{" "}
+                    <div className="section-content">
+                      <div className="control-group">
+                        <h4 className="subsection-title">Annotation Format</h4>
+                        <div className="info-section">
+                          <a
+                            href={HELP_LINKS.threed}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="help-link"
+                          >
+                            📋 Format Requirements
+                          </a>
+                        </div>
+
+                        <label className="control-label">
+                          <strong>File Format:</strong>
                           <select
                             name="annoFormat"
                             defaultValue={annoFormat}
                             onChange={this.handleAnnoFormatChange}
+                            className="enhanced-select"
                           >
-                            <option value="cytoband">Ideogram cytoband</option>
+                            <option value="cytoband">Ideogram Cytoband</option>
                             <option value="refgene">UCSC refGene</option>
-                            <option value="bedrgb">Bed (9 columns)</option>
-                            <option value="bed4">Bed color (4 columns)</option>
-                            <option value="4dn">4DN compartment</option>
+                            <option value="bedrgb">BED (9 columns)</option>
+                            <option value="bed4">BED Color (4 columns)</option>
+                            <option value="4dn">4DN Compartment</option>
                             <option value="cell2014">
-                              Rao et.al compartment
+                              Rao et.al Compartment
                             </option>
                           </select>
-                        </p>
+                        </label>
                       </div>
-                      <input
+
+                      <div
+                        className={`control-group ${
+                          annoFormat === "cytoband" ? "hidden" : ""
+                        }`}
                         style={{
                           display: annoFormat === "cytoband" ? "none" : "block",
                         }}
-                        type="file"
-                        name="annoFile"
-                        onChange={this.handleAnnotationFileUpload}
-                        key={annoFormat}
-                      />
-                      <OpacityThickness
-                        opacity={lineOpacity}
-                        thickness={cartoonThickness}
-                        highlightStyle={highlightStyle}
-                        onUpdate={this.updateLegendColor}
-                      />
-                      <label
+                      >
+                        <h4 className="subsection-title">File Upload</h4>
+                        <div className="file-upload-group">
+                          <label className="file-upload-label">
+                            Upload annotation file:
+                            <input
+                              type="file"
+                              name="annoFile"
+                              onChange={this.handleAnnotationFileUpload}
+                              key={annoFormat}
+                              className="file-input"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="control-group">
+                        <OpacityThickness
+                          opacity={lineOpacity}
+                          thickness={cartoonThickness}
+                          highlightStyle={highlightStyle}
+                          onUpdate={this.updateLegendColor}
+                        />
+                      </div>
+
+                      <div
+                        className={`control-group ${
+                          annoFormat === "refgene" ? "" : "hidden"
+                        }`}
                         style={{
                           display: annoFormat === "refgene" ? "block" : "none",
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          name="usePromoter"
-                          checked={annoUsePromoter === true}
-                          onChange={this.toggleUsePromoter}
-                        />
-                        <span>Use promoter only</span>
-                      </label>
-                      <p>
-                        <button
-                          className="btn btn-primary btn-sm"
-                          disabled={paintAnnotationRegion === "region"}
-                          onClick={() => this.paintAnnotation("region")}
-                        >
-                          Paint region
-                        </button>
-                        <button
-                          className="btn btn-success btn-sm"
-                          disabled={paintAnnotationRegion === "chrom"}
-                          onClick={() => this.paintAnnotation("chrom")}
-                        >
-                          Paint chromosome
-                        </button>
-                        <button
-                          className="btn btn-info btn-sm"
-                          disabled={paintAnnotationRegion === "genome"}
-                          onClick={() => this.paintAnnotation("genome")}
-                        >
-                          Paint genome
-                        </button>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          disabled={paintAnnotationRegion === "none"}
-                          onClick={this.removeAnnotationPaint}
-                        >
-                          Remove paint
-                        </button>
-                      </p>
+                        <h4 className="subsection-title">RefGene Options</h4>
+                        <div className="toggle-control">
+                          <label className="toggle-label">
+                            <span className="label-text">
+                              Use promoter only
+                            </span>
+                            <div className="toggle-wrapper">
+                              <input
+                                type="checkbox"
+                                name="usePromoter"
+                                className="toggle-input"
+                                checked={annoUsePromoter === true}
+                                onChange={this.toggleUsePromoter}
+                              />
+                              <span className="toggle-slider"></span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="control-group">
+                        <div className="button-group-grid">
+                          <button
+                            className="enhanced-btn primary"
+                            disabled={paintAnnotationRegion === "region"}
+                            onClick={() => this.paintAnnotation("region")}
+                          >
+                            Paint Region
+                          </button>
+                          <button
+                            className="enhanced-btn success"
+                            disabled={paintAnnotationRegion === "chrom"}
+                            onClick={() => this.paintAnnotation("chrom")}
+                          >
+                            Paint Chromosome
+                          </button>
+                          <button
+                            className="enhanced-btn info"
+                            disabled={paintAnnotationRegion === "genome"}
+                            onClick={() => this.paintAnnotation("genome")}
+                          >
+                            Paint Genome
+                          </button>
+                          <button
+                            className="enhanced-btn secondary"
+                            disabled={paintAnnotationRegion === "none"}
+                            onClick={this.removeAnnotationPaint}
+                          >
+                            Remove Paint
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ),
                 },
@@ -3847,64 +4092,80 @@ class ThreedmolContainer extends React.Component<
                   key: "animation",
                   title: "Animation",
                   content: (
-                    <div className="card-body">
-                      <FrameListMenu frameList={frameLabels} />
-                      <div style={{ display: "flex" }}>
-                        <input
-                          type="text"
-                          placeholder="new g3d url"
-                          value={newG3dUrl}
-                          onChange={this.handleNewG3dUrlChange}
-                        />
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={this.prepareModelFrames}
-                        >
-                          Add
-                        </button>
+                    <div className="section-content">
+                      <div className="control-group">
+                        <FrameListMenu frameList={frameLabels} />
                       </div>
-                      {frameLabels.length > 1 ? (
-                        <div>
+
+                      <div className="control-group">
+                        <div className="input-group">
+                          <input
+                            type="text"
+                            placeholder="New G3D URL"
+                            value={newG3dUrl}
+                            onChange={this.handleNewG3dUrlChange}
+                            className="modern-input"
+                          />
                           <button
-                            className="btn btn-success btn-sm"
-                            onClick={this.animate}
-                            disabled={sync3d}
+                            className="enhanced-btn primary"
+                            onClick={this.prepareModelFrames}
                           >
-                            Play
-                          </button>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={this.stopAnimate}
-                            disabled={sync3d}
-                          >
-                            Stop
-                          </button>
-                          <button
-                            className="btn btn-info btn-sm"
-                            onClick={this.resetAnimate}
-                            disabled={sync3d}
-                          >
-                            Reset
+                            Add Model
                           </button>
                         </div>
-                      ) : (
-                        <div>add 2 and more models for animation</div>
-                      )}
-                      <div>
-                        <button
-                          className="btn btn-warning btn-sm"
-                          onClick={this.syncHic}
-                          disabled={sync3d}
-                        >
-                          Sync dynamic HiC
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={this.stopSync}
-                          disabled={!sync3d}
-                        >
-                          Stop sync
-                        </button>
+                      </div>
+
+                      <div className="control-group">
+                        {frameLabels.length > 1 ? (
+                          <div className="animation-controls">
+                            <div className="button-group">
+                              <button
+                                className="enhanced-btn success"
+                                onClick={this.animate}
+                                disabled={sync3d}
+                              >
+                                ▶️ Play
+                              </button>
+                              <button
+                                className="enhanced-btn secondary"
+                                onClick={this.stopAnimate}
+                                disabled={sync3d}
+                              >
+                                ⏹️ Stop
+                              </button>
+                              <button
+                                className="enhanced-btn info"
+                                onClick={this.resetAnimate}
+                                disabled={sync3d}
+                              >
+                                🔄 Reset
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="info-message">
+                            📝 Add 2 or more models to enable animation
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="control-group">
+                        <div className="sync-controls">
+                          <button
+                            className="enhanced-btn warning"
+                            onClick={this.syncHic}
+                            disabled={sync3d}
+                          >
+                            🔗 Sync Dynamic HiC
+                          </button>
+                          <button
+                            className="enhanced-btn danger"
+                            onClick={this.stopSync}
+                            disabled={!sync3d}
+                          >
+                            ⏹️ Stop Sync
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ),
@@ -3913,21 +4174,23 @@ class ThreedmolContainer extends React.Component<
                   key: "export",
                   title: "Export",
                   content: (
-                    <div className="card-body">
-                      <div>
-                        Save main and thumbnail viewer as image.
-                        <div>
+                    <div className="section-content">
+                      <div className="control-group">
+                        <h4 className="subsection-title">
+                          Save Viewers as Images
+                        </h4>
+                        <div className="export-controls">
                           <button
-                            className="btn btn-primary btn-sm"
+                            className="enhanced-btn primary large"
                             onClick={() => this.saveImage(this.viewer)}
                           >
-                            Save main
+                            📷 Save Main Viewer
                           </button>
                           <button
-                            className="btn btn-success btn-sm"
+                            className="enhanced-btn success large"
                             onClick={() => this.saveImage(this.viewer2)}
                           >
-                            Save thumbnail
+                            🖼️ Save Thumbnail
                           </button>
                         </div>
                       </div>
@@ -3935,11 +4198,7 @@ class ThreedmolContainer extends React.Component<
                   ),
                 },
               ].map((section, idx) => (
-                <AccordionSection
-                  key={section.key}
-                  title={section.title}
-                  defaultOpen={idx === 0}
-                >
+                <AccordionSection key={section.key} title={section.title}>
                   {section.content}
                 </AccordionSection>
               ))}
