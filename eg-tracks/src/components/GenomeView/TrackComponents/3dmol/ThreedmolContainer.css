@@ -172,8 +172,6 @@
 .enhanced-drawer {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(8px);
-  overflow-y: auto;
-  max-height: 100vh;
 }
 
 .enhanced-accordion {
@@ -309,13 +307,12 @@
 .enhanced-accordion-content {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: #ffffff;
 }
 
 /* When accordion is open, ensure proper overflow handling */
 .enhanced-accordion-section.open .enhanced-accordion-content {
-  max-height: none;
   overflow: visible;
 }
 

@@ -114,7 +114,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
     if (component === "Browser") {
       // node.setEventListener("resize", () => handleNodeResize(node));
-
       return (
         <TrackManager
           key={trackManagerId.current}
@@ -318,7 +317,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       prevViewRegion.current.end = userViewRegion._endBase!;
     }
   }, [userViewRegion]);
-
+  console.log(size);
   return (
     <div
       style={{ height: "100%" }}
@@ -330,7 +329,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           display: "flex",
           flexDirection: "column",
           width: size.width,
-          height: size.height,
+          height: size.height || "100vh",
+          minHeight: "400px",
         }}
       >
         {/* <GenomeViewerTest /> */}

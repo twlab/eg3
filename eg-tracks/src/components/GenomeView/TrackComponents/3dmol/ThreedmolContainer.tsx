@@ -169,6 +169,18 @@ function AccordionSection({ title, children, defaultOpen = true }) {
   const [isInitialized, setIsInitialized] = React.useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
+  // Function to update the max height based on current content
+  const updateMaxHeight = React.useCallback(() => {
+    if (contentRef.current && isInitialized) {
+      if (open) {
+        contentRef.current.style.maxHeight =
+          contentRef.current.scrollHeight + "px";
+      } else {
+        contentRef.current.style.maxHeight = "0px";
+      }
+    }
+  }, [open, isInitialized]);
+
   React.useEffect(() => {
     // Initialize the accordion content height
     const timer = setTimeout(() => {
@@ -187,15 +199,51 @@ function AccordionSection({ title, children, defaultOpen = true }) {
   }, []);
 
   React.useEffect(() => {
-    if (contentRef.current && isInitialized) {
-      if (open) {
-        contentRef.current.style.maxHeight =
-          contentRef.current.scrollHeight + "px";
-      } else {
-        contentRef.current.style.maxHeight = "0px";
-      }
+    updateMaxHeight();
+  }, [open, isInitialized, updateMaxHeight]);
+
+  // Add effect to watch for content changes
+  React.useEffect(() => {
+    if (!contentRef.current || !isInitialized || !open) return;
+
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    // Debounced update function to avoid excessive calls
+    const debouncedUpdate = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateMaxHeight, 10);
+    };
+
+    // Use MutationObserver to detect changes in the content
+    const observer = new MutationObserver(debouncedUpdate);
+
+    // Observe changes to child elements, attributes, and text content
+    observer.observe(contentRef.current, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
+      characterData: true,
+    });
+
+    // Also use ResizeObserver if available for better detection of size changes
+    let resizeObserver: ResizeObserver | null = null;
+    if (window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(debouncedUpdate);
+      const targetElement =
+        contentRef.current.querySelector(".accordion-content-inner") ||
+        contentRef.current;
+      resizeObserver.observe(targetElement);
     }
-  }, [open, isInitialized]);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      observer.disconnect();
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  }, [isInitialized, open, updateMaxHeight]);
 
   return (
     <div className={`enhanced-accordion-section${open ? " open" : ""}`}>

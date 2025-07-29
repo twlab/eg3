@@ -71,8 +71,8 @@ export default function RootLayout() {
 
   return (
     <div
-      className={`h-screen w-screen flex flex-col ${darkTheme ? 'dark' : ''}`}
-      data-theme={darkTheme ? 'dark' : 'light'}
+      className={`h-screen w-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+      data-theme={darkTheme ? "dark" : "light"}
     >
       <GoogleAnalytics />
       <motion.div
@@ -86,7 +86,10 @@ export default function RootLayout() {
         }}
       >
         <NavBar />
-        <div className="flex flex-row flex-1 relative bg-black" ref={contentRef}>
+        <div
+          className="flex flex-row flex-1 relative bg-black"
+          ref={contentRef}
+        >
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
@@ -160,13 +163,15 @@ export default function RootLayout() {
               <AnimatePresence mode="wait">
                 {sessionId !== null ? (
                   <motion.div
-                    className="flex flex-col h-full w-screen overflow-auto pb-44"
+                    className="flex flex-col w-screen overflow-auto pb-44"
                     key="genome-view"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    style={{ width: contentWidth, height: contentHeight }}
+                    style={{
+                      width: contentWidth,
+                    }}
                   >
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
                       <GenomeView />
