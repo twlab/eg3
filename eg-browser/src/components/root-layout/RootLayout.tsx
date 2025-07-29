@@ -64,7 +64,7 @@ export default function RootLayout() {
     width: contentWidth,
     height: contentHeight,
   } = useElementGeometry();
-
+  console.log(contentHeight);
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
@@ -171,6 +171,7 @@ export default function RootLayout() {
                     transition={{ duration: 0.3 }}
                     style={{
                       width: contentWidth,
+                      height: contentHeight,
                     }}
                   >
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
