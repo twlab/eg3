@@ -148,6 +148,7 @@ interface TrackManagerProps {
   infiniteScrollWorker: React.MutableRefObject<Worker | null>;
   fetchGenomeAlignWorker: React.MutableRefObject<Worker | null>;
   isThereG3dTrack: boolean;
+  onHeightChange?: (height: number) => void; // Optional callback for height changes
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -171,6 +172,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   setShow3dGene,
   infiniteScrollWorker,
   fetchGenomeAlignWorker,
+  onHeightChange,
 }) {
   //useRef to store data between states without re render the component
 
@@ -182,6 +184,31 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const bpRegionSize = useRef(0);
   const pixelPerBase = useRef(0);
   const block = useRef<HTMLInputElement>(null);
+
+  // Track block ref height changes
+  useEffect(() => {
+    if (!block.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { height } = entry.contentRect;
+        const scrollHeight = entry.target.scrollHeight;
+        const newHeight = Math.max(height, scrollHeight);
+
+        // Call the optional callback if provided
+        if (onHeightChange) {
+          onHeightChange(newHeight);
+        }
+      }
+    });
+
+    resizeObserver.observe(block.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [onHeightChange]);
+
   const bpX = useRef(0);
   const maxBp = useRef(0);
   const minBp = useRef(0);
@@ -3117,7 +3144,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       style={{
         backgroundColor: "var(--bg-color)",
         paddingLeft: "20px",
-        marginBottom: "50px",
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (

@@ -64,7 +64,7 @@ export default function RootLayout() {
     width: contentWidth,
     height: contentHeight,
   } = useElementGeometry();
-  console.log(contentHeight);
+
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
@@ -154,7 +154,7 @@ export default function RootLayout() {
 
                 filter: "blur(0px) brightness(1)",
                 // translateX: expandNavigationTab ? 50 : 0,
-                width: !showRightTab ? "100vw" : "75vw",
+                // width: !showRightTab ? "100vw" : "75vw",
               }}
               style={{
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
@@ -163,7 +163,7 @@ export default function RootLayout() {
               <AnimatePresence mode="wait">
                 {sessionId !== null ? (
                   <motion.div
-                    className="flex flex-col w-screen overflow-auto pb-44"
+                    className="flex flex-col w-screen"
                     key="genome-view"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -171,7 +171,7 @@ export default function RootLayout() {
                     transition={{ duration: 0.3 }}
                     style={{
                       width: contentWidth,
-                      height: contentHeight,
+                      height: "auto",
                     }}
                   >
                     <GenomeErrorBoundary onGoHome={handleGoHome}>

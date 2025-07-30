@@ -44,8 +44,8 @@ const Loading: React.FC<PopoverProps> = ({
       //need to margin left the
       style={{
         position: "absolute",
-        marginTop: height - 16, // 16 is the number of tracks - one more
-        marginLeft: xOffset,
+        top: height - 16, // 16 is the number of tracks - one more
+        left: xOffset,
       }}
     >
       <button

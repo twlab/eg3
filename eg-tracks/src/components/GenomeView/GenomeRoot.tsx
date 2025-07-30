@@ -42,6 +42,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
+  const [tracksHeight, setTracksHeight] = useState<number>(0);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
@@ -122,7 +123,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           windowWidth={
             (!size.width || size.width - legendWidth < 0 ? 1500 : size.width) -
             legendWidth -
-            60
+            40
             // 20 px from padding left moving element inside flexlayout 20px over, 20px from scrollbar, 20px to add the gap
             // this make the width of the browser fit the screen
           }
@@ -144,6 +145,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           setShow3dGene={setShow3dGene}
           infiniteScrollWorker={infiniteScrollWorker}
           fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+          onHeightChange={onHeightChange}
         />
       );
     } else {
@@ -169,6 +171,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }, 100)
   );
+  function onHeightChange(height: number) {
+    console.log("onHeightChange", height);
+    setTracksHeight(height + 134);
+    // top parts is 130 px and 4 for border top and bottom
+  }
   function findAllG3dTabs(layout: any) {
     const result: any[] = [];
 
@@ -317,19 +324,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       prevViewRegion.current.end = userViewRegion._endBase!;
     }
   }, [userViewRegion]);
-  console.log(size);
+
   return (
-    <div
-      style={{ height: "100%" }}
-      ref={resizeRef as React.RefObject<HTMLDivElement>}
-    >
+    <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {/* <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div> */}
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           width: size.width,
-          height: "100%",
+          height: tracksHeight,
         }}
       >
         {/* <GenomeViewerTest /> */}

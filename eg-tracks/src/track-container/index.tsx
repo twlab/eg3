@@ -295,7 +295,7 @@ export function TrackContainerRepresentable({
   };
 
   return (
-    <div style={{ height: "100%" }}>
+    <div>
       <TrackContainer
         tracks={convertedTracks}
         highlights={highlights}
