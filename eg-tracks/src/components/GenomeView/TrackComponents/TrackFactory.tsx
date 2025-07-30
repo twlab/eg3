@@ -618,7 +618,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }, [isScreenShotOpen]);
 
   // MARK: RENDER
-
+  console.log(messageData);
   return (
     <div
       style={{
@@ -673,7 +673,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                     key={`${trackModel.index}loading-` + `${index}`}
                     style={{ display: "flex", flexDirection: "column" }}
                   >
-                    {item.genomicLoci.map((item) => item.toString())}{" "}
+                    {item.genomicLoci
+                      ? item.genomicLoci.map((item) => item.toString())
+                      : ""}{" "}
                   </div>
                 );
               })
