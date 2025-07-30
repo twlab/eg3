@@ -479,7 +479,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let cacheDataIdx = dataIdx;
 
         let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-        let combinedData: Array<any> | undefined = [];
+        let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
         let trackState = _.cloneDeep(

@@ -172,7 +172,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }, 100)
   );
   function onHeightChange(height: number) {
-    console.log("onHeightChange", height);
     setTracksHeight(height + 154);
     // top parts is 130 px and 4 for border top and bottom
   }
