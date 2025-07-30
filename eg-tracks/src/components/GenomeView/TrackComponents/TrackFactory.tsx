@@ -641,46 +641,45 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
         Button 60
       </div> */}
-      {trackModel.id in messageData ||
-      !viewComponent ||
-      (viewComponent && dataIdx !== viewComponent.dataIdx) ? (
-        <Loading
-          buttonLabel={
-            (viewComponent && dataIdx !== viewComponent.dataIdx) ||
-            !viewComponent
-              ? "Loading View"
-              : "Getting Data"
-          }
-          height={
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-              ? configOptions.current.height
+      <Loading
+        buttonLabel={
+          (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
+            ? "Loading View"
+            : "Getting Data"
+        }
+        height={
+          configOptions.current.displayMode === "full"
+            ? !fetchError.current
+              ? svgHeight.current
               : 40
-          }
-          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-          // xOffset={0}
-        >
-          <div>
-            {trackModel.id in messageData
-              ? messageData[`${trackModel.id}`].map((item, index) => {
-                  return (
-                    <div
-                      key={`${trackModel.index}loading-` + `${index}`}
-                      style={{ display: "flex", flexDirection: "column" }}
-                    >
-                      {item.genomicLoci.map((item) => item.toString())}{" "}
-                    </div>
-                  );
-                })
-              : ""}
-          </div>
-        </Loading>
-      ) : (
-        ""
-      )}
+            : !fetchError.current
+            ? configOptions.current.height
+            : 40
+        }
+        // Control visibility instead of conditional rendering
+        isVisible={
+          trackModel.id in messageData ||
+          !viewComponent ||
+          (viewComponent && dataIdx !== viewComponent.dataIdx)
+        }
+        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+        // xOffset={0}
+      >
+        <div>
+          {trackModel.id in messageData
+            ? messageData[`${trackModel.id}`].map((item, index) => {
+                return (
+                  <div
+                    key={`${trackModel.index}loading-` + `${index}`}
+                    style={{ display: "flex", flexDirection: "column" }}
+                  >
+                    {item.genomicLoci.map((item) => item.toString())}{" "}
+                  </div>
+                );
+              })
+            : ""}
+        </div>
+      </Loading>
       {Toolbar.skeleton && !viewComponent ? (
         <div style={{}}>
           <Toolbar.skeleton width={windowWidth} height={40} />

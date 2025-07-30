@@ -163,7 +163,7 @@ export default function RootLayout() {
               <AnimatePresence mode="wait">
                 {sessionId !== null ? (
                   <motion.div
-                    className="flex flex-col w-screen pb-24"
+                    className="flex flex-col w-screen pb-16"
                     key="genome-view"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

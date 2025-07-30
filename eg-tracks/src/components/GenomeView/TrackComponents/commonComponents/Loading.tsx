@@ -6,7 +6,8 @@ interface PopoverProps {
   children: React.ReactNode;
   className?: string;
   height: number;
-  xOffset: number;
+  xOffset?: number;
+  isVisible?: boolean;
 }
 
 const Loading: React.FC<PopoverProps> = ({
@@ -14,7 +15,8 @@ const Loading: React.FC<PopoverProps> = ({
   children,
   className,
   height,
-  xOffset,
+  xOffset = 0,
+  isVisible = true,
 }) => {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -46,6 +48,9 @@ const Loading: React.FC<PopoverProps> = ({
         position: "absolute",
         top: height - 16, // 16 is the number of tracks - one more
         left: xOffset,
+        visibility: isVisible ? "visible" : "hidden", // Control visibility
+        pointerEvents: isVisible ? "auto" : "none", // Make uninteractable when hidden
+        opacity: isVisible ? 1 : 0, // Smooth visual transition
       }}
     >
       <button
