@@ -669,10 +669,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           {trackModel.id in messageData
             ? messageData[`${trackModel.id}`].map((item, index) => {
                 return (
-                  <div
-                    key={`${trackModel.index}loading-` + `${index}`}
-                    style={{ display: "flex", flexDirection: "column" }}
-                  >
+                  <div key={`${trackModel.index}loading-` + `${index}`}>
                     {item.genomicLoci
                       ? item.genomicLoci.map((item) => item.toString())
                       : ""}{" "}

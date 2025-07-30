@@ -63,12 +63,29 @@ const Loading: React.FC<PopoverProps> = ({
         <div className="loader"></div>
         <span className={`popover-arrow${open ? " open" : ""}`} />
       </button>
-      {/* <div
+      <div
         className={`popover-panel${open ? " open" : ""}`}
-        style={open ? { position: "relative", zIndex: 9999 } : {}}
+        style={
+          open
+            ? {
+                position: "absolute",
+                top: "100%", // Position below the button
+                left: 0,
+                zIndex: 9999,
+                maxWidth: "300px", // Limit width
+                maxHeight: "200px", // Limit height
+                overflow: "auto", // Add scrolling if content is too large
+                backgroundColor: "white",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                padding: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              }
+            : { display: "none" }
+        }
       >
         {children}
-      </div> */}
+      </div>
     </div>
   );
 };
