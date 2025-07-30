@@ -63,12 +63,12 @@ const Loading: React.FC<PopoverProps> = ({
         <div className="loader"></div>
         <span className={`popover-arrow${open ? " open" : ""}`} />
       </button>
-      <div
+      {/* <div
         className={`popover-panel${open ? " open" : ""}`}
         style={open ? { position: "relative", zIndex: 9999 } : {}}
       >
         {children}
-      </div>
+      </div> */}
     </div>
   );
 };

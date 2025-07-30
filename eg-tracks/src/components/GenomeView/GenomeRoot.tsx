@@ -42,7 +42,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
-  const [tracksHeight, setTracksHeight] = useState<number>(0);
+  const tracksHeight = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
@@ -172,7 +173,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }, 100)
   );
   function onHeightChange(height: number) {
-    setTracksHeight(height + 154);
+    const newHeight = height + 154;
+    if (newHeight !== tracksHeight.current) {
+      tracksHeight.current = newHeight;
+      // Directly update the DOM to avoid re-renders and flickering
+      if (containerRef.current) {
+        containerRef.current.style.height = `${newHeight}px`;
+      }
+    }
     // top parts is 130 px and 4 for border top and bottom
   }
   function findAllG3dTabs(layout: any) {
@@ -196,6 +204,15 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     recurse(layout.layout); // Start from the root layout node
     return result;
   }
+
+  useEffect(() => {
+    // Set initial height for the container
+    if (containerRef.current && tracksHeight.current === 0) {
+      tracksHeight.current = 154; // Initial height (just the top parts)
+      containerRef.current.style.height = `${tracksHeight.current}px`;
+    }
+  }, []);
+
   useEffect(() => {
     if (!infiniteScrollWorker.current) {
       infiniteScrollWorker.current = new Worker(
@@ -328,11 +345,12 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {/* <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div> */}
       <div
+        ref={containerRef}
         style={{
           display: "flex",
           flexDirection: "column",
           width: size.width,
-          height: tracksHeight,
+          height: tracksHeight.current || 154, // Use ref value with fallback
         }}
       >
         {/* <GenomeViewerTest /> */}
