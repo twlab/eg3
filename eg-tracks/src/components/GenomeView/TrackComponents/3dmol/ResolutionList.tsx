@@ -22,7 +22,7 @@ export const ResolutionList = (props) => {
         value={reso.toString()}
         onChange={(e) => setReso(e.target.value)}
         style={{
-          padding: "4px 8px",
+          padding: "2px 0px",
           borderRadius: "2px",
           border: "1px solid #ccc",
           fontSize: "14px",
@@ -42,7 +42,6 @@ export const ResolutionList = (props) => {
         className="btn btn-primary btn-sm"
         onClick={() => onUpdateResolution(Number.parseInt(reso, 10))}
         style={{
-          padding: "4px 12px",
           fontSize: "14px",
           lineHeight: "1.4",
           margin: "0",

@@ -191,7 +191,7 @@
 
 .drawer-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   color: #1e293b;
   background: linear-gradient(135deg, #3b82f6, #6366f1);
@@ -243,7 +243,7 @@
 }
 
 .enhanced-accordion-header {
-  padding: 14px 18px;
+  padding: 8px 8px;
   background: #f8fafc;
   cursor: pointer;
   user-select: none;
@@ -270,7 +270,7 @@
 
 .accordion-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #1e293b;
   display: flex;
@@ -387,7 +387,7 @@
 
 .subsection-title {
   color: #1e293b;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   margin: 0 0 2px 0;
   padding-bottom: 0;
@@ -478,7 +478,7 @@
   border-radius: 0;
   padding: 0;
   margin: 6px 0;
-  font-size: 13px;
+  font-size: 12px;
   color: #1e40af;
   text-align: left;
 }
@@ -542,7 +542,7 @@
 
 .input-label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #6b7280;
   margin-bottom: 4px;
@@ -627,7 +627,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 8px 12px;
+
   border-radius: 8px;
   transition: all 0.2s ease;
   margin-bottom: 0;
@@ -720,8 +720,7 @@
 }
 
 .option-icon {
-  font-size: 20px;
-  margin-bottom: 4px;
+  font-size: 12px;
 }
 
 .option-label {

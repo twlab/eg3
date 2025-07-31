@@ -3726,14 +3726,30 @@ class ThreedmolContainer extends React.Component<
                         </label>
                       </div>
 
-                      <div className="control-group">
-                        <h4 className="subsection-title">Gene Labeling:</h4>
+                      <div
+                        className="control-group"
+                        style={{ position: "relative" }}
+                      >
+                        <h4
+                          className="subsection-title"
+                          style={{
+                            margin: "0 0 8px 0",
+                            position: "static",
+                            display: "block",
+                            zIndex: 10,
+                          }}
+                        >
+                          Gene Labeling:
+                        </h4>
                         <div
                           style={{
                             border: "1px solid #e2e8f0",
                             borderRadius: "8px",
                             padding: "4px",
                             background: "#ffffff",
+                            position: "relative",
+                            zIndex: 1,
+                            minHeight: "40px",
                           }}
                         >
                           <GeneSearchBox3D
@@ -3983,6 +3999,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn primary"
                             disabled={paintRegion === "region"}
                             onClick={() => this.paintBigwig("region")}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Paint Region
                           </button>
@@ -3990,6 +4011,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn success"
                             disabled={paintRegion === "chrom"}
                             onClick={() => this.paintBigwig("chrom")}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Paint Chromosome
                           </button>
@@ -3997,6 +4023,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn info"
                             disabled={paintRegion === "genome"}
                             onClick={() => this.paintBigwig("genome")}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Paint Genome
                           </button>
@@ -4004,6 +4035,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn secondary"
                             disabled={paintRegion === "none"}
                             onClick={this.removePaint}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Remove Paint
                           </button>
@@ -4018,7 +4054,7 @@ class ThreedmolContainer extends React.Component<
                   content: (
                     <div className="section-content">
                       <div className="control-group">
-                        <h4 className="subsection-title">Annotation Format</h4>
+                        <h4 className="subsection-title">Annotation Format:</h4>
                         <div className="info-section">
                           <a
                             href={HELP_LINKS.threed}
@@ -4031,7 +4067,7 @@ class ThreedmolContainer extends React.Component<
                         </div>
 
                         <label className="control-label">
-                          <strong>File Format:</strong>
+                          File Format:
                           <select
                             name="annoFormat"
                             defaultValue={annoFormat}
@@ -4116,6 +4152,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn primary"
                             disabled={paintAnnotationRegion === "region"}
                             onClick={() => this.paintAnnotation("region")}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Paint Region
                           </button>
@@ -4123,6 +4164,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn success"
                             disabled={paintAnnotationRegion === "chrom"}
                             onClick={() => this.paintAnnotation("chrom")}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Paint Chromosome
                           </button>
@@ -4130,6 +4176,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn info"
                             disabled={paintAnnotationRegion === "genome"}
                             onClick={() => this.paintAnnotation("genome")}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Paint Genome
                           </button>
@@ -4137,6 +4188,11 @@ class ThreedmolContainer extends React.Component<
                             className="enhanced-btn secondary"
                             disabled={paintAnnotationRegion === "none"}
                             onClick={this.removeAnnotationPaint}
+                            style={{
+                              fontSize: "11px",
+                              padding: "4px 6px",
+                              lineHeight: "1.2",
+                            }}
                           >
                             Remove Paint
                           </button>
@@ -4151,6 +4207,7 @@ class ThreedmolContainer extends React.Component<
                   content: (
                     <div className="section-content">
                       <div className="control-group">
+                        <h4 className="subsection-title">Frames:</h4>
                         <FrameListMenu frameList={frameLabels} />
                       </div>
 
