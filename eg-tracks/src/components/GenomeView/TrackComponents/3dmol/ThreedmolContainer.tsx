@@ -4,6 +4,13 @@ import _ from "lodash";
 // import axios from "axios";
 import percentile from "percentile";
 import G3dFile from "../../../../getRemoteData/g3dFileV2";
+
+// Declare $3Dmol on the Window interface for TypeScript
+declare global {
+  interface Window {
+    $3Dmol: any;
+  }
+}
 import Drawer from "rc-drawer";
 import TrackModel from "../../../../models/TrackModel";
 import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
@@ -420,9 +427,9 @@ class ThreedmolContainer extends React.Component<
       showEnvelop: false,
       envelopColor: "grey",
       envelopOpacity: "0.3",
-      spinning: false,
+      spinning: true,
       spinDirection: "y",
-      spinSpeed: 1,
+      spinSpeed: 0.2,
       spinReverse: false,
     };
     this.paintWithBigwig = _.debounce(this.paintWithBigwig, 150);
@@ -474,6 +481,7 @@ class ThreedmolContainer extends React.Component<
       resolutions: this.g3dFile.meta.resolutions,
       resolution: reso,
     });
+    this.viewer.spin(this.state.spinDirection, this.state.spinSpeed);
   }
 
   async componentDidUpdate(prevProps, prevState) {
@@ -1260,7 +1268,10 @@ class ThreedmolContainer extends React.Component<
       this.model[hap] = this.viewer.addModel();
       this.model[hap].addAtoms(atoms2[hap]);
     });
-    this.setState({ modelDisplayConfig: { ...modelDisplayConfig } });
+    this.setState({ modelDisplayConfig: { ...modelDisplayConfig } }, () => {
+      // This callback runs after the state has been updated
+      this.highlightRegions();
+    });
 
     // get max/min of x, y, z
     const xS: Array<any> = [],
@@ -1325,8 +1336,6 @@ class ThreedmolContainer extends React.Component<
     // console.log(this.viewer, this.model)
     // element.style.border='1px red solid';
     // element2.style.border='1px black solid';
-
-    this.highlightRegions(modelDisplayConfig);
 
     this.setState({
       message: "",
@@ -1523,40 +1532,27 @@ class ThreedmolContainer extends React.Component<
     this.setState({ resolution });
   };
 
-  highlightRegions = (tmpModelDisplayConfig: any = null) => {
+  highlightRegions = () => {
     const {
       highlightStyle,
       highlightingColor,
       cartoonThickness,
       resolution,
       lineOpacity,
-      highlightingChromColor,
       modelDisplayConfig,
       showEnvelop,
     } = this.state;
-    let curModelDisplayConfig;
-    if (tmpModelDisplayConfig !== null) {
-      curModelDisplayConfig = tmpModelDisplayConfig;
-    } else {
-      curModelDisplayConfig = modelDisplayConfig;
-    }
     const regions = this.viewRegionToRegions();
 
-    // console.log(regions);
-    const colorByRegion = function (atom, region) {
-      if (
-        atom.chain === region.chrom &&
-        atom.properties.start >= region.start &&
-        atom.properties.start <= region.end
-      ) {
-        return highlightingColor;
-      } else {
-        return highlightingChromColor;
-      }
-    };
     const regionRange = {}; // key: hap: {key: chrom, value: [lower resi, higher resi] used for selection}
     const resString = resolution.toString();
-    Object.keys(curModelDisplayConfig).forEach((hap) => {
+
+    if (!modelDisplayConfig) {
+      console.log("modelDisplayConfig is null, skipping highlight");
+      return;
+    }
+
+    Object.keys(modelDisplayConfig).forEach((hap) => {
       regionRange[hap] = {};
       regions.forEach((reg) => {
         const leftResi = getClosestValueIndex(
@@ -1577,16 +1573,10 @@ class ThreedmolContainer extends React.Component<
       { line: { colorscheme: "chrom", opacity: lineOpacity } }
     ); //remove existing style
     // regions.forEach((region) => {
-    //   this.viewer.setStyle(
-    //     { chain: region.chrom },
-    //     {
-    //       cartoon: {
-    //         colorfunc: (atom) => colorByRegion(atom, region),
-    //         style: "trace",
-    //         thickness: 1,
-    //       },
-    //     }
-    //   );
+    //     this.viewer.setStyle(
+    //         { chain: region.chrom },
+    //         { cartoon: { colorfunc: (atom) => colorByRegion(atom, region), style: "trace", thickness: 1 } }
+    //     );
     // });
     const usedHighlightStyle =
       highlightStyle === "cartoon"
@@ -1606,7 +1596,7 @@ class ThreedmolContainer extends React.Component<
           };
     let validateRegion = false;
     // console.log(regionRange);
-    Object.keys(curModelDisplayConfig).forEach((hap) => {
+    Object.keys(modelDisplayConfig).forEach((hap) => {
       regions.forEach((region) => {
         if (
           regionRange[hap][region.chrom][0] !== undefined &&
@@ -1632,7 +1622,6 @@ class ThreedmolContainer extends React.Component<
       if (showEnvelop && this.envelop) {
         this.updateEnvelop(false);
       }
-
       this.viewer.render();
     } else {
       this.setState({
