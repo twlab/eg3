@@ -3728,12 +3728,21 @@ class ThreedmolContainer extends React.Component<
 
                       <div className="control-group">
                         <h4 className="subsection-title">Gene Labeling:</h4>
-                        <GeneSearchBox3D
-                          setGeneCallback={this.addGeneToMyShapes}
-                          color={this.modalfg}
-                          background={this.modalbg}
-                          genomeConfig={genomeConfig}
-                        />
+                        <div
+                          style={{
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                            padding: "4px",
+                            background: "#ffffff",
+                          }}
+                        >
+                          <GeneSearchBox3D
+                            setGeneCallback={this.addGeneToMyShapes}
+                            color={this.modalfg}
+                            background={this.modalbg}
+                            genomeConfig={genomeConfig}
+                          />
+                        </div>
                       </div>
 
                       <div className="control-group">
