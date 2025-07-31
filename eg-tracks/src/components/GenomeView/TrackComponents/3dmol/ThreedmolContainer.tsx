@@ -3732,6 +3732,7 @@ class ThreedmolContainer extends React.Component<
                           setGeneCallback={this.addGeneToMyShapes}
                           color={this.modalfg}
                           background={this.modalbg}
+                          genomeConfig={genomeConfig}
                         />
                       </div>
 
