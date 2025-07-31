@@ -58,7 +58,7 @@
 #accordion button,
 #accordion select {
   margin-right: 1ch;
-  margin-bottom: 1ch;
+  /* margin-bottom: 1ch; */
 }
 
 #accordion select {

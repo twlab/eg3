@@ -3755,6 +3755,11 @@ class ThreedmolContainer extends React.Component<
                             value={myShapeRegion}
                             onChange={this.handleMyShapeRegionChange}
                             className="modern-input"
+                            style={{
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "4px",
+                              padding: "4px",
+                            }}
                           />
                         </div>
                         <div className="input-group">
@@ -3765,6 +3770,11 @@ class ThreedmolContainer extends React.Component<
                             value={myShapeLabel}
                             onChange={this.handleMyShapeLabelChange}
                             className="modern-input"
+                            style={{
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "4px",
+                              padding: "4px",
+                            }}
                           />
                           <button
                             className="enhanced-btn primary small"

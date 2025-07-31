@@ -13,6 +13,11 @@ export const OpacityThickness = (props) => {
           onChange={(e) =>
             onUpdate("lineOpacity", Number.parseFloat(e.target.value || "0"))
           }
+          style={{
+            border: "1px solid #e2e8f0",
+            borderRadius: "4px",
+            padding: "4px",
+          }}
         />
       </label>
       <label>
@@ -29,6 +34,11 @@ export const OpacityThickness = (props) => {
               Number.parseFloat(e.target.value || "0")
             )
           }
+          style={{
+            border: "1px solid #e2e8f0",
+            borderRadius: "4px",
+            padding: "4px",
+          }}
         />
       </label>
       <label>
@@ -36,6 +46,11 @@ export const OpacityThickness = (props) => {
         <select
           value={highlightStyle}
           onChange={(e) => onUpdate("highlightStyle", e.target.value)}
+          style={{
+            border: "1px solid #e2e8f0",
+            borderRadius: "4px",
+            padding: "4px",
+          }}
         >
           <option value="cartoon">cartoon</option>
           <option value="sphere">sphere</option>
