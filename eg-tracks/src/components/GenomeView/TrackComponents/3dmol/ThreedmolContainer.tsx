@@ -3373,7 +3373,7 @@ class ThreedmolContainer extends React.Component<
               className="enhanced-accordion"
               style={{
                 flexDirection: menuFlexDirection,
-                padding: "16px",
+                padding: "8px",
                 background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
                 minHeight: "100%",
               }}
@@ -3409,9 +3409,10 @@ class ThreedmolContainer extends React.Component<
                         <div
                           style={{
                             display: "flex",
+                            flexWrap: "wrap",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            gap: "12px",
+                            gap: "8px",
                           }}
                         >
                           <h4

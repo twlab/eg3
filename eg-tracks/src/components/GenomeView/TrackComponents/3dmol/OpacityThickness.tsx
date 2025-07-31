@@ -11,7 +11,7 @@ export const OpacityThickness = (props) => {
       }}
     >
       <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-        <span style={{ fontSize: "14px", fontWeight: "500" }}>
+        <span style={{ fontSize: "12px", fontWeight: "400" }}>
           line opacity:
         </span>
         <input
@@ -33,7 +33,7 @@ export const OpacityThickness = (props) => {
         />
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-        <span style={{ fontSize: "14px", fontWeight: "500" }}>
+        <span style={{ fontSize: "12px", fontWeight: "400" }}>
           thickness/radius:
         </span>
         <input
@@ -58,7 +58,7 @@ export const OpacityThickness = (props) => {
         />
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-        <span style={{ fontSize: "14px", fontWeight: "500" }}>
+        <span style={{ fontSize: "12px", fontWeight: "400" }}>
           paint style:
         </span>
         <select
