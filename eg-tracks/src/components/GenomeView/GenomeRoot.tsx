@@ -42,7 +42,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
   const infiniteScrollWorker = useRef<Worker | null>(null);
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
-  const tracksHeight = useRef<number>(0);
+  const tracksHeight = useRef<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
@@ -350,7 +350,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           display: "flex",
           flexDirection: "column",
           width: size.width,
-          height: 500,
+          height: "500px",
         }}
       >
         {/* <GenomeViewerTest /> */}
