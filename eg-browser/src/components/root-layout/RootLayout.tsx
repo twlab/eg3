@@ -163,7 +163,7 @@ export default function RootLayout() {
               <AnimatePresence mode="wait">
                 {sessionId !== null ? (
                   <motion.div
-                    className="flex flex-col w-screen pb-16"
+                    className="flex flex-col w-screen pb-20"
                     key="genome-view"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -207,7 +207,7 @@ export default function RootLayout() {
                     borderBottomLeftRadius: 0,
                   }}
                   animate={{
-                    width: expandNavigationTab ? "75vw" : "25vw",
+                    width: expandNavigationTab ? "75vw" : "35vw",
                     marginLeft: 5,
                     borderTopLeftRadius: CURL_RADIUS,
                     borderBottomLeftRadius: CURL_RADIUS,

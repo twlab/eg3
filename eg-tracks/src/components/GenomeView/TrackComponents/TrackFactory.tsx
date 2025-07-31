@@ -618,7 +618,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }, [isScreenShotOpen]);
 
   // MARK: RENDER
-  console.log(messageData);
+
   return (
     <div
       style={{
@@ -656,7 +656,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             ? configOptions.current.height
             : 40
         }
-        // Control visibility instead of conditional rendering
+        // Control visibility
         isVisible={
           trackModel.id in messageData ||
           !viewComponent ||

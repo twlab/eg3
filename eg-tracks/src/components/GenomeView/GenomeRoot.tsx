@@ -350,7 +350,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           display: "flex",
           flexDirection: "column",
           width: size.width,
-          height: tracksHeight.current || 154, // Use ref value with fallback
+          height: 500,
         }}
       >
         {/* <GenomeViewerTest /> */}
