@@ -4,7 +4,7 @@ import {
   ChevronRightIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { genomeDataSchema } from "wuepgg3-track-test";
+import { genomeDataSchema } from "wuepgg3-track";
 import Button from "../ui/button/Button";
 
 type SchemaNode = {

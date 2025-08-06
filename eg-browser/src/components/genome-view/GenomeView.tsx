@@ -13,9 +13,9 @@ import {
   GenomeCoordinate,
   IHighlightInterval,
   ITrackModel,
-} from "wuepgg3-track-test";
-import "wuepgg3-track-test/style.css";
-import { TrackContainerRepresentable } from "wuepgg3-track-test";
+} from "wuepgg3-track";
+import "wuepgg3-track/style.css";
+import { TrackContainerRepresentable } from "wuepgg3-track";
 import Toolbar from "./toolbar/Toolbar";
 
 import { useRef } from "react";

@@ -3,7 +3,7 @@ import {
   createSlice,
   PayloadAction,
 } from "@reduxjs/toolkit";
-import { IGenome } from "wuepgg3-track-test";
+import { IGenome } from "wuepgg3-track";
 import { RootState } from "../store";
 
 const genomeHubAdapter = createEntityAdapter<IGenome>({

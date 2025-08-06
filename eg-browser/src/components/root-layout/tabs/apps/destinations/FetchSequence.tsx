@@ -4,7 +4,7 @@ import {
   TwoBitSource,
   CopyToClip,
   GenomeSerializer,
-} from "wuepgg3-track-test";
+} from "wuepgg3-track";
 import "./FetchSequence.css";
 import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 import { useAppSelector } from "@/lib/redux/hooks";

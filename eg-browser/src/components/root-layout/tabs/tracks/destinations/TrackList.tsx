@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useTable, Column, useFilters } from "react-table";
-import { ITrackModel } from "wuepgg3-track-test";
+import { ITrackModel } from "wuepgg3-track";
 
 type TrackListProps = {
   addedTracks: ITrackModel[];

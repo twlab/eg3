@@ -4,5 +4,3 @@ node_modules
 .env.*.local
 .env
 dist
-build/
-.DS_Store
