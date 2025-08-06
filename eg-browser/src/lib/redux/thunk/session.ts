@@ -3,7 +3,7 @@ import {
   ITrackModel,
   restoreLegacyViewRegion,
   DisplayedRegionModel,
-} from "wuepgg3-track";
+} from "wuepgg3-track-test";
 import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";

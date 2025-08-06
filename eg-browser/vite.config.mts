@@ -4,13 +4,11 @@ import path from "path";
 import url from "@rollup/plugin-url";
 import tailwindcss from "@tailwindcss/vite";
 import dts from "vite-plugin-dts";
-import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
   plugins: [
     url(),
     react(),
-    nodePolyfills(),
     tailwindcss(),
     dts({
       outputDir: "dist",
@@ -21,6 +19,10 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    global: "globalThis",
+    "process.env": "{}",
   },
   build: {
     lib: {
@@ -38,6 +40,4 @@ export default defineConfig({
       },
     },
   },
-
-  base: "/browser/",
 });

@@ -3,12 +3,12 @@ import React, { useState } from "react";
 // Local Component
 import RegionSetConfig from "./RegionSetConfig";
 
-// wuepgg3-track Imports
+// wuepgg3-track-test Imports
 import {
   RegionSet,
   GenomeSerializer,
   DisplayedRegionModel,
-} from "wuepgg3-track";
+} from "wuepgg3-track-test";
 
 // Redux Imports
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";

@@ -1,4 +1,4 @@
-import { GenomeHubManager } from "wuepgg3-track";
+import { GenomeHubManager } from "wuepgg3-track-test";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   setCustomGenomes,

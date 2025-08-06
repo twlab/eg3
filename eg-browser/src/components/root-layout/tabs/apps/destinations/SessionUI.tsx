@@ -16,7 +16,7 @@ import {
   CopyToClip,
   TrackModel,
   RegionSet,
-} from "wuepgg3-track";
+} from "wuepgg3-track-test";
 import "./SessionUI.css";
 
 export interface BundleProps {

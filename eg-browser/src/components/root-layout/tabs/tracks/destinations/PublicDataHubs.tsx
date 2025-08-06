@@ -10,7 +10,7 @@ import {
 
 import FacetTable from "./FacetTable";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/solid";
-import { ITrackModel } from "wuepgg3-track";
+import { ITrackModel } from "wuepgg3-track-test";
 
 import {
   addPublicTracksPool,
@@ -22,8 +22,8 @@ import {
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 
-// wuepgg3-track Imports
-import { DataHubParser, Json5Fetcher, TrackModel } from "wuepgg3-track";
+// wuepgg3-track-test Imports
+import { DataHubParser, Json5Fetcher, TrackModel } from "wuepgg3-track-test";
 
 export default function PublicDataHubs() {
   useExpandedNavigationTab();
@@ -121,10 +121,11 @@ export default function PublicDataHubs() {
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${isLoaded
+              className={`size-6 rounded-md flex items-center justify-center ${
+                isLoaded
                   ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
                   : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-                }`}
+              }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -202,7 +203,7 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>

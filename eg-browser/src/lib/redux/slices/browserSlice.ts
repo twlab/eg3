@@ -4,7 +4,7 @@ import {
   IHighlightInterval,
   ITrackModel,
   RegionSet,
-} from "wuepgg3-track";
+} from "wuepgg3-track-test";
 import {
   createEntityAdapter,
   createSlice,

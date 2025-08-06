@@ -8,7 +8,7 @@ import {
   clearAllGenomes,
   refreshLocalGenomes,
 } from "@/lib/redux/thunk/genome-hub";
-import { IGenome } from "wuepgg3-track";
+import { IGenome } from "wuepgg3-track-test";
 import { ChevronRightIcon } from "@heroicons/react/16/solid";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";

@@ -10,7 +10,7 @@ import {
   GenomeSerializer,
   getGenomeConfig,
   ITrackModel,
-} from "wuepgg3-track";
+} from "wuepgg3-track-test";
 import {
   addSessionsFromBundleId,
   importOneSession,
@@ -130,7 +130,9 @@ export default function useBrowserInitialization() {
               }));
             } catch (error) {
               console.error("Failed to load hub data:", error);
-              alert("Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead.");
+              alert(
+                "Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead."
+              );
             }
           }
 

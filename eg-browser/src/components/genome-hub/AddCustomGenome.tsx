@@ -5,7 +5,7 @@ import { useNavigation } from "../core-navigation/NavigationStack";
 import { addCustomGenome } from "@/lib/redux/thunk/genome-hub";
 import { ArrowDownTrayIcon, PlusIcon } from "@heroicons/react/24/outline";
 import FileInput from "../ui/input/FileInput";
-import { GenomeSerializer } from "wuepgg3-track";
+import { GenomeSerializer } from "wuepgg3-track-test";
 
 export default function AddCustomGenome() {
   const dispatch = useAppDispatch();

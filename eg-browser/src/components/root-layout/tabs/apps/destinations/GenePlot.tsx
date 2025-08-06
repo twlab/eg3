@@ -12,7 +12,7 @@ import {
   NumericalFeature,
   RegionSet,
   GenomeSerializer,
-} from "wuepgg3-track";
+} from "wuepgg3-track-test";
 
 import RegionSetSelector from "./region-set/RegionSetSelector";
 import { useAppSelector } from "@/lib/redux/hooks";
