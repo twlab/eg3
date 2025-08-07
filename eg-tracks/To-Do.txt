@@ -21,3 +21,22 @@ finished
 5. working tab ui react layers 
 6. fixed conditionally display in genomeroot
 7. fixed loading placeholder
+
+
+finished 
+1. browser package and track package working with react 18 and 19
+2. fixed two react version bug with packages and consuming app
+3. fixed nodepoly package
+4. implemented g3d ui 
+5. fixed flexlayout bugs, when tabs are opened
+6. added new system to manage track height so height changing works 
+    with flexlayout
+7. refactor const objects for package (need to implement in dev branch)\
+8. working multi worker fetch(need to test for bugs and implement in dev)
+
+8/07/2025
+1. fix hover for metadata
+2. show hidden genomes in trackfactory
+3. working multi worker fetch(need to test for bugs and implement in dev)
+4. refactor const objects for package (need to implement in dev branch)
+5. hover for ruler 
