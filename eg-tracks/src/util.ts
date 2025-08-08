@@ -3,6 +3,7 @@ import DisplayedRegionModel from "./models/DisplayedRegionModel";
 import DataHubParser from "./models/DataHubParser";
 import RegionSet from "./models/RegionSet";
 import OpenInterval from "./models/OpenInterval";
+import TrackModel from "./models/TrackModel";
 
 export function getGenomeDefaultState(genome: string) {
   const genomeConfig = getGenomeConfigFromAllGenomes(genome);
@@ -77,6 +78,52 @@ export function getGenomeConfig(genome: string) {
   return getGenomeConfigFromAllGenomes(genome);
 }
 
+export function arraysHaveSameTrackModels(
+  array1: Array<TrackModel>,
+  array2: Array<TrackModel>
+): boolean {
+  // Check if the lengths are different. If they are, return false.
+  if (array1.length !== array2.length) {
+    return false;
+  }
+
+  // Use a map to keep track of the count of each id in the first array.
+  const idCounts = new Map();
+
+  for (let item of array1) {
+    // Increment the count for each id in the first array.
+    idCounts.set(item.id, (idCounts.get(item.id) || 0) + 1);
+  }
+
+  for (let item of array2) {
+    // Decrement the count for each id in the second array.
+    if (!idCounts.has(item.id)) {
+      return false;
+    }
+    const newCount = idCounts.get(item.id) - 1;
+    if (newCount === 0) {
+      idCounts.delete(item.id);
+    } else {
+      idCounts.set(item.id, newCount);
+    }
+  }
+
+  // If idCounts is empty, it means both arrays have the same ids with the same counts.
+  return idCounts.size === 0;
+}
+
+export function diffTrackModels(
+  array1: Array<TrackModel>,
+  array2: Array<TrackModel>
+): { onlyInArray1: Array<TrackModel>; onlyInArray2: Array<TrackModel> } {
+  const array2Ids = new Set(array2.map((item) => item.id));
+  const array1Ids = new Set(array1.map((item) => item.id));
+
+  const onlyInArray1 = array1.filter((item) => !array2Ids.has(item.id));
+  const onlyInArray2 = array2.filter((item) => !array1Ids.has(item.id));
+
+  return { onlyInArray1, onlyInArray2 };
+}
 export function restoreLegacyViewRegion(
   object: any,
   regionSetView: RegionSet | null

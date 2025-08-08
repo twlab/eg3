@@ -12,7 +12,7 @@ export interface ITrackContainerState {
   onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTracksChange: (trackSelected: TrackModel[]) => void;
-
+  onSetSelected: (set: any) => void;
   onNewRegionSelect: (
     startbase: number,
     endbase: number,
@@ -38,7 +38,7 @@ export interface ITrackContainerRepresentableProps {
   onNewRegion: (startbase: number, endbase: number) => void | null | undefined;
   onNewHighlight: (highlightState: Array<any>) => void | null | undefined;
   onTracksChange: (trackSelected: ITrackModel[]) => void | null | undefined;
-
+  onSetSelected: (set: any) => void | null | undefined;
   onNewRegionSelect: (
     startbase: number,
     endbase: number,

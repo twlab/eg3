@@ -8,10 +8,12 @@ const useResizeObserver = () => {
   const prevSize = useRef({ width: 0, height: 0 });
   const initialWidth = useRef(true);
   const initialHeight = useRef(true);
+
   useEffect(() => {
     const handleResize = debounce((entries: ResizeObserverEntry[]) => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
+
         // Only update size if the change is significant (e.g., exclude scrollbar adjustments)
         if (
           initialWidth.current ||
@@ -20,6 +22,15 @@ const useResizeObserver = () => {
           setSize({ width, height: prevSize.current.height });
           prevSize.current = { width, height: prevSize.current.height };
           initialWidth.current = false;
+        }
+
+        if (
+          initialHeight.current ||
+          Math.abs(height - prevSize.current.width) > 25
+        ) {
+          setSize({ width: prevSize.current.width, height });
+          prevSize.current = { width: prevSize.current.width, height };
+          initialHeight.current = false;
         }
       }
     }, 500); // Adjust debounce delay as needed

@@ -4,8 +4,7 @@ export const ModelListMenu = (props) => {
   const { modelDisplay, onToggleModelDisplay } = props;
   if (!modelDisplay) return null;
   return (
-    <div style={{ padding: 5 }}>
-      <label>Models:</label>
+    <div style={{ paddingLeft: 5, paddingBottom: 5 }}>
       {Object.entries(modelDisplay).map((modelValue, index) => {
         return (
           <div className="toggle-model-container" key={index}>

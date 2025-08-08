@@ -1,19 +1,42 @@
 To-Do, 6/15/2025
-1. check matplot  _done
-2. implement combine into matplot _done
-3. skeleton loading _done
-4. takeout loading from mainmenu _done
-5. Tutorial
-6. check hic and options
-7. legendWidth change
-
+1. remove extra setState for creating workers in the package version
+2. showGenome on 3d
+3. fix css
+4. show hidden genomes in trackfactory
+5. fix hover for metadata
 ______________________
 11. implement g3d
     - get g3d working (finish) _done
-    - display with tabs below the tracks OR next to the element _done
-    - implement old ui
+    - implement old ui _working
+    - create model for react tab, in genomeroot, check for dupe, like in trackmanager (tracks)
+    - implment add and delete from tracks and update properly
+
 ______________________
-12. after sending - work on npm 
-    - working individual tracks npm package _done
-    - connect track into browser npm package
-    - allow exports in browser
+
+finished
+1. fixed slow loading on initial by moving worker to genomeroot
+2. double render in queueTofetch because we update newDrawData twice on initial
+3. overall performance improvement by not having to recreate workers 
+4. finish npm package
+5. working tab ui react layers 
+6. fixed conditionally display in genomeroot
+7. fixed loading placeholder
+
+
+finished 
+1. browser package and track package working with react 18 and 19
+2. fixed two react version bug with packages and consuming app
+3. fixed nodepoly package
+4. implemented g3d ui 
+5. fixed flexlayout bugs, when tabs are opened
+6. added new system to manage track height so height changing works 
+    with flexlayout
+7. refactor const objects for package (need to implement in dev branch)\
+8. working multi worker fetch(need to test for bugs and implement in dev)
+
+8/07/2025
+1. fix hover for metadata
+2. show hidden genomes in trackfactory
+3. working multi worker fetch(need to test for bugs and implement in dev)
+4. refactor const objects for package (need to implement in dev branch)
+5. hover for ruler 

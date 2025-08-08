@@ -386,6 +386,13 @@ export const getHoverTooltip = {
 
         const left = xSpan1.start;
         const right = xSpan2.start;
+        // old cal wrong when theres padding or component moves
+        // const fullSiteLeft = parentPos.left + left - 20 + "px";
+        // const fullSiteRight = parentPos.left + right - 20 + "px";
+        const fullSiteLeft = left - dataObj.viewWindow.start + 120 + "px";
+        const fullSiteRight = right - dataObj.viewWindow.start + 120 + "px";
+        const packageLeft = left + 120 + "px";
+        const packageRight = right + 120 + "px";
         const leftWidth = Math.max(xSpan1.getLength(), 1);
         const rightWidth = Math.max(xSpan2.getLength(), 1);
 
@@ -398,7 +405,9 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: parentPos.left + left - 20 + "px",
+                left: dataObj.options.packageVersion
+                  ? packageLeft
+                  : fullSiteLeft,
                 width: leftWidth + "px",
                 height: "100%",
 
@@ -414,7 +423,9 @@ export const getHoverTooltip = {
                 display: "block",
                 // 20 px is the padding in genome Root  if you include borders in css you also have to account for border left and border right so border: 1px we have to add 2px here
 
-                left: parentPos.left + right - 20 + "px",
+                left: dataObj.options.packageVersion
+                  ? packageRight
+                  : fullSiteRight,
                 width: rightWidth + "px",
                 height: "1000",
                 zIndex: 1000,

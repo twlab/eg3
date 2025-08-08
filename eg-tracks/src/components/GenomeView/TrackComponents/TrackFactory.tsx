@@ -74,7 +74,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   const [toolTip, setToolTip] = useState<any>();
   const [toolTipVisible, setToolTipVisible] = useState(false);
-  const [legend, setLegend] = useState<any>();
+  const [legend, setLegend] = useState<any>(null);
 
   function getHeight(numRows: number): number {
     let rowHeight = trackOptionMap[`${trackModel.type}`].ROW_HEIGHT;
@@ -165,7 +165,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       pageY: event.pageY,
       name: genomeConfig.genome._name,
       onClose: onClose,
-      isThereG3dTrack: false,
+      isThereG3dTrack: isThereG3dTrack,
       setShow3dGene: setShow3dGene,
       configOptions: configOptions.current,
     });
@@ -207,7 +207,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    if (viewComponent) {
+    if (viewComponent && viewComponent.dataIdx === dataIdx) {
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
@@ -267,8 +267,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
+        var noData = false;
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
+            noData = true;
             continue;
           }
           if (
@@ -284,7 +286,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           currIdx--;
         }
 
-        var noData = false;
         if (!hasError) {
           if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
             combinedData = getDeDupeArrMatPlot(combinedData, false);
@@ -478,7 +479,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let cacheDataIdx = dataIdx;
 
         let cacheTrackData = trackFetchedDataCache.current[`${id}`];
-        let combinedData: Array<any> | undefined = [];
+        let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
         let trackState = _.cloneDeep(
@@ -587,7 +588,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
-
+        trackState["groupScale"] =
+          globalTrackState.current.trackStates[dataIdx].trackState[
+            "groupScale"
+          ];
         if (combinedData) {
           sentScreenshotData({
             fetchData: {
@@ -619,6 +623,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     <div
       style={{
         display: "flex",
+        position: "relative",
       }}
     >
       <div
@@ -636,46 +641,44 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
         Button 60
       </div> */}
-      {trackModel.id in messageData ||
-      !viewComponent ||
-      (viewComponent && dataIdx !== viewComponent.dataIdx) ? (
-        <Loading
-          buttonLabel={
-            (viewComponent && dataIdx !== viewComponent.dataIdx) ||
-            !viewComponent
-              ? "Loading View"
-              : "Getting Data"
-          }
-          height={
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-              ? configOptions.current.height
+      <Loading
+        buttonLabel={
+          (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
+            ? "Loading View"
+            : "Getting Data"
+        }
+        height={
+          configOptions.current.displayMode === "full"
+            ? !fetchError.current
+              ? svgHeight.current
               : 40
-          }
-          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-          // xOffset={0}
-        >
-          <div>
-            {trackModel.id in messageData
-              ? messageData[`${trackModel.id}`].map((item, index) => {
-                  return (
-                    <div
-                      key={`${trackModel.index}loading-` + `${index}`}
-                      style={{ display: "flex", flexDirection: "column" }}
-                    >
-                      {item.genomicLoci.map((item) => item.toString())}{" "}
-                    </div>
-                  );
-                })
-              : ""}
-          </div>
-        </Loading>
-      ) : (
-        ""
-      )}
+            : !fetchError.current
+            ? configOptions.current.height
+            : 40
+        }
+        // Control visibility
+        isVisible={
+          trackModel.id in messageData ||
+          !viewComponent ||
+          (viewComponent && dataIdx !== viewComponent.dataIdx)
+        }
+        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+        // xOffset={0}
+      >
+        <div>
+          {trackModel.id in messageData
+            ? messageData[`${trackModel.id}`].map((item, index) => {
+                return (
+                  <div key={`${trackModel.index}loading-` + `${index}`}>
+                    {item.genomicLoci
+                      ? item.genomicLoci.map((item) => item.toString())
+                      : ""}{" "}
+                  </div>
+                );
+              })
+            : ""}
+        </div>
+      </Loading>
       {Toolbar.skeleton && !viewComponent ? (
         <div style={{}}>
           <Toolbar.skeleton width={windowWidth} height={40} />

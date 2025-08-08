@@ -127,7 +127,7 @@ class RulerComponent extends React.Component<RulerComponentProps> {
     return (
       <React.Fragment>
         <div style={{ display: "flex", ...curParentStyle }}>
-          {this.props.options.forceSvg ? legend : ""}
+          {forceSvg || this.props.options.packageVersion ? legend : ""}
           <div
             style={{
               ...curEleStyle,

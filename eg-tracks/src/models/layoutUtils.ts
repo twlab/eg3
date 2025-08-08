@@ -1,7 +1,5 @@
-import React from "react";
 import _ from "lodash";
 import { Model, Actions } from "flexlayout-react"; // Use named imports based on what's available
-import { v4 as uuidv4 } from "uuid";
 
 /**
  * utilities to deal with layouts
@@ -12,13 +10,14 @@ export const global0 = {
   tabSetHeaderHeight: 0,
   tabSetTabStripHeight: 0,
   splitterSize: 0,
+  tabSetEnableTabStrip: false,
 };
 export const global25 = {
   tabSetHeaderHeight: 25,
   tabSetTabStripHeight: 25,
   splitterSize: 8,
+  tabSetEnableTabStrip: true,
 };
-
 export const initialLayout = {
   global: global0,
   layout: {
@@ -26,13 +25,14 @@ export const initialLayout = {
     children: [
       {
         type: "tabset",
+        weight: 50,
         children: [
           {
+            config: { trackModel: null },
             type: "tab",
-            enableClose: false,
             name: "Browser",
-            component: "app",
-            id: "app",
+            component: "Browser",
+            enableClose: false,
           },
         ],
       },
@@ -47,16 +47,18 @@ export function addTabSetToLayout(newTabset, exisingLayout) {
     // already have 2 panels, change direction to horizontal
     const lastChild = initial.layout.children.slice(-1)[0];
     if (lastChild.type === "row") {
+      // add another tabset to the last row
       children = [...initial.layout.children, newTabset];
     } else {
+      // combine tabset into a row
       const child = [lastChild, newTabset];
       children = [
         ...initial.layout.children.slice(0, -1),
-        { type: "row", children: child, id: uuidv4() },
+        { type: "row", children: child, id: crypto.randomUUID() },
       ];
     }
   } else {
-    children = [...initial.layout.children, newTabset];
+    children = [...exisingLayout.layout.children, newTabset];
   }
   const layout = { ...initial.layout, children };
   return { ...initial, layout, global: global25 };

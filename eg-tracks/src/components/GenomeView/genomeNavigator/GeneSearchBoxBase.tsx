@@ -164,6 +164,13 @@ const GeneSearchBoxBase: React.FC<GeneSearchBoxBaseProps> = ({
             value: inputValue,
             onChange: handleInputChange,
             onKeyUp: showIsoformsIfEnterPressed,
+            style: {
+              width: "100%",
+              padding: "6px 8px",
+              border: "1px solid #e2e8f0",
+              borderRadius: "4px",
+              fontSize: "14px",
+            },
           }}
           ref={inputRef}
           onSuggestionSelected={showIsoforms}

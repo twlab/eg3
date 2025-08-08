@@ -1,5 +1,14 @@
 # Version history
 
+## 55.2.0
+
+- added g3d UI and flexlayout component
+- remote track, indicator when a user submit a track
+- moved workers to genomeroot, decreasing init load times
+- fixed where configmenu appears, so it doesn't get cut off
+- refactor states in trackmanager
+- fixed bug where groupscale are not applying in screenshot
+
 ## 55.1.0
 
 - Added loading indicator and track placeholder
