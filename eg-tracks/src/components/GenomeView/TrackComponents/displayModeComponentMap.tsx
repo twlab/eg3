@@ -14,7 +14,6 @@ import Gene, { IdbRecord } from "../../../models/Gene";
 import OpenInterval from "../../../models/OpenInterval";
 import { SortItemsOptions } from "../../../models/SortItemsOptions";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-
 import TrackLegend from "./commonComponents/TrackLegend";
 import GeneAnnotation from "./geneAnnotationTrackComponents/GeneAnnotation";
 import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
@@ -26,10 +25,8 @@ import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
-
 import { getContrastingColor, parseNumberString } from "../../../models/util";
 import { scaleLinear } from "d3-scale";
-
 import MethylCRecord from "../../../models/MethylCRecord";
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
 import DynseqTrackComponents from "./DynseqComponents/DynseqTrackComponents";
@@ -53,14 +50,12 @@ import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackCompone
 import { Model } from "flexlayout-react";
 import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
 import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
-
 import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
 import Snp from "../../../models/Snp";
 import SnpAnnotation from "./SnpComponents/SnpAnnotation";
 import { BamAlignment } from "../../../models/BamAlignment";
 import { BamAnnotation } from "./BamComponents/BamAnnotation";
 import ImageRecord from "../../../models/ImageRecord";
-
 import OmeroTrackComponents, {
   MAX_NUMBER_THUMBNAILS,
   THUMBNAIL_PADDING,
@@ -68,24 +63,31 @@ import OmeroTrackComponents, {
 import { initialLayout } from "../../../models/layoutUtils";
 import _ from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
-
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
 import QBed from "../../../models/QBed";
-
 import React from "react";
-
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
-
 import VcfTrack from "./VcfComponents/VcfTrack";
-
 import Bedcolor from "./bedComponents/Bedcolor";
-import { config } from "process";
+
+export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
+export const bigWithNavTracks = new Set(["repeat", "jaspar", "bigbed"]);
+export const instanceFetchTracks = new Set(["hic", "dynamichic", "bam"]);
+export const dynamicMatplotTracks = new Set([
+  "matplot",
+  "dynamic",
+  "dynamicbed",
+]);
+export const anchorTracks = new Set(["hic", "longrange"]);
+export const densityTracks = new Set(["bigwig", "qbed", "bedgraph"]);
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
+
 enum BedColumnIndex {
   CATEGORY = 3,
 }
 const TOP_PADDING = 2;
+
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
     formattedData,
@@ -634,7 +636,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let height;
 
     height =
-      trackModel.type in { repeatmasker: "" }
+      trackModel.type === "repeatmasker"
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
 
@@ -1463,9 +1465,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     });
 
     return elements;
-  } else if (
-    drawData.trackModel.type in { hic: "", biginteract: "", longrange: "" }
-  ) {
+  } else if (interactionTracks.has(drawData.trackModel.type)) {
     let formattedData: any = [];
 
     formattedData = drawData.genesArr;
@@ -1516,7 +1516,10 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
     });
 
     return canvasElements;
-  } else if (drawData.trackModel.type in { methylc: "", dynseq: "" }) {
+  } else if (
+    drawData.trackModel.type === "methylc" ||
+    drawData.trackModel.type === "dynseq"
+  ) {
     let formattedData = drawData.genesArr;
 
     let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
@@ -1571,7 +1574,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
 
     return canvasElements;
   } else if (
-    drawData.trackModel.type in { bigwig: "", qbed: "", bedgraph: "" } ||
+    densityTracks.has(drawData.trackModel.type) ||
     drawData.configOptions.displayMode === "density"
   ) {
     let formattedData;

@@ -675,29 +675,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           (trackModel) => trackModel.id === config
         ) || null
       );
-      trackModel.options = _.cloneDeep(
-        globalTrackConfig.current[`${config}`].configOptions
-      );
-      if (value && key === "displayMode") {
-        trackModel.options.displayMode = value;
-      }
-      if (value && key === "scoreScale") {
-        trackModel.options.scoreScale = value;
-      }
-      if (value && key === "yScale") {
-        trackModel.options.yScale = value;
-      }
-      if (trackModel.type === "hic") {
-        fileInfos[`${trackModel.id}`] =
-          fetchInstances.current[`${trackModel.id}`].getFileInfo();
-      }
-      trackModel.options["trackId"] = config;
-      const trackConfig = getTrackConfig(trackModel);
-      const menuItems = trackConfig.getMenuComponents();
+      if (trackModel) {
+        trackModel.options = _.cloneDeep(
+          globalTrackConfig.current[`${config}`].configOptions
+        );
+        if (value && key === "displayMode") {
+          if (!trackModel.options) trackModel.options = {};
+          trackModel.options.displayMode = value;
+        }
+        if (value && key === "scoreScale") {
+          if (!trackModel.options) trackModel.options = {};
+          trackModel.options.scoreScale = value;
+        }
+        if (value && key === "yScale") {
+          if (!trackModel.options) trackModel.options = {};
+          trackModel.options.yScale = value;
+        }
+        if (trackModel.type === "hic") {
+          fileInfos[`${trackModel.id}`] =
+            fetchInstances.current[`${trackModel.id}`].getFileInfo();
+        }
+        if (!trackModel.options) trackModel.options = {};
+        trackModel.options["trackId"] = config;
+        const trackConfig = getTrackConfig(trackModel);
+        const menuItems = trackConfig.getMenuComponents();
 
-      menuComponents.push(menuItems);
-      optionsObjects.push(trackModel.options);
-      curtracks.push(trackModel);
+        menuComponents.push(menuItems);
+        optionsObjects.push(trackModel.options);
+        curtracks.push(trackModel);
+      }
     }
 
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
@@ -737,7 +743,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (item.id === trackId) {
           let oldOption = _.cloneDeep(item.options);
           let newVal = _.cloneDeep(value);
-          item.options = { ...oldOption, [key]: newVal };
+          item.options = { ...oldOption, [key]: String(newVal) };
           newSelected[`${trackId}`] = { [key]: value };
         }
       });
@@ -2119,7 +2125,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
       ) {
         trackManagerState.current.tracks[i].tracks?.map(
-          (trackModel: { id: string }, index: any) => {
+          (trackModel: TrackModel, index: any) => {
             trackModel.id =
               `${trackManagerState.current.tracks[i].id}` +
               "subtrack" +
