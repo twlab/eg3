@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./loading.css";
 
-interface PopoverProps {
-  buttonLabel: React.ReactNode;
+interface HiddenIndicatorProps {
+  viewComponent: number;
   children: React.ReactNode;
   className?: string;
   height: number;
@@ -10,8 +10,8 @@ interface PopoverProps {
   isVisible?: boolean;
 }
 
-const Loading: React.FC<PopoverProps> = ({
-  buttonLabel,
+const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
+  viewComponent,
   children,
   className,
   height,
@@ -59,7 +59,7 @@ const Loading: React.FC<PopoverProps> = ({
         onClick={() => setOpen((prev) => !prev)}
         style={{ zIndex: 9994 }}
       >
-        <div style={{ fontStyle: "italic" }}>{buttonLabel} </div>
+        <div style={{ fontStyle: "italic" }}>{viewComponent} </div>
         <div className="loader"></div>
         <span className={`popover-arrow${open ? " open" : ""}`} />
       </button>
@@ -90,4 +90,4 @@ const Loading: React.FC<PopoverProps> = ({
   );
 };
 
-export default Loading;
+export default HiddenIndicator;

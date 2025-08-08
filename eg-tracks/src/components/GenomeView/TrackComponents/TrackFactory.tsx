@@ -737,7 +737,26 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : ""
         }
       </div>
+      <div
+        style={{
+          position: "absolute",
+          zIndex: 3,
+          height: 16,
 
+          top:
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
+              : 40, // 16 is the height of the button, shift it up to align
+          left: windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1),
+        }}
+      >
+        {" "}
+        HIII
+      </div>
       <div
         style={{
           position: "absolute",

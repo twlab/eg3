@@ -1,5 +1,10 @@
 # Version history
 
+## 55.3.0
+
+- implement hover data for ruler
+- fixed tooltip hover for metadata
+
 ## 55.2.0
 
 - added g3d UI and flexlayout component

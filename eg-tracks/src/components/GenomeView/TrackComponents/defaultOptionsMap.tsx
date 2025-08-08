@@ -48,7 +48,11 @@ const SNP_ROW_HEIGHT = SNP_HEIGHT + SNP_ROW_VERTICAL_PADDING;
 
 export const trackOptionMap: { [key: string]: any } = {
   ruler: {
-    defaultOptions: { backgroundColor: "var(--bg-color)", height: 40 },
+    defaultOptions: {
+      backgroundColor: "var(--bg-color)",
+      height: 40,
+      forceSvg: false,
+    },
   },
   bigbed: {
     defaultOptions: {
