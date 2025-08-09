@@ -620,7 +620,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       configOptions.hiddenPixels,
       sortType
     );
-
+    console.log(placeFeatureData);
     // if (configOptions.forceSvg) {
     //   placeFeatureData.placements = placeFeatureData.placements.filter(
     //     (feature) => {
@@ -672,7 +672,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       svgHeight.current = height;
     }
 
-    return svgDATA;
+    return { component: svgDATA, numHidden: placeFeatureData.numHidden };
   },
 
   density: function getDensity({

@@ -813,7 +813,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
     } else {
-      console.log(newSelected);
       setApplyTrackConfigChange(newSelected);
     }
 

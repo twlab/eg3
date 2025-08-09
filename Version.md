@@ -4,6 +4,7 @@
 
 - implement hover data for ruler
 - fixed tooltip hover for metadata
+- fixed aggregateMethod config bug
 
 ## 55.2.0
 

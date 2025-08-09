@@ -20,6 +20,7 @@ import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
+import HiddenIndicator from "./commonComponents/HiddenIndicator";
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -139,8 +140,23 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (cacheDataIdx === dataIdx) {
       signalTrackLoadComplete(id);
       updateSide.current = side;
+      let result;
+      let numHidden = 0;
+      if (
+        typeof res === "object" &&
+        Object.prototype.hasOwnProperty.call(res, "numHidden")
+      ) {
+        result = res.component;
+        numHidden = res.numHidden;
+      } else {
+        result = res;
+      }
 
-      setViewComponent({ component: res, dataIdx: cacheDataIdx });
+      setViewComponent({
+        component: result,
+        dataIdx: cacheDataIdx,
+        numHidden: numHidden,
+      });
 
       xPos.current = curXPos;
     }
@@ -662,6 +678,55 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : ""}
         </div>
       </Loading>
+      {viewComponent && viewComponent.numHidden ? (
+        <div
+          style={{
+            position: "absolute",
+            zIndex: 3,
+            height: 16,
+
+            top:
+              configOptions.current.displayMode === "full"
+                ? !fetchError.current
+                  ? svgHeight.current
+                  : 40
+                : !fetchError.current
+                ? configOptions.current.height
+                : 40, // 16 is the height of the button, shift it up to align
+            left: windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1),
+          }}
+        >
+          {viewComponent.numHidden}
+        </div>
+      ) : (
+        ""
+      )}
+      {/* <HiddenIndicator
+        buttonLabel={
+          (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
+            ? "Loading View"
+            : "Getting Data"
+        }
+        height={
+          configOptions.current.displayMode === "full"
+            ? !fetchError.current
+              ? svgHeight.current
+              : 40
+            : !fetchError.current
+            ? configOptions.current.height
+            : 40
+        }
+        // Control visibility
+        isVisible={
+          trackModel.id in messageData ||
+          !viewComponent ||
+          (viewComponent && dataIdx !== viewComponent.dataIdx)
+        }
+        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+        // xOffset={0}
+      >
+        {viewComponent ? viewComponent.component : ""}
+      </HiddenIndicator> */}
       {Toolbar.skeleton && !viewComponent ? (
         <div style={{}}>
           <Toolbar.skeleton width={windowWidth} height={40} />
@@ -737,26 +802,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : ""
         }
       </div>
-      <div
-        style={{
-          position: "absolute",
-          zIndex: 3,
-          height: 16,
 
-          top:
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-              ? configOptions.current.height
-              : 40, // 16 is the height of the button, shift it up to align
-          left: windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1),
-        }}
-      >
-        {" "}
-        HIII
-      </div>
       <div
         style={{
           position: "absolute",
