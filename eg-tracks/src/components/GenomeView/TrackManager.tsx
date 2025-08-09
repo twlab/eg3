@@ -733,7 +733,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackId: string | null = null
   ) {
     let newSelected: { [key: string]: any } = {};
-    console.log(key);
+
     if (key === "displayMode" || key === "scoreScale" || key === "yScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));
     }
@@ -754,6 +754,28 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           let newVal = _.cloneDeep(value);
           item.options = { ...oldOption, [key]: newVal };
           newSelected[`${item.id}`] = { [key]: value };
+          if (key === "aggregateMethod") {
+            const trackToDrawId = {};
+            for (const key in trackFetchedDataCache.current) {
+              if (key in selectedTracks.current) {
+                trackToDrawId[key] = {};
+                const curTrack = trackFetchedDataCache.current[key];
+
+                for (const cacheDataIdx in curTrack) {
+                  if (isInteger(cacheDataIdx)) {
+                    if (
+                      "xvalues" in
+                      trackFetchedDataCache.current[key][cacheDataIdx]
+                    ) {
+                      delete trackFetchedDataCache.current[key][cacheDataIdx]
+                        .xvalues;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
           if (key === "normalization" || key === "binSize") {
             updateGlobalTrackConfig({
               configOptions: {
@@ -791,6 +813,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (key === "normalization" || key === "binSize") {
       queueRegionToFetch(dataIdx.current);
     } else {
+      console.log(newSelected);
       setApplyTrackConfigChange(newSelected);
     }
 
