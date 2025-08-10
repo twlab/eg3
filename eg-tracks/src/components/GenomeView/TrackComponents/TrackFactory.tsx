@@ -701,32 +701,24 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       ) : (
         ""
       )}
-      {/* <HiddenIndicator
-        buttonLabel={
-          (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
-            ? "Loading View"
-            : "Getting Data"
-        }
-        height={
-          configOptions.current.displayMode === "full"
-            ? !fetchError.current
-              ? svgHeight.current
+      {viewComponent && viewComponent.numHidden ? (
+        <HiddenIndicator
+          numHidden={viewComponent.numHidden}
+          height={
+            configOptions.current.displayMode === "full"
+              ? !fetchError.current
+                ? svgHeight.current
+                : 40
+              : !fetchError.current
+              ? configOptions.current.height
               : 40
-            : !fetchError.current
-            ? configOptions.current.height
-            : 40
-        }
-        // Control visibility
-        isVisible={
-          trackModel.id in messageData ||
-          !viewComponent ||
-          (viewComponent && dataIdx !== viewComponent.dataIdx)
-        }
-        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-        // xOffset={0}
-      >
-        {viewComponent ? viewComponent.component : ""}
-      </HiddenIndicator> */}
+          }
+          xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
+        />
+      ) : (
+        ""
+      )}
+
       {Toolbar.skeleton && !viewComponent ? (
         <div style={{}}>
           <Toolbar.skeleton width={windowWidth} height={40} />
