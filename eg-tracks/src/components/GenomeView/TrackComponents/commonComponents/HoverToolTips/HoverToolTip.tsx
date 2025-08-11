@@ -37,6 +37,22 @@ function getAbsolutePosition(element) {
   };
 }
 export const getHoverTooltip = {
+  ruler: function getTooltip(dataObj: { [key: string]: any }) {
+    return {
+      toolTip: (
+        <div>
+          <div className="Tooltip-minor-text">
+            <GenomicCoordinates
+              viewRegion={dataObj.viewRegion}
+              width={Math.round(dataObj.width)}
+              x={dataObj.relativeX}
+            />
+          </div>
+        </div>
+      ),
+    };
+  },
+
   numerical: function getTooltip(dataObj: { [key: string]: any }) {
     const value = dataObj.data[Math.round(dataObj.relativeX)];
     const value2 = dataObj.hasReverse
@@ -706,7 +722,8 @@ const HoverTooltip: React.FC<HoverToolTipProps> = memo(function tooltip({
   const handleMouseEnter = (e) => {
     if (
       isArrayNotEmpty(data) ||
-      (isObjectNotEmpty(data) && isDataValid(data))
+      (isObjectNotEmpty(data) && isDataValid(data)) ||
+      trackType === "ruler"
     ) {
       const rect = targetRef.current!.getBoundingClientRect();
 

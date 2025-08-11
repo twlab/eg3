@@ -38,5 +38,8 @@ finished
 1. fix hover for metadata
 2. show hidden genomes in trackfactory
 3. working multi worker fetch(need to test for bugs and implement in dev)
-4. refactor const objects for package (need to implement in dev branch)
+4. refactor const objects for package (need to implement in dev branch), (finish dev, finish worker,multi)
 5. hover for ruler 
+6. implement changes for packages: flexlayout, multi worker, css, refactoring of state. 
+7. implement props for whole website genomehub of package.
+

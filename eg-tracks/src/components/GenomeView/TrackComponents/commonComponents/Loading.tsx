@@ -8,6 +8,7 @@ interface PopoverProps {
   height: number;
   xOffset?: number;
   isVisible?: boolean;
+  color: string;
 }
 
 const Loading: React.FC<PopoverProps> = ({
@@ -17,6 +18,7 @@ const Loading: React.FC<PopoverProps> = ({
   height,
   xOffset = 0,
   isVisible = true,
+  color,
 }) => {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ const Loading: React.FC<PopoverProps> = ({
       //need to margin left the
       style={{
         position: "absolute",
-        top: height - 16, // 16 is the number of tracks - one more
+        top: height - 16, // 16 is the height of the button, shift it up to align
         left: xOffset,
         visibility: isVisible ? "visible" : "hidden", // Control visibility
         pointerEvents: isVisible ? "auto" : "none", // Make uninteractable when hidden
