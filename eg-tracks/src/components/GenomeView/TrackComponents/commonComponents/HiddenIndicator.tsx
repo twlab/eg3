@@ -5,14 +5,19 @@ interface HiddenIndicatorProps {
   numHidden: any;
   height: number;
   xOffset?: number;
+  isVisible?: boolean;
+  color: string;
 }
 
 const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
   numHidden,
   height,
   xOffset = 0,
+  isVisible = false,
+  color,
 }) => {
   const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(true);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Close popover when clicking outside
@@ -38,22 +43,75 @@ const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
       ref={popoverRef}
       style={{
         position: "absolute",
-        top: height - 16, // 16 is the height of the button, shift it up to align
-        left: xOffset,
+        top: height - 16, // 16 is the height of the loading but
+        left: dismissed ? 0 : xOffset,
+        visibility: isVisible ? "visible" : "hidden", // Control visibility
+        zIndex: 9994,
+        pointerEvents: "none",
       }}
     >
-      <button
-        type="button"
-        className={`popover-btn${open ? " open" : ""}`}
-        onClick={() => setOpen((prev) => !prev)}
-        style={{ zIndex: 9994 }}
-      >
-        <div style={{ fontStyle: "italic" }}>
-          {numHidden} items hidden - zoom{" "}
+      {dismissed ? (
+        // Small tab indicator when dismissed - click to restore full component
+
+        <div
+          onClick={() => setDismissed(false)}
+          className={`popover-btn`}
+          style={{
+            width: 120,
+            gap: "0.5em",
+            position: "relative",
+            verticalAlign: "top",
+            padding: "0 7px 0 5px",
+            fontStyle: "italic",
+            pointerEvents: "auto",
+          }}
+        >
+          <span style={{ textAlign: "left" }}>{numHidden} items hidden</span>
+          <span className={`popover-arrow${open ? " open" : ""}`} />
         </div>
-        {/* <div className="loader"></div> */}
-        {/* <span className={`popover-arrow${open ? " open" : ""}`} /> */}
-      </button>
+      ) : (
+        // Full component when not dismissed
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              gap: "0.8em",
+              alignItems: "center",
+              color: color,
+              fontFamily:
+                "BlinkMacSystemFont, -apple-system, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+              fontSize: "0.8rem",
+              height: "16px",
+              position: "relative",
+              verticalAlign: "top",
+              whiteSpace: "nowrap",
+              pointerEvents: "none",
+            }}
+          >
+            <div style={{ fontStyle: "italic", pointerEvents: "none" }}>
+              {numHidden} items hidden - zoom{" "}
+              <span
+                onClick={() => setDismissed(true)}
+                style={{
+                  fontSize: "12px",
+                  color: "#007acc",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  pointerEvents: "auto",
+                }}
+              >
+                dismiss
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,6 +8,7 @@ interface PopoverProps {
   height: number;
   xOffset?: number;
   isVisible?: boolean;
+  color: string;
 }
 
 const Loading: React.FC<PopoverProps> = ({
@@ -17,6 +18,7 @@ const Loading: React.FC<PopoverProps> = ({
   height,
   xOffset = 0,
   isVisible = true,
+  color,
 }) => {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
