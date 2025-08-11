@@ -206,6 +206,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
+    console.log(newDrawData);
     if (newDrawData.trackToDrawId && id in newDrawData.trackToDrawId) {
       const cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {

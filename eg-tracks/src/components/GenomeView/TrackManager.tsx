@@ -279,7 +279,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     null
   );
   const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
-
+  [];
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
 
   const [selectedTool, setSelectedTool] = useState<{ [key: string]: any }>({
@@ -713,6 +713,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     } else {
       dataIdx.current = curDataIdx;
+      console.log("Hii");
       queueRegionToFetch(dataIdx.current);
     }
 
@@ -1842,16 +1843,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         enqueueMessage(dataToFetchArr);
       }
     }
-
     if (
       Object.keys(trackToDrawId).length > 0 &&
       !needToFetchGenAlign &&
       !genomeConfig.isInitial
     ) {
+      console.log(
+        trackToDrawId,
+        "trackToDrawId",
+        !genomeConfig.isInitial,
+        !needToFetchGenAlign
+      );
+      completedFetchedRegion.current.done = { ...trackToDrawId };
+      completedFetchedRegion.current.key = dataIdx.current;
       setNewDrawData({
         curDataIdx: dataIdx.current,
         isInitial: 0,
-        trackToDrawId,
+        trackToDrawId: { ...trackToDrawId },
       });
     }
   }
