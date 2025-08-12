@@ -81,7 +81,7 @@ export default function GenomeView() {
     endbase: number,
     coordinate: GenomeCoordinate
   ) => {
-    let updatedCoord;
+    let updatedCoord: any;
     if (coordinate === prevViewRegion.current) {
       updatedCoord = `${coordinate},${startbase}-${endbase}`;
     } else {
@@ -123,32 +123,28 @@ export default function GenomeView() {
   return currentSession &&
     genomeConfig &&
     currentSession.genomeId === genomeConfig.name ? (
-    <div>
-      <TrackContainerRepresentable
-        key={currentSession.id}
-        genomeName={
-          currentSession?.genomeId ? currentSession?.genomeId : "hg38"
-        }
-        tracks={currentSession.tracks}
-        highlights={currentSession.highlights}
-        genomeConfig={genomeConfig}
-        legendWidth={120}
-        showGenomeNav={isNavigatorVisible}
-        onNewRegion={handleNewRegion}
-        onNewHighlight={handleNewHighlight}
-        onTracksChange={handleTracksChange}
-        onNewRegionSelect={handleNewRegionSelect}
-        onSetSelected={handleSetSelected}
-        viewRegion={currentSession?.viewRegion}
-        userViewRegion={currentSession.userViewRegion}
-        tool={tool}
-        Toolbar={{ toolbar: Toolbar, skeleton: TrackPlaceHolder }}
-        selectedRegionSet={currentSession?.selectedRegionSet}
-        setScreenshotData={setScreenshotData}
-        isScreenShotOpen={isScreenShotOpen}
-        overrideViewRegion={currentSession?.overrideViewRegion}
-        currentState={currentState}
-      />
-    </div>
+    <TrackContainerRepresentable
+      key={currentSession.id}
+      genomeName={currentSession?.genomeId ? currentSession?.genomeId : "hg38"}
+      tracks={currentSession.tracks}
+      highlights={currentSession.highlights}
+      genomeConfig={genomeConfig}
+      legendWidth={120}
+      showGenomeNav={isNavigatorVisible}
+      onNewRegion={handleNewRegion}
+      onNewHighlight={handleNewHighlight}
+      onTracksChange={handleTracksChange}
+      onNewRegionSelect={handleNewRegionSelect}
+      onSetSelected={handleSetSelected}
+      viewRegion={currentSession?.viewRegion}
+      userViewRegion={currentSession.userViewRegion}
+      tool={tool}
+      Toolbar={{ toolbar: Toolbar, skeleton: TrackPlaceHolder }}
+      selectedRegionSet={currentSession?.selectedRegionSet}
+      setScreenshotData={setScreenshotData}
+      isScreenShotOpen={isScreenShotOpen}
+      overrideViewRegion={currentSession?.overrideViewRegion}
+      currentState={currentState}
+    />
   ) : null;
 }

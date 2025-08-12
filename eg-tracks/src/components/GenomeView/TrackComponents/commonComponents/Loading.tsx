@@ -7,6 +7,8 @@ interface PopoverProps {
   className?: string;
   height: number;
   xOffset?: number;
+  isVisible?: boolean;
+  color: string;
 }
 
 const Loading: React.FC<PopoverProps> = ({
@@ -14,7 +16,9 @@ const Loading: React.FC<PopoverProps> = ({
   children,
   className,
   height,
-  xOffset,
+  xOffset = 0,
+  isVisible = true,
+  color,
 }) => {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -44,8 +48,11 @@ const Loading: React.FC<PopoverProps> = ({
       //need to margin left the
       style={{
         position: "absolute",
-        marginTop: height - 16, // 16 is the height of the loading box other its below the tracklegend
-        // marginLeft: xOffset,
+        top: height - 16, // 16 is the height of the button, shift it up to align
+        left: xOffset,
+        visibility: isVisible ? "visible" : "hidden", // Control visibility
+        pointerEvents: isVisible ? "auto" : "none", // Make uninteractable when hidden
+        opacity: isVisible ? 1 : 0, // Smooth visual transition
       }}
     >
       <button
@@ -60,7 +67,24 @@ const Loading: React.FC<PopoverProps> = ({
       </button>
       <div
         className={`popover-panel${open ? " open" : ""}`}
-        style={open ? { position: "relative", zIndex: 9999 } : {}}
+        style={
+          open
+            ? {
+                position: "absolute",
+                top: "100%", // Position below the button
+                left: 0,
+                zIndex: 9999,
+                maxWidth: "300px", // Limit width
+                maxHeight: "200px", // Limit height
+                overflow: "auto", // Add scrolling if content is too large
+                backgroundColor: "white",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                padding: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              }
+            : { display: "none" }
+        }
       >
         {children}
       </div>

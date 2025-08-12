@@ -1,10 +1,10 @@
 // import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 
-
 import {
   removeDuplicates,
   removeDuplicatesWithoutId,
 } from "../commonComponents/check-obj-dupe";
+import { dynamicMatplotTracks } from "../displayModeComponentMap";
 
 export function getDeDupeArrMatPlot(data: Array<any>, isError) {
   if (isError) {
@@ -105,8 +105,8 @@ export function cacheFetchedData({
           }
             ? trackData
             : trackType === "genomealign"
-              ? trackData
-              : trackData.flat(1),
+            ? trackData
+            : trackData.flat(1),
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
     }
@@ -116,35 +116,32 @@ export function cacheFetchedData({
       trackFetchedDataCache.current[`${id}`][
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]
       ] = {
-        dataCache:
-          trackType in { matplot: "", dynamic: "", dynamicbed: "" }
-            ? trackData.map((item: any, index: number) => {
+        dataCache: dynamicMatplotTracks.has(trackType)
+          ? trackData.map((item: any, index: number) => {
               return item[0];
             })
-            : trackData[0],
+          : trackData[0],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]++;
 
       trackFetchedDataCache.current[`${id}`][
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]
       ] = {
-        dataCache:
-          trackType in { matplot: "", dynamic: "", dynamicbed: "" }
-            ? trackData.map((item: any, index: number) => {
+        dataCache: dynamicMatplotTracks.has(trackType)
+          ? trackData.map((item: any, index: number) => {
               return item[1];
             })
-            : trackData[1],
+          : trackData[1],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
       trackFetchedDataCache.current[`${id}`][
         trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]
       ] = {
-        dataCache:
-          trackType in { matplot: "", dynamic: "", dynamicbed: "" }
-            ? trackData.map((item: any, index: number) => {
+        dataCache: dynamicMatplotTracks.has(trackType)
+          ? trackData.map((item: any, index: number) => {
               return item[2];
             })
-            : trackData[2],
+          : trackData[2],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
     }

@@ -1,9 +1,19 @@
 export const OpacityThickness = (props) => {
   const { onUpdate, opacity, thickness, highlightStyle } = props;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-      <label>
-        line opacity:{" "}
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: "8px",
+        marginBottom: "8px",
+      }}
+    >
+      <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "12px", fontWeight: "400" }}>
+          line opacity:
+        </span>
         <input
           type="number"
           min={0}
@@ -13,10 +23,19 @@ export const OpacityThickness = (props) => {
           onChange={(e) =>
             onUpdate("lineOpacity", Number.parseFloat(e.target.value || "0"))
           }
+          style={{
+            border: "1px solid #e2e8f0",
+            borderRadius: "4px",
+            padding: "4px",
+            width: "60px",
+            fontSize: "14px",
+          }}
         />
       </label>
-      <label>
-        thickness/radius:{" "}
+      <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "12px", fontWeight: "400" }}>
+          thickness/radius:
+        </span>
         <input
           type="number"
           min={0}
@@ -29,13 +48,29 @@ export const OpacityThickness = (props) => {
               Number.parseFloat(e.target.value || "0")
             )
           }
+          style={{
+            border: "1px solid #e2e8f0",
+            borderRadius: "4px",
+            padding: "4px",
+            width: "60px",
+            fontSize: "14px",
+          }}
         />
       </label>
-      <label>
-        paint style:{" "}
+      <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "12px", fontWeight: "400" }}>
+          paint style:
+        </span>
         <select
           value={highlightStyle}
           onChange={(e) => onUpdate("highlightStyle", e.target.value)}
+          style={{
+            border: "1px solid #e2e8f0",
+            borderRadius: "4px",
+            padding: "4px",
+            fontSize: "14px",
+            minWidth: "80px",
+          }}
         >
           <option value="cartoon">cartoon</option>
           <option value="sphere">sphere</option>

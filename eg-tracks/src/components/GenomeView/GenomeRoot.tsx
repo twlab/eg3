@@ -49,6 +49,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     worker: [],
   });
   const fetchGenomeAlignWorker = useRef<Worker | null>(null);
+  const tracksHeight = useRef<number>(1);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
@@ -61,7 +63,23 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
   }
-
+  // function handleNodeResize(node) {
+  //   const model = node.getModel();
+  //   if (model) {
+  //     const parent = node.getParent();
+  //     // console.log(node.getId(), parent.getWeight());
+  //     console.log(size.width);
+  //     model.doAction(
+  //       FlexLayout.Actions.updateNodeAttributes(parent.getId(), {
+  //         width: size.width,
+  //         weight: parent.getWeight(),
+  //       })
+  //     );
+  //     // console.log(parent.getWeight());
+  //     // console.log("HUHUH", parent);
+  //     setModel(model);
+  //   }
+  // }
   function renderG3dTrackComponents(node) {
     const config = node.getConfig();
     const { x, y, width, height } = node.getRect();
@@ -100,7 +118,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const factory = (node) => {
     var component = node.getComponent();
-    // node.setEventListener("resize", () => handleNodeResize(node));
+
     if (component === "Browser") {
       // node.setEventListener("resize", () => handleNodeResize(node));
       return (
@@ -111,7 +129,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           windowWidth={
             (!size.width || size.width - legendWidth < 0 ? 1500 : size.width) -
             legendWidth -
-            60
+            40
             // 20 px from padding left moving element inside flexlayout 20px over, 20px from scrollbar, 20px to add the gap
             // this make the width of the browser fit the screen
           }
@@ -133,6 +151,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           setShow3dGene={setShow3dGene}
           infiniteScrollWorkers={infiniteScrollWorkers}
           fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+          onHeightChange={onHeightChange}
         />
       );
     } else {
@@ -158,7 +177,17 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }, 100)
   );
-
+  function onHeightChange(height: number) {
+    const newHeight = height + 154;
+    if (newHeight !== tracksHeight.current) {
+      tracksHeight.current = newHeight;
+      // Directly update the DOM to avoid re-renders and flickering
+      if (containerRef.current) {
+        containerRef.current.style.height = `${newHeight}px`;
+      }
+    }
+    // top parts is 130 px and 4 for border top and bottom
+  }
   function findAllG3dTabs(layout: any) {
     const result: any[] = [];
 
@@ -180,6 +209,15 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     recurse(layout.layout); // Start from the root layout node
     return result;
   }
+
+  useEffect(() => {
+    // Set initial height for the container
+    if (containerRef.current && tracksHeight.current === 0) {
+      tracksHeight.current = 154; // Initial height (just the top parts)
+      containerRef.current.style.height = `${tracksHeight.current}px`;
+    }
+  }, []);
+
   useEffect(() => {
     // Count tracks by type
     const normalTracks = tracks.filter((t) => !(t.type in HIC_TYPES));
@@ -332,13 +370,15 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [userViewRegion]);
 
   return (
-    <div>
-      <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div>
+    <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
+      {/* <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div> */}
       <div
+        ref={containerRef}
         style={{
           display: "flex",
-
           flexDirection: "column",
+          width: size.width,
+          height: "500px",
         }}
       >
         {/* <GenomeViewerTest /> */}

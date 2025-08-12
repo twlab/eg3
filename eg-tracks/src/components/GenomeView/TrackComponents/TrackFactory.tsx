@@ -4,9 +4,15 @@ import { TrackProps } from "../../../models/trackModels/trackProps";
 import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
-import { getDisplayModeFunction } from "./displayModeComponentMap";
 import OpenInterval from "../../../models/OpenInterval";
 import { getDeDupeArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+import {
+  anchorTracks,
+  dynamicMatplotTracks,
+  getDisplayModeFunction,
+  interactionTracks,
+} from "./displayModeComponentMap";
+const TOP_PADDING = 2;
 import { trackOptionMap } from "./defaultOptionsMap";
 import _ from "lodash";
 import MetadataIndicator from "./commonComponents/MetadataIndicator";
@@ -14,9 +20,7 @@ import { numericalTracks } from "./GroupedTrackManager";
 import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
-
-const TOP_PADDING = 2;
-
+import HiddenIndicator from "./commonComponents/HiddenIndicator";
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -136,8 +140,23 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     if (cacheDataIdx === dataIdx) {
       signalTrackLoadComplete(id);
       updateSide.current = side;
+      let result;
+      let numHidden = 0;
+      if (
+        typeof res === "object" &&
+        Object.prototype.hasOwnProperty.call(res, "numHidden")
+      ) {
+        result = res.component;
+        numHidden = res.numHidden;
+      } else {
+        result = res;
+      }
 
-      setViewComponent({ component: res, dataIdx: cacheDataIdx });
+      setViewComponent({
+        component: result,
+        dataIdx: cacheDataIdx,
+        numHidden: numHidden,
+      });
 
       xPos.current = curXPos;
     }
@@ -199,7 +218,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   }
 
   useEffect(() => {
-    if (viewComponent) {
+    if (viewComponent && viewComponent.dataIdx === dataIdx) {
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
@@ -229,10 +248,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       if (initTrackStart.current) {
         // use previous data before resetState
 
-        if (
-          trackModel.type in
-          { hic: "", biginteract: "", longrange: "", dynamichic: "" }
-        ) {
+        if (interactionTracks.has(trackModel.type)) {
           configOptions.current["trackManagerRef"] = trackManagerRef;
         }
 
@@ -255,8 +271,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         let combinedData: any = [];
         let hasError = false;
         let currIdx = dataIdx + 1;
+        var noData = false;
         for (let i = 0; i < 3; i++) {
           if (!cacheTrackData[currIdx] || !cacheTrackData[currIdx].dataCache) {
+            noData = true;
             continue;
           }
           if (
@@ -272,9 +290,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           currIdx--;
         }
 
-        var noData = false;
         if (!hasError) {
-          if (trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }) {
+          if (dynamicMatplotTracks.has(trackModel.type)) {
             combinedData = getDeDupeArrMatPlot(combinedData, false);
           } else {
             combinedData = combinedData
@@ -389,7 +406,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       (trackModel.type in numericalTracks ||
         configOptions.current.displayMode === "density")
     ) {
-      if (trackModel.type in { hic: "", longrange: "" }) {
+      if (anchorTracks.has(trackModel.type)) {
         if (
           !configOptions.current.fetchViewWindowOnly &&
           !configOptions.current.bothAnchorsInView
@@ -473,9 +490,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
         if (trackModel.type !== "genomealign") {
-          if (
-            !(trackModel.type in { hic: "", biginteraction: "", longrange: "" })
-          ) {
+          if (!interactionTracks.has(trackModel.type)) {
             for (let i = 0; i < 3; i++) {
               if (!cacheTrackData[currIdx].dataCache) {
                 continue;
@@ -502,27 +517,18 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           var noData = false;
           if (!hasError) {
-            if (
-              trackModel.type in { matplot: "", dynamic: "", dynamicbed: "" }
-            ) {
+            if (dynamicMatplotTracks.has(trackModel.type)) {
               combinedData = getDeDupeArrMatPlot(combinedData, false);
-            } else if (
-              !(
-                trackModel.type in
-                { hic: "", biginteraction: "", longrange: "" }
-              )
-            ) {
-              if (combinedData) {
-                combinedData = combinedData
-                  .map((item) => {
-                    if (item && "dataCache" in item) {
-                      return item.dataCache;
-                    } else {
-                      noData = true;
-                    }
-                  })
-                  .flat(1);
-              }
+            } else if (!interactionTracks.has(trackModel.type)) {
+              combinedData = combinedData
+                .map((item) => {
+                  if (item && "dataCache" in item) {
+                    return item.dataCache;
+                  } else {
+                    noData = true;
+                  }
+                })
+                .flat(1);
             } else if (combinedData && "error" in combinedData) {
               noData = true;
             }
@@ -577,7 +583,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
-
+        trackState["groupScale"] =
+          globalTrackState.current.trackStates[dataIdx].trackState[
+            "groupScale"
+          ];
         if (combinedData) {
           sentScreenshotData({
             fetchData: {
@@ -627,46 +636,76 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
         Button 60
       </div> */}
-      {trackModel.id in messageData ||
-      !viewComponent ||
-      (viewComponent && dataIdx !== viewComponent.dataIdx) ? (
-        <Loading
-          buttonLabel={
-            (viewComponent && dataIdx !== viewComponent.dataIdx) ||
-            !viewComponent
-              ? "Loading View"
-              : "Getting Data"
-          }
-          height={
-            configOptions.current.displayMode === "full"
-              ? !fetchError.current
-                ? svgHeight.current
-                : 40
-              : !fetchError.current
-              ? configOptions.current.height
+      {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
+      <Loading
+        buttonLabel={
+          (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
+            ? "Loading View"
+            : "Getting Data"
+        }
+        height={
+          configOptions.current.displayMode === "full"
+            ? !fetchError.current
+              ? svgHeight.current
               : 40
-          }
-          // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
-          // xOffset={0}
-        >
-          <div>
-            {trackModel.id in messageData
-              ? messageData[`${trackModel.id}`].map((item, index) => {
-                  return (
-                    <div
-                      key={`${trackModel.index}loading-` + `${index}`}
-                      style={{ display: "flex", flexDirection: "column" }}
-                    >
-                      {item.genomicLoci.map((item) => item.toString())}{" "}
-                    </div>
-                  );
-                })
-              : ""}
-          </div>
-        </Loading>
-      ) : (
-        ""
-      )}
+            : !fetchError.current
+            ? configOptions.current.height
+            : 40
+        }
+        color={trackModel.isSelected ? "black" : "var(--font-color)"}
+        // Control visibility - show when loading
+        isVisible={
+          trackModel.id in messageData ||
+          !viewComponent ||
+          (viewComponent && dataIdx !== viewComponent.dataIdx)
+        }
+        // windowWidth + (120 - (15 * metaSets.terms.length - 1)) - 200
+        // xOffset={0}
+      >
+        <div>
+          {trackModel.id in messageData
+            ? messageData[`${trackModel.id}`].map((item, index) => {
+                return (
+                  <div key={`${trackModel.index}loading-` + `${index}`}>
+                    {item.genomicLoci
+                      ? item.genomicLoci.map((item) => item.toString())
+                      : ""}{" "}
+                  </div>
+                );
+              })
+            : ""}
+        </div>
+      </Loading>
+
+      <HiddenIndicator
+        numHidden={
+          viewComponent && viewComponent.numHidden
+            ? viewComponent.numHidden
+            : ""
+        }
+        color={trackModel.isSelected ? "black" : "var(--font-color)"}
+        height={
+          configOptions.current.displayMode === "full"
+            ? !fetchError.current
+              ? svgHeight.current
+              : 40
+            : !fetchError.current
+            ? configOptions.current.height
+            : 40
+        }
+        xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
+        // Control visibility - show when data is loaded and items are hidden, but not when loading
+        isVisible={
+          viewComponent &&
+          viewComponent.numHidden &&
+          !(
+            trackModel.id in messageData ||
+            !viewComponent ||
+            (viewComponent && dataIdx !== viewComponent.dataIdx)
+          )
+        }
+      />
+
       {Toolbar.skeleton && !viewComponent ? (
         <div style={{}}>
           <Toolbar.skeleton width={windowWidth} height={40} />

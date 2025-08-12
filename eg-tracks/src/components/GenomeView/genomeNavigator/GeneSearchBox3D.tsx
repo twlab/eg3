@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import GeneSearchBoxBase from "./GeneSearchBoxBase";
 // import GeneSearchBoxBase from "./GeneSearchBoxBase";
 
 /**
@@ -12,6 +13,7 @@ interface GeneSearchBox3DProps {
   color?: any;
   background?: any;
   setGeneCallback?: any;
+  genomeConfig?: any;
 }
 class GeneSearchBox3D extends React.PureComponent<GeneSearchBox3DProps> {
   static propTypes = {
@@ -26,8 +28,18 @@ class GeneSearchBox3D extends React.PureComponent<GeneSearchBox3DProps> {
   };
 
   render() {
-    const { color, background } = this.props;
-    return <>hi</>;
+    const { color, background, genomeConfig } = this.props;
+
+    return (
+      <GeneSearchBoxBase
+        onGeneSelected={this.setGene}
+        simpleMode={true}
+        voiceInput={false}
+        color={color}
+        background={background}
+        genomeConfig={genomeConfig}
+      />
+    );
   }
 }
 

@@ -23,6 +23,15 @@ const useResizeObserver = () => {
           prevSize.current = { width, height: prevSize.current.height };
           initialWidth.current = false;
         }
+
+        if (
+          initialHeight.current ||
+          Math.abs(height - prevSize.current.width) > 25
+        ) {
+          setSize({ width: prevSize.current.width, height });
+          prevSize.current = { width: prevSize.current.width, height };
+          initialHeight.current = false;
+        }
       }
     }, 500); // Adjust debounce delay as needed
 

@@ -1,5 +1,11 @@
 # Version history
 
+## 55.3.0
+
+- implement hover data for ruler
+- fixed tooltip hover for metadata
+- fixed aggregateMethod config bug
+
 ## 55.2.0
 
 - added g3d UI and flexlayout component
@@ -7,6 +13,7 @@
 - moved workers to genomeroot, decreasing init load times
 - fixed where configmenu appears, so it doesn't get cut off
 - refactor states in trackmanager
+- fixed bug where groupscale are not applying in screenshot
 
 ## 55.1.0
 
