@@ -633,11 +633,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         {legend}
       </div>
 
-      {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
-        Button 60
-      </div> */}
       {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
-      {/* <Loading
+      <Loading
         buttonLabel={
           (viewComponent && dataIdx !== viewComponent.dataIdx) || !viewComponent
             ? "Loading View"
@@ -675,7 +672,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               })
             : ""}
         </div>
-      </Loading> */}
+      </Loading>
 
       <HiddenIndicator
         numHidden={
@@ -696,13 +693,13 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         xOffset={windowWidth / 2 + 120 - (15 * metaSets.terms.length - 1)}
         // Control visibility - show when data is loaded and items are hidden, but not when loading
         isVisible={
-          viewComponent && viewComponent.numHidden
-          // &&
-          // !(
-          //   trackModel.id in messageData ||
-          //   !viewComponent ||
-          //   (viewComponent && dataIdx !== viewComponent.dataIdx)
-          // )
+          viewComponent &&
+          viewComponent.numHidden &&
+          !(
+            trackModel.id in messageData ||
+            !viewComponent ||
+            (viewComponent && dataIdx !== viewComponent.dataIdx)
+          )
         }
       />
 

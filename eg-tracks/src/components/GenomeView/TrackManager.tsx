@@ -3273,6 +3273,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       newDrawData.trackToDrawId = newDrawData.trackToDrawId;
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
+      processQueue();
 
       // if (
       //   Object.keys(completedFetchedRegion.current.done).length ===
