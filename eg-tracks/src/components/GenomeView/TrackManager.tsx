@@ -442,6 +442,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
   const processQueue = () => {
     if (messageQueue.current.length === 0) {
+      console.log("HUH");
       setMessageData({});
       return;
     }
@@ -1846,12 +1847,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       !needToFetchGenAlign &&
       !genomeConfig.isInitial
     ) {
-      console.log(
-        trackToDrawId,
-        "trackToDrawId",
-        !genomeConfig.isInitial,
-        !needToFetchGenAlign
-      );
       completedFetchedRegion.current.done = { ...trackToDrawId };
       completedFetchedRegion.current.key = dataIdx.current;
       for (let id in completedFetchedRegion.current.done) {
@@ -2085,7 +2080,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   const refreshState = () => {
     // Reset useRef letiables
-
+    completedFetchedRegion.current = {
+      key: -0,
+      done: {},
+    };
     useFineModeNav.current = false;
     trackManagerId.current = "";
     leftStartCoord.current = 0;
@@ -2144,7 +2142,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     // setTrackComponents([]);
 
-    setNewDrawData({});
+    setNewDrawData(null);
     // setSelectedTool({ ...tool });
 
     let highlightElement = createHighlight(highlights);
@@ -2250,7 +2248,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
     addTermToMetaSets(trackManagerState.current.tracks);
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
-
+    console.log("huh4");
     queueRegionToFetch(0);
   }
   // MARK: sigTrackLoad
@@ -2621,7 +2619,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // initializeTracks();
     } else {
       preload.current = true;
-
+      console.log("huh3");
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
 
       refreshState();
@@ -2777,7 +2775,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWindowConfig
 
   function getWindowViewConfig(viewWindow, dataIdx) {
-    if (viewWindow) {
+    if (viewWindow && dataIdx !== undefined && dataIdx !== null) {
       const trackDataObj: { [key: string]: any } = {};
       const trackToDrawId: { [key: string]: any } = {};
       let primaryVisData;
@@ -2915,9 +2913,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         dataIdx,
         trackFetchedDataCache
       );
-
+      console.log(trackToDrawId, globalTrackState.current, dataIdx);
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
         groupScale;
+
       return trackToDrawId;
     }
   }
@@ -3127,6 +3126,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWIndow useeffect
   useEffect(() => {
     if (viewWindowConfigData.current) {
+      console.log("huh");
       if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
         const curTrackToDrawId = getWindowViewConfig(
           viewWindowConfigData.current.viewWindow,
@@ -3246,6 +3246,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curViewWindow = globalTrackState.current.viewWindow;
       }
       // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
+      console.log("huh2");
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
       // const curDrawObj: { [key: string]: any } = {};
       // for (let trackId in newDrawData.trackToDrawId) {

@@ -93,8 +93,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           </button>
 
           <button
-            onClick={() => handleToolClick(Tool.Zoom)}
-            className={getButtonClass(Tool.Zoom)}
+            onClick={() => handleToolClick(Tool.Drag)}
+            className={getButtonClass(Tool.Drag)}
             title="Zoom-in"
           >
             <span className="size-6 text-gray-600 dark:text-dark-primary">
