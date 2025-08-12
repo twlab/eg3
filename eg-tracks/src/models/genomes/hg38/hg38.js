@@ -45,7 +45,7 @@ const genome = new Genome("hg38", [
 // for renmora
 // for omer4dn chr5:114534673-136928518
 const navContext = genome.makeNavContext();
-const defaultRegion = navContext.parse("chr7:27053397-27373765");
+const defaultRegion = navContext.parse("chr7:27213325-27213837");
 
 const defaultTracks = [
   new TrackModel({
@@ -59,24 +59,24 @@ const defaultTracks = [
   //   name: "NOTSUPPORTEDTRACEXAMPLE",
   // }),
 
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "refGene",
-  //   genome: "hg38",
-  // }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV47",
-  //   genome: "hg38",
-  // }),
-  // new TrackModel({
-  //   name: "hg38tomm10",
-  //   label: "Query mouse mm10 to hg38 blastz",
-  //   type: "genomealign",
-  //   querygenome: "mm10",
-  //   filetype: "genomealign",
-  //   url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "refGene",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV47",
+    genome: "hg38",
+  }),
+  new TrackModel({
+    name: "hg38tomm10",
+    label: "Query mouse mm10 to hg38 blastz",
+    type: "genomealign",
+    querygenome: "mm10",
+    filetype: "genomealign",
+    url: "https://vizhub.wustl.edu/public/hg38/weaver/hg38_mm10_axt.gz",
+  }),
   // new TrackModel({
   //   type: "vcf",
   //   name: "testVcf",

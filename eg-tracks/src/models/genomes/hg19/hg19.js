@@ -126,6 +126,22 @@ const defaultTracks = [
     },
   }),
   new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    options: {
+      displayMode: "arc",
+    },
+  }),
+  new TrackModel({
+    type: "hic",
+    name: "test hic",
+    url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+    options: {
+      displayMode: "arc",
+    },
+  }),
+  new TrackModel({
     type: "bam",
     name: "Test bam",
     url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",

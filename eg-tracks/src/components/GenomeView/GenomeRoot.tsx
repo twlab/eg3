@@ -12,7 +12,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 4;
+const MAX_WORKERS = 6;
 const HIC_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
@@ -178,7 +178,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }, 100)
   );
   function onHeightChange(height: number) {
-    const newHeight = height + 154;
+    const newHeight = height + 200;
     if (newHeight !== tracksHeight.current) {
       tracksHeight.current = newHeight;
       // Directly update the DOM to avoid re-renders and flickering
@@ -186,7 +186,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         containerRef.current.style.height = `${newHeight}px`;
       }
     }
-    // top parts is 130 px and 4 for border top and bottom
+    // top parts is 200 px and 4 for border top and bottom
   }
   function findAllG3dTabs(layout: any) {
     const result: any[] = [];

@@ -176,6 +176,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   setShow3dGene,
   infiniteScrollWorkers,
   fetchGenomeAlignWorker,
+  onHeightChange,
 }) {
   //useRef to store data between states without re render the component
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
@@ -539,10 +540,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   };
   const processGenomeAlignQueue = () => {
-    if (
-      isfetchGenomeAlignWorkerBusy.current ||
-      genomeAlignMessageQueue.current.length === 0
-    ) {
+    if (genomeAlignMessageQueue.current.length === 0) {
       return;
     }
     isfetchGenomeAlignWorkerBusy.current = true;
@@ -714,7 +712,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     } else {
       dataIdx.current = curDataIdx;
-      console.log("Hii");
+
       queueRegionToFetch(dataIdx.current);
     }
 
@@ -1397,7 +1395,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       })
     )
       .then(() => {
-        isfetchGenomeAlignWorkerBusy.current = false;
         // once we finish with a fetch we need to check if there are any more
         // request in the queue, user might scroll fast and have multipe region data to fetch
         globalTrackState.current.trackStates[
@@ -1599,11 +1596,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...completedFetchedRegion.current.done,
           ...cacheKeysWithData,
         };
-        console.log(
-          dataIdx.current,
-          { ...completedFetchedRegion.current.done },
-          "chunks"
-        );
         curDrawData["trackToDrawId"] = combineTrackToDrawId;
         curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
         setNewDrawData({ ...curDrawData });
@@ -1862,6 +1854,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
       completedFetchedRegion.current.done = { ...trackToDrawId };
       completedFetchedRegion.current.key = dataIdx.current;
+      for (let id in completedFetchedRegion.current.done) {
+        completedFetchedRegion.current.done[id] = true;
+      }
       setNewDrawData({
         curDataIdx: dataIdx.current,
         isInitial: 0,
@@ -3302,6 +3297,29 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // }
     }
   }, [newDrawData]);
+
+  useEffect(() => {
+    if (!block.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { height } = entry.contentRect;
+        const scrollHeight = entry.target.scrollHeight;
+        const newHeight = Math.max(height, scrollHeight);
+
+        // Call the optional callback if provided
+        if (onHeightChange) {
+          onHeightChange(newHeight);
+        }
+      }
+    });
+
+    resizeObserver.observe(block.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [onHeightChange]);
   return (
     <div
       style={{
