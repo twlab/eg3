@@ -442,7 +442,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   };
   const processQueue = () => {
     if (messageQueue.current.length === 0) {
-      console.log("HUH");
       setMessageData({});
       return;
     }
@@ -2045,7 +2044,44 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function getHighlightState(highlightState: any) {
     onNewHighlight(highlightState);
   }
+  function toolSelect(toolTitle: string | number) {
+    const newSelectedTool: { [key: string]: any } = {};
+    newSelectedTool["isSelected"] = false;
 
+    if (toolTitle === 4) {
+      onRegionSelected(
+        Math.round(bpX.current - bpRegionSize.current),
+        Math.round(bpX.current),
+        toolTitle
+      );
+    } else if (toolTitle === 5) {
+      onRegionSelected(
+        Math.round(bpX.current + bpRegionSize.current),
+        Math.round(bpX.current + bpRegionSize.current * 2),
+        toolTitle
+      );
+    } else if (String(toolTitle) in zoomFactors) {
+      let useDisplayFunction = new DisplayedRegionModel(
+        genomeConfig.navContext,
+        bpX.current,
+        bpX.current + bpRegionSize.current
+      );
+      let res = useDisplayFunction.zoom(zoomFactors[`${toolTitle}`].factor);
+      onRegionSelected(
+        res._startBase as number,
+        res._endBase as number,
+        toolTitle
+      );
+    } else {
+      if (tool && tool !== 0 && tool !== 12) {
+        newSelectedTool.isSelected = true;
+      }
+    }
+
+    newSelectedTool["title"] = toolTitle;
+    isToolSelected.current = newSelectedTool.isSelected;
+    return newSelectedTool;
+  }
   // MARK: InitState
   // state management functions
   //______________________________________________________________________________________________________________
@@ -2248,7 +2284,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
     addTermToMetaSets(trackManagerState.current.tracks);
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
-    console.log("huh4");
+
     queueRegionToFetch(0);
   }
   // MARK: sigTrackLoad
@@ -2377,44 +2413,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
       screenshotDataObj.current = {};
     }
-  }
-
-  function toolSelect(toolTitle: string | number) {
-    const newSelectedTool: { [key: string]: any } = {};
-    newSelectedTool["isSelected"] = false;
-
-    if (toolTitle === 4) {
-      onRegionSelected(
-        Math.round(bpX.current - bpRegionSize.current),
-        Math.round(bpX.current),
-        toolTitle
-      );
-    } else if (toolTitle === 5) {
-      onRegionSelected(
-        Math.round(bpX.current + bpRegionSize.current),
-        Math.round(bpX.current + bpRegionSize.current * 2),
-        toolTitle
-      );
-    } else if (String(toolTitle) in zoomFactors) {
-      let useDisplayFunction = new DisplayedRegionModel(
-        genomeConfig.navContext,
-        bpX.current,
-        bpX.current + bpRegionSize.current
-      );
-      let res = useDisplayFunction.zoom(zoomFactors[`${toolTitle}`].factor);
-      onRegionSelected(
-        res._startBase as number,
-        res._endBase as number,
-        toolTitle
-      );
-    } else {
-      if (tool && tool !== 0 && tool !== 12) {
-        newSelectedTool.isSelected = true;
-      }
-    }
-    newSelectedTool["title"] = toolTitle;
-    isToolSelected.current = newSelectedTool.isSelected;
-    return newSelectedTool;
   }
 
   // MARK: METATERMS
@@ -2619,7 +2617,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // initializeTracks();
     } else {
       preload.current = true;
-      console.log("huh3");
+
       // genomeConfig.defaultTracks = trackManagerState.current.tracks;
 
       refreshState();
@@ -2913,7 +2911,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         dataIdx,
         trackFetchedDataCache
       );
-      console.log(trackToDrawId, globalTrackState.current, dataIdx);
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
         groupScale;
 
@@ -3126,7 +3123,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWIndow useeffect
   useEffect(() => {
     if (viewWindowConfigData.current) {
-      console.log("huh");
       if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
         const curTrackToDrawId = getWindowViewConfig(
           viewWindowConfigData.current.viewWindow,
@@ -3246,7 +3242,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         curViewWindow = globalTrackState.current.viewWindow;
       }
       // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
-      console.log("huh2");
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
       // const curDrawObj: { [key: string]: any } = {};
       // for (let trackId in newDrawData.trackToDrawId) {
