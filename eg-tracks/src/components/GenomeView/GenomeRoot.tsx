@@ -13,7 +13,7 @@ import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
 const MAX_WORKERS = 10;
-const HIC_TYPES = { hic: "", dynamichic: "", bam: "" };
+const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
@@ -205,11 +205,18 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // check what types of tracks are being added, and determine the number of workers needed for
   // TrackManager
   useEffect(() => {
-    const normalTracks = tracks.filter((t) => !(t.type in HIC_TYPES));
-    const hicTracks = tracks.filter((t) => t.type in HIC_TYPES);
+    const normalTracks = tracks.filter(
+      (t) => !(t.type in INSTANCE_FETCH_TYPES)
+    );
+    const instanceFetchTracks = tracks.filter(
+      (t) => t.type in INSTANCE_FETCH_TYPES
+    );
     // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
     const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-    const hicCount = Math.min(hicTracks.length, MAX_WORKERS);
+    const instanceFetchTracksCount = Math.min(
+      instanceFetchTracks.length,
+      MAX_WORKERS
+    );
 
     for (let i = 0; i < normalCount; i++) {
       if (infiniteScrollWorkers.current.worker.length < MAX_WORKERS) {
@@ -221,7 +228,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
       }
     }
-    for (let i = 0; i < hicCount; i++) {
+    for (let i = 0; i < instanceFetchTracksCount; i++) {
       if (infiniteScrollWorkers.current.instance.length < MAX_WORKERS) {
         infiniteScrollWorkers.current.instance.push(
           new Worker(

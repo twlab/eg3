@@ -43,3 +43,7 @@ finished
 6. implement changes for packages: flexlayout, multi worker, css, refactoring of state. 
 7. implement props for whole website genomehub of package.
 
+
+
+8/13/2025
+1. Need to fix when entering invalid genomealign tracks 
