@@ -8,7 +8,6 @@ import { SequenceSegment } from "../../../../models/AlignmentStringUtils";
 import OpenInterval from "../../../../models/OpenInterval";
 import AnnotationArrows from "../commonComponents/annotation/AnnotationArrows";
 import { Sequence } from "./Sequence";
-import { v4 as uuidv4 } from "uuid";
 
 export const DEFAULT_OPTIONS = {
   height: 80,
@@ -49,7 +48,7 @@ export function renderGapText(
   i: number,
   options: { [key: string]: any }
 ) {
-  const uniqueKey = uuidv4();
+  const uniqueKey = crypto.randomUUID();
   const { height, primaryColor, queryColor } = options;
   const placementTargetGap = gap.targetGapText;
   const placementQueryGap = gap.queryGapText;
@@ -148,7 +147,7 @@ export function renderFineAlignment(
   const queryLocus = placement.queryLocus;
   const nonGapsTarget = placement.nonGapsTarget;
   const nonGapsQuery = placement.nonGapsQuery;
-  const uniqueKey = uuidv4();
+  const uniqueKey = crypto.randomUUID();
   return (
     <React.Fragment key={uniqueKey + i}>
       {renderSequenceSegments(
@@ -267,7 +266,7 @@ export function renderRoughStrand(
   viewWindow: { [key: string]: any },
   isPrimary: boolean
 ) {
-  const uniqueKey = uuidv4();
+  const uniqueKey = crypto.randomUUID();
   const plotReverse = strand === "-" ? true : false;
   return (
     <AnnotationArrows
@@ -303,7 +302,7 @@ export function renderRoughAlignment(
   targetGenome,
   queryGenome
 ) {
-  const uniqueKey = uuidv4();
+  const uniqueKey = crypto.randomUUID();
   const targetXSpan: { [key: string]: any } = placement.targetXSpan;
   const segments: Array<{ [key: string]: any }> = placement.segments;
   const queryXSpan: { [key: string]: any } = placement.queryXSpan;

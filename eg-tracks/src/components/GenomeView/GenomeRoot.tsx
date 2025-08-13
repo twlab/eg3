@@ -12,7 +12,7 @@ import { arraysHaveSameTrackModels } from "../../util";
 import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-const MAX_WORKERS = 6;
+const MAX_WORKERS = 10;
 const HIC_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
@@ -63,23 +63,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
   }
-  // function handleNodeResize(node) {
-  //   const model = node.getModel();
-  //   if (model) {
-  //     const parent = node.getParent();
-  //     // console.log(node.getId(), parent.getWeight());
-  //     console.log(size.width);
-  //     model.doAction(
-  //       FlexLayout.Actions.updateNodeAttributes(parent.getId(), {
-  //         width: size.width,
-  //         weight: parent.getWeight(),
-  //       })
-  //     );
-  //     // console.log(parent.getWeight());
-  //     // console.log("HUHUH", parent);
-  //     setModel(model);
-  //   }
-  // }
+
   function renderG3dTrackComponents(node) {
     const config = node.getConfig();
     const { x, y, width, height } = node.getRect();
@@ -95,7 +79,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         })
       );
     });
-    // node.setEventListener("resize", () => handleNodeResize(node));
 
     return (
       <ThreedmolContainer
@@ -120,7 +103,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     var component = node.getComponent();
 
     if (component === "Browser") {
-      // node.setEventListener("resize", () => handleNodeResize(node));
       return (
         <TrackManager
           key={trackManagerId.current}
@@ -177,6 +159,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }, 100)
   );
+
   function onHeightChange(height: number) {
     const newHeight = height + 200;
     if (newHeight !== tracksHeight.current) {
@@ -188,6 +171,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }
     // top parts is 200 px and 4 for border top and bottom
   }
+
   function findAllG3dTabs(layout: any) {
     const result: any[] = [];
 
@@ -213,18 +197,17 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     // Set initial height for the container
     if (containerRef.current && tracksHeight.current === 0) {
-      tracksHeight.current = 154; // Initial height (just the top parts)
+      tracksHeight.current = 200; // Initial height (just the top parts)
       containerRef.current.style.height = `${tracksHeight.current}px`;
     }
   }, []);
 
+  // check what types of tracks are being added, and determine the number of workers needed for
+  // TrackManager
   useEffect(() => {
-    // Count tracks by type
     const normalTracks = tracks.filter((t) => !(t.type in HIC_TYPES));
     const hicTracks = tracks.filter((t) => t.type in HIC_TYPES);
-
-    // Create up to MAX_WORKERS for each type, but do not exceed 4 in the ref
-    // const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
     const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
     const hicCount = Math.min(hicTracks.length, MAX_WORKERS);
 
@@ -291,6 +274,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }
   }, [tracks]);
 
+  // use effect of tracks will get trigger first creating the page layout before the resize effect
+  // which will create the TrackManager component
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -359,7 +344,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           );
           curGenome.navContext = userViewRegion._navContext;
           curGenome["sizeChange"] = false;
-
           throttledSetConfig.current(curGenome);
         }
       }
@@ -371,7 +355,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {/* <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div> */}
       <div
         ref={containerRef}
         style={{

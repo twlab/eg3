@@ -1638,7 +1638,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               ? curTrackState.missingIdx
               : curTrackState.trackDataIdx
           ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
-
+          console.log(
+            event.data,
+            curTrackState.genomicFetchCoord,
+            "DATAAAAAAAAAAAAAAAAAAAA"
+          );
           globalTrackState.current.trackStates[
             curTrackState.missingIdx
               ? curTrackState.missingIdx

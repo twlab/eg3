@@ -70,6 +70,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
+  console.log(event.data);
   const regionExpandLoci = event.data.regionExpandLoci;
   const trackToFetch = event.data.trackToFetch;
   const genomicLoci = event.data.genomicLoci;
@@ -234,7 +235,7 @@ self.onmessage = async (event: MessageEvent) => {
     );
 
     let alignment = multiCalInstance.multiAlign(visData, successFetch);
-
+    console.log(alignment);
     // in old epigenome these data are calcualted while in the component, but we calculate the data here using the instantiated class
     // because class don't get sent over Workers and Internet so we have to get the data here.
 
