@@ -192,6 +192,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const minBp = useRef(0);
   const selectedTracks = useRef<{ [key: string]: any }>({});
   const mousePositionRef = useRef({ x: 0, y: 0 });
+  const mouseGenomicPositionRef = useRef({ basePair: 0, chromosome: "" });
+  const mouseRelativePositionRef = useRef({ x: 0, y: 0 });
+  const lastClickTimeRef = useRef(0);
+  const doubleClickThreshold = 300; // milliseconds
   const horizontalLineRef = useRef<any>(0);
   const verticalLineRef = useRef<any>(0);
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -502,19 +506,67 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMouseLeave() {
     isMouseInsideRef.current = false;
+    // Hide crosshair lines when mouse leaves
+    if (horizontalLineRef.current && verticalLineRef.current) {
+      horizontalLineRef.current.style.display = "none";
+      verticalLineRef.current.style.display = "none";
+    }
   }
+
+  function calculateGenomicPosition(x: number) {
+    // Calculate the genomic position based on mouse x coordinate
+    if (
+      !trackManagerState.current.viewRegion._endBase ||
+      !trackManagerState.current.viewRegion._startBase
+    ) {
+      return { basePair: 0, chromosome: "" };
+    }
+
+    const viewportBp =
+      trackManagerState.current.viewRegion._endBase -
+      trackManagerState.current.viewRegion._startBase;
+    const pixelToBp = viewportBp / windowWidth;
+    const mouseBp =
+      trackManagerState.current.viewRegion._startBase +
+      (x - legendWidth) * pixelToBp;
+
+    // Find which chromosome this position belongs to
+    let chromosome = "";
+    if (genomeConfig.navContext && genomeConfig.navContext._features) {
+      for (const feature of genomeConfig.navContext._features) {
+        if (mouseBp >= feature.locus.start && mouseBp <= feature.locus.end) {
+          chromosome = feature.locus.chr;
+          break;
+        }
+      }
+    }
+
+    return { basePair: Math.round(mouseBp), chromosome };
+  }
+
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
     if (isMouseInsideRef.current) {
       const parentRect = block.current!.getBoundingClientRect();
       const x = e.clientX - parentRect.left;
       const y = e.clientY - parentRect.top;
+
+      // Update all mouse position references
       mousePositionRef.current = { x: e.clientX, y: e.clientY };
-      horizontalLineRef.current.style.display = "block";
-      verticalLineRef.current.style.display = "block";
-      updateLinePosition(x, y);
+      mouseRelativePositionRef.current = { x, y };
+      mouseGenomicPositionRef.current = calculateGenomicPosition(x);
+
+      // Show and update crosshair lines
+      if (horizontalLineRef.current && verticalLineRef.current) {
+        horizontalLineRef.current.style.display = "block";
+        verticalLineRef.current.style.display = "block";
+        updateLinePosition(x, y);
+      }
     } else {
-      horizontalLineRef.current.style.display = "none";
-      verticalLineRef.current.style.display = "none";
+      // Hide crosshair lines when mouse is outside
+      if (horizontalLineRef.current && verticalLineRef.current) {
+        horizontalLineRef.current.style.display = "none";
+        verticalLineRef.current.style.display = "none";
+      }
     }
 
     if (!isDragging.current || isToolSelected.current) {
@@ -547,6 +599,126 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       frameID.current = requestAnimationFrame(() => {
         component.posRef.current!.style.transform = `translate3d(${dragX.current}px, 0px, 0)`;
       });
+    });
+  }
+
+  function handleClick(e: MouseEvent) {
+    if (isToolSelected.current) {
+      return;
+    }
+
+    const currentTime = Date.now();
+    const timeSinceLastClick = currentTime - lastClickTimeRef.current;
+
+    if (timeSinceLastClick < doubleClickThreshold) {
+      handleDoubleClick(e);
+    } else {
+      handleSingleClick(e);
+    }
+
+    lastClickTimeRef.current = currentTime;
+  }
+
+  function handleSingleClick(e: MouseEvent) {
+    console.log("Single click at:", {
+      screen: { x: e.clientX, y: e.clientY },
+      relative: mouseRelativePositionRef.current,
+      genomic: mouseGenomicPositionRef.current,
+    });
+
+    // Add your single click logic here
+    // For example, you might want to select a track or feature at this position
+  }
+
+  function handleDoubleClick(e: MouseEvent) {
+    console.log("Double click at:", {
+      screen: { x: e.clientX, y: e.clientY },
+      relative: mouseRelativePositionRef.current,
+      genomic: mouseGenomicPositionRef.current,
+    });
+
+    // Add your double click logic here
+    // For example, you might want to zoom in on the clicked position
+    const genomicPos = mouseGenomicPositionRef.current;
+    if (
+      genomicPos.basePair > 0 &&
+      trackManagerState.current.viewRegion._endBase &&
+      trackManagerState.current.viewRegion._startBase
+    ) {
+      const currentRegionSize =
+        trackManagerState.current.viewRegion._endBase -
+        trackManagerState.current.viewRegion._startBase;
+      const newRegionSize = currentRegionSize / 2; // Zoom in 2x
+      const newStart = Math.max(0, genomicPos.basePair - newRegionSize / 2);
+      const newEnd = newStart + newRegionSize;
+
+      onNewRegion(newStart, newEnd);
+    }
+  }
+
+  function handleGenomeClick(e: MouseEvent, trackModel?: any) {
+    e.preventDefault();
+    console.log("Genome click at:", {
+      screen: { x: e.clientX, y: e.clientY },
+      relative: mouseRelativePositionRef.current,
+      genomic: mouseGenomicPositionRef.current,
+      track: trackModel,
+    });
+
+    // Add your context menu logic here
+    // For example, you might want to show a context menu
+  }
+
+  function handleWheel(e: WheelEvent) {
+    if (!isMouseInsideRef.current || isToolSelected.current) {
+      return;
+    }
+
+    e.preventDefault();
+
+    // Calculate zoom direction (positive = zoom out, negative = zoom in)
+    const zoomDirection = e.deltaY > 0 ? 1 : -1;
+    const zoomFactor = zoomDirection > 0 ? 1.2 : 0.8; // Zoom out 20% or zoom in 20%
+
+    if (
+      !trackManagerState.current.viewRegion._endBase ||
+      !trackManagerState.current.viewRegion._startBase
+    ) {
+      return;
+    }
+
+    const currentStart = trackManagerState.current.viewRegion._startBase;
+    const currentEnd = trackManagerState.current.viewRegion._endBase;
+    const currentSize = currentEnd - currentStart;
+    const newSize = currentSize * zoomFactor;
+
+    // Calculate zoom center based on mouse position
+    const mousePos = mouseGenomicPositionRef.current;
+    let centerBp = mousePos.basePair;
+
+    // If mouse position is not valid, use center of current view
+    if (!centerBp || centerBp < currentStart || centerBp > currentEnd) {
+      centerBp = currentStart + currentSize / 2;
+    }
+
+    // Calculate new start and end positions
+    const newStart = Math.max(0, centerBp - newSize / 2);
+    const newEnd = newStart + newSize;
+
+    // Ensure we don't exceed genome bounds
+    const maxBp = genomeConfig.navContext._totalBases || newEnd;
+    if (newEnd > maxBp) {
+      const adjustedStart = Math.max(0, maxBp - newSize);
+      onNewRegion(adjustedStart, maxBp);
+    } else {
+      onNewRegion(newStart, newEnd);
+    }
+
+    console.log("Mouse wheel zoom:", {
+      direction: zoomDirection > 0 ? "out" : "in",
+      factor: zoomFactor,
+      center: centerBp,
+      newRegion: { start: newStart, end: newEnd },
     });
   }
 
@@ -648,6 +820,73 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     globalTrackState.current.viewWindow = curViewWindow;
+  }
+
+  // MARK: TOUCH EVENTS
+  // Touch event handlers that mirror mouse functionality
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+    isDragging.current = true;
+    lastX.current = touch.pageX;
+
+    e.preventDefault();
+  }
+
+  function handleTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+
+    // Mirror the handleMove functionality
+    handleMove({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      pageX: touch.pageX,
+    });
+  }
+
+  function handleTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    // Mirror handleMouseUp functionality
+    handleMouseUp();
+  }
+
+  // DOM touch event handlers for addEventListener
+  function handleDOMTouchStart(e: TouchEvent) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+    isDragging.current = true;
+    lastX.current = touch.pageX;
+
+    e.preventDefault();
+  }
+
+  function handleDOMTouchMove(e: TouchEvent) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+
+    // Mirror the handleMove functionality
+    handleMove({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      pageX: touch.pageX,
+    });
+  }
+
+  function handleDOMTouchEnd(e: TouchEvent) {
+    // Mirror handleMouseUp functionality
+    handleMouseUp();
   }
 
   // MARK: GloCONFIG
@@ -2239,10 +2478,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("keydown", handleKeyDown);
 
+    // Add click event listener to the track container
+    const trackContainer = block.current;
+    if (trackContainer) {
+      trackContainer.addEventListener("click", handleClick);
+      trackContainer.addEventListener("contextmenu", handleGenomeClick);
+
+      // Add touch event listeners
+      trackContainer.addEventListener("touchstart", handleDOMTouchStart, {
+        passive: false,
+      });
+      trackContainer.addEventListener("touchmove", handleDOMTouchMove, {
+        passive: false,
+      });
+      trackContainer.addEventListener("touchend", handleDOMTouchEnd);
+    }
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
+
+      // Remove click event listeners
+      if (trackContainer) {
+        trackContainer.removeEventListener("click", handleClick);
+        trackContainer.removeEventListener("contextmenu", handleGenomeClick);
+
+        // Remove touch event listeners
+        trackContainer.removeEventListener("touchstart", handleDOMTouchStart);
+        trackContainer.removeEventListener("touchmove", handleDOMTouchMove);
+        trackContainer.removeEventListener("touchend", handleDOMTouchEnd);
+      }
     };
   }, [trackComponents, windowWidth]);
 
@@ -3016,6 +3282,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         >
           <div
             onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
             ref={block}
             style={{
               display: "flex",
