@@ -2530,7 +2530,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [GenConfig]
   useEffect(() => {
     // on GenomeRoot first creation we add the default state to StateArr in genomeroot
-
+    console.log(getDeviceType());
     if (genomeConfig.isInitial) {
       prevWindowWidth.current = windowWidth;
 
@@ -2570,7 +2570,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initializeTracks();
     }
   }, [genomeConfig]);
+  function getDeviceType(): "mobile" | "tablet" | "desktop" {
+    const userAgent = navigator.userAgent;
+    const isTouchDevice =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const screenWidth = window.innerWidth;
 
+    // Check for mobile
+    if (
+      /android|webos|iphone|ipod|blackberry|iemobile|opera mini/i.test(
+        userAgent
+      )
+    ) {
+      return "mobile";
+    }
+
+    // Check for tablet
+    if (
+      /ipad|tablet|playbook|silk/i.test(userAgent) ||
+      (isTouchDevice && screenWidth >= 768 && screenWidth <= 1024)
+    ) {
+      return "tablet";
+    }
+
+    // Check by screen size and touch capability
+    if (isTouchDevice && screenWidth < 768) {
+      return "mobile";
+    }
+
+    return "desktop";
+  }
   // MARK: trackSizeCha
 
   function trackSizeChange() {
