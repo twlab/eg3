@@ -42,8 +42,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [resizeRef, size] = useResizeObserver();
 
   const infiniteScrollWorkers = useRef<{
-    instance: Worker[];
-    worker: Worker[];
+    instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
   }>({
     instance: [],
     worker: [],
@@ -200,6 +200,27 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       tracksHeight.current = 200; // Initial height (just the top parts)
       containerRef.current.style.height = `${tracksHeight.current}px`;
     }
+
+    // Cleanup workers on component unmount
+    return () => {
+      // Terminate all infinite scroll workers
+      infiniteScrollWorkers.current.worker.forEach((workerObj) => {
+        workerObj.fetchWorker.terminate();
+      });
+      infiniteScrollWorkers.current.instance.forEach((workerObj) => {
+        workerObj.fetchWorker.terminate();
+      });
+
+      // Terminate genome align worker
+      if (fetchGenomeAlignWorker.current) {
+        fetchGenomeAlignWorker.current.terminate();
+      }
+
+      // Clear the arrays and references
+      infiniteScrollWorkers.current.worker = [];
+      infiniteScrollWorkers.current.instance = [];
+      fetchGenomeAlignWorker.current = null;
+    };
   }, []);
 
   // check what types of tracks are being added, and determine the number of workers needed for
@@ -220,22 +241,24 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
     for (let i = 0; i < normalCount; i++) {
       if (infiniteScrollWorkers.current.worker.length < MAX_WORKERS) {
-        infiniteScrollWorkers.current.worker.push(
-          new Worker(
+        infiniteScrollWorkers.current.worker.push({
+          fetchWorker: new Worker(
             new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
             { type: "module" }
-          )
-        );
+          ),
+          hasOnMessage: false,
+        });
       }
     }
     for (let i = 0; i < instanceFetchTracksCount; i++) {
       if (infiniteScrollWorkers.current.instance.length < MAX_WORKERS) {
-        infiniteScrollWorkers.current.instance.push(
-          new Worker(
+        infiniteScrollWorkers.current.instance.push({
+          fetchWorker: new Worker(
             new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
             { type: "module" }
-          )
-        );
+          ),
+          hasOnMessage: false,
+        });
       }
     }
     if (

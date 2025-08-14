@@ -60,7 +60,6 @@ export const convertTrackModelToITrackModel = (
   id: track.id,
   isSelected: track.isSelected,
 });
-const HIC_TYPES = { hic: "", dynamichic: "", bam: "" };
 
 export const zoomFactors: { [key: string]: { [key: string]: any } } = {
   "6": { factor: 4 / 3, text: "⅓×", title: "Zoom out 1/3-fold" },
@@ -144,8 +143,8 @@ interface TrackManagerProps {
   selectedRegionSet: any;
   setShow3dGene: any;
   infiniteScrollWorkers: React.MutableRefObject<{
-    worker: Worker[];
-    instance: Worker[];
+    instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
   }>;
   fetchGenomeAlignWorker: React.MutableRefObject<Worker | null>;
   isThereG3dTrack: boolean;
@@ -444,7 +443,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         if (messagesForWorker.length > 0) {
-          infiniteScrollWorkers.current.instance[i].postMessage(
+          infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
             messagesForWorker
           );
         }
@@ -452,7 +451,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     // Send normalMessages to worker workers
-
+    console.log(normalMessages, "all messages");
     if (
       normalMessages.length > 0 &&
       infiniteScrollWorkers.current.worker.length > 0
@@ -467,7 +466,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         if (messagesForWorker.length > 0) {
-          infiniteScrollWorkers.current.worker[i].postMessage(
+          console.log(messagesForWorker, "chunks");
+          infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
             messagesForWorker
           );
         }
@@ -1175,6 +1175,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: onmessInfin
 
   const createInfiniteOnMessage = async (event: MessageEvent) => {
+    console.log(event.data, "GOTMESSAGE");
     event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
@@ -1309,6 +1310,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...completedFetchedRegion.current.done,
           ...cacheKeysWithData,
         };
+        console.log("finshed fetch", { ...curDrawData });
         curDrawData["trackToDrawId"] = combineTrackToDrawId;
         curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
         setNewDrawData({ ...curDrawData });
@@ -1351,11 +1353,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               ? curTrackState.missingIdx
               : curTrackState.trackDataIdx
           ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
-          console.log(
-            event.data,
-            curTrackState.genomicFetchCoord,
-            "DATAAAAAAAAAAAAAAAAAAAA"
-          );
+
           globalTrackState.current.trackStates[
             curTrackState.missingIdx
               ? curTrackState.missingIdx
@@ -1555,6 +1553,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           missingIdx: curIdx,
         });
       } else {
+        console.log([...dataToFetchArr], [...tracks], "WUT");
         enqueueMessage(dataToFetchArr);
       }
     }
@@ -2278,13 +2277,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
       // created the workers needed already in GenomeRoot, now
       // we create a way to recieve the return data as message from the workers here
-
       if (infiniteScrollWorkers.current) {
         infiniteScrollWorkers.current.worker?.forEach((w) => {
-          w.onmessage = createInfiniteOnMessage;
+          if (!w.hasOnMessage) {
+            w.fetchWorker.onmessage = createInfiniteOnMessage;
+            w.hasOnMessage = true;
+          }
         });
         infiniteScrollWorkers.current.instance?.forEach((w) => {
-          w.onmessage = createInfiniteOnMessage;
+          if (!w.hasOnMessage) {
+            w.fetchWorker.onmessage = createInfiniteOnMessage;
+            w.hasOnMessage = true;
+          }
         });
       }
       if (hasGenomeAlign.current) {
@@ -2783,6 +2787,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       addTermToMetaSets(filteredTracks);
     }
+
+    // Set up worker message handlers when tracks change (new workers might be added)
+    if (infiniteScrollWorkers.current) {
+      infiniteScrollWorkers.current.worker?.forEach((w) => {
+        if (!w.hasOnMessage) {
+          w.fetchWorker.onmessage = createInfiniteOnMessage;
+          w.hasOnMessage = true;
+        }
+      });
+      infiniteScrollWorkers.current.instance?.forEach((w) => {
+        if (!w.hasOnMessage) {
+          w.fetchWorker.onmessage = createInfiniteOnMessage;
+          w.hasOnMessage = true;
+        }
+      });
+    }
   }, [tracks]);
 
   useEffect(() => {
@@ -2877,7 +2897,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ...completedFetchedRegion.current.done,
         ...newDrawData.trackToDrawId,
       };
-
+      console.log({ ...newDrawData, viewWindow: curViewWindow }, "currentdraw");
       newDrawData.trackToDrawId = newDrawData.trackToDrawId;
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
       processQueue();
