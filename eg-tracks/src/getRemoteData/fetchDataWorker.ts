@@ -349,6 +349,6 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   const results = await Promise.all(objectPromises);
-  console.log(results, "fetchDataWorker received data");
+
   postMessage(results);
 };

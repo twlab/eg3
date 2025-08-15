@@ -52,25 +52,25 @@ const defaultTracks = [
       maxRows: 10,
     },
   }),
-  // new TrackModel({
-  //   type: "geneAnnotation",
-  //   name: "gencodeV47",
-  //   genome: "hg19",
-  //   options: {
-  //     maxRows: 10,
-  //   },
-  // }),
+  new TrackModel({
+    type: "geneAnnotation",
+    name: "gencodeV47",
+    genome: "hg19",
+    options: {
+      maxRows: 10,
+    },
+  }),
   // new TrackModel({
   //     type: "bigwig",
   //     name: "TESt",
   //     genome: "hg19",
   //     url: "https://vizhub.wustl.edu/public/tmp/TW463_20-5-bonemarrow_MeDIP.bigWig"
   // }),
-  // new TrackModel({
-  //   type: "repeatmasker",
-  //   name: "RepeatMasker",
-  //   url: "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
-  // }),
+  new TrackModel({
+    type: "repeatmasker",
+    name: "RepeatMasker",
+    url: "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
+  }),
 
   // new TrackModel({
   //   type: "g3d",
@@ -141,11 +141,11 @@ const defaultTracks = [
   //     displayMode: "arc",
   //   },
   // }),
-  new TrackModel({
-    type: "bam",
-    name: "Test bam",
-    url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
-  }),
+  // new TrackModel({
+  //   type: "bam",
+  //   name: "Test bam",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
+  // }),
   // new TrackModel({
   //   type: "bam",
   //   name: "Test bam",

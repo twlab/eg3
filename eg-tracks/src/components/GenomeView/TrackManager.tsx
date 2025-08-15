@@ -455,7 +455,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     // Send normalMessages to worker workers
-    console.log(normalMessages, "all messages");
+
     if (
       normalMessages.length > 0 &&
       infiniteScrollWorkers.current.worker.length > 0
@@ -470,7 +470,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         if (messagesForWorker.length > 0) {
-          console.log(messagesForWorker, "chunks");
           infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
             messagesForWorker
           );
@@ -1434,7 +1433,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: onmessInfin
 
   const createInfiniteOnMessage = async (event: MessageEvent) => {
-    console.log(event.data, "GOTMESSAGE");
     event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
@@ -1569,7 +1567,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ...completedFetchedRegion.current.done,
           ...cacheKeysWithData,
         };
-        console.log("finshed fetch", { ...curDrawData });
+
         curDrawData["trackToDrawId"] = combineTrackToDrawId;
         curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
         setNewDrawData({ ...curDrawData });
@@ -1690,7 +1688,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             curTrackCache.trackType in trackUsingExpandedLoci &&
             idx !== curIdx
           ) {
-            console.log("SHOULDNT BE HERE");
           } else {
             trackFetchedDataCache.current[key][idx] = {};
           }
@@ -1785,13 +1782,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
         }
       }
-      console.log(
-        needToFetchGenAlign,
-        trackFetchedDataCache.current,
-        hasGenomeAlign.current
-      );
+
       if (hasGenomeAlign.current && needToFetchGenAlign) {
-        console.log("getting genomealign first");
         const genomeAlignTracks = trackManagerState.current.tracks.filter(
           (items, _index) => {
             return items.type === "genomealign";
@@ -1818,7 +1810,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           missingIdx: curIdx,
         });
       } else {
-        console.log([...dataToFetchArr], [...tracks], "WUT");
         enqueueMessage(dataToFetchArr);
       }
     }
@@ -2556,7 +2547,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: [GenConfig]
   useEffect(() => {
     // on GenomeRoot first creation we add the default state to StateArr in genomeroot
-    console.log(getDeviceType());
+
     if (genomeConfig.isInitial) {
       prevWindowWidth.current = windowWidth;
 
@@ -3221,7 +3212,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ...completedFetchedRegion.current.done,
         ...newDrawData.trackToDrawId,
       };
-      console.log({ ...newDrawData, viewWindow: curViewWindow }, "currentdraw");
+
       newDrawData.trackToDrawId = newDrawData.trackToDrawId;
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
       processQueue();
@@ -3239,7 +3230,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         // Call the optional callback if provided
         if (onHeightChange) {
-          console.log(newHeight, "newHeight");
           onHeightChange(newHeight);
         }
       }
