@@ -1022,6 +1022,26 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               }
             }
+          } else if (key === "aggregateMethod") {
+            const trackToDrawId = {};
+            for (const key in trackFetchedDataCache.current) {
+              if (key in selectedTracks.current) {
+                trackToDrawId[key] = {};
+                const curTrack = trackFetchedDataCache.current[key];
+
+                for (const cacheDataIdx in curTrack) {
+                  if (isInteger(cacheDataIdx)) {
+                    if (
+                      "xvalues" in
+                      trackFetchedDataCache.current[key][cacheDataIdx]
+                    ) {
+                      delete trackFetchedDataCache.current[key][cacheDataIdx]
+                        .xvalues;
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       });
