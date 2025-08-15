@@ -61,7 +61,7 @@ export default function NavBar() {
   // const genomeLogoUrl: string | null = null;
 
   return (
-    <div className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
+    <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
       <div className="flex flex-row items-center gap-3 relative">
         {currentSession && (
           <BackspaceIcon

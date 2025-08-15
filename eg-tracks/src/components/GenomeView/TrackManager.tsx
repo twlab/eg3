@@ -1670,6 +1670,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             curTrackCache.trackType in trackUsingExpandedLoci &&
             idx !== curIdx
           ) {
+            console.log("SHOULDNT BE HERE");
           } else {
             trackFetchedDataCache.current[key][idx] = {};
           }
@@ -1764,8 +1765,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
         }
       }
-
+      console.log(
+        needToFetchGenAlign,
+        trackFetchedDataCache.current,
+        hasGenomeAlign.current
+      );
       if (hasGenomeAlign.current && needToFetchGenAlign) {
+        console.log("getting genomealign first");
         const genomeAlignTracks = trackManagerState.current.tracks.filter(
           (items, _index) => {
             return items.type === "genomealign";
@@ -2946,6 +2952,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               if (curTrackModel.type === "g3d") {
                 continue;
               } else {
+                if (trackComponent.trackModel.type === "genomealign") {
+                  checkHasGenAlign = true;
+                }
                 newTrackComponents.push(trackComponent);
               }
 
@@ -3210,6 +3219,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         // Call the optional callback if provided
         if (onHeightChange) {
+          console.log(newHeight, "newHeight");
           onHeightChange(newHeight);
         }
       }

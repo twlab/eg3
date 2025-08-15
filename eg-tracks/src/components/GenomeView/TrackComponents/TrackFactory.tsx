@@ -723,9 +723,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               : 40,
           position: "relative",
           WebkitBackfaceVisibility: "hidden", // this stops lag for when there are a lot of svg components on the screen when using translate3d
-          WebkitPerspective: `${windowWidth * 3 + 120}px`,
+          WebkitPerspective: `${0}px`,
           backfaceVisibility: "hidden",
-          perspective: `${windowWidth * 3 + 120}px`,
+          perspective: `${0}px`,
         }}
       >
         <div

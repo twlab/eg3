@@ -382,7 +382,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       prevViewRegion.current.end = userViewRegion._endBase!;
     }
   }, [userViewRegion]);
-
+  console.log(size.width);
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       <div
