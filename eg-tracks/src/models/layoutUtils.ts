@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Model, Actions } from "flexlayout-react"; // Use named imports based on what's available
-
+import { generateUUID } from "../util";
 /**
  * utilities to deal with layouts
  * @autor Daofeng Li
@@ -54,7 +54,7 @@ export function addTabSetToLayout(newTabset, exisingLayout) {
       const child = [lastChild, newTabset];
       children = [
         ...initial.layout.children.slice(0, -1),
-        { type: "row", children: child, id: crypto.randomUUID() },
+        { type: "row", children: child, id: generateUUID() },
       ];
     }
   } else {

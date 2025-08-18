@@ -8,4 +8,5 @@ export {
   getGenomeConfig,
   restoreLegacyViewRegion,
   fetchDataHubTracks,
+  generateUUID
 } from "./util";

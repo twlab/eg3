@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent } from "react";
 
 import JSZip from "jszip";
 import _ from "lodash";
-
+import { generateUUID } from "wuepgg3-track";
 import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import {
   AppStateSaver,
@@ -159,7 +159,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
         ? state.viewRegion.getContextCoordinates().serialize()
         : null;
 
-    const sessionId = crypto.randomUUID();
+    const sessionId = generateUUID();
 
     let newBundle = {
       bundleId: bundle.bundleId,
@@ -588,8 +588,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.buttonHover.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -605,12 +605,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <button
               style={styles.uploadButton}
               onMouseOver={(e) =>
-                (e.target.style.backgroundColor =
-                  styles.uploadButtonHover.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.uploadButtonHover.backgroundColor)
               }
               onMouseOut={(e) =>
-                (e.target.style.backgroundColor =
-                  styles.uploadButton.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.uploadButton.backgroundColor)
               }
             >
               Upload
@@ -652,8 +652,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                       (e.target.style.backgroundColor = "#EC971F")
                     }
                     onMouseOut={(e) =>
-                      (e.target.style.backgroundColor =
-                        styles.button.backgroundColor)
+                    (e.target.style.backgroundColor =
+                      styles.button.backgroundColor)
                     }
                     onClick={() => setNewSessionLabel(getFunName())}
                   >

@@ -9,7 +9,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { BrowserSession } from "../slices/browserSlice";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/SessionUI";
 import { updateBundle } from "../slices/hubSlice";
-
+import { generateUUID } from "wuepgg3-track";
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",
   async (
@@ -37,14 +37,14 @@ export const importOneSession = createAsyncThunk(
       const mappedTracks = session.tracks.map((track: any) => {
         return {
           ...track,
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           genome: session.genomeName,
           isSelected: false,
         } satisfies ITrackModel;
       });
 
       session = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         genomeId: session.genomeName,
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -53,9 +53,9 @@ export const importOneSession = createAsyncThunk(
           parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
         userViewRegion: session.viewInterval
           ? {
-              start: parsedViewRegion._startBase,
-              end: parsedViewRegion._endBase,
-            }
+            start: parsedViewRegion._startBase,
+            end: parsedViewRegion._endBase,
+          }
           : null,
         tracks: mappedTracks,
         highlights: session.highlights ?? [],
@@ -73,7 +73,7 @@ export const importOneSession = createAsyncThunk(
     if (!session.createdAt) session.createdAt = Date.now();
     if (!session.updatedAt) session.updatedAt = Date.now();
 
-    session.id = crypto.randomUUID();
+    session.id = generateUUID();
 
     thunkApi.dispatch(upsertSession(session));
 

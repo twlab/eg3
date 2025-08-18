@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import TabView from "@/components/ui/tab-view/TabView";
 import FacetTable from "./FacetTable";
-
+import { generateUUID } from "wuepgg3-track";
 // Redux Imports
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -159,7 +159,7 @@ function AddTracks() {
         name: trackState.name,
         options: trackState.options ?? {},
         metadata: { genome: trackState.metadata.genome },
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         isSelected: false,
       };
 
@@ -219,7 +219,7 @@ function AddTracks() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -325,7 +325,7 @@ function AddTracks() {
                     name: trackState.name,
                     options: trackState.options ?? {},
                     metadata: { genome: trackState.metadata.genome },
-                    id: crypto.randomUUID(),
+                    id: generateUUID(),
                     isSelected: false,
                   };
 
@@ -642,7 +642,7 @@ function AddDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -890,7 +890,7 @@ export const TYPES_DESC = {
 //       //       name: fileList[0].name,
 //       //       label: fileList[0].name,
 //       //       files: fileList,
-//       //       id: crypto.randomUUID(),
+//       //       id: generateUUID(),
 //       //       options: trackState.options ? trackState.options : {},
 //       //     })
 //       //   );

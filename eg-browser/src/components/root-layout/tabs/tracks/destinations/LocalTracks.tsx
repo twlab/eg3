@@ -4,7 +4,7 @@ import TabView from "@/components/ui/tab-view/TabView";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-
+import { generateUUID } from "wuepgg3-track";
 import React from "react";
 import JSON5 from "json5";
 
@@ -126,7 +126,7 @@ function AddLocalTracks() {
             label: file.name,
             files: undefined,
             options: trackState.options ? trackState.options : {},
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             metadata: { genome: trackState.assembly },
           })
       );
@@ -169,7 +169,7 @@ function AddLocalTracks() {
             name: item[0].name,
             label: item[0].name,
             files: item,
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             options: trackState.options ? trackState.options : {},
           })
         );
@@ -196,7 +196,7 @@ function AddLocalTracks() {
       //     name: fileList[0].name,
       //     label: fileList[0].name,
       //     files: fileList,
-      //     id: crypto.randomUUID(),
+      //     id: generateUUID(),
       //     options: trackState.options ? trackState.options : {},
       //   }),
       // ];

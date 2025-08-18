@@ -17,6 +17,7 @@ const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
+import { generateUUID } from "../../util";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
@@ -321,7 +322,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome["sizeChange"] = true;
         throttledSetConfig.current(curGenome);
       } else {
-        trackManagerId.current = crypto.randomUUID();
+        trackManagerId.current = generateUUID();
         curGenome = { ...genomeConfig };
         curGenome.navContext = userViewRegion._navContext;
         curGenome["isInitial"] = true;

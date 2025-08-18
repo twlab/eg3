@@ -3,7 +3,7 @@ import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Button from "@/components/ui/button/Button";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { generateUUID } from "wuepgg3-track";
 type RegionSetStep = "name" | "elements";
 
 interface IRegionElement {
@@ -87,18 +87,18 @@ function ElementsStep({ elements, onAddElement, onRemoveElement, onElementNameCh
 export default function RegionSetCreator() {
     const [name, setName] = useState<string>("");
     const [elements, setElements] = useState<IRegionElement[]>([
-        { id: crypto.randomUUID(), name: "CYP4A22" },
-        { id: crypto.randomUUID(), name: "chr10:96796528-96829254" },
-        { id: crypto.randomUUID(), name: "CYP2A6" },
-        { id: crypto.randomUUID(), name: "CYP3A4" },
-        { id: crypto.randomUUID(), name: "chr1:47223509-47276522" },
-        { id: crypto.randomUUID(), name: "CYP1A2" }
+        { id: generateUUID(), name: "CYP4A22" },
+        { id: generateUUID(), name: "chr10:96796528-96829254" },
+        { id: generateUUID(), name: "CYP2A6" },
+        { id: generateUUID(), name: "CYP3A4" },
+        { id: generateUUID(), name: "chr1:47223509-47276522" },
+        { id: generateUUID(), name: "CYP1A2" }
     ]);
     const [selectedStep, setSelectedStep] = useState<RegionSetStep | null>("name");
 
     const handleAddElement = () => {
         const newElement: IRegionElement = {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name: ""
         };
         setElements([...elements, newElement]);

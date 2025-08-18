@@ -42,7 +42,7 @@ import MetadataHeader from "./ToolComponents/MetadataHeader";
 // import { fetchGenomicData } from "../../getRemoteData/fetchData";
 // import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
 import { arraysHaveSameTrackModels } from "../../util";
-
+import { generateUUID } from "../../util";
 const groupManager = new GroupedTrackManager();
 
 export const convertTrackModelToITrackModel = (
@@ -944,7 +944,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
 
-    let newUnique = crypto.randomUUID();
+    let newUnique = generateUUID();
     return {
       key: newUnique,
       handleDelete,
@@ -1159,7 +1159,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newTrack: TrackModel | null = null;
     if (trackType === "matplot") {
       newTrack = new TrackModel({
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         type: "matplot",
         name: "matplot wrap",
         tracks,
