@@ -2613,7 +2613,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initializeTracks();
       preload.current = true;
     } else if (genomeConfig.sizeChange) {
-
       trackSizeChange();
     } else {
       preload.current = true;
@@ -3010,7 +3009,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   };
 
                   trackState.genomicFetchCoord = newGenomicFetchCoord;
-               
                 }
               }
             }
@@ -3152,7 +3150,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
-      
       } else {
         const newTrackComponents: Array<any> = [];
 
