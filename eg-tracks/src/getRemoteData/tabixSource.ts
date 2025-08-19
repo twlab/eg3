@@ -53,6 +53,7 @@ class TabixSource {
       return this.getDataForLocus(chrom, locus.start, locus.end);
     });
     const dataForEachLocus = await Promise.all(promises);
+
     if (options && options.ensemblStyle) {
       loci.forEach((locus, index) => {
         dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));

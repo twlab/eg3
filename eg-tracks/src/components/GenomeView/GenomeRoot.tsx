@@ -49,7 +49,10 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     instance: [],
     worker: [],
   });
-  const fetchGenomeAlignWorker = useRef<Worker | null>(null);
+  const fetchGenomeAlignWorker = useRef<{
+    fetchWorker: Worker;
+    hasOnMessage: boolean;
+  } | null>(null);
   const tracksHeight = useRef<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
@@ -214,7 +217,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
       // Terminate genome align worker
       if (fetchGenomeAlignWorker.current) {
-        fetchGenomeAlignWorker.current.terminate();
+        fetchGenomeAlignWorker.current.fetchWorker.terminate();
       }
 
       // Clear the arrays and references
@@ -262,17 +265,21 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         });
       }
     }
+
     if (
       tracks.some((t) => t.type === "genomealign") &&
       !fetchGenomeAlignWorker.current
     ) {
-      fetchGenomeAlignWorker.current = new Worker(
-        new URL(
-          "../../getRemoteData/fetchGenomeAlignWorker.ts",
-          import.meta.url
+      fetchGenomeAlignWorker.current = {
+        fetchWorker: new Worker(
+          new URL(
+            "../../getRemoteData/fetchGenomeAlignWorker.ts",
+            import.meta.url
+          ),
+          { type: "module" }
         ),
-        { type: "module" }
-      );
+        hasOnMessage: false,
+      };
     }
     const curG3dTracks = findAllG3dTabs(layout.current);
     const newG3dTracks: Array<any> = tracks.filter(

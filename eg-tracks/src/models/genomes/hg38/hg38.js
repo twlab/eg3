@@ -33,7 +33,7 @@ const genome = new Genome("hg38", [
 ]);
 //   //chr7:27053397-27373765
 //   // chr7:10000-20000
-//   //testing finemode  27213325-27213837, 27195171-27202238
+//   //testing finemode  27213325-27213837, 27195171-27202238, chr7:27166871-27181006
 //   //chr7:157159564-158159564
 
 //chr7:26805572-26825594
@@ -236,7 +236,17 @@ const defaultTracks = [
   //     color: "blue",
   //   },
   // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "example bigwig",
+  //   url: "https://vizhub.wustl.edu/hubSample/hg19/GSM429321.bigWig",
 
+  //   genome: "hg38",
+  //   metadata: { genome: "mm10" },
+  //   options: {
+  //     color: "blue",
+  //   },
+  // }),
   // new TrackModel({
   //   type: "bigwig",
   //   name: "example bigwig",
@@ -446,7 +456,6 @@ const defaultTracks = [
   //   // metadata: { genome: "mm10" },
   // }),
   // new TrackModel({
-
   //   type: "geneAnnotation",
   //   name: "refGene",
   //   genome: "mm10",
@@ -477,14 +486,14 @@ const defaultTracks = [
   //   },
   // }),
 
-  new TrackModel({
-    name: "hg38tomm10",
-    label: "Query mouse mm10 to hg38 blastz",
-    type: "genomealign",
-    querygenome: "mm10",
-    filetype: "genomealign",
-    url: "",
-  }),
+  // new TrackModel({
+  //   name: "hg38tomm10",
+  //   label: "Query mouse mm10 to hg38 blastz",
+  //   type: "genomealign",
+  //   querygenome: "mm10",
+  //   filetype: "genomealign",
+  //   url: "",
+  // }),
   // new TrackModel({
   //   type: "categorical",
   //   name: "ChromHMM",
