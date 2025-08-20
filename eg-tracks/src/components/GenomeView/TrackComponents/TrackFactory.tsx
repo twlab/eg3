@@ -640,9 +640,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : "Getting Data"
         }
         height={
-          trackModel.id in messageData ||
-          !viewComponent ||
-          (viewComponent && dataIdx !== viewComponent.dataIdx)
+          !viewComponent
             ? 40
             : configOptions.current.displayMode === "full"
             ? !fetchError.current
