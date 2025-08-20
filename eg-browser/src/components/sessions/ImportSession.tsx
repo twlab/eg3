@@ -12,7 +12,7 @@ import {
   DisplayedRegionModel,
 } from "wuepgg3-track";
 import { addSessionsFromBundleId } from "@/lib/redux/thunk/session";
-
+import { generateUUID } from "wuepgg3-track";
 export default function ImportSession() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -46,14 +46,14 @@ export default function ImportSession() {
         const mappedTracks = session.tracks.map((track: any) => {
           return {
             ...track,
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             genome: session.genomeName,
             isSelected: false,
           } satisfies ITrackModel;
         });
 
         session = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           genomeId: session.genomeName,
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -62,9 +62,9 @@ export default function ImportSession() {
             parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
           userViewRegion: session.viewInterval
             ? {
-                start: parsedViewRegion._startBase,
-                end: parsedViewRegion._endBase,
-              }
+              start: parsedViewRegion._startBase,
+              end: parsedViewRegion._endBase,
+            }
             : null,
           tracks: mappedTracks,
           highlights: session.highlights ? session.highlights : [],
@@ -85,7 +85,7 @@ export default function ImportSession() {
       if (!session.createdAt) session.createdAt = Date.now();
       if (!session.updatedAt) session.updatedAt = Date.now();
 
-      session.id = crypto.randomUUID();
+      session.id = generateUUID();
 
       dispatch(upsertSession(session));
       navigation.pop();

@@ -59,7 +59,7 @@ const Loading: React.FC<PopoverProps> = ({
         type="button"
         className={`popover-btn${open ? " open" : ""}`}
         onClick={() => setOpen((prev) => !prev)}
-        style={{ zIndex: 9994 }}
+        style={{ zIndex: 9994, width: 120 }}
       >
         <div style={{ fontStyle: "italic" }}>{buttonLabel} </div>
         <div className="loader"></div>

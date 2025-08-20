@@ -112,7 +112,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           lineHeight: "40px",
         }}
       >
-        {genesArr[0]}
+        {genesArr.filter((gene) => typeof gene === "string").join(", ")}
       </div>
     ) : (
       getDisplayModeFunction({
@@ -225,13 +225,8 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
-    if (
-      newDrawData.trackToDrawId &&
-      id in newDrawData.trackToDrawId &&
-      dataIdx in trackFetchedDataCache.current[`${id}`] &&
-      dataIdx in globalTrackState.current.trackStates
-    ) {
-      let cacheTrackData = trackFetchedDataCache.current[`${id}`];
+    if (newDrawData.trackToDrawId && id in newDrawData.trackToDrawId) {
+      const cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
@@ -341,7 +336,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           createSVGOrCanvas(
             trackState,
-            combinedData,
+            "error" in combinedData ? combinedData.error : combinedData,
             "error" in combinedData ? true : false,
             dataIdx,
             cacheTrackData[dataIdx].xvalues
@@ -637,9 +632,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
         {legend}
       </div>
 
-      {/* <div className="button-60" role="button" style={{ zIndex: 2 }}>
-        Button 60
-      </div> */}
       {/* Show Loading component when loading, or HiddenIndicator when data is loaded and items are hidden */}
       <Loading
         buttonLabel={
@@ -648,7 +640,11 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             : "Getting Data"
         }
         height={
-          configOptions.current.displayMode === "full"
+          trackModel.id in messageData ||
+          !viewComponent ||
+          (viewComponent && dataIdx !== viewComponent.dataIdx)
+            ? 40
+            : configOptions.current.displayMode === "full"
             ? !fetchError.current
               ? svgHeight.current
               : 40

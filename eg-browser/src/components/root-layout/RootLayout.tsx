@@ -71,7 +71,7 @@ export default function RootLayout() {
 
   return (
     <div
-      className={`h-screen w-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+      className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
     >
       <GoogleAnalytics />
@@ -124,7 +124,7 @@ export default function RootLayout() {
           <motion.div
             className="flex flex-row flex-1 overflow-hidden bg-black"
             animate={{
-              scale: sessionPanelOpen ? 0.95 : 1,
+              // scale: sessionPanelOpen ? 0.95 : 1,
               borderRadius: sessionPanelOpen ? 15 : 0,
               filter: sessionPanelOpen
                 ? "blur(5px) brightness(0.7)"
@@ -147,12 +147,12 @@ export default function RootLayout() {
                 borderBottomRightRadius: !showRightTab ? 0 : CURL_RADIUS,
                 borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
                 borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
-                scale: expandNavigationTab ? 0.95 : 1,
-                // filter: expandNavigationTab
-                //   ? "blur(5px) brightness(0.7)"
-                //   : "blur(0px) brightness(1)",
+                // scale: expandNavigationTab ? 0.95 : 1,
+                filter: expandNavigationTab
+                  ? "brightness(0.85)"
+                  : "brightness(1)",
 
-                filter: "blur(0px) brightness(1)",
+                // filter: "blur(0px) brightness(1)",
                 // translateX: expandNavigationTab ? 50 : 0,
                 // width: !showRightTab ? "100vw" : "75vw",
               }}

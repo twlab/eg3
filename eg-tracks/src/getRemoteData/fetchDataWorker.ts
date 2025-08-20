@@ -99,6 +99,7 @@ export interface MultiAlignment {
 }
 
 self.onmessage = async (event: MessageEvent) => {
+  console.log(event.data)
   const objectPromises = event.data.map((dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
     const initial = dataItem.initial;
@@ -273,15 +274,15 @@ self.onmessage = async (event: MessageEvent) => {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            });
 
           if (
             curRespond &&
@@ -307,8 +308,8 @@ self.onmessage = async (event: MessageEvent) => {
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
                         : trackModel.genome
-                        ? trackModel.genome
-                        : primaryGenName,
+                          ? trackModel.genome
+                          : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,
@@ -349,5 +350,6 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   const results = await Promise.all(objectPromises);
+
   postMessage(results);
 };

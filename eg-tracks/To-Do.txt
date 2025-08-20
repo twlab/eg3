@@ -43,3 +43,33 @@ finished
 6. implement changes for packages: flexlayout, multi worker, css, refactoring of state. 
 7. implement props for whole website genomehub of package.
 
+
+
+8/13/2025
+1. Need to fix when entering invalid genomealign tracks 
+
+
+8/14/2025
+STRESS TEST WORKER ALGO 
+--1. SCROLL FAST TO SEE IF EVERYThing is loading correctly  (done)
+--2. check scrolling fast to already fetched data (done)
+
+--3. genomealign error checking for invalid url. fetch etc
+
+--4. scroll fast and then add more tracks tthrough public, t
+hen scroll back if its fetching the new tracks only that are added 
+(done, fixed, when new workers after initial are added, it doesn't have an onmessage so we dont get back the fetch data)
+
+5. check local add 
+-- 6. check remote 
+-- 7. check annotation add, fixed genomealign add cause it doesn't have worker
+-- 8. check toolbar: zoom, regionselect, jump 
+-- 9. check undo redo 
+10.check sessions 
+--11. check genomealign: already checked(added as default, remote, multiple genomealign, add new genomealign to a group)
+    : check deleting, resize, adding track following query genome, 
+-- 12. resize
+13. check more errors, and let the user which track has error
+-- 14. cryptoUUID not working on somebrowser 
+
+-- 15. fixed some bigwig bugs, found by jessica

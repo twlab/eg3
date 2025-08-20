@@ -19,6 +19,7 @@ import "./GenomeView/track.css";
 import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickTooltipMap";
 import ReactDOM from "react-dom";
 import BamSource from "../getRemoteData/BamSource";
+import { generateUUID } from "../util"
 /**
  * Configuration for a single track in GenomeViewer.
  * @property {string} type - The type of the track (required).
@@ -105,18 +106,18 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
     const defaults = trackOptionMap[type]?.defaultOptions || {};
     return userOptions
       ? {
-          ...defaults,
-          ...userOptions,
-          packageVersion: true,
-          trackManagerRef:
-            type in { hic: "", longrange: "", biginteract: "" } ? block : null,
-        }
+        ...defaults,
+        ...userOptions,
+        packageVersion: true,
+        trackManagerRef:
+          type in { hic: "", longrange: "", biginteract: "" } ? block : null,
+      }
       : {
-          ...defaults,
-          packageVersion: true,
-          trackManagerRef:
-            type in { hic: "", longrange: "", biginteract: "" } ? block : null,
-        };
+        ...defaults,
+        packageVersion: true,
+        trackManagerRef:
+          type in { hic: "", longrange: "", biginteract: "" } ? block : null,
+      };
   }
   function getTrackModels(genomeConfig: any, genomeViewId: string) {
     let trackModelArr: TrackModel[] = [];
@@ -144,11 +145,11 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             name: track.name
               ? track.name
               : track.type === "ruler"
-              ? "ruler"
-              : `track ${idx + 1}`,
+                ? "ruler"
+                : `track ${idx + 1}`,
             url: track.url,
             options: getOptions(track.type, track.options),
-            id: crypto.randomUUID(),
+            id: generateUUID(),
           })
       );
 
@@ -417,7 +418,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
   } // MARK: UseEffects
   useEffect(() => {
     async function handle() {
-      latestGenomeKey.current = crypto.randomUUID();
+      latestGenomeKey.current = generateUUID();
       const genomeConfig = getConfig();
       if (!genomeConfig) {
         setViewerElement("Invalid genome");

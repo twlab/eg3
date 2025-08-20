@@ -1,10 +1,19 @@
 # Version history
 
-## 55.3.0
+## 56.0.0
 
+- implement multiple workers to fetch and process data, individual
+  tracks group will be immediately display without waiting for all tracks
+  to be finishes processing
+- track now support touch screen devices, allowing the user to move the tracks with touch controls
 - implement hover data for ruler
+- improved speed of loading tracks
 - fixed tooltip hover for metadata
 - fixed aggregateMethod config bug
+- fixed flexlayout height bug
+- implement indicator that shows number of items too small
+- refactor packages.json
+- refactor checking const objects
 
 ## 55.2.0
 

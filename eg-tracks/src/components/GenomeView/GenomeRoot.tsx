@@ -12,12 +12,13 @@ import { arraysHaveSameTrackModels } from "../../util";
 import OpenInterval from "../../models/OpenInterval";
 import useResizeObserver from "./TrackComponents/commonComponents/Resize";
 import TrackManager from "./TrackManager";
-
+const MAX_WORKERS = 10;
+const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
+import { generateUUID } from "../../util";
 // import GenomeViewerTest from "../testComp";
-
 // import GenomeViewerTest from "./testComp";
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
@@ -40,9 +41,19 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   selectedRegionSet,
 }) {
   const [resizeRef, size] = useResizeObserver();
-  const infiniteScrollWorker = useRef<Worker | null>(null);
-  const fetchGenomeAlignWorker = useRef<Worker | null>(null);
-  const tracksHeight = useRef<number>(1);
+
+  const infiniteScrollWorkers = useRef<{
+    instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
+  }>({
+    instance: [],
+    worker: [],
+  });
+  const fetchGenomeAlignWorker = useRef<{
+    fetchWorker: Worker;
+    hasOnMessage: boolean;
+  } | null>(null);
+  const tracksHeight = useRef<number>(400);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
@@ -56,26 +67,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
   }
-  // function handleNodeResize(node) {
-  //   const model = node.getModel();
-  //   if (model) {
-  //     const parent = node.getParent();
-  //     // console.log(node.getId(), parent.getWeight());
-  //     console.log(size.width);
-  //     model.doAction(
-  //       FlexLayout.Actions.updateNodeAttributes(parent.getId(), {
-  //         width: size.width,
-  //         weight: parent.getWeight(),
-  //       })
-  //     );
-  //     // console.log(parent.getWeight());
-  //     // console.log("HUHUH", parent);
-  //     setModel(model);
-  //   }
-  // }
-  function renderG3dTrackComponents(node) {
-    // const model = node.getModel();
 
+  function renderG3dTrackComponents(node) {
     const config = node.getConfig();
     const { x, y, width, height } = node.getRect();
     const g3dtrack = TrackModel.deserialize(config.trackModel);
@@ -90,7 +83,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         })
       );
     });
-    // node.setEventListener("resize", () => handleNodeResize(node));
 
     return (
       <ThreedmolContainer
@@ -115,7 +107,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     var component = node.getComponent();
 
     if (component === "Browser") {
-      // node.setEventListener("resize", () => handleNodeResize(node));
       return (
         <TrackManager
           key={trackManagerId.current}
@@ -144,7 +135,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           isScreenShotOpen={isScreenShotOpen}
           selectedRegionSet={selectedRegionSet}
           setShow3dGene={setShow3dGene}
-          infiniteScrollWorker={infiniteScrollWorker}
+          infiniteScrollWorkers={infiniteScrollWorkers}
           fetchGenomeAlignWorker={fetchGenomeAlignWorker}
           onHeightChange={onHeightChange}
         />
@@ -172,8 +163,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       setCurrentGenomeConfig(curGenome);
     }, 100)
   );
+
   function onHeightChange(height: number) {
-    const newHeight = height + 154;
+    const newHeight = height + 200;
     if (newHeight !== tracksHeight.current) {
       tracksHeight.current = newHeight;
       // Directly update the DOM to avoid re-renders and flickering
@@ -181,8 +173,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         containerRef.current.style.height = `${newHeight}px`;
       }
     }
-    // top parts is 130 px and 4 for border top and bottom
+    // top parts is 200 px and 4 for border top and bottom
   }
+
   function findAllG3dTabs(layout: any) {
     const result: any[] = [];
 
@@ -208,29 +201,85 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   useEffect(() => {
     // Set initial height for the container
     if (containerRef.current && tracksHeight.current === 0) {
-      tracksHeight.current = 154; // Initial height (just the top parts)
+      tracksHeight.current = 200; // Initial height (just the top parts)
       containerRef.current.style.height = `${tracksHeight.current}px`;
     }
+
+    // Cleanup workers on component unmount
+    return () => {
+      // Terminate all infinite scroll workers
+      infiniteScrollWorkers.current.worker.forEach((workerObj) => {
+        workerObj.fetchWorker.terminate();
+      });
+      infiniteScrollWorkers.current.instance.forEach((workerObj) => {
+        workerObj.fetchWorker.terminate();
+      });
+
+      // Terminate genome align worker
+      if (fetchGenomeAlignWorker.current) {
+        fetchGenomeAlignWorker.current.fetchWorker.terminate();
+      }
+
+      // Clear the arrays and references
+      infiniteScrollWorkers.current.worker = [];
+      infiniteScrollWorkers.current.instance = [];
+      fetchGenomeAlignWorker.current = null;
+    };
   }, []);
 
+  // check what types of tracks are being added, and determine the number of workers needed for
+  // TrackManager
   useEffect(() => {
-    if (!infiniteScrollWorker.current) {
-      infiniteScrollWorker.current = new Worker(
-        new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
-        { type: "module" }
-      );
+    const normalTracks = tracks.filter(
+      (t) => !(t.type in INSTANCE_FETCH_TYPES)
+    );
+    const instanceFetchTracks = tracks.filter(
+      (t) => t.type in INSTANCE_FETCH_TYPES
+    );
+    // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
+    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    const instanceFetchTracksCount = Math.min(
+      instanceFetchTracks.length,
+      MAX_WORKERS
+    );
+
+    for (let i = 0; i < normalCount; i++) {
+      if (infiniteScrollWorkers.current.worker.length < MAX_WORKERS) {
+        infiniteScrollWorkers.current.worker.push({
+          fetchWorker: new Worker(
+            new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+            { type: "module" }
+          ),
+          hasOnMessage: false,
+        });
+      }
     }
+    for (let i = 0; i < instanceFetchTracksCount; i++) {
+      if (infiniteScrollWorkers.current.instance.length < MAX_WORKERS) {
+        infiniteScrollWorkers.current.instance.push({
+          fetchWorker: new Worker(
+            new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+            { type: "module" }
+          ),
+          hasOnMessage: false,
+        });
+      }
+    }
+
     if (
       tracks.some((t) => t.type === "genomealign") &&
       !fetchGenomeAlignWorker.current
     ) {
-      fetchGenomeAlignWorker.current = new Worker(
-        new URL(
-          "../../getRemoteData/fetchGenomeAlignWorker.ts",
-          import.meta.url
+      fetchGenomeAlignWorker.current = {
+        fetchWorker: new Worker(
+          new URL(
+            "../../getRemoteData/fetchGenomeAlignWorker.ts",
+            import.meta.url
+          ),
+          { type: "module" }
         ),
-        { type: "module" }
-      );
+        hasOnMessage: false,
+      };
     }
     const curG3dTracks = findAllG3dTabs(layout.current);
     const newG3dTracks: Array<any> = tracks.filter(
@@ -263,6 +312,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     }
   }, [tracks]);
 
+  // use effect of tracks will get trigger first creating the page layout before the resize effect
+  // which will create the TrackManager component
   useEffect(() => {
     if (size.width > 0) {
       let curGenome;
@@ -278,7 +329,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         curGenome["sizeChange"] = true;
         throttledSetConfig.current(curGenome);
       } else {
-        trackManagerId.current = crypto.randomUUID();
+        trackManagerId.current = generateUUID();
         curGenome = { ...genomeConfig };
         curGenome.navContext = userViewRegion._navContext;
         curGenome["isInitial"] = true;
@@ -304,8 +355,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         );
         curGenome.navContext = userViewRegion._navContext;
         curGenome["sizeChange"] = false;
-
-        setCurrentGenomeConfig(curGenome);
+        throttledSetConfig.current(curGenome);
+        // setCurrentGenomeConfig(curGenome);
       }
     }
   }, [viewRegion]);
@@ -331,7 +382,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           );
           curGenome.navContext = userViewRegion._navContext;
           curGenome["sizeChange"] = false;
-
           throttledSetConfig.current(curGenome);
         }
       }
@@ -343,14 +393,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-      {/* <div ref={resizeRef as React.RefObject<HTMLDivElement>}> </div> */}
       <div
         ref={containerRef}
         style={{
           display: "flex",
           flexDirection: "column",
           width: size.width,
-          height: "500px",
+          height: 400,
         }}
       >
         {/* <GenomeViewerTest /> */}

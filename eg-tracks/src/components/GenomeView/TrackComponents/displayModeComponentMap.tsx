@@ -70,7 +70,7 @@ import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 import VcfTrack from "./VcfComponents/VcfTrack";
 import Bedcolor from "./bedComponents/Bedcolor";
-
+import { generateUUID } from "../../../util";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 export const bigWithNavTracks = new Set(["repeat", "jaspar", "bigbed"]);
 export const instanceFetchTracks = new Set(["hic", "dynamichic", "bam"]);
@@ -126,22 +126,22 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.height
         );
       }
-      let svgKey = crypto.randomUUID();
+      let svgKey = generateUUID();
 
       if (configOptions.forceSvg || configOptions.packageVersion) {
         let curParentStyle: any = configOptions.forceSvg
           ? {
-              position: "relative",
+            position: "relative",
 
-              overflow: "hidden",
-              width: width / 3,
-            }
+            overflow: "hidden",
+            width: width / 3,
+          }
           : {};
         let curEleStyle: any = configOptions.forceSvg
           ? {
-              position: "relative",
-              transform: `translateX(${-trackState.viewWindow.start}px)`,
-            }
+            position: "relative",
+            transform: `translateX(${-trackState.viewWindow.start}px)`,
+          }
           : {};
 
         return (
@@ -211,7 +211,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => {}}
+          onClick={renderTooltip ? renderTooltip : () => { }}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -236,7 +236,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => {}}
+          onClick={renderTooltip ? renderTooltip : () => { }}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -309,7 +309,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -334,7 +334,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => {}}
+            renderTooltip={renderTooltip ? renderTooltip : () => { }}
             onHideTooltip={onClose}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -457,7 +457,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => {}}
+              onClick={renderTooltip ? renderTooltip : () => { }}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -483,7 +483,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -502,7 +502,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => {}}
+            onClick={renderTooltip ? renderTooltip : () => { }}
             options={configOptions}
           />
         ));
@@ -522,8 +522,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-            imgCount -
-            THUMBNAIL_PADDING,
+          imgCount -
+          THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -547,8 +547,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
               configOptions.label
                 ? configOptions.label
                 : trackModel.options.label
-                ? trackModel.options.label
-                : ""
+                  ? trackModel.options.label
+                  : ""
             }
           />
         );
@@ -567,7 +567,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => {}}
+          onSetImageInfo={() => { }}
           heightObj={heightObj}
         />
       );
@@ -620,7 +620,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       configOptions.hiddenPixels,
       sortType
     );
-    console.log(placeFeatureData);
+
     // if (configOptions.forceSvg) {
     //   placeFeatureData.placements = placeFeatureData.placements.filter(
     //     (feature) => {
@@ -648,8 +648,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.label
             ? configOptions.label
             : trackModel.options.label
-            ? trackModel.options.label
-            : ""
+              ? trackModel.options.label
+              : ""
         }
         forceSvg={configOptions.forceSvg}
       />
@@ -1144,9 +1144,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         selectedRegion={
           trackState.genomicFetchCoord
             ? objToInstanceAlign(
-                trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
-                  .viewWindowRegion
-              )
+              trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+                .viewWindowRegion
+            )
             : trackState.visRegion
         }
         viewWindow={
@@ -1180,8 +1180,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             drawData.configOptions.label
               ? drawData.configOptions.label
               : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
+                ? drawData.trackModel.options.label
+                : ""
           }
           forceSvg={drawData.configOptions.forceSvg}
         />
@@ -1218,7 +1218,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               }}
             >
               <svg
-                key={crypto.randomUUID()}
+                key={generateUUID()}
                 width={drawData.trackState.visWidth}
                 height={drawData.configOptions.height}
                 display={"block"}
@@ -1255,7 +1255,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             </div>
 
             <svg
-              key={crypto.randomUUID()}
+              key={generateUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
               display={"block"}
@@ -1277,8 +1277,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             drawData.configOptions.label
               ? drawData.configOptions.label
               : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
+                ? drawData.trackModel.options.label
+                : ""
           }
           forceSvg={drawData.configOptions.forceSvg}
         />
