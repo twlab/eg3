@@ -65,11 +65,21 @@ hen scroll back if its fetching the new tracks only that are added
 -- 7. check annotation add, fixed genomealign add cause it doesn't have worker
 -- 8. check toolbar: zoom, regionselect, jump 
 -- 9. check undo redo 
-10.check sessions 
---11. check genomealign: already checked(added as default, remote, multiple genomealign, add new genomealign to a group)
+-- 10.check sessions 
+-- 11. check genomealign: already checked(added as default, remote, multiple genomealign, add new genomealign to a group)
     : check deleting, resize, adding track following query genome, 
 -- 12. resize
 13. check more errors, and let the user which track has error
 -- 14. cryptoUUID not working on somebrowser 
 
 -- 15. fixed some bigwig bugs, found by jessica
+
+
+
+8/20/2025
+1. add better error checking
+2. integrate changes to npm packages
+3. maybe change flexlayout to something else 
+4. add props to genomeHub package
+5. add saving chromosome in sessions so custom genome can be rebuild 
+6. fix datahub bug
