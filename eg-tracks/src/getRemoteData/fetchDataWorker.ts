@@ -98,9 +98,16 @@ export interface MultiAlignment {
   [genome: string]: Alignment;
 }
 
-self.onmessage = async (event: MessageEvent) => {
-  console.log(event.data)
-  const objectPromises = event.data.map((dataItem) => {
+// Main processing function that can be used both as worker and regular function
+export async function fetchGenomicData(data: any[]): Promise<any> {
+  // Ensure data is an array
+  if (!Array.isArray(data)) {
+    throw new Error(
+      `fetchGenomicData expects an array, but received: ${typeof data}`
+    );
+  }
+
+  const objectPromises = data.map((dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
     const initial = dataItem.initial;
     const fetchResults: Array<any> = [];
@@ -274,15 +281,15 @@ self.onmessage = async (event: MessageEvent) => {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            })
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              })
             : await localTrackFetchFunction[trackModel.type]({
-              basesPerPixel: bpRegionSize / windowWidth,
-              nav: curFetchNav[i],
-              trackModel,
-            });
+                basesPerPixel: bpRegionSize / windowWidth,
+                nav: curFetchNav[i],
+                trackModel,
+              });
 
           if (
             curRespond &&
@@ -308,8 +315,8 @@ self.onmessage = async (event: MessageEvent) => {
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
                         : trackModel.genome
-                          ? trackModel.genome
-                          : primaryGenName,
+                        ? trackModel.genome
+                        : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,
@@ -350,6 +357,25 @@ self.onmessage = async (event: MessageEvent) => {
   });
 
   const results = await Promise.all(objectPromises);
+  return results;
+}
 
-  postMessage(results);
-};
+// Worker message handler - only set up when we're actually in a worker context
+// Check if we're in a Web Worker by looking for the WorkerGlobalScope
+if (
+  typeof self !== "undefined" &&
+  "postMessage" in self &&
+  "onmessage" in self &&
+  typeof window === "undefined"
+) {
+  self.onmessage = async (event: MessageEvent) => {
+    try {
+      const results = await fetchGenomicData(event.data);
+      postMessage(results);
+    } catch (error) {
+      postMessage({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+}

@@ -46,6 +46,7 @@ import {
   getGenomeAlignTracksNotInSecondArray,
 } from "../../util";
 import { generateUUID } from "../../util";
+import { fetchGenomicData } from "../../getRemoteData/fetchDataWorker";
 const groupManager = new GroupedTrackManager();
 
 /**
@@ -156,7 +157,7 @@ interface TrackManagerProps {
   infiniteScrollWorkers: React.MutableRefObject<{
     instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
-  }>;
+  } | null>;
   fetchGenomeAlignWorker: React.MutableRefObject<{
     fetchWorker: Worker;
     hasOnMessage: boolean;
@@ -392,12 +393,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     processGenomeAlignQueue();
   };
-  const processQueue = () => {
-    if (messageQueue.current.length === 0) {
+  const processQueue = async () => {
+    if (messageQueue.current.length === 0 || isWorkerBusy.current) {
       setMessageData({});
       return;
     }
 
+    isWorkerBusy.current = true;
     setMessageData(getMessageData());
     const message = messageQueue.current.pop();
 
@@ -448,49 +450,88 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     // Send intMessages to instance workers
     if (
-      intMessages.length > 0 &&
-      infiniteScrollWorkers.current.instance.length > 0
+      infiniteScrollWorkers.current &&
+      (infiniteScrollWorkers.current.instance.length > 0 ||
+        infiniteScrollWorkers.current.worker.length > 0)
     ) {
-      const numWorkers = infiniteScrollWorkers.current.instance.length;
-      for (let i = 0; i < numWorkers; i++) {
-        const messagesForWorker: Array<any> = [];
-        for (const msgObj of intMessages) {
-          const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
-          if (chunks[i].length > 0) {
-            messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+      console.log("Using workers");
+      if (
+        intMessages.length > 0 &&
+        infiniteScrollWorkers.current.instance.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.instance.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of intMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
           }
-        }
-        if (messagesForWorker.length > 0) {
-          infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
-            messagesForWorker
-          );
+          if (messagesForWorker.length > 0) {
+            infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
+          }
         }
       }
-    }
 
-    // Send normalMessages to worker workers
+      // Send normalMessages to worker workers
+      if (
+        normalMessages.length > 0 &&
+        infiniteScrollWorkers.current.worker.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.worker.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of normalMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
 
-    if (
-      normalMessages.length > 0 &&
-      infiniteScrollWorkers.current.worker.length > 0
-    ) {
-      const numWorkers = infiniteScrollWorkers.current.worker.length;
+          if (messagesForWorker.length > 0) {
+            infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
+          }
+        }
+      }
+    } else {
+      console.log("Using non-worker version");
+      // Send normalMessages to fetch functions (non-worker version)
+      const numWorkers = message[0].trackModelArr.length;
+      const chunks = splitArrayIntoChunks(message[0].trackModelArr, numWorkers);
+      // Launch independent async operations for each chunk
       for (let i = 0; i < numWorkers; i++) {
         const messagesForWorker: Array<any> = [];
-        for (const msgObj of normalMessages) {
-          const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
+        for (const msgObj of message) {
           if (chunks[i].length > 0) {
             messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
           }
         }
         if (messagesForWorker.length > 0) {
-          infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-            messagesForWorker
-          );
+          // Launch async operation without awaiting - process results independently
+          fetchGenomicData(messagesForWorker)
+            .then((results) => {
+              // Call createInfiniteOnMessage once with the entire results array
+              createInfiniteOnMessage({ data: results });
+            })
+            .catch((error) => {
+              console.error("Error fetching genomic data:", error);
+            });
         }
       }
     }
   };
+
   const processGenomeAlignQueue = () => {
     if (genomeAlignMessageQueue.current.length === 0) {
       return;
@@ -1446,7 +1487,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: onmessInfin
 
-  const createInfiniteOnMessage = async (event: MessageEvent) => {
+  const createInfiniteOnMessage = async (
+    event: MessageEvent | { [key: string]: any }
+  ) => {
+    console.log(event);
     event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
@@ -3187,20 +3231,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     // Set up worker message handlers when tracks change (new workers might be added)
-    if (infiniteScrollWorkers.current) {
-      infiniteScrollWorkers.current.worker?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
-        }
-      });
-      infiniteScrollWorkers.current.instance?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
-        }
-      });
-    }
+    // if (infiniteScrollWorkers.current) {
+    //   infiniteScrollWorkers.current.worker?.forEach((w) => {
+    //     if (!w.hasOnMessage) {
+    //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+    //       w.hasOnMessage = true;
+    //     }
+    //   });
+    //   infiniteScrollWorkers.current.instance?.forEach((w) => {
+    //     if (!w.hasOnMessage) {
+    //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+    //       w.hasOnMessage = true;
+    //     }
+    //   });
+    // }
   }, [tracks]);
 
   useEffect(() => {
