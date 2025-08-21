@@ -97,9 +97,9 @@ export interface Alignment {
 export interface MultiAlignment {
   [genome: string]: Alignment;
 }
-
+//
 self.onmessage = async (event: MessageEvent) => {
-  console.log(event.data)
+
   const objectPromises = event.data.map((dataItem) => {
     const primaryGenName = dataItem.primaryGenName;
     const initial = dataItem.initial;
