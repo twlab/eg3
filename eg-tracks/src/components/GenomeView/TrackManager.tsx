@@ -394,12 +394,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     processGenomeAlignQueue();
   };
   const processQueue = async () => {
-    if (messageQueue.current.length === 0 || isWorkerBusy.current) {
+    if (messageQueue.current.length === 0) {
       setMessageData({});
       return;
     }
 
-    isWorkerBusy.current = true;
     setMessageData(getMessageData());
     const message = messageQueue.current.pop();
 
@@ -2172,7 +2171,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     rightStartCoord.current = 0;
     bpRegionSize.current = 0;
     pixelPerBase.current = 0;
-    isWorkerBusy.current = false;
+
     messageQueue.current = [];
     bpX.current = 0;
     maxBp.current = 0;

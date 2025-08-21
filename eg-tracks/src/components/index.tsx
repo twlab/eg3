@@ -19,6 +19,7 @@ import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickToo
 import ReactDOM from "react-dom";
 import BamSource from "../getRemoteData/BamSource";
 import { generateUUID } from "../util";
+import { fetchGenomicData } from "../getRemoteData/fetchDataWorker";
 /**
  * Configuration for a single track in GenomeViewer.
  * @property {string} type - The type of the track (required).
@@ -226,9 +227,6 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
     prevFetchResults?: any
   ) {
     if (!prevFetchResults) {
-      const { fetchGenomicData } = await import(
-        "../getRemoteData/fetchDataWorker"
-      );
       const results = await fetchGenomicData([viewRegionData]);
       const fetchPromises: Array<Promise<void>> = [];
       results[0].fetchResults.forEach((track) => {
