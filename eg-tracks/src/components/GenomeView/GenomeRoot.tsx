@@ -21,7 +21,7 @@ import { generateUUID } from "../../util";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
-const packageVersion = false;
+const packageVersion = true;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -252,7 +252,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       MAX_WORKERS
     );
     if (!packageVersion) {
-
       for (let i = 0; i < normalCount; i++) {
         if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
           infiniteScrollWorkers.current!.worker.push({
@@ -281,22 +280,23 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           });
         }
       }
-    }
-    if (
-      tracks.some((t) => t.type === "genomealign") &&
-      !fetchGenomeAlignWorker.current
-    ) {
-      fetchGenomeAlignWorker.current = {
-        fetchWorker: new Worker(
-          new URL(
-            "../../getRemoteData/fetchGenomeAlignWorker.ts",
-            import.meta.url
+      if (
+        tracks.some((t) => t.type === "genomealign") &&
+        !fetchGenomeAlignWorker.current
+      ) {
+        fetchGenomeAlignWorker.current = {
+          fetchWorker: new Worker(
+            new URL(
+              "../../getRemoteData/fetchGenomeAlignWorker.ts",
+              import.meta.url
+            ),
+            { type: "module" }
           ),
-          { type: "module" }
-        ),
-        hasOnMessage: false,
-      };
+          hasOnMessage: false,
+        };
+      }
     }
+
     const curG3dTracks = findAllG3dTabs(layout.current);
     const newG3dTracks: Array<any> = tracks.filter(
       (track) => track.type === "g3d"

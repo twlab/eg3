@@ -46,7 +46,7 @@ import {
   getGenomeAlignTracksNotInSecondArray,
 } from "../../util";
 import { generateUUID } from "../../util";
-import { fetchGenomicData } from "../../getRemoteData/fetchDataWorker";
+import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
 const groupManager = new GroupedTrackManager();
 
 /**
@@ -453,7 +453,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       (infiniteScrollWorkers.current.instance.length > 0 ||
         infiniteScrollWorkers.current.worker.length > 0)
     ) {
-      console.log("Using workers");
+
       if (
         intMessages.length > 0 &&
         infiniteScrollWorkers.current.instance.length > 0
@@ -504,7 +504,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
     } else {
-      console.log("Using non-worker version");
+
       // Send normalMessages to fetch functions (non-worker version)
       const numWorkers = message[0].trackModelArr.length;
       const chunks = splitArrayIntoChunks(message[0].trackModelArr, numWorkers);
@@ -1489,7 +1489,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any }
   ) => {
-    console.log(event);
+
     event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
