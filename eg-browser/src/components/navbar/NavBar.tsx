@@ -56,14 +56,12 @@ export default function NavBar() {
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-    versionToLogoUrl[genome.name]?.logoUrl
+      versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
   return (
-    <div
-      className="w-screen flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative"
-    >
+    <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
       <div className="flex flex-row items-center gap-3 relative">
         {currentSession && (
           <BackspaceIcon
@@ -97,13 +95,9 @@ export default function NavBar() {
               {currentSession.title.length > 0 && genome?.name && (
                 //replaced text-primary with var font color
                 <>
-                  <p className="text-2xl  font-medium">
-                    {genome?.name}
-                  </p>
+                  <p className="text-2xl  font-medium">{genome?.name}</p>
 
-                  <p className="text-2xl font-light">
-                    /
-                  </p>
+                  <p className="text-2xl font-light">/</p>
                 </>
               )}
               <InlineEditable
@@ -115,8 +109,9 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                  }`}
+                style={`text-2xl font-light border border-blue-500 px-2 ${
+                  currentSession.title.length > 0 ? "" : "font-medium"
+                }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -125,14 +120,13 @@ export default function NavBar() {
               />
             </div>
           ) : (
-            <h1
-              className="text-2xl font-light"
-            >
+            <h1 className="text-2xl font-light">
               <span className="font-medium">WashU </span> Epigenome Browser
             </h1>
-
           ))}
-        {!isSmallScreen && <span className="text-xs text-red-500">{version}</span>}
+        {!isSmallScreen && (
+          <span className="text-xs text-red-500">{version}</span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         {isSmallScreen ? (
@@ -182,7 +176,9 @@ export default function NavBar() {
                 <Button
                   onClick={() =>
                     dispatch(
-                      setNavigationTab(currentTab === "tracks" ? null : "tracks")
+                      setNavigationTab(
+                        currentTab === "tracks" ? null : "tracks"
+                      )
                     )
                   }
                   active={currentTab === "tracks"}
@@ -248,7 +244,8 @@ export default function NavBar() {
                 />
                 <Button
                   style={{
-                    backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
+                    backgroundColor:
+                      "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
                     padding: "4px 8px",
                     color: "black",
                   }}
@@ -285,7 +282,9 @@ export default function NavBar() {
                       onClick={undo}
                       disabled={!canUndo}
                       title="Undo"
-                      className={!canUndo ? "opacity-50 cursor-not-allowed" : ""}
+                      className={
+                        !canUndo ? "opacity-50 cursor-not-allowed" : ""
+                      }
                     >
                       <ArrowUturnLeftIcon className="h-5 w-5" />
                     </IconButton>
@@ -293,7 +292,9 @@ export default function NavBar() {
                       onClick={redo}
                       disabled={!canRedo}
                       title="Redo"
-                      className={!canRedo ? "opacity-50 cursor-not-allowed" : ""}
+                      className={
+                        !canRedo ? "opacity-50 cursor-not-allowed" : ""
+                      }
                     >
                       <ArrowUturnRightIcon className="h-5 w-5" />
                     </IconButton>
@@ -301,7 +302,9 @@ export default function NavBar() {
                   <Button
                     onClick={() => {
                       dispatch(
-                        setNavigationTab(currentTab === "tracks" ? null : "tracks")
+                        setNavigationTab(
+                          currentTab === "tracks" ? null : "tracks"
+                        )
                       );
                       setMobileMenuOpen(false);
                     }}
@@ -325,7 +328,9 @@ export default function NavBar() {
                   <Button
                     onClick={() => {
                       dispatch(
-                        setNavigationTab(currentTab === "share" ? null : "share")
+                        setNavigationTab(
+                          currentTab === "share" ? null : "share"
+                        )
                       );
                       setMobileMenuOpen(false);
                     }}
@@ -368,13 +373,16 @@ export default function NavBar() {
                     <Switch
                       checked={darkTheme}
                       onChange={(checked) => dispatch(setDarkTheme(checked))}
-                      checkedIcon={<MoonIcon className="w-4 h-4 text-gray-400" />}
+                      checkedIcon={
+                        <MoonIcon className="w-4 h-4 text-gray-400" />
+                      }
                       uncheckedIcon={<SunIcon className="w-4 h-4 text-white" />}
                     />
                   </div>
                   <Button
                     style={{
-                      backgroundColor: "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
+                      backgroundColor:
+                        "rgb(232 222 248 / var(--tw-bg-opacity, 1))",
                       padding: "8px 16px",
                       color: "black",
                       width: "100%",

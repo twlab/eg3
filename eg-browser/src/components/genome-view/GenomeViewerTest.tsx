@@ -17,7 +17,9 @@ export default function GenomeViewerTest() {
       type: "bigwig",
     },
   ]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [zoom, setZoom] = useState<undefined | number>(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [type, setType] = useState("bigwig");
   const [genomeName, setGenomeName] = useState("hg19");
 
@@ -67,7 +69,7 @@ export default function GenomeViewerTest() {
       <button
         style={buttonStyle}
         onClick={() =>
-          setType((prev) => (prev === "bigwig" ? "geneannotation" : "linear"))
+          setType((prev) => (prev === "bigwig" ? "geneannotation" : "bigwig"))
         }
       >
         Change type
@@ -80,9 +82,7 @@ export default function GenomeViewerTest() {
       >
         Change genomeName
       </button>
-      <div
-        style={{ display: "flex", flexDirection: "column", padding: "300px" }}
-      >
+      <div style={{ display: "flex", flexDirection: "column" }}>
         <GenomeViewer
           viewRegion={viewRegion}
           tracks={tracks}
@@ -92,9 +92,6 @@ export default function GenomeViewerTest() {
           viewRegion={viewRegion}
           tracks={[
             {
-              type: "ruler",
-            },
-            {
               name: "gencodeV47",
               type: "geneannotation",
             },
@@ -103,7 +100,7 @@ export default function GenomeViewerTest() {
         />
 
         <GenomeViewer
-          viewRegion={"chr7:27181545-27245617"}
+          viewRegion="chr7:27181545-27245617"
           tracks={[
             {
               url: "https://egg.wustl.edu/d/hg19/GSM832458.gz",
@@ -111,10 +108,10 @@ export default function GenomeViewerTest() {
               type: "longrange",
             },
           ]}
-          genomeName={"hg19"}
+          genomeName="hg19"
         />
         <GenomeViewer
-          viewRegion={"chr7:27181545-27245617"}
+          viewRegion="chr7:27181545-27245617"
           tracks={[
             {
               url: "https://vizhub.wustl.edu/hubSample/hg19/bam1.bam",
@@ -122,10 +119,10 @@ export default function GenomeViewerTest() {
               type: "bam",
             },
           ]}
-          genomeName={"hg19"}
+          genomeName="hg19"
         />
         <GenomeViewer
-          viewRegion={"chr7:27181545-27245617"}
+          viewRegion="chr7:27181545-27245617"
           tracks={[
             {
               url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
@@ -142,7 +139,7 @@ export default function GenomeViewerTest() {
               type: "geneannotation",
             },
           ]}
-          genomeName={"hg19"}
+          genomeName="hg19"
         />
       </div>
     </div>

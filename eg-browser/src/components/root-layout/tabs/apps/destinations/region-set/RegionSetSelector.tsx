@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 // Local Component
 import RegionSetConfig from "./RegionSetConfig";
-
+import { generateUUID } from "wuepgg3-track";
 // wuepgg3-track Imports
 import {
   RegionSet,
@@ -19,7 +19,7 @@ import {
 
 // Custom Hooks
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
-const RegionSetSelector: React.FC = ({}) => {
+const RegionSetSelector: React.FC = ({ }) => {
   const [indexBeingConfigured, setIndexBeingConfigured] = useState(0);
   const currentSession = useAppSelector(selectCurrentSession);
   const dispatch = useAppDispatch();
@@ -37,14 +37,14 @@ const RegionSetSelector: React.FC = ({}) => {
   }
   const sets = currentSession?.regionSets
     ? currentSession?.regionSets.map((item) => {
-        if (typeof item === "object") {
-          const newRegionSet = RegionSet.deserialize(item);
+      if (typeof item === "object") {
+        const newRegionSet = RegionSet.deserialize(item);
 
-          return newRegionSet;
-        } else {
-          return item;
-        }
-      })
+        return newRegionSet;
+      } else {
+        return item;
+      }
+    })
     : [];
 
   const setConfigured = (newSet: RegionSet) => {
@@ -56,7 +56,7 @@ const RegionSetSelector: React.FC = ({}) => {
   };
 
   const addSet = (newSet: RegionSet) => {
-    newSet["id"] = crypto.randomUUID();
+    newSet["id"] = generateUUID();
     dispatch(
       updateCurrentSession({
         regionSets: [...currentSession?.regionSets, newSet],

@@ -6,7 +6,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { genomeDataSchema } from "wuepgg3-track";
 import Button from "../ui/button/Button";
-
+import { generateUUID } from "wuepgg3-track";
 type SchemaNode = {
   type: string;
   required?: string[];
@@ -275,11 +275,10 @@ const SchemaNode: React.FC<{
         <div>
           <div className="flex items-center">
             <span
-              className={`font-semibold ${
-                required
-                  ? "text-black dark:text-white"
-                  : "text-gray-600 dark:text-gray-400"
-              }`}
+              className={`font-semibold ${required
+                ? "text-black dark:text-white"
+                : "text-gray-600 dark:text-gray-400"
+                }`}
             >
               {name}
               {required && <span className="text-red-500 ml-1">*</span>}
@@ -321,7 +320,7 @@ export default function GenomeSchemaView() {
 
   const exampleData = {
     name: "hg19",
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     chromosomes: [
       { name: "chr1", length: 249250621 },
       { name: "chrX", length: 155270560 },

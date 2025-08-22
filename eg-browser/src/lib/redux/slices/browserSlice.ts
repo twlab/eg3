@@ -12,7 +12,7 @@ import {
 } from "@reduxjs/toolkit";
 
 import { RootState } from "../store";
-
+import { generateUUID } from "wuepgg3-track";
 export type uuid = string;
 
 export interface BrowserSession {
@@ -68,12 +68,12 @@ export const browserSlice = createSlice({
       const initializedTracks =
         allTracks?.map((track) => ({
           ...track,
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           isSelected: false,
         })) || [];
 
       const nextSession: BrowserSession = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "Untitled Session",
@@ -113,7 +113,7 @@ export const browserSlice = createSlice({
         if ("tracks" in changes) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
-              (track as ITrackModel).id = crypto.randomUUID();
+              (track as ITrackModel).id = generateUUID();
             }
             return track;
           });
@@ -140,7 +140,7 @@ export const browserSlice = createSlice({
             if (!("id" in track) || !track["id"]) {
               return {
                 ...(track as object),
-                id: crypto.randomUUID(),
+                id: generateUUID(),
               } as ITrackModel;
             }
             return track;
@@ -203,9 +203,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-        state,
-        state.browser.present.currentSession
-      )
+      state,
+      state.browser.present.currentSession
+    )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import TabView from "@/components/ui/tab-view/TabView";
 import FacetTable from "./FacetTable";
-
+import { generateUUID } from "wuepgg3-track";
 // Redux Imports
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -79,6 +79,7 @@ function AddTracks() {
   useExpandedNavigationTab();
   const session = useAppSelector(selectCurrentSession);
   const customTracksPool = useAppSelector(selectCustomTracksPool);
+  const [submitted, setSubmitted] = React.useState(false);
 
   const [selectedStep, setSelectedStep] = React.useState<AddTracksStep | null>(
     AddTracksStep.TRACK_TYPE
@@ -123,7 +124,8 @@ function AddTracks() {
       }
     }
   };
-
+  const canSubmit =
+    !!trackState.type && !!trackState.url && isValidUrl(trackState.url);
   const handleIndexUrlChange = (indexUrl: string) => {
     setTrackState((prev) => ({ ...prev, indexUrl }));
 
@@ -150,14 +152,14 @@ function AddTracks() {
   };
 
   const handleSubmit = () => {
-    if (session) {
+    if (canSubmit && session) {
       const track: ITrackModel = {
         type: trackState.type,
         url: trackState.url,
         name: trackState.name,
         options: trackState.options ?? {},
         metadata: { genome: trackState.metadata.genome },
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         isSelected: false,
       };
 
@@ -171,8 +173,23 @@ function AddTracks() {
 
       dispatch(addCustomTracksPool([...customTracksPool, track]));
       dispatch(addTracks(track));
+      setSubmitted(true); // Mark as submitted
     }
   };
+
+  const handleAddNew = () => {
+    setTrackState({
+      type: TRACK_TYPES.Numerical[0],
+      url: "",
+      name: "",
+      urlError: "",
+      metadata: { genome: session?.genomeId ?? "" },
+      queryGenome: "",
+    });
+    setSubmitted(false); // Reset submit state
+    setSelectedStep(AddTracksStep.TRACK_TYPE);
+  };
+
   function onTracksAdded(tracks: TrackModel[]) {
     dispatch(
       updateCurrentSession({
@@ -202,7 +219,7 @@ function AddTracks() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -273,15 +290,100 @@ function AddTracks() {
           ]}
         />
         <Button
-          active
+          active={canSubmit && !submitted}
           onClick={handleSubmit}
+          disabled={!canSubmit || submitted}
           style={{
             width: "100%",
             marginTop: "10px",
+            background:
+              canSubmit && !submitted
+                ? "linear-gradient(90deg, #2563eb 0%, #38bdf8 100%)"
+                : "#f1f5fa",
+            color: canSubmit && !submitted ? "#fff" : "#888",
+            border: "none",
+            fontWeight: 600,
+            fontSize: "1rem",
+            boxShadow:
+              canSubmit && !submitted
+                ? "0 2px 8px rgba(56,189,248,0.15)"
+                : "none",
+            cursor: canSubmit && !submitted ? "pointer" : "not-allowed",
+            transition: "background 0.2s, color 0.2s",
           }}
         >
           Submit
         </Button>
+        {submitted && (
+          <>
+            <Button
+              onClick={() => {
+                if (canSubmit && session) {
+                  const track: ITrackModel = {
+                    type: trackState.type,
+                    url: trackState.url,
+                    name: trackState.name,
+                    options: trackState.options ?? {},
+                    metadata: { genome: trackState.metadata.genome },
+                    id: generateUUID(),
+                    isSelected: false,
+                  };
+
+                  if (trackState.indexUrl) {
+                    track.indexUrl = trackState.indexUrl;
+                  }
+
+                  if (
+                    track.type === "genomealign" ||
+                    track.type === "bigchain"
+                  ) {
+                    track.querygenome =
+                      trackState.queryGenome || session.genomeId;
+                  }
+
+                  dispatch(addCustomTracksPool([...customTracksPool, track]));
+                  dispatch(addTracks(track));
+                }
+              }}
+              disabled={!canSubmit}
+              style={{
+                width: "100%",
+                marginTop: "10px",
+                background: canSubmit
+                  ? "linear-gradient(90deg, #6366f1 0%, #38bdf8 100%)"
+                  : "#cbd5e1",
+                color: canSubmit ? "#fff" : "#888",
+                border: "none",
+                fontWeight: 600,
+                fontSize: "1rem",
+                boxShadow: canSubmit
+                  ? "0 2px 8px rgba(56,189,248,0.15)"
+                  : "none",
+                cursor: canSubmit ? "pointer" : "not-allowed",
+                transition: "background 0.2s, color 0.2s",
+              }}
+            >
+              Add Same Track
+            </Button>
+            <Button
+              onClick={handleAddNew}
+              style={{
+                width: "100%",
+                marginTop: "10px",
+                background: "linear-gradient(90deg, #38bdf8 0%, #2563eb 100%)",
+                color: "#fff",
+                border: "none",
+                fontWeight: 600,
+                fontSize: "1rem",
+                boxShadow: "0 2px 8px rgba(56,189,248,0.15)",
+                cursor: "pointer",
+                transition: "background 0.2s, color 0.2s",
+              }}
+            >
+              Add New
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -345,7 +447,7 @@ function TrackFileUrl({
           type="text"
           className="w-full p-2 border rounded"
           value={url}
-          onChange={(e) => onUrlChange(e.target.value.trim())}
+          onChange={(e) => onUrlChange(e.target.value)}
         />
         {urlError && <span className="text-red-500">{urlError}</span>}
       </div>
@@ -359,7 +461,7 @@ function TrackFileUrl({
             type="text"
             className="w-full p-2 border rounded"
             value={indexUrl}
-            onChange={(e) => onIndexUrlChange(e.target.value.trim())}
+            onChange={(e) => onIndexUrlChange(e.target.value)}
           />
         </div>
       )}
@@ -370,7 +472,7 @@ function TrackFileUrl({
             type="text"
             className="w-full p-2 border rounded"
             value={queryGenome || ""}
-            onChange={(e) => onQueryGenomeChange?.(e.target.value.trim())}
+            onChange={(e) => onQueryGenomeChange?.(e.target.value)}
           />
         </div>
       )}
@@ -540,7 +642,7 @@ function AddDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => {}}
+            addTermToMetaSets={() => { }}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>
@@ -788,7 +890,7 @@ export const TYPES_DESC = {
 //       //       name: fileList[0].name,
 //       //       label: fileList[0].name,
 //       //       files: fileList,
-//       //       id: crypto.randomUUID(),
+//       //       id: generateUUID(),
 //       //       options: trackState.options ? trackState.options : {},
 //       //     })
 //       //   );

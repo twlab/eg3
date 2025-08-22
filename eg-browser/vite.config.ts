@@ -4,10 +4,12 @@ import path from "path";
 
 import tailwindcss from "@tailwindcss/vite";
 
-import { nodePolyfills } from "vite-plugin-node-polyfills";
-
 export default defineConfig({
-  plugins: [react(), nodePolyfills(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
+  define: {
+    global: "globalThis",
+    "process.env": "{}",
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

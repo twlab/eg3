@@ -15,7 +15,7 @@ import {
   addSessionsFromBundleId,
   importOneSession,
 } from "../redux/thunk/session";
-
+import { generateUUID } from "wuepgg3-track";
 const IDEMPOTENCY_STORAGE_KEY = "_eg-query-idempotency-key";
 
 export default function useBrowserInitialization() {
@@ -86,7 +86,7 @@ export default function useBrowserInitialization() {
         const decompressed = decompressString(blob);
         const sessionData = JSON.parse(decompressed);
 
-        sessionData.id = crypto.randomUUID();
+        sessionData.id = generateUUID();
 
         dispatch(upsertSession(sessionData));
         dispatch(setCurrentSession(sessionData.id));
@@ -124,7 +124,7 @@ export default function useBrowserInitialization() {
 
               additionalTracks = hubData.map((t: any) => ({
                 ...t,
-                id: crypto.randomUUID(),
+                id: generateUUID(),
                 genome: genome,
                 isSelected: false,
               }));
@@ -167,7 +167,7 @@ function decompressString(compressed: string): string {
 }
 
 function generateAndSetIdempotencyToken() {
-  const idempotencyToken = crypto.randomUUID();
+  const idempotencyToken = generateUUID();
   localStorage.setItem(IDEMPOTENCY_STORAGE_KEY, idempotencyToken);
   const searchParams = new URLSearchParams(window.location.search);
   searchParams.set("idempotencyToken", idempotencyToken);
