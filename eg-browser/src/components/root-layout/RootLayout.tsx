@@ -71,8 +71,8 @@ export default function RootLayout() {
 
   return (
     <div
-      className={`h-screen w-screen flex flex-col ${darkTheme ? 'dark' : ''}`}
-      data-theme={darkTheme ? 'dark' : 'light'}
+      className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
+      data-theme={darkTheme ? "dark" : "light"}
     >
       <GoogleAnalytics />
       <motion.div
@@ -86,7 +86,10 @@ export default function RootLayout() {
         }}
       >
         <NavBar />
-        <div className="flex flex-row flex-1 relative bg-black" ref={contentRef}>
+        <div
+          className="flex flex-row flex-1 relative bg-black"
+          ref={contentRef}
+        >
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
@@ -121,7 +124,7 @@ export default function RootLayout() {
           <motion.div
             className="flex flex-row flex-1 overflow-hidden bg-black"
             animate={{
-              scale: sessionPanelOpen ? 0.95 : 1,
+              // scale: sessionPanelOpen ? 0.95 : 1,
               borderRadius: sessionPanelOpen ? 15 : 0,
               filter: sessionPanelOpen
                 ? "blur(5px) brightness(0.7)"
@@ -144,14 +147,14 @@ export default function RootLayout() {
                 borderBottomRightRadius: !showRightTab ? 0 : CURL_RADIUS,
                 borderTopLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
                 borderBottomLeftRadius: expandNavigationTab ? CURL_RADIUS : 0,
-                scale: expandNavigationTab ? 0.95 : 1,
-                // filter: expandNavigationTab
-                //   ? "blur(5px) brightness(0.7)"
-                //   : "blur(0px) brightness(1)",
+                // scale: expandNavigationTab ? 0.95 : 1,
+                filter: expandNavigationTab
+                  ? "brightness(0.85)"
+                  : "brightness(1)",
 
-                filter: "blur(0px) brightness(1)",
+                // filter: "blur(0px) brightness(1)",
                 // translateX: expandNavigationTab ? 50 : 0,
-                width: !showRightTab ? "100vw" : "75vw",
+                // width: !showRightTab ? "100vw" : "75vw",
               }}
               style={{
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
@@ -160,13 +163,16 @@ export default function RootLayout() {
               <AnimatePresence mode="wait">
                 {sessionId !== null ? (
                   <motion.div
-                    className="flex flex-col h-full w-screen overflow-auto pb-44"
+                    className="flex flex-col w-screen pb-20"
                     key="genome-view"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    style={{ width: contentWidth, height: contentHeight }}
+                    style={{
+                      width: contentWidth,
+                      height: "auto",
+                    }}
                   >
                     <GenomeErrorBoundary onGoHome={handleGoHome}>
                       <GenomeView />
@@ -201,7 +207,7 @@ export default function RootLayout() {
                     borderBottomLeftRadius: 0,
                   }}
                   animate={{
-                    width: expandNavigationTab ? "75vw" : "25vw",
+                    width: expandNavigationTab ? "75vw" : "35vw",
                     marginLeft: 5,
                     borderTopLeftRadius: CURL_RADIUS,
                     borderBottomLeftRadius: CURL_RADIUS,
