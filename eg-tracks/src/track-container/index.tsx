@@ -26,6 +26,7 @@ export function TrackContainer(props: ITrackContainerState) {
       onNewHighlight={props.onNewHighlight}
       onTracksChange={props.onTracksChange}
       onNewRegionSelect={props.onNewRegionSelect}
+      onSetSelected={props.onSetSelected}
       viewRegion={props.viewRegion}
       userViewRegion={props.userViewRegion}
       tool={props.tool}
@@ -54,6 +55,7 @@ export function TrackContainerRepresentable({
   onNewHighlight,
   onTracksChange,
   onNewRegionSelect,
+  onSetSelected,
   viewRegion,
   userViewRegion,
   tool,
@@ -306,6 +308,7 @@ export function TrackContainerRepresentable({
         onNewRegionSelect={
           !onNewRegionSelect ? () => {} : handleNewRegionSelect
         }
+        onSetSelected={!onSetSelected ? () => {} : onSetSelected}
         viewRegion={convertedViewRegion}
         userViewRegion={convertedUserViewRegion}
         tool={tool}

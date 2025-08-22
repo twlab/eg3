@@ -3,6 +3,7 @@ import _ from "lodash";
 // import { CheckCircleIcon, XCircleIcon } from "@primer/octicons-react";
 import ColorPicker from "./ColorPicker";
 import { usePrevious } from "./ShapeList";
+import { CheckCircleIcon, XCircleIcon } from "@primer/octicons-react";
 
 export const ArrowList = (props) => {
   const { arrows, onUpdateMyArrows, onDeleteArrowByKey, onSetMessage } = props;

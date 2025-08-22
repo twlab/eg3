@@ -1,14 +1,9 @@
-import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
+
 import { RemoteFile } from "generic-filehandle";
 import fetch from "isomorphic-fetch";
 
-/**
- * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
- *
- * @author Daofeng Li
- */
-class BigSourceWorkerGmod {
+export class BigwigSource {
   url: any;
   bw: BigWig;
   /**
@@ -38,15 +33,10 @@ class BigSourceWorkerGmod {
       if (chrom === "M") {
         chrom = "MT";
       }
-      return this.bw.getFeatures(chrom, locus.start, locus.end);
+      return this.bw.getFeatures(chrom, locus.start, locus.end, options);
     });
     const dataForEachLocus = await Promise.all(promises);
-    loci.forEach((locus, index) => {
-      dataForEachLocus[index].forEach((f) => (f.chr = locus.chr));
-    });
-    const combinedData = _.flatten(dataForEachLocus);
-    return combinedData;
+
+    return dataForEachLocus.flat();
   }
 }
-
-export default BigSourceWorkerGmod;

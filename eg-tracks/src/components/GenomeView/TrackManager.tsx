@@ -37,18 +37,26 @@ import {
 import GenomeNavigator from "./genomeNavigator/GenomeNavigator";
 
 import { SortableList } from "./TrackComponents/commonComponents/chr-order/SortableTrack";
-import {
-  formatDataByType,
-  instanceFetchTracks,
-  interactionTracks,
-  twoDataTypeTracks,
-} from "./TrackComponents/displayModeComponentMap";
+import { formatDataByType } from "./TrackComponents/displayModeComponentMap";
 import MetadataHeader from "./ToolComponents/MetadataHeader";
-import { fetchGenomicData } from "../../getRemoteData/fetchData";
-import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
-
+// import { fetchGenomicData } from "../../getRemoteData/fetchData";
+// import { fetchGenomeAlignData } from "../../getRemoteData/fetchGenomeAlign";
+import {
+  arraysHaveSameTrackModels,
+  getGenomeAlignTracksNotInSecondArray,
+} from "../../util";
+import { generateUUID } from "../../util";
+import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
 const groupManager = new GroupedTrackManager();
-const allowedTools = new Set([0, 1, 2, 3]);
+
+/**
+ * Filters trackModels of type "genomealign" from the first array where their IDs
+ * don't exist in the second array
+ * @param {TrackModel[]} trackModelsArray1 - First array of trackModels to filter from
+ * @param {TrackModel[]} trackModelsArray2 - Second array of trackModels to check IDs against
+ * @returns {TrackModel[]} Array of trackModels with type "genomealign" whose IDs are not in the second array
+ */
+
 export const convertTrackModelToITrackModel = (
   track: TrackModel
 ): ITrackModel => ({
@@ -145,6 +153,17 @@ interface TrackManagerProps {
   setScreenshotData: any;
   isScreenShotOpen: boolean;
   selectedRegionSet: any;
+  setShow3dGene: any;
+  infiniteScrollWorkers: React.MutableRefObject<{
+    instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
+    worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
+  } | null>;
+  fetchGenomeAlignWorker: React.MutableRefObject<{
+    fetchWorker: Worker;
+    hasOnMessage: boolean;
+  } | null>;
+  isThereG3dTrack: boolean;
+  onHeightChange?: (height: number) => void; // Optional callback for height changes
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -153,6 +172,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   userViewRegion,
   highlights,
   tracks,
+
   onNewRegion,
   onNewHighlight,
   onTracksChange,
@@ -160,13 +180,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   tool,
   Toolbar,
   showGenomeNav,
+  isThereG3dTrack,
   setScreenshotData,
   selectedRegionSet,
   isScreenShotOpen,
+  setShow3dGene,
+  infiniteScrollWorkers,
+  fetchGenomeAlignWorker,
+  onHeightChange,
 }) {
   //useRef to store data between states without re render the component
-  const infiniteScrollWorker = useRef<Worker | null>(null);
-  const fetchGenomeAlignWorker = useRef<Worker | null>(null);
+  const completedFetchedRegion = useRef<{ [key: string]: any }>({
+    key: -0,
+    done: {},
+  });
   const useFineModeNav = useRef(false);
   const prevWindowWidth = useRef<number>(0);
   const trackManagerId = useRef("");
@@ -180,6 +207,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const minBp = useRef(0);
   const selectedTracks = useRef<{ [key: string]: any }>({});
   const mousePositionRef = useRef({ x: 0, y: 0 });
+  const mouseGenomicPositionRef = useRef({ basePair: 0, chromosome: "" });
+  const mouseRelativePositionRef = useRef({ x: 0, y: 0 });
+  const lastClickTimeRef = useRef(0);
+  const doubleClickThreshold = 300; // milliseconds
   const horizontalLineRef = useRef<any>(0);
   const verticalLineRef = useRef<any>(0);
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
@@ -212,12 +243,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       genomeConfig.defaultRegion.end
     ),
     trackLegendWidth: legendWidth,
-    tracks: tracks && tracks.length >= 0 ? tracks : genomeConfig.defaultTracks,
+    tracks:
+      tracks && tracks.length >= 0
+        ? tracks.filter((trackModel) => trackModel.type !== "g3d")
+        : genomeConfig.defaultTracks.filter(
+            (trackModel) => trackModel.type !== "g3d"
+          ),
   });
 
   const configMenuPos = useRef<{ [key: string]: any }>({});
   const lastDragX = useRef(0);
-  const isThereG3dTrack = useRef(false);
 
   //this is made for dragging so everytime the track moves it does not rerender the screen but keeps the coordinates
   const basePerPixel = useRef(0);
@@ -234,8 +269,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const preloadedTracks = useRef<{ [key: string]: any }>({});
   const screenshotDataObj = useRef<{ [key: string]: any }>({});
   const preload = useRef<boolean>(false);
-  // These states are used to update the tracks with new fetch(data);
-
+  const dataIdx = useRef(-0);
   const globalTrackState = useRef<{ [key: string]: any }>({
     rightIdx: 0,
     leftIdx: 1,
@@ -254,22 +288,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     groupScale: any;
     dataIdx: number;
   } | null>(null);
-  const showTrackMetaSet = useState<boolean>(false);
+
+  // These states are used to update the tracks with new fetch(data);
   // new track sections are added as the user moves left (lower regions) and right (higher region)
   // New data are fetched only if the user drags to the either ends of the track
-  const [newDrawData, setNewDrawData] = useState<{ [key: string]: any }>({});
-  const [initialStart, setInitialStart] = useState("workerNotReady");
+  const [newDrawData, setNewDrawData] = useState<{ [key: string]: any } | null>(
+    null
+  );
   const [messageData, setMessageData] = useState<{ [key: string]: any }>({});
-  const [show3dGene, setShow3dGene] = useState();
+  [];
   const [trackComponents, setTrackComponents] = useState<Array<any>>([]);
 
-  const [g3dtrackComponents, setG3dTrackComponents] = useState<Array<any>>([]);
   const [selectedTool, setSelectedTool] = useState<{ [key: string]: any }>({
     isSelected: false,
     title: "none",
   });
   const [draw, setDraw] = useState<{ [key: string]: any }>({});
-  const [dataIdx, setDataIdx] = useState(-0);
+
   const [highlightElements, setHighLightElements] = useState<Array<any>>([]);
   const [configMenu, setConfigMenu] = useState<{ [key: string]: any } | null>(
     null
@@ -311,11 +346,46 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const throttleOnNewRegionSelect = useRef(
     throttleViewRegion((startbase, endbase, highlightSearch) => {
       onNewRegionSelect(startbase, endbase, highlightSearch);
-    }, 400)
+    }, 150)
   );
+
+  function getMessageData() {
+    const lociMap: {
+      [trackId: string]: Array<{
+        missingIdx: any;
+        genomicLoci: any;
+      }>;
+    } = {};
+
+    messageQueue.current.forEach((messageArr: any) => {
+      if (messageArr && Array.isArray(messageArr)) {
+        // If missingIdx and genomicLoci are properties of the array itself
+
+        messageArr.forEach((message: any) => {
+          if (message.trackModelArr && Array.isArray(message.trackModelArr)) {
+            message.trackModelArr.forEach((trackModel: any) => {
+              if (trackModel && trackModel.id) {
+                if (!lociMap[trackModel.id]) {
+                  lociMap[trackModel.id] = [];
+                }
+                lociMap[trackModel.id].push({
+                  missingIdx: message.missingIdx,
+                  genomicLoci: message.genomicLoci,
+                });
+              }
+            });
+            return;
+          }
+        });
+      }
+    });
+
+    return lociMap;
+  }
 
   const enqueueMessage = (message: Array<any>) => {
     messageQueue.current.push(message);
+
     processQueue();
   };
   const enqueueGenomeAlignMessage = (message: { [key: string]: any }) => {
@@ -324,125 +394,150 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     processGenomeAlignQueue();
   };
   const processQueue = async () => {
-    if (isWorkerBusy.current) {
+    if (messageQueue.current.length === 0) {
+      setMessageData({});
       return;
     }
-    isWorkerBusy.current = true;
 
-    while (messageQueue.current.length > 0) {
-      const messages = messageQueue.current.slice(0); // Create a copy of the current message queue
-      messageQueue.current.length = 0; // Clear the message queue
+    setMessageData(getMessageData());
+    const message = messageQueue.current.pop();
 
-      const results = await Promise.all(
-        messages.map((message) => fetchGenomicData(message))
-      );
+    // Split message by trackModelArr type
+    const hicTypes = { hic: "", dynamichic: "", bam: "" };
 
-      for (let res of results) {
-        processFetchData(res);
+    // message is an array of objects
+    const intMessages: Array<any> = [];
+    const normalMessages: Array<any> = [];
+
+    for (const msgObj of message) {
+      if (
+        Array.isArray(msgObj.trackModelArr) &&
+        msgObj.trackModelArr.length > 0
+      ) {
+        const intTrackModels: any[] = [];
+        const normalTrackModels: any[] = [];
+        for (const track of msgObj.trackModelArr) {
+          if (track.type in hicTypes) {
+            intTrackModels.push(track);
+          } else {
+            normalTrackModels.push(track);
+          }
+        }
+        if (intTrackModels.length > 0) {
+          intMessages.push({
+            ...msgObj,
+            trackModelArr: intTrackModels,
+          });
+        }
+        if (normalTrackModels.length > 0) {
+          normalMessages.push({
+            ...msgObj,
+            trackModelArr: normalTrackModels,
+          });
+        }
       }
     }
 
-    isWorkerBusy.current = false;
+    // Helper to split an array into N chunks
+    function splitArrayIntoChunks(arr, numChunks) {
+      const chunks: Array<any> = Array.from({ length: numChunks }, () => []);
+      arr.forEach((item, idx) => {
+        chunks[idx % numChunks].push(item);
+      });
+      return chunks;
+    }
 
-    // Check if there are new messages that were added while processing the previous ones
-    if (messageQueue.current.length > 0) {
-      processQueue(); // Call the processQueue function again if there are new messages
+    // Send intMessages to instance workers
+    if (
+      infiniteScrollWorkers.current &&
+      (infiniteScrollWorkers.current.instance.length > 0 ||
+        infiniteScrollWorkers.current.worker.length > 0)
+    ) {
+      if (
+        intMessages.length > 0 &&
+        infiniteScrollWorkers.current.instance.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.instance.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of intMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
+          if (messagesForWorker.length > 0) {
+            infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
+          }
+        }
+      }
+
+      // Send normalMessages to worker workers
+      if (
+        normalMessages.length > 0 &&
+        infiniteScrollWorkers.current.worker.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.worker.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of normalMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
+
+          if (messagesForWorker.length > 0) {
+            infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
+          }
+        }
+      }
+    } else {
+      // Send normalMessages to fetch functions (non-worker version)
+      const numWorkers = message[0].trackModelArr.length;
+      const chunks = splitArrayIntoChunks(message[0].trackModelArr, numWorkers);
+      // Launch independent async operations for each chunk
+      for (let i = 0; i < numWorkers; i++) {
+        const messagesForWorker: Array<any> = [];
+        for (const msgObj of message) {
+          if (chunks[i].length > 0) {
+            messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+          }
+        }
+        if (messagesForWorker.length > 0) {
+          // Launch async operation without awaiting - process results independently
+          fetchGenomicData(messagesForWorker)
+            .then((results) => {
+              // Call createInfiniteOnMessage once with the entire results array
+              createInfiniteOnMessage({ data: results });
+            })
+            .catch((error) => {
+              console.error("Error fetching genomic data:", error);
+            });
+        }
+      }
     }
   };
 
-  const processGenomeAlignQueue = async () => {
-    if (isfetchGenomeAlignWorkerBusy.current) {
+  const processGenomeAlignQueue = () => {
+    if (genomeAlignMessageQueue.current.length === 0) {
       return;
     }
     isfetchGenomeAlignWorkerBusy.current = true;
+    const message = genomeAlignMessageQueue.current.pop();
 
-    while (genomeAlignMessageQueue.current.length > 0) {
-      const messages = genomeAlignMessageQueue.current.slice(0); // Create a copy of the current message queue
-      genomeAlignMessageQueue.current.length = 0; // Clear the message queue
-
-      const results = await Promise.all(
-        messages.map((message) => fetchGenomeAlignData(message))
-      );
-
-      for (let res of results) {
-        processGenomeAlignFetchData(res); // Assuming you have a function to process the fetched data
-      }
-    }
-
-    isfetchGenomeAlignWorkerBusy.current = false;
-
-    // Check if there are new messages that were added while processing the previous ones
-    if (genomeAlignMessageQueue.current.length > 0) {
-      processGenomeAlignQueue(); // Call the processGenomeAlignQueue function again if there are new messages
-    }
+    fetchGenomeAlignWorker.current!.fetchWorker.postMessage(message);
   };
-  // function getMessageData() {
-  //   const lociMap: {
-  //     [trackId: string]: Array<{
-  //       missingIdx: any;
-  //       genomicLoci: any;
-  //     }>;
-  //   } = {};
-
-  //   messageQueue.current.forEach((messageArr: any) => {
-  //     if (messageArr && Array.isArray(messageArr)) {
-  //       // If missingIdx and genomicLoci are properties of the array itself
-
-  //       messageArr.forEach((message: any) => {
-  //         if (message.trackModelArr && Array.isArray(message.trackModelArr)) {
-  //           message.trackModelArr.forEach((trackModel: any) => {
-  //             if (trackModel && trackModel.id) {
-  //               if (!lociMap[trackModel.id]) {
-  //                 lociMap[trackModel.id] = [];
-  //               }
-  //               lociMap[trackModel.id].push({
-  //                 missingIdx: message.missingIdx,
-  //                 genomicLoci: message.genomicLoci,
-  //               });
-  //             }
-  //           });
-  //           return;
-  //         }
-  //       });
-  //     }
-  //   });
-
-  //   return lociMap;
-  // }
-  // const enqueueMessage = (message: Array<any>) => {
-  //   messageQueue.current.push(message);
-
-  //   processQueue();
-  // };
-  // const enqueueGenomeAlignMessage = (message: { [key: string]: any }) => {
-  //   genomeAlignMessageQueue.current.push(message);
-
-  //   processGenomeAlignQueue();
-  // };
-
-  // const processQueue = () => {
-  //   if (isWorkerBusy.current || messageQueue.current.length === 0) {
-  //     setMessageData({});
-  //     return;
-  //   }
-  //   isWorkerBusy.current = true;
-
-  //   setMessageData(getMessageData());
-  //   const message = messageQueue.current.pop();
-  //   infiniteScrollWorker.current!.postMessage(message);
-  // };
-  // const processGenomeAlignQueue = () => {
-  //   if (
-  //     isfetchGenomeAlignWorkerBusy.current ||
-  //     genomeAlignMessageQueue.current.length === 0
-  //   ) {
-  //     return;
-  //   }
-  //   isfetchGenomeAlignWorkerBusy.current = true;
-  //   const message = genomeAlignMessageQueue.current.pop();
-
-  //   fetchGenomeAlignWorker.current!.postMessage(message);
-  // };
 
   // MARK: mouseAction
   const handleKeyDown = (event: { key: string }) => {
@@ -462,19 +557,67 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleMouseLeave() {
     isMouseInsideRef.current = false;
+    // Hide crosshair lines when mouse leaves
+    if (horizontalLineRef.current && verticalLineRef.current) {
+      horizontalLineRef.current.style.display = "none";
+      verticalLineRef.current.style.display = "none";
+    }
   }
+
+  function calculateGenomicPosition(x: number) {
+    // Calculate the genomic position based on mouse x coordinate
+    if (
+      !trackManagerState.current.viewRegion._endBase ||
+      !trackManagerState.current.viewRegion._startBase
+    ) {
+      return { basePair: 0, chromosome: "" };
+    }
+
+    const viewportBp =
+      trackManagerState.current.viewRegion._endBase -
+      trackManagerState.current.viewRegion._startBase;
+    const pixelToBp = viewportBp / windowWidth;
+    const mouseBp =
+      trackManagerState.current.viewRegion._startBase +
+      (x - legendWidth) * pixelToBp;
+
+    // Find which chromosome this position belongs to
+    let chromosome = "";
+    if (genomeConfig.navContext && genomeConfig.navContext._features) {
+      for (const feature of genomeConfig.navContext._features) {
+        if (mouseBp >= feature.locus.start && mouseBp <= feature.locus.end) {
+          chromosome = feature.locus.chr;
+          break;
+        }
+      }
+    }
+
+    return { basePair: Math.round(mouseBp), chromosome };
+  }
+
   function handleMove(e: { clientX: number; clientY: number; pageX: number }) {
     if (isMouseInsideRef.current) {
       const parentRect = block.current!.getBoundingClientRect();
       const x = e.clientX - parentRect.left;
       const y = e.clientY - parentRect.top;
+
+      // Update all mouse position references
       mousePositionRef.current = { x: e.clientX, y: e.clientY };
-      horizontalLineRef.current.style.display = "block";
-      verticalLineRef.current.style.display = "block";
-      updateLinePosition(x, y);
+      mouseRelativePositionRef.current = { x, y };
+      mouseGenomicPositionRef.current = calculateGenomicPosition(x);
+
+      // Show and update crosshair lines
+      if (horizontalLineRef.current && verticalLineRef.current) {
+        horizontalLineRef.current.style.display = "block";
+        verticalLineRef.current.style.display = "block";
+        updateLinePosition(x, y);
+      }
     } else {
-      horizontalLineRef.current.style.display = "none";
-      verticalLineRef.current.style.display = "none";
+      // Hide crosshair lines when mouse is outside
+      if (horizontalLineRef.current && verticalLineRef.current) {
+        horizontalLineRef.current.style.display = "none";
+        verticalLineRef.current.style.display = "none";
+      }
     }
 
     if (!isDragging.current || isToolSelected.current) {
@@ -510,6 +653,126 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
   }
 
+  function handleClick(e: MouseEvent) {
+    if (isToolSelected.current) {
+      return;
+    }
+
+    const currentTime = Date.now();
+    const timeSinceLastClick = currentTime - lastClickTimeRef.current;
+
+    if (timeSinceLastClick < doubleClickThreshold) {
+      handleDoubleClick(e);
+    } else {
+      handleSingleClick(e);
+    }
+
+    lastClickTimeRef.current = currentTime;
+  }
+
+  function handleSingleClick(e: MouseEvent) {
+    console.log("Single click at:", {
+      screen: { x: e.clientX, y: e.clientY },
+      relative: mouseRelativePositionRef.current,
+      genomic: mouseGenomicPositionRef.current,
+    });
+
+    // Add your single click logic here
+    // For example, you might want to select a track or feature at this position
+  }
+
+  function handleDoubleClick(e: MouseEvent) {
+    console.log("Double click at:", {
+      screen: { x: e.clientX, y: e.clientY },
+      relative: mouseRelativePositionRef.current,
+      genomic: mouseGenomicPositionRef.current,
+    });
+
+    // Add your double click logic here
+    // For example, you might want to zoom in on the clicked position
+    const genomicPos = mouseGenomicPositionRef.current;
+    if (
+      genomicPos.basePair > 0 &&
+      trackManagerState.current.viewRegion._endBase &&
+      trackManagerState.current.viewRegion._startBase
+    ) {
+      const currentRegionSize =
+        trackManagerState.current.viewRegion._endBase -
+        trackManagerState.current.viewRegion._startBase;
+      const newRegionSize = currentRegionSize / 2; // Zoom in 2x
+      const newStart = Math.max(0, genomicPos.basePair - newRegionSize / 2);
+      const newEnd = newStart + newRegionSize;
+
+      onNewRegion(newStart, newEnd);
+    }
+  }
+
+  function handleGenomeClick(e: MouseEvent, trackModel?: any) {
+    e.preventDefault();
+    console.log("Genome click at:", {
+      screen: { x: e.clientX, y: e.clientY },
+      relative: mouseRelativePositionRef.current,
+      genomic: mouseGenomicPositionRef.current,
+      track: trackModel,
+    });
+
+    // Add your context menu logic here
+    // For example, you might want to show a context menu
+  }
+
+  function handleWheel(e: WheelEvent) {
+    if (!isMouseInsideRef.current || isToolSelected.current) {
+      return;
+    }
+
+    e.preventDefault();
+
+    // Calculate zoom direction (positive = zoom out, negative = zoom in)
+    const zoomDirection = e.deltaY > 0 ? 1 : -1;
+    const zoomFactor = zoomDirection > 0 ? 1.2 : 0.8; // Zoom out 20% or zoom in 20%
+
+    if (
+      !trackManagerState.current.viewRegion._endBase ||
+      !trackManagerState.current.viewRegion._startBase
+    ) {
+      return;
+    }
+
+    const currentStart = trackManagerState.current.viewRegion._startBase;
+    const currentEnd = trackManagerState.current.viewRegion._endBase;
+    const currentSize = currentEnd - currentStart;
+    const newSize = currentSize * zoomFactor;
+
+    // Calculate zoom center based on mouse position
+    const mousePos = mouseGenomicPositionRef.current;
+    let centerBp = mousePos.basePair;
+
+    // If mouse position is not valid, use center of current view
+    if (!centerBp || centerBp < currentStart || centerBp > currentEnd) {
+      centerBp = currentStart + currentSize / 2;
+    }
+
+    // Calculate new start and end positions
+    const newStart = Math.max(0, centerBp - newSize / 2);
+    const newEnd = newStart + newSize;
+
+    // Ensure we don't exceed genome bounds
+    const maxBp = genomeConfig.navContext._totalBases || newEnd;
+    if (newEnd > maxBp) {
+      const adjustedStart = Math.max(0, maxBp - newSize);
+      onNewRegion(adjustedStart, maxBp);
+    } else {
+      onNewRegion(newStart, newEnd);
+    }
+
+    console.log("Mouse wheel zoom:", {
+      direction: zoomDirection > 0 ? "out" : "in",
+      factor: zoomFactor,
+      center: centerBp,
+      newRegion: { start: newStart, end: newEnd },
+    });
+  }
+
   function handleMouseDown(e: any) {
     if (e.button !== 0) {
       // If not the left button, exit the function
@@ -542,11 +805,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     onNewRegion(curBp, curBp + bpRegionSize.current);
 
     bpX.current = curBp;
-    //DONT MOVE THIS PART OR THERE WILL BE FLICKERS BECAUSE when using ref,
-    //the new ref data will only be passed to childnre component
-    // after the state changes, we put this here so it changes with other
-    // useState letiable that changes so we save some computation instead of using
-    // another useState
+
     const curDataIdx = Math.ceil(dragX.current / windowWidth);
     if (dragX.current > 0 && side.current === "right") {
       side.current = "left";
@@ -584,19 +843,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       curViewWindow = new OpenInterval(start, end);
     }
 
-    setDataIdx((prevState) => {
-      if (prevState === curDataIdx) {
-        viewWindowConfigData.current = {
-          viewWindow: curViewWindow,
-          groupScale: null,
-          dataIdx: curDataIdx,
-        };
-      }
-      return curDataIdx;
-    });
-
-    globalTrackState.current.viewWindow = curViewWindow;
-
     if (
       -dragX.current >= sumArray(rightSectionSize.current) &&
       dragX.current < 0
@@ -611,6 +857,87 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       leftSectionSize.current.push(windowWidth);
       fetchGenomeData(0, "left", curViewWindow);
     }
+
+    if (dataIdx.current === curDataIdx) {
+      viewWindowConfigData.current = {
+        viewWindow: curViewWindow,
+        groupScale: null,
+        dataIdx: curDataIdx,
+      };
+    } else {
+      dataIdx.current = curDataIdx;
+
+      queueRegionToFetch(dataIdx.current);
+    }
+
+    globalTrackState.current.viewWindow = curViewWindow;
+  }
+
+  // MARK: TOUCH EVENTS
+  // Touch event handlers that mirror mouse functionality
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+    isDragging.current = true;
+    lastX.current = touch.pageX;
+
+    e.preventDefault();
+  }
+
+  function handleTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+
+    // Mirror the handleMove functionality
+    handleMove({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      pageX: touch.pageX,
+    });
+  }
+
+  function handleTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    // Mirror handleMouseUp functionality
+    handleMouseUp();
+  }
+
+  // DOM touch event handlers for addEventListener
+  function handleDOMTouchStart(e: TouchEvent) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+    isDragging.current = true;
+    lastX.current = touch.pageX;
+
+    e.preventDefault();
+  }
+
+  function handleDOMTouchMove(e: TouchEvent) {
+    if (e.touches.length !== 1) {
+      return; // Only handle single touch
+    }
+
+    const touch = e.touches[0];
+
+    // Mirror the handleMove functionality
+    handleMove({
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      pageX: touch.pageX,
+    });
+  }
+
+  function handleDOMTouchEnd(e: TouchEvent) {
+    // Mirror handleMouseUp functionality
+    handleMouseUp();
   }
 
   // MARK: GloCONFIG
@@ -631,7 +958,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   ) {
     let menuComponents: Array<any> = [];
     let optionsObjects: Array<any> = [];
-    const tracks: Array<any> = [];
+    const curtracks: Array<any> = [];
     const selectCount = Object.keys(selectedTracks.current).length;
     let fileInfos: { [key: string]: any } = {};
     for (const config in selectedTracks.current) {
@@ -640,31 +967,36 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           (trackModel) => trackModel.id === config
         ) || null
       );
-      trackModel.options = _.cloneDeep(
-        globalTrackConfig.current[`${config}`].configOptions
-      );
-      if (value && key === "displayMode") {
-        trackModel.options.displayMode = value;
-      }
-      if (value && key === "scoreScale") {
-        trackModel.options.scoreScale = value;
-      }
-      if (trackModel.type === "hic") {
-        fileInfos[`${trackModel.id}`] =
-          fetchInstances.current[`${trackModel.id}`].getFileInfo();
-      }
-      trackModel.options["trackId"] = config;
-      const trackConfig = getTrackConfig(trackModel);
-      const menuItems = trackConfig.getMenuComponents();
+      if (trackModel) {
+        trackModel.options = _.cloneDeep(
+          globalTrackConfig.current[`${config}`].configOptions
+        );
+        if (!trackModel.options) {
+          trackModel.options = {};
+        }
+        if (value && key === "displayMode") {
+          trackModel.options.displayMode = value;
+        }
+        if (value && key === "scoreScale") {
+          trackModel.options.scoreScale = value;
+        }
+        if (trackModel.type === "hic") {
+          fileInfos[`${trackModel.id}`] =
+            fetchInstances.current[`${trackModel.id}`].getFileInfo();
+        }
+        trackModel.options["trackId"] = config;
+        const trackConfig = getTrackConfig(trackModel);
+        const menuItems = trackConfig.getMenuComponents();
 
-      menuComponents.push(menuItems);
-      optionsObjects.push(trackModel.options);
-      tracks.push(trackModel);
+        menuComponents.push(menuItems);
+        optionsObjects.push(trackModel.options);
+        curtracks.push(trackModel);
+      }
     }
 
     const commonMenuComponents: Array<any> = _.intersection(...menuComponents);
 
-    let newUnique = crypto.randomUUID();
+    let newUnique = generateUUID();
     return {
       key: newUnique,
       handleDelete,
@@ -677,7 +1009,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       items: commonMenuComponents,
       onConfigChange,
       blockRef: block,
-      tracks: tracks,
+      tracks: curtracks,
       fileInfos: fileInfos,
       trackId: trackId,
     };
@@ -689,17 +1021,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackId: string | null = null
   ) {
     let newSelected: { [key: string]: any } = {};
-
+    // these are options that changes the configMenu so we need to recreate the
+    // the configmenu
     if (key === "displayMode" || key === "scoreScale") {
       setConfigMenu(createConfigMenuData(trackId, key, value));
     }
-
+    // separate label because we don't to apply label to all tracks
     if (key === "label" && trackId) {
       trackManagerState.current.tracks.map((item) => {
         if (item.id === trackId) {
           let oldOption = _.cloneDeep(item.options);
           let newVal = _.cloneDeep(value);
-          item.options = { ...oldOption, [key]: newVal };
+          item.options = { ...oldOption, [key]: String(newVal) };
           newSelected[`${trackId}`] = { [key]: value };
         }
       });
@@ -740,16 +1073,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 }
               }
             }
+          } else if (key === "aggregateMethod") {
+            const trackToDrawId = {};
+            for (const key in trackFetchedDataCache.current) {
+              if (key in selectedTracks.current) {
+                trackToDrawId[key] = {};
+                const curTrack = trackFetchedDataCache.current[key];
+
+                for (const cacheDataIdx in curTrack) {
+                  if (isInteger(cacheDataIdx)) {
+                    if (
+                      "xvalues" in
+                      trackFetchedDataCache.current[key][cacheDataIdx]
+                    ) {
+                      delete trackFetchedDataCache.current[key][cacheDataIdx]
+                        .xvalues;
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       });
     }
     if (key === "normalization" || key === "binSize") {
-      queueRegionToFetch(dataIdx);
+      queueRegionToFetch(dataIdx.current);
     } else {
       setApplyTrackConfigChange(newSelected);
     }
-    onTracksChange([...trackManagerState.current.tracks]);
+
+    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
 
   function renderTrackSpecificConfigMenu(
@@ -815,7 +1169,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
 
       selectedTracks.current[`${trackDetails.trackModel.id}`] = "";
-      onTracksChange([...trackManagerState.current.tracks]);
+
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
       renderTrackSpecificConfigMenu(
         e.pageX,
         e.pageY,
@@ -834,8 +1189,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         trackModel.isSelected = false;
       });
 
-      onTracksChange(trackManagerState.current.tracks);
       selectedTracks.current = {};
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
     }
   }
 
@@ -846,7 +1201,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     );
 
-    onTracksChange([...trackManagerState.current.tracks]);
+    onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
 
     if (id.length > 0) {
       onConfigMenuClose();
@@ -856,7 +1211,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     let newTrack: TrackModel | null = null;
     if (trackType === "matplot") {
       newTrack = new TrackModel({
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         type: "matplot",
         name: "matplot wrap",
         tracks,
@@ -869,7 +1224,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         newTrack,
       ];
 
-      onTracksChange([...trackManagerState.current.tracks]);
+      onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
       onConfigMenuClose();
     }
 
@@ -890,6 +1245,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackManagerState.current.tracks = _.cloneDeep(newOrder);
 
     // console.log(trackManagerState.current.tracks, newOrder, "order")
+
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
 
@@ -1124,450 +1480,262 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       trackState: newTrackState,
       globalTrackState: globalTrackState,
     });
-
-    // sent the navigation to fetch the data from server
-    // try {
-    //   queueRegionToFetch(initial ? 0 : dataIdx);
-    // } catch {}
   }
 
-  async function processFetchData(rawData: any) {
-    // Process each object in the array individually
+  // MARK: onmessInfin
 
-    Promise.all(
-      rawData.map(async (dataItem) => {
-        const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
-          ? dataItem.trackToDrawId
-          : {};
-        const regionDrawIdx = dataItem.trackDataIdx;
+  const createInfiniteOnMessage = async (
+    event: MessageEvent | { [key: string]: any }
+  ) => {
+    event.data.forEach(async (dataItem: any) => {
+      const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
+        ? dataItem.trackToDrawId
+        : {};
+      const regionDrawIdx = dataItem.trackDataIdx;
 
-        const curTrackState = {
-          ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
-          primaryGenName: genomeConfig.genome.getName(),
-        };
+      const curTrackState = {
+        ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
+        primaryGenName: genomeConfig.genome.getName(),
+      };
 
-        await Promise.all(
-          dataItem.fetchResults.map(
-            async (
-              item: {
-                id: any;
-                name: string;
-                result: any;
-                metadata: any;
-                trackModel: any;
-                curFetchNav: any;
-              },
-              _index: any
-            ) => {
-              trackToDrawId[`${item.id}`] = "";
-              // Need to await the function finishes for BAM and Hi-C that use fetch instances
-              await createCache({
-                trackState: curTrackState,
-                result: item.result,
-                id: item.id,
-                trackType: item.trackModel.type
-                  ? item.trackModel.type
-                  : item.name
-                  ? item.name
-                  : "",
-                metadata: item.metadata,
-                trackModel: item.trackModel,
-                curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-                missingIdx: dataItem.missingIdx,
-              });
-            }
-          )
-        );
+      await Promise.all(
+        dataItem.fetchResults.map(
+          async (
+            item: {
+              id: any;
+              name: string;
+              result: any;
+              metadata: any;
+              trackModel: any;
+              curFetchNav: any;
+            },
+            _index: any
+          ) => {
+            trackToDrawId[`${item.id}`] = "";
+            await createCache({
+              trackState: curTrackState,
+              result: item.result,
+              id: item.id,
+              trackType: item.trackModel.type
+                ? item.trackModel.type
+                : item.name
+                ? item.name
+                : "",
+              metadata: item.metadata,
+              trackModel: item.trackModel,
+              curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+              missingIdx: dataItem.missingIdx,
+            });
+          }
+        )
+      );
 
-        const browserMemorySize: { [key: string]: any } = window.performance;
+      const browserMemorySize: { [key: string]: any } = window.performance;
 
-        // Check memory usage and free up if necessary
-        if (
-          browserMemorySize["memory"] &&
-          browserMemorySize["memory"].usedJSHeapSize >
-            browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-        ) {
-          for (const key in trackFetchedDataCache.current) {
-            const curTrack = trackFetchedDataCache.current[key];
+      // Check memory usage and free up if necessary
+      if (
+        browserMemorySize["memory"] &&
+        browserMemorySize["memory"].usedJSHeapSize >
+          browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+      ) {
+        for (const key in trackFetchedDataCache.current) {
+          const curTrack = trackFetchedDataCache.current[key];
 
-            for (const cacheDataIdx in curTrack) {
-              if (
-                curTrack.trackType in trackUsingExpandedLoci &&
-                isInteger(cacheDataIdx)
-              ) {
-                if (Number(cacheDataIdx) !== regionDrawIdx) {
+          for (const cacheDataIdx in curTrack) {
+            if (
+              curTrack.trackType in trackUsingExpandedLoci &&
+              isInteger(cacheDataIdx)
+            ) {
+              if (Number(cacheDataIdx) !== regionDrawIdx) {
+                delete trackFetchedDataCache.current[key][cacheDataIdx]
+                  .dataCache;
+                if (
+                  "records" in trackFetchedDataCache.current[key][cacheDataIdx]
+                ) {
                   delete trackFetchedDataCache.current[key][cacheDataIdx]
-                    .dataCache;
-                  if (
-                    "records" in
-                    trackFetchedDataCache.current[key][cacheDataIdx]
-                  ) {
-                    delete trackFetchedDataCache.current[key][cacheDataIdx]
-                      .records;
-                  }
-                  if (
-                    "xvalues" in
-                    trackFetchedDataCache.current[key][cacheDataIdx]
-                  ) {
-                    delete trackFetchedDataCache.current[key][cacheDataIdx]
-                      .xvalues;
-                  }
+                    .records;
+                }
+                if (
+                  "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
+                ) {
+                  delete trackFetchedDataCache.current[key][cacheDataIdx]
+                    .xvalues;
                 }
               }
             }
           }
         }
+      }
+      const drawData = {
+        trackDataIdx: dataItem.trackDataIdx,
+        initial: dataItem.initial,
+        trackToDrawId: trackToDrawId,
+        missingIdx: dataItem.missingIdx,
+      };
+      let curDrawData;
+      let combineTrackToDrawId = {};
 
-        // Return necessary data for setNewDrawData
-        return {
-          trackDataIdx: dataItem.trackDataIdx,
-          initial: dataItem.initial,
-          trackToDrawId: trackToDrawId,
-          missingIdx: dataItem.missingIdx,
-        };
-      })
-    )
-      .then((drawData) => {
-        // const curDrawData = drawData.find(
-        //   (item) => item.trackToDrawId === item.missingIdx
-        // );
+      curDrawData = drawData;
+      combineTrackToDrawId = {
+        ...combineTrackToDrawId,
+        ...drawData.trackToDrawId,
+      };
 
-        let curDrawData;
-        let combineTrackToDrawId = {};
-        for (let item of drawData) {
-          curDrawData = item;
+      if (curDrawData) {
+        const idxArr = [
+          dataIdx.current - 1,
+          dataIdx.current,
+          dataIdx.current + 1,
+        ];
+        const cacheKeysWithData = {};
+        for (let trackToDrawKey in combineTrackToDrawId) {
+          const cache = trackFetchedDataCache.current[trackToDrawKey];
 
-          combineTrackToDrawId = {
-            ...combineTrackToDrawId,
-            ...item.trackToDrawId,
-          };
-        }
-
-        if (curDrawData) {
-          curDrawData["trackToDrawId"] = combineTrackToDrawId;
-          curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
-
-          setNewDrawData(curDrawData);
-        }
-      })
-      .catch((error) => {
-        console.error("An error occurred trying to fetch data:", error);
-      });
-  }
-
-  // MARK: onmessGenAl
-  async function processGenomeAlignFetchData(rawData) {
-    const regionDrawIdx = rawData.navData.trackDataIdx;
-
-    const curTrackState = {
-      ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
-      primaryGenName: genomeConfig.genome.getName(),
-      ...rawData.navData,
-    };
-
-    Promise.all(
-      Object.values(rawData.fetchResults).map((item: any, _index) => {
-        createCache({
-          trackState: curTrackState,
-          result: item.records,
-          id: item.id,
-          trackType: item.trackModel.type,
-          metadata: item.metadata,
-          trackModel: item.trackModel,
-          curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-          missingIdx: curTrackState.missingIdx,
-          queryGenome: item.query,
-        });
-      })
-    )
-      .then(() => {
-        isfetchGenomeAlignWorkerBusy.current = false;
-        // once we finish with a fetch we need to check if there are any more
-        // request in the queue, user might scroll fast and have multipe region data to fetch
-        globalTrackState.current.trackStates[
-          curTrackState.missingIdx
-            ? curTrackState.missingIdx
-            : curTrackState.trackDataIdx
-        ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
-
-        globalTrackState.current.trackStates[
-          curTrackState.missingIdx
-            ? curTrackState.missingIdx
-            : curTrackState.trackDataIdx
-        ].trackState["startWindow"] =
-          rawData.navData.regionSetStartBp !== 0
-            ? curTrackState.genomicFetchCoord[genomeConfig.genome.getName()]
-                .primaryVisData.viewWindow.start
-            : 0;
-
-        globalTrackState.current.trackStates[
-          curTrackState.missingIdx
-            ? curTrackState.missingIdx
-            : curTrackState.trackDataIdx
-        ].trackState["visWidth"] =
-          curTrackState.genomicFetchCoord[
-            genomeConfig.genome.getName()
-          ].primaryVisData.visWidth;
-
-        if (isInteger(curTrackState.missingIdx)) {
-          const trackToDrawId: { [key: string]: any } = {};
-          for (const key in trackFetchedDataCache.current) {
-            trackToDrawId[key] = "";
-          }
-          for (let key in rawData.fetchResults) {
-            trackToDrawId[key] = "";
-          }
-          if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
-            for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
-              dataForFetch["genomicFetchCoord"] =
-                curTrackState.genomicFetchCoord;
-
-              dataForFetch["trackToDrawId"] = trackToDrawId;
+          if (cache) {
+            if (useFineModeNav.current || cache.useExpandedLoci) {
+              if (cache[dataIdx.current]) {
+                cacheKeysWithData[trackToDrawKey] = "";
+              }
+            } else {
+              let hasAllRegionData = true;
+              for (let idx of idxArr) {
+                if (!cache[idx] || cache[idx].dataCache === null) {
+                  hasAllRegionData = false;
+                  break;
+                }
+              }
+              if (hasAllRegionData) {
+                cacheKeysWithData[trackToDrawKey] = "";
+              }
             }
-
-            enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
-          } else {
-            setNewDrawData({
-              curDataIdx: curTrackState.trackDataIdx,
-              isInitial: 0,
-              trackToDrawId,
-              missingIdx: curTrackState.missingIdx,
-            });
           }
-        } else {
-          enqueueMessage(curTrackState);
         }
-      })
-      .catch((error) => {
-        console.error(
-          "An error occurred when trying to fetch genomealign track:",
-          error
-        );
-      });
-  }
+        for (let id in cacheKeysWithData) {
+          cacheKeysWithData[`${id}`] = false;
+        }
+        if (completedFetchedRegion.current.key !== dataIdx.current) {
+          completedFetchedRegion.current.key = dataIdx.current;
+          completedFetchedRegion.current.done = {};
+        }
+        completedFetchedRegion.current.done = {
+          ...completedFetchedRegion.current.done,
+          ...cacheKeysWithData,
+        };
 
-  // MARK: onmessInfin
-  // function createInfiniteOnMessage() {
-  //   infiniteScrollWorker.current!.onmessage = (event) => {
-  //     // Process each object in the array individually
-  //     Promise.all(
-  //       event.data.map(async (dataItem) => {
-  //         const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
-  //           ? dataItem.trackToDrawId
-  //           : {};
-  //         const regionDrawIdx = dataItem.trackDataIdx;
+        curDrawData["trackToDrawId"] = combineTrackToDrawId;
+        curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
+        setNewDrawData({ ...curDrawData });
+      }
+    });
+  };
 
-  //         const curTrackState = {
-  //           ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
-  //           primaryGenName: genomeConfig.genome.getName(),
-  //         };
+  //MARK: onmessGenAl;
 
-  //         await Promise.all(
-  //           dataItem.fetchResults.map(
-  //             async (
-  //               item: {
-  //                 id: any;
-  //                 name: string;
-  //                 result: any;
-  //                 metadata: any;
-  //                 trackModel: any;
-  //                 curFetchNav: any;
-  //               },
-  //               _index: any
-  //             ) => {
-  //               trackToDrawId[`${item.id}`] = "";
-  //               // Need to await the function finishes for BAM and Hi-C that use fetch instances
-  //               await createCache({
-  //                 trackState: curTrackState,
-  //                 result: item.result,
-  //                 id: item.id,
-  //                 trackType: item.trackModel.type
-  //                   ? item.trackModel.type
-  //                   : item.name
-  //                   ? item.name
-  //                   : "",
-  //                 metadata: item.metadata,
-  //                 trackModel: item.trackModel,
-  //                 curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-  //                 missingIdx: dataItem.missingIdx,
-  //               });
-  //             }
-  //           )
-  //         );
+  // const createGenomeAlignOnMessage = async (event: MessageEvent) => {
+  //   const regionDrawIdx = event.data.navData.trackDataIdx;
 
-  //         const browserMemorySize: { [key: string]: any } = window.performance;
-
-  //         // Check memory usage and free up if necessary
-  //         if (
-  //           browserMemorySize["memory"] &&
-  //           browserMemorySize["memory"].usedJSHeapSize >
-  //             browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-  //         ) {
-  //           for (const key in trackFetchedDataCache.current) {
-  //             const curTrack = trackFetchedDataCache.current[key];
-
-  //             for (const cacheDataIdx in curTrack) {
-  //               if (
-  //                 curTrack.trackType in trackUsingExpandedLoci &&
-  //                 isInteger(cacheDataIdx)
-  //               ) {
-  //                 if (Number(cacheDataIdx) !== regionDrawIdx) {
-  //                   delete trackFetchedDataCache.current[key][cacheDataIdx]
-  //                     .dataCache;
-  //                   if (
-  //                     "records" in
-  //                     trackFetchedDataCache.current[key][cacheDataIdx]
-  //                   ) {
-  //                     delete trackFetchedDataCache.current[key][cacheDataIdx]
-  //                       .records;
-  //                   }
-  //                   if (
-  //                     "xvalues" in
-  //                     trackFetchedDataCache.current[key][cacheDataIdx]
-  //                   ) {
-  //                     delete trackFetchedDataCache.current[key][cacheDataIdx]
-  //                       .xvalues;
-  //                   }
-  //                 }
-  //               }
-  //             }
-  //           }
-  //         }
-
-  //         // Return necessary data for setNewDrawData
-  //         return {
-  //           trackDataIdx: dataItem.trackDataIdx,
-  //           initial: dataItem.initial,
-  //           trackToDrawId: trackToDrawId,
-  //           missingIdx: dataItem.missingIdx,
-  //         };
-  //       })
-  //     )
-  //       .then((drawData) => {
-  //         // const curDrawData = drawData.find(
-  //         //   (item) => item.trackToDrawId === item.missingIdx
-  //         // );
-
-  //         let curDrawData;
-  //         let combineTrackToDrawId = {};
-  //         for (let item of drawData) {
-  //           curDrawData = item;
-
-  //           combineTrackToDrawId = {
-  //             ...combineTrackToDrawId,
-  //             ...item.trackToDrawId,
-  //           };
-  //         }
-
-  //         if (curDrawData) {
-  //           curDrawData["trackToDrawId"] = combineTrackToDrawId;
-  //           curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
-
-  //           setNewDrawData(curDrawData);
-  //         }
-
-  //         isWorkerBusy.current = false;
-
-  //         // Once we finish with a fetch, check if there are more requests in the queue
-  //         processQueue();
-  //       })
-  //       .catch((error) => {
-  //         console.error("An error occurred trying to fetch data:", error);
-  //       });
+  //   const curTrackState = {
+  //     ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
+  //     primaryGenName: genomeConfig.genome.getName(),
+  //     ...event.data.navData,
   //   };
-  // }
-  // MARK: onmessGenAl
-  // function createGenomeAlignOnMessage() {
-  //   fetchGenomeAlignWorker.current!.onmessage = (event) => {
-  //     const regionDrawIdx = event.data.navData.trackDataIdx;
 
-  //     const curTrackState = {
-  //       ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
-  //       primaryGenName: genomeConfig.genome.getName(),
-  //       ...event.data.navData,
-  //     };
+  //   Promise.all(
+  //     Object.values(event.data.fetchResults).map((item: any, _index) => {
+  //       createCache({
+  //         trackState: curTrackState,
+  //         result: item.records,
+  //         id: item.id,
+  //         trackType: item.trackModel.type,
+  //         metadata: item.metadata,
+  //         trackModel: item.trackModel,
+  //         curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+  //         missingIdx: curTrackState.missingIdx,
+  //         queryGenome: item.query,
+  //       });
+  //     })
+  //   )
+  //     .then(() => {
+  //       isfetchGenomeAlignWorkerBusy.current = false;
+  //       // once we finish with a fetch we need to check if there are any more
+  //       // request in the queue, user might scroll fast and have multipe region data to fetch
 
-  //     Promise.all(
-  //       Object.values(event.data.fetchResults).map((item: any, _index) => {
-  //         createCache({
-  //           trackState: curTrackState,
-  //           result: item.records,
-  //           id: item.id,
-  //           trackType: item.trackModel.type,
-  //           metadata: item.metadata,
-  //           trackModel: item.trackModel,
-  //           curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-  //           missingIdx: curTrackState.missingIdx,
-  //           queryGenome: item.query,
-  //         });
-  //       })
-  //     )
-  //       .then(() => {
-  //         isfetchGenomeAlignWorkerBusy.current = false;
-  //         // once we finish with a fetch we need to check if there are any more
-  //         // request in the queue, user might scroll fast and have multipe region data to fetch
-  //         globalTrackState.current.trackStates[
-  //           curTrackState.missingIdx
-  //             ? curTrackState.missingIdx
-  //             : curTrackState.trackDataIdx
-  //         ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
+  //       globalTrackState.current.trackStates[
+  //         curTrackState.missingIdx
+  //           ? curTrackState.missingIdx
+  //           : curTrackState.trackDataIdx
+  //       ].trackState["startWindow"] =
+  //         event.data.navData.regionSetStartBp !== 0
+  //           ? curTrackState.genomicFetchCoord[genomeConfig.genome.getName()]
+  //               .primaryVisData.viewWindow.start
+  //           : 0;
 
-  //         globalTrackState.current.trackStates[
-  //           curTrackState.missingIdx
-  //             ? curTrackState.missingIdx
-  //             : curTrackState.trackDataIdx
-  //         ].trackState["startWindow"] =
-  //           event.data.navData.regionSetStartBp !== 0
-  //             ? curTrackState.genomicFetchCoord[genomeConfig.genome.getName()]
-  //                 .primaryVisData.viewWindow.start
-  //             : 0;
+  //       globalTrackState.current.trackStates[
+  //         curTrackState.missingIdx
+  //           ? curTrackState.missingIdx
+  //           : curTrackState.trackDataIdx
+  //       ].trackState.genomicFetchCoord = curTrackState.genomicFetchCoord;
+  //       globalTrackState.current.trackStates[
+  //         curTrackState.missingIdx
+  //           ? curTrackState.missingIdx
+  //           : curTrackState.trackDataIdx
+  //       ].trackState["visWidth"] =
+  //         curTrackState.genomicFetchCoord[
+  //           genomeConfig.genome.getName()
+  //         ].primaryVisData.visWidth;
+  //       processGenomeAlignQueue();
+  //       if (isInteger(curTrackState.missingIdx)) {
+  //         const trackToDrawId: { [key: string]: any } = {};
+  //         for (const key in trackFetchedDataCache.current) {
+  //           trackToDrawId[key] = "";
+  //         }
+  //         for (let key in event.data.fetchResults) {
+  //           trackToDrawId[key] = "";
+  //         }
+  //         if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
+  //           for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
+  //             dataForFetch["genomicFetchCoord"] =
+  //               curTrackState.genomicFetchCoord;
 
-  //         globalTrackState.current.trackStates[
-  //           curTrackState.missingIdx
-  //             ? curTrackState.missingIdx
-  //             : curTrackState.trackDataIdx
-  //         ].trackState["visWidth"] =
-  //           curTrackState.genomicFetchCoord[
-  //             genomeConfig.genome.getName()
-  //           ].primaryVisData.visWidth;
-  //         processGenomeAlignQueue();
-  //         if (isInteger(curTrackState.missingIdx)) {
-  //           const trackToDrawId: { [key: string]: any } = {};
-  //           for (const key in trackFetchedDataCache.current) {
-  //             trackToDrawId[key] = "";
+  //             dataForFetch["trackToDrawId"] = trackToDrawId;
   //           }
-  //           for (let key in event.data.fetchResults) {
-  //             trackToDrawId[key] = "";
-  //           }
-  //           if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
-  //             for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
-  //               dataForFetch["genomicFetchCoord"] =
-  //                 curTrackState.genomicFetchCoord;
 
-  //               dataForFetch["trackToDrawId"] = trackToDrawId;
-  //             }
-
-  //             enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
-  //           } else {
-  //             setNewDrawData({
-  //               curDataIdx: curTrackState.trackDataIdx,
-  //               isInitial: 0,
-  //               trackToDrawId,
-  //               missingIdx: curTrackState.missingIdx,
-  //             });
-  //           }
+  //           enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
   //         } else {
-  //           enqueueMessage(curTrackState);
+  //           setNewDrawData({
+  //             curDataIdx: curTrackState.trackDataIdx,
+  //             isInitial: 0,
+  //             trackToDrawId,
+  //             missingIdx: curTrackState.missingIdx,
+  //           });
   //         }
-  //       })
-  //       .catch((error) => {
-  //         console.error(
-  //           "An error occurred when trying to fetch genomealign track:",
-  //           error
-  //         );
+  //       } else {
+  //         enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error(
+  //         "An error occurred when trying to fetch genomealign track:",
+  //         error
+  //       );
+
+  //       curTrackState["genomicFetchCoord"] = null;
+  //       let trackToDrawId = {};
+  //       for (let track of curTrackState.trackModelArr) {
+  //         trackFetchedDataCache.current[`${track.id}`][
+  //           `${curTrackState.missingIdx}`
+  //         ]["dataCache"] = { error: ["error fetching genomealign tracks"] };
+  //         trackToDrawId[`${track.id}`] = "";
+  //       }
+  //       setNewDrawData({
+  //         curDataIdx: curTrackState.trackDataIdx,
+  //         isInitial: 0,
+  //         trackToDrawId,
+  //         missingIdx: curTrackState.missingIdx,
   //       });
-  //   };
-  // }
+  //       enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+  //     });
+  // };
   // MARK: queueRegion
 
   function queueRegionToFetch(regionIdx: number) {
@@ -1714,12 +1882,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         enqueueMessage(dataToFetchArr);
       }
     }
-
-    if (Object.keys(trackToDrawId).length > 0 && !needToFetchGenAlign) {
+    if (
+      Object.keys(trackToDrawId).length > 0 &&
+      !needToFetchGenAlign &&
+      !genomeConfig.isInitial
+    ) {
+      completedFetchedRegion.current.done = { ...trackToDrawId };
+      completedFetchedRegion.current.key = dataIdx.current;
+      for (let id in completedFetchedRegion.current.done) {
+        completedFetchedRegion.current.done[id] = true;
+      }
       setNewDrawData({
-        curDataIdx: dataIdx,
+        curDataIdx: dataIdx.current,
         isInitial: 0,
-        trackToDrawId,
+        trackToDrawId: { ...trackToDrawId },
       });
     }
   }
@@ -1728,7 +1904,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   async function createCache(fetchRes: { [key: string]: any }) {
     const tmpTrackState = { ...fetchRes.trackState };
     let result;
-    if (instanceFetchTracks.has(fetchRes.trackType)) {
+    if (fetchRes.trackType in { hic: "", dynamichic: "", bam: "" }) {
       let configOptions;
       if (globalTrackConfig.current[`${fetchRes.id}`]) {
         configOptions = globalTrackConfig.current[fetchRes.id].configOptions;
@@ -1804,6 +1980,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         });
 
         result = (await Promise.all(tmpRawData)).flat();
+
         // if (!tmpTrackState.initial) {
 
         // }
@@ -1813,16 +1990,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (isInteger(fetchRes.missingIdx)) {
-      // this means that we just fetched data from a region that we already visited
-      // - we already have trackState, this includes, regionloci + expandloci
-      // - new fetch data will have its visRegion deleled or replaced here
-      // - we just need to set a visRegion, visRegion is used to draw components we have to set it for the newly fetched data
-      // - we also set the datacache with its trackModel Id and missingIdx datacoord to store.
-      // - we don't use cacheFetchedData because we don't want to update the rightIdx / leftIdx cause both have latest info already.
       const formattedData =
-        fetchRes.trackType in twoDataTypeTracks
-          ? result
-          : formatDataByType(result, fetchRes.trackType);
+        // fetchRes.trackType in twoDataTypeTracks
+        //   ? result
+        //   :
+        formatDataByType(result, fetchRes.trackType);
       trackFetchedDataCache.current[`${fetchRes.id}`][fetchRes.missingIdx][
         "dataCache"
       ] = formattedData;
@@ -1914,7 +2086,44 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   function getHighlightState(highlightState: any) {
     onNewHighlight(highlightState);
   }
+  function toolSelect(toolTitle: string | number) {
+    const newSelectedTool: { [key: string]: any } = {};
+    newSelectedTool["isSelected"] = false;
 
+    if (toolTitle === 4) {
+      onRegionSelected(
+        Math.round(bpX.current - bpRegionSize.current),
+        Math.round(bpX.current),
+        toolTitle
+      );
+    } else if (toolTitle === 5) {
+      onRegionSelected(
+        Math.round(bpX.current + bpRegionSize.current),
+        Math.round(bpX.current + bpRegionSize.current * 2),
+        toolTitle
+      );
+    } else if (String(toolTitle) in zoomFactors) {
+      let useDisplayFunction = new DisplayedRegionModel(
+        genomeConfig.navContext,
+        bpX.current,
+        bpX.current + bpRegionSize.current
+      );
+      let res = useDisplayFunction.zoom(zoomFactors[`${toolTitle}`].factor);
+      onRegionSelected(
+        res._startBase as number,
+        res._endBase as number,
+        toolTitle
+      );
+    } else {
+      if (tool && tool !== 0 && tool !== 12) {
+        newSelectedTool.isSelected = true;
+      }
+    }
+
+    newSelectedTool["title"] = toolTitle;
+    isToolSelected.current = newSelectedTool.isSelected;
+    return newSelectedTool;
+  }
   // MARK: InitState
   // state management functions
   //______________________________________________________________________________________________________________
@@ -1949,24 +2158,23 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
   const refreshState = () => {
     // Reset useRef letiables
-
+    completedFetchedRegion.current = {
+      key: -0,
+      done: {},
+    };
     useFineModeNav.current = false;
     trackManagerId.current = "";
     leftStartCoord.current = 0;
     rightStartCoord.current = 0;
     bpRegionSize.current = 0;
     pixelPerBase.current = 0;
-    isWorkerBusy.current = false;
+
     messageQueue.current = [];
     bpX.current = 0;
     maxBp.current = 0;
     minBp.current = 0;
     selectedTracks.current = {};
     mousePositionRef.current = { x: 0, y: 0 };
-
-    // fetchInstances.current = {};
-    // isMouseInsideRef.current = false;
-    // globalTrackConfig.current = {};
     trackManagerState.current = {
       bundleId: "",
       customTracksPool: [],
@@ -1994,24 +2202,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     configMenuPos.current = {};
     lastDragX.current = 0;
-    // isThereG3dTrack.current = false;
     basePerPixel.current = 0;
     frameID.current = 0;
     lastX.current = 0;
     dragX.current = 0;
-
-    // isToolSelected.current = false;
     side.current = "right";
     isDragging.current = false;
     rightSectionSize.current = [windowWidth];
     leftSectionSize.current = [];
-
-    setShow3dGene(undefined);
-    // setTrackComponents([]);
-    setG3dTrackComponents([]);
-    setNewDrawData({});
-    // setSelectedTool({ ...tool });
-
+    setNewDrawData(null);
     let highlightElement = createHighlight(highlights);
     globalTrackState.current = {
       rightIdx: 0,
@@ -2021,8 +2220,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     };
     trackFetchedDataCache.current = {};
     setHighLightElements([...highlightElement]);
-
-    setDataIdx(-0);
+    dataIdx.current = -0;
 
     setConfigMenu(null);
     setApplyTrackConfigChange({});
@@ -2043,7 +2241,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     minBp.current = leftStartCoord.current;
 
     const newTrackComponents: Array<any> = [];
-    const newG3dComponents: Array<any> = [];
 
     // loop through trackmanager checking to see if the track is already created else if create a new one with default valuies
     for (let i = 0; i < trackManagerState.current.tracks.length; i++) {
@@ -2076,7 +2273,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         { matplot: "", dynamic: "", dynamicbed: "", dynamiclongrange: "" }
       ) {
         trackManagerState.current.tracks[i].tracks?.map(
-          (trackModel: { id: string }, index: any) => {
+          (trackModel: TrackModel, index: any) => {
             trackModel.id =
               `${trackManagerState.current.tracks[i].id}` +
               "subtrack" +
@@ -2093,30 +2290,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
       trackManagerState.current.tracks[i]["legendWidth"] = legendWidth;
 
-      if (trackManagerState.current.tracks[i].type !== "g3d") {
-        newTrackComponents.push({
-          trackIdx: i,
-          id: trackManagerState.current.tracks[i].id,
-          component: TrackFactory,
-          posRef: newPosRef,
-          legendRef: newLegendRef,
-          trackModel: trackManagerState.current.tracks[i],
-          hasAllRegionData: false,
-        });
-      } else {
-        isThereG3dTrack.current = true;
-
-        newG3dComponents.push({
-          id: trackManagerState.current.tracks[i].id,
-          component: ThreedmolContainer,
-
-          trackModel: trackManagerState.current.tracks[i],
-        });
-      }
-    }
-
-    if (newG3dComponents.length > 0) {
-      setG3dTrackComponents(newG3dComponents);
+      newTrackComponents.push({
+        trackIdx: i,
+        id: trackManagerState.current.tracks[i].id,
+        component: TrackFactory,
+        posRef: newPosRef,
+        legendRef: newLegendRef,
+        trackModel: trackManagerState.current.tracks[i],
+        hasAllRegionData: false,
+      });
     }
 
     setTrackComponents(newTrackComponents);
@@ -2145,7 +2327,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         preload.current = false;
         if (genomeConfig.isInitial) {
           setSelectedTool((prevState) => {
-            if (tool && allowedTools.has(tool)) {
+            if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
               const newSelectedTool = toolSelect(tool);
               return newSelectedTool;
             } else {
@@ -2241,10 +2423,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
       let curViewWindow =
         viewWindowConfigData.current &&
-        viewWindowConfigData.current.dataIdx === dataIdx
+        viewWindowConfigData.current.dataIdx === dataIdx.current
           ? viewWindowConfigData.current.viewWindow
           : hasGenomeAlign.current
-          ? globalTrackState.current.trackStates[dataIdx].trackState
+          ? globalTrackState.current.trackStates[dataIdx.current].trackState
               .genomicFetchCoord[genomeConfig.genome.getName()].primaryVisData
               .viewWindow
           : draw.viewWindow;
@@ -2260,44 +2442,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
       screenshotDataObj.current = {};
     }
-  }
-
-  function toolSelect(toolTitle: string | number) {
-    const newSelectedTool: { [key: string]: any } = {};
-    newSelectedTool["isSelected"] = false;
-
-    if (toolTitle === 4) {
-      onRegionSelected(
-        Math.round(bpX.current - bpRegionSize.current),
-        Math.round(bpX.current),
-        toolTitle
-      );
-    } else if (toolTitle === 5) {
-      onRegionSelected(
-        Math.round(bpX.current + bpRegionSize.current),
-        Math.round(bpX.current + bpRegionSize.current * 2),
-        toolTitle
-      );
-    } else if (String(toolTitle) in zoomFactors) {
-      let useDisplayFunction = new DisplayedRegionModel(
-        genomeConfig.navContext,
-        bpX.current,
-        bpX.current + bpRegionSize.current
-      );
-      let res = useDisplayFunction.zoom(zoomFactors[`${toolTitle}`].factor);
-      onRegionSelected(
-        res._startBase as number,
-        res._endBase as number,
-        toolTitle
-      );
-    } else {
-      if (tool && tool !== 0 && tool !== 12) {
-        newSelectedTool.isSelected = true;
-      }
-    }
-    newSelectedTool["title"] = toolTitle;
-    isToolSelected.current = newSelectedTool.isSelected;
-    return newSelectedTool;
   }
 
   // MARK: METATERMS
@@ -2386,12 +2530,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       parentElement.addEventListener("mouseleave", handleMouseLeave);
     }
     return () => {
-      if (infiniteScrollWorker.current) {
-        infiniteScrollWorker.current!.terminate();
-      }
-      if (fetchGenomeAlignWorker.current) {
-        fetchGenomeAlignWorker.current!.terminate();
-      }
+      // if (infiniteScrollWorker.current) {
+      //   infiniteScrollWorker.current!.terminate();
+      // }
+
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
@@ -2400,7 +2542,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      // console.log("trackmanager terminate");
+      console.log("trackmanager terminate");
     };
   }, []);
 
@@ -2420,10 +2562,37 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("keydown", handleKeyDown);
 
+    // Add click event listener to the track container
+    const trackContainer = block.current;
+    if (trackContainer) {
+      trackContainer.addEventListener("click", handleClick);
+      trackContainer.addEventListener("contextmenu", handleGenomeClick);
+
+      // Add touch event listeners
+      trackContainer.addEventListener("touchstart", handleDOMTouchStart, {
+        passive: false,
+      });
+      trackContainer.addEventListener("touchmove", handleDOMTouchMove, {
+        passive: false,
+      });
+      trackContainer.addEventListener("touchend", handleDOMTouchEnd);
+    }
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleMouseUp);
+
+      // Remove click event listeners
+      if (trackContainer) {
+        trackContainer.removeEventListener("click", handleClick);
+        trackContainer.removeEventListener("contextmenu", handleGenomeClick);
+
+        // Remove touch event listeners
+        trackContainer.removeEventListener("touchstart", handleDOMTouchStart);
+        trackContainer.removeEventListener("touchmove", handleDOMTouchMove);
+        trackContainer.removeEventListener("touchend", handleDOMTouchEnd);
+      }
     };
   }, [trackComponents, windowWidth]);
 
@@ -2441,16 +2610,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     }
   }, [tool]);
-  useEffect(() => {
-    if (initialStart === "workerReady") {
-      initializeTracks();
-    }
-  }, [initialStart]);
+
   // MARK: [GenConfig]
   useEffect(() => {
     // on GenomeRoot first creation we add the default state to StateArr in genomeroot
-    // on recreation of trackManager we do not need to set the defaultState because it is saved in genomeroot so we skip to else
-    // and do not add to the StateArr.
 
     if (genomeConfig.isInitial) {
       prevWindowWidth.current = windowWidth;
@@ -2462,57 +2625,99 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
       );
-
-      //addGlobalState(newStateObj);
-
-      // create the worker and trigger state change before we can actually use them takes one re render to acutally
-      // start working.Thats why we need the initialStart state.
-      if (initialStart === "workerNotReady") {
-        // infiniteScrollWorker.current = new Worker(
-        //   new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
-        //   {
-        //     type: "module",
-        //   }
-        // );
-        // createInfiniteOnMessage();
-        // if (hasGenomeAlign.current) {
-        //   fetchGenomeAlignWorker.current = new Worker(
-        //     new URL(
-        //       "../../getRemoteData/fetchGenomeAlignWorker.ts",
-        //       import.meta.url
-        //     ),
-        //     {
-        //       type: "module",
-        //     }
-        //   );
-        //   createGenomeAlignOnMessage();
-        // }
-
-        setInitialStart("workerReady");
-      }
+      // created the workers needed already in GenomeRoot, now
+      // we create a way to recieve the return data as message from the workers here
+      // if (infiniteScrollWorkers.current) {
+      //   infiniteScrollWorkers.current.worker?.forEach((w) => {
+      //     if (!w.hasOnMessage) {
+      //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+      //       w.hasOnMessage = true;
+      //     }
+      //   });
+      //   infiniteScrollWorkers.current.instance?.forEach((w) => {
+      //     if (!w.hasOnMessage) {
+      //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+      //       w.hasOnMessage = true;
+      //     }
+      //   });
+      // }
+      // if (
+      //   hasGenomeAlign.current &&
+      //   fetchGenomeAlignWorker.current &&
+      //   !fetchGenomeAlignWorker.current.hasOnMessage
+      // ) {
+      //   fetchGenomeAlignWorker.current.fetchWorker.onmessage =
+      //     createGenomeAlignOnMessage;
+      //   fetchGenomeAlignWorker.current.hasOnMessage = true;
+      // }
+      initializeTracks();
       preload.current = true;
     } else if (genomeConfig.sizeChange) {
-      // refreshState();
       trackSizeChange();
-      // initialConfig.current = true;
-
-      // initializeTracks();
     } else {
       preload.current = true;
-
-      // genomeConfig.defaultTracks = trackManagerState.current.tracks;
-
       refreshState();
       initializeTracks();
     }
-    // onNewRegion(
-    //   genomeConfig.defaultRegion.start,
-    //   genomeConfig.defaultRegion.end
-    // );
   }, [genomeConfig]);
+  function getDeviceType(): "mobile" | "tablet" | "desktop" {
+    const userAgent = navigator.userAgent;
+    const isTouchDevice =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const screenWidth = window.innerWidth;
 
+    // Check for mobile
+    if (
+      /android|webos|iphone|ipod|blackberry|iemobile|opera mini/i.test(
+        userAgent
+      )
+    ) {
+      return "mobile";
+    }
+
+    // Check for tablet
+    if (
+      /ipad|tablet|playbook|silk/i.test(userAgent) ||
+      (isTouchDevice && screenWidth >= 768 && screenWidth <= 1024)
+    ) {
+      return "tablet";
+    }
+
+    // Check by screen size and touch capability
+    if (isTouchDevice && screenWidth < 768) {
+      return "mobile";
+    }
+
+    return "desktop";
+  }
   // MARK: trackSizeCha
+  function deleteCache() {
+    for (const key in trackFetchedDataCache.current) {
+      const trackCache = trackFetchedDataCache.current[key];
 
+      if (trackCache.trackType === "genomealign") {
+        for (const dataKey in trackCache) {
+          if (isInteger(dataKey)) {
+            delete trackFetchedDataCache.current[key][dataKey].dataCache;
+          }
+        }
+      } else {
+        for (const cacheDataIdx in trackCache) {
+          if (isInteger(cacheDataIdx)) {
+            if ("xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]) {
+              delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
+            }
+          }
+        }
+      }
+    }
+
+    if (basePerPixel.current < 10) {
+      useFineModeNav.current = true;
+    } else {
+      useFineModeNav.current = false;
+    }
+  }
   function trackSizeChange() {
     const trackToDrawId: { [key: string]: any } = {};
     for (const cacheKey in trackFetchedDataCache.current) {
@@ -2584,27 +2789,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     if (hasGenomeAlign.current) {
-      for (const key in trackFetchedDataCache.current) {
-        const trackCache = trackFetchedDataCache.current[key];
-
-        if (trackCache.trackType === "genomealign") {
-          for (const dataKey in trackCache) {
-            if (isInteger(dataKey)) {
-              delete trackFetchedDataCache.current[key][dataKey].dataCache;
-            }
-          }
-        } else {
-          for (const cacheDataIdx in trackCache) {
-            if (isInteger(cacheDataIdx)) {
-              if (
-                "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
-              ) {
-                delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
-              }
-            }
-          }
-        }
-      }
+      deleteCache();
 
       if (basePerPixel.current < 10) {
         useFineModeNav.current = true;
@@ -2612,8 +2797,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         useFineModeNav.current = false;
       }
       const tmpArr = [...trackComponents];
-      setTrackComponents(tmpArr);
-      queueRegionToFetch(dataIdx);
+      // setTrackComponents(tmpArr);
+
+      queueRegionToFetch(dataIdx.current);
     } else {
       for (const key in trackFetchedDataCache.current) {
         const curTrack = trackFetchedDataCache.current[key];
@@ -2643,7 +2829,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       setTrackComponents(tmpArr);
 
       setNewDrawData({
-        curDataIdx: dataIdx,
+        curDataIdx: dataIdx.current,
         isInitial: 0,
         trackToDrawId,
       });
@@ -2654,20 +2840,19 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWindowConfig
 
   function getWindowViewConfig(viewWindow, dataIdx) {
-    if (viewWindow) {
+    if (viewWindow && dataIdx !== undefined && dataIdx !== null) {
       const trackDataObj: { [key: string]: any } = {};
       const trackToDrawId: { [key: string]: any } = {};
       let primaryVisData;
 
       for (let key in trackFetchedDataCache.current) {
         const cacheTrackData = trackFetchedDataCache.current[key];
-        // methylc: "" qbed: "" , dynseq: "",,
         let curTrackModel;
         let configOptions;
         if (!trackOptionMap[`${cacheTrackData.trackType}`]) {
           continue;
         }
-        if (interactionTracks.has(cacheTrackData.trackType)) {
+        if (cacheTrackData.trackType in { hic: "", longrange: "" }) {
           trackToDrawId[key] = "";
           continue;
         }
@@ -2792,18 +2977,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         dataIdx,
         trackFetchedDataCache
       );
-
       globalTrackState.current.trackStates[dataIdx].trackState["groupScale"] =
         groupScale;
+
       return trackToDrawId;
     }
   }
 
   // MARK: [dataIdx,tra]
-
-  useEffect(() => {
-    queueRegionToFetch(dataIdx);
-  }, [dataIdx]);
 
   useEffect(() => {
     if (highlights) {
@@ -2819,39 +3000,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     return str !== null && !isNaN(num) && Number.isInteger(num);
   }
-  function arraysHaveSameTrackModels(
-    array1: Array<TrackModel>,
-    array2: Array<TrackModel>
-  ): boolean {
-    // Check if the lengths are different. If they are, return false.
-    if (array1.length !== array2.length) {
-      return false;
-    }
-
-    // Use a map to keep track of the count of each id in the first array.
-    const idCounts = new Map();
-
-    for (let item of array1) {
-      // Increment the count for each id in the first array.
-      idCounts.set(item.id, (idCounts.get(item.id) || 0) + 1);
-    }
-
-    for (let item of array2) {
-      // Decrement the count for each id in the second array.
-      if (!idCounts.has(item.id)) {
-        return false;
-      }
-      const newCount = idCounts.get(item.id) - 1;
-      if (newCount === 0) {
-        idCounts.delete(item.id);
-      } else {
-        idCounts.set(item.id, newCount);
-      }
-    }
-
-    // If idCounts is empty, it means both arrays have the same ids with the same counts.
-    return idCounts.size === 0;
-  }
 
   useEffect(() => {
     if (
@@ -2859,14 +3007,55 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       tracks &&
       !tracks.every((item) => item.waitToUpdate)
     ) {
-      if (
-        !arraysHaveSameTrackModels(tracks, [
-          ...trackComponents.map((item) => item.trackModel),
-          ...g3dtrackComponents.map((item) => item.trackModel),
-        ])
-      ) {
+      const filteredTracks = tracks.filter(
+        (trackModel) => trackModel.type !== "g3d"
+      );
+      const tracksInView = [...trackComponents.map((item) => item.trackModel)];
+      if (!arraysHaveSameTrackModels(filteredTracks, tracksInView)) {
+        const newGenomealignTracks = filteredTracks.filter(
+          (item) => item.type === "genomealign"
+        );
+        const genomealignTracksInView = tracksInView.filter(
+          (item) => item.type === "genomealign"
+        );
+        if (
+          !arraysHaveSameTrackModels(
+            newGenomealignTracks,
+            genomealignTracksInView
+          )
+        ) {
+          deleteCache();
+
+          if (
+            newGenomealignTracks.length === 0 &&
+            genomealignTracksInView.length > 0
+          ) {
+            for (let key in globalTrackState.current.trackStates) {
+              const allTrackState = globalTrackState.current.trackStates[key];
+              for (let key2 in allTrackState) {
+                const trackState = allTrackState[key2];
+                if (trackState["genomicFetchCoord"]) {
+                  trackState.genomicFetchCoord[
+                    `${genomeConfig.genome.getName()}`
+                  ]["primaryVisData"] = _.cloneDeep(
+                    globalTrackState.current.trackStates[key].trackState.visData
+                  );
+                  const newGenomicFetchCoord = {
+                    [genomeConfig.genome.getName()]: _.cloneDeep(
+                      trackState.genomicFetchCoord[
+                        `${genomeConfig.genome.getName()}`
+                      ]
+                    ),
+                  };
+
+                  trackState.genomicFetchCoord = newGenomicFetchCoord;
+                }
+              }
+            }
+          }
+        }
         const newTrackId: { [key: string]: any } = {};
-        for (const trackModel of tracks) {
+        for (const trackModel of filteredTracks) {
           newTrackId[`${trackModel.id}`] = {};
         }
         // check if a track inside trackmanager was deleted
@@ -2880,8 +3069,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         const newG3dComponents: Array<any> = [];
         const newAddedTrackModel: Array<any> = [];
         let checkHasGenAlign = false;
-        for (let i = 0; i < tracks.length; i++) {
-          const curTrackModel = tracks[i];
+        for (let i = 0; i < filteredTracks.length; i++) {
+          const curTrackModel = filteredTracks[i];
 
           let foundComp = false;
 
@@ -2889,8 +3078,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           for (let trackComponent of trackComponents) {
             if (trackComponent.trackModel.id === curTrackModel.id) {
               if (curTrackModel.type === "g3d") {
-                newG3dComponents.push(trackComponent);
+                continue;
               } else {
+                if (trackComponent.trackModel.type === "genomealign") {
+                  checkHasGenAlign = true;
+                }
                 newTrackComponents.push(trackComponent);
               }
 
@@ -2915,18 +3107,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 useFineModeNav.current = true;
               }
               hasGenomeAlign.current = true;
-              if (hasGenomeAlign.current && !fetchGenomeAlignWorker.current) {
-                // fetchGenomeAlignWorker.current = new Worker(
-                //   new URL(
-                //     "../../getRemoteData/fetchGenomeAlignWorker.ts",
-                //     import.meta.url
-                //   ),
-                //   {
-                //     type: "module",
-                //   }
-                // );
-                // createGenomeAlignOnMessage();
-              }
+              // if (
+              //   hasGenomeAlign.current &&
+              //   fetchGenomeAlignWorker.current &&
+              //   !fetchGenomeAlignWorker.current.hasOnMessage
+              // ) {
+              //   fetchGenomeAlignWorker.current.fetchWorker.onmessage =
+              //     createGenomeAlignOnMessage;
+              //   fetchGenomeAlignWorker.current.hasOnMessage = true;
+              // }
             }
             // for tracks like hic and bam where we create an  instance obj
             // that we reuse to fetch data
@@ -2997,18 +3186,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           hasGenomeAlign.current = false;
         }
 
-        trackManagerState.current.tracks = tracks;
+        trackManagerState.current.tracks = filteredTracks;
         addTermToMetaSets(newAddedTrackModel);
-        setG3dTrackComponents(newG3dComponents);
         setTrackComponents(newTrackComponents);
-        queueRegionToFetch(dataIdx);
+        queueRegionToFetch(dataIdx.current);
       } else {
         const newTrackComponents: Array<any> = [];
-        const newG3dComponents: Array<any> = [];
+
         let needToToUpdate = false;
 
-        for (let i = 0; i < tracks.length; i++) {
-          const curTrackModel = tracks[i];
+        for (let i = 0; i < filteredTracks.length; i++) {
+          const curTrackModel = filteredTracks[i];
           if (curTrackModel.id !== trackComponents[i].trackModel.id) {
             needToToUpdate = true;
           }
@@ -3024,23 +3212,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 trackComponent.trackModel.isSelected = curTrackModel.isSelected;
                 needToToUpdate = true;
               }
-              if (curTrackModel.type === "g3d") {
-                newG3dComponents.push(trackComponent);
-              } else {
-                newTrackComponents.push(trackComponent);
-              }
+
+              newTrackComponents.push(trackComponent);
             }
           }
         }
 
         if (needToToUpdate) {
-          trackManagerState.current.tracks = tracks;
+          trackManagerState.current.tracks = filteredTracks;
           setTrackComponents(newTrackComponents);
-          setG3dTrackComponents(newG3dComponents);
         }
       }
-      addTermToMetaSets(tracks);
+      addTermToMetaSets(filteredTracks);
     }
+
+    // Set up worker message handlers when tracks change (new workers might be added)
+    // if (infiniteScrollWorkers.current) {
+    //   infiniteScrollWorkers.current.worker?.forEach((w) => {
+    //     if (!w.hasOnMessage) {
+    //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+    //       w.hasOnMessage = true;
+    //     }
+    //   });
+    //   infiniteScrollWorkers.current.instance?.forEach((w) => {
+    //     if (!w.hasOnMessage) {
+    //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+    //       w.hasOnMessage = true;
+    //     }
+    //   });
+    // }
   }, [tracks]);
 
   useEffect(() => {
@@ -3052,17 +3252,17 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   // MARK: viewWIndow useeffect
   useEffect(() => {
     if (viewWindowConfigData.current) {
-      if (dataIdx === viewWindowConfigData.current.dataIdx) {
+      if (dataIdx.current === viewWindowConfigData.current.dataIdx) {
         const curTrackToDrawId = getWindowViewConfig(
           viewWindowConfigData.current.viewWindow,
           viewWindowConfigData.current.dataIdx
         );
 
         setViewWindowConfigChange({
-          dataIdx,
+          dataIdx: dataIdx.current,
           viewWindow: viewWindowConfigData.current.viewWindow,
           groupScale:
-            globalTrackState.current.trackStates[dataIdx].trackState[
+            globalTrackState.current.trackStates[dataIdx.current].trackState[
               "groupScale"
             ],
           trackToDrawId: curTrackToDrawId,
@@ -3070,47 +3270,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       }
     }
   }, [viewWindowConfigData.current]);
+  // create a useRef object, that keep track of the current dataidx most current view
+  // if data Idx from new fetch is diff then, go back to empty object.
+  // each track that gets finish get put into the useref
+  // setDrawData of the current tracks id that has data ready so {'id': true, 'id2:false}:,
+  // check in trackfactory if the track is already drawn  bhy checking the object if its null, nulll means when
+  // another track updates and the current track is already drawn we ignore it .
   useEffect(() => {
-    const cacheKeysWithData: { [key: string]: any } = {};
-    const idxArr = [dataIdx - 1, dataIdx, dataIdx + 1];
-
-    if (newDrawData) {
-      for (let trackToDrawKey in newDrawData.trackToDrawId) {
-        const cache = trackFetchedDataCache.current[trackToDrawKey];
-        if (
-          cache &&
-          ((draw.trackToDrawId && !draw.trackToDrawId[trackToDrawKey]) ||
-            Object.keys(draw).length === 0)
-        ) {
-          if (useFineModeNav.current || cache.useExpandedLoci) {
-            if (cache[dataIdx]) {
-              cacheKeysWithData[trackToDrawKey] = "";
-            }
-          } else {
-            let hasAllRegionData = true;
-            for (let idx of idxArr) {
-              if (!cache[idx]) {
-                hasAllRegionData = false;
-                break;
-              }
-            }
-            if (hasAllRegionData) {
-              cacheKeysWithData[trackToDrawKey] = "";
-            }
-          }
-        }
-      }
-    }
-    const combinedTrackToDrawId =
-      Object.keys(draw).length === 0
-        ? cacheKeysWithData
-        : {
-            ...draw.trackToDrawId,
-            ...cacheKeysWithData,
-          };
-    newDrawData.trackToDrawId = combinedTrackToDrawId;
-
-    if (Object.keys(cacheKeysWithData).length > 0) {
+    if (
+      newDrawData &&
+      completedFetchedRegion.current.key === dataIdx.current &&
+      Object.keys(completedFetchedRegion.current.done).length > 0
+    ) {
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
       if (
@@ -3149,14 +3320,58 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       } else {
         curViewWindow = globalTrackState.current.viewWindow;
       }
-      // console.log(newDrawData, trackFetchedDataCache.current, "newDrawData")
+
       getWindowViewConfig(curViewWindow, newDrawData.curDataIdx);
 
+      for (let id in newDrawData.trackToDrawId) {
+        newDrawData.trackToDrawId[id] = true;
+      }
+      for (let id in completedFetchedRegion.current.done) {
+        if (!completedFetchedRegion.current.done[id]) {
+          newDrawData.trackToDrawId[id] = true;
+        }
+      }
+      completedFetchedRegion.current.done = {
+        ...completedFetchedRegion.current.done,
+        ...newDrawData.trackToDrawId,
+      };
+
+      newDrawData.trackToDrawId = newDrawData.trackToDrawId;
       setDraw({ ...newDrawData, viewWindow: curViewWindow });
+      processQueue();
     }
   }, [newDrawData]);
+
+  useEffect(() => {
+    if (!block.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { height } = entry.contentRect;
+        const scrollHeight = entry.target.scrollHeight;
+        const newHeight = Math.max(height, scrollHeight);
+
+        // Call the optional callback if provided
+        if (onHeightChange) {
+          onHeightChange(newHeight);
+        }
+      }
+    });
+
+    resizeObserver.observe(block.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [onHeightChange]);
   return (
-    <div style={{ backgroundColor: "var(--bg-color)" }}>
+    <div
+      style={{
+        backgroundColor: "var(--bg-color)",
+        paddingLeft: "20px",
+        marginBottom: "50px",
+      }}
+    >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
         <GenomeNavigator
           selectedRegion={userViewRegion}
@@ -3239,6 +3454,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         >
           <div
             onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
             ref={block}
             style={{
               display: "flex",
@@ -3306,10 +3522,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                         side={side.current}
                         windowWidth={windowWidth}
                         genomeConfig={genomeConfig}
-                        dataIdx={dataIdx}
+                        dataIdx={dataIdx.current}
                         trackManagerRef={block}
                         setShow3dGene={setShow3dGene}
-                        isThereG3dTrack={isThereG3dTrack.current}
+                        isThereG3dTrack={isThereG3dTrack}
                         updateGlobalTrackConfig={updateGlobalTrackConfig}
                         applyTrackConfigChange={applyTrackConfigChange}
                         dragX={dragX.current}
@@ -3386,45 +3602,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ""
         )}
       </OutsideClickDetector>
-
-      {g3dtrackComponents.length > 0 ? (
-        <div
-          style={{
-            display: "flex",
-            backgroundColor: "var(--bg-color)",
-            WebkitBackfaceVisibility: "hidden",
-            WebkitPerspective: `${windowWidth + 120}px`,
-            backfaceVisibility: "hidden",
-            perspective: `${windowWidth + 120}px`,
-            border: "1px solid #d3d3d3",
-            borderRadius: "10px",
-            boxShadow: "0 2px 3px 0 rgba(0, 0, 0, 0.2)",
-            padding: "5px",
-            flexWrap: "wrap",
-          }}
-        >
-          {g3dtrackComponents.map((item, index) => {
-            const Component = item.component;
-            return (
-              trackManagerState.current.viewRegion && (
-                <div key={item.id} style={{ width: "50%" }}>
-                  <Component
-                    handleDelete={handleDelete}
-                    tracks={tracks}
-                    g3dtrack={item.trackModel}
-                    viewRegion={trackManagerState.current.viewRegion}
-                    width={windowWidth / 2}
-                    genomeConfig={genomeConfig}
-                    geneFor3d={show3dGene}
-                  />
-                </div>
-              )
-            );
-          })}
-        </div>
-      ) : (
-        ""
-      )}
     </div>
   );
 });

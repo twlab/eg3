@@ -1,33 +1,33 @@
 div.GeneSearchBox-speech {
-    position: absolute;
-    right: 5ch;
-    top: 10px;
+  position: absolute;
+  right: 5ch;
+  top: 10px;
 }
 
 div.GeneSearchBox-speech button {
-    padding: 2px;
-    margin-right: 2px;
+  padding: 2px;
+  margin-right: 2px;
 }
 
 .react-autosuggest__suggestions-container--open {
-    max-height: 800px;
-    overflow: auto;
+  max-height: 800px;
+  overflow: auto;
 }
 
 .react-autosuggest__suggestions-list-222 {
-    background-color: white;
-    margin: 0;
-    padding: 0;
-    list-style-type: none;
+  background-color: white;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
 }
 
 .react-autosuggest__suggestions-list-white {
-    background-color: #222;
-    margin: 0;
-    padding: 0;
-    list-style-type: none;
+  background-color: #222;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
 }
 
 .react-autosuggest__suggestion:hover {
-    background-color: #a4ae86 !important;
+  background-color: #a4ae86 !important;
 }

@@ -6,11 +6,10 @@ import RepeatSource from "./RepeatSource";
 import JasparSource from "./JasparSource";
 import VcfSource from "./VcfSource";
 import BigSourceWorker from "./BigSourceWorker";
-import { bigWithNavTracks } from "../components/GenomeView/TrackComponents/displayModeComponentMap";
 
 let cachedFetchInstance: { [key: string]: any } = {};
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
-const separateBigTrackType = { repeat: "", jaspar: "", bigbed: "" };
+
 export const trackFetchFunction: { [key: string]: any } = {
   geneannotation: async function refGeneFetch(regionData: any) {
     let genomeName;
@@ -24,7 +23,7 @@ export const trackFetchFunction: { [key: string]: any } = {
 
     if (
       trackModel["apiConfig"] &&
-      apiConfigMap[`${trackModel["apiConfig"]["format"]}`]
+      trackModel["apiConfig"]["format"] in apiConfigMap
     ) {
       apiConfigPrefix = apiConfigMap[`${trackModel["apiConfig"]["format"]}`];
     } else {
@@ -49,9 +48,10 @@ export const trackFetchFunction: { [key: string]: any } = {
       hg38: "https://rest.ensembl.org/overlap/region/human",
     };
 
-    const api = SNP_REGION_API[`${regionData.genomeName}`]
-      ? SNP_REGION_API[`${regionData.genomeName}`]
-      : null;
+    const api =
+      regionData.genomeName in SNP_REGION_API
+        ? SNP_REGION_API[`${regionData.genomeName}`]
+        : null;
 
     if (!api) {
       return [];
@@ -157,7 +157,7 @@ function getRemoteData(regionData: any, trackType: string) {
   if (regionData.trackModel.indexUrl) {
     indexUrl = regionData.trackModel.indexUrl;
   }
-  if (cachedFetchInstance[`${regionData.trackModel.id}`]) {
+  if (regionData.trackModel.id in cachedFetchInstance) {
   } else {
     if (trackType === "bedOrTabix") {
       cachedFetchInstance[`${regionData.trackModel.id}`] = new TabixSource(
@@ -188,7 +188,7 @@ function getRemoteData(regionData: any, trackType: string) {
   }
   let fetchInstance = cachedFetchInstance[`${regionData.trackModel.id}`];
 
-  if (bigWithNavTracks.has(trackType)) {
+  if (trackType in { repeat: "", jaspar: "", bigbed: "" }) {
     return fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,

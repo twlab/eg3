@@ -14,7 +14,6 @@ import Gene, { IdbRecord } from "../../../models/Gene";
 import OpenInterval from "../../../models/OpenInterval";
 import { SortItemsOptions } from "../../../models/SortItemsOptions";
 import NumericalTrack from "./commonComponents/numerical/NumericalTrack";
-
 import TrackLegend from "./commonComponents/TrackLegend";
 import GeneAnnotation from "./geneAnnotationTrackComponents/GeneAnnotation";
 import GeneAnnotationScaffold from "./geneAnnotationTrackComponents/GeneAnnotationScaffold";
@@ -26,10 +25,8 @@ import { RepeatMaskerFeature } from "../../../models/RepeatMaskerFeature";
 import BackgroundedText from "./geneAnnotationTrackComponents/BackgroundedText";
 import AnnotationArrows from "./commonComponents/annotation/AnnotationArrows";
 import { TranslatableG } from "./geneAnnotationTrackComponents/TranslatableG";
-
 import { getContrastingColor, parseNumberString } from "../../../models/util";
 import { scaleLinear } from "d3-scale";
-
 import MethylCRecord from "../../../models/MethylCRecord";
 import MethylCTrackComputation from "./MethylcComponents/MethylCTrackComputation";
 import DynseqTrackComponents from "./DynseqComponents/DynseqTrackComponents";
@@ -50,16 +47,15 @@ import FiberAnnotation from "./bedComponents/FiberAnnotation";
 import DynamicplotTrackComponent from "./commonComponents/numerical/DynamicplotTrackComponent";
 import QBedTrackComponents from "./QBedComponents/QBedTrackComponents";
 import BoxplotTrackComponents from "./commonComponents/stats/BoxplotTrackComponents";
+import { Model } from "flexlayout-react";
 import DynamicInteractionTrackComponents from "./InteractionComponents/DynamicInteractionTrackComponents";
 import DynamicBedTrackComponents from "./bedComponents/DynamicBedTrackComponents";
-
 import DynamicNumericalTrack from "./commonComponents/numerical/DynamicNumericalTrack";
 import Snp from "../../../models/Snp";
 import SnpAnnotation from "./SnpComponents/SnpAnnotation";
 import { BamAlignment } from "../../../models/BamAlignment";
 import { BamAnnotation } from "./BamComponents/BamAnnotation";
 import ImageRecord from "../../../models/ImageRecord";
-
 import OmeroTrackComponents, {
   MAX_NUMBER_THUMBNAILS,
   THUMBNAIL_PADDING,
@@ -67,24 +63,14 @@ import OmeroTrackComponents, {
 import { initialLayout } from "../../../models/layoutUtils";
 import _ from "lodash";
 import RulerComponent from "./RulerComponents/RulerComponent";
-
 import HoverToolTip from "./commonComponents/HoverToolTips/HoverToolTip";
 import QBed from "../../../models/QBed";
-
 import React from "react";
-
 import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
-
 import VcfTrack from "./VcfComponents/VcfTrack";
-
 import Bedcolor from "./bedComponents/Bedcolor";
-
-export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
-enum BedColumnIndex {
-  CATEGORY = 3,
-}
-const TOP_PADDING = 2;
+import { generateUUID } from "../../../util";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
 export const bigWithNavTracks = new Set(["repeat", "jaspar", "bigbed"]);
 export const instanceFetchTracks = new Set(["hic", "dynamichic", "bam"]);
@@ -95,6 +81,12 @@ export const dynamicMatplotTracks = new Set([
 ]);
 export const anchorTracks = new Set(["hic", "longrange"]);
 export const densityTracks = new Set(["bigwig", "qbed", "bedgraph"]);
+export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
+
+enum BedColumnIndex {
+  CATEGORY = 3,
+}
+const TOP_PADDING = 2;
 
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
@@ -134,7 +126,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.height
         );
       }
-      let svgKey = crypto.randomUUID();
+      let svgKey = generateUUID();
 
       if (configOptions.forceSvg || configOptions.packageVersion) {
         let curParentStyle: any = configOptions.forceSvg
@@ -680,7 +672,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
       svgHeight.current = height;
     }
 
-    return svgDATA;
+    return { component: svgDATA, numHidden: placeFeatureData.numHidden };
   },
 
   density: function getDensity({
@@ -1226,7 +1218,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               }}
             >
               <svg
-                key={crypto.randomUUID()}
+                key={generateUUID()}
                 width={drawData.trackState.visWidth}
                 height={drawData.configOptions.height}
                 display={"block"}
@@ -1263,7 +1255,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             </div>
 
             <svg
-              key={crypto.randomUUID()}
+              key={generateUUID()}
               width={drawData.trackState.visWidth}
               height={drawData.configOptions.height}
               display={"block"}

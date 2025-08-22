@@ -12,7 +12,7 @@ import {
 } from "../models";
 import { GenomeCoordinate } from "../types";
 import NavigationContext from "../models/NavigationContext";
-import { fetchGenomicData } from "../getRemoteData/fetchData";
+import { fetchGenomicData } from "../getRemoteData/fetchFunctions";
 import { HicSource } from "../getRemoteData/hicSource";
 import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
@@ -20,6 +20,7 @@ import "./GenomeView/track.css";
 import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickTooltipMap";
 import ReactDOM from "react-dom";
 import BamSource from "../getRemoteData/BamSource";
+import { generateUUID } from "../util";
 /**
  * Configuration for a single track in GenomeViewer.
  * @property {string} type - The type of the track (required).
@@ -147,7 +148,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
               : `track ${idx + 1}`,
             url: track.url,
             options: getOptions(track.type, track.options),
-            id: crypto.randomUUID(),
+            id: generateUUID(),
           })
       );
 
@@ -374,7 +375,10 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             width: (windowWidth || DEFAULT_WINDOW_WIDTH) + 120,
           }}
         >
-          {svgResult}
+          {typeof svgResult === "object" &&
+          Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
+            ? svgResult.component
+            : svgResult}
         </div>
       );
     });
@@ -416,7 +420,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
   } // MARK: UseEffects
   useEffect(() => {
     async function handle() {
-      latestGenomeKey.current = crypto.randomUUID();
+      latestGenomeKey.current = generateUUID();
       const genomeConfig = getConfig();
       if (!genomeConfig) {
         setViewerElement("Invalid genome");

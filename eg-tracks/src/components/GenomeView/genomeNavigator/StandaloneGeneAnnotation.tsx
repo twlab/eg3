@@ -3,7 +3,7 @@ import Gene from "../../../models/Gene";
 import { PlacedFeature } from "../../../models/getXSpan/FeaturePlacer";
 import OpenInterval from "../../../models/OpenInterval";
 import { FeatureSegment } from "../../../models/FeatureSegment";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID } from "../../../util";
 interface StandaloneGeneAnnotationProps {
   gene: Gene;
   contextLocation: OpenInterval;
@@ -27,7 +27,7 @@ export function StandaloneGeneAnnotation(
     xSpan,
     isReverse: false,
   };
-  const uniqueKey = uuidv4();
+  const uniqueKey = generateUUID();
   return (
     <svg width={elementWidth} height={HEIGHT}>
       <GeneAnnotation key={uniqueKey} id={uniqueKey} placedGene={placedGene} />

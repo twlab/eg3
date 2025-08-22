@@ -1,4 +1,6 @@
 import React, { useState, FC } from "react";
+import ReactDOM from "react-dom";
+import { Manager, Reference, Popper } from "react-popper";
 import TrackModel from "../../../../models/TrackModel";
 
 import "./hoverToolTips/Tooltip.css";
@@ -73,6 +75,9 @@ export const COLORS = [
   "#E85EBE",
 ];
 
+const BACKGROUND_COLOR = "rgba(173, 216, 230, 0.9)"; // lightblue with opacity adjustment
+const ARROW_SIZE = 16;
+
 /**
  * Port of Java's String `hashCode()` function. Consistently returns the same integer for equal strings.
  *
@@ -121,7 +126,7 @@ const MetadataIndicator: FC<MetadataIndicatorProps> = ({
           color={termValue.color}
           term={term}
           termValue={termValue.name}
-          onClick={(event) => onClick(event, term)}
+          onClick={(event) => onClick(term, termValue.name)}
         />
       );
     } else {
@@ -161,8 +166,13 @@ const ColoredBox: FC<ColoredBoxProps> = ({
   onClick,
 }) => {
   const [isShowingTooltip, setIsShowingTooltip] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  const showTooltip = () => setIsShowingTooltip(true);
+  const showTooltip = (event: React.MouseEvent) => {
+    setMousePosition({ x: event.pageX, y: event.pageY });
+    setIsShowingTooltip(true);
+  };
+
   const hideTooltip = () => setIsShowingTooltip(false);
 
   const boxStyle = {
@@ -172,10 +182,68 @@ const ColoredBox: FC<ColoredBoxProps> = ({
     borderLeft: "1px solid lightgrey",
   };
 
-  const tooltipStyle = {
-    zIndex: 1,
-    marginRight: 5,
-    display: isShowingTooltip ? undefined : "none",
+  const contentStyle = Object.assign({
+    marginTop: ARROW_SIZE,
+    pointerEvents: "auto" as const,
+  });
+
+  const renderTooltip = () => {
+    if (!isShowingTooltip) return null;
+
+    return ReactDOM.createPortal(
+      <Manager>
+        <Reference>
+          {({ ref }) => (
+            <div
+              ref={ref}
+              style={{
+                position: "absolute",
+                left: mousePosition.x - 8 * 2,
+                top: mousePosition.y,
+              }}
+            />
+          )}
+        </Reference>
+        <Popper
+          placement="bottom-start"
+          modifiers={[{ name: "flip", enabled: false }]}
+        >
+          {({ ref, style, placement, arrowProps }) => (
+            <div
+              ref={ref}
+              style={{
+                ...style,
+                ...contentStyle,
+                zIndex: 1001,
+              }}
+              className="Tooltip"
+            >
+              <div className="Tooltip-minor-text">{term}:</div>
+              <div>{termValue || "(no value)"}</div>
+
+              {ReactDOM.createPortal(
+                <div
+                  ref={arrowProps.ref}
+                  style={{
+                    ...arrowProps.style,
+                    width: 0,
+                    height: 0,
+                    position: "absolute",
+                    left: mousePosition.x - 8,
+                    top: mousePosition.y,
+                    borderLeft: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderRight: `${ARROW_SIZE / 2}px solid transparent`,
+                    borderBottom: `${ARROW_SIZE}px solid ${BACKGROUND_COLOR}`,
+                  }}
+                />,
+                document.body
+              )}
+            </div>
+          )}
+        </Popper>
+      </Manager>,
+      document.body
+    );
   };
 
   return (
@@ -185,12 +253,7 @@ const ColoredBox: FC<ColoredBoxProps> = ({
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
     >
-      {isShowingTooltip && (
-        <div className="Tooltip" style={tooltipStyle}>
-          <div className="Tooltip-minor-text">{term}:</div>
-          <div>{termValue || "(no value)"}</div>
-        </div>
-      )}
+      {renderTooltip()}
     </div>
   );
 };

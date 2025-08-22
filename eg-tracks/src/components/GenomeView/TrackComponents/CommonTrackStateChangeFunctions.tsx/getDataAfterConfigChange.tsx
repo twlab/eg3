@@ -1,4 +1,3 @@
-import { dynamicMatplotTracks } from "../displayModeComponentMap";
 import { getDeDupeArrMatPlot } from "./cacheFetchedData";
 import { trackUsingExpandedLoci } from "./cacheFetchedData";
 
@@ -43,7 +42,7 @@ export function getConfigChangeData({
       fetchedDataCache[dataIdx! - 1],
     ];
 
-    if (dynamicMatplotTracks.has(trackType)) {
+    if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
       viewData = getDeDupeArrMatPlot(viewData, false);
     } else {
       viewData = viewData.map((item) => item.dataCache).flat(1);
@@ -51,6 +50,7 @@ export function getConfigChangeData({
   }
 
   newIntanceTrackState["recreate"] = true;
+
   createSVGOrCanvas(
     newIntanceTrackState,
     viewData,

@@ -9,23 +9,44 @@ export const ResolutionList = (props) => {
   }, [resolution]);
   if (!resolutions.length) return null;
   return (
-    <div style={{ padding: 5 }}>
-      <label>
-        Choose resolution:
-        <select
-          value={reso.toString()}
-          onChange={(e) => setReso(e.target.value)}
-        >
-          {resolutions.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </label>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end",
+
+        width: "100%",
+      }}
+    >
+      <select
+        value={reso.toString()}
+        onChange={(e) => setReso(e.target.value)}
+        style={{
+          padding: "2px 0px",
+          borderRadius: "2px",
+          border: "1px solid #ccc",
+          fontSize: "14px",
+          lineHeight: "1.4",
+          margin: "0",
+          verticalAlign: "middle",
+        }}
+      >
+        {resolutions.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+      </select>
+
       <button
         className="btn btn-primary btn-sm"
         onClick={() => onUpdateResolution(Number.parseInt(reso, 10))}
+        style={{
+          fontSize: "14px",
+          lineHeight: "1.4",
+          margin: "0",
+          verticalAlign: "middle",
+        }}
       >
         Go
       </button>

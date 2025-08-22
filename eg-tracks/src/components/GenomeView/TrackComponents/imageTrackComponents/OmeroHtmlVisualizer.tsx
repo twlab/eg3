@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { Model, Actions } from "flexlayout-react"; // Import named exports
 import OpenInterval from "../../../../models/OpenInterval";
 import { MAX_NUMBER_THUMBNAILS } from "./OmeroTrackComponents";
 import {
@@ -7,10 +8,10 @@ import {
   niceCount,
   variableIsObject,
 } from "../../../../models/util";
-import {
-  addTabSetToLayout,
-  tabIdExistInLayout,
-} from "../../../../models/layoutUtils";
+// import {
+//   addTabSetToLayout,
+//   tabIdExistInLayout,
+// } from "../../../../models/layoutUtils";
 import TrackModel from "../../../../models/TrackModel";
 // import { withTooltip } from "../commonComponents/tooltip/withTooltip";
 // import Tooltip from "../commonComponents/tooltip/Tooltip";

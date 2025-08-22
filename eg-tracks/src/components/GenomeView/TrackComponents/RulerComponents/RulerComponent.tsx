@@ -12,6 +12,7 @@ import DisplayedRegionModel from "../../../../models/DisplayedRegionModel";
 import TrackModel from "../../../../models/TrackModel";
 import TrackLegend from "../commonComponents/TrackLegend";
 import { config } from "process";
+import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 
 const CHROMOSOMES_Y = 60;
 const RULER_Y = 20;
@@ -96,7 +97,6 @@ interface RulerComponentProps {
 }
 class RulerComponent extends React.Component<RulerComponentProps> {
   render() {
-    console.log(this.props);
     let legend = (
       <TrackLegend
         height={HEIGHT}
@@ -111,6 +111,7 @@ class RulerComponent extends React.Component<RulerComponentProps> {
       this.props.getNumLegend(legend);
     }
     const forceSvg = this.props.options.forceSvg;
+
     let curParentStyle: any = forceSvg
       ? {
           position: "relative",
@@ -125,8 +126,34 @@ class RulerComponent extends React.Component<RulerComponentProps> {
           transform: `translateX(${-this.props.viewWindow.start}px)`,
         }
       : {};
+
+    let hoverStyle: any = this.props.options.packageVersion
+      ? { marginLeft: 120 }
+      : {};
+
     return (
       <React.Fragment>
+        {!forceSvg ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              position: "absolute",
+              zIndex: 3,
+              ...hoverStyle,
+            }}
+          >
+            <HoverToolTip
+              data={new Array()}
+              windowWidth={this.props.width}
+              trackType={"ruler"}
+              height={40}
+              viewRegion={this.props.viewRegion}
+            />
+          </div>
+        ) : (
+          ""
+        )}
         <div style={{ display: "flex", ...curParentStyle }}>
           {forceSvg || this.props.options.packageVersion ? legend : ""}
           <div
@@ -147,5 +174,4 @@ class RulerComponent extends React.Component<RulerComponentProps> {
     );
   }
 }
-
 export default RulerComponent;
