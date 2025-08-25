@@ -20,6 +20,8 @@ import TrackModel from "../../models/TrackModel";
 import { generateUUID } from "../../util";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
+
+const packageVersion = true;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -45,10 +47,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const infiniteScrollWorkers = useRef<{
     instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
-  }>({
-    instance: [],
-    worker: [],
-  });
+  } | null>(
+    packageVersion
+      ? null
+      : {
+          instance: [],
+          worker: [],
+        }
+  );
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
     hasOnMessage: boolean;
@@ -208,21 +214,24 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     // Cleanup workers on component unmount
     return () => {
       // Terminate all infinite scroll workers
-      infiniteScrollWorkers.current.worker.forEach((workerObj) => {
-        workerObj.fetchWorker.terminate();
-      });
-      infiniteScrollWorkers.current.instance.forEach((workerObj) => {
-        workerObj.fetchWorker.terminate();
-      });
+      if (infiniteScrollWorkers.current) {
+        infiniteScrollWorkers.current.worker.forEach((workerObj) => {
+          workerObj.fetchWorker.terminate();
+        });
+        infiniteScrollWorkers.current.instance.forEach((workerObj) => {
+          workerObj.fetchWorker.terminate();
+        });
+
+        // Clear the arrays and references
+        infiniteScrollWorkers.current.worker = [];
+        infiniteScrollWorkers.current.instance = [];
+      }
 
       // Terminate genome align worker
       if (fetchGenomeAlignWorker.current) {
         fetchGenomeAlignWorker.current.fetchWorker.terminate();
       }
 
-      // Clear the arrays and references
-      infiniteScrollWorkers.current.worker = [];
-      infiniteScrollWorkers.current.instance = [];
       fetchGenomeAlignWorker.current = null;
     };
   }, []);
@@ -242,45 +251,52 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       instanceFetchTracks.length,
       MAX_WORKERS
     );
-
-    for (let i = 0; i < normalCount; i++) {
-      if (infiniteScrollWorkers.current.worker.length < MAX_WORKERS) {
-        infiniteScrollWorkers.current.worker.push({
+    if (!packageVersion) {
+      for (let i = 0; i < normalCount; i++) {
+        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.worker.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      for (let i = 0; i < instanceFetchTracksCount; i++) {
+        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.instance.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      if (
+        tracks.some((t) => t.type === "genomealign") &&
+        !fetchGenomeAlignWorker.current
+      ) {
+        fetchGenomeAlignWorker.current = {
           fetchWorker: new Worker(
-            new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
+            new URL(
+              "../../getRemoteData/fetchGenomeAlignWorker.ts",
+              import.meta.url
+            ),
             { type: "module" }
           ),
           hasOnMessage: false,
-        });
-      }
-    }
-    for (let i = 0; i < instanceFetchTracksCount; i++) {
-      if (infiniteScrollWorkers.current.instance.length < MAX_WORKERS) {
-        infiniteScrollWorkers.current.instance.push({
-          fetchWorker: new Worker(
-            new URL("../../getRemoteData/fetchDataWorker.ts", import.meta.url),
-            { type: "module" }
-          ),
-          hasOnMessage: false,
-        });
+        };
       }
     }
 
-    if (
-      tracks.some((t) => t.type === "genomealign") &&
-      !fetchGenomeAlignWorker.current
-    ) {
-      fetchGenomeAlignWorker.current = {
-        fetchWorker: new Worker(
-          new URL(
-            "../../getRemoteData/fetchGenomeAlignWorker.ts",
-            import.meta.url
-          ),
-          { type: "module" }
-        ),
-        hasOnMessage: false,
-      };
-    }
     const curG3dTracks = findAllG3dTabs(layout.current);
     const newG3dTracks: Array<any> = tracks.filter(
       (track) => track.type === "g3d"

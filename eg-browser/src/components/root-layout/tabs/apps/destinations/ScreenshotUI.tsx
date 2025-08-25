@@ -416,7 +416,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
               position: "relative", // Position these elements absolutely
             }}
           >
-            {svgResult}
+            {typeof svgResult === "object" &&
+            Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
+              ? svgResult.component
+              : svgResult}
             {highlights.length > 0
               ? highlights.map((item, index) => {
                   return (

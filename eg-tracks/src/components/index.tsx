@@ -6,12 +6,13 @@ import {
   DisplayedRegionModel,
   formatDataByType,
   getDisplayModeFunction,
+  interactionTracks,
   OpenInterval,
   trackOptionMap,
 } from "../models";
 import { GenomeCoordinate } from "../types";
 import NavigationContext from "../models/NavigationContext";
-import { fetchGenomicData } from "../getRemoteData/fetchData";
+import { fetchGenomicData } from "../getRemoteData/fetchFunctions";
 import { HicSource } from "../getRemoteData/hicSource";
 import { testCustomGenome } from "./testCustomGenome";
 import { GenomeSerializer } from "../genome-hub";
@@ -19,7 +20,7 @@ import "./GenomeView/track.css";
 import { geneClickToolTipMap } from "./GenomeView/TrackComponents/renderClickTooltipMap";
 import ReactDOM from "react-dom";
 import BamSource from "../getRemoteData/BamSource";
-import { generateUUID } from "../util"
+import { generateUUID } from "../util";
 /**
  * Configuration for a single track in GenomeViewer.
  * @property {string} type - The type of the track (required).
@@ -106,18 +107,16 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
     const defaults = trackOptionMap[type]?.defaultOptions || {};
     return userOptions
       ? {
-        ...defaults,
-        ...userOptions,
-        packageVersion: true,
-        trackManagerRef:
-          type in { hic: "", longrange: "", biginteract: "" } ? block : null,
-      }
+          ...defaults,
+          ...userOptions,
+          packageVersion: true,
+          trackManagerRef: interactionTracks.has(type) ? block : null,
+        }
       : {
-        ...defaults,
-        packageVersion: true,
-        trackManagerRef:
-          type in { hic: "", longrange: "", biginteract: "" } ? block : null,
-      };
+          ...defaults,
+          packageVersion: true,
+          trackManagerRef: interactionTracks.has(type) ? block : null,
+        };
   }
   function getTrackModels(genomeConfig: any, genomeViewId: string) {
     let trackModelArr: TrackModel[] = [];
@@ -145,8 +144,8 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             name: track.name
               ? track.name
               : track.type === "ruler"
-                ? "ruler"
-                : `track ${idx + 1}`,
+              ? "ruler"
+              : `track ${idx + 1}`,
             url: track.url,
             options: getOptions(track.type, track.options),
             id: generateUUID(),
@@ -376,7 +375,10 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             width: (windowWidth || DEFAULT_WINDOW_WIDTH) + 120,
           }}
         >
-          {svgResult}
+          {typeof svgResult === "object" &&
+          Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
+            ? svgResult.component
+            : svgResult}
         </div>
       );
     });

@@ -82,4 +82,6 @@ hen scroll back if its fetching the new tracks only that are added
 3. maybe change flexlayout to something else 
 4. add props to genomeHub package
 5. add saving chromosome in sessions so custom genome can be rebuild 
-6. fix datahub bug
+-- 6. fix datahub bug
+7. history menu option
+--8. fix strictmode, cause ref data not getting deleted after component unmount

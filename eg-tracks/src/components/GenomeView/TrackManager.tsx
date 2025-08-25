@@ -46,6 +46,7 @@ import {
   getGenomeAlignTracksNotInSecondArray,
 } from "../../util";
 import { generateUUID } from "../../util";
+import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
 const groupManager = new GroupedTrackManager();
 
 /**
@@ -156,7 +157,7 @@ interface TrackManagerProps {
   infiniteScrollWorkers: React.MutableRefObject<{
     instance: { fetchWorker: Worker; hasOnMessage: boolean }[];
     worker: { fetchWorker: Worker; hasOnMessage: boolean }[];
-  }>;
+  } | null>;
   fetchGenomeAlignWorker: React.MutableRefObject<{
     fetchWorker: Worker;
     hasOnMessage: boolean;
@@ -392,7 +393,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     processGenomeAlignQueue();
   };
-  const processQueue = () => {
+  const processQueue = async () => {
     if (messageQueue.current.length === 0) {
       setMessageData({});
       return;
@@ -448,49 +449,86 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     // Send intMessages to instance workers
     if (
-      intMessages.length > 0 &&
-      infiniteScrollWorkers.current.instance.length > 0
+      infiniteScrollWorkers.current &&
+      (infiniteScrollWorkers.current.instance.length > 0 ||
+        infiniteScrollWorkers.current.worker.length > 0)
     ) {
-      const numWorkers = infiniteScrollWorkers.current.instance.length;
-      for (let i = 0; i < numWorkers; i++) {
-        const messagesForWorker: Array<any> = [];
-        for (const msgObj of intMessages) {
-          const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
-          if (chunks[i].length > 0) {
-            messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+      if (
+        intMessages.length > 0 &&
+        infiniteScrollWorkers.current.instance.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.instance.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of intMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
           }
-        }
-        if (messagesForWorker.length > 0) {
-          infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
-            messagesForWorker
-          );
+          if (messagesForWorker.length > 0) {
+            infiniteScrollWorkers.current.instance[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
+          }
         }
       }
-    }
 
-    // Send normalMessages to worker workers
+      // Send normalMessages to worker workers
+      if (
+        normalMessages.length > 0 &&
+        infiniteScrollWorkers.current.worker.length > 0
+      ) {
+        const numWorkers = infiniteScrollWorkers.current.worker.length;
+        for (let i = 0; i < numWorkers; i++) {
+          const messagesForWorker: Array<any> = [];
+          for (const msgObj of normalMessages) {
+            const chunks = splitArrayIntoChunks(
+              msgObj.trackModelArr,
+              numWorkers
+            );
+            if (chunks[i].length > 0) {
+              messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
+            }
+          }
 
-    if (
-      normalMessages.length > 0 &&
-      infiniteScrollWorkers.current.worker.length > 0
-    ) {
-      const numWorkers = infiniteScrollWorkers.current.worker.length;
+          if (messagesForWorker.length > 0) {
+            infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
+              messagesForWorker
+            );
+          }
+        }
+      }
+    } else {
+      // Send normalMessages to fetch functions (non-worker version)
+      const numWorkers = message[0].trackModelArr.length;
+      const chunks = splitArrayIntoChunks(message[0].trackModelArr, numWorkers);
+      // Launch independent async operations for each chunk
       for (let i = 0; i < numWorkers; i++) {
         const messagesForWorker: Array<any> = [];
-        for (const msgObj of normalMessages) {
-          const chunks = splitArrayIntoChunks(msgObj.trackModelArr, numWorkers);
+        for (const msgObj of message) {
           if (chunks[i].length > 0) {
             messagesForWorker.push({ ...msgObj, trackModelArr: chunks[i] });
           }
         }
         if (messagesForWorker.length > 0) {
-          infiniteScrollWorkers.current.worker[i].fetchWorker.postMessage(
-            messagesForWorker
-          );
+          // Launch async operation without awaiting - process results independently
+          fetchGenomicData(messagesForWorker)
+            .then((results) => {
+              // Call createInfiniteOnMessage once with the entire results array
+              createInfiniteOnMessage({ data: results });
+            })
+            .catch((error) => {
+              console.error("Error fetching genomic data:", error);
+            });
         }
       }
     }
   };
+
   const processGenomeAlignQueue = () => {
     if (genomeAlignMessageQueue.current.length === 0) {
       return;
@@ -633,22 +671,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleSingleClick(e: MouseEvent) {
-    console.log("Single click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-    });
-
+    // console.log("Single click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    // });
     // Add your single click logic here
     // For example, you might want to select a track or feature at this position
   }
 
   function handleDoubleClick(e: MouseEvent) {
-    console.log("Double click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-    });
+    // console.log("Double click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    // });
 
     // Add your double click logic here
     // For example, you might want to zoom in on the clicked position
@@ -671,12 +708,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleGenomeClick(e: MouseEvent, trackModel?: any) {
     e.preventDefault();
-    console.log("Genome click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-      track: trackModel,
-    });
+    // console.log("Genome click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    //   track: trackModel,
+    // });
 
     // Add your context menu logic here
     // For example, you might want to show a context menu
@@ -727,12 +764,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onNewRegion(newStart, newEnd);
     }
 
-    console.log("Mouse wheel zoom:", {
-      direction: zoomDirection > 0 ? "out" : "in",
-      factor: zoomFactor,
-      center: centerBp,
-      newRegion: { start: newStart, end: newEnd },
-    });
+    // console.log("Mouse wheel zoom:", {
+    //   direction: zoomDirection > 0 ? "out" : "in",
+    //   factor: zoomFactor,
+    //   center: centerBp,
+    //   newRegion: { start: newStart, end: newEnd },
+    // });
   }
 
   function handleMouseDown(e: any) {
@@ -1446,7 +1483,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: onmessInfin
 
-  const createInfiniteOnMessage = async (event: MessageEvent) => {
+  const createInfiniteOnMessage = async (
+    event: MessageEvent | { [key: string]: any }
+  ) => {
     event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
@@ -2128,7 +2167,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     rightStartCoord.current = 0;
     bpRegionSize.current = 0;
     pixelPerBase.current = 0;
-    isWorkerBusy.current = false;
+
     messageQueue.current = [];
     bpX.current = 0;
     maxBp.current = 0;
@@ -2490,10 +2529,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       parentElement.addEventListener("mouseleave", handleMouseLeave);
     }
     return () => {
-      // if (infiniteScrollWorker.current) {
-      //   infiniteScrollWorker.current!.terminate();
-      // }
-
+      // Clear ref data and remove event listeners to prevent memory leaks after component unmounts
+      refreshState();
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
@@ -3187,20 +3224,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
 
     // Set up worker message handlers when tracks change (new workers might be added)
-    if (infiniteScrollWorkers.current) {
-      infiniteScrollWorkers.current.worker?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
-        }
-      });
-      infiniteScrollWorkers.current.instance?.forEach((w) => {
-        if (!w.hasOnMessage) {
-          w.fetchWorker.onmessage = createInfiniteOnMessage;
-          w.hasOnMessage = true;
-        }
-      });
-    }
+    // if (infiniteScrollWorkers.current) {
+    //   infiniteScrollWorkers.current.worker?.forEach((w) => {
+    //     if (!w.hasOnMessage) {
+    //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+    //       w.hasOnMessage = true;
+    //     }
+    //   });
+    //   infiniteScrollWorkers.current.instance?.forEach((w) => {
+    //     if (!w.hasOnMessage) {
+    //       w.fetchWorker.onmessage = createInfiniteOnMessage;
+    //       w.hasOnMessage = true;
+    //     }
+    //   });
+    // }
   }, [tracks]);
 
   useEffect(() => {
