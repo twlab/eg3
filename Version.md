@@ -1,5 +1,9 @@
 # Version history
 
+## 56.0.1
+
+- Fixed the screenshot bug
+
 ## 56.0.0
 
 - implement multiple workers to fetch and process data, individual
