@@ -671,22 +671,22 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleSingleClick(e: MouseEvent) {
-    console.log("Single click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-    });
+    // console.log("Single click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    // });
 
     // Add your single click logic here
     // For example, you might want to select a track or feature at this position
   }
 
   function handleDoubleClick(e: MouseEvent) {
-    console.log("Double click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-    });
+    // console.log("Double click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    // });
 
     // Add your double click logic here
     // For example, you might want to zoom in on the clicked position
@@ -709,12 +709,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleGenomeClick(e: MouseEvent, trackModel?: any) {
     e.preventDefault();
-    console.log("Genome click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-      track: trackModel,
-    });
+    // console.log("Genome click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    //   track: trackModel,
+    // });
 
     // Add your context menu logic here
     // For example, you might want to show a context menu
@@ -765,12 +765,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onNewRegion(newStart, newEnd);
     }
 
-    console.log("Mouse wheel zoom:", {
-      direction: zoomDirection > 0 ? "out" : "in",
-      factor: zoomFactor,
-      center: centerBp,
-      newRegion: { start: newStart, end: newEnd },
-    });
+    // console.log("Mouse wheel zoom:", {
+    //   direction: zoomDirection > 0 ? "out" : "in",
+    //   factor: zoomFactor,
+    //   center: centerBp,
+    //   newRegion: { start: newStart, end: newEnd },
+    // });
   }
 
   function handleMouseDown(e: any) {
@@ -2533,7 +2533,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       // if (infiniteScrollWorker.current) {
       //   infiniteScrollWorker.current!.terminate();
       // }
-
+      refreshState();
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
