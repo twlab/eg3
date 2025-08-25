@@ -403,6 +403,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
           genomeConfig: createSVGData.genomeConfig,
+          groupScale: newTrackState.groupScale,
         });
 
         return (
@@ -415,7 +416,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
               position: "relative", // Position these elements absolutely
             }}
           >
-            {svgResult}
+            {typeof svgResult === "object" &&
+            Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
+              ? svgResult.component
+              : svgResult}
             {highlights.length > 0
               ? highlights.map((item, index) => {
                   return (

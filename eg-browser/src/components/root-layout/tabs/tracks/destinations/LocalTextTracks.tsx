@@ -1,7 +1,7 @@
 import StepAccordion from "@/components/ui/step-accordion/StepAccordion";
 import React from "react";
 import JSON5 from "json5";
-
+import { generateUUID } from "wuepgg3-track";
 import { ITrackModel, HELP_LINKS } from "wuepgg3-track";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -154,7 +154,7 @@ export default function LocalTextTracks() {
       textConfig,
       options: options || {},
       metadata: {},
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       isSelected: false,
     }));
 
@@ -197,8 +197,8 @@ export default function LocalTextTracks() {
             value: AddTextTrackStep.TRACK_TYPE,
             valuePreview: trackState.textType
               ? TEXT_TYPE_DESC[
-                  trackState.textType as keyof typeof TEXT_TYPE_DESC
-                ].label
+                trackState.textType as keyof typeof TEXT_TYPE_DESC
+              ].label
               : undefined,
             component: (
               <SelectTextType

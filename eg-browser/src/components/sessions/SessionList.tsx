@@ -25,7 +25,7 @@ import useGenome from "@/lib/hooks/useGenome";
 import Button from "../ui/button/Button";
 import { useNavigation } from "../core-navigation/NavigationStack";
 import ClearAllButton from "./ClearAllButton";
-
+import { generateUUID } from "wuepgg3-track";
 export default function SessionList({
   onSessionClick,
   showImportSessionButton = false,
@@ -167,7 +167,7 @@ function SessionListItem({
 
     const newSession = {
       ...session,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
     };
 
     dispatch(upsertSession(newSession));
