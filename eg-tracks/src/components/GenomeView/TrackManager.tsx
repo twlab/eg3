@@ -453,7 +453,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       (infiniteScrollWorkers.current.instance.length > 0 ||
         infiniteScrollWorkers.current.worker.length > 0)
     ) {
-
       if (
         intMessages.length > 0 &&
         infiniteScrollWorkers.current.instance.length > 0
@@ -504,7 +503,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
     } else {
-
       // Send normalMessages to fetch functions (non-worker version)
       const numWorkers = message[0].trackModelArr.length;
       const chunks = splitArrayIntoChunks(message[0].trackModelArr, numWorkers);
@@ -673,22 +671,21 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   function handleSingleClick(e: MouseEvent) {
-    console.log("Single click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-    });
-
+    // console.log("Single click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    // });
     // Add your single click logic here
     // For example, you might want to select a track or feature at this position
   }
 
   function handleDoubleClick(e: MouseEvent) {
-    console.log("Double click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-    });
+    // console.log("Double click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    // });
 
     // Add your double click logic here
     // For example, you might want to zoom in on the clicked position
@@ -711,12 +708,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   function handleGenomeClick(e: MouseEvent, trackModel?: any) {
     e.preventDefault();
-    console.log("Genome click at:", {
-      screen: { x: e.clientX, y: e.clientY },
-      relative: mouseRelativePositionRef.current,
-      genomic: mouseGenomicPositionRef.current,
-      track: trackModel,
-    });
+    // console.log("Genome click at:", {
+    //   screen: { x: e.clientX, y: e.clientY },
+    //   relative: mouseRelativePositionRef.current,
+    //   genomic: mouseGenomicPositionRef.current,
+    //   track: trackModel,
+    // });
 
     // Add your context menu logic here
     // For example, you might want to show a context menu
@@ -767,12 +764,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       onNewRegion(newStart, newEnd);
     }
 
-    console.log("Mouse wheel zoom:", {
-      direction: zoomDirection > 0 ? "out" : "in",
-      factor: zoomFactor,
-      center: centerBp,
-      newRegion: { start: newStart, end: newEnd },
-    });
+    // console.log("Mouse wheel zoom:", {
+    //   direction: zoomDirection > 0 ? "out" : "in",
+    //   factor: zoomFactor,
+    //   center: centerBp,
+    //   newRegion: { start: newStart, end: newEnd },
+    // });
   }
 
   function handleMouseDown(e: any) {
@@ -1489,7 +1486,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any }
   ) => {
-
     event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
@@ -2533,10 +2529,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       parentElement.addEventListener("mouseleave", handleMouseLeave);
     }
     return () => {
-      // if (infiniteScrollWorker.current) {
-      //   infiniteScrollWorker.current!.terminate();
-      // }
-
+      // Clear ref data and remove event listeners to prevent memory leaks after component unmounts
+      refreshState();
       if (parentElement) {
         parentElement.removeEventListener("mouseenter", handleMouseEnter);
         parentElement.removeEventListener("mouseleave", handleMouseLeave);
