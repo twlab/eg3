@@ -75,7 +75,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
     if (snapshot.exists()) {
       let res = snapshot.val();
-      console.log(res, "retrived bundl;e");
+
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;

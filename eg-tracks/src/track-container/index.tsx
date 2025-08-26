@@ -182,7 +182,7 @@ export function TrackContainerRepresentable({
       );
     }
   }, [viewRegion, genomeConfig, selectedRegionSet]);
-  console.log(convertedViewRegion, "CONVERTED VIEW REGION");
+
   const convertedUserViewRegion = useMemo(() => {
     try {
       let genomeConfig;

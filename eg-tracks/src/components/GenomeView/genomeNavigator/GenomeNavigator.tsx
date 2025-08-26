@@ -72,29 +72,35 @@ class GenomeNavigator extends React.Component<
   }
 
   /**
-   * Resets the view region if a new one is received.
+   * Resets the view region when props change.
    *
-   * @param {any} nextProps - new props that this component will receive
+   * @param {any} prevProps - previous props that this component had
    * @override
    */
-
-  //commented out because cause zoom glitch with new GenomeContext update
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentDidUpdate(prevProps) {
     const thisNavContext = this.state.viewRegion.getNavigationContext();
-    const nextNavContext = nextProps.selectedRegion.getNavigationContext();
+    const currentNavContext = this.props.selectedRegion.getNavigationContext();
+    const prevNavContext = prevProps.selectedRegion.getNavigationContext();
 
-    if (thisNavContext !== nextNavContext) {
-      this.setState({ viewRegion: new DisplayedRegionModel(nextNavContext) });
-      this.setState({
-        viewRegion: this._setInitialView(nextProps.selectedRegion),
-      });
-    }
-    else if (
-      this.props.selectedRegion.getGenomeIntervals()[0].chr !==
-      nextProps.selectedRegion.getGenomeIntervals()[0].chr
+    // Check if navigation context changed
+    if (
+      prevNavContext !== currentNavContext &&
+      thisNavContext !== currentNavContext
     ) {
       this.setState({
-        viewRegion: this._setInitialView(nextProps.selectedRegion),
+        viewRegion: new DisplayedRegionModel(currentNavContext),
+      });
+      this.setState({
+        viewRegion: this._setInitialView(this.props.selectedRegion),
+      });
+    }
+    // Check if chromosome changed
+    else if (
+      prevProps.selectedRegion.getGenomeIntervals()[0].chr !==
+      this.props.selectedRegion.getGenomeIntervals()[0].chr
+    ) {
+      this.setState({
+        viewRegion: this._setInitialView(this.props.selectedRegion),
       });
     }
   }
@@ -151,7 +157,6 @@ class GenomeNavigator extends React.Component<
    * @inheritdoc
    */
   render() {
-
     return (
       <div>
         <MainPane

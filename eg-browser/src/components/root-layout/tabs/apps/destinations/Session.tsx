@@ -14,7 +14,7 @@ import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settin
 import { BundleProps } from "./SessionUI";
 import { addCustomGenomeRemote } from "../../../../../lib/redux/thunk/genome-hub";
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
-import { GenomeSerializer } from "wuepgg3-track";
+import { generateUUID, GenomeSerializer } from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 import { useRef } from "react";
 const Session: React.FC = () => {
@@ -86,15 +86,29 @@ const Session: React.FC = () => {
         })),
       });
     }
+    let curViewRegion;
+    if (
+      `${sessionBundle.viewInterval.start}` +
+        `${sessionBundle.viewInterval.end}` ===
+      prevViewRegion.current
+    ) {
+      curViewRegion =
+        `${sessionBundle.viewInterval.start}` +
+        `${sessionBundle.viewInterval.end}` +
+        generateUUID();
+    } else {
+      curViewRegion =
+        `${sessionBundle.viewInterval.start}` +
+        `${sessionBundle.viewInterval.end}`;
+    }
+    prevViewRegion.current = curViewRegion;
     const session = {
       genomeId: sessionBundle.genomeId,
       customGenome: sessionBundle.customGenome,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       title: "",
-      viewRegion:
-        `${sessionBundle.viewInterval.start}` +
-        `${sessionBundle.viewInterval.end}`,
+      viewRegion: curViewRegion,
       userViewRegion: {
         start: sessionBundle.viewInterval.start,
         end: sessionBundle.viewInterval.end,
