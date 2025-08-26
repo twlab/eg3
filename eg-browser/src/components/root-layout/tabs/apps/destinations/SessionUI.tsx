@@ -34,6 +34,7 @@ export interface BundleProps {
   trackLegendWidth: number;
   tracks: Array<TrackModel> | Array<ITrackModel>;
   onRestoreBundle: any;
+  chromosomes: Array<any> | null;
 }
 
 interface SessionBundle {
@@ -74,7 +75,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
     const snapshot = await get(child(dbRef, `sessions/${retrieveId}`));
     if (snapshot.exists()) {
       let res = snapshot.val();
-
+      console.log(res, "retrived bundl;e");
       for (let curId in res.sessionsInBundle) {
         if (res.sessionsInBundle.hasOwnProperty(curId)) {
           let object = res.sessionsInBundle[curId].state;
@@ -85,25 +86,21 @@ export const onRetrieveSession = async (retrieveId: string) => {
           const regionSetView = regionSets[object.regionSetViewIndex] || null;
 
           // Create the newBundle object based on the existing object.
-          const genomeConfig = getGenomeConfig(object.genomeName);
+
           let viewInterval;
           if (object.viewInterval) {
             viewInterval = object.viewInterval;
           } else {
             viewInterval = {
-              start: genomeConfig.defaultRegion.start,
-              end: genomeConfig.defaultRegion.end,
+              start: 0,
+              end: 1,
             };
           }
           let newBundle = {
-            genomeName: object.genomeName,
-            viewRegion: new DisplayedRegionModel(
-              genomeConfig.navContext,
-              viewInterval.start,
-              viewInterval.end
-            ),
-
-            tracks: object.tracks.map((data) => TrackModel.deserialize(data)),
+            genomeId: object.genomeId,
+            viewInterval,
+            chromosomes: object.chromosomes || null,
+            tracks: object.tracks,
             metadataTerms: object.metadataTerms || [],
             regionSets,
             regionSetView,
@@ -154,10 +151,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
       date: Date.now(),
       state: state ? state : {},
     };
-    newSessionObj.state["viewInterval"] =
-      state && state.viewRegion
-        ? state.viewRegion.getContextCoordinates().serialize()
-        : null;
 
     const sessionId = generateUUID();
 
@@ -169,6 +162,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
         [sessionId]: newSessionObj,
       },
     };
+
     setBundle(newBundle);
     updateBundle(newBundle);
     const db = getDatabase();
@@ -588,8 +582,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-            (e.target.style.backgroundColor =
-              styles.buttonHover.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -605,12 +599,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <button
               style={styles.uploadButton}
               onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.uploadButtonHover.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.uploadButtonHover.backgroundColor)
               }
               onMouseOut={(e) =>
-              (e.target.style.backgroundColor =
-                styles.uploadButton.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.uploadButton.backgroundColor)
               }
             >
               Upload
@@ -652,8 +646,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                       (e.target.style.backgroundColor = "#EC971F")
                     }
                     onMouseOut={(e) =>
-                    (e.target.style.backgroundColor =
-                      styles.button.backgroundColor)
+                      (e.target.style.backgroundColor =
+                        styles.button.backgroundColor)
                     }
                     onClick={() => setNewSessionLabel(getFunName())}
                   >

@@ -361,6 +361,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   useEffect(() => {
     if (size.width > 0) {
+      console.log(viewRegion, userViewRegion, "WHJATTTTTTTT");
       if (trackManagerId.current) {
         const curGenome = { ...genomeConfig };
         curGenome["isInitial"] = false;
@@ -379,6 +380,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   useEffect(() => {
     if (size.width > 0) {
+      console.log(viewRegion, userViewRegion, "WHJATTTTTTTT2222");
       if (
         trackManagerId.current &&
         currentState.index !== currentState.limit - 1

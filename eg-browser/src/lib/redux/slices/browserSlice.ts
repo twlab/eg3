@@ -31,6 +31,7 @@ export interface BrowserSession {
   regionSets: Array<any>;
   selectedRegionSet: RegionSet | null;
   overrideViewRegion: GenomeCoordinate | null;
+  customGenome?: boolean | null;
 }
 
 // MARK: - State
@@ -78,6 +79,7 @@ export const browserSlice = createSlice({
         updatedAt: Date.now(),
         title: "Untitled Session",
         bundleId: null,
+        customGenome: genome.customGenome ? genome.customGenome : null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
@@ -123,6 +125,7 @@ export const browserSlice = createSlice({
           id: state.currentSession,
           changes: {
             ...changes,
+
             updatedAt: Date.now(),
           },
         });
@@ -203,9 +206,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-      state,
-      state.browser.present.currentSession
-    )
+        state,
+        state.browser.present.currentSession
+      )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

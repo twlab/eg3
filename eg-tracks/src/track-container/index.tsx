@@ -155,10 +155,7 @@ export function TrackContainerRepresentable({
 
         const { start, end } = parsed;
 
-        const newRegion = lastViewRegion.current.clone();
-        newRegion.setRegion(start, end);
-        lastViewRegion.current = newRegion;
-        return newRegion;
+        return new DisplayedRegionModel(navContext, start, end);
       } else {
         const navContext = genomeConfig.navContext as NavigationContext;
         const startViewRegion = new DisplayedRegionModel(
@@ -185,7 +182,7 @@ export function TrackContainerRepresentable({
       );
     }
   }, [viewRegion, genomeConfig, selectedRegionSet]);
-
+  console.log(convertedViewRegion, "CONVERTED VIEW REGION");
   const convertedUserViewRegion = useMemo(() => {
     try {
       let genomeConfig;

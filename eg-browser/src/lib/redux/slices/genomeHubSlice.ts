@@ -20,7 +20,12 @@ export const genomeHubSlice = createSlice({
   },
   reducers: {
     setCustomGenomes: (state, action: PayloadAction<IGenome[]>) => {
-      genomeHubAdapter.setAll(state.customGenomes, action.payload);
+      // Add customGenome: true to each genome before storing
+      const genomesWithCustomFlag = action.payload.map((genome) => ({
+        ...genome,
+        customGenome: true,
+      }));
+      genomeHubAdapter.setAll(state.customGenomes, genomesWithCustomFlag);
     },
     setCustomGenomesLoadStatus: (state, action: PayloadAction<AsyncStatus>) => {
       state.customGenomeLoadStatus = action.payload;
