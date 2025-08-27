@@ -1295,7 +1295,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         start: maxBp.current,
         end: maxBp.current + bpRegionSize.current,
       });
-      console.log(initBpLoci)
+
       startingBpArr.current = [
         minBp.current - bpRegionSize.current,
         minBp.current,
