@@ -211,7 +211,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       containerRef.current.style.height = `${tracksHeight.current}px`;
     }
 
-    // Cleanup workers on component unmount
+    // Cleanup workers and all refs/state on component unmount
     return () => {
       // Terminate all infinite scroll workers
       if (infiniteScrollWorkers.current) {
@@ -225,14 +225,27 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         // Clear the arrays and references
         infiniteScrollWorkers.current.worker = [];
         infiniteScrollWorkers.current.instance = [];
+        infiniteScrollWorkers.current = null;
       }
 
       // Terminate genome align worker
       if (fetchGenomeAlignWorker.current) {
         fetchGenomeAlignWorker.current.fetchWorker.terminate();
       }
-
       fetchGenomeAlignWorker.current = null;
+
+      // Clear all other refs
+      containerRef.current = null;
+      tracksHeight.current = 0;
+      trackManagerId.current = null;
+      prevViewRegion.current = { genomeName: "", start: 0, end: 1 };
+      layout.current = _.cloneDeep(initialLayout);
+      g3dTracks.current = [];
+
+      // Reset state to initial values
+      setCurrentGenomeConfig(null);
+      setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
+      setShow3dGene(undefined);
     };
   }, []);
 

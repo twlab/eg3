@@ -26,7 +26,6 @@ import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackP
 import { RootState } from "../../lib/redux/store";
 
 export default function GenomeView() {
-  const prevViewRegion = useRef<any>("");
   const currentSession = useAppSelector(selectCurrentSession);
   const currentState = useAppSelector((state: RootState) => {
     return currentSession ? { ...state.browser } : null;
@@ -45,7 +44,6 @@ export default function GenomeView() {
 
   const sessionId = currentSession ? currentSession.id : null;
 
-  prevViewRegion.current = currentSession ? currentSession?.viewRegion : "";
   if (lastSessionId.current !== sessionId) {
     dispatch(resetState());
     lastSessionId.current = sessionId;
@@ -68,30 +66,19 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ tracks }));
   };
 
-  const handleNewRegion = (startbase: number, endbase: number) => {
+  const handleNewRegion = (coordinate: GenomeCoordinate) => {
     dispatch(
       updateCurrentSession({
-        userViewRegion: { start: startbase, end: endbase },
+        userViewRegion: coordinate,
       })
     );
   };
 
-  const handleNewRegionSelect = (
-    startbase: number,
-    endbase: number,
-    coordinate: GenomeCoordinate
-  ) => {
-    let updatedCoord: any;
-    if (coordinate === prevViewRegion.current) {
-      updatedCoord = `${coordinate},${startbase}-${endbase}`;
-    } else {
-      updatedCoord = coordinate;
-    }
-    prevViewRegion.current = updatedCoord;
+  const handleNewRegionSelect = (coordinate: GenomeCoordinate) => {
     dispatch(
       updateCurrentSession({
-        viewRegion: updatedCoord,
-        userViewRegion: { start: startbase, end: endbase },
+        viewRegion: coordinate,
+        userViewRegion: coordinate,
       })
     );
   };

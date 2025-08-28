@@ -1,5 +1,12 @@
 # Version history
+
+## 56.0.3
+
+- Fixed modbed crash when zooming in
+- implement ability for user to save chromosomes to app session for remotely loading custom genomes
+
 ## 56.0.2
+
 - Fixed app session, not loading previous after saving
 - implement ability for user to save chromosomes to app session for remotely loading custom genomes
 

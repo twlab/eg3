@@ -35,17 +35,15 @@ export interface ITrackContainerRepresentableProps {
   genomeConfig: IGenome;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (startbase: number, endbase: number) => void | null | undefined;
+  onNewRegion: (genomeCoordinate: GenomeCoordinate) => void | null | undefined;
   onNewHighlight: (highlightState: Array<any>) => void | null | undefined;
   onTracksChange: (trackSelected: ITrackModel[]) => void | null | undefined;
   onSetSelected: (set: any) => void | null | undefined;
   onNewRegionSelect: (
-    startbase: number,
-    endbase: number,
-    coordinate: GenomeCoordinate
+    genomeCoordinate: GenomeCoordinate
   ) => void | null | undefined;
   viewRegion: GenomeCoordinate | null;
-  userViewRegion: { start: number; end: number } | null;
+  userViewRegion: GenomeCoordinate | null;
   tool: Tool | null;
   Toolbar?: any;
   selectedRegionSet: any;

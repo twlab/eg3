@@ -1010,6 +1010,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
       />
     );
+
     return canvasElements;
   },
 
