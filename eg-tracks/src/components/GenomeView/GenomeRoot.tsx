@@ -75,6 +75,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }
 
   function renderG3dTrackComponents(node) {
+    if (!userViewRegion) {
+      return null;
+    }
     const config = node.getConfig();
     const { x, y, width, height } = node.getRect();
     const g3dtrack = TrackModel.deserialize(config.trackModel);
@@ -344,7 +347,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // use effect of tracks will get trigger first creating the page layout before the resize effect
   // which will create the TrackManager component
   useEffect(() => {
-    if (size.width > 0) {
+    if (size.width > 0 && userViewRegion) {
       let curGenome;
       if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
@@ -373,7 +376,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [size.width]);
 
   useEffect(() => {
-    if (size.width > 0) {
+    if (size.width > 0 && userViewRegion) {
       if (trackManagerId.current) {
         const curGenome = { ...genomeConfig };
         curGenome["isInitial"] = false;
@@ -391,7 +394,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [viewRegion]);
 
   useEffect(() => {
-    if (size.width > 0) {
+    if (size.width > 0 && userViewRegion) {
       if (
         trackManagerId.current &&
         currentState.index !== currentState.limit - 1

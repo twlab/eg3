@@ -23,7 +23,7 @@ export interface BrowserSession {
   title: string;
   genomeId: uuid;
   viewRegion: GenomeCoordinate | null;
-  userViewRegion: { start: number; end: number } | null;
+  userViewRegion: GenomeCoordinate | null;
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];

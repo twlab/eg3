@@ -10,9 +10,7 @@ import {
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
 import {
-  DisplayedRegionModel,
   GenomeCoordinate,
-  GenomeSerializer,
   IHighlightInterval,
   ITrackModel,
   RegionSet,
@@ -82,25 +80,15 @@ export default function GenomeView() {
       })
     );
   };
-  function handleSetSelected(set: RegionSet | null) {
-    let start;
-    let end;
-    if (set) {
-      const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
-      start = newVisData._startBase;
-      end = newVisData._endBase;
-    } else {
-      const serilizeGenomeConfig = genomeConfig
-        ? GenomeSerializer.deserialize(genomeConfig)
-        : null;
-      start = serilizeGenomeConfig?.defaultRegion.start;
-      end = serilizeGenomeConfig?.defaultRegion.end;
-    }
+  function handleSetSelected(
+    set: RegionSet | null,
+    coordinate: GenomeCoordinate | null
+  ) {
     if (currentSession?.selectedRegionSet || set) {
       dispatch(
         updateCurrentSession({
           selectedRegionSet: set,
-          userViewRegion: { start, end },
+          userViewRegion: coordinate,
         })
       );
     }

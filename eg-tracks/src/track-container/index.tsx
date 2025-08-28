@@ -10,9 +10,7 @@ import { TrackModel } from "../models/TrackModel";
 import NavigationContext from "../models/NavigationContext";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import GenomeSerializer from "../genome-hub/GenomeSerializer";
-import OpenInterval, { IOpenInterval } from "../models/OpenInterval";
 import RegionSet from "../models/RegionSet";
-import { getGenomeConfig } from "../util";
 import { FeatureSegment } from "../models/FeatureSegment";
 
 export function TrackContainer(props: ITrackContainerState) {
@@ -143,7 +141,6 @@ export function TrackContainerRepresentable({
     try {
       if (!viewRegion) {
         if (userViewRegion) {
-          console.log(userViewRegion);
           const navContext = genomeConfig.navContext as NavigationContext;
           const parsed = navContext.parse(userViewRegion);
           const { start, end } = parsed;
@@ -199,7 +196,6 @@ export function TrackContainerRepresentable({
             genomeConfig.navContext,
             ...newViewRegion
           );
-        } else {
         }
       }
     } catch (e) {
@@ -246,7 +242,25 @@ export function TrackContainerRepresentable({
     },
     [onNewRegion]
   );
-
+  const handleSetRegion = useCallback(
+    (set: RegionSet | null) => {
+      let coordinate: GenomeCoordinate | null = null;
+      if (set) {
+        const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
+        coordinate =
+          newVisData.currentRegionAsString() as GenomeCoordinate | null;
+      } else {
+        const navContext = genomeConfig.navContext;
+        coordinate = new DisplayedRegionModel(
+          navContext,
+          genomeConfig.defaultRegion.start,
+          genomeConfig.defaultRegion.end
+        ).currentRegionAsString() as GenomeCoordinate | null;
+      }
+      onSetSelected(set, coordinate);
+    },
+    [onNewRegion]
+  );
   const handleNewRegionSelect = (
     startbase: number,
     endbase: number,
@@ -293,7 +307,7 @@ export function TrackContainerRepresentable({
         onNewRegionSelect={
           !onNewRegionSelect ? () => {} : handleNewRegionSelect
         }
-        onSetSelected={!onSetSelected ? () => {} : onSetSelected}
+        onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
         viewRegion={convertedViewRegion}
         userViewRegion={
           convertedUserViewRegion

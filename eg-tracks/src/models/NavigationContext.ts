@@ -269,33 +269,47 @@ class NavigationContext {
    */
   parse(str: string): OpenInterval {
     // Check if the input contains multiple chromosome intervals
-    if (str.includes("-") && str.split(":").length === 3) {
-      const segments = str.split("-");
+    // Multi-chromosome format: "chr7:154900269-chr8:1379003"
+    // Single chromosome format: "chr7:27103672.064926386-27424040.064926386"
+    const segments = str.split("-");
+    const isMultiChromosome =
+      segments.length === 2 &&
+      segments[0].includes(":") &&
+      segments[1].includes(":") &&
+      segments[1].startsWith("chr");
+
+    if (isMultiChromosome) {
       const startChromosomePart = segments[0]; // e.g., "chr7:154900269"
       const endChromosomePart = segments[1]; // e.g., "chr10:1379003"
 
       const [startChr, startPosStr] = startChromosomePart.split(":");
       const [endChr, endPosStr] = endChromosomePart.split(":");
-      const startPos = parseInt(startPosStr);
-      const endPos = parseInt(endPosStr);
+      const startPos = Math.round(parseFloat(startPosStr));
+      const endPos = Math.round(parseFloat(endPosStr));
 
       const startFeature = this._featuresForChr[startChr]?.[0];
       const endFeature = this._featuresForChr[endChr]?.[0];
 
       if (!startFeature || !endFeature) {
-        throw new RangeError("One or more chromosomes unavailable in this context");
+        throw new RangeError(
+          "One or more chromosomes unavailable in this context"
+        );
       }
 
       // Extract chromosome numbers for range calculation
-      const startChrNum = parseInt(startChr.replace('chr', ''));
-      const endChrNum = parseInt(endChr.replace('chr', ''));
+      const startChrNum = parseInt(startChr.replace("chr", ""));
+      const endChrNum = parseInt(endChr.replace("chr", ""));
 
       // Collect all intervals spanning from start chromosome to end chromosome
       const intervals: OpenInterval[] = [];
 
       // Add the starting chromosome interval (from startPos to end of chromosome)
-      const startInterval = `${startChr}:${startPos}-${startFeature.getLocus().end}`;
-      const startContextCoords = this.convertGenomeIntervalToBases(ChromosomeInterval.parse(startInterval))[0];
+      const startInterval = `${startChr}:${startPos}-${
+        startFeature.getLocus().end
+      }`;
+      const startContextCoords = this.convertGenomeIntervalToBases(
+        ChromosomeInterval.parse(startInterval)
+      )[0];
       if (startContextCoords) {
         intervals.push(startContextCoords);
       }
@@ -305,8 +319,12 @@ class NavigationContext {
         const chrName = `chr${chrNum}`;
         const chrFeature = this._featuresForChr[chrName]?.[0];
         if (chrFeature) {
-          const chrInterval = `${chrName}:${chrFeature.getLocus().start}-${chrFeature.getLocus().end}`;
-          const chrContextCoords = this.convertGenomeIntervalToBases(ChromosomeInterval.parse(chrInterval))[0];
+          const chrInterval = `${chrName}:${chrFeature.getLocus().start}-${
+            chrFeature.getLocus().end
+          }`;
+          const chrContextCoords = this.convertGenomeIntervalToBases(
+            ChromosomeInterval.parse(chrInterval)
+          )[0];
           if (chrContextCoords) {
             intervals.push(chrContextCoords);
           }
@@ -315,8 +333,12 @@ class NavigationContext {
 
       // Add the ending chromosome interval (from start of chromosome to endPos)
       if (startChrNum !== endChrNum) {
-        const endInterval = `${endChr}:${endFeature.getLocus().start}-${endPos}`;
-        const endContextCoords = this.convertGenomeIntervalToBases(ChromosomeInterval.parse(endInterval))[0];
+        const endInterval = `${endChr}:${
+          endFeature.getLocus().start
+        }-${endPos}`;
+        const endContextCoords = this.convertGenomeIntervalToBases(
+          ChromosomeInterval.parse(endInterval)
+        )[0];
         if (endContextCoords) {
           intervals.push(endContextCoords);
         }
@@ -327,10 +349,11 @@ class NavigationContext {
       }
 
       // Return an interval spanning from the start of the first interval to the end of the last
-      const overallStart = Math.min(...intervals.map(interval => interval.start));
-      const overallEnd = Math.max(...intervals.map(interval => interval.end));
+      const overallStart = Math.min(
+        ...intervals.map((interval) => interval.start)
+      );
+      const overallEnd = Math.max(...intervals.map((interval) => interval.end));
 
-      console.log(`Multi-chromosome interval spans: ${overallStart} to ${overallEnd}`);
       return new OpenInterval(overallStart, overallEnd);
     }
 
@@ -344,7 +367,25 @@ class NavigationContext {
       return new OpenInterval(center - 3, center + 3);
     }
 
+    // Handle single chromosome interval with potential decimal coordinates
+    if (str.includes(":") && str.includes("-")) {
+      const [chrPart, rangePart] = str.split(":");
+      const [startStr, endStr] = rangePart.split("-");
+      const startPos = Math.round(parseFloat(startStr));
+      const endPos = Math.round(parseFloat(endStr));
+      const cleanedStr = `${chrPart}:${startPos}-${endPos}`;
+
+      const locus = ChromosomeInterval.parse(cleanedStr);
+      const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
+      if (!contextCoords) {
+        throw new RangeError("Location unavailable in this context");
+      } else {
+        return contextCoords;
+      }
+    }
+
     const locus = ChromosomeInterval.parse(str);
+
     const contextCoords = this.convertGenomeIntervalToBases(locus)[0];
     if (!contextCoords) {
       throw new RangeError("Location unavailable in this context");

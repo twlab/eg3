@@ -12,14 +12,14 @@ export interface ITrackContainerState {
   onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTracksChange: (trackSelected: TrackModel[]) => void;
-  onSetSelected: (set: any) => void;
+  onSetSelected: (set: any, genomeCoordinate: GenomeCoordinate | null) => void;
   onNewRegionSelect: (
     startbase: number,
     endbase: number,
     highlightSearch?: boolean
   ) => void;
-  viewRegion: DisplayedRegionModel | undefined;
-  userViewRegion: DisplayedRegionModel;
+  viewRegion: DisplayedRegionModel | undefined | null;
+  userViewRegion: DisplayedRegionModel | undefined | null;
   tool: Tool | null | string;
   Toolbar: { [key: string]: any };
   selectedRegionSet: any;
@@ -38,7 +38,10 @@ export interface ITrackContainerRepresentableProps {
   onNewRegion: (genomeCoordinate: GenomeCoordinate) => void | null | undefined;
   onNewHighlight: (highlightState: Array<any>) => void | null | undefined;
   onTracksChange: (trackSelected: ITrackModel[]) => void | null | undefined;
-  onSetSelected: (set: any) => void | null | undefined;
+  onSetSelected: (
+    set: any,
+    genomeCoordinate: GenomeCoordinate | null
+  ) => void | null | undefined;
   onNewRegionSelect: (
     genomeCoordinate: GenomeCoordinate
   ) => void | null | undefined;
