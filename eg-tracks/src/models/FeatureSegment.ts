@@ -1,6 +1,11 @@
 import OpenInterval from "./OpenInterval";
 import ChromosomeInterval from "./ChromosomeInterval";
-import { Feature } from "./Feature";
+export function isGenomeCoordinate(str: string) {
+  const singleRegionPattern = /^chr[\w.]+:\d+-\d+$/;
+  const multiRegionPattern = /^chr[\w.]+:\d+-chr[\w.]+-\d+$/;
+  return singleRegionPattern.test(str) || multiRegionPattern.test(str);
+}
+
 
 /**
  * A 0-indexed open interval within a Feature.  Or, put another way, attaches an interval to a Feature.
@@ -8,6 +13,17 @@ import { Feature } from "./Feature";
  * @author Silas Hsu
  * @see Feature
  */
+
+function parseChromosomeName(regionString: string): string {
+  const singleRegionPattern = /^(chr[\w.]+):(\d+)-(\d+)$/;
+  const match = regionString.match(singleRegionPattern);
+
+  if (!match) {
+    throw new Error(`Invalid region format: ${regionString}. Expected format: chr7:27053397-27373765`);
+  }
+
+  return match[1]; // Returns the chromosome name (e.g., "chr7")
+}
 export class FeatureSegment {
   public readonly relativeStart: number; // Start base of the interval, relative to the feature's start
   public readonly relativeEnd: number; // End base of the interval, relative to the feature's start
@@ -135,9 +151,15 @@ export class FeatureSegment {
    * @return {string} human-readable representation of this interval
    */
   toString(): string {
-    // web 1 based
-    return `${this.getName()}:${this.relativeStart + 1}-${this.relativeEnd}`;
+    let name;
+    if (isGenomeCoordinate(this.getName())) {
+      name = parseChromosomeName(this.getName());
+    } else {
+      name = this.getName();
+    }
+    return `${name}:${this.relativeStart}-${this.relativeEnd}`;
   }
+
 
   // /**
   //  * Interprets this and another interval as a multi-feature interval, with this being the start and the other being
@@ -147,9 +169,20 @@ export class FeatureSegment {
   //  * @return {string} a human-readable representation of a multi-feature interval
   //  */
   toStringWithOther(other: FeatureSegment): string {
-    // web 1 based
-    return `${this.getName()}:${this.relativeStart + 1}-${other.getName()}:${
-      other.relativeEnd
-    }`;
+    let name1;
+    let name2;
+    if (isGenomeCoordinate(this.getName())) {
+      name1 = parseChromosomeName(this.getName());
+    }
+    else {
+      name1 = this.getName();
+    }
+    if (isGenomeCoordinate(other.getName())) {
+      name2 = parseChromosomeName(other.getName());
+    } else {
+      name2 = other.getName();
+    }
+    return `${name1}:${this.relativeStart + 1}-${name2}:${other.relativeEnd}`;
   }
+
 }

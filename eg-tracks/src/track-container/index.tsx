@@ -141,26 +141,21 @@ export function TrackContainerRepresentable({
     try {
       if (!viewRegion) {
         if (userViewRegion) {
+          console.log("ASDADSASDASDADASDSD")
           const navContext = genomeConfig.navContext as NavigationContext;
           const parsed = navContext.parse(userViewRegion);
           const { start, end } = parsed;
-
           return new DisplayedRegionModel(genomeConfig.navContext, start, end);
         }
       } else {
         const navContext = genomeConfig.navContext as NavigationContext;
         const parsed = navContext.parse(viewRegion);
         const { start, end } = parsed;
-
-        const startViewRegion = new DisplayedRegionModel(
-          navContext,
-          start,
-          end
-        );
-        return startViewRegion;
+        return new DisplayedRegionModel(genomeConfig.navContext, start, end);
       }
     } catch (e) {
       // console.error(e);
+      return new DisplayedRegionModel(genomeConfig.navContext, ...genomeConfig.defaultRegion);
     }
   }, [viewRegion, genomeConfig, selectedRegionSet, forceViewRegionUpdate]);
 
@@ -181,9 +176,6 @@ export function TrackContainerRepresentable({
         let setNavContext;
         if (typeof selectedRegionSet === "object") {
           const newRegionSet = RegionSet.deserialize(selectedRegionSet);
-          newRegionSet.genome = genomeConfig.genome;
-          newRegionSet.genomeName = genomeConfig.genome.getName();
-
           setNavContext = newRegionSet.makeNavContext();
         } else {
           setNavContext = selectedRegionSet.makeNavContext();
@@ -199,7 +191,7 @@ export function TrackContainerRepresentable({
         }
       }
     } catch (e) {
-      console.error(e);
+      return new DisplayedRegionModel(genomeConfig.navContext, ...genomeConfig.defaultRegion);
     }
   }, [userViewRegion, genomeConfig, overrideViewRegion, selectedRegionSet]);
 
@@ -235,10 +227,8 @@ export function TrackContainerRepresentable({
     (startbase: number, endbase: number) => {
       const genomeFeatureSegment: Array<FeatureSegment> =
         genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
-
-      onNewRegion(
-        currentRegionAsString(genomeFeatureSegment) as GenomeCoordinate
-      );
+      const coordinate = currentRegionAsString(genomeFeatureSegment) as GenomeCoordinate;
+      onNewRegion(coordinate);
     },
     [onNewRegion]
   );
@@ -249,6 +239,7 @@ export function TrackContainerRepresentable({
         const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
         coordinate =
           newVisData.currentRegionAsString() as GenomeCoordinate | null;
+
       } else {
         const navContext = genomeConfig.navContext;
         coordinate = new DisplayedRegionModel(
@@ -301,13 +292,13 @@ export function TrackContainerRepresentable({
         genomeConfig={genomeConfig}
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
-        onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
-        onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
-        onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
+        onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
+        onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
+        onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
         onNewRegionSelect={
-          !onNewRegionSelect ? () => {} : handleNewRegionSelect
+          !onNewRegionSelect ? () => { } : handleNewRegionSelect
         }
-        onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
+        onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
         viewRegion={convertedViewRegion}
         userViewRegion={
           convertedUserViewRegion
@@ -334,9 +325,9 @@ export function TrackContainerRepresentable({
         >
           <Toolbar.toolbar
             highlights={highlights}
-            onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
+            onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
             onNewRegionSelect={
-              !onNewRegionSelect ? () => {} : handleNewRegionSelect
+              !onNewRegionSelect ? () => { } : handleNewRegionSelect
             }
           />
         </div>

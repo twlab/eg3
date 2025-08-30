@@ -124,7 +124,7 @@ export function bpNavToGenNav(bpNaletr: Array<any>, genome: GenomeConfig) {
         "start" in bpNav ? bpNav.start : bpNav._startBase,
         "end" in bpNav ? bpNav.end : bpNav._endBase
       );
-
+    console.log(genomeFeatureSegment)
     genRes.push(genomeFeatureSegment.map((item, _index) => item.getLocus()));
   }
 

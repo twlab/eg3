@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent } from "react";
 
 import JSZip from "jszip";
 import _ from "lodash";
-import { generateUUID } from "wuepgg3-track";
+import { generateUUID, Genome, GenomeCoordinate } from "wuepgg3-track";
 import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import {
   AppStateSaver,
@@ -30,11 +30,13 @@ export interface BundleProps {
   metadataTerms: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
   regionSetView: any | null; // use appropriate type if you know it
   regionSets: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
-  viewRegion: DisplayedRegionModel | null;
+  viewRegion: GenomeCoordinate | null;
   trackLegendWidth: number;
   tracks: Array<TrackModel> | Array<ITrackModel>;
-  onRestoreBundle: any;
   chromosomes: Array<any> | null;
+  customGenome: any | null;
+  genomeId: string | null;
+  viewInterval: { start: number; end: number } | null;
 }
 
 interface SessionBundle {
@@ -61,7 +63,6 @@ interface SessionUIProps extends HasBundleId {
   withGenomePicker?: boolean;
   state?: BundleProps;
   curBundle: any;
-  onRestoreBundle: any;
 }
 
 export const onRetrieveSession = async (retrieveId: string) => {
@@ -133,7 +134,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   onRetrieveBundle,
   withGenomePicker,
   updateBundle,
-  onRestoreBundle,
+
   state,
   curBundle,
   bundleId,
@@ -582,8 +583,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.buttonHover.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -599,12 +600,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <button
               style={styles.uploadButton}
               onMouseOver={(e) =>
-                (e.target.style.backgroundColor =
-                  styles.uploadButtonHover.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.uploadButtonHover.backgroundColor)
               }
               onMouseOut={(e) =>
-                (e.target.style.backgroundColor =
-                  styles.uploadButton.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.uploadButton.backgroundColor)
               }
             >
               Upload
@@ -646,8 +647,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                       (e.target.style.backgroundColor = "#EC971F")
                     }
                     onMouseOut={(e) =>
-                      (e.target.style.backgroundColor =
-                        styles.button.backgroundColor)
+                    (e.target.style.backgroundColor =
+                      styles.button.backgroundColor)
                     }
                     onClick={() => setNewSessionLabel(getFunName())}
                   >

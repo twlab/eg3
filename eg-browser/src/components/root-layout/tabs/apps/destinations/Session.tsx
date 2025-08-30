@@ -14,9 +14,11 @@ import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settin
 import { BundleProps } from "./SessionUI";
 import { addCustomGenomeRemote } from "../../../../../lib/redux/thunk/genome-hub";
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
-import { generateUUID, GenomeSerializer } from "wuepgg3-track";
+import { DisplayedRegionModel, generateUUID, Genome, GenomeCoordinate, GenomeSerializer, getGenomeConfig } from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
-import { useRef } from "react";
+import { use, useRef } from "react";
+import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
+import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 const Session: React.FC = () => {
   useExpandedNavigationTab();
   const prevViewRegion = useRef<any>("");
@@ -28,7 +30,7 @@ const Session: React.FC = () => {
   const _genomeConfig = useCurrentGenome();
 
   prevViewRegion.current = currentSession ? currentSession?.viewRegion : "";
-  let curUserState: BundleProps | null = null;
+  let curUserState: BundleProps | undefined = undefined;
 
   if (currentSession && _genomeConfig && bundle) {
     const highlights = currentSession.highlights;
@@ -39,15 +41,20 @@ const Session: React.FC = () => {
     const userViewRegion = currentSession.userViewRegion;
 
     let curViewInterval;
+    const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
     if (userViewRegion) {
+
+      const navContext = genomeConfig.navContext as NavigationContext;
+      const parsed = navContext.parse(userViewRegion);
+      const { start, end } = parsed;
+
       curViewInterval = {
-        start: userViewRegion?.start,
-        end: userViewRegion?.end,
+        start,
+        end,
       };
+
     } else {
-      const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
-      const navContext = genomeConfig.navContext;
-      curViewInterval = navContext.parse(_genomeConfig.defaultRegion);
+      curViewInterval = genomeConfig.defaultRegion;
     }
 
     curUserState = {
@@ -70,13 +77,17 @@ const Session: React.FC = () => {
       regionSets,
       trackLegendWidth: 120,
       tracks,
+      viewRegion: userViewRegion,
       viewInterval: curViewInterval,
     };
   }
   //provide data to genomeTracks to new current bundle session
   function onRestoreSession(sessionBundle: any) {
+    let newGenomeConfig: GenomeConfig | null = null;
+    let coordinate: GenomeCoordinate | null = null;
+
     if (sessionBundle.customGenome) {
-      addCustomGenomeRemote({
+      const _newGenomeConfig = {
         id: sessionBundle.genomeId,
         name: sessionBundle.genomeId,
         chromosomes: sessionBundle.chromosomes,
@@ -84,36 +95,35 @@ const Session: React.FC = () => {
           ...item,
           waitToUpdate: true,
         })),
-      });
+      }
+      addCustomGenomeRemote(_newGenomeConfig);
+      newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
+
     }
-    let curViewRegion;
-    if (
-      `${sessionBundle.viewInterval.start}` +
-        `${sessionBundle.viewInterval.end}` ===
-      prevViewRegion.current
-    ) {
-      curViewRegion =
-        `${sessionBundle.viewInterval.start}` +
-        `${sessionBundle.viewInterval.end}` +
-        generateUUID();
-    } else {
-      curViewRegion =
-        `${sessionBundle.viewInterval.start}` +
-        `${sessionBundle.viewInterval.end}`;
+    else if (getGenomeConfig(sessionBundle.genomeId)) {
+      newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
     }
-    prevViewRegion.current = curViewRegion;
+
+    // if (newGenomeConfig && sessionBundle.viewRegion) {
+    //   coordinate = sessionBundle.viewRegion;
+    // }
+    // else 
+
+    if (newGenomeConfig && sessionBundle.viewInterval) {
+      coordinate =
+        new DisplayedRegionModel(newGenomeConfig?.navContext, sessionBundle.viewInterval.start, sessionBundle.viewInterval.end).currentRegionAsString() as GenomeCoordinate | null;
+    }
+
+
     const session = {
       genomeId: sessionBundle.genomeId,
       customGenome: sessionBundle.customGenome,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       title: "",
-      viewRegion: curViewRegion,
-      userViewRegion: {
-        start: sessionBundle.viewInterval.start,
-        end: sessionBundle.viewInterval.end,
-      },
-      tracks: sessionBundle.tracks.map((item) => ({
+      viewRegion: coordinate === prevViewRegion.current ? null : coordinate,
+      userViewRegion: coordinate,
+      tracks: sessionBundle.tracks.map((item: any) => ({
         ...item,
         waitToUpdate: true,
       })),
@@ -122,6 +132,8 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
+
+    prevViewRegion.current = coordinate;
 
     dispatch(resetState());
     dispatch(updateCurrentSession(session));
@@ -153,8 +165,7 @@ const Session: React.FC = () => {
       updateBundle={onUpdateBundle}
       bundleId={bundle.bundleId ? bundle.bundleId : ""}
       curBundle={bundle}
-      state={curUserState}
-    />
+      state={curUserState} />
   );
 };
 

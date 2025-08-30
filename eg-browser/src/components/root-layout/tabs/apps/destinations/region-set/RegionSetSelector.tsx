@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 // Local Component
 import RegionSetConfig from "./RegionSetConfig";
-import { generateUUID } from "wuepgg3-track";
+import { generateUUID, GenomeCoordinate } from "wuepgg3-track";
 // wuepgg3-track Imports
 import {
   RegionSet,
@@ -64,21 +64,26 @@ const RegionSetSelector: React.FC = ({ }) => {
     );
   };
   function onSetSelected(set: RegionSet | null) {
-    let start;
-    let end;
+    let coordinate: GenomeCoordinate | null = null;
     if (set) {
       const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
-      start = newVisData._startBase;
-      end = newVisData._endBase;
-    } else {
-      start = genomeConfig?.defaultRegion.start;
-      end = genomeConfig?.defaultRegion.end;
-    }
+      coordinate =
+        newVisData.currentRegionAsString() as GenomeCoordinate | null;
 
+    } else {
+      if (genomeConfig) {
+        const navContext = genomeConfig.navContext;
+        coordinate = new DisplayedRegionModel(
+          navContext,
+          genomeConfig.defaultRegion.start,
+          genomeConfig.defaultRegion.end
+        ).currentRegionAsString() as GenomeCoordinate | null;
+      }
+    }
     dispatch(
       updateCurrentSession({
         selectedRegionSet: set,
-        userViewRegion: { start, end },
+        userViewRegion: coordinate,
       })
     );
   }
