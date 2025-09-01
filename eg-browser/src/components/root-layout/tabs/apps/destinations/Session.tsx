@@ -14,14 +14,13 @@ import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settin
 import { BundleProps } from "./SessionUI";
 import { addCustomGenomeRemote } from "../../../../../lib/redux/thunk/genome-hub";
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
-import { DisplayedRegionModel, generateUUID, Genome, GenomeCoordinate, GenomeSerializer, getGenomeConfig } from "wuepgg3-track";
+import { DisplayedRegionModel, GenomeCoordinate, GenomeSerializer, getGenomeConfig } from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
-import { use, useRef } from "react";
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
+
 const Session: React.FC = () => {
   useExpandedNavigationTab();
-  const prevViewRegion = useRef<any>("");
   const dispatch = useAppDispatch();
   const customTracksPool = useAppSelector(selectCustomTracksPool);
   const currentSession = useAppSelector(selectCurrentSession);
@@ -29,7 +28,6 @@ const Session: React.FC = () => {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const _genomeConfig = useCurrentGenome();
 
-  prevViewRegion.current = currentSession ? currentSession?.viewRegion : "";
   let curUserState: BundleProps | undefined = undefined;
 
   if (currentSession && _genomeConfig && bundle) {
@@ -104,12 +102,10 @@ const Session: React.FC = () => {
       newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
     }
 
-    // if (newGenomeConfig && sessionBundle.viewRegion) {
-    //   coordinate = sessionBundle.viewRegion;
-    // }
-    // else 
-
-    if (newGenomeConfig && sessionBundle.viewInterval) {
+    if (newGenomeConfig && sessionBundle.viewRegion) {
+      coordinate = sessionBundle.viewRegion;
+    }
+    else if (newGenomeConfig && sessionBundle.viewInterval) {
       coordinate =
         new DisplayedRegionModel(newGenomeConfig?.navContext, sessionBundle.viewInterval.start, sessionBundle.viewInterval.end).currentRegionAsString() as GenomeCoordinate | null;
     }
@@ -121,7 +117,7 @@ const Session: React.FC = () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       title: "",
-      viewRegion: coordinate === prevViewRegion.current ? null : coordinate,
+      viewRegion: coordinate,
       userViewRegion: coordinate,
       tracks: sessionBundle.tracks.map((item: any) => ({
         ...item,
@@ -133,7 +129,7 @@ const Session: React.FC = () => {
       regionSets: sessionBundle.regionSets ?? [],
     };
 
-    prevViewRegion.current = coordinate;
+
 
     dispatch(resetState());
     dispatch(updateCurrentSession(session));

@@ -112,7 +112,7 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
-        if ("tracks" in changes) {
+        if (changes["tracks"]) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
               (track as ITrackModel).id = generateUUID();
@@ -120,7 +120,10 @@ export const browserSlice = createSlice({
             return track;
           });
         }
-
+        const currentSession = state.sessions.entities[state.currentSession];
+        if (changes["viewRegion"] && currentSession && changes["viewRegion"] === currentSession.viewRegion) {
+          changes["viewRegion"] = null
+        }
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
@@ -206,9 +209,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-        state,
-        state.browser.present.currentSession
-      )
+      state,
+      state.browser.present.currentSession
+    )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

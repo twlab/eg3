@@ -66,7 +66,7 @@ export function TrackContainerRepresentable({
   overrideViewRegion,
   currentState,
 }: ITrackContainerRepresentableProps) {
-  const [forceViewRegionUpdate, setForceViewRegionUpdate] = useState(0);
+  // const [forceViewRegionUpdate, setForceViewRegionUpdate] = useState(0);
 
   // MARK: Genome Config
 
@@ -157,7 +157,7 @@ export function TrackContainerRepresentable({
       // console.error(e);
       return new DisplayedRegionModel(genomeConfig.navContext, ...genomeConfig.defaultRegion);
     }
-  }, [viewRegion, genomeConfig, selectedRegionSet, forceViewRegionUpdate]);
+  }, [viewRegion, genomeConfig, selectedRegionSet]);
 
   const convertedUserViewRegion = useMemo(() => {
     try {
@@ -262,14 +262,13 @@ export function TrackContainerRepresentable({
     const newCoordinate = currentRegionAsString(
       genomeFeatureSegment
     ) as GenomeCoordinate;
-
-    if (viewRegion && newCoordinate === viewRegion) {
-      // Force convertedViewRegion to recalculate without calling onNewRegionSelect
-      setForceViewRegionUpdate((prev) => prev + 1);
-    } else {
-      // Only call onNewRegionSelect when coordinate is different
-      onNewRegionSelect(newCoordinate as GenomeCoordinate);
-    }
+    // if (viewRegion && newCoordinate === viewRegion) {
+    //   // Force convertedViewRegion to recalculate without calling onNewRegionSelect
+    //   setForceViewRegionUpdate((prev) => prev + 1);
+    // } else {
+    //   // Only call onNewRegionSelect when coordinate is different
+    onNewRegionSelect(newCoordinate as GenomeCoordinate);
+    // }
 
     if (highlightSearch) {
       const newHightlight = {
