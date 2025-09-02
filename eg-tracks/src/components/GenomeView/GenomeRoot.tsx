@@ -21,7 +21,7 @@ import { generateUUID } from "../../util";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
-const packageVersion = true;
+const packageVersion = false;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
@@ -174,7 +174,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   );
 
   function onHeightChange(height: number) {
-    const newHeight = height + 200;
+    const newHeight = height + 240;
     if (newHeight !== tracksHeight.current) {
       tracksHeight.current = newHeight;
       // Directly update the DOM to avoid re-renders and flickering

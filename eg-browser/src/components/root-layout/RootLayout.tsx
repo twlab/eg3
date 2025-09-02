@@ -17,8 +17,10 @@ import ShareTab from "./tabs/ShareTab";
 import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
+  createSession,
   selectCurrentSessionId,
   setCurrentSession,
+  updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
 import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "../sessions/SessionPanel";
@@ -27,7 +29,19 @@ import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
-import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
+import {
+  selectDarkTheme,
+  setNavBarVisibility,
+  setNavigatorVisibility,
+} from "@/lib/redux/slices/settingsSlice";
+import { useEffect } from "react";
+
+import {
+  GenomeSerializer,
+  getGenomeConfig,
+  IGenome,
+  ITrackModel,
+} from "wuepgg3-track";
 
 // const firebaseConfig = {
 //   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
@@ -43,7 +57,27 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-export default function RootLayout() {
+
+export interface TracksProps {
+  url?: string;
+  name?: string;
+  options?: { [key: string]: any };
+  type: string;
+  showOnHubLoad?: boolean;
+  metadata?: { [key: string]: any };
+}
+export interface RootLayoutProps {
+  viewRegion?: string | null | undefined;
+  genomeName?: string;
+  tracks?: TracksProps[] | ITrackModel[];
+  windowWidth?: number;
+  customGenome?: any;
+  showGenomeNavigator?: boolean;
+  showNavBar?: boolean;
+  showToolBar?: boolean;
+}
+
+export default function RootLayout(props: RootLayoutProps) {
   useBrowserInitialization();
 
   const isSmallScreen = useSmallScreen();
@@ -68,13 +102,91 @@ export default function RootLayout() {
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
+  function getConfig(customGenome: any, genomeName: string | null | undefined) {
+    if (customGenome) {
+      try {
+        return customGenome;
+      } catch {
+        return null;
+      }
+    }
+    if (genomeName) {
+      const genomeConfig = getGenomeConfig(genomeName);
+      if (genomeConfig) {
+        return GenomeSerializer.serialize(genomeConfig);
+      }
+      return null;
+    }
+    return null;
+  }
+
+  useEffect(() => {
+    if (
+      (props.genomeName && props.tracks && props.viewRegion) ||
+      props.customGenome
+    ) {
+      const iGenomeConfig: IGenome | null = getConfig(
+        props.customGenome,
+        props.genomeName
+      );
+      if (iGenomeConfig) {
+        // dispatch(
+        //   setNavigatorVisibility(
+        //     typeof props.showGenomeNavigator === "boolean"
+        //       ? props.showGenomeNavigator
+        //       : true
+        //   )
+        // );
+        // dispatch(
+        //   setNavBarVisibility(
+        //     typeof props.showNavBar === "boolean" ? props.showNavBar : true
+        //   )
+        // );
+        if (!sessionId) {
+          const defaultTracks = iGenomeConfig["defaultTracks"]
+            ? iGenomeConfig["defaultTracks"]
+            : [];
+          iGenomeConfig["defaultTracks"] = [
+            ...defaultTracks,
+            ...(props.tracks || []),
+          ];
+
+          dispatch(
+            createSession({
+              genome: iGenomeConfig,
+
+              viewRegion:
+                typeof props.viewRegion === "string" ||
+                props.viewRegion === null
+                  ? undefined
+                  : props.viewRegion,
+            })
+          );
+        } else {
+          dispatch(
+            updateCurrentSession({
+              tracks: props.tracks as ITrackModel[],
+              viewRegion:
+                typeof props.viewRegion === "string" ||
+                props.viewRegion === null
+                  ? undefined
+                  : props.viewRegion,
+
+              genomeId: props.genomeName,
+              customGenome: props.customGenome,
+            })
+          );
+        }
+      }
+    }
+  }, [props]);
 
   return (
     <div
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
     >
-      <GoogleAnalytics />
+      {!import.meta.env.packageVersion ? <GoogleAnalytics /> : null}
       <motion.div
         className="flex flex-col h-full text-primary dark:text-white"
         animate={{
@@ -85,7 +197,7 @@ export default function RootLayout() {
           borderRadius: showModal ? 15 : 0,
         }}
       >
-        <NavBar />
+        {!import.meta.env.packageVersion ? <NavBar /> : null}
         <div
           className="flex flex-row flex-1 relative bg-black"
           ref={contentRef}

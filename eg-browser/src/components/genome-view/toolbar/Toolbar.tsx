@@ -54,30 +54,33 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
   };
 
   return (
-    <motion.div
-      className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-col p-1 m-1.5 border border-gray-secondary rounded-md"
-      animate={{
-        gap: isSearchFocused ? 0 : "0.5rem",
-      }}
-      transition={{ duration: 0.2 }}
-    >
-      <SearchBar
-        isSearchFocused={isSearchFocused}
-        onSearchFocusChange={setIsSearchFocused}
-        onNewRegionSelect={onNewRegionSelect}
-      />
-
+    <div className="flex flex-row items-center gap-1 ">
+      {/* Search Bar Container */}
       <motion.div
-        className="flex flex-row items-center gap-1.5"
+        className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex-1  px-3 py-2 border border-gray-secondary rounded-md h-12 flex items-center"
         animate={{
-          height: isSearchFocused ? 0 : "auto",
-          opacity: isSearchFocused ? 0 : 1,
+          opacity: 1,
         }}
         transition={{ duration: 0.2 }}
-        style={{ overflow: "hidden" }}
+      >
+        <SearchBar
+          isSearchFocused={isSearchFocused}
+          onSearchFocusChange={setIsSearchFocused}
+          onNewRegionSelect={onNewRegionSelect}
+        />
+      </motion.div>
+
+      {/* Toolbar Buttons Container */}
+      <motion.div
+        className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-row items-center gap-1  p-2 border border-gray-secondary rounded-md h-12"
+        animate={{
+          opacity: isSearchFocused ? 0.5 : 1,
+          scale: isSearchFocused ? 0.95 : 1,
+        }}
+        transition={{ duration: 0.2 }}
       >
         <motion.div
-          className="flex flex-row items-center gap-1.5"
+          className="flex flex-row items-center gap-1"
           animate={{
             opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
             scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -89,7 +92,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.Drag)}
             title="Drag"
           >
-            <HandRaisedIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <HandRaisedIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
 
           <button
@@ -97,7 +100,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.Zoom)}
             title="Zoom-in"
           >
-            <span className="size-6 text-gray-600 dark:text-dark-primary">
+            <span className="flex items-center text-gray-600 dark:text-dark-primary text-sm">
               ⬚🔍+
             </span>
           </button>
@@ -106,7 +109,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.Reorder)}
             title="Re-order"
           >
-            <ArrowsUpDownIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <ArrowsUpDownIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
 
           <div className="h-full border-r border-gray-400" />
@@ -133,7 +136,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.PanLeft)}
             title="Pan left"
           >
-            <ArrowLeftCircleIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <ArrowLeftCircleIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
         </motion.div>
         <motion.div
@@ -170,7 +173,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
             title="Zoom out"
           >
-            <MagnifyingGlassMinusIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <MagnifyingGlassMinusIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
           <AnimatePresence>
             {hoveredMagnifyingDirection === MagnifyingDirection.Out && (
@@ -248,7 +251,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             onClick={() => handleToolClick(Tool.ZoomInOneFold)}
             title="Zoom in"
           >
-            <MagnifyingGlassPlusIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <MagnifyingGlassPlusIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
           <AnimatePresence>
             {hoveredMagnifyingDirection === MagnifyingDirection.In && (
@@ -291,8 +294,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             )}
           </AnimatePresence>
         </motion.div>
+
+        {/* Navigation and tools */}
         <motion.div
-          className="flex flex-row items-center gap-1.5"
+          className="flex flex-row items-center gap-1"
           animate={{
             opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
             scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -304,54 +309,37 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             className={getButtonClass(Tool.PanRight)}
             title="Pan right"
           >
-            <ArrowRightCircleIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <ArrowRightCircleIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
         </motion.div>
-        <motion.div
-          className="self-stretch w-[1px] border-r border-gray-400"
-          animate={{
-            opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-            scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-          }}
-          transition={{ duration: 0.2 }}
-        />
+
+        <div className="h-6 border-r border-gray-400 mx-2" />
 
         <motion.div
-          className="flex flex-row items-center gap-1.5"
+          className="flex flex-row items-center gap-1"
           animate={{
             opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
             scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
           }}
           transition={{ duration: 0.2 }}
         >
-          <div className="h-full border-r border-gray-400" />
-          {/* <button
-            onClick={() => handleToolClick(Tool.Drag)}
-            className={getButtonClass(Tool.Drag)}
-            title="Drag"
-          >
-            <HandRaisedIcon className="size-6 text-gray-600 dark:text-dark-primary" />
-          </button> */}
-          {/* <button className={getButtonClass()} title="Zoom in">
-            <ClockIcon className="size-6 text-gray-600 dark:text-dark-primary" />
-          </button> */}
           <button
             onClick={() => handleToolClick(Tool.Highlight)}
             className={getButtonClass(Tool.Highlight)}
             title="Highlight"
           >
-            <BoltIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <BoltIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
           <button
             className={getButtonClass()}
             onClick={() => handleToolClick(Tool.highlightMenu)}
             title="Highlight list"
           >
-            <LightBulbIcon className="size-6 text-gray-600 dark:text-dark-primary" />
+            <LightBulbIcon className="size-5 text-gray-600 dark:text-dark-primary" />
           </button>
         </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 

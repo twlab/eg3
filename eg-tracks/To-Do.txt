@@ -85,5 +85,6 @@ hen scroll back if its fetching the new tracks only that are added
 -- 6. fix datahub bug
 7. history menu option
 --8. fix strictmode, cause ref data not getting deleted after component unmount
-9. rework viewRegion and userViewRegion
+--9. rework viewRegion and userViewRegion
 -- 10. create a contextCoord convert to genomicCoord
+11. move toolbar to the top next to region controller

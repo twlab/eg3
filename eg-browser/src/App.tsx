@@ -1,20 +1,22 @@
-import { MotionConfig } from 'framer-motion';
-import RootLayout from './components/root-layout/RootLayout';
-import ReduxProvider from './lib/redux/provider';
+import { MotionConfig } from "framer-motion";
+import RootLayout, {
+  RootLayoutProps,
+} from "./components/root-layout/RootLayout";
+import ReduxProvider from "./lib/redux/provider";
 
-export default function App() {
+export default function App(props: RootLayoutProps = {}) {
   return (
     <MotionConfig transition={snappyTransition}>
       <ReduxProvider>
-        <RootLayout />
+        <RootLayout {...props} />
       </ReduxProvider>
     </MotionConfig>
-  )
+  );
 }
 
-const snappyTransition = {
-  type: 'spring',
+const snappyTransition: any = {
+  type: "spring",
   damping: 35,
   stiffness: 400,
-  mass: 0.8
-}
+  mass: 0.8,
+};

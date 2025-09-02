@@ -240,7 +240,7 @@ export default function SearchBar({
   onSearchFocusChange,
   onNewRegionSelect,
 }: SearchBarProps) {
-  const { ref: searchContainerRef, height: searchHeight } = useElementGeometry({
+  const { ref: searchContainerRef } = useElementGeometry({
     shouldRespondToResize: false,
   });
 
@@ -595,7 +595,6 @@ export default function SearchBar({
       <motion.div
         ref={searchContainerRef}
         className="flex flex-col relative"
-        animate={{ height: searchHeight }}
         transition={{ duration: 0.2 }}
       >
         <AnimatePresence>
@@ -615,19 +614,20 @@ export default function SearchBar({
           )}
         </AnimatePresence>
 
-        <div className="flex flex-row items-center">
-          <div className="flex flex-row items-center px-2 py-2 pb-3.5 w-full">
+        <div className="flex flex-row items-center w-full h-full">
+          <div className="flex flex-row items-center w-full min-w-0 flex-1">
             {activeCommand ? (
-              <div className="flex items-center bg-secondary dark:bg-dark-secondary px-2 py-1 rounded-lg -ml-1">
+              <div className="flex items-center bg-secondary dark:bg-dark-secondary px-2 py-0.5 rounded-lg mr-2 flex-shrink-0">
                 <span className="text-sm text-tint dark:text-dark-primary">
                   /{activeCommand}
                 </span>
               </div>
             ) : (
-              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0 mr-2" />
             )}
             <input
-              className="flex-1 outline-none bg-transparent ml-2 text-base"
+              className="flex-1 outline-none bg-transparent text-base min-w-0 w-full"
+              style={{ minWidth: "260px" }}
               placeholder={
                 activeCommand
                   ? `Search ${activeCommand}s...`
@@ -656,9 +656,9 @@ export default function SearchBar({
                 onClick={() =>
                   parseRegion(document.querySelector("input")?.value || "")
                 }
-                className="flex items-center justify-center w-6 h-6 rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
+                className="flex items-center justify-center w-5 h-5 rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
               >
-                <ArrowRightIcon className="w-4 h-4 text-tint" />
+                <ArrowRightIcon className="w-3 h-3 text-tint" />
               </button>
             )}
           </div>

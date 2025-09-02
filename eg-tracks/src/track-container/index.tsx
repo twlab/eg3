@@ -141,7 +141,7 @@ export function TrackContainerRepresentable({
     try {
       if (!viewRegion) {
         if (userViewRegion) {
-          console.log("ASDADSASDASDADASDSD")
+          console.log("ASDADSASDASDADASDSD");
           const navContext = genomeConfig.navContext as NavigationContext;
           const parsed = navContext.parse(userViewRegion);
           const { start, end } = parsed;
@@ -155,7 +155,10 @@ export function TrackContainerRepresentable({
       }
     } catch (e) {
       // console.error(e);
-      return new DisplayedRegionModel(genomeConfig.navContext, ...genomeConfig.defaultRegion);
+      return new DisplayedRegionModel(
+        genomeConfig.navContext,
+        ...genomeConfig.defaultRegion
+      );
     }
   }, [viewRegion, genomeConfig, selectedRegionSet]);
 
@@ -191,7 +194,10 @@ export function TrackContainerRepresentable({
         }
       }
     } catch (e) {
-      return new DisplayedRegionModel(genomeConfig.navContext, ...genomeConfig.defaultRegion);
+      return new DisplayedRegionModel(
+        genomeConfig.navContext,
+        ...genomeConfig.defaultRegion
+      );
     }
   }, [userViewRegion, genomeConfig, overrideViewRegion, selectedRegionSet]);
 
@@ -227,7 +233,9 @@ export function TrackContainerRepresentable({
     (startbase: number, endbase: number) => {
       const genomeFeatureSegment: Array<FeatureSegment> =
         genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
-      const coordinate = currentRegionAsString(genomeFeatureSegment) as GenomeCoordinate;
+      const coordinate = currentRegionAsString(
+        genomeFeatureSegment
+      ) as GenomeCoordinate;
       onNewRegion(coordinate);
     },
     [onNewRegion]
@@ -239,7 +247,6 @@ export function TrackContainerRepresentable({
         const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
         coordinate =
           newVisData.currentRegionAsString() as GenomeCoordinate | null;
-
       } else {
         const navContext = genomeConfig.navContext;
         coordinate = new DisplayedRegionModel(
@@ -291,13 +298,13 @@ export function TrackContainerRepresentable({
         genomeConfig={genomeConfig}
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
-        onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
-        onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
-        onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
+        onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
+        onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
+        onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
         onNewRegionSelect={
-          !onNewRegionSelect ? () => { } : handleNewRegionSelect
+          !onNewRegionSelect ? () => {} : handleNewRegionSelect
         }
-        onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
+        onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
         viewRegion={convertedViewRegion}
         userViewRegion={
           convertedUserViewRegion
@@ -311,28 +318,6 @@ export function TrackContainerRepresentable({
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
       />
-      {Toolbar.toolbar ? (
-        <div
-          id="toolbar-container"
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 50,
-          }}
-        >
-          <Toolbar.toolbar
-            highlights={highlights}
-            onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
-            onNewRegionSelect={
-              !onNewRegionSelect ? () => { } : handleNewRegionSelect
-            }
-          />
-        </div>
-      ) : (
-        ""
-      )}
     </div>
   );
 }
