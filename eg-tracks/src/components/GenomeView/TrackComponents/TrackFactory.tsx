@@ -101,7 +101,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     }
 
     trackState["viewWindow"] = trackState.viewWindow;
-    console.log(genesArr);
+
     let res = fetchError.current ? (
       <div
         style={{

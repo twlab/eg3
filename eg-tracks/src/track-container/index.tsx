@@ -139,7 +139,7 @@ export function TrackContainerRepresentable({
     }
     return result;
   }, [tracks]);
-  console.log(trackCache.current, convertedTracks);
+
   genomeConfig["defaultTracks"] = convertedTracks;
 
   // MARK: View Region
@@ -218,7 +218,7 @@ export function TrackContainerRepresentable({
               convertTrackModelToITrackModel
             );
           }
-          console.log(newITrackModel, selectedTracks);
+
           return newITrackModel;
         })
       );
