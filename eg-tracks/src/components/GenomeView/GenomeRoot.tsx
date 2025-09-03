@@ -176,7 +176,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   );
 
   function onHeightChange(height: number) {
-    const newHeight = height + 240;
+    const newHeight = height + 215;
     if (newHeight !== tracksHeight.current) {
       tracksHeight.current = newHeight;
       // Directly update the DOM to avoid re-renders and flickering

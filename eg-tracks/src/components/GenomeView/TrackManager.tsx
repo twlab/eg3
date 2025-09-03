@@ -124,7 +124,7 @@ export function bpNavToGenNav(bpNaletr: Array<any>, genome: GenomeConfig) {
         "start" in bpNav ? bpNav.start : bpNav._startBase,
         "end" in bpNav ? bpNav.end : bpNav._endBase
       );
-    console.log(genomeFeatureSegment);
+
     genRes.push(genomeFeatureSegment.map((item, _index) => item.getLocus()));
   }
 
@@ -1103,7 +1103,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else {
       setApplyTrackConfigChange(newSelected);
     }
-
+    console.log(_.cloneDeep(trackManagerState.current.tracks));
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
   }
 
@@ -2160,6 +2160,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       initTrackModel;
   }
   const refreshState = () => {
+    console.log(tracks);
     // Reset useRef letiables
     completedFetchedRegion.current = {
       key: -0,
@@ -2656,6 +2657,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     } else if (genomeConfig.sizeChange) {
       trackSizeChange();
     } else {
+      console.log("WUT");
       preload.current = true;
       refreshState();
       initializeTracks();
@@ -3186,7 +3188,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           useFineModeNav.current = false;
           hasGenomeAlign.current = false;
         }
-
+        console.log(filteredTracks);
         trackManagerState.current.tracks = filteredTracks;
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);

@@ -89,6 +89,7 @@ export interface ITrackModel {
   indexUrl?: string;
   metadata: ITrackModelMetadata;
   fileObj?: Blob;
+  files?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
   id: number | string;

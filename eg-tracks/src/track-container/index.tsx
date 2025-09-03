@@ -51,6 +51,7 @@ export function TrackContainerRepresentable({
   genomeConfig: _genomeConfig,
   legendWidth,
   showGenomeNav,
+  showToolBar,
   onNewRegion,
   onNewHighlight,
   onTracksChange,
@@ -91,6 +92,8 @@ export function TrackContainerRepresentable({
       querygenome: track.querygenome,
       id: track.id,
       isSelected: track.isSelected,
+      fileObj: track.fileObj,
+      files: track.files,
     }),
     []
   );
@@ -134,6 +137,7 @@ export function TrackContainerRepresentable({
     }
     return result;
   }, [tracks]);
+  console.log(trackCache.current, convertedTracks);
   genomeConfig["defaultTracks"] = convertedTracks;
 
   // MARK: View Region
@@ -142,7 +146,6 @@ export function TrackContainerRepresentable({
     try {
       if (!viewRegion) {
         if (userViewRegion) {
-          console.log("ASDADSASDASDADASDSD");
           const navContext = genomeConfig.navContext as NavigationContext;
           const parsed = navContext.parse(userViewRegion);
           const { start, end } = parsed;
@@ -213,6 +216,7 @@ export function TrackContainerRepresentable({
               convertTrackModelToITrackModel
             );
           }
+          console.log(newITrackModel, selectedTracks);
           return newITrackModel;
         })
       );
@@ -270,13 +274,8 @@ export function TrackContainerRepresentable({
     const newCoordinate = currentRegionAsString(
       genomeFeatureSegment
     ) as GenomeCoordinate;
-    // if (viewRegion && newCoordinate === viewRegion) {
-    //   // Force convertedViewRegion to recalculate without calling onNewRegionSelect
-    //   setForceViewRegionUpdate((prev) => prev + 1);
-    // } else {
-    //   // Only call onNewRegionSelect when coordinate is different
+
     onNewRegionSelect(newCoordinate as GenomeCoordinate);
-    // }
 
     if (highlightSearch) {
       const newHightlight = {
@@ -299,6 +298,7 @@ export function TrackContainerRepresentable({
         genomeConfig={genomeConfig}
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
+        showToolBar={showToolBar}
         onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
         onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
         onTracksChange={!onTracksChange ? () => {} : handleTracksChange}

@@ -330,7 +330,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
       } else {
         curFetchNav = Array(genomicLoci);
       }
-
+      console.log(trackModel);
       const isLocalFetch = trackModel.fileObj instanceof File;
       if (isLocalFetch && trackModel.url === "") {
         for (let i = 0; i < curFetchNav.length; i++) {

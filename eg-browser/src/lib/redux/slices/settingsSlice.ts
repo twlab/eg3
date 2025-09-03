@@ -45,6 +45,9 @@ export const settingsSlice = createSlice({
     setDarkTheme: (state, action: PayloadAction<boolean>) => {
       state.darkTheme = action.payload;
     },
+    resetSettings: (state) => {
+      Object.assign(state, settingsSlice.getInitialState());
+    },
   },
 });
 
@@ -56,6 +59,7 @@ export const {
   setSessionSortPreference,
   setCookieConsentStatus,
   setDarkTheme,
+  resetSettings,
 } = settingsSlice.actions;
 
 export const selectIsNavigatorVisible = (state: RootState) =>

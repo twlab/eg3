@@ -31,6 +31,7 @@ import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
 import {
+  resetSettings,
   selectDarkTheme,
   setNavBarVisibility,
   setNavigatorVisibility,
@@ -183,6 +184,8 @@ export default function RootLayout(props: RootLayoutProps) {
           }
         }
       }
+    } else {
+      dispatch(resetSettings());
     }
   }, [props]);
 
@@ -191,7 +194,7 @@ export default function RootLayout(props: RootLayoutProps) {
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
     >
-      {!import.meta.env.VITE_PACKAGE ? <GoogleAnalytics /> : null}
+      {import.meta.env.VITE_PACKAGE === "false" ? <GoogleAnalytics /> : null}
       <motion.div
         className="flex flex-col h-full text-primary dark:text-white"
         animate={{
@@ -202,7 +205,9 @@ export default function RootLayout(props: RootLayoutProps) {
           borderRadius: showModal ? 15 : 0,
         }}
       >
-        {!import.meta.env.VITE_PACKAGE || props.showNavBar ? <NavBar /> : null}
+        {import.meta.env.VITE_PACKAGE === "false" || props.showNavBar ? (
+          <NavBar />
+        ) : null}
         <div
           className="flex flex-row flex-1 relative bg-black"
           ref={contentRef}
