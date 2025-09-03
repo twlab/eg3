@@ -21,6 +21,7 @@ export function TrackContainer(props: ITrackContainerState) {
       highlights={props.highlights}
       legendWidth={props.legendWidth}
       showGenomeNav={props.showGenomeNav}
+      showToolBar={props.showToolBar}
       onNewRegion={props.onNewRegion}
       onNewHighlight={props.onNewHighlight}
       onTracksChange={props.onTracksChange}

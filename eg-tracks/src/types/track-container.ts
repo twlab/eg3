@@ -8,7 +8,8 @@ export interface ITrackContainerState {
   highlights: Array<any>;
   genomeConfig?: any;
   legendWidth: number;
-  showGenomeNav: boolean;
+  showGenomeNav?: boolean;
+  showToolBar?: boolean;
   onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTracksChange: (trackSelected: TrackModel[]) => void;
@@ -35,6 +36,7 @@ export interface ITrackContainerRepresentableProps {
   genomeConfig: IGenome;
   legendWidth: number;
   showGenomeNav: boolean;
+  showToolBar: boolean;
   onNewRegion: (genomeCoordinate: GenomeCoordinate) => void | null | undefined;
   onNewHighlight: (highlightState: Array<any>) => void | null | undefined;
   onTracksChange: (trackSelected: ITrackModel[]) => void | null | undefined;

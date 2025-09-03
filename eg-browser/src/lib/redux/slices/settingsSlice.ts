@@ -10,7 +10,8 @@ export const settingsSlice = createSlice({
   initialState: {
     isNavigatorVisible: true,
     isNavBarVisible: true,
-    trackLegendWidth: 200,
+    isToolBarVisible: true,
+    trackLegendWidth: 120,
     sessionSortPreference: "createdAt" as SessionSortPreference,
     cookieConsentStatus: "pending" as CookieConsentStatus,
     darkTheme: false,
@@ -22,6 +23,9 @@ export const settingsSlice = createSlice({
 
     setNavBarVisibility: (state, action: PayloadAction<boolean>) => {
       state.isNavBarVisible = action.payload;
+    },
+    setToolBarVisibility: (state, action: PayloadAction<boolean>) => {
+      state.isToolBarVisible = action.payload;
     },
     setTrackLegendWidth: (state, action: PayloadAction<number>) => {
       state.trackLegendWidth = action.payload;
@@ -47,6 +51,7 @@ export const settingsSlice = createSlice({
 export const {
   setNavigatorVisibility,
   setNavBarVisibility,
+  setToolBarVisibility,
   setTrackLegendWidth,
   setSessionSortPreference,
   setCookieConsentStatus,
@@ -57,6 +62,8 @@ export const selectIsNavigatorVisible = (state: RootState) =>
   state.settings.isNavigatorVisible;
 export const selectIsNavBarVisible = (state: RootState) =>
   state.settings.isNavBarVisible;
+export const selectIsToolBarVisible = (state: RootState) =>
+  state.settings.isToolBarVisible;
 export const selectTrackLegendWidth = (state: RootState) =>
   state.settings.trackLegendWidth;
 export const selectSessionSortPreference = (state: RootState) =>

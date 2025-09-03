@@ -371,7 +371,7 @@ export default function SearchBar({
     }
   };
 
-  const debouncedSearch = debounce(handleSearch, 50);
+  const debouncedSearch = debounce(handleSearch, 100);
 
   const handleSearchChange = (e: any) => {
     const value = e.target.value;
@@ -572,10 +572,10 @@ export default function SearchBar({
       <AnimatePresence>
         {isShowingIsoforms ? (
           <motion.div
-            className="absolute bottom-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mb-2 z-50"
-            initial={{ opacity: 0, y: 10, height: 0 }}
+            className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-50"
+            initial={{ opacity: 0, y: -10, height: 0 }}
             animate={{ opacity: 1, y: 0, height: "auto" }}
-            exit={{ opacity: 0, y: 10, height: 0 }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <IsoformSelection
@@ -601,10 +601,10 @@ export default function SearchBar({
           {isSearchFocused &&
           ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
-              className="absolute bottom-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mb-2 overflow-hidden z-50"
-              initial={{ opacity: 0, y: 10, height: 0 }}
+              className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
+              initial={{ opacity: 0, y: -10, height: 0 }}
               animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, y: 10, height: 0 }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {renderSearchSuggestions()}

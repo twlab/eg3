@@ -21,6 +21,10 @@ const testProps = {
     },
   ],
   genomeName: "hg19",
+
+  showGenomeNavigator: false,
+  showNavBar: false,
+  showToolBar: false,
 };
 
 createRoot(document.getElementById("root")!).render(<App {...testProps} />);

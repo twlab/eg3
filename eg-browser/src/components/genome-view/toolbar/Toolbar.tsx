@@ -55,288 +55,282 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
 
   return (
     <div className="flex flex-row items-center gap-1 ">
-      {/* Search Bar Container */}
+      {/* Combined Search Bar and Toolbar Container */}
       <motion.div
-        className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex-1  px-3 py-2 border border-gray-secondary rounded-md h-12 flex items-center"
+        className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-row items-center gap-3 px-3 py-2 border border-gray-secondary rounded-md h-12 flex-1"
         animate={{
           opacity: 1,
         }}
         transition={{ duration: 0.2 }}
       >
-        <SearchBar
-          isSearchFocused={isSearchFocused}
-          onSearchFocusChange={setIsSearchFocused}
-          onNewRegionSelect={onNewRegionSelect}
-        />
-      </motion.div>
-
-      {/* Toolbar Buttons Container */}
-      <motion.div
-        className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-row items-center gap-1  p-2 border border-gray-secondary rounded-md h-12"
-        animate={{
-          opacity: isSearchFocused ? 0.5 : 1,
-          scale: isSearchFocused ? 0.95 : 1,
-        }}
-        transition={{ duration: 0.2 }}
-      >
-        <motion.div
-          className="flex flex-row items-center gap-1"
-          animate={{
-            opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-            scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          <button
-            onClick={() => handleToolClick(Tool.Drag)}
-            className={getButtonClass(Tool.Drag)}
-            title="Drag"
-          >
-            <HandRaisedIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
-
-          <button
-            onClick={() => handleToolClick(Tool.Zoom)}
-            className={getButtonClass(Tool.Zoom)}
-            title="Zoom-in"
-          >
-            <span className="flex items-center text-gray-600 dark:text-dark-primary text-sm">
-              ⬚🔍+
-            </span>
-          </button>
-          <button
-            onClick={() => handleToolClick(Tool.Reorder)}
-            className={getButtonClass(Tool.Reorder)}
-            title="Re-order"
-          >
-            <ArrowsUpDownIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
-
-          <div className="h-full border-r border-gray-400" />
-        </motion.div>
-
-        <motion.div
-          className="self-stretch w-[1px] border-r border-gray-400"
-          animate={{
-            opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-            scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-          }}
-          transition={{ duration: 0.2 }}
-        />
-        <motion.div
-          className="flex flex-row items-center gap-1.5"
-          animate={{
-            opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-            scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          <button
-            onClick={() => handleToolClick(Tool.PanLeft)}
-            className={getButtonClass(Tool.PanLeft)}
-            title="Pan left"
-          >
-            <ArrowLeftCircleIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
-        </motion.div>
-        <motion.div
-          className="relative"
-          animate={{
-            opacity:
-              hoveredMagnifyingDirection === MagnifyingDirection.Out
-                ? 1
-                : hoveredMagnifyingDirection !== null
-                ? 0
-                : 1,
-            scale:
-              hoveredMagnifyingDirection === MagnifyingDirection.Out
-                ? 1
-                : hoveredMagnifyingDirection !== null
-                ? 0.95
-                : 1,
-          }}
-          transition={{ duration: 0.2 }}
-          onMouseEnter={() =>
-            setHoveredMagnifyingDirection(MagnifyingDirection.Out)
-          }
-          onMouseLeave={() => setHoveredMagnifyingDirection(null)}
-        >
-          <button
-            className={
-              getButtonClass() +
-              ` relative rounded-none ${
-                hoveredMagnifyingDirection === MagnifyingDirection.Out
-                  ? "z-20"
-                  : ""
-              }`
-            }
-            onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
-            title="Zoom out"
-          >
-            <MagnifyingGlassMinusIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
-          <AnimatePresence>
-            {hoveredMagnifyingDirection === MagnifyingDirection.Out && (
-              <motion.div
-                className="absolute top-0 left-0 h-full border border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "350%", opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ translateX: "-100%" }}
-              >
-                <button
-                  onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
-                  className={
-                    getButtonClass() +
-                    " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
-                  }
-                >
-                  -⅓
-                </button>
-                <button
-                  onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
-                  className={
-                    getButtonClass() +
-                    " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
-                  }
-                >
-                  -1
-                </button>
-                <button
-                  onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
-                  className={
-                    getButtonClass() +
-                    " text-gray-600 dark:text-dark-primary rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
-                  }
-                >
-                  -5
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        <motion.div
-          className="relative"
-          animate={{
-            opacity:
-              hoveredMagnifyingDirection === MagnifyingDirection.In
-                ? 1
-                : hoveredMagnifyingDirection !== null
-                ? 0
-                : 1,
-            scale:
-              hoveredMagnifyingDirection === MagnifyingDirection.In
-                ? 1
-                : hoveredMagnifyingDirection !== null
-                ? 0.95
-                : 1,
-          }}
-          transition={{ duration: 0.2 }}
-          onMouseEnter={() =>
-            setHoveredMagnifyingDirection(MagnifyingDirection.In)
-          }
-          onMouseLeave={() => setHoveredMagnifyingDirection(null)}
-        >
-          <button
-            className={
-              getButtonClass() +
-              ` relative rounded-none ${
-                hoveredMagnifyingDirection === MagnifyingDirection.In
-                  ? "z-20"
-                  : ""
-              }`
-            }
-            onClick={() => handleToolClick(Tool.ZoomInOneFold)}
-            title="Zoom in"
-          >
-            <MagnifyingGlassPlusIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
-          <AnimatePresence>
-            {hoveredMagnifyingDirection === MagnifyingDirection.In && (
-              <motion.div
-                className="absolute top-0 left-0 h-full border border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "350%", opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ translateX: "30%" }}
-              >
-                <button
-                  onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
-                  className={
-                    getButtonClass() +
-                    " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
-                  }
-                >
-                  +⅓
-                </button>
-                <button
-                  onClick={() => handleToolClick(Tool.ZoomInOneFold)}
-                  className={
-                    getButtonClass() +
-                    " text-gray-600 dark:text-dark-primary rounded-r-full pr-1.5 -mr-1.5 w-[33%]"
-                  }
-                >
-                  +1
-                </button>
-                <button
-                  onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
-                  className={
-                    getButtonClass() +
-                    " text-gray-600 dark:text-dark-primary rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
-                  }
-                >
-                  +5
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Navigation and tools */}
-        <motion.div
-          className="flex flex-row items-center gap-1"
-          animate={{
-            opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-            scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          <button
-            onClick={() => handleToolClick(Tool.PanRight)}
-            className={getButtonClass(Tool.PanRight)}
-            title="Pan right"
-          >
-            <ArrowRightCircleIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
-        </motion.div>
+        {/* Search Bar */}
+        <div className="flex-1">
+          <SearchBar
+            isSearchFocused={isSearchFocused}
+            onSearchFocusChange={setIsSearchFocused}
+            onNewRegionSelect={onNewRegionSelect}
+          />
+        </div>
 
         <div className="h-6 border-r border-gray-400 mx-2" />
-
+        {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center gap-1"
           animate={{
-            opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-            scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
+            opacity: isSearchFocused ? 0.5 : 1,
+            scale: isSearchFocused ? 0.95 : 1,
           }}
           transition={{ duration: 0.2 }}
         >
-          <button
-            onClick={() => handleToolClick(Tool.Highlight)}
-            className={getButtonClass(Tool.Highlight)}
-            title="Highlight"
+          <motion.div
+            className="flex flex-row items-center gap-1"
+            animate={{
+              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
+              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
+            }}
+            transition={{ duration: 0.2 }}
           >
-            <BoltIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
-          <button
-            className={getButtonClass()}
-            onClick={() => handleToolClick(Tool.highlightMenu)}
-            title="Highlight list"
+            <button
+              onClick={() => handleToolClick(Tool.Drag)}
+              className={getButtonClass(Tool.Drag)}
+              title="Drag"
+            >
+              <HandRaisedIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+
+            <button
+              onClick={() => handleToolClick(Tool.Zoom)}
+              className={getButtonClass(Tool.Zoom)}
+              title="Zoom in Selected Area"
+            >
+              <span className="flex items-center text-gray-600 dark:text-dark-primary text-sm">
+                ⬚🔍+
+              </span>
+            </button>
+            <button
+              onClick={() => handleToolClick(Tool.Reorder)}
+              className={getButtonClass(Tool.Reorder)}
+              title="Re-order"
+            >
+              <ArrowsUpDownIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+
+            <div className="h-full border-r border-gray-400" />
+          </motion.div>
+
+          <motion.div
+            className="flex flex-row items-center gap-1.5"
+            animate={{
+              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
+              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
+            }}
+            transition={{ duration: 0.2 }}
           >
-            <LightBulbIcon className="size-5 text-gray-600 dark:text-dark-primary" />
-          </button>
+            <button
+              onClick={() => handleToolClick(Tool.PanLeft)}
+              className={getButtonClass(Tool.PanLeft)}
+              title="Pan left"
+            >
+              <ArrowLeftCircleIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+          </motion.div>
+          <motion.div
+            className="relative"
+            animate={{
+              opacity:
+                hoveredMagnifyingDirection === MagnifyingDirection.Out
+                  ? 1
+                  : hoveredMagnifyingDirection !== null
+                  ? 0
+                  : 1,
+              scale:
+                hoveredMagnifyingDirection === MagnifyingDirection.Out
+                  ? 1
+                  : hoveredMagnifyingDirection !== null
+                  ? 0.95
+                  : 1,
+            }}
+            transition={{ duration: 0.2 }}
+            onMouseEnter={() =>
+              setHoveredMagnifyingDirection(MagnifyingDirection.Out)
+            }
+            onMouseLeave={() => setHoveredMagnifyingDirection(null)}
+          >
+            <button
+              className={
+                getButtonClass() +
+                ` relative rounded-none ${
+                  hoveredMagnifyingDirection === MagnifyingDirection.Out
+                    ? "z-20"
+                    : ""
+                }`
+              }
+              onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
+              title="Zoom out"
+            >
+              <MagnifyingGlassMinusIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+            <AnimatePresence>
+              {hoveredMagnifyingDirection === MagnifyingDirection.Out && (
+                <motion.div
+                  className="absolute top-0 left-0 h-full border border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "350%", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ translateX: "-100%" }}
+                >
+                  <button
+                    onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
+                    className={
+                      getButtonClass() +
+                      " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
+                    }
+                  >
+                    -⅓
+                  </button>
+                  <button
+                    onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
+                    className={
+                      getButtonClass() +
+                      " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
+                    }
+                  >
+                    -1
+                  </button>
+                  <button
+                    onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
+                    className={
+                      getButtonClass() +
+                      " text-gray-600 dark:text-dark-primary rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
+                    }
+                  >
+                    -5
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          <motion.div
+            className="relative"
+            animate={{
+              opacity:
+                hoveredMagnifyingDirection === MagnifyingDirection.In
+                  ? 1
+                  : hoveredMagnifyingDirection !== null
+                  ? 0
+                  : 1,
+              scale:
+                hoveredMagnifyingDirection === MagnifyingDirection.In
+                  ? 1
+                  : hoveredMagnifyingDirection !== null
+                  ? 0.95
+                  : 1,
+            }}
+            transition={{ duration: 0.2 }}
+            onMouseEnter={() =>
+              setHoveredMagnifyingDirection(MagnifyingDirection.In)
+            }
+            onMouseLeave={() => setHoveredMagnifyingDirection(null)}
+          >
+            <button
+              className={
+                getButtonClass() +
+                ` relative rounded-none ${
+                  hoveredMagnifyingDirection === MagnifyingDirection.In
+                    ? "z-20"
+                    : ""
+                }`
+              }
+              onClick={() => handleToolClick(Tool.ZoomInOneFold)}
+              title="Zoom in"
+            >
+              <MagnifyingGlassPlusIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+            <AnimatePresence>
+              {hoveredMagnifyingDirection === MagnifyingDirection.In && (
+                <motion.div
+                  className="absolute top-0 left-0 h-full border border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "350%", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ translateX: "30%" }}
+                >
+                  <button
+                    onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
+                    className={
+                      getButtonClass() +
+                      " text-gray-600 dark:text-dark-primary rounded-l-full pr-1.5 -mr-1.5 w-[33%]"
+                    }
+                  >
+                    +⅓
+                  </button>
+                  <button
+                    onClick={() => handleToolClick(Tool.ZoomInOneFold)}
+                    className={
+                      getButtonClass() +
+                      " text-gray-600 dark:text-dark-primary rounded-r-full pr-1.5 -mr-1.5 w-[33%]"
+                    }
+                  >
+                    +1
+                  </button>
+                  <button
+                    onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
+                    className={
+                      getButtonClass() +
+                      " text-gray-600 dark:text-dark-primary rounded-r-full pl-1.5 -ml-1.5 w-[33%]"
+                    }
+                  >
+                    +5
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Navigation and tools */}
+          <motion.div
+            className="flex flex-row items-center gap-1"
+            animate={{
+              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
+              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
+            }}
+            transition={{ duration: 0.2 }}
+          >
+            <button
+              onClick={() => handleToolClick(Tool.PanRight)}
+              className={getButtonClass(Tool.PanRight)}
+              title="Pan right"
+            >
+              <ArrowRightCircleIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+          </motion.div>
+
+          <motion.div
+            className="flex flex-row items-center gap-1"
+            animate={{
+              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
+              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
+            }}
+            transition={{ duration: 0.2 }}
+          >
+            <button
+              onClick={() => handleToolClick(Tool.Highlight)}
+              className={getButtonClass(Tool.Highlight)}
+              title="Highlight"
+            >
+              <BoltIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+            <button
+              className={getButtonClass()}
+              onClick={() => handleToolClick(Tool.highlightMenu)}
+              title="Highlight list"
+            >
+              <LightBulbIcon className="size-5 text-gray-600 dark:text-dark-primary" />
+            </button>
+          </motion.div>
         </motion.div>
       </motion.div>
     </div>

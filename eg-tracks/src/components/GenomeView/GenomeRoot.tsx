@@ -28,6 +28,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   highlights,
   legendWidth,
   showGenomeNav,
+  showToolBar,
   onNewRegion,
   onNewHighlight,
   onTracksChange,
@@ -139,6 +140,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           Toolbar={Toolbar}
           viewRegion={viewRegion}
           showGenomeNav={showGenomeNav}
+          showToolBar={showToolBar}
           isThereG3dTrack={g3dTracks.current.length > 0 ? true : false}
           setScreenshotData={setScreenshotData}
           isScreenShotOpen={isScreenShotOpen}
