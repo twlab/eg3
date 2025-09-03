@@ -34,9 +34,10 @@ interface FiberTrackProps extends PropsFromTrackContainer {
   };
   forceSvg?: boolean;
   visRegion: DisplayedRegionModel;
-  getNumLegend: any; getAnnotationTrack: any
-
-  ; trackState: any; renderTooltip: any;
+  getNumLegend: any;
+  getAnnotationTrack: any;
+  trackState: any;
+  renderTooltip: any;
 
   svgHeight: any;
   updatedLegend: any;
@@ -56,8 +57,8 @@ interface AggregatedFiber {
 export const DEFAULT_OPTIONS = {
   hiddenPixels: 0.5,
   rowHeight: 40,
-  color: 'orangered',
-  color2: 'blue',
+  color: "orangered",
+  color2: "blue",
   height: 40,
   maxRows: 20,
   displayMode: FiberDisplayModes.AUTO,
@@ -196,7 +197,8 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
   visualizer = () => {
     const { pctToY, countToY, pcts, counts } = this.scales;
     const { height, color, color2, displayMode } = this.props.options;
-    const { width, trackModel, forceSvg, getNumLegend, options, visRegion } = this.props
+    const { width, trackModel, forceSvg, getNumLegend, options, visRegion } =
+      this.props;
     const colorScale = scaleLinear()
       .domain([0, 1])
       .range([color2 as any, color as any])
@@ -247,10 +249,19 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
       );
     }
 
-    const legend = <div>
-      <TrackLegend trackModel={trackModel} height={options.height} axisScale={options.displayMode === FiberDisplayModes.AUTO ? this.scales.pctToY : this.scales.countToY}
-      />
-    </div>
+    const legend = (
+      <div>
+        <TrackLegend
+          trackModel={trackModel}
+          height={options.height}
+          axisScale={
+            options.displayMode === FiberDisplayModes.AUTO
+              ? this.scales.pctToY
+              : this.scales.countToY
+          }
+        />
+      </div>
+    );
     if (getNumLegend) {
       getNumLegend(legend);
     }
@@ -258,7 +269,6 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
     return (
       <React.Fragment>
         <div style={{ display: "flex" }}>
-
           <div
             style={{
               display: "flex",
@@ -296,14 +306,26 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
           </DesignRenderer>
         </div>
       </React.Fragment>
-
-
     );
   };
 
   render() {
-
-    const { onClose, ROW_HEIGHT, getHeight, data, getGenePadding, visRegion, svgHeight, width, options, trackModel, getAnnotationTrack, trackState, renderTooltip, updatedLegend } = this.props;
+    const {
+      onClose,
+      ROW_HEIGHT,
+      getHeight,
+      data,
+      getGenePadding,
+      visRegion,
+      svgHeight,
+      width,
+      options,
+      trackModel,
+      getAnnotationTrack,
+      trackState,
+      renderTooltip,
+      updatedLegend,
+    } = this.props;
     if (visRegion.getWidth() > FIBER_DENSITY_CUTOFF_LENGTH) {
       this.xMap = this.aggregateFibers(data, visRegion, width);
       this.scales = this.computeScales();
@@ -322,9 +344,8 @@ class FiberTrackComponent extends React.Component<FiberTrackProps> {
       getGenePadding: getGenePadding,
       getHeight: getHeight,
       ROW_HEIGHT: ROW_HEIGHT,
-      onClose
-    })
-
+      onClose,
+    }).component;
   }
 }
 

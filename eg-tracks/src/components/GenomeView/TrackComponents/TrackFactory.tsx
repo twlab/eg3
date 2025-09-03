@@ -112,7 +112,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           lineHeight: "40px",
         }}
       >
-        {genesArr.filter((gene) => typeof gene === "string").join(", ")}
+        {Array.isArray(genesArr)
+          ? genesArr.filter((gene) => typeof gene === "string").join(", ")
+          : ""}
       </div>
     ) : (
       getDisplayModeFunction({

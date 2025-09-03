@@ -5,6 +5,7 @@ import RegionSet from "./models/RegionSet";
 import OpenInterval from "./models/OpenInterval";
 import TrackModel from "./models/TrackModel";
 
+
 export function getGenomeDefaultState(genome: string) {
   const genomeConfig = getGenomeConfigFromAllGenomes(genome);
 
@@ -38,6 +39,7 @@ export function getGenomeDefaultState(genome: string) {
   };
 }
 // Cross-platform UUID generator for browsers and Node.js
+
 export function generateUUID() {
   if (
     typeof crypto !== "undefined" &&

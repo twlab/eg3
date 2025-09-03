@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent } from "react";
 
 import JSZip from "jszip";
 import _ from "lodash";
-import { generateUUID } from "wuepgg3-track";
+import { generateUUID, Genome, GenomeCoordinate } from "wuepgg3-track";
 import { child, get, getDatabase, ref, remove, set } from "firebase/database";
 import {
   AppStateSaver,
@@ -30,10 +30,13 @@ export interface BundleProps {
   metadataTerms: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
   regionSetView: any | null; // use appropriate type if you know it
   regionSets: any[]; // use appropriate types if you know specifics, or use unknown[] for any type
-  viewRegion: DisplayedRegionModel | null;
+  viewRegion: GenomeCoordinate | null;
   trackLegendWidth: number;
   tracks: Array<TrackModel> | Array<ITrackModel>;
-  onRestoreBundle: any;
+  chromosomes: Array<any> | null;
+  customGenome: any | null;
+  genomeId: string | null;
+  viewInterval: { start: number; end: number } | null;
 }
 
 interface SessionBundle {
@@ -60,7 +63,6 @@ interface SessionUIProps extends HasBundleId {
   withGenomePicker?: boolean;
   state?: BundleProps;
   curBundle: any;
-  onRestoreBundle: any;
 }
 
 export const onRetrieveSession = async (retrieveId: string) => {
@@ -85,25 +87,21 @@ export const onRetrieveSession = async (retrieveId: string) => {
           const regionSetView = regionSets[object.regionSetViewIndex] || null;
 
           // Create the newBundle object based on the existing object.
-          const genomeConfig = getGenomeConfig(object.genomeName);
+
           let viewInterval;
           if (object.viewInterval) {
             viewInterval = object.viewInterval;
           } else {
             viewInterval = {
-              start: genomeConfig.defaultRegion.start,
-              end: genomeConfig.defaultRegion.end,
+              start: 0,
+              end: 1,
             };
           }
           let newBundle = {
-            genomeName: object.genomeName,
-            viewRegion: new DisplayedRegionModel(
-              genomeConfig.navContext,
-              viewInterval.start,
-              viewInterval.end
-            ),
-
-            tracks: object.tracks.map((data) => TrackModel.deserialize(data)),
+            genomeId: object.genomeId,
+            viewInterval,
+            chromosomes: object.chromosomes || null,
+            tracks: object.tracks,
             metadataTerms: object.metadataTerms || [],
             regionSets,
             regionSetView,
@@ -136,7 +134,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   onRetrieveBundle,
   withGenomePicker,
   updateBundle,
-  onRestoreBundle,
+
   state,
   curBundle,
   bundleId,
@@ -154,10 +152,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
       date: Date.now(),
       state: state ? state : {},
     };
-    newSessionObj.state["viewInterval"] =
-      state && state.viewRegion
-        ? state.viewRegion.getContextCoordinates().serialize()
-        : null;
 
     const sessionId = generateUUID();
 
@@ -169,6 +163,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
         [sessionId]: newSessionObj,
       },
     };
+
     setBundle(newBundle);
     updateBundle(newBundle);
     const db = getDatabase();

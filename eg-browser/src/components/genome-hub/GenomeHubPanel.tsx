@@ -120,7 +120,6 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
   const dispatch = useAppDispatch();
   const [isHovered, setIsHovered] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const handleClick = () => {
     setLoading(true);
     setTimeout(() => {

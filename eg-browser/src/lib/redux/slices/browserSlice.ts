@@ -23,7 +23,7 @@ export interface BrowserSession {
   title: string;
   genomeId: uuid;
   viewRegion: GenomeCoordinate | null;
-  userViewRegion: { start: number; end: number } | null;
+  userViewRegion: GenomeCoordinate | null;
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];
@@ -31,6 +31,7 @@ export interface BrowserSession {
   regionSets: Array<any>;
   selectedRegionSet: RegionSet | null;
   overrideViewRegion: GenomeCoordinate | null;
+  customGenome?: boolean | null;
 }
 
 // MARK: - State
@@ -78,6 +79,7 @@ export const browserSlice = createSlice({
         updatedAt: Date.now(),
         title: "Untitled Session",
         bundleId: null,
+        customGenome: genome.customGenome ? genome.customGenome : null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
@@ -110,7 +112,7 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
-        if ("tracks" in changes) {
+        if (changes["tracks"]) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
               (track as ITrackModel).id = generateUUID();
@@ -118,11 +120,15 @@ export const browserSlice = createSlice({
             return track;
           });
         }
-
+        const currentSession = state.sessions.entities[state.currentSession];
+        if (changes["viewRegion"] && currentSession && changes["viewRegion"] === currentSession.viewRegion) {
+          changes["viewRegion"] = null
+        }
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
             ...changes,
+
             updatedAt: Date.now(),
           },
         });

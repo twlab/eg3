@@ -10,6 +10,7 @@ import useExpandedNavigationTab from "@/lib/hooks/useExpandedNavigationTab";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
+import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 
 const SEQ_LIMIT = 10000; // 10kb
 
@@ -31,14 +32,15 @@ export const FetchSequence: React.FC = () => {
     if (
       genomeConfig &&
       genomeConfig.navContext &&
-      userViewRegion?.start != null &&
-      userViewRegion?.end != null
+      userViewRegion
     ) {
-      return new DisplayedRegionModel(
-        genomeConfig.navContext,
-        userViewRegion.start,
-        userViewRegion.end
-      );
+
+      const navContext = genomeConfig.navContext as NavigationContext;
+      const parsed = navContext.parse(userViewRegion);
+      const { start, end } = parsed;
+
+      return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+
     } else if (genomeConfig && genomeConfig.navContext) {
       return new DisplayedRegionModel(
         genomeConfig.navContext,

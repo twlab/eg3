@@ -493,9 +493,9 @@ body {
 
 .ReactModal__Content input {
   border: #1eb7e9 1px solid;
-    border-radius: 4px;
-    padding: 4px;
-    margin: 2px;
+  border-radius: 4px;
+  padding: 4px;
+  margin: 2px;
 }
 
 .mybtn {

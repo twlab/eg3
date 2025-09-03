@@ -449,7 +449,7 @@ const defaultTracks = [
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
   //   // "options": {
   //   //     "displayMode": "arc"
   //   // }

@@ -149,7 +149,8 @@ interface TrackManagerProps {
   tool: any;
   Toolbar: { [key: string]: any };
   viewRegion?: any;
-  showGenomeNav: boolean;
+  showGenomeNav?: boolean;
+  showToolBar?: boolean;
   setScreenshotData: any;
   isScreenShotOpen: boolean;
   selectedRegionSet: any;
@@ -180,6 +181,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   tool,
   Toolbar,
   showGenomeNav,
+  showToolBar,
   isThereG3dTrack,
   setScreenshotData,
   selectedRegionSet,
@@ -1253,6 +1255,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     trackSide: string,
     viewWindow: OpenInterval
   ) {
+    // chr7:154586411-chr8:2287416
+    // console.log(genomeConfig.navContext.parse("chr7:142877610-chr9:4445444"))
     let curFetchRegionNav;
     let genomicLoci: Array<ChromosomeInterval> = [];
     let initBpLoci: Array<any> = [];
@@ -3379,66 +3383,94 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       )}
 
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-        <div
-          className="flex flex-row items-center justify-center"
-          style={{
-            backgroundColor: "var(--bg-color)",
-            width: `${windowWidth + 120}px`,
-            marginTop: "2px",
-            marginBottom: "2px",
-            gap: "2px",
-          }}
-        >
-          <HighlightMenu
-            highlights={highlightElements}
-            viewRegion={userViewRegion}
-            showHighlightMenuModal={true}
-            onNewRegion={onRegionSelected}
-            onSetHighlights={getHighlightState}
-            selectedTool={selectedTool}
-          />
+        {showToolBar ? (
           <div
+            className="flex flex-row items-center justify-center"
             style={{
-              width: "62%",
-              display: "flex",
-              justifyContent: "flex-end",
+              backgroundColor: "var(--bg-color)",
+              width: `${windowWidth + 120}px`,
+              marginTop: "5px",
+              marginBottom: "5px",
+              gap: "4px",
             }}
           >
-            {userViewRegion && (
-              <TrackRegionController
-                selectedRegion={userViewRegion}
-                onRegionSelected={onRegionSelected}
-                contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                genomeConfig={genomeConfig}
-                trackManagerState={trackManagerState}
-                genomeArr={[]}
-                genomeIdx={0}
-                addGlobalState={undefined}
-              />
-            )}
-            <p
-              className="ml-4"
+            <HighlightMenu
+              highlights={highlightElements}
+              viewRegion={userViewRegion}
+              showHighlightMenuModal={true}
+              onNewRegion={onRegionSelected}
+              onSetHighlights={getHighlightState}
+              selectedTool={selectedTool}
+            />
+
+            <div
               style={{
-                backgroundColor: "var(--bg-color)",
-                color: "var(--font-color)",
+                display: "flex",
+                position: "relative",
+                zIndex: 100000,
               }}
             >
-              Viewing a{" "}
-              {niceBpCount(trackManagerState.current.viewRegion.getWidth())}{" "}
-              region in {Math.round(windowWidth)}px, 1 pixel spans{" "}
-              {niceBpCount(basePerPixel.current, true)}
-            </p>
+              {Toolbar.toolbar ? (
+                <div style={{ position: "relative", zIndex: 100000 }}>
+                  <Toolbar.toolbar
+                    highlights={highlights}
+                    onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
+                    onNewRegionSelect={
+                      !onNewRegionSelect ? () => {} : onNewRegion
+                    }
+                  />
+                </div>
+              ) : (
+                ""
+              )}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              {userViewRegion && (
+                <TrackRegionController
+                  selectedRegion={userViewRegion}
+                  onRegionSelected={onRegionSelected}
+                  contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                  genomeConfig={genomeConfig}
+                  trackManagerState={trackManagerState}
+                  genomeArr={[]}
+                  genomeIdx={0}
+                  addGlobalState={undefined}
+                />
+              )}
+            </div>
+            <div style={{ display: "flex" }}>
+              <p
+                className="ml-6"
+                style={{
+                  backgroundColor: "var(--bg-color)",
+                  color: "var(--font-color)",
+                }}
+              >
+                Viewing a{" "}
+                {niceBpCount(trackManagerState.current.viewRegion.getWidth())}{" "}
+                region in {Math.round(windowWidth)}px, 1 pixel spans{" "}
+                {niceBpCount(basePerPixel.current, true)}
+              </p>
+            </div>
+            <div
+              style={{ display: "flex", flexGrow: 1, justifyContent: "end" }}
+            >
+              <MetadataHeader
+                terms={metaSets.terms}
+                onNewTerms={onNewTerms}
+                suggestedMetaSets={metaSets.suggestedMetaSets}
+                onRemoveTerm={onRemoveTerm}
+              />
+            </div>
           </div>
-          <div style={{ width: "38%", display: "flex" }}>
-            <MetadataHeader
-              terms={metaSets.terms}
-              onNewTerms={onNewTerms}
-              suggestedMetaSets={metaSets.suggestedMetaSets}
-              onRemoveTerm={onRemoveTerm}
-            />
-          </div>
-        </div>
-
+        ) : (
+          ""
+        )}
         <div
           style={{
             display: "flex",
@@ -3582,7 +3614,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             </div>
           </div>
         </div>
-
         {configMenu ? (
           <div
             style={{

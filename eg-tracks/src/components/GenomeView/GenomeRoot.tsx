@@ -21,13 +21,14 @@ import { generateUUID } from "../../util";
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
-const packageVersion = true;
+const packageVersion = false;
 const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   tracks,
   genomeConfig,
   highlights,
   legendWidth,
   showGenomeNav,
+  showToolBar,
   onNewRegion,
   onNewHighlight,
   onTracksChange,
@@ -75,6 +76,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }
 
   function renderG3dTrackComponents(node) {
+    if (!userViewRegion) {
+      return null;
+    }
     const config = node.getConfig();
     const { x, y, width, height } = node.getRect();
     const g3dtrack = TrackModel.deserialize(config.trackModel);
@@ -136,6 +140,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           Toolbar={Toolbar}
           viewRegion={viewRegion}
           showGenomeNav={showGenomeNav}
+          showToolBar={showToolBar}
           isThereG3dTrack={g3dTracks.current.length > 0 ? true : false}
           setScreenshotData={setScreenshotData}
           isScreenShotOpen={isScreenShotOpen}
@@ -171,7 +176,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   );
 
   function onHeightChange(height: number) {
-    const newHeight = height + 200;
+    const newHeight = height + 215;
     if (newHeight !== tracksHeight.current) {
       tracksHeight.current = newHeight;
       // Directly update the DOM to avoid re-renders and flickering
@@ -211,7 +216,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       containerRef.current.style.height = `${tracksHeight.current}px`;
     }
 
-    // Cleanup workers on component unmount
+    // Cleanup workers and all refs/state on component unmount
     return () => {
       // Terminate all infinite scroll workers
       if (infiniteScrollWorkers.current) {
@@ -225,14 +230,27 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         // Clear the arrays and references
         infiniteScrollWorkers.current.worker = [];
         infiniteScrollWorkers.current.instance = [];
+        infiniteScrollWorkers.current = null;
       }
 
       // Terminate genome align worker
       if (fetchGenomeAlignWorker.current) {
         fetchGenomeAlignWorker.current.fetchWorker.terminate();
       }
-
       fetchGenomeAlignWorker.current = null;
+
+      // Clear all other refs
+      containerRef.current = null;
+      tracksHeight.current = 0;
+      trackManagerId.current = null;
+      prevViewRegion.current = { genomeName: "", start: 0, end: 1 };
+      layout.current = _.cloneDeep(initialLayout);
+      g3dTracks.current = [];
+
+      // Reset state to initial values
+      setCurrentGenomeConfig(null);
+      setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
+      setShow3dGene(undefined);
     };
   }, []);
 
@@ -331,7 +349,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // use effect of tracks will get trigger first creating the page layout before the resize effect
   // which will create the TrackManager component
   useEffect(() => {
-    if (size.width > 0) {
+    if (size.width > 0 && userViewRegion) {
       let curGenome;
       if (trackManagerId.current) {
         curGenome = { ...genomeConfig };
@@ -360,7 +378,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [size.width]);
 
   useEffect(() => {
-    if (size.width > 0) {
+    if (size.width > 0 && userViewRegion) {
       if (trackManagerId.current) {
         const curGenome = { ...genomeConfig };
         curGenome["isInitial"] = false;
@@ -378,7 +396,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }, [viewRegion]);
 
   useEffect(() => {
-    if (size.width > 0) {
+    if (size.width > 0 && userViewRegion) {
       if (
         trackManagerId.current &&
         currentState.index !== currentState.limit - 1

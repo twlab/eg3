@@ -2,7 +2,10 @@ import useCurrentGenome from "@/lib/hooks/useCurrentGenome";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
-import { selectIsNavigatorVisible } from "@/lib/redux/slices/settingsSlice";
+import {
+  selectIsNavigatorVisible,
+  selectIsToolBarVisible,
+} from "@/lib/redux/slices/settingsSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
 import {
   resetState,
@@ -10,9 +13,7 @@ import {
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
 import {
-  DisplayedRegionModel,
   GenomeCoordinate,
-  GenomeSerializer,
   IHighlightInterval,
   ITrackModel,
   RegionSet,
@@ -26,7 +27,6 @@ import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackP
 import { RootState } from "../../lib/redux/store";
 
 export default function GenomeView() {
-  const prevViewRegion = useRef<any>("");
   const currentSession = useAppSelector(selectCurrentSession);
   const currentState = useAppSelector((state: RootState) => {
     return currentSession ? { ...state.browser } : null;
@@ -38,14 +38,13 @@ export default function GenomeView() {
 
   const genomeConfig = useCurrentGenome();
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
-
+  const isToolBarVisible = useAppSelector(selectIsToolBarVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
   const lastSessionId = useRef<null | string>(null);
   const bundleId = currentSession ? currentSession.bundleId : null;
 
   const sessionId = currentSession ? currentSession.id : null;
 
-  prevViewRegion.current = currentSession ? currentSession?.viewRegion : "";
   if (lastSessionId.current !== sessionId) {
     dispatch(resetState());
     lastSessionId.current = sessionId;
@@ -68,58 +67,38 @@ export default function GenomeView() {
     dispatch(updateCurrentSession({ tracks }));
   };
 
-  const handleNewRegion = (startbase: number, endbase: number) => {
+  const handleNewRegion = (coordinate: GenomeCoordinate) => {
     dispatch(
       updateCurrentSession({
-        userViewRegion: { start: startbase, end: endbase },
+        userViewRegion: coordinate,
       })
     );
   };
 
-  const handleNewRegionSelect = (
-    startbase: number,
-    endbase: number,
-    coordinate: GenomeCoordinate
-  ) => {
-    let updatedCoord: any;
-    if (coordinate === prevViewRegion.current) {
-      updatedCoord = `${coordinate},${startbase}-${endbase}`;
-    } else {
-      updatedCoord = coordinate;
-    }
-    prevViewRegion.current = updatedCoord;
+  const handleNewRegionSelect = (coordinate: GenomeCoordinate) => {
     dispatch(
       updateCurrentSession({
-        viewRegion: updatedCoord,
-        userViewRegion: { start: startbase, end: endbase },
+        viewRegion: coordinate,
+        userViewRegion: coordinate,
       })
     );
   };
-  function handleSetSelected(set: RegionSet | null) {
-    let start;
-    let end;
-    if (set) {
-      const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
-      start = newVisData._startBase;
-      end = newVisData._endBase;
-    } else {
-      const serilizeGenomeConfig = genomeConfig
-        ? GenomeSerializer.deserialize(genomeConfig)
-        : null;
-      start = serilizeGenomeConfig?.defaultRegion.start;
-      end = serilizeGenomeConfig?.defaultRegion.end;
-    }
+  function handleSetSelected(
+    set: RegionSet | null,
+    coordinate: GenomeCoordinate | null
+  ) {
     if (currentSession?.selectedRegionSet || set) {
       dispatch(
         updateCurrentSession({
           selectedRegionSet: set,
-          userViewRegion: { start, end },
+          userViewRegion: coordinate,
         })
       );
     }
   }
   // need to check if genomes are the same, for example if we update session bundle it can have a different genome name from genomeConfig because
   // currentSession updates first, but genomeConfig still has the previous genome
+
   return currentSession &&
     genomeConfig &&
     currentSession.genomeId === genomeConfig.name ? (
@@ -131,6 +110,7 @@ export default function GenomeView() {
       genomeConfig={genomeConfig}
       legendWidth={120}
       showGenomeNav={isNavigatorVisible}
+      showToolBar={isToolBarVisible}
       onNewRegion={handleNewRegion}
       onNewHighlight={handleNewHighlight}
       onTracksChange={handleTracksChange}
