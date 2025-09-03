@@ -4,6 +4,10 @@
 
 - Fixed modbed crash when zooming in
 - implement ability for user to save chromosomes to app session for remotely loading custom genomes
+- moved Toolbar above tracks
+- fixed local upload bug, where changing configs will crash
+- implemented a more in depth parse for regionset and multi chromosome regions
+- refactor viewRegion and userViewRegion to only use genomeCoordinate
 
 ## 56.0.2
 
