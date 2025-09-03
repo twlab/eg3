@@ -114,6 +114,8 @@ export function TrackContainerRepresentable({
         querygenome: track.querygenome,
         id: track.id,
         isSelected: track.isSelected,
+        fileObj: track.fileObj,
+        files: track.files,
       });
     };
 
