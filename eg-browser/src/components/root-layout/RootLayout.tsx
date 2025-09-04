@@ -125,69 +125,70 @@ export default function RootLayout(props: RootLayoutProps) {
   //   return null;
   // }
 
-  // useEffect(() => {
-  //   if (
-  //     (props.genomeName && props.tracks && props.viewRegion) ||
-  //     props.customGenome
-  //   ) {
-  //     const iGenomeConfig: IGenome | null = getConfig(
-  //       props.customGenome,
-  //       props.genomeName
-  //     );
-  //     if (iGenomeConfig) {
-  //       dispatch(
-  //         setNavigatorVisibility(
-  //           typeof props.showGenomeNavigator === "boolean"
-  //             ? props.showGenomeNavigator
-  //             : true
-  //         )
-  //       );
-  //       dispatch(
-  //         setNavBarVisibility(
-  //           typeof props.showNavBar === "boolean" ? props.showNavBar : true
-  //         )
-  //       );
-  //       dispatch(
-  //         setToolBarVisibility(
-  //           typeof props.showToolBar === "boolean" ? props.showToolBar : true
-  //         )
-  //       );
-  //       if (!sessionId) {
-  //         const defaultTracks = iGenomeConfig["defaultTracks"]
-  //           ? iGenomeConfig["defaultTracks"]
-  //           : [];
-  //         iGenomeConfig["defaultTracks"] = [
-  //           ...defaultTracks,
-  //           ...(props.tracks || []),
-  //         ];
+  useEffect(() => {
+    // if (
+    //   (props.genomeName && props.tracks && props.viewRegion) ||
+    //   props.customGenome
+    // ) {
+    //   const iGenomeConfig: IGenome | null = getConfig(
+    //     props.customGenome,
+    //     props.genomeName
+    //   );
+    //   if (iGenomeConfig) {
+    //     dispatch(
+    //       setNavigatorVisibility(
+    //         typeof props.showGenomeNavigator === "boolean"
+    //           ? props.showGenomeNavigator
+    //           : true
+    //       )
+    //     );
+    //     dispatch(
+    //       setNavBarVisibility(
+    //         typeof props.showNavBar === "boolean" ? props.showNavBar : true
+    //       )
+    //     );
+    //     dispatch(
+    //       setToolBarVisibility(
+    //         typeof props.showToolBar === "boolean" ? props.showToolBar : true
+    //       )
+    //     );
+    //     if (!sessionId) {
+    //       const defaultTracks = iGenomeConfig["defaultTracks"]
+    //         ? iGenomeConfig["defaultTracks"]
+    //         : [];
+    //       iGenomeConfig["defaultTracks"] = [
+    //         ...defaultTracks,
+    //         ...(props.tracks || []),
+    //       ];
 
-  //         dispatch(
-  //           createSession({
-  //             genome: iGenomeConfig,
-  //             viewRegion:
-  //               typeof props.viewRegion === "string"
-  //                 ? props.viewRegion
-  //                 : undefined,
-  //           })
-  //         );
-  //       } else {
-  //         if (currentSession && props.tracks && props.tracks.length > 0) {
-  //           dispatch(
-  //             updateCurrentSession({
-  //               tracks: [...currentSession.tracks, ...props.tracks],
-  //               viewRegion:
-  //                 typeof props.viewRegion === "string"
-  //                   ? props.viewRegion
-  //                   : undefined,
-  //             })
-  //           );
-  //         }
-  //       }
-  //     }
-  //   } else {
-  //     dispatch(resetSettings());
-  //   }
-  // }, [props]);
+    //       dispatch(
+    //         createSession({
+    //           genome: iGenomeConfig,
+    //           viewRegion:
+    //             typeof props.viewRegion === "string"
+    //               ? props.viewRegion
+    //               : undefined,
+    //         })
+    //       );
+    //     } else {
+    //       if (currentSession && props.tracks && props.tracks.length > 0) {
+    //         dispatch(
+    //           updateCurrentSession({
+    //             tracks: [...currentSession.tracks, ...props.tracks],
+    //             viewRegion:
+    //               typeof props.viewRegion === "string"
+    //                 ? props.viewRegion
+    //                 : undefined,
+    //           })
+    //         );
+    //       }
+    //     }
+    //   }
+    // } else {
+    //   dispatch(resetSettings());
+    // }
+    dispatch(resetSettings());
+  }, [props]);
 
   return (
     <div
