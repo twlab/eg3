@@ -62,9 +62,8 @@ export const trackFetchFunction: { [key: string]: any } = {
     };
 
     if (regionData.end - regionData.start <= 30000) {
-      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
-        regionData.end + "?content-type=application%2Fjson&feature=variation"
-      }`;
+      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${regionData.end + "?content-type=application%2Fjson&feature=variation"
+        }`;
 
       return fetch(url, { headers })
         .then((response) => {
@@ -128,6 +127,7 @@ export const trackFetchFunction: { [key: string]: any } = {
     return getRemoteData(regionData, "bedOrTabix");
   },
   longrange: async function coolFetch(regionData: any) {
+    console.log(regionData)
     return getRemoteData(regionData, "bedOrTabix");
   },
   dynseq: async function dynseqFetch(regionData: any) {

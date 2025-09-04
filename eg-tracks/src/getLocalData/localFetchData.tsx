@@ -32,7 +32,7 @@ export const localTrackFetchFunction: { [key: string]: any } = {
   categorical: async function coolFetch(regionData: any) {
     return getLocalData(regionData, "bedOrTabix");
   },
-  longrange: async function coolFetch(regionData: any) {
+  longrange: async function longrangeFetch(regionData: any) {
     return getLocalData(regionData, "bedOrTabix");
   },
   dynseq: async function dynseqFetch(regionData: any) {

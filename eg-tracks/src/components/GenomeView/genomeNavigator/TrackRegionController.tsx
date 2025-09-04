@@ -109,7 +109,7 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   const coordinates = selectedRegion.currentRegionAsString();
 
   return (
-    <div className="bg tool-element font-mono pl-2">
+    <div className="bg tool-element font-mono text-sm p-1">
       <button className="underline" onClick={handleOpenModal}>
         {coordinates}
       </button>

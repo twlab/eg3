@@ -333,18 +333,20 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
 
       const isLocalFetch = trackModel.fileObj instanceof File;
       if (isLocalFetch && trackModel.url === "") {
+
         for (let i = 0; i < curFetchNav.length; i++) {
+
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            });
 
           if (
             curRespond &&
@@ -355,6 +357,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               error: curRespond.message,
             });
           } else {
+
             responses.push(curRespond);
           }
         }
@@ -370,8 +373,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
                         : trackModel.genome
-                        ? trackModel.genome
-                        : primaryGenName,
+                          ? trackModel.genome
+                          : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,
@@ -412,6 +415,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
   });
 
   const results = await Promise.all(objectPromises);
+
   return results;
 }
 
@@ -542,9 +546,8 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
               trackToDrawId[`${item.id}`] = "";
             } catch (error) {
               rawRecords = {
-                error: `Error processing genome align track with id ${
-                  item.id
-                }: ${"Error"}`,
+                error: `Error processing genome align track with id ${item.id
+                  }: ${"Error"}`,
               };
             }
           })
@@ -722,7 +725,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       trackToDrawId,
       regionSetStartBp:
         data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-        data.bpRegionSize
+          data.bpRegionSize
           ? 0
           : null,
     },
