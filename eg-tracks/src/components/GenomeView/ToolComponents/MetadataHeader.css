@@ -2,9 +2,10 @@
   /* margin-left: auto;
     margin-right: 0; */
   /* padding-bottom: 5px; */
-  flex-grow: 2;
+  width: auto;
   display: flex;
   justify-content: flex-end;
+  flex-grow: 1;
 }
 
 .MetadataHeader-terms {
@@ -23,7 +24,7 @@
 
 .MetadataHeader-button {
   margin-top: auto;
-  margin-left: 1ch;
+  margin-left: 0.5ch;
   margin-bottom: auto;
 
   position: relative;

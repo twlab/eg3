@@ -26,23 +26,49 @@ interface ToolbarProps {
     end: number,
     highlightSearch?: boolean
   ) => void;
-  highlights: Array<any>;
-  onNewHighlight: (highlightState: Array<any>) => void;
+  windowWidth?: number;
 }
-const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
+const Toolbar: React.FC<ToolbarProps> = ({
+  onNewRegionSelect,
+  windowWidth,
+}) => {
   const tool = useAppSelector(selectTool);
   const dispatch = useAppDispatch();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [hoveredMagnifyingDirection, setHoveredMagnifyingDirection] =
     useState<MagnifyingDirection | null>(null);
 
-  const getButtonClass = (buttonTool?: Tool) => {
-    return `p-1 ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
-      } ${tool !== buttonTool
-        ? "hover:bg-gray-200 dark:hover:bg-dark-secondary"
-        : ""
-      } rounded-md`;
+  // Helper functions for responsive sizing
+  const getIconSize = () => {
+    return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
   };
+
+  const iconSizeStyle = {
+    width: `${getIconSize()}px`,
+    height: `${getIconSize()}px`,
+  };
+
+  const getButtonClass = (buttonTool?: Tool) => {
+    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${
+      tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
+    }`;
+  };
+
+  const getButtonStyle = () => ({
+    padding: `${Math.max(4, Math.min(8, (windowWidth || 1920) * 0.004))}px`,
+  });
+
+  const getGapSize = () => {
+    return `${Math.max(
+      0.15,
+      Math.min(0.35, (windowWidth || 1920) * 0.0001)
+    )}rem`;
+  };
+
+  const getFontSize = () => {
+    return `${Math.max(0.75, Math.min(1, (windowWidth || 1920) * 0.0005))}rem`;
+  };
+
   const handleToolClick = (selectedTool: Tool): any => {
     if (tool === selectedTool) {
       dispatch(setTool(null));
@@ -52,10 +78,25 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
   };
 
   return (
-    <div className="flex flex-row items-center gap-1 ">
+    <div className="flex flex-row items-center">
       {/* Combined Search Bar and Toolbar Container */}
       <motion.div
-        className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-row items-center gap-2 px-2 py-1.5 border border-gray-secondary rounded-md h-10 flex-1"
+        className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-row items-center"
+        style={{
+          height: `${Math.max(
+            40,
+            Math.min(60, (windowWidth || 1920) * 0.03)
+          )}px`,
+          gap: `${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
+          padding: `${Math.max(
+            6,
+            Math.min(12, (windowWidth || 1920) * 0.006)
+          )}px ${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
+          borderRadius: `${Math.max(
+            6,
+            Math.min(10, (windowWidth || 1920) * 0.005)
+          )}px`,
+        }}
         animate={{
           opacity: 1,
         }}
@@ -67,13 +108,15 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             isSearchFocused={isSearchFocused}
             onSearchFocusChange={setIsSearchFocused}
             onNewRegionSelect={onNewRegionSelect}
+            windowWidth={windowWidth}
           />
         </div>
 
         <div className="h-5 border-r border-gray-400" />
         {/* Toolbar Buttons */}
         <motion.div
-          className="flex flex-row items-center gap-1"
+          className="flex flex-row items-center"
+          style={{ gap: getGapSize() }}
           animate={{
             opacity: isSearchFocused ? 0.5 : 1,
             scale: isSearchFocused ? 0.95 : 1,
@@ -81,7 +124,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
           transition={{ duration: 0.2 }}
         >
           <motion.div
-            className="flex flex-row items-center gap-1"
+            className="flex flex-row items-center"
+            style={{ gap: getGapSize() }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -91,19 +135,25 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <button
               onClick={() => handleToolClick(Tool.Drag)}
               className={getButtonClass(Tool.Drag)}
+              style={getButtonStyle()}
               title="Drag"
             >
-              <HandRaisedIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <HandRaisedIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
 
             <button
               onClick={() => handleToolClick(Tool.Zoom)}
               className={getButtonClass(Tool.Zoom)}
+              style={getButtonStyle()}
               title="Zoom in Selected Area"
             >
-
-
-              <span className="flex flex-row items-center justify-center text-gray-600 dark:text-dark-primary text-sm">
+              <span
+                className="flex flex-row items-center justify-center text-gray-600 dark:text-dark-primary"
+                style={{ fontSize: getFontSize() }}
+              >
                 <span>⬚</span>
                 <span>🔍</span>
                 <span>+</span>
@@ -112,16 +162,21 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <button
               onClick={() => handleToolClick(Tool.Reorder)}
               className={getButtonClass(Tool.Reorder)}
+              style={getButtonStyle()}
               title="Re-order"
             >
-              <ArrowsUpDownIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <ArrowsUpDownIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
 
             <div className="h-full border-r border-gray-400" />
           </motion.div>
 
           <motion.div
-            className="flex flex-row items-center gap-1"
+            className="flex flex-row items-center"
+            style={{ gap: getGapSize() }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -131,9 +186,13 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <button
               onClick={() => handleToolClick(Tool.PanLeft)}
               className={getButtonClass(Tool.PanLeft)}
+              style={getButtonStyle()}
               title="Pan left"
             >
-              <ArrowLeftCircleIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <ArrowLeftCircleIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
           </motion.div>
           <motion.div
@@ -143,14 +202,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                 hoveredMagnifyingDirection === MagnifyingDirection.Out
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0
-                    : 1,
+                  ? 0
+                  : 1,
               scale:
                 hoveredMagnifyingDirection === MagnifyingDirection.Out
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0.95
-                    : 1,
+                  ? 0.95
+                  : 1,
             }}
             transition={{ duration: 0.2 }}
             onMouseEnter={() =>
@@ -161,15 +220,20 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <button
               className={
                 getButtonClass() +
-                ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.Out
-                  ? "z-20"
-                  : ""
+                ` relative rounded-none ${
+                  hoveredMagnifyingDirection === MagnifyingDirection.Out
+                    ? "z-20"
+                    : ""
                 }`
               }
+              style={getButtonStyle()}
               onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
               title="Zoom out"
             >
-              <MagnifyingGlassMinusIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <MagnifyingGlassMinusIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
             <AnimatePresence>
               {hoveredMagnifyingDirection === MagnifyingDirection.Out && (
@@ -220,14 +284,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
                 hoveredMagnifyingDirection === MagnifyingDirection.In
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0
-                    : 1,
+                  ? 0
+                  : 1,
               scale:
                 hoveredMagnifyingDirection === MagnifyingDirection.In
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0.95
-                    : 1,
+                  ? 0.95
+                  : 1,
             }}
             transition={{ duration: 0.2 }}
             onMouseEnter={() =>
@@ -238,15 +302,20 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <button
               className={
                 getButtonClass() +
-                ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.In
-                  ? "z-20"
-                  : ""
+                ` relative rounded-none ${
+                  hoveredMagnifyingDirection === MagnifyingDirection.In
+                    ? "z-20"
+                    : ""
                 }`
               }
+              style={getButtonStyle()}
               onClick={() => handleToolClick(Tool.ZoomInOneFold)}
               title="Zoom in"
             >
-              <MagnifyingGlassPlusIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <MagnifyingGlassPlusIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
             <AnimatePresence>
               {hoveredMagnifyingDirection === MagnifyingDirection.In && (
@@ -292,7 +361,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
 
           {/* Navigation and tools */}
           <motion.div
-            className="flex flex-row items-center gap-1"
+            className="flex flex-row items-center"
+            style={{ gap: getGapSize() }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -302,14 +372,19 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <button
               onClick={() => handleToolClick(Tool.PanRight)}
               className={getButtonClass(Tool.PanRight)}
+              style={getButtonStyle()}
               title="Pan right"
             >
-              <ArrowRightCircleIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <ArrowRightCircleIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
           </motion.div>
 
           <motion.div
-            className="flex flex-row items-center gap-1"
+            className="flex flex-row items-center"
+            style={{ gap: getGapSize() }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -319,16 +394,24 @@ const Toolbar: React.FC<ToolbarProps> = ({ onNewRegionSelect }) => {
             <button
               onClick={() => handleToolClick(Tool.Highlight)}
               className={getButtonClass(Tool.Highlight)}
+              style={getButtonStyle()}
               title="Highlight"
             >
-              <BoltIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <BoltIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
             <button
               className={getButtonClass()}
+              style={getButtonStyle()}
               onClick={() => handleToolClick(Tool.highlightMenu)}
               title="Highlight list"
             >
-              <LightBulbIcon className="size-4 text-gray-600 dark:text-dark-primary" />
+              <LightBulbIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
             </button>
           </motion.div>
         </motion.div>

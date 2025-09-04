@@ -9,6 +9,9 @@ interface MetadataHeaderProps {
   onNewTerms?: (newTerms: string[]) => void;
   suggestedMetaSets?: Set<string>;
   onRemoveTerm?: (newTerms: string[]) => void;
+  windowWidth?: number;
+  fontSize?: number;
+  padding?: number;
 }
 
 const MetadataHeader: React.FC<MetadataHeaderProps> = ({
@@ -16,6 +19,9 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
   onNewTerms = () => undefined,
   suggestedMetaSets,
   onRemoveTerm,
+  windowWidth = 800,
+  fontSize,
+  padding,
 }) => {
   const [isShowingEditMenu, setIsShowingEditMenu] = useState(false);
 
@@ -23,7 +29,15 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
 
   return (
     <>
-      <div className="MetadataHeader-button">
+      <div
+        style={{ paddingLeft: padding ? padding : 5 }}
+        className="h-5 border-r border-gray-400"
+      />
+
+      <div
+        className="MetadataHeader-button"
+        style={{ paddingLeft: padding ?? (padding || 5) }}
+      >
         <button
           onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
           className={
@@ -31,7 +45,12 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
               ? "btn btn-sm btn-danger"
               : "btn btn-sm btn-success"
           }
-          style={{ width: "95px" }}
+          style={{
+            width: `${Math.max(80, Math.min(110, windowWidth * 0.07))}px`,
+            fontSize: `${
+              fontSize || Math.max(11, Math.min(15, windowWidth * 0.009))
+            }px`,
+          }}
         >
           Metadata {isShowingEditMenu ? "↩" : "»"}
         </button>
