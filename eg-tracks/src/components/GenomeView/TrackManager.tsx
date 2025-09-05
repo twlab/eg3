@@ -3529,7 +3529,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     genomeIdx={0}
                     addGlobalState={undefined}
                     windowWidth={windowWidth}
-                    fontSize={getFontSize()}
+                    fontSize={Math.max(16, getFontSize())}
                     padding={getPadding()}
                   />
                 </div>
@@ -3550,7 +3550,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   style={{
                     backgroundColor: "var(--bg-color)",
                     color: "var(--font-color)",
-                    fontSize: `${getFontSize()}px`,
+                    fontSize: `${Math.max(16, getFontSize())}px`,
                     margin: 0,
                     whiteSpace: "nowrap",
                   }}
@@ -3578,7 +3578,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 suggestedMetaSets={metaSets.suggestedMetaSets}
                 onRemoveTerm={onRemoveTerm}
                 windowWidth={windowWidth}
-                fontSize={getFontSize()}
+                fontSize={Math.max(16, getFontSize())}
                 padding={getPadding()}
               />
             </div>
