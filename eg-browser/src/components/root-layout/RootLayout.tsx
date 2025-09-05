@@ -98,11 +98,7 @@ export default function RootLayout(props: RootLayoutProps) {
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
 
-  const {
-    ref: contentRef,
-    width: contentWidth,
-    height: contentHeight,
-  } = useElementGeometry();
+
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
@@ -213,7 +209,7 @@ export default function RootLayout(props: RootLayoutProps) {
         {/* ) : null} */}
         <div
           className="flex flex-row flex-1 relative bg-black"
-          ref={contentRef}
+
         >
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
@@ -237,7 +233,7 @@ export default function RootLayout(props: RootLayoutProps) {
               >
                 <div
                   className="flex flex-col"
-                  style={{ height: contentHeight }}
+
                 >
                   <SessionPanel />
                 </div>
@@ -290,10 +286,7 @@ export default function RootLayout(props: RootLayoutProps) {
                   className="flex flex-col w-screen pb-20"
                   key="genome-view"
                   exit={{ opacity: 0 }}
-                  style={{
-                    width: contentWidth,
-                    height: "auto",
-                  }}
+
                 >
                   <GenomeErrorBoundary onGoHome={handleGoHome}>
                     <GenomeView />
@@ -301,10 +294,10 @@ export default function RootLayout(props: RootLayoutProps) {
                 </motion.div>
               ) : (
                 <motion.div
-                  className="h-full"
+                  className="h-full w-full"
                   key="genome-picker"
                   exit={{ opacity: 0 }}
-                  style={{ width: contentWidth, height: contentHeight }}
+
                 >
                   <GenomePicker />
                 </motion.div>
