@@ -88,3 +88,7 @@ hen scroll back if its fetching the new tracks only that are added
 --9. rework viewRegion and userViewRegion
 -- 10. create a contextCoord convert to genomicCoord
 11. move toolbar to the top next to region controller
+
+12 create intiial windowWidth before genomeroot and resize from root to manager
+13 delte newdrawdata state in trackmanager
+14 move viewRegion and UserViewRegion to trackrepresent and create genomeConfig there. 
