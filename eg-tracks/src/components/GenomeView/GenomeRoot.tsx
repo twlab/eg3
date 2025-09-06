@@ -344,7 +344,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         setModel(FlexLayout.Model.fromJson(layout.current));
       }
     }
-    console.log("tracks changed", size.width, containerRef.current?.style.width);
+
   }, [tracks]);
 
   // use effect of tracks will get trigger first creating the page layout before the resize effect
