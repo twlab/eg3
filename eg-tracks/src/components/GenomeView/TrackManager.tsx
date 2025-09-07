@@ -12,6 +12,10 @@ import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import _, { throttle } from "lodash";
+
+// Performance tracking
+let trackManagerStartTime = performance.now();
+
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
@@ -1692,6 +1696,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
         curDrawData["trackToDrawId"] = combineTrackToDrawId;
         curDrawData["curDataIdx"] = curDrawData.trackDataIdx;
+        // console.log(`[TrackManager] 🎨 Setting new draw data at ${new Date().toLocaleTimeString()}.${Math.floor(performance.now() % 1000).toString().padStart(3, '0')} (+${(performance.now() - trackManagerStartTime).toFixed(1)}ms)`);
 
         setNewDrawData({ ...curDrawData });
       }
@@ -2383,6 +2388,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     });
 
     addTermToMetaSets(trackManagerState.current.tracks);
+    console.log(`[TrackManager] 🚀 Initialize tracks completed at ${new Date().toLocaleTimeString()}.${Math.floor(performance.now() % 1000).toString().padStart(3, '0')} (+${(performance.now() - trackManagerStartTime).toFixed(1)}ms)`);
     fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
 
     queueRegionToFetch(0);
@@ -2630,6 +2636,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("keydown", handleKeyDown);
+    console.log(`[TrackManager] 🎛️ Event listeners setup at ${new Date().toLocaleTimeString()}.${Math.floor(performance.now() % 1000).toString().padStart(3, '0')} (+${(performance.now() - trackManagerStartTime).toFixed(1)}ms)`);
 
     // Add click event listener to the track container
     const trackContainer = block.current;
