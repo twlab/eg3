@@ -1,11 +1,14 @@
 import React, { memo, useEffect, useRef, useState } from "react";
-import _ from "lodash";
+import _, { has } from "lodash";
 import { ITrackContainerState } from "../../types";
 import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import { addTabSetToLayout, initialLayout } from "../../models/layoutUtils";
 import "./AppLayout.css";
 import { arraysHaveSameTrackModels } from "../../util";
+
+// Pre-compile FlexLayout model to eliminate JSON parsing delay
+const precompiledModel = FlexLayout.Model.fromJson(initialLayout);
 // import "./track.css";
 // import { chrType } from "../../localdata/genomename";
 // import { getGenomeConfig } from "../../models/genomes/allGenomes";
@@ -56,9 +59,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     packageVersion
       ? null
       : {
-        instance: [],
-        worker: [],
-      }
+          instance: [],
+          worker: [],
+        }
   );
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
@@ -69,12 +72,16 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
-  // const layout = useRef(_.cloneDeep(initialLayout));
-  // const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
+  const layout = useRef(_.cloneDeep(initialLayout));
+  const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
   const [show3dGene, setShow3dGene] = useState();
   //keep a ref of g3d track else completeTrackChange will not have the latest tracks data
   const g3dTracks = useRef<Array<any>>([]);
 
+  const has3dTracks = React.useMemo(
+    () => tracks.some((track) => track.type === "g3d"),
+    [tracks]
+  );
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
   }
@@ -117,51 +124,72 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     );
   }
 
-  // const factory = (node) => {
-  //   var component = node.getComponent();
+  // Optimized factory function with reduced overhead
+  const factory = React.useCallback(
+    (node) => {
+      const component = node.getComponent();
 
-  //   if (component === "Browser") {
-  //     console.log(`[GenomeRoot] FACRTORY${new Date().toLocaleTimeString()}.${Math.floor(performance.now() % 1000).toString().padStart(3, '0')} (+${(performance.now() - genomeRootStartTime).toFixed(1)}ms)`);
+      if (component === "Browser") {
+        // // Minimal logging for performance
+        // if (process.env.NODE_ENV === "development") {
+        //   console.log(`[GenomeRoot] Factory:${Date.now()}`);
+        // }
 
-  //     return (
-  //       <TrackManager
-  //         key={trackManagerId.current}
-  //         tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
-  //         legendWidth={legendWidth}
-  //         windowWidth={
-  //           (!size.width || size.width - legendWidth <= 0 ? 1500 : size.width) -
-  //           legendWidth -
-  //           40
-  //           // 20 px from padding left moving element inside flexlayout 20px over, 20px from scrollbar, 20px to add the gap
-  //           // this make the width of the browser fit the screen
-  //         }
-  //         userViewRegion={userViewRegion}
-  //         highlights={highlights}
-  //         genomeConfig={currentGenomeConfig}
-  //         onNewRegion={onNewRegion}
-  //         onNewRegionSelect={onNewRegionSelect}
-  //         onNewHighlight={onNewHighlight}
-  //         onTracksChange={completeTracksChange}
-  //         tool={tool}
-  //         Toolbar={Toolbar}
-  //         viewRegion={viewRegion}
-  //         showGenomeNav={showGenomeNav}
-  //         showToolBar={showToolBar}
-  //         isThereG3dTrack={g3dTracks.current.length > 0 ? true : false}
-  //         setScreenshotData={setScreenshotData}
-  //         isScreenShotOpen={isScreenShotOpen}
-  //         selectedRegionSet={selectedRegionSet}
-  //         setShow3dGene={setShow3dGene}
-  //         infiniteScrollWorkers={infiniteScrollWorkers}
-  //         fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-  //         onHeightChange={onHeightChange}
-  //       />
-  //     );
-  //   } else {
-  //     const g3dComp = renderG3dTrackComponents(node);
-  //     return g3dComp;
-  //   }
-  // };
+        return (
+          <TrackManager
+            key={trackManagerId.current}
+            tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
+            legendWidth={legendWidth}
+            windowWidth={
+              (!size.width || size.width - legendWidth <= 0
+                ? 1500
+                : size.width) -
+              legendWidth -
+              40
+            }
+            userViewRegion={userViewRegion}
+            highlights={highlights}
+            genomeConfig={genomeConfig}
+            onNewRegion={onNewRegion}
+            onNewRegionSelect={onNewRegionSelect}
+            onNewHighlight={onNewHighlight}
+            onTracksChange={completeTracksChange}
+            tool={tool}
+            Toolbar={Toolbar}
+            viewRegion={viewRegion}
+            showGenomeNav={showGenomeNav}
+            showToolBar={showToolBar}
+            isThereG3dTrack={g3dTracks.current.length > 0}
+            setScreenshotData={setScreenshotData}
+            isScreenShotOpen={isScreenShotOpen}
+            selectedRegionSet={selectedRegionSet}
+            setShow3dGene={setShow3dGene}
+            infiniteScrollWorkers={infiniteScrollWorkers}
+            fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+            onHeightChange={onHeightChange}
+          />
+        );
+      } else {
+        return renderG3dTrackComponents(node);
+      }
+    },
+    [
+      tracks,
+      size.width,
+      legendWidth,
+      userViewRegion,
+      highlights,
+      genomeConfig,
+      onNewRegion,
+      onNewRegionSelect,
+      onNewHighlight,
+      tool,
+      viewRegion,
+      showGenomeNav,
+      showToolBar,
+      selectedRegionSet,
+    ]
+  );
 
   const throttle = (callback, limit) => {
     let timeoutId: any = null;
@@ -215,245 +243,205 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     return result;
   }
 
-  // useEffect(() => {
-  //   // Set initial height for the container
-  //   if (containerRef.current && tracksHeight.current === 0) {
-  //     tracksHeight.current = 200; // Initial height (just the top parts)
-  //     containerRef.current.style.height = `${tracksHeight.current}px`;
-  //   }
+  useEffect(() => {
+    // console.log(
+    //   `[GenomeRoot] ⚙️ Setting genome config at ${new Date().toLocaleTimeString()}.${Math.floor(
+    //     performance.now() % 1000
+    //   )
+    //     .toString()
+    //     .padStart(3, "0")} (+${(
+    //     performance.now() - genomeRootStartTime
+    //   ).toFixed(1)}ms)`
+    // );
+    // setCurrentGenomeConfig(curGenome);
+    // Cleanup workers and all refs/state on component unmount
+    trackManagerId.current = generateUUID();
+    const normalTracks = tracks.filter(
+      (t) => !(t.type in INSTANCE_FETCH_TYPES)
+    );
+    const instanceFetchTracks = tracks.filter(
+      (t) => t.type in INSTANCE_FETCH_TYPES
+    );
+    // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
+    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    const instanceFetchTracksCount = Math.min(
+      instanceFetchTracks.length,
+      MAX_WORKERS
+    );
+    if (!packageVersion) {
+      for (let i = 0; i < normalCount; i++) {
+        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.worker.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      for (let i = 0; i < instanceFetchTracksCount; i++) {
+        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.instance.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      if (
+        tracks.some((t) => t.type === "genomealign") &&
+        !fetchGenomeAlignWorker.current
+      ) {
+        fetchGenomeAlignWorker.current = {
+          fetchWorker: new Worker(
+            new URL(
+              "../../getRemoteData/fetchGenomeAlignWorker.ts",
+              import.meta.url
+            ),
+            { type: "module" }
+          ),
+          hasOnMessage: false,
+        };
+      }
+    }
+    return () => {
+      // Terminate all infinite scroll workers
 
-  //   const normalTracks = tracks.filter(
-  //     (t) => !(t.type in INSTANCE_FETCH_TYPES)
-  //   );
-  //   const instanceFetchTracks = tracks.filter(
-  //     (t) => t.type in INSTANCE_FETCH_TYPES
-  //   );
-  //   // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
-  //   const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-  //   const instanceFetchTracksCount = Math.min(
-  //     instanceFetchTracks.length,
-  //     MAX_WORKERS
-  //   );
-  //   if (!packageVersion) {
-  //     for (let i = 0; i < normalCount; i++) {
-  //       if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
-  //         infiniteScrollWorkers.current!.worker.push({
-  //           fetchWorker: new Worker(
-  //             new URL(
-  //               "../../getRemoteData/fetchDataWorker.ts",
-  //               import.meta.url
-  //             ),
-  //             { type: "module" }
-  //           ),
-  //           hasOnMessage: false,
-  //         });
-  //       }
-  //     }
-  //     for (let i = 0; i < instanceFetchTracksCount; i++) {
-  //       if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
-  //         infiniteScrollWorkers.current!.instance.push({
-  //           fetchWorker: new Worker(
-  //             new URL(
-  //               "../../getRemoteData/fetchDataWorker.ts",
-  //               import.meta.url
-  //             ),
-  //             { type: "module" }
-  //           ),
-  //           hasOnMessage: false,
-  //         });
-  //       }
-  //     }
-  //     if (
-  //       tracks.some((t) => t.type === "genomealign") &&
-  //       !fetchGenomeAlignWorker.current
-  //     ) {
-  //       fetchGenomeAlignWorker.current = {
-  //         fetchWorker: new Worker(
-  //           new URL(
-  //             "../../getRemoteData/fetchGenomeAlignWorker.ts",
-  //             import.meta.url
-  //           ),
-  //           { type: "module" }
-  //         ),
-  //         hasOnMessage: false,
-  //       };
-  //     }
-  //   }
+      if (infiniteScrollWorkers.current) {
+        infiniteScrollWorkers.current.worker.forEach((workerObj) => {
+          workerObj.fetchWorker.terminate();
+        });
+        infiniteScrollWorkers.current.instance.forEach((workerObj) => {
+          workerObj.fetchWorker.terminate();
+        });
 
-  //   const curG3dTracks = findAllG3dTabs(layout.current);
-  //   const newG3dTracks: Array<any> = tracks.filter(
-  //     (track) => track.type === "g3d"
-  //   );
+        // Clear the arrays and references
+        infiniteScrollWorkers.current.worker = [];
+        infiniteScrollWorkers.current.instance = [];
+        infiniteScrollWorkers.current = null;
+      }
 
-  //   if (tracks.length > 0) {
-  //     if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
-  //       layout.current = _.cloneDeep(initialLayout);
-  //       g3dTracks.current = newG3dTracks;
-  //       for (let track of newG3dTracks) {
-  //         const newLayout = {
-  //           type: "tabset",
-  //           children: [
-  //             {
-  //               type: "tab",
-  //               name: track.getDisplayLabel(),
-  //               component: "g3d",
+      // Terminate genome align worker
+      if (fetchGenomeAlignWorker.current) {
+        fetchGenomeAlignWorker.current.fetchWorker.terminate();
+      }
+      fetchGenomeAlignWorker.current = null;
 
-  //               config: { trackModel: track, trackId: track.id },
-  //               enableClose: true,
-  //             },
-  //           ],
-  //         };
-  //         layout.current = addTabSetToLayout(newLayout, layout.current);
-  //       }
+      // Clear all other refs
+      containerRef.current = null;
+      tracksHeight.current = 0;
+      trackManagerId.current = null;
+      prevViewRegion.current = { genomeName: "", start: 0, end: 1 };
+      layout.current = _.cloneDeep(initialLayout);
+      g3dTracks.current = [];
 
-  //       setModel(FlexLayout.Model.fromJson(layout.current));
-  //     }
-  //   }
-
-
-
-  //   trackManagerId.current = generateUUID();
-  //   const curGenome = { ...genomeConfig };
-  //   curGenome.navContext = userViewRegion._navContext;
-  //   curGenome["isInitial"] = true;
-  //   curGenome["genomeID"] = trackManagerId.current;
-  //   curGenome.defaultRegion = new OpenInterval(
-  //     userViewRegion._startBase!,
-  //     userViewRegion._endBase!
-  //   );
-  //   console.log(`[GenomeRoot] ⚙️ Setting genome config at ${new Date().toLocaleTimeString()}.${Math.floor(performance.now() % 1000).toString().padStart(3, '0')} (+${(performance.now() - genomeRootStartTime).toFixed(1)}ms)`);
-  //   // setCurrentGenomeConfig(curGenome);
-  //   // Cleanup workers and all refs/state on component unmount
-  //   return () => {
-  //     // Terminate all infinite scroll workers
-
-  //     if (infiniteScrollWorkers.current) {
-  //       infiniteScrollWorkers.current.worker.forEach((workerObj) => {
-  //         workerObj.fetchWorker.terminate();
-  //       });
-  //       infiniteScrollWorkers.current.instance.forEach((workerObj) => {
-  //         workerObj.fetchWorker.terminate();
-  //       });
-
-  //       // Clear the arrays and references
-  //       infiniteScrollWorkers.current.worker = [];
-  //       infiniteScrollWorkers.current.instance = [];
-  //       infiniteScrollWorkers.current = null;
-  //     }
-
-  //     // Terminate genome align worker
-  //     if (fetchGenomeAlignWorker.current) {
-  //       fetchGenomeAlignWorker.current.fetchWorker.terminate();
-  //     }
-  //     fetchGenomeAlignWorker.current = null;
-
-  //     // Clear all other refs
-  //     containerRef.current = null;
-  //     tracksHeight.current = 0;
-  //     trackManagerId.current = null;
-  //     prevViewRegion.current = { genomeName: "", start: 0, end: 1 };
-  //     layout.current = _.cloneDeep(initialLayout);
-  //     g3dTracks.current = [];
-
-  //     // Reset state to initial values
-  //     setCurrentGenomeConfig(null);
-  //     setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
-  //     setShow3dGene(undefined);
-  //   };
-  // }, []);
+      // Reset state to initial values
+      setCurrentGenomeConfig(null);
+      setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
+      setShow3dGene(undefined);
+    };
+  }, []);
 
   // check what types of tracks are being added, and determine the number of workers needed for
   // TrackManager
-  // useEffect(() => {
-  //   const normalTracks = tracks.filter(
-  //     (t) => !(t.type in INSTANCE_FETCH_TYPES)
-  //   );
-  //   const instanceFetchTracks = tracks.filter(
-  //     (t) => t.type in INSTANCE_FETCH_TYPES
-  //   );
-  //   // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
-  //   const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-  //   const instanceFetchTracksCount = Math.min(
-  //     instanceFetchTracks.length,
-  //     MAX_WORKERS
-  //   );
-  //   if (!packageVersion) {
-  //     for (let i = 0; i < normalCount; i++) {
-  //       if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
-  //         infiniteScrollWorkers.current!.worker.push({
-  //           fetchWorker: new Worker(
-  //             new URL(
-  //               "../../getRemoteData/fetchDataWorker.ts",
-  //               import.meta.url
-  //             ),
-  //             { type: "module" }
-  //           ),
-  //           hasOnMessage: false,
-  //         });
-  //       }
-  //     }
-  //     for (let i = 0; i < instanceFetchTracksCount; i++) {
-  //       if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
-  //         infiniteScrollWorkers.current!.instance.push({
-  //           fetchWorker: new Worker(
-  //             new URL(
-  //               "../../getRemoteData/fetchDataWorker.ts",
-  //               import.meta.url
-  //             ),
-  //             { type: "module" }
-  //           ),
-  //           hasOnMessage: false,
-  //         });
-  //       }
-  //     }
-  //     if (
-  //       tracks.some((t) => t.type === "genomealign") &&
-  //       !fetchGenomeAlignWorker.current
-  //     ) {
-  //       fetchGenomeAlignWorker.current = {
-  //         fetchWorker: new Worker(
-  //           new URL(
-  //             "../../getRemoteData/fetchGenomeAlignWorker.ts",
-  //             import.meta.url
-  //           ),
-  //           { type: "module" }
-  //         ),
-  //         hasOnMessage: false,
-  //       };
-  //     }
-  //   }
+  useEffect(() => {
+    const normalTracks = tracks.filter(
+      (t) => !(t.type in INSTANCE_FETCH_TYPES)
+    );
+    const instanceFetchTracks = tracks.filter(
+      (t) => t.type in INSTANCE_FETCH_TYPES
+    );
+    // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
+    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+    const instanceFetchTracksCount = Math.min(
+      instanceFetchTracks.length,
+      MAX_WORKERS
+    );
+    if (!packageVersion) {
+      for (let i = 0; i < normalCount; i++) {
+        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.worker.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      for (let i = 0; i < instanceFetchTracksCount; i++) {
+        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.instance.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      if (
+        tracks.some((t) => t.type === "genomealign") &&
+        !fetchGenomeAlignWorker.current
+      ) {
+        fetchGenomeAlignWorker.current = {
+          fetchWorker: new Worker(
+            new URL(
+              "../../getRemoteData/fetchGenomeAlignWorker.ts",
+              import.meta.url
+            ),
+            { type: "module" }
+          ),
+          hasOnMessage: false,
+        };
+      }
+    }
 
-  //   const curG3dTracks = findAllG3dTabs(layout.current);
-  //   const newG3dTracks: Array<any> = tracks.filter(
-  //     (track) => track.type === "g3d"
-  //   );
+    const curG3dTracks = findAllG3dTabs(layout.current);
+    const newG3dTracks: Array<any> = tracks.filter(
+      (track) => track.type === "g3d"
+    );
 
-  //   if (tracks.length > 0) {
-  //     if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
-  //       layout.current = _.cloneDeep(initialLayout);
-  //       g3dTracks.current = newG3dTracks;
-  //       for (let track of newG3dTracks) {
-  //         const newLayout = {
-  //           type: "tabset",
-  //           children: [
-  //             {
-  //               type: "tab",
-  //               name: track.getDisplayLabel(),
-  //               component: "g3d",
+    if (tracks.length > 0 && has3dTracks) {
+      if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
+        layout.current = _.cloneDeep(initialLayout);
+        g3dTracks.current = newG3dTracks;
+        for (let track of newG3dTracks) {
+          const newLayout = {
+            type: "tabset",
+            children: [
+              {
+                type: "tab",
+                name: track.getDisplayLabel(),
+                component: "g3d",
 
-  //               config: { trackModel: track, trackId: track.id },
-  //               enableClose: true,
-  //             },
-  //           ],
-  //         };
-  //         layout.current = addTabSetToLayout(newLayout, layout.current);
-  //       }
+                config: { trackModel: track, trackId: track.id },
+                enableClose: true,
+              },
+            ],
+          };
+          layout.current = addTabSetToLayout(newLayout, layout.current);
+        }
 
-  //       setModel(FlexLayout.Model.fromJson(layout.current));
-  //     }
-  //   }
-
-  // }, [tracks]);
+        setModel(FlexLayout.Model.fromJson(layout.current));
+      }
+    }
+  }, [tracks]);
 
   // use effect of tracks will get trigger first creating the page layout before the resize effect
   // which will create the TrackManager component
@@ -471,108 +459,120 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   //       curGenome.navContext = userViewRegion._navContext;
   //       curGenome["sizeChange"] = true;
   //       throttledSetConfig.current(curGenome);
-  //     } else {
-  //       trackManagerId.current = generateUUID();
-  //       curGenome = { ...genomeConfig };
-  //       curGenome.navContext = userViewRegion._navContext;
-  //       curGenome["isInitial"] = true;
+  //     }
+
+  //     // else {
+  //     //   trackManagerId.current = generateUUID();
+  //     //   curGenome = { ...genomeConfig };
+  //     //   curGenome.navContext = userViewRegion._navContext;
+  //     //   curGenome["isInitial"] = true;
+  //     //   curGenome["genomeID"] = trackManagerId.current;
+  //     //   curGenome.defaultRegion = new OpenInterval(
+  //     //     userViewRegion._startBase!,
+  //     //     userViewRegion._endBase!
+  //     //   );
+  //     //   setCurrentGenomeConfig(curGenome);
+  //     // }
+  //   }
+  // }, [size.width]);
+
+  // useEffect(() => {
+  //   if (userViewRegion) {
+  //     if (trackManagerId.current) {
+  //       const curGenome = { ...genomeConfig };
+  //       curGenome["isInitial"] = false;
   //       curGenome["genomeID"] = trackManagerId.current;
   //       curGenome.defaultRegion = new OpenInterval(
   //         userViewRegion._startBase!,
   //         userViewRegion._endBase!
   //       );
-  //       setCurrentGenomeConfig(curGenome);
+  //       curGenome.navContext = userViewRegion._navContext;
+  //       curGenome["sizeChange"] = false;
+  //       throttledSetConfig.current(curGenome);
+  //       // setCurrentGenomeConfig(curGenome);
   //     }
   //   }
-  // }, [size.width]);
+  // }, [viewRegion]);
 
-  useEffect(() => {
-    if (size.width > 0 && userViewRegion) {
-      if (trackManagerId.current) {
-        const curGenome = { ...genomeConfig };
-        curGenome["isInitial"] = false;
-        curGenome["genomeID"] = trackManagerId.current;
-        curGenome.defaultRegion = new OpenInterval(
-          userViewRegion._startBase!,
-          userViewRegion._endBase!
-        );
-        curGenome.navContext = userViewRegion._navContext;
-        curGenome["sizeChange"] = false;
-        throttledSetConfig.current(curGenome);
-        // setCurrentGenomeConfig(curGenome);
-      }
-    }
-  }, [viewRegion]);
+  // useEffect(() => {
+  //   if (userViewRegion) {
+  //     if (
+  //       trackManagerId.current &&
+  //       currentState.index !== currentState.limit - 1
+  //     ) {
+  //       if (
+  //         genomeConfig.genomeName !== prevViewRegion.current.genomeName ||
+  //         userViewRegion._startBase !== prevViewRegion.current.start ||
+  //         userViewRegion._endBase !== prevViewRegion.current.end
+  //       ) {
+  //         const curGenome = { ...genomeConfig };
+  //         curGenome["isInitial"] = false;
+  //         curGenome["genomeID"] = trackManagerId.current;
 
-  useEffect(() => {
-    if (size.width > 0 && userViewRegion) {
-      if (
-        trackManagerId.current &&
-        currentState.index !== currentState.limit - 1
-      ) {
-        if (
-          genomeConfig.genomeName !== prevViewRegion.current.genomeName ||
-          userViewRegion._startBase !== prevViewRegion.current.start ||
-          userViewRegion._endBase !== prevViewRegion.current.end
-        ) {
-          const curGenome = { ...genomeConfig };
-          curGenome["isInitial"] = false;
-          curGenome["genomeID"] = trackManagerId.current;
-
-          curGenome.defaultRegion = new OpenInterval(
-            userViewRegion._startBase!,
-            userViewRegion._endBase!
-          );
-          curGenome.navContext = userViewRegion._navContext;
-          curGenome["sizeChange"] = false;
-          throttledSetConfig.current(curGenome);
-        }
-      }
-      prevViewRegion.current.genomeName = genomeConfig.genomeName;
-      prevViewRegion.current.start = userViewRegion._startBase!;
-      prevViewRegion.current.end = userViewRegion._endBase!;
-    }
-  }, [userViewRegion]);
+  //         curGenome.defaultRegion = new OpenInterval(
+  //           userViewRegion._startBase!,
+  //           userViewRegion._endBase!
+  //         );
+  //         curGenome.navContext = userViewRegion._navContext;
+  //         curGenome["sizeChange"] = false;
+  //         throttledSetConfig.current(curGenome);
+  //       }
+  //     }
+  //     prevViewRegion.current.genomeName = genomeConfig.genomeName;
+  //     prevViewRegion.current.start = userViewRegion._startBase!;
+  //     prevViewRegion.current.end = userViewRegion._endBase!;
+  //   }
+  // }, [userViewRegion]);
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       <div
-        ref={containerRef}
+        // ref={containerRef}
         style={{
           display: "flex",
           flexDirection: "column",
-          width: size.width,
-          height: 400,
+          // width: size.width,
+          // height: 400,
         }}
       >
-        <TrackManager
-          key={"ASDSAD"}
-          tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
-          legendWidth={legendWidth}
-          windowWidth={
-            1500
-          }
-          userViewRegion={userViewRegion}
-          highlights={highlights}
-          genomeConfig={genomeConfig}
-          onNewRegion={onNewRegion}
-          onNewRegionSelect={onNewRegionSelect}
-          onNewHighlight={onNewHighlight}
-          onTracksChange={completeTracksChange}
-          tool={tool}
-          Toolbar={Toolbar}
-          viewRegion={viewRegion}
-          showGenomeNav={showGenomeNav}
-          showToolBar={showToolBar}
-          isThereG3dTrack={g3dTracks.current.length > 0 ? true : false}
-          setScreenshotData={setScreenshotData}
-          isScreenShotOpen={isScreenShotOpen}
-          selectedRegionSet={selectedRegionSet}
-          setShow3dGene={setShow3dGene}
-          infiniteScrollWorkers={infiniteScrollWorkers}
-          fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-          onHeightChange={onHeightChange}
-        />
+        {has3dTracks ? (
+          // Use FlexLayout with precompiled model for better performance
+          <FlexLayout.Layout model={model} factory={factory} />
+        ) : (
+          // Direct rendering for optimal performance
+          <TrackManager
+            key={trackManagerId.current || "direct-track-manager"}
+            tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
+            legendWidth={legendWidth}
+            windowWidth={
+              (!size.width || size.width - legendWidth <= 0
+                ? 1500
+                : size.width) -
+              legendWidth -
+              40
+            }
+            userViewRegion={userViewRegion}
+            highlights={highlights}
+            genomeConfig={genomeConfig}
+            onNewRegion={onNewRegion}
+            onNewRegionSelect={onNewRegionSelect}
+            onNewHighlight={onNewHighlight}
+            onTracksChange={completeTracksChange}
+            tool={tool}
+            Toolbar={Toolbar}
+            viewRegion={viewRegion}
+            showGenomeNav={showGenomeNav}
+            showToolBar={showToolBar}
+            isThereG3dTrack={false}
+            setScreenshotData={setScreenshotData}
+            isScreenShotOpen={isScreenShotOpen}
+            selectedRegionSet={selectedRegionSet}
+            setShow3dGene={setShow3dGene}
+            infiniteScrollWorkers={infiniteScrollWorkers}
+            fetchGenomeAlignWorker={fetchGenomeAlignWorker}
+            onHeightChange={onHeightChange}
+          />
+        )}
       </div>
     </div>
   );
