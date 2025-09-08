@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState } from "react";
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import _, { has } from "lodash";
 import { ITrackContainerState } from "../../types";
 import FlexLayout from "flexlayout-react";
@@ -67,9 +67,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     fetchWorker: Worker;
     hasOnMessage: boolean;
   } | null>(null);
-  const tracksHeight = useRef<number>(400);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [currentGenomeConfig, setCurrentGenomeConfig] = useState<any>(null);
+
   const trackManagerId = useRef<null | string>(null);
   const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
   const layout = useRef(_.cloneDeep(initialLayout));
@@ -82,6 +80,70 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     () => tracks.some((track) => track.type === "g3d"),
     [tracks]
   );
+
+  useMemo(() => {
+    if (!packageVersion) {
+      const normalTracks = tracks.filter(
+        (t) => !(t.type in INSTANCE_FETCH_TYPES)
+      );
+      const instanceFetchTracks = tracks.filter(
+        (t) => t.type in INSTANCE_FETCH_TYPES
+      );
+      // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
+      const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
+      const instanceFetchTracksCount = Math.min(
+        instanceFetchTracks.length,
+        MAX_WORKERS
+      );
+      // Create workers for normal tracks
+      for (let i = 0; i < normalCount; i++) {
+        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.worker.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      // Create workers for instance fetch tracks
+      for (let i = 0; i < instanceFetchTracksCount; i++) {
+        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
+          infiniteScrollWorkers.current!.instance.push({
+            fetchWorker: new Worker(
+              new URL(
+                "../../getRemoteData/fetchDataWorker.ts",
+                import.meta.url
+              ),
+              { type: "module" }
+            ),
+            hasOnMessage: false,
+          });
+        }
+      }
+      // Create genome align worker if needed
+      if (
+        tracks.some((t) => t.type === "genomealign") &&
+        !fetchGenomeAlignWorker.current
+      ) {
+        fetchGenomeAlignWorker.current = {
+          fetchWorker: new Worker(
+            new URL(
+              "../../getRemoteData/fetchGenomeAlignWorker.ts",
+              import.meta.url
+            ),
+            { type: "module" }
+          ),
+          hasOnMessage: false,
+        };
+      }
+    }
+  }, [tracks]);
+
   function completeTracksChange(updateTracks: Array<TrackModel>) {
     onTracksChange([...updateTracks, ...g3dTracks.current]);
   }
@@ -115,7 +177,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         height={height}
         x={x}
         y={y}
-        genomeConfig={currentGenomeConfig}
+        genomeConfig={genomeConfig}
         geneFor3d={show3dGene}
         onSetSelected={onSetSelected}
         onNewViewRegion={onNewRegionSelect}
@@ -166,7 +228,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             setShow3dGene={setShow3dGene}
             infiniteScrollWorkers={infiniteScrollWorkers}
             fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-            onHeightChange={onHeightChange}
           />
         );
       } else {
@@ -191,35 +252,17 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     ]
   );
 
-  const throttle = (callback, limit) => {
-    let timeoutId: any = null;
-    return (...args) => {
-      if (!timeoutId) {
-        callback(...args);
-        timeoutId = setTimeout(() => {
-          timeoutId = null;
-        }, limit);
-      }
-    };
-  };
-
-  const throttledSetConfig = useRef(
-    throttle((curGenome) => {
-      setCurrentGenomeConfig(curGenome);
-    }, 100)
-  );
-
-  function onHeightChange(height: number) {
-    const newHeight = height + 250;
-    if (Math.round(newHeight) !== Math.round(tracksHeight.current)) {
-      tracksHeight.current = newHeight;
-      // Directly update the DOM to avoid re-renders and flickering
-      if (containerRef.current) {
-        containerRef.current.style.height = `${Math.round(newHeight)}px`;
-      }
-    }
-    // top parts is 200 px and 4 for border top and bottom
-  }
+  // function onHeightChange(height: number) {
+  //   const newHeight = height + 250;
+  //   if (Math.round(newHeight) !== Math.round(tracksHeight.current)) {
+  //     tracksHeight.current = newHeight;
+  //     // Directly update the DOM to avoid re-renders and flickering
+  //     if (containerRef.current) {
+  //       containerRef.current.style.height = `${Math.round(newHeight)}px`;
+  //     }
+  //   }
+  //   // top parts is 200 px and 4 for border top and bottom
+  // }
 
   function findAllG3dTabs(layout: any) {
     const result: any[] = [];
@@ -244,75 +287,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   }
 
   useEffect(() => {
-    // console.log(
-    //   `[GenomeRoot] ⚙️ Setting genome config at ${new Date().toLocaleTimeString()}.${Math.floor(
-    //     performance.now() % 1000
-    //   )
-    //     .toString()
-    //     .padStart(3, "0")} (+${(
-    //     performance.now() - genomeRootStartTime
-    //   ).toFixed(1)}ms)`
-    // );
-    // setCurrentGenomeConfig(curGenome);
-    // Cleanup workers and all refs/state on component unmount
-    trackManagerId.current = generateUUID();
-    const normalTracks = tracks.filter(
-      (t) => !(t.type in INSTANCE_FETCH_TYPES)
-    );
-    const instanceFetchTracks = tracks.filter(
-      (t) => t.type in INSTANCE_FETCH_TYPES
-    );
-    // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
-    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-    const instanceFetchTracksCount = Math.min(
-      instanceFetchTracks.length,
-      MAX_WORKERS
-    );
-    if (!packageVersion) {
-      for (let i = 0; i < normalCount; i++) {
-        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.worker.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
-            hasOnMessage: false,
-          });
-        }
-      }
-      for (let i = 0; i < instanceFetchTracksCount; i++) {
-        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.instance.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
-            hasOnMessage: false,
-          });
-        }
-      }
-      if (
-        tracks.some((t) => t.type === "genomealign") &&
-        !fetchGenomeAlignWorker.current
-      ) {
-        fetchGenomeAlignWorker.current = {
-          fetchWorker: new Worker(
-            new URL(
-              "../../getRemoteData/fetchGenomeAlignWorker.ts",
-              import.meta.url
-            ),
-            { type: "module" }
-          ),
-          hasOnMessage: false,
-        };
-      }
-    }
     return () => {
       // Terminate all infinite scroll workers
 
@@ -337,15 +311,14 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       fetchGenomeAlignWorker.current = null;
 
       // Clear all other refs
-      containerRef.current = null;
-      tracksHeight.current = 0;
+
       trackManagerId.current = null;
       prevViewRegion.current = { genomeName: "", start: 0, end: 1 };
       layout.current = _.cloneDeep(initialLayout);
       g3dTracks.current = [];
 
       // Reset state to initial values
-      setCurrentGenomeConfig(null);
+
       setModel(FlexLayout.Model.fromJson(_.cloneDeep(initialLayout)));
       setShow3dGene(undefined);
     };
@@ -354,70 +327,12 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   // check what types of tracks are being added, and determine the number of workers needed for
   // TrackManager
   useEffect(() => {
-    const normalTracks = tracks.filter(
-      (t) => !(t.type in INSTANCE_FETCH_TYPES)
-    );
-    const instanceFetchTracks = tracks.filter(
-      (t) => t.type in INSTANCE_FETCH_TYPES
-    );
-    // Create up to MAX_WORKERS for each type, but do not exceed 10 in the ref
-    const normalCount = Math.min(normalTracks.length, MAX_WORKERS);
-    const instanceFetchTracksCount = Math.min(
-      instanceFetchTracks.length,
-      MAX_WORKERS
-    );
-    if (!packageVersion) {
-      for (let i = 0; i < normalCount; i++) {
-        if (infiniteScrollWorkers.current!.worker.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.worker.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
-            hasOnMessage: false,
-          });
-        }
-      }
-      for (let i = 0; i < instanceFetchTracksCount; i++) {
-        if (infiniteScrollWorkers.current!.instance.length < MAX_WORKERS) {
-          infiniteScrollWorkers.current!.instance.push({
-            fetchWorker: new Worker(
-              new URL(
-                "../../getRemoteData/fetchDataWorker.ts",
-                import.meta.url
-              ),
-              { type: "module" }
-            ),
-            hasOnMessage: false,
-          });
-        }
-      }
-      if (
-        tracks.some((t) => t.type === "genomealign") &&
-        !fetchGenomeAlignWorker.current
-      ) {
-        fetchGenomeAlignWorker.current = {
-          fetchWorker: new Worker(
-            new URL(
-              "../../getRemoteData/fetchGenomeAlignWorker.ts",
-              import.meta.url
-            ),
-            { type: "module" }
-          ),
-          hasOnMessage: false,
-        };
-      }
-    }
-
-    const curG3dTracks = findAllG3dTabs(layout.current);
-    const newG3dTracks: Array<any> = tracks.filter(
-      (track) => track.type === "g3d"
-    );
-
     if (tracks.length > 0 && has3dTracks) {
+      const curG3dTracks = findAllG3dTabs(layout.current);
+      const newG3dTracks: Array<any> = tracks.filter(
+        (track) => track.type === "g3d"
+      );
+
       if (!arraysHaveSameTrackModels(curG3dTracks, newG3dTracks)) {
         layout.current = _.cloneDeep(initialLayout);
         g3dTracks.current = newG3dTracks;
@@ -546,7 +461,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             legendWidth={legendWidth}
             windowWidth={
               (!size.width || size.width - legendWidth <= 0
-                ? 1500
+                ? window.innerWidth
                 : size.width) -
               legendWidth -
               40
@@ -570,7 +485,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             setShow3dGene={setShow3dGene}
             infiniteScrollWorkers={infiniteScrollWorkers}
             fetchGenomeAlignWorker={fetchGenomeAlignWorker}
-            onHeightChange={onHeightChange}
           />
         )}
       </div>

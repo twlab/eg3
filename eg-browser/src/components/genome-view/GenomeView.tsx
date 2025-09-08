@@ -100,7 +100,6 @@ export default function GenomeView() {
     }
   }
 
-  console.log(`[GenomeView] 🎬 Rendering at ${new Date().toLocaleTimeString()}.${Math.floor(performance.now() % 1000).toString().padStart(3, '0')} (+${(performance.now() - componentStartTime).toFixed(1)}ms)`);
   return currentSession &&
     genomeConfig &&
     currentSession.genomeId === genomeConfig.name ? (

@@ -177,7 +177,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   userViewRegion,
   highlights,
   tracks,
-
+  viewRegion,
   onNewRegion,
   onNewHighlight,
   onTracksChange,
@@ -230,6 +230,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     key: -0,
     done: {},
   });
+  const initialLoad = useRef(true);
   const useFineModeNav = useRef(false);
   const prevWindowWidth = useRef<number>(0);
   const trackManagerId = useRef("");
@@ -1529,7 +1530,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const createInfiniteOnMessage = async (
     event: MessageEvent | { [key: string]: any }
   ) => {
-    console.log(event.data);
     event.data.forEach(async (dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
@@ -1961,7 +1961,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (
       Object.keys(trackToDrawId).length > 0 &&
       !needToFetchGenAlign &&
-      !genomeConfig.isInitial
+      !initialLoad.current
     ) {
       completedFetchedRegion.current.done = { ...trackToDrawId };
       completedFetchedRegion.current.key = dataIdx.current;
@@ -2415,7 +2415,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       ) {
         preloadedTracks.current = {};
         preload.current = false;
-        if (genomeConfig.isInitial) {
+        if (initialLoad.current) {
           setSelectedTool((prevState) => {
             if (tool && tool in { 0: "", 1: "", 2: "", 3: "" }) {
               const newSelectedTool = toolSelect(tool);
@@ -2461,7 +2461,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             }
           }
 
-          genomeConfig.isInitial = false;
+          initialLoad.current = false;
         }
       }
     }
@@ -2620,10 +2620,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       parentElement.addEventListener("mouseenter", handleMouseEnter);
       parentElement.addEventListener("mouseleave", handleMouseLeave);
     }
-    console.log(genomeConfig);
+
     if (genomeConfig) {
       prevWindowWidth.current = windowWidth;
-
+      genomeConfig.defaultRegion = new OpenInterval(
+        userViewRegion._startBase!,
+        userViewRegion._endBase!
+      );
+      genomeConfig.navContext = userViewRegion._navContext;
       trackManagerState.current.tracks.map(
         (items: { type: string }, _index: any) => {
           if (items.type === "genomealign") {
@@ -2736,7 +2740,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [trackComponents, windowWidth]);
 
   useEffect(() => {
-    if (!genomeConfig.isInitial) {
+    if (!initialLoad.current) {
       setSelectedTool((prevState) => {
         if (tool === null || tool === 0) {
           const newSelectedTool = toolSelect(prevState.title);
@@ -2964,6 +2968,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             );
 
       globalTrackState.current.viewWindow = newViewWindow;
+      console.log(newViewWindow, tmpArr);
       setTrackComponents(tmpArr);
 
       setNewDrawData({
@@ -3141,7 +3146,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (
-      !genomeConfig.isInitial &&
+      !initialLoad.current &&
       tracks &&
       !tracks.every((item) => item.waitToUpdate) &&
       trackComponents
@@ -3381,53 +3386,38 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }, [tracks]);
 
-  // useEffect(() => {
-  //   if (size.width > 0 && userViewRegion) {
-  //     let curGenome;
-  //     if (trackManagerId.current) {
-  //       curGenome = { ...genomeConfig };
-  //       curGenome["genomeID"] = trackManagerId.current;
-  //       curGenome["isInitial"] = false;
-  //       curGenome.defaultRegion = new OpenInterval(
-  //         userViewRegion._startBase!,
-  //         userViewRegion._endBase!
-  //       );
-  //       curGenome.navContext = userViewRegion._navContext;
-  //       curGenome["sizeChange"] = true;
-  //       throttledSetConfig.current(curGenome);
-  //     }
-
-  //     // else {
-  //     //   trackManagerId.current = generateUUID();
-  //     //   curGenome = { ...genomeConfig };
-  //     //   curGenome.navContext = userViewRegion._navContext;
-  //     //   curGenome["isInitial"] = true;
-  //     //   curGenome["genomeID"] = trackManagerId.current;
-  //     //   curGenome.defaultRegion = new OpenInterval(
-  //     //     userViewRegion._startBase!,
-  //     //     userViewRegion._endBase!
-  //     //   );
-  //     //   setCurrentGenomeConfig(curGenome);
-  //     // }
-  //   }
-  // }, [size.width]);
-  // useEffect(() => {
-  //   if (userViewRegion) {
-  //     if (trackManagerId.current) {
-  //       const curGenome = { ...genomeConfig };
-  //       curGenome["isInitial"] = false;
-  //       curGenome["genomeID"] = trackManagerId.current;
-  //       curGenome.defaultRegion = new OpenInterval(
-  //         userViewRegion._startBase!,
-  //         userViewRegion._endBase!
-  //       );
-  //       curGenome.navContext = userViewRegion._navContext;
-  //       curGenome["sizeChange"] = false;
-  //       throttledSetConfig.current(curGenome);
-  //       // setCurrentGenomeConfig(curGenome);
-  //     }
-  //   }
-  // }, [viewRegion]);
+  useEffect(() => {
+    if (userViewRegion && !initialLoad.current) {
+      if (trackComponents) {
+        genomeConfig.defaultRegion = new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
+        );
+        genomeConfig.navContext = userViewRegion._navContext;
+        trackSizeChange();
+      }
+    }
+  }, [windowWidth]);
+  useEffect(() => {
+    if (!initialLoad.current) {
+      if (userViewRegion) {
+        genomeConfig.defaultRegion = new OpenInterval(
+          userViewRegion._startBase!,
+          userViewRegion._endBase!
+        );
+        genomeConfig.navContext = userViewRegion._navContext;
+      } else {
+        genomeConfig.defaultRegion = new OpenInterval(
+          viewRegion._startBase,
+          viewRegion._endBase
+        );
+        genomeConfig.navContext = viewRegion._navContext;
+      }
+      preload.current = true;
+      refreshState();
+      initializeTracks();
+    }
+  }, [viewRegion]);
 
   // useEffect(() => {
   //   if (userViewRegion) {
