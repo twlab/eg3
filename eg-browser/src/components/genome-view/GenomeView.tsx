@@ -26,9 +26,6 @@ import { fetchBundle } from "../../lib/redux/thunk/session";
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
 import { RootState } from "../../lib/redux/store";
 
-// Performance tracking
-const componentStartTime = performance.now();
-
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
   const currentState = useAppSelector((state: RootState) => {
