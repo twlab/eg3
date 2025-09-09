@@ -139,6 +139,8 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
           borderRadius: "6px",
           transition: "background-color 0.15s ease",
           textDecoration: "underline",
+
+          transform: "translateY(.5px)",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.05)";

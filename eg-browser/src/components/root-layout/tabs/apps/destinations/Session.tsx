@@ -14,7 +14,12 @@ import { selectIsNavigatorVisible } from "../../../../../lib/redux/slices/settin
 import { BundleProps } from "./SessionUI";
 import { addCustomGenomeRemote } from "../../../../../lib/redux/thunk/genome-hub";
 import useCurrentGenome from "../../../../../lib/hooks/useCurrentGenome";
-import { DisplayedRegionModel, GenomeCoordinate, GenomeSerializer, getGenomeConfig } from "wuepgg3-track";
+import {
+  DisplayedRegionModel,
+  GenomeCoordinate,
+  GenomeSerializer,
+  getGenomeConfig,
+} from "wuepgg3-track";
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
@@ -28,9 +33,19 @@ const Session: React.FC = () => {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const _genomeConfig = useCurrentGenome();
 
+  // Early return if required data is not available
+  if (!currentSession || !_genomeConfig) {
+    return null;
+  }
+
   let curUserState: BundleProps | undefined = undefined;
 
-  if (currentSession && _genomeConfig && bundle) {
+  if (
+    currentSession &&
+    _genomeConfig &&
+    bundle &&
+    currentSession.genomeId === _genomeConfig.name
+  ) {
     const highlights = currentSession.highlights;
     const isShowingNavigator = isNavigatorVisible;
     const regionSets = currentSession.regionSets;
@@ -41,7 +56,6 @@ const Session: React.FC = () => {
     let curViewInterval;
     const genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
     if (userViewRegion) {
-
       const navContext = genomeConfig.navContext as NavigationContext;
       const parsed = navContext.parse(userViewRegion);
       const { start, end } = parsed;
@@ -50,7 +64,6 @@ const Session: React.FC = () => {
         start,
         end,
       };
-
     } else {
       curViewInterval = genomeConfig.defaultRegion;
     }
@@ -84,7 +97,7 @@ const Session: React.FC = () => {
     let newGenomeConfig: GenomeConfig | null = null;
     let coordinate: GenomeCoordinate | null = null;
 
-    if (sessionBundle.customGenome) {
+    if (sessionBundle.chromosomes && sessionBundle.chromosomes.length > 0) {
       const _newGenomeConfig = {
         id: sessionBundle.genomeId,
         name: sessionBundle.genomeId,
@@ -93,23 +106,23 @@ const Session: React.FC = () => {
           ...item,
           waitToUpdate: true,
         })),
-      }
+      };
+
       addCustomGenomeRemote(_newGenomeConfig);
       newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
-
-    }
-    else if (getGenomeConfig(sessionBundle.genomeId)) {
+    } else if (getGenomeConfig(sessionBundle.genomeId)) {
       newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
     }
 
-    if (newGenomeConfig && sessionBundle.viewRegion) {
+    if (newGenomeConfig && sessionBundle.viewRegion !== undefined) {
       coordinate = sessionBundle.viewRegion;
+    } else if (newGenomeConfig && sessionBundle.viewInterval) {
+      coordinate = new DisplayedRegionModel(
+        newGenomeConfig?.navContext,
+        sessionBundle.viewInterval.start,
+        sessionBundle.viewInterval.end
+      ).currentRegionAsString() as GenomeCoordinate | null;
     }
-    else if (newGenomeConfig && sessionBundle.viewInterval) {
-      coordinate =
-        new DisplayedRegionModel(newGenomeConfig?.navContext, sessionBundle.viewInterval.start, sessionBundle.viewInterval.end).currentRegionAsString() as GenomeCoordinate | null;
-    }
-
 
     const session = {
       genomeId: sessionBundle.genomeId,
@@ -128,8 +141,6 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
-
-
 
     dispatch(resetState());
     dispatch(updateCurrentSession(session));
@@ -161,7 +172,8 @@ const Session: React.FC = () => {
       updateBundle={onUpdateBundle}
       bundleId={bundle.bundleId ? bundle.bundleId : ""}
       curBundle={bundle}
-      state={curUserState} />
+      state={curUserState}
+    />
   );
 };
 

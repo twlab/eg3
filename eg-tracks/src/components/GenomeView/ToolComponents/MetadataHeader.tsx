@@ -29,39 +29,39 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
 
   return (
     <>
-      <div
-        style={{ paddingLeft: padding ? padding : 5 }}
-        className="h-5 border-r border-gray-400"
-      />
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <div
+          style={{ paddingLeft: padding ? padding : 5 }}
+          className="h-5 border-r border-gray-400"
+        />
 
-      <div
-        className="MetadataHeader-button"
-        style={{ paddingLeft: padding ?? (padding || 5) }}
-      >
-        <button
-          onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
-          className={
-            isShowingEditMenu
-              ? "btn btn-sm btn-danger"
-              : "btn btn-sm btn-success"
-          }
-          style={{
-            width: `${Math.max(80, Math.min(110, windowWidth * 0.07))}px`,
-            fontSize: `${
-              fontSize || Math.max(11, Math.min(15, windowWidth * 0.009))
-            }px`,
-          }}
+        <div
+          className="MetadataHeader-button"
+          style={{ paddingLeft: padding ?? (padding || 5) }}
         >
-          Metadata {isShowingEditMenu ? "↩" : "»"}
-        </button>
-        <div>
-          <MetadataSelectionMenu
-            terms={terms}
-            style={isShowingEditMenu ? undefined : { display: "none" }}
-            onNewTerms={onNewTerms}
-            suggestedMetaSets={suggestedMetaSets}
-            onRemoveTerm={onRemoveTerm}
-          />
+          <button
+            onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
+            className={
+              isShowingEditMenu
+                ? "btn btn-sm btn-danger"
+                : "btn btn-sm btn-success"
+            }
+            style={{
+              width: `${Math.max(80, Math.min(110, windowWidth * 0.09))}px`,
+              fontSize: `${Math.max(16, Math.min(15, windowWidth * 0.009))}px`,
+            }}
+          >
+            Metadata {isShowingEditMenu ? "↩" : "»"}
+          </button>
+          <div>
+            <MetadataSelectionMenu
+              terms={terms}
+              style={isShowingEditMenu ? undefined : { display: "none" }}
+              onNewTerms={onNewTerms}
+              suggestedMetaSets={suggestedMetaSets}
+              onRemoveTerm={onRemoveTerm}
+            />
+          </div>
         </div>
       </div>
 

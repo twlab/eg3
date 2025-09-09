@@ -112,6 +112,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
             layout: object.layout || {},
             highlights: object.highlights || [],
             darkTheme: object.darkTheme || false,
+            viewRegion: object.viewRegion,
           };
 
           // Replace the state key with the newBundle in the session.
@@ -583,8 +584,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-            (e.target.style.backgroundColor =
-              styles.buttonHover.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -600,12 +601,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <button
               style={styles.uploadButton}
               onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.uploadButtonHover.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.uploadButtonHover.backgroundColor)
               }
               onMouseOut={(e) =>
-              (e.target.style.backgroundColor =
-                styles.uploadButton.backgroundColor)
+                (e.target.style.backgroundColor =
+                  styles.uploadButton.backgroundColor)
               }
             >
               Upload
@@ -647,8 +648,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                       (e.target.style.backgroundColor = "#EC971F")
                     }
                     onMouseOut={(e) =>
-                    (e.target.style.backgroundColor =
-                      styles.button.backgroundColor)
+                      (e.target.style.backgroundColor =
+                        styles.button.backgroundColor)
                     }
                     onClick={() => setNewSessionLabel(getFunName())}
                   >

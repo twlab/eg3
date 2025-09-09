@@ -78,7 +78,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <div className="flex flex-row items-center">
+    <div className="flex flex-row ">
       {/* Combined Search Bar and Toolbar Container */}
       <motion.div
         className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-row items-center"

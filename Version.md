@@ -1,5 +1,12 @@
 # Version history
 
+## 56.0.4
+
+- center toolbar
+- fixed initial slow loading (found by wenjin)
+- increase reactivity when switching between pages
+- refactor state, userViewRegion, sizeChange, and viewRegion
+
 ## 56.0.3
 
 - Fixed modbed crash when zooming in
