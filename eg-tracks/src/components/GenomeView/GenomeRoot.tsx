@@ -163,7 +163,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         })
       );
     });
-    console.log(height)
+
     return (
       <ThreedmolContainer
         key={g3dtrack.id}
@@ -189,11 +189,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       const component = node.getComponent();
 
       if (component === "Browser") {
-        // // Minimal logging for performance
-        // if (process.env.NODE_ENV === "development") {
-        //   console.log(`[GenomeRoot] Factory:${Date.now()}`);
-        // }
-        console.log("Rendering TrackManager", window.innerWidth);
+
         return (
           <TrackManager
             tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
