@@ -5,8 +5,8 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "check-build": "tsc && vite build",
+    "dev": "node --max-old-space-size=8192 node_modules/vite/bin/vite.js",
+    "check-build": "tsc && node --max-old-space-size=8192 node_modules/vite/bin/vite.js build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

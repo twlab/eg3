@@ -44,8 +44,11 @@ export default class GenomeSerializer {
     const genome = new Genome(object.name, chromosomes);
     const navContext = genome.makeNavContext();
     const defaultRegion = navContext.parse(
-      object.defaultRegion ? object.defaultRegion : "chr1:0-10000"
+      object.defaultRegion
+        ? object.defaultRegion
+        : `${object.chromosomes[0].name}` + ":0-1"
     );
+
     const defaultTracks = object.defaultTracks?.map((track) =>
       TrackModel.deserialize(track)
     );

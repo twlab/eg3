@@ -98,97 +98,11 @@ export default function RootLayout(props: RootLayoutProps) {
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
 
-  const {
-    ref: contentRef,
-    width: contentWidth,
-    height: contentHeight,
-  } = useElementGeometry();
+
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
-  // function getConfig(customGenome: any, genomeName: string | null | undefined) {
-  //   if (customGenome) {
-  //     try {
-  //       return customGenome;
-  //     } catch {
-  //       return null;
-  //     }
-  //   }
-  //   if (genomeName) {
-  //     const genomeConfig = getGenomeConfig(genomeName);
-  //     if (genomeConfig) {
-  //       return GenomeSerializer.serialize(genomeConfig);
-  //     }
-  //     return null;
-  //   }
-  //   return null;
-  // }
-
-  useEffect(() => {
-    // if (
-    //   (props.genomeName && props.tracks && props.viewRegion) ||
-    //   props.customGenome
-    // ) {
-    //   const iGenomeConfig: IGenome | null = getConfig(
-    //     props.customGenome,
-    //     props.genomeName
-    //   );
-    //   if (iGenomeConfig) {
-    //     dispatch(
-    //       setNavigatorVisibility(
-    //         typeof props.showGenomeNavigator === "boolean"
-    //           ? props.showGenomeNavigator
-    //           : true
-    //       )
-    //     );
-    //     dispatch(
-    //       setNavBarVisibility(
-    //         typeof props.showNavBar === "boolean" ? props.showNavBar : true
-    //       )
-    //     );
-    //     dispatch(
-    //       setToolBarVisibility(
-    //         typeof props.showToolBar === "boolean" ? props.showToolBar : true
-    //       )
-    //     );
-    //     if (!sessionId) {
-    //       const defaultTracks = iGenomeConfig["defaultTracks"]
-    //         ? iGenomeConfig["defaultTracks"]
-    //         : [];
-    //       iGenomeConfig["defaultTracks"] = [
-    //         ...defaultTracks,
-    //         ...(props.tracks || []),
-    //       ];
-
-    //       dispatch(
-    //         createSession({
-    //           genome: iGenomeConfig,
-    //           viewRegion:
-    //             typeof props.viewRegion === "string"
-    //               ? props.viewRegion
-    //               : undefined,
-    //         })
-    //       );
-    //     } else {
-    //       if (currentSession && props.tracks && props.tracks.length > 0) {
-    //         dispatch(
-    //           updateCurrentSession({
-    //             tracks: [...currentSession.tracks, ...props.tracks],
-    //             viewRegion:
-    //               typeof props.viewRegion === "string"
-    //                 ? props.viewRegion
-    //                 : undefined,
-    //           })
-    //         );
-    //       }
-    //     }
-    //   }
-    // } else {
-    //   dispatch(resetSettings());
-    // }
-    dispatch(resetSettings());
-  }, [props]);
 
   return (
     <div
@@ -213,7 +127,7 @@ export default function RootLayout(props: RootLayoutProps) {
         {/* ) : null} */}
         <div
           className="flex flex-row flex-1 relative bg-black"
-          ref={contentRef}
+
         >
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
@@ -237,7 +151,7 @@ export default function RootLayout(props: RootLayoutProps) {
               >
                 <div
                   className="flex flex-col"
-                  style={{ height: contentHeight }}
+
                 >
                   <SessionPanel />
                 </div>
@@ -285,38 +199,27 @@ export default function RootLayout(props: RootLayoutProps) {
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
               }}
             >
-              <AnimatePresence mode="wait">
-                {sessionId !== null ? (
-                  <motion.div
-                    className="flex flex-col w-screen pb-20"
-                    key="genome-view"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    style={{
-                      width: contentWidth,
-                      height: "auto",
-                    }}
-                  >
-                    <GenomeErrorBoundary onGoHome={handleGoHome}>
-                      <GenomeView />
-                    </GenomeErrorBoundary>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className="h-full"
-                    key="genome-picker"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    style={{ width: contentWidth, height: contentHeight }}
-                  >
-                    <GenomePicker />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {sessionId !== null ? (
+                <motion.div
+                  className="flex flex-col w-screen pb-20"
+                  key="genome-view"
+                  exit={{ opacity: 0 }}
+
+                >
+                  <GenomeErrorBoundary onGoHome={handleGoHome}>
+                    <GenomeView />
+                  </GenomeErrorBoundary>
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="h-full w-full"
+                  key="genome-picker"
+                  exit={{ opacity: 0 }}
+
+                >
+                  <GenomePicker />
+                </motion.div>
+              )}
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}

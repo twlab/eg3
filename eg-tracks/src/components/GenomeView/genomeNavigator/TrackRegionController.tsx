@@ -48,6 +48,9 @@ interface TrackRegionControllerProps {
   genomeIdx: number;
   addGlobalState: any;
   trackManagerState: any;
+  windowWidth?: number;
+  fontSize?: number;
+  padding?: number;
 }
 
 const TrackRegionController: FC<TrackRegionControllerProps> = ({
@@ -56,6 +59,9 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   contentColorSetup,
   virusBrowserMode,
   genomeConfig,
+  windowWidth = 800,
+  fontSize,
+  padding,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [badInputMessage, setBadInputMessage] = useState("");
@@ -109,8 +115,40 @@ const TrackRegionController: FC<TrackRegionControllerProps> = ({
   const coordinates = selectedRegion.currentRegionAsString();
 
   return (
-    <div className="bg tool-element font-mono text-sm p-1">
-      <button className="underline" onClick={handleOpenModal}>
+    <div
+      className="bg tool-element"
+      style={{
+        fontSize: `${
+          fontSize || Math.max(11, Math.min(15, windowWidth * 0.009))
+        }px`,
+        paddingLeft: padding ? padding : 5,
+      }}
+    >
+      <button
+        onClick={handleOpenModal}
+        style={{
+          fontSize: `${
+            fontSize || Math.max(11, Math.min(15, windowWidth * 0.009))
+          }px`,
+          cursor: "pointer",
+          background: "none",
+          border: "none",
+          color: "inherit",
+          fontFamily: "inherit",
+          padding: "2px 6px",
+          borderRadius: "6px",
+          transition: "background-color 0.15s ease",
+          textDecoration: "underline",
+
+          transform: "translateY(.5px)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.05)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "transparent";
+        }}
+      >
         {coordinates}
       </button>
       <ReactModal

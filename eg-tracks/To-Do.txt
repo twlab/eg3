@@ -88,3 +88,11 @@ hen scroll back if its fetching the new tracks only that are added
 --9. rework viewRegion and userViewRegion
 -- 10. create a contextCoord convert to genomicCoord
 11. move toolbar to the top next to region controller
+
+12 create intiial windowWidth before genomeroot and resize from root to manager
+13 delte newdrawdata state in trackmanager
+14 move viewRegion and UserViewRegion to trackrepresent and create genomeConfig there. 
+15 in trackfactory instead of creating new track components, create one react track component and just change the data 
+    so its not recreated everytime theres newdata or new index 
+
+16. make each track component be able to react to state changes so its not recreated. 

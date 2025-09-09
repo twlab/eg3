@@ -46,6 +46,7 @@ interface SearchBarProps {
     end: number,
     highlightSearch?: boolean
   ) => void;
+  windowWidth?: number;
 }
 
 type CommandType = "gene" | "snp";
@@ -179,7 +180,9 @@ function SearchSuggestionDivider(props: any) {
     >
       <div
         className="text-gray-600 dark:text-dark-primary"
-        style={{ fontSize: "0.75rem" }}
+        style={{
+          fontSize: props.getFontSize ? props.getFontSize() : "0.75rem",
+        }}
       >
         {props.text}
       </div>
@@ -198,7 +201,7 @@ function SearchSuggestionDivider(props: any) {
             className="text-gray-600 dark:text-dark-primary"
             style={{
               marginLeft: "0.375rem",
-              fontSize: "0.75rem",
+              fontSize: props.getFontSize ? props.getFontSize() : "0.75rem",
             }}
           >
             Highlight search
@@ -216,11 +219,13 @@ function SearchSuggestionBase({
   text,
   desc,
   onClick,
+  getSmallFontSize,
 }: {
   icon: React.ReactNode;
   text: string;
   desc: string;
   onClick: () => void;
+  getSmallFontSize?: () => string;
 }) {
   return (
     <div
@@ -229,8 +234,22 @@ function SearchSuggestionBase({
     >
       <div className="flex-shrink-0">{icon}</div>
       <div>
-        <div className="text-xs font-medium">{text}</div>
-        <div className="text-xs text-gray-500">{desc}</div>
+        <div
+          className="font-medium"
+          style={{
+            fontSize: getSmallFontSize ? getSmallFontSize() : "0.75rem",
+          }}
+        >
+          {text}
+        </div>
+        <div
+          className="text-gray-500"
+          style={{
+            fontSize: getSmallFontSize ? getSmallFontSize() : "0.75rem",
+          }}
+        >
+          {desc}
+        </div>
       </div>
     </div>
   );
@@ -240,6 +259,7 @@ export default function SearchBar({
   isSearchFocused,
   onSearchFocusChange,
   onNewRegionSelect,
+  windowWidth = 1920,
 }: SearchBarProps) {
   const { ref: searchContainerRef } = useElementGeometry({
     shouldRespondToResize: false,
@@ -266,6 +286,55 @@ export default function SearchBar({
   const genome = useCurrentGenome();
   const [isShowingIsoforms, setIsShowingIsoforms] = useState(false);
   const [isShowingSNPforms, setIsShowingSNPforms] = useState(false);
+
+  // Helper functions for responsive sizing (matching Toolbar.tsx)
+  const getIconSize = () => {
+    return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
+  };
+
+  const iconSizeStyle = {
+    width: `${getIconSize()}px`,
+    height: `${getIconSize()}px`,
+  };
+
+  const getButtonStyle = () => ({
+    padding: `${Math.max(4, Math.min(8, (windowWidth || 1920) * 0.004))}px`,
+  });
+
+  const getGapSize = () => {
+    return `${Math.max(
+      0.15,
+      Math.min(0.35, (windowWidth || 1920) * 0.0001)
+    )}rem`;
+  };
+
+  const getFontSize = () => {
+    return `${Math.max(0.75, Math.min(1, (windowWidth || 1920) * 0.0005))}rem`;
+  };
+
+  const getInputMinWidth = () => {
+    return `${Math.max(150, Math.min(250, (windowWidth || 1920) * 0.15))}px`;
+  };
+
+  const getInputFontSize = () => {
+    return `${Math.max(12, Math.min(16, (windowWidth || 1920) * 0.008))}px`;
+  };
+
+  const getRegionButtonSize = () => {
+    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  };
+
+  const getArrowIconSize = () => {
+    return `${Math.max(10, Math.min(14, (windowWidth || 1920) * 0.007))}px`;
+  };
+
+  const getSmallFontSize = () => {
+    return `${Math.max(12, Math.min(16, (windowWidth || 1920) * 0.008))}px`;
+  };
+
+  const getEmojiSize = () => {
+    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  };
 
   const genomeConfig = useMemo(() => {
     if (genome) {
@@ -419,10 +488,11 @@ export default function SearchBar({
       suggestions.push(
         <SearchSuggestionBase
           key="region-message"
-          icon={<span className="text-lg">🎯</span>}
+          icon={<span style={{ fontSize: getEmojiSize() }}>🎯</span>}
           text={`"${searchInput}"`}
           desc="You're entering coordinates. Press enter or click here to jump to this region."
           onClick={() => parseRegion(searchInput)}
+          getSmallFontSize={getSmallFontSize}
         />
       );
       return suggestions;
@@ -434,6 +504,7 @@ export default function SearchBar({
           key="filters"
           text="Filters"
           highlightSearch={highlightSearch}
+          getFontSize={getFontSize}
         />
       );
       SLASH_COMMANDS.forEach((command) => {
@@ -443,8 +514,13 @@ export default function SearchBar({
             className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-dark-secondary dark:text-dark-primary cursor-pointer flex items-center gap-1.5"
             onClick={() => setActiveCommand(command)}
           >
-            <span className="text-lg">{typeToEmoji[command]}</span>
-            <span className="text-xs text-gray-600 dark:text-dark-primary">
+            <span style={{ fontSize: getEmojiSize() }}>
+              {typeToEmoji[command]}
+            </span>
+            <span
+              className="text-gray-600 dark:text-dark-primary"
+              style={{ fontSize: getSmallFontSize() }}
+            >
               /{command}
             </span>
           </motion.div>
@@ -461,7 +537,13 @@ export default function SearchBar({
       );
 
       if (geneResults.length > 0) {
-        suggestions.push(<SearchSuggestionDivider key="genes" text="Genes" />);
+        suggestions.push(
+          <SearchSuggestionDivider
+            key="genes"
+            text="Genes"
+            getFontSize={getFontSize}
+          />
+        );
         geneResults.forEach((result) => {
           suggestions.push(
             <motion.div
@@ -471,8 +553,16 @@ export default function SearchBar({
               onClick={() => handleResultClick(result)}
             >
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium">{result.symbol}</span>
-                <span className="text-xs text-gray-500">
+                <span
+                  className="font-medium"
+                  style={{ fontSize: getSmallFontSize() }}
+                >
+                  {result.symbol}
+                </span>
+                <span
+                  className="text-gray-500"
+                  style={{ fontSize: getSmallFontSize() }}
+                >
                   {result.description}
                 </span>
               </div>
@@ -483,7 +573,11 @@ export default function SearchBar({
 
       if (snpResults.length > 0) {
         suggestions.push(
-          <SearchSuggestionDivider key="snps" text="Variants" />
+          <SearchSuggestionDivider
+            key="snps"
+            text="Variants"
+            getFontSize={getFontSize}
+          />
         );
         snpResults.forEach((result) => {
           suggestions.push(
@@ -574,9 +668,9 @@ export default function SearchBar({
         {isShowingIsoforms ? (
           <motion.div
             className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-50"
-            initial={{ opacity: 0, y: -10, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: "auto" }}
-            exit={{ opacity: 0, y: -10, height: 0 }}
+            initial={{ opacity: 0, y: -10, maxHeight: 0 }}
+            animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
+            exit={{ opacity: 0, y: -10, maxHeight: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <IsoformSelection
@@ -592,7 +686,6 @@ export default function SearchBar({
           ""
         )}
       </AnimatePresence>
-
       <motion.div
         ref={searchContainerRef}
         className="flex flex-col relative"
@@ -600,12 +693,12 @@ export default function SearchBar({
       >
         <AnimatePresence>
           {isSearchFocused &&
-            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
-              initial={{ opacity: 0, y: -10, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, y: -10, height: 0 }}
+              initial={{ opacity: 0, y: -10, maxHeight: 0 }}
+              animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
+              exit={{ opacity: 0, y: -10, maxHeight: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {renderSearchSuggestions()}
@@ -618,21 +711,33 @@ export default function SearchBar({
         <div className="flex flex-row items-center w-full h-full">
           <div className="flex flex-row items-center w-full min-w-0 flex-1">
             {activeCommand ? (
-              <div className="flex items-center bg-secondary dark:bg-dark-secondary px-1.5 py-0.5 rounded-md mr-1.5 flex-shrink-0">
-                <span className="text-xs text-tint dark:text-dark-primary leading-none">
+              <div
+                className="flex items-center bg-secondary dark:bg-dark-secondary rounded-md mr-1.5 flex-shrink-0"
+                style={getButtonStyle()}
+              >
+                <span
+                  className="text-tint dark:text-dark-primary leading-none"
+                  style={{ fontSize: getFontSize() }}
+                >
                   /{activeCommand}
                 </span>
               </div>
             ) : (
-              <MagnifyingGlassIcon className="w-3 h-3 text-gray-400 flex-shrink-0 mr-1" />
+              <MagnifyingGlassIcon
+                className="text-gray-400 flex-shrink-0 mr-1"
+                style={iconSizeStyle}
+              />
             )}
             <input
-              className="flex-1 outline-none bg-transparent text-sm min-w-0 w-full placeholder:text-xs leading-tight py-1"
-              style={{ minWidth: "200px" }}
+              className="flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
+              style={{
+                minWidth: getInputMinWidth(),
+                fontSize: getInputFontSize(),
+              }}
               placeholder={
                 activeCommand
-                  ? `Search ${activeCommand}s...`
-                  : "Search genes, variants, or regions..."
+                  ? `Search ${activeCommand}s`
+                  : "Search genes, variants, or regions"
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
@@ -657,19 +762,29 @@ export default function SearchBar({
                 onClick={() =>
                   parseRegion(document.querySelector("input")?.value || "")
                 }
-                className="flex items-center justify-center w-4 h-4 rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
+                className="flex items-center justify-center rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
+                style={{
+                  width: getRegionButtonSize(),
+                  height: getRegionButtonSize(),
+                }}
               >
-                <ArrowRightIcon className="w-2.5 h-2.5 text-tint" />
+                <ArrowRightIcon
+                  className="text-tint"
+                  style={{
+                    width: getArrowIconSize(),
+                    height: getArrowIconSize(),
+                  }}
+                />
               </button>
             )}
           </div>
-          <motion.div
-            className="w-full absolute bottom-0 border-b border-gray-300"
-            animate={{ opacity: isSearchFocused ? 0 : 1 }}
-            transition={{ duration: 0.2 }}
-          />
         </div>
-      </motion.div>
+      </motion.div>{" "}
+      <motion.div
+        className="w-full absolute bottom-0 border-b border-gray-300"
+        animate={{ opacity: isSearchFocused ? 0 : 1 }}
+        transition={{ duration: 0.2 }}
+      />
     </OutsideClickDetector>
   );
 }

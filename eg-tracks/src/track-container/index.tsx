@@ -13,31 +13,6 @@ import GenomeSerializer from "../genome-hub/GenomeSerializer";
 import RegionSet from "../models/RegionSet";
 import { FeatureSegment } from "../models/FeatureSegment";
 
-export function TrackContainer(props: ITrackContainerState) {
-  return (
-    <GenomeRoot
-      tracks={props.tracks}
-      genomeConfig={props.genomeConfig}
-      highlights={props.highlights}
-      legendWidth={props.legendWidth}
-      showGenomeNav={props.showGenomeNav}
-      showToolBar={props.showToolBar}
-      onNewRegion={props.onNewRegion}
-      onNewHighlight={props.onNewHighlight}
-      onTracksChange={props.onTracksChange}
-      onNewRegionSelect={props.onNewRegionSelect}
-      onSetSelected={props.onSetSelected}
-      viewRegion={props.viewRegion}
-      userViewRegion={props.userViewRegion}
-      tool={props.tool}
-      Toolbar={props.Toolbar}
-      selectedRegionSet={props.selectedRegionSet}
-      setScreenshotData={props.setScreenshotData}
-      isScreenShotOpen={props.isScreenShotOpen}
-      currentState={props.currentState}
-    />
-  );
-}
 
 /**
  * TrackContainerRepresentable serves as the boundary between the new serializable TrackModel and the previous
@@ -294,20 +269,20 @@ export function TrackContainerRepresentable({
 
   return (
     <div>
-      <TrackContainer
+      <GenomeRoot
         tracks={convertedTracks}
         highlights={highlights}
         genomeConfig={genomeConfig}
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
         showToolBar={showToolBar}
-        onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
-        onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
-        onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
+        onNewRegion={!onNewRegion ? () => { } : handleNewRegion}
+        onNewHighlight={!onNewHighlight ? () => { } : onNewHighlight}
+        onTracksChange={!onTracksChange ? () => { } : handleTracksChange}
         onNewRegionSelect={
-          !onNewRegionSelect ? () => {} : handleNewRegionSelect
+          !onNewRegionSelect ? () => { } : handleNewRegionSelect
         }
-        onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
+        onSetSelected={!onSetSelected ? () => { } : handleSetRegion}
         viewRegion={convertedViewRegion}
         userViewRegion={
           convertedUserViewRegion

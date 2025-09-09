@@ -45,7 +45,7 @@ export default function GenomeView() {
 
   const sessionId = currentSession ? currentSession.id : null;
 
-  if (lastSessionId.current !== sessionId) {
+  if (lastSessionId.current !== sessionId && sessionId !== null) {
     dispatch(resetState());
     lastSessionId.current = sessionId;
     if (bundleId) {
@@ -96,8 +96,6 @@ export default function GenomeView() {
       );
     }
   }
-  // need to check if genomes are the same, for example if we update session bundle it can have a different genome name from genomeConfig because
-  // currentSession updates first, but genomeConfig still has the previous genome
 
   return currentSession &&
     genomeConfig &&

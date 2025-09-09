@@ -87,14 +87,31 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
       </div>
     ))
   ) : (
-    <div style={{ textAlign: "center", marginTop: 100, color: "#3c4043" }}>
+    <div
+      style={{
+        textAlign: "center",
+        marginTop: "clamp(60px, 8vw, 120px)",
+        color: "#3c4043",
+      }}
+    >
       <img
         src="/browser/img/favicon-144.png"
         alt="Browser Icon"
-        style={{ height: 125, width: "auto", marginLeft: 20, marginRight: 20 }}
+        style={{
+          height: "clamp(80px, 10vw, 150px)",
+          width: "auto",
+          marginLeft: "clamp(15px, 1.5vw, 25px)",
+          marginRight: "clamp(15px, 1.5vw, 25px)",
+        }}
       />
-      <h4>No highlights</h4>
-      <h5 style={{ width: "50vh", textAlign: "center" }}>
+      <h4 style={{ fontSize: "clamp(14px, 1.2vw, 20px)" }}>No highlights</h4>
+      <h5
+        style={{
+          width: "clamp(300px, 40vw, 500px)",
+          textAlign: "center",
+          fontSize: "clamp(12px, 1vw, 16px)",
+        }}
+      >
         Select a region with the highlight tool and it will show up here.
       </h5>
     </div>
@@ -112,11 +129,22 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
           overlay: { backgroundColor: "rgba(111,107,101,0.3)", zIndex: 4 },
         }}
       >
-        <div className="HighlightMenu">
-          <h5 style={{ margin: 15 }}>Highlights</h5>
+        <div
+          className="HighlightMenu"
+          style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
+        >
+          <h5 style={{ margin: "clamp(10px, 1vw, 20px)" }}>Highlights</h5>
           {highlights.length ? (
-            <div style={{ paddingBottom: "5px" }}>
-              <button onClick={() => {}}>Remove all</button>
+            <div style={{ paddingBottom: "clamp(3px, 0.4vw, 8px)" }}>
+              <button
+                onClick={() => {}}
+                style={{
+                  fontSize: "clamp(10px, 0.8vw, 14px)",
+                  padding: "clamp(2px, 0.3vw, 6px)",
+                }}
+              >
+                Remove all
+              </button>
             </div>
           ) : null}
           <div
@@ -133,10 +161,10 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
             style={{
               cursor: "pointer",
               color: "red",
-              fontSize: "2em",
+              fontSize: "clamp(1.5em, 1.8vw, 2.5em)",
               position: "absolute",
-              top: "-5px",
-              right: "15px",
+              top: "clamp(-8px, -0.5vw, -3px)",
+              right: "clamp(10px, 1vw, 20px)",
               zIndex: 2,
             }}
             onClick={() => {
@@ -177,8 +205,9 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
     <div
       style={{
         border: `2px solid ${interval.color}`,
-        borderRadius: 12,
-        padding: "1em",
+        borderRadius: "clamp(8px, 1vw, 16px)",
+        padding: "clamp(0.5em, 1vw, 1.5em)",
+        fontSize: "clamp(10px, 0.9vw, 14px)",
       }}
     >
       <div
@@ -200,7 +229,12 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}
-          style={{ flex: 1, marginRight: "1em" }}
+          style={{
+            flex: 1,
+            marginRight: "clamp(0.5em, 1vw, 1.5em)",
+            fontSize: "clamp(10px, 0.8vw, 14px)",
+            padding: "clamp(2px, 0.3vw, 6px)",
+          }}
         />
         <div className="highlight-item-buttons-group">
           <ColorPicker
@@ -222,7 +256,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
         </div>
       </div>
       <div>
-        <h5>
+        <h5 style={{ fontSize: "clamp(12px, 1vw, 16px)" }}>
           {navContext
             .getLociInInterval(interval.start, interval.end)
             .toString()}
@@ -232,10 +266,17 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
         style={{
           display: "flex",
           justifyContent: "space-between",
-          marginTop: "1em",
+          marginTop: "clamp(0.5em, 1vw, 1.5em)",
+          gap: "clamp(4px, 0.5vw, 8px)",
         }}
       >
-        <button onClick={() => onHandleHighlightIntervalUpdate(true, index)}>
+        <button
+          onClick={() => onHandleHighlightIntervalUpdate(true, index)}
+          style={{
+            fontSize: "clamp(10px, 0.8vw, 14px)",
+            padding: "clamp(2px, 0.3vw, 6px)",
+          }}
+        >
           Delete
         </button>
         <button
@@ -249,10 +290,22 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}
+          style={{
+            fontSize: "clamp(10px, 0.8vw, 14px)",
+            padding: "clamp(2px, 0.3vw, 6px)",
+          }}
         >
           {interval.display ? "Hide" : "Show"}
         </button>
-        <button onClick={() => onHandleViewRegionJump(interval)}>Jump</button>
+        <button
+          onClick={() => onHandleViewRegionJump(interval)}
+          style={{
+            fontSize: "clamp(10px, 0.8vw, 14px)",
+            padding: "clamp(2px, 0.3vw, 6px)",
+          }}
+        >
+          Jump
+        </button>
       </div>
     </div>
   );

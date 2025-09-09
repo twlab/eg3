@@ -21,13 +21,16 @@ export const TrackPlaceHolder: React.FC<TrackPlaceHolderProps> = ({
 }) => {
   const darkTheme = useAppSelector(selectDarkTheme);
 
-  // Only generate bars when width or barCount changes
   const bars = useMemo(
     () =>
       Array.from({ length: barCount }, (_, i) => {
-        const barWidth = Math.floor(width * (0.4 + Math.random() * 0.6));
-        const align = Math.random() > 0.5 ? "flex-start" : "flex-end";
-        const color = ["#60a5fa", "#3b82f6", "#2563eb"][i % 3];
+        // Predetermined values based on index for consistency
+        const widthMultipliers = [0.3, 0.9, 0.6, 0.6, 0.9]; // Different widths for each bar
+        const alignments = ["flex-start", "flex-end", "flex-start", "flex-end", "flex-start"]; // Alternating alignments
+
+        const barWidth = Math.floor(width * widthMultipliers[i % widthMultipliers.length]);
+        const align = alignments[i % alignments.length];
+        const color = ["#6b7280", "#9ca3af", "#d1d5db"][i % 3];
         return { barWidth, align, color, key: i };
       }),
     [width, barCount]
