@@ -3144,7 +3144,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     }
   }
 
-  // MARK: [dataIdx,tra]
+  // MARK: useeffects_____________________________________________________________
 
   useEffect(() => {
     if (highlights) {
@@ -3401,7 +3401,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       });
     }
   }, [tracks]);
-
+  // MARK: width, regions
   useEffect(() => {
     if (userViewRegion && !initialLoad.current) {
       if (trackComponents) {
@@ -3417,7 +3417,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!initialLoad.current) {
-    
       if (userViewRegion) {
         genomeConfig.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
@@ -3574,7 +3573,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //     resizeObserver.disconnect();
   //   };
   // }, [onHeightChange]);
-
+  // MARK: render________________________________________
   return (
     <div
       style={{

@@ -7,7 +7,7 @@ export {
 export { default as DataHubParser } from "./DataHubParser";
 export { default as FlankingStrategy } from "./FlankingStrategy";
 export { default as Json5Fetcher } from "./Json5Fetcher";
-export * from "../components/GenomeView/ToolComponents/Tools";
+
 export { COLORS } from "../components/GenomeView/TrackComponents/commonComponents/MetadataIndicator";
 export { getTrackConfig } from "../trackConfigs/config-menu-models.tsx/getTrackConfig";
 export * from "../trackConfigs/config-menu-components.tsx/ColorPicker";
