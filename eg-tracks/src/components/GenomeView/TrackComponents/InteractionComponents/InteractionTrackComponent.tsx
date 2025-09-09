@@ -196,7 +196,7 @@ class InteractionTrackComponent extends React.PureComponent<
       isThereG3dTrack,
       getNumLegend,
     } = this.props;
-
+    console.log(this.props);
     const filteredData = this.filterData(data);
 
     this.scales = this.computeScale();

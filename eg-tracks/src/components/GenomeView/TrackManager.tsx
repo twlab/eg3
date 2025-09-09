@@ -3389,12 +3389,14 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (infiniteScrollWorkers.current) {
       infiniteScrollWorkers.current.worker?.forEach((w) => {
         if (!w.hasOnMessage) {
+          console.log("adding onmessage to worker");
           w.fetchWorker.onmessage = createInfiniteOnMessage;
           w.hasOnMessage = true;
         }
       });
       infiniteScrollWorkers.current.instance?.forEach((w) => {
         if (!w.hasOnMessage) {
+          console.log("adding onmessage to worker22");
           w.fetchWorker.onmessage = createInfiniteOnMessage;
           w.hasOnMessage = true;
         }

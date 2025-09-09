@@ -57,9 +57,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     packageVersion
       ? null
       : {
-        instance: [],
-        worker: [],
-      }
+          instance: [],
+          worker: [],
+        }
   );
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
@@ -189,7 +189,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       const component = node.getComponent();
 
       if (component === "Browser") {
-
         return (
           <TrackManager
             tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
@@ -421,7 +420,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   return (
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
-
       {!has3dTracks ? (
         <TrackManager
           tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
@@ -453,17 +451,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           infiniteScrollWorkers={infiniteScrollWorkers}
           fetchGenomeAlignWorker={fetchGenomeAlignWorker}
           currentState={currentState}
-
         />
-
       ) : (
         <div style={{ width: size.width, height: 900 }}>
           <FlexLayout.Layout model={model} factory={factory} />
-
         </div>
       )}
     </div>
-
   );
 });
 
