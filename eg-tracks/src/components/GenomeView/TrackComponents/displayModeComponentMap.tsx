@@ -1916,7 +1916,6 @@ function formatBigInteract(genesArr: any[]) {
 }
 function formatLongRange(genesArr: any[]) {
   const formattedData: any = [];
-  console.log(genesArr);
   genesArr.forEach((record) => {
     const regexMatch = record[3].match(/([\w.]+)\W+(\d+)\W+(\d+)\W+(\d+)/);
     // console.log(regexMatch);

@@ -71,6 +71,7 @@ class BedTextSource {
             n: mainFields.length + 1, // total field count
           };
         }
+        console.log(record, item);
       } else {
         // Format: chr1    720589  722848  chr1:713605-715737,2
         record = {
@@ -82,6 +83,7 @@ class BedTextSource {
           5: "", // No strand info in this format
           n: mainFields.length, // 4 fields
         };
+        console.log(record, item);
       }
 
       return record;

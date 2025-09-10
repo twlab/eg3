@@ -12,10 +12,6 @@ import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import _, { throttle } from "lodash";
-
-// Performance tracking
-let trackManagerStartTime = performance.now();
-
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
@@ -1525,10 +1521,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: onmessInfin
 
-  const createInfiniteOnMessage = async (
+  const createInfiniteOnMessage = (
     event: MessageEvent | { [key: string]: any }
   ) => {
-    event.data.forEach(async (dataItem: any) => {
+    event.data.forEach((dataItem: any) => {
       const trackToDrawId: { [key: string]: any } = dataItem.trackToDrawId
         ? dataItem.trackToDrawId
         : {};
@@ -1539,36 +1535,34 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         primaryGenName: genomeConfig.genome.getName(),
       };
 
-      await Promise.all(
-        dataItem.fetchResults.map(
-          async (
-            item: {
-              id: any;
-              name: string;
-              result: any;
-              metadata: any;
-              trackModel: any;
-              curFetchNav: any;
-            },
-            _index: any
-          ) => {
-            trackToDrawId[`${item.id}`] = "";
-            await createCache({
-              trackState: curTrackState,
-              result: item.result,
-              id: item.id,
-              trackType: item.trackModel.type
-                ? item.trackModel.type
-                : item.name
-                ? item.name
-                : "",
-              metadata: item.metadata,
-              trackModel: item.trackModel,
-              curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-              missingIdx: dataItem.missingIdx,
-            });
-          }
-        )
+      dataItem.fetchResults.map(
+        async (
+          item: {
+            id: any;
+            name: string;
+            result: any;
+            metadata: any;
+            trackModel: any;
+            curFetchNav: any;
+          },
+          _index: any
+        ) => {
+          trackToDrawId[`${item.id}`] = "";
+          createCache({
+            trackState: curTrackState,
+            result: item.result,
+            id: item.id,
+            trackType: item.trackModel.type
+              ? item.trackModel.type
+              : item.name
+              ? item.name
+              : "",
+            metadata: item.metadata,
+            trackModel: item.trackModel,
+            curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+            missingIdx: dataItem.missingIdx,
+          });
+        }
       );
 
       const browserMemorySize: { [key: string]: any } = window.performance;
@@ -2300,7 +2294,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     setApplyTrackConfigChange({});
   };
 
-  async function initializeTracks() {
+  function initializeTracks() {
     // set initial track manager control values and create fetch instance for track that can't use worker like hic.
 
     leftStartCoord.current = genomeConfig.defaultRegion.start;
@@ -2387,11 +2381,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     addTermToMetaSets(trackManagerState.current.tracks);
 
-    await fetchGenomeData(
-      1,
-      "right",
-      new OpenInterval(windowWidth, windowWidth * 2)
-    );
+    fetchGenomeData(1, "right", new OpenInterval(windowWidth, windowWidth * 2));
 
     queueRegionToFetch(0);
     setTrackComponents(newTrackComponents);
@@ -3389,14 +3379,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     if (infiniteScrollWorkers.current) {
       infiniteScrollWorkers.current.worker?.forEach((w) => {
         if (!w.hasOnMessage) {
-          console.log("adding onmessage to worker");
           w.fetchWorker.onmessage = createInfiniteOnMessage;
           w.hasOnMessage = true;
         }
       });
       infiniteScrollWorkers.current.instance?.forEach((w) => {
         if (!w.hasOnMessage) {
-          console.log("adding onmessage to worker22");
           w.fetchWorker.onmessage = createInfiniteOnMessage;
           w.hasOnMessage = true;
         }
