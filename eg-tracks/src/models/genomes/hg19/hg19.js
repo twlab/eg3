@@ -72,11 +72,11 @@ const defaultTracks = [
     url: "https://vizhub.wustl.edu/public/hg19/rmsk16.bb",
   }),
 
-  new TrackModel({
-    type: "longrange",
-    name: "lonrage!!!!!!!!",
-    url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
-  }),
+  // new TrackModel({
+  //   type: "longrange",
+  //   name: "lonrage!!!!!!!!",
+  //   url: "https://egg.wustl.edu/d/hg19/K562_pearson_100kb.gz",
+  // }),
 
   // new TrackModel({
   //   type: "g3d",
