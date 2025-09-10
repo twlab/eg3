@@ -227,7 +227,15 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
-    if (newDrawData.trackToDrawId && id in newDrawData.trackToDrawId) {
+    if (
+      newDrawData.completedFetchedRegion &&
+      newDrawData.completedFetchedRegion.current["done"][id] === false
+    ) {
+      if (dataIdx === newDrawData.completedFetchedRegion.current["key"]) {
+        newDrawData.completedFetchedRegion.current["done"][id] = true;
+      } else {
+        return;
+      }
       const cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
