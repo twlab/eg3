@@ -1514,35 +1514,33 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         primaryGenName: genomeConfig.genome.getName(),
       };
 
-      dataItem.fetchResults.map(
-        (
-          item: {
-            id: any;
-            name: string;
-            result: any;
-            metadata: any;
-            trackModel: any;
-            curFetchNav: any;
-          },
-          _index: any
-        ) => {
-          trackToDrawId[`${item.id}`] = "";
-          createCache({
-            trackState: curTrackState,
-            result: item.result,
-            id: item.id,
-            trackType: item.trackModel.type
-              ? item.trackModel.type
-              : item.name
-                ? item.name
-                : "",
-            metadata: item.metadata,
-            trackModel: item.trackModel,
-            curFetchNav: item.name === "bam" ? item.curFetchNav : "",
-            missingIdx: dataItem.missingIdx,
-          });
+      // Process each fetch result synchronously
+      dataItem.fetchResults.forEach((
+        item: {
+          id: any;
+          name: string;
+          result: any;
+          metadata: any;
+          trackModel: any;
+          curFetchNav: any;
         }
-      );
+      ) => {
+        trackToDrawId[`${item.id}`] = "";
+        createCache({
+          trackState: curTrackState,
+          result: item.result,
+          id: item.id,
+          trackType: item.trackModel.type
+            ? item.trackModel.type
+            : item.name
+              ? item.name
+              : "",
+          metadata: item.metadata,
+          trackModel: item.trackModel,
+          curFetchNav: item.name === "bam" ? item.curFetchNav : "",
+          missingIdx: dataItem.missingIdx,
+        });
+      });
 
       const browserMemorySize: { [key: string]: any } = window.performance;
 
@@ -1656,7 +1654,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           }
         }
         for (let id in cacheKeysWithData) {
-          console.log(id, "has data for region", dataIdx.current);
           cacheKeysWithData[`${id}`] = false;
         }
         if (completedFetchedRegion.current.key !== dataIdx.current) {
@@ -1734,10 +1731,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (isInteger(curTrackState.missingIdx)) {
           const trackToDrawId: { [key: string]: any } = {};
           for (const key in trackFetchedDataCache.current) {
-            trackToDrawId[key] = "";
-          }
-          for (let key in event.data.fetchResults) {
-            trackToDrawId[key] = "";
+            trackToDrawId[key] = false;
           }
           if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
             for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
@@ -1749,6 +1743,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
             enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
           } else {
+
             checkDrawData({
               curDataIdx: curTrackState.trackDataIdx,
               isInitial: 0,
@@ -1757,8 +1752,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             });
           }
         } else {
+
           enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
         }
+
       })
       .catch((error) => {
         console.error(
@@ -2018,7 +2015,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ...completedFetchedRegion.current.done,
         ...newDrawData.trackToDrawId,
       };
-      console.log(newDrawData, "draw data", newDrawData.trackToDrawId);
+
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
@@ -3407,7 +3404,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
         if (infiniteScrollWorkers.current) {
-          console.log("HUHUHUHUHUH");
           infiniteScrollWorkers.current.worker?.forEach((w) => {
             if (!w.hasOnMessage) {
               w.fetchWorker.onmessage = createInfiniteOnMessage;

@@ -221,7 +221,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   useEffect(() => {
     if (viewComponent && viewComponent.dataIdx === dataIdx) {
-      console.log(id, trackModel.type, " redraw legend");
+
       setLegend(updatedLegend.current);
     }
   }, [viewComponent]);
