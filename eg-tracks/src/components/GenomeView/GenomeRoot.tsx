@@ -57,9 +57,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     packageVersion
       ? null
       : {
-          instance: [],
-          worker: [],
-        }
+        instance: [],
+        worker: [],
+      }
   );
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
@@ -75,6 +75,11 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
   const has3dTracks = useMemo(
     () => tracks.some((track) => track.type === "g3d"),
+    [tracks]
+  );
+
+  const nonG3dTracks = useMemo(
+    () => tracks.filter((trackModel) => trackModel.type !== "g3d"),
     [tracks]
   );
 
@@ -191,7 +196,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       if (component === "Browser") {
         return (
           <TrackManager
-            tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
+            tracks={nonG3dTracks}
             legendWidth={legendWidth}
             windowWidth={
               (!size.width || size.width - legendWidth <= 0
@@ -227,7 +232,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
       }
     },
     [
-      tracks,
+      nonG3dTracks,
       size.width,
       legendWidth,
       userViewRegion,
@@ -341,7 +346,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     <div ref={resizeRef as React.RefObject<HTMLDivElement>}>
       {!has3dTracks ? (
         <TrackManager
-          tracks={tracks.filter((trackModel) => trackModel.type !== "g3d")}
+          tracks={nonG3dTracks}
           legendWidth={legendWidth}
           windowWidth={
             (!size.width || size.width - legendWidth <= 0
