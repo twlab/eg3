@@ -1,4 +1,4 @@
-import React from "react";
+
 import SelectConfig from "./SelectConfig";
 import {
   AnnotationDisplayModes,

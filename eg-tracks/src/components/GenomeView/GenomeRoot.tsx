@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
-import _, { has } from "lodash";
+import _ from "lodash";
 import { ITrackContainerState } from "../../types";
 import FlexLayout from "flexlayout-react";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
@@ -18,10 +18,7 @@ const INSTANCE_FETCH_TYPES = { hic: "", dynamichic: "", bam: "" };
 export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
-import { generateUUID } from "../../util";
 
-// Performance tracking
-let genomeRootStartTime = performance.now();
 
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";

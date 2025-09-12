@@ -10,6 +10,7 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon,
   ArrowsUpDownIcon,
+
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,10 +28,16 @@ interface ToolbarProps {
     highlightSearch?: boolean
   ) => void;
   windowWidth?: number;
+  buttonPadding?: number;
+  gapSize?: number;
+  fontSize?: number;
 }
 const Toolbar: React.FC<ToolbarProps> = ({
   onNewRegionSelect,
   windowWidth,
+  gapSize = 8,
+  fontSize = 16,
+  buttonPadding = 6,
 }) => {
   const tool = useAppSelector(selectTool);
   const dispatch = useAppDispatch();
@@ -49,25 +56,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${
-      tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
-    }`;
+    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
+      }`;
   };
 
   const getButtonStyle = () => ({
-    padding: `${Math.max(4, Math.min(8, (windowWidth || 1920) * 0.004))}px`,
+    padding: `${buttonPadding}px`,
   });
 
-  const getGapSize = () => {
-    return `${Math.max(
-      0.15,
-      Math.min(0.35, (windowWidth || 1920) * 0.0001)
-    )}rem`;
-  };
-
-  const getFontSize = () => {
-    return `${Math.max(0.75, Math.min(1, (windowWidth || 1920) * 0.0005))}rem`;
-  };
 
   const handleToolClick = (selectedTool: Tool): any => {
     if (tool === selectedTool) {
@@ -84,8 +80,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
         className="bg-white/80 dark:bg-dark-background/80 backdrop-blur-md flex flex-row items-center"
         style={{
           height: `${Math.max(
-            40,
-            Math.min(60, (windowWidth || 1920) * 0.03)
+            30,
+            Math.min(15, (windowWidth || 1920) * 0.01)
           )}px`,
           gap: `${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
           padding: `${Math.max(
@@ -109,6 +105,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             onSearchFocusChange={setIsSearchFocused}
             onNewRegionSelect={onNewRegionSelect}
             windowWidth={windowWidth}
+            fontSize={fontSize}
+            buttonPadding={buttonPadding}
+            gapSize={gapSize}
           />
         </div>
 
@@ -116,7 +115,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-          style={{ gap: getGapSize() }}
+          style={{ gap: gapSize }}
           animate={{
             opacity: isSearchFocused ? 0.5 : 1,
             scale: isSearchFocused ? 0.95 : 1,
@@ -125,7 +124,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         >
           <motion.div
             className="flex flex-row items-center"
-            style={{ gap: getGapSize() }}
+            style={{ gap: gapSize }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -152,10 +151,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             >
               <span
                 className="flex flex-row items-center justify-center text-gray-600 dark:text-dark-primary"
-                style={{ fontSize: getFontSize() }}
+                style={{ fontSize: fontSize }}
               >
                 <span>⬚</span>
-                <span>🔍</span>
                 <span>+</span>
               </span>
             </button>
@@ -176,7 +174,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
           <motion.div
             className="flex flex-row items-center"
-            style={{ gap: getGapSize() }}
+            style={{ gap: gapSize }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -202,14 +200,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 hoveredMagnifyingDirection === MagnifyingDirection.Out
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                  ? 0
-                  : 1,
+                    ? 0
+                    : 1,
               scale:
                 hoveredMagnifyingDirection === MagnifyingDirection.Out
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                  ? 0.95
-                  : 1,
+                    ? 0.95
+                    : 1,
             }}
             transition={{ duration: 0.2 }}
             onMouseEnter={() =>
@@ -220,10 +218,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               className={
                 getButtonClass() +
-                ` relative rounded-none ${
-                  hoveredMagnifyingDirection === MagnifyingDirection.Out
-                    ? "z-20"
-                    : ""
+                ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.Out
+                  ? "z-20"
+                  : ""
                 }`
               }
               style={getButtonStyle()}
@@ -284,14 +281,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 hoveredMagnifyingDirection === MagnifyingDirection.In
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                  ? 0
-                  : 1,
+                    ? 0
+                    : 1,
               scale:
                 hoveredMagnifyingDirection === MagnifyingDirection.In
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                  ? 0.95
-                  : 1,
+                    ? 0.95
+                    : 1,
             }}
             transition={{ duration: 0.2 }}
             onMouseEnter={() =>
@@ -302,10 +299,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               className={
                 getButtonClass() +
-                ` relative rounded-none ${
-                  hoveredMagnifyingDirection === MagnifyingDirection.In
-                    ? "z-20"
-                    : ""
+                ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.In
+                  ? "z-20"
+                  : ""
                 }`
               }
               style={getButtonStyle()}
@@ -362,7 +358,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {/* Navigation and tools */}
           <motion.div
             className="flex flex-row items-center"
-            style={{ gap: getGapSize() }}
+            style={{ gap: gapSize }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
@@ -384,7 +380,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
           <motion.div
             className="flex flex-row items-center"
-            style={{ gap: getGapSize() }}
+            style={{ gap: gapSize }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
               scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,

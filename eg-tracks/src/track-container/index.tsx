@@ -1,7 +1,6 @@
 import {
   GenomeCoordinate,
   ITrackContainerRepresentableProps,
-  ITrackContainerState,
   ITrackModel,
 } from "../types";
 import GenomeRoot from "../components/GenomeView/GenomeRoot";

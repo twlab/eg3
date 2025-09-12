@@ -202,7 +202,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
     const maxFontSize = 18;
     return Math.max(baseFontSize, Math.min(maxFontSize, windowWidth * 0.009));
   };
-
+  const getGapSize = () => {
+    return `${Math.max(
+      0.15,
+      Math.min(0.35, (windowWidth || 1920) * 0.0001)
+    )}rem`;
+  };
   //useRef to store data between states without re render the component
   const completedFetchedRegion = useRef<{ [key: string]: any }>({
     key: -0,
@@ -3466,7 +3471,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       style={{
         backgroundColor: "var(--bg-color)",
         paddingLeft: "20px",
-        marginBottom: "50px",
+        marginBottom: "100px",
       }}
     >
       {windowWidth > 0 && userViewRegion && showGenomeNav && (
@@ -3484,8 +3489,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             style={{
               backgroundColor: "var(--bg-color)",
               width: `${windowWidth + 120}px`,
-              marginTop: getPadding() ? getPadding() / 2 : 3,
-              marginBottom: getPadding() ? getPadding() / 2 : 3,
+              marginTop: getPadding() ? getPadding() / 3 : 2,
+              marginBottom: getPadding() ? getPadding() / 3 : 2,
               display: "flex",
               flexDirection: windowWidth <= 1080 ? "column" : "row",
               alignItems: windowWidth <= 1080 ? "stretch" : "center",
@@ -3526,6 +3531,11 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                       !onNewRegionSelect ? () => { } : onNewRegionSelect
                     }
                     windowWidth={windowWidth}
+
+                    buttonPadding={getPadding() ? getPadding() / 2 : 3}
+                    gapSize={getGapSize()}
+                    fontSize={Math.max(16, getFontSize())}
+
                   />
                 </div>
               </div>
