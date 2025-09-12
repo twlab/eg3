@@ -66,7 +66,7 @@ export const textFetchFunction: { [key: string]: any } = {
 
 async function getTextData(regionData: any) {
   if (!(regionData.trackModel.id in cachedLocalFetchInstance)) {
-    if (regionData.trackModel.type === "longrange") {
+    if (regionData.trackModel.textConfig.subType === "AndreaGillespie") {
       cachedLocalFetchInstance[`${regionData.trackModel.id}`] =
         new LongrangeAndreaTextSource({
           blob: regionData.trackModel.fileObj,
@@ -79,6 +79,7 @@ async function getTextData(regionData: any) {
           blob: regionData.trackModel.fileObj,
           textConfig: regionData.trackModel.textConfig,
           url: "",
+          type: regionData.trackModel.type,
         });
     }
   }

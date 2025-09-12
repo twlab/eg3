@@ -32,50 +32,50 @@ interface Props {
   windowWidth: number;
   viewWindow: any;
 }
-export const getHighlightedXs = (
-  interval: OpenInterval,
-  visData: ViewExpansion,
-  legendWidth: number,
-  tracks?: TrackModel[],
-  trackData?: any
-): OpenInterval => {
-  const { viewWindowRegion, viewWindow } = visData;
-  // console.log(trackData)
-  const navBuilds = tracks
-    ? tracks
-        .map((k) => trackData[k.getId()].alignment)
-        .filter((x) => x)
-        .map((x) => x.navContextBuilder)
-        .filter((x) => x)
-    : []; //remove rough mode adjustment
-  // console.log(navBuilds)
-  let start, end;
-  let newIntervalStart = interval.start,
-    newIntervalEnd = interval.end;
-  // navBuilds.forEach(build => {
-  //     newIntervalStart = build.convertOldCoordinates(newIntervalStart);
-  //     newIntervalEnd = build.convertOldCoordinates(newIntervalEnd);
-  //     return; // only execute once - not working
-  // })
-  if (navBuilds.length) {
-    newIntervalStart = navBuilds[0].convertOldCoordinates(newIntervalStart);
-    newIntervalEnd = navBuilds[0].convertOldCoordinates(newIntervalEnd);
-  }
-  const drawModel = new LinearDrawingModel(
-    viewWindowRegion,
-    viewWindow.getLength()
-  );
-  const xRegion = drawModel.baseSpanToXSpan(
-    new OpenInterval(newIntervalStart, newIntervalEnd)
-  );
-  start = Math.max(legendWidth, xRegion.start + legendWidth);
-  end = xRegion.end + legendWidth;
-  if (end <= start) {
-    start = -1;
-    end = 0;
-  }
-  return new OpenInterval(start, end);
-};
+// export const getHighlightedXs = (
+//   interval: OpenInterval,
+//   visData: ViewExpansion,
+//   legendWidth: number,
+//   tracks?: TrackModel[],
+//   trackData?: any
+// ): OpenInterval => {
+//   const { viewWindowRegion, viewWindow } = visData;
+//   // console.log(trackData)
+//   const navBuilds = tracks
+//     ? tracks
+//         .map((k) => trackData[k.getId()].alignment)
+//         .filter((x) => x)
+//         .map((x) => x.navContextBuilder)
+//         .filter((x) => x)
+//     : []; //remove rough mode adjustment
+//   // console.log(navBuilds)
+//   let start, end;
+//   let newIntervalStart = interval.start,
+//     newIntervalEnd = interval.end;
+//   // navBuilds.forEach(build => {
+//   //     newIntervalStart = build.convertOldCoordinates(newIntervalStart);
+//   //     newIntervalEnd = build.convertOldCoordinates(newIntervalEnd);
+//   //     return; // only execute once - not working
+//   // })
+//   if (navBuilds.length) {
+//     newIntervalStart = navBuilds[0].convertOldCoordinates(newIntervalStart);
+//     newIntervalEnd = navBuilds[0].convertOldCoordinates(newIntervalEnd);
+//   }
+//   const drawModel = new LinearDrawingModel(
+//     viewWindowRegion,
+//     viewWindow.getLength()
+//   );
+//   const xRegion = drawModel.baseSpanToXSpan(
+//     new OpenInterval(newIntervalStart, newIntervalEnd)
+//   );
+//   start = Math.max(legendWidth, xRegion.start + legendWidth);
+//   end = xRegion.end + legendWidth;
+//   if (end <= start) {
+//     start = -1;
+//     end = 0;
+//   }
+//   return new OpenInterval(start, end);
+// };
 
 const ScreenshotUI: React.FC<Props> = (props) => {
   const [display, setDisplay] = useState<string>("");

@@ -2,9 +2,6 @@ import { AnnotationDisplayModes } from "./DisplayModes";
 import { AnnotationDisplayModeConfig } from "../config-menu-components.tsx/DisplayModeConfig";
 import { BackgroundColorConfig } from "../config-menu-components.tsx/ColorConfig";
 
-import { DEFAULT_OPTIONS } from "@/components/GenomeView/TrackComponents/OmeroTrack";
-import TrackModel from "../../models/TrackModel";
-
 import { TrackConfig } from "./TrackConfig";
 import LabelConfig from "../config-menu-components.tsx/LabelConfig";
 import OmeroImageHeightConfig from "../config-menu-components.tsx/OmeroImageHeightConfig";

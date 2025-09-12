@@ -1,9 +1,15 @@
 # Version history
 
+## 56.0.5
+
+- implemented longrange local text tracks
+- increase track draw speed, by using less useeffect
+- fixed error when user select IMAGECOUNT 
+
 ## 56.0.4
 
 - center toolbar
-- fixed initial slow loading (found by wenjin)
+- fixed initial slow loading by separating out flexlayout (found by wenjin)
 - increase reactivity when switching between pages
 - refactor state, userViewRegion, sizeChange, and viewRegion
 

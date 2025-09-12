@@ -48,7 +48,7 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
             }
             style={{
               width: `${Math.max(80, Math.min(110, windowWidth * 0.09))}px`,
-              fontSize: `${Math.max(16, Math.min(15, windowWidth * 0.009))}px`,
+              fontSize: `${fontSize}px`,
             }}
           >
             Metadata {isShowingEditMenu ? "↩" : "»"}
