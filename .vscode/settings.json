@@ -1,37 +1,4 @@
 {
   "editor.formatOnSave": true,
-  "editor.formatOnPaste": false,
-  
-  // Performance optimizations
-  "typescript.suggest.autoImports": false,
-  "typescript.disableAutomaticTypeAcquisition": true,
-  "typescript.preferences.includePackageJsonAutoImports": "off",
-  "typescript.surveys.enabled": false,
-  
-  // Exclude heavy directories from file watching
-  "files.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/build": true,
-    "**/.git": true,
-    "**/.next": true,
-    "**/coverage": true
-  },
-  
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/build": true,
-    "**/.git": true,
-    "**/coverage": true
-  },
-  
-  // Reduce language server overhead
-  "editor.semanticHighlighting.enabled": false,
-  "editor.suggest.snippetsPreventQuickSuggestions": false,
-  "editor.parameterHints.enabled": false,
-  
-  // Reduce git overhead for large repos
-  "git.decorations.enabled": false,
-  "git.autoRepositoryDetection": false
+  "editor.formatOnPaste": false
 }

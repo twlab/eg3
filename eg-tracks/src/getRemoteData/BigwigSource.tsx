@@ -1,6 +1,6 @@
 import { BigWig } from "@gmod/bbi";
 
-import { RemoteFile } from "generic-filehandle";
+import { RemoteFile } from "generic-filehandle2";
 import fetch from "isomorphic-fetch";
 
 export class BigwigSource {
