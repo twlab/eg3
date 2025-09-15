@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
-import { BlobFile } from "generic-filehandle";
+import { BlobFile } from "generic-filehandle2";
 
 /**
  * Reads and gets data from bigwig or bigbed files hosted remotely using @gmod/bbi library
