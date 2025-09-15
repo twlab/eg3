@@ -181,7 +181,7 @@ function SearchSuggestionDivider(props: any) {
       <div
         className="text-gray-600 dark:text-dark-primary"
         style={{
-          fontSize: props.getFontSize ? props.getFontSize() : "0.75rem",
+          fontSize: props.getFontSize ? props.fontSize : "0.75rem",
         }}
       >
         {props.text}
@@ -201,7 +201,7 @@ function SearchSuggestionDivider(props: any) {
             className="text-gray-600 dark:text-dark-primary"
             style={{
               marginLeft: "0.375rem",
-              fontSize: props.getFontSize ? props.getFontSize() : "0.75rem",
+              fontSize: props.fontSize,
             }}
           >
             Highlight search
@@ -219,13 +219,13 @@ function SearchSuggestionBase({
   text,
   desc,
   onClick,
-  getSmallFontSize,
+  fontSize,
 }: {
   icon: React.ReactNode;
   text: string;
   desc: string;
   onClick: () => void;
-  getSmallFontSize?: () => string;
+
 }) {
   return (
     <div
@@ -237,7 +237,7 @@ function SearchSuggestionBase({
         <div
           className="font-medium"
           style={{
-            fontSize: getSmallFontSize ? getSmallFontSize() : "0.75rem",
+            fontSize: fontSize,
           }}
         >
           {text}
@@ -245,7 +245,7 @@ function SearchSuggestionBase({
         <div
           className="text-gray-500"
           style={{
-            fontSize: getSmallFontSize ? getSmallFontSize() : "0.75rem",
+            fontSize: fontSize,
           }}
         >
           {desc}
@@ -260,6 +260,9 @@ export default function SearchBar({
   onSearchFocusChange,
   onNewRegionSelect,
   windowWidth = 1920,
+  buttonPadding = 2,
+  fontSize = 16,
+  gapSize = 6,
 }: SearchBarProps) {
   const { ref: searchContainerRef } = useElementGeometry({
     shouldRespondToResize: false,
@@ -298,27 +301,11 @@ export default function SearchBar({
   };
 
   const getButtonStyle = () => ({
-    padding: `${Math.max(4, Math.min(8, (windowWidth || 1920) * 0.004))}px`,
+    padding: `${padding}px`,
   });
 
-  const getGapSize = () => {
-    return `${Math.max(
-      0.15,
-      Math.min(0.35, (windowWidth || 1920) * 0.0001)
-    )}rem`;
-  };
 
-  const getFontSize = () => {
-    return `${Math.max(0.75, Math.min(1, (windowWidth || 1920) * 0.0005))}rem`;
-  };
 
-  const getInputMinWidth = () => {
-    return `${Math.max(150, Math.min(250, (windowWidth || 1920) * 0.15))}px`;
-  };
-
-  const getInputFontSize = () => {
-    return `${Math.max(12, Math.min(16, (windowWidth || 1920) * 0.008))}px`;
-  };
 
   const getRegionButtonSize = () => {
     return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
@@ -326,10 +313,6 @@ export default function SearchBar({
 
   const getArrowIconSize = () => {
     return `${Math.max(10, Math.min(14, (windowWidth || 1920) * 0.007))}px`;
-  };
-
-  const getSmallFontSize = () => {
-    return `${Math.max(12, Math.min(16, (windowWidth || 1920) * 0.008))}px`;
   };
 
   const getEmojiSize = () => {
@@ -492,7 +475,8 @@ export default function SearchBar({
           text={`"${searchInput}"`}
           desc="You're entering coordinates. Press enter or click here to jump to this region."
           onClick={() => parseRegion(searchInput)}
-          getSmallFontSize={getSmallFontSize}
+
+          fontSize={fontSize}
         />
       );
       return suggestions;
@@ -504,7 +488,7 @@ export default function SearchBar({
           key="filters"
           text="Filters"
           highlightSearch={highlightSearch}
-          getFontSize={getFontSize}
+          fontSize={fontSize}
         />
       );
       SLASH_COMMANDS.forEach((command) => {
@@ -519,7 +503,7 @@ export default function SearchBar({
             </span>
             <span
               className="text-gray-600 dark:text-dark-primary"
-              style={{ fontSize: getSmallFontSize() }}
+              style={{ fontSize: fontSize }}
             >
               /{command}
             </span>
@@ -541,7 +525,7 @@ export default function SearchBar({
           <SearchSuggestionDivider
             key="genes"
             text="Genes"
-            getFontSize={getFontSize}
+            fontSize={fontSize}
           />
         );
         geneResults.forEach((result) => {
@@ -555,13 +539,13 @@ export default function SearchBar({
               <div className="flex items-center gap-1.5">
                 <span
                   className="font-medium"
-                  style={{ fontSize: getSmallFontSize() }}
+                  style={{ fontSize: fontSize }}
                 >
                   {result.symbol}
                 </span>
                 <span
                   className="text-gray-500"
-                  style={{ fontSize: getSmallFontSize() }}
+                  style={{ fontSize: fontSize }}
                 >
                   {result.description}
                 </span>
@@ -576,7 +560,7 @@ export default function SearchBar({
           <SearchSuggestionDivider
             key="snps"
             text="Variants"
-            getFontSize={getFontSize}
+            fontSize={fontSize}
           />
         );
         snpResults.forEach((result) => {
@@ -693,7 +677,7 @@ export default function SearchBar({
       >
         <AnimatePresence>
           {isSearchFocused &&
-          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: -10, maxHeight: 0 }}
@@ -717,7 +701,7 @@ export default function SearchBar({
               >
                 <span
                   className="text-tint dark:text-dark-primary leading-none"
-                  style={{ fontSize: getFontSize() }}
+                  style={{ fontSize: fontSize }}
                 >
                   /{activeCommand}
                 </span>
@@ -731,8 +715,8 @@ export default function SearchBar({
             <input
               className="flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
               style={{
-                minWidth: getInputMinWidth(),
-                fontSize: getInputFontSize(),
+                minWidth: fontSize,
+                fontSize: fontSize,
               }}
               placeholder={
                 activeCommand

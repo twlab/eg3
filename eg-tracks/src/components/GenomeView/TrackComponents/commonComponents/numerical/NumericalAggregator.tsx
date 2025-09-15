@@ -20,8 +20,14 @@ export class NumericalAggregator {
   aggregateFeatures(data, viewRegion, width, aggregatorId) {
     const aggregator = new FeatureAggregator();
     const xToFeatures = aggregator.makeXMap(data, viewRegion, width);
+    let newAggregatorId = aggregatorId;
+    if (aggregatorId === "IMAGECOUNT" || !aggregatorId) {
+      newAggregatorId = "MEAN";
+    } else {
+      newAggregatorId = aggregatorId
+    }
 
-    return xToFeatures.map(DefaultAggregators.fromId(aggregatorId));
+    return xToFeatures.map(DefaultAggregators.fromId(newAggregatorId));
   }
 
   xToValueMaker(data, viewRegion, width, options) {
@@ -63,11 +69,11 @@ export class NumericalAggregator {
       const xToValueBeforeSmooth =
         dataForward.length > 0
           ? this.aggregateFeatures(
-              dataForward,
-              viewRegion,
-              width,
-              aggregateMethod
-            )
+            dataForward,
+            viewRegion,
+            width,
+            aggregateMethod
+          )
           : [];
       xToValue =
         smoothNumber === 0

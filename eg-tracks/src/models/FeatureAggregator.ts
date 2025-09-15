@@ -14,7 +14,7 @@ export const AggregatorTypes = {
   COUNT: "COUNT", // Counts records
   MIN: "MIN", // Computes value of min record
   MAX: "MAX", // Computes value of max record
-  IMAGECOUNT: "IMAGECOUNT", // for image track count
+  // IMAGECOUNT: "IMAGECOUNT", // for image track count
 };
 
 const aggregateFunctions = {};
@@ -33,8 +33,8 @@ aggregateFunctions[AggregatorTypes.MAX] = (records: any[]) =>
     ? _.maxBy(records, VALUE_PROP_NAME)[VALUE_PROP_NAME]
     : null;
 
-aggregateFunctions[AggregatorTypes.IMAGECOUNT] = (records: any[]) =>
-  _.sum(records.map((x) => x.images.length));
+// aggregateFunctions[AggregatorTypes.IMAGECOUNT] = (records: any[]) =>
+//   _.sum(records.map((x) => x.images.length));
 
 /**
  * aggregator utils for array data

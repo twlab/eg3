@@ -4,6 +4,7 @@
 
 - implemented longrange local text tracks
 - increase track draw speed, by using less useeffect
+- fixed error when user select IMAGECOUNT 
 
 ## 56.0.4
 
