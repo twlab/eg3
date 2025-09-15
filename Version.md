@@ -1,8 +1,9 @@
 # Version history
 
-## 56.0.5.1
+## 56.0.6
 
 - fixed bug where track not showing when the user scroll to previous regions
+- updated bigwig fetch, @gmod/bbi to new version, fixed error with negative regions
 
 ## 56.0.5
 

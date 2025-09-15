@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { BigWig } from "@gmod/bbi";
-import { RemoteFile } from "generic-filehandle";
+import { RemoteFile } from "generic-filehandle2";
 import fetch from "isomorphic-fetch";
 
 /**
@@ -8,6 +8,12 @@ import fetch from "isomorphic-fetch";
  *
  * @author Daofeng Li
  */
+
+export function resolveUriLocation(location) {
+  return location.baseUri
+    ? { ...location, uri: new URL(location.uri, location.baseUri).href }
+    : location;
+}
 class BigSourceWorkerGmod {
   url: any;
   bw: BigWig;
