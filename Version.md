@@ -1,10 +1,14 @@
 # Version history
 
+## 56.0.5.1
+
+- fixed bug where track not showing when the user scroll to previous regions
+
 ## 56.0.5
 
 - implemented longrange local text tracks
 - increase track draw speed, by using less useeffect
-- fixed error when user select IMAGECOUNT 
+- fixed error when user select IMAGECOUNT
 
 ## 56.0.4
 
