@@ -16,6 +16,14 @@ export const redo = () => (dispatch: AppDispatch) => {
   dispatch(ActionCreators.redo());
 };
 
+export const jumpToPast = (index: number) => (dispatch: AppDispatch) => {
+  dispatch(ActionCreators.jumpToPast(index));
+};
+
+export const jumpToFuture = (index: number) => (dispatch: AppDispatch) => {
+  dispatch(ActionCreators.jumpToFuture(index));
+};
+
 export const clearHistory = () => (dispatch: AppDispatch) => {
   dispatch(ActionCreators.clearHistory());
 };

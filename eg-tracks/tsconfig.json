@@ -25,6 +25,6 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "../eg-browser/src/components/navbar/History.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

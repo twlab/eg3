@@ -40,7 +40,8 @@ import {
   setDarkTheme,
 } from "@/lib/redux/slices/settingsSlice";
 import { version } from "../../../package.json";
-
+import History from "./History";
+import { RootState } from "../../lib/redux/store";
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -48,9 +49,21 @@ export default function NavBar() {
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
+
+  const currentState = useAppSelector((state: RootState) => {
+    return currentSession ? { ...state.browser } : null;
+  });
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const { undo, redo, canUndo, canRedo } = useUndoRedo();
+  const {
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    jumpToPast,
+    jumpToFuture,
+    clearHistory,
+  } = useUndoRedo();
 
   const genome = useCurrentGenome();
 
@@ -164,6 +177,15 @@ export default function NavBar() {
                 >
                   <ArrowUturnLeftIcon className="h-5 w-5" />
                 </IconButton>
+                <History
+                  state={{
+                    past: currentState ? currentState.past : [],
+                    future: currentState ? currentState.future : [],
+                  }}
+                  jumpToPast={jumpToPast}
+                  jumpToFuture={jumpToFuture}
+                  clearHistory={clearHistory}
+                />
                 <IconButton
                   onClick={redo}
                   disabled={!canRedo}

@@ -96,3 +96,4 @@ hen scroll back if its fetching the new tracks only that are added
     so its not recreated everytime theres newdata or new index 
 
 16. make each track component be able to react to state changes so its not recreated. 
+17. take out local tracks when refreshing
