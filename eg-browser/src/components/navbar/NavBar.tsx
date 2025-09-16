@@ -69,7 +69,7 @@ export default function NavBar() {
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-      versionToLogoUrl[genome.name]?.logoUrl
+    versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
@@ -122,9 +122,8 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl font-light border border-blue-500 px-2 ${
-                  currentSession.title.length > 0 ? "" : "font-medium"
-                }`}
+                style={`text-2xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
+                  }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -177,7 +176,7 @@ export default function NavBar() {
                 >
                   <ArrowUturnLeftIcon className="h-5 w-5" />
                 </IconButton>
-                <History
+                {/* <History
                   state={{
                     past: currentState ? currentState.past : [],
                     future: currentState ? currentState.future : [],
@@ -185,7 +184,7 @@ export default function NavBar() {
                   jumpToPast={jumpToPast}
                   jumpToFuture={jumpToFuture}
                   clearHistory={clearHistory}
-                />
+                /> */}
                 <IconButton
                   onClick={redo}
                   disabled={!canRedo}

@@ -59,7 +59,7 @@ const Loading: React.FC<PopoverProps> = ({
         type="button"
         className={`popover-btn${open ? " open" : ""}`}
         onClick={() => setOpen((prev) => !prev)}
-        style={{ zIndex: 9994, width: 120 }}
+        style={{ zIndex: 10, width: 120 }}
       >
         <div style={{ fontStyle: "italic" }}>{buttonLabel} </div>
         <div className="loader"></div>
@@ -70,19 +70,19 @@ const Loading: React.FC<PopoverProps> = ({
         style={
           open
             ? {
-                position: "absolute",
-                top: "100%", // Position below the button
-                left: 0,
-                zIndex: 9999,
-                maxWidth: "300px", // Limit width
-                maxHeight: "200px", // Limit height
-                overflow: "auto", // Add scrolling if content is too large
-                backgroundColor: "white",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                padding: "8px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              }
+              position: "absolute",
+              top: "100%", // Position below the button
+              left: 0,
+              zIndex: 10,
+              maxWidth: "300px", // Limit width
+              maxHeight: "200px", // Limit height
+              overflow: "auto", // Add scrolling if content is too large
+              backgroundColor: "white",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              padding: "8px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            }
             : { display: "none" }
         }
       >

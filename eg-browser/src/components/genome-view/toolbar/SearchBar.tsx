@@ -175,19 +175,30 @@ function SearchSuggestionDivider(props: any) {
         alignItems: "center",
         justifyContent: "space-between",
         margin: "0.125rem 0.75rem",
-        padding: "0 0.75rem",
+        // padding: "0 0.75rem",
       }}
     >
       <div
         className="text-gray-600 dark:text-dark-primary"
         style={{
-          fontSize: props.getFontSize ? props.fontSize : "0.75rem",
+          fontSize: props.fontSize,
         }}
       >
         {props.text}
       </div>
       {props.highlightSearch !== undefined ? (
         <div style={{ display: "flex", alignItems: "center" }}>
+
+          <label
+            htmlFor="highsearch"
+            className="text-gray-600 dark:text-dark-primary"
+            style={{
+
+              fontSize: props.fontSize,
+            }}
+          >
+            Highlight search
+          </label>
           <input
             type="checkbox"
             id="highsearch"
@@ -196,16 +207,6 @@ function SearchSuggestionDivider(props: any) {
             onChange={handleChange}
             style={{ transform: "scale(0.85)" }}
           />
-          <label
-            htmlFor="highsearch"
-            className="text-gray-600 dark:text-dark-primary"
-            style={{
-              marginLeft: "0.375rem",
-              fontSize: props.fontSize,
-            }}
-          >
-            Highlight search
-          </label>
         </div>
       ) : (
         ""
@@ -301,7 +302,7 @@ export default function SearchBar({
   };
 
   const getButtonStyle = () => ({
-    padding: `${padding}px`,
+    padding: `${buttonPadding}px`,
   });
 
 
@@ -692,8 +693,10 @@ export default function SearchBar({
           )}
         </AnimatePresence>
 
-        <div className="flex flex-row items-center w-full h-full">
-          <div className="flex flex-row items-center w-full min-w-0 flex-1">
+        {/* Outer row for search input + dynamic buttons; increased flex growth & min width */}
+        <div className="flex flex-row items-center w-full h-full flex-grow" >
+          {/* Inner container: give it stronger flex and a minimum width so it claims more horizontal space */}
+          <div className="flex flex-row items-center w-full flex-[2] min-w-[227px]">
             {activeCommand ? (
               <div
                 className="flex items-center bg-secondary dark:bg-dark-secondary rounded-md mr-1.5 flex-shrink-0"
@@ -721,7 +724,7 @@ export default function SearchBar({
               placeholder={
                 activeCommand
                   ? `Search ${activeCommand}s`
-                  : "Search genes, variants, or regions"
+                  : "Search regions, genes, snps"
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
@@ -764,11 +767,11 @@ export default function SearchBar({
           </div>
         </div>
       </motion.div>{" "}
-      <motion.div
+      {/* <motion.div
         className="w-full absolute bottom-0 border-b border-gray-300"
         animate={{ opacity: isSearchFocused ? 0 : 1 }}
         transition={{ duration: 0.2 }}
-      />
+      /> */}
     </OutsideClickDetector>
   );
 }

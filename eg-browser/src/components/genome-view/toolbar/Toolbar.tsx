@@ -99,17 +99,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
         transition={{ duration: 0.2 }}
       >
         {/* Search Bar */}
-        <div className="flex-1">
-          <SearchBar
-            isSearchFocused={isSearchFocused}
-            onSearchFocusChange={setIsSearchFocused}
-            onNewRegionSelect={onNewRegionSelect}
-            windowWidth={windowWidth}
-            fontSize={fontSize}
-            buttonPadding={buttonPadding}
-            gapSize={gapSize}
-          />
-        </div>
+
+        <SearchBar
+          isSearchFocused={isSearchFocused}
+          onSearchFocusChange={setIsSearchFocused}
+          onNewRegionSelect={onNewRegionSelect}
+          windowWidth={windowWidth}
+          fontSize={fontSize}
+          buttonPadding={buttonPadding}
+          gapSize={gapSize}
+        />
+
 
         <div className="h-5 border-r border-gray-400" />
         {/* Toolbar Buttons */}
