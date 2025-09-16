@@ -114,7 +114,14 @@ export function TrackContainerRepresentable({
     return result;
   }, [tracks]);
 
-  genomeConfig["defaultTracks"] = convertedTracks;
+  // Create a modified genomeConfig with updated defaultTracks
+  const modifiedGenomeConfig = useMemo(() => {
+    if (!genomeConfig) return genomeConfig;
+    return {
+      ...genomeConfig,
+      defaultTracks: convertedTracks
+    };
+  }, [genomeConfig, convertedTracks]);
 
   // MARK: View Region
 
@@ -271,7 +278,7 @@ export function TrackContainerRepresentable({
       <GenomeRoot
         tracks={convertedTracks}
         highlights={highlights}
-        genomeConfig={genomeConfig}
+        genomeConfig={modifiedGenomeConfig}
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
         showToolBar={showToolBar}

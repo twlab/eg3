@@ -40,7 +40,8 @@ import {
   setDarkTheme,
 } from "@/lib/redux/slices/settingsSlice";
 import { version } from "../../../package.json";
-
+import History from "./History";
+import { RootState } from "../../lib/redux/store";
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -48,15 +49,27 @@ export default function NavBar() {
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
+
+  const currentState = useAppSelector((state: RootState) => {
+    return currentSession ? { ...state.browser } : null;
+  });
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const { undo, redo, canUndo, canRedo } = useUndoRedo();
+  const {
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    jumpToPast,
+    jumpToFuture,
+    clearHistory,
+  } = useUndoRedo();
 
   const genome = useCurrentGenome();
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-      versionToLogoUrl[genome.name]?.logoUrl
+    versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
@@ -109,9 +122,8 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl font-light border border-blue-500 px-2 ${
-                  currentSession.title.length > 0 ? "" : "font-medium"
-                }`}
+                style={`text-2xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
+                  }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -164,6 +176,15 @@ export default function NavBar() {
                 >
                   <ArrowUturnLeftIcon className="h-5 w-5" />
                 </IconButton>
+                {/* <History
+                  state={{
+                    past: currentState ? currentState.past : [],
+                    future: currentState ? currentState.future : [],
+                  }}
+                  jumpToPast={jumpToPast}
+                  jumpToFuture={jumpToFuture}
+                  clearHistory={clearHistory}
+                /> */}
                 <IconButton
                   onClick={redo}
                   disabled={!canRedo}

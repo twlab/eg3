@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import ReactModal from "react-modal";
-
 import "./History.css";
 
 /**
@@ -29,7 +28,7 @@ const History: React.FC<Props> = ({
   const handleOpenModal = () => {
     setShowModal(true);
   };
-
+  console.log(state);
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -60,11 +59,11 @@ const History: React.FC<Props> = ({
 
   const makeItemList = (
     stateList: any[],
-    callback: (actionType: string, index: number) => void,
+    callback: (index: number) => void,
     type: string
   ) => {
     const items = stateList.map((value, index) => (
-      <li key={index} onClick={() => callback(type, index)}>
+      <li key={index} onClick={() => callback(index)}>
         <button className="btn btn-sm btn-warning">
           Region:{" "}
           {value.viewRegion

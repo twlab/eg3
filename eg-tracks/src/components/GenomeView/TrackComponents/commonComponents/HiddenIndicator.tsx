@@ -46,7 +46,7 @@ const HiddenIndicator: React.FC<HiddenIndicatorProps> = ({
         top: height - 16, // 16 is the height of the loading but
         left: dismissed ? 0 : xOffset,
         visibility: isVisible ? "visible" : "hidden", // Control visibility
-        zIndex: 9994,
+        zIndex: 10,
         pointerEvents: "none",
       }}
     >
