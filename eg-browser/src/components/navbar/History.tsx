@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./History.css";
 import {
   ClockIcon,
-  ChevronRightIcon,
-  ChevronDownIcon
+  ChevronRightIcon
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import OutsideClickDetector from "wuepgg3-track/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
@@ -37,6 +36,15 @@ const History: React.FC<Props> = ({
   const handleCloseModal = () => {
     setShowModal(false);
   };
+
+  const handleToggleModal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (showModal) {
+      handleCloseModal();
+    } else {
+      handleOpenModal();
+    }
+  };
   function handleClear() {
     clearHistory("clear");
     setCheckStateEmpty(true);
@@ -49,8 +57,8 @@ const History: React.FC<Props> = ({
       return <div>No operation history yet!</div>;
     }
 
-    const pastItems = makeItemList(past, (index) => jumpToPast(index), "past");
-    const futureItems = makeItemList(future, (index) => jumpToFuture(index), "future");
+    const pastItems = makeItemList(past, (index) => jumpToPast("past", index), "past");
+    const futureItems = makeItemList(future, (index) => jumpToFuture("future", index), "future");
 
     return (
       <div className="History">
@@ -65,7 +73,7 @@ const History: React.FC<Props> = ({
   const makeItemList = (
     stateList: any[],
     callback: (index: number) => void,
-    type: string
+    _type: string
   ) => {
 
     const items = stateList.map((value, index) => {
@@ -95,25 +103,27 @@ const History: React.FC<Props> = ({
     setCheckStateEmpty(false);
   }, [state]);
   return (
-    <div className="relative">
-      <button
-        onClick={handleOpenModal}
-        title="Operation history"
-        className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-2 mx-2 hover:bg-gray-50 transition-colors"
-      >
-        <ClockIcon className="w-4 h-4" />
-        <span className="text-base font-medium">History</span>
-        <motion.div
-          animate={{ rotate: showModal ? 90 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronRightIcon className="w-4 h-4" />
-        </motion.div>
-      </button>
 
+    <div className="relative">
       <OutsideClickDetector
         onOutsideClick={handleCloseModal}
       >
+        <button
+          onClick={handleToggleModal}
+          title="Operation history"
+          className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-2 mx-2 hover:bg-gray-50 transition-colors"
+        >
+          <ClockIcon className="w-4 h-4" />
+          <span className="text-base font-medium">History</span>
+          <motion.div
+            animate={{ rotate: showModal ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronRightIcon className="w-4 h-4" />
+          </motion.div>
+        </button>
+
+
         <AnimatePresence>
           {showModal && (
             <motion.div
