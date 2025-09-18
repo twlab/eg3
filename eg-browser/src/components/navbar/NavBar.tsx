@@ -41,7 +41,8 @@ import {
 } from "@/lib/redux/slices/settingsSlice";
 import { version } from "../../../package.json";
 import History from "./History";
-import { RootState } from "../../lib/redux/store";
+
+import { selectCurrentState } from "../../lib/redux/selectors";
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -50,9 +51,7 @@ export default function NavBar() {
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
 
-  const currentState = useAppSelector((state: RootState) => {
-    return currentSession ? { ...state.browser } : null;
-  });
+  const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
   const {
@@ -69,7 +68,7 @@ export default function NavBar() {
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-    versionToLogoUrl[genome.name]?.logoUrl
+      versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
@@ -122,8 +121,9 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                  }`}
+                style={`text-2xl font-light border border-blue-500 px-2 ${
+                  currentSession.title.length > 0 ? "" : "font-medium"
+                }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -192,7 +192,6 @@ export default function NavBar() {
                   }}
                   jumpToPast={jumpToPast}
                   jumpToFuture={jumpToFuture}
-                  clearHistory={clearHistory}
                 />
                 <div className="h-5 border-r border-gray-400" />
                 <Button

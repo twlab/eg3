@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./History.css";
-import {
-  ClockIcon,
-  ChevronRightIcon
-} from "@heroicons/react/24/outline";
+import { ClockIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import OutsideClickDetector from "wuepgg3-track/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 /**
@@ -17,16 +14,10 @@ type Props = {
     past: any[];
     future: any[];
   };
-  jumpToPast: (actionType: string, index: number) => void;
-  jumpToFuture: (actionType: string, index: number) => void;
-  clearHistory: (actionType: string) => any;
+  jumpToPast: (index: number) => void;
+  jumpToFuture: (index: number) => void;
 };
-const History: React.FC<Props> = ({
-  state,
-  jumpToPast,
-  jumpToFuture,
-  clearHistory,
-}) => {
+const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
   const [showModal, setShowModal] = useState(false);
   const [checkStateEmpty, setCheckStateEmpty] = useState(false);
   const handleOpenModal = () => {
@@ -46,7 +37,6 @@ const History: React.FC<Props> = ({
     }
   };
   function handleClear() {
-    clearHistory("clear");
     setCheckStateEmpty(true);
     renderHistory();
   }
@@ -57,8 +47,12 @@ const History: React.FC<Props> = ({
       return <div>No operation history yet!</div>;
     }
 
-    const pastItems = makeItemList(past, (index) => jumpToPast("past", index), "past");
-    const futureItems = makeItemList(future, (index) => jumpToFuture("future", index), "future");
+    const pastItems = makeItemList(past, (index) => jumpToPast(index), "past");
+    const futureItems = makeItemList(
+      future,
+      (index) => jumpToFuture(index),
+      "future"
+    );
 
     return (
       <div className="History">
@@ -75,12 +69,14 @@ const History: React.FC<Props> = ({
     callback: (index: number) => void,
     _type: string
   ) => {
-
     const items = stateList.map((value, index) => {
-      const currentSessionKey = value.currentSession
-      let stateData = null
-      if (currentSessionKey && value.sessions.entities[`${currentSessionKey}`]) {
-        stateData = value.sessions.entities[`${currentSessionKey}`]
+      const currentSessionKey = value.currentSession;
+      let stateData = null;
+      if (
+        currentSessionKey &&
+        value.sessions.entities[`${currentSessionKey}`]
+      ) {
+        stateData = value.sessions.entities[`${currentSessionKey}`];
       }
 
       return (
@@ -90,12 +86,13 @@ const History: React.FC<Props> = ({
             {stateData && stateData.userViewRegion
               ? stateData.userViewRegion
               : stateData && stateData.viewRegion
-                ? stateData.viewRegion
-                : ("(None)")}
-            , # of tracks: {stateData && stateData.tracks ? stateData.tracks.length : 0}
+              ? stateData.viewRegion
+              : "(None)"}
+            , # of tracks:{" "}
+            {stateData && stateData.tracks ? stateData.tracks.length : 0}
           </button>
         </li>
-      )
+      );
     });
     return <ol>{items}</ol>;
   };
@@ -103,11 +100,8 @@ const History: React.FC<Props> = ({
     setCheckStateEmpty(false);
   }, [state]);
   return (
-
     <div className="relative">
-      <OutsideClickDetector
-        onOutsideClick={handleCloseModal}
-      >
+      <OutsideClickDetector onOutsideClick={handleCloseModal}>
         <button
           onClick={handleToggleModal}
           title="Operation history"
@@ -123,7 +117,6 @@ const History: React.FC<Props> = ({
           </motion.div>
         </button>
 
-
         <AnimatePresence>
           {showModal && (
             <motion.div
@@ -135,7 +128,9 @@ const History: React.FC<Props> = ({
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h5 className="text-xl font-semibold text-gray-800">Operation history</h5>
+                  <h5 className="text-xl font-semibold text-gray-800">
+                    Operation history
+                  </h5>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleClear()}

@@ -24,13 +24,11 @@ import Toolbar from "./toolbar/Toolbar";
 import { useRef } from "react";
 import { fetchBundle } from "../../lib/redux/thunk/session";
 import { TrackPlaceHolder } from "../root-layout/tabs/tracks/destinations/TrackPlaceHolder";
-import { RootState } from "../../lib/redux/store";
+import { selectCurrentState } from "../../lib/redux/selectors";
 
 export default function GenomeView() {
   const currentSession = useAppSelector(selectCurrentSession);
-  const currentState = useAppSelector((state: RootState) => {
-    return currentSession ? { ...state.browser } : null;
-  });
+  const currentState = useAppSelector(selectCurrentState);
 
   const dispatch = useAppDispatch();
 
@@ -96,7 +94,7 @@ export default function GenomeView() {
       );
     }
   }
-  console.log(currentState)
+  console.log(currentState);
   return currentSession &&
     genomeConfig &&
     currentSession.genomeId === genomeConfig.name ? (
