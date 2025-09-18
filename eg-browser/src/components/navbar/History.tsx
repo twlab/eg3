@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
-import ReactModal from "react-modal";
 import "./History.css";
-
+import {
+  ClockIcon,
+  ChevronRightIcon,
+  ChevronDownIcon
+} from "@heroicons/react/24/outline";
+import { motion, AnimatePresence } from "framer-motion";
+import OutsideClickDetector from "wuepgg3-track/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 /**
  * A component to show users' history of operations
  * @param props The component props
@@ -28,7 +33,7 @@ const History: React.FC<Props> = ({
   const handleOpenModal = () => {
     setShowModal(true);
   };
-  console.log(state);
+
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -44,8 +49,8 @@ const History: React.FC<Props> = ({
       return <div>No operation history yet!</div>;
     }
 
-    const pastItems = makeItemList(past, jumpToPast, "past");
-    const futureItems = makeItemList(future, jumpToFuture, "future");
+    const pastItems = makeItemList(past, (index) => jumpToPast(index), "past");
+    const futureItems = makeItemList(future, (index) => jumpToFuture(index), "future");
 
     return (
       <div className="History">
@@ -62,67 +67,90 @@ const History: React.FC<Props> = ({
     callback: (index: number) => void,
     type: string
   ) => {
-    const items = stateList.map((value, index) => (
-      <li key={index} onClick={() => callback(index)}>
-        <button className="btn btn-sm btn-warning">
-          Region:{" "}
-          {value.viewRegion
-            ? value.viewRegion.currentRegionAsString()
-            : "(none)"}
-          , # of tracks: {value.tracks ? value.tracks.length : 0}
-        </button>
-      </li>
-    ));
+
+    const items = stateList.map((value, index) => {
+      const currentSessionKey = value.currentSession
+      let stateData = null
+      if (currentSessionKey && value.sessions.entities[`${currentSessionKey}`]) {
+        stateData = value.sessions.entities[`${currentSessionKey}`]
+      }
+
+      return (
+        <li key={index} onClick={() => callback(index)}>
+          <button className="btn btn-sm btn-warning w-full text-left">
+            Region:{" "}
+            {stateData && stateData.userViewRegion
+              ? stateData.userViewRegion
+              : stateData && stateData.viewRegion
+                ? stateData.viewRegion
+                : ("(None)")}
+            , # of tracks: {stateData && stateData.tracks ? stateData.tracks.length : 0}
+          </button>
+        </li>
+      )
+    });
     return <ol>{items}</ol>;
   };
   useEffect(() => {
     setCheckStateEmpty(false);
   }, [state]);
   return (
-    <>
+    <div className="relative">
       <button
         onClick={handleOpenModal}
         title="Operation history"
-        className="border border-gray-300 rounded-md p-2 mx-2"
-        style={{ width: "50px" }}
+        className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-2 mx-2 hover:bg-gray-50 transition-colors"
       >
-        <span role="img" aria-label="History">
-          📗
-        </span>
+        <ClockIcon className="w-4 h-4" />
+        <span className="text-base font-medium">History</span>
+        <motion.div
+          animate={{ rotate: showModal ? 90 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronRightIcon className="w-4 h-4" />
+        </motion.div>
       </button>
-      <ReactModal
-        isOpen={showModal}
-        contentLabel="History"
-        ariaHideApp={false}
-        onRequestClose={handleCloseModal}
-        shouldCloseOnOverlayClick={true}
-        style={MODAL_STYLE}
-      >
-        <div className="History">
-          <h5>Operation history</h5>
-          <button onClick={handleCloseModal} className="btn btn-sm btn-danger">
-            Close
-          </button>
-          <button onClick={() => handleClear()} className="btn btn-sm btn-info">
-            Clear History
-          </button>
-        </div>
-        <div>{renderHistory()}</div>
-      </ReactModal>
-    </>
-  );
-};
 
-const MODAL_STYLE = {
-  content: {
-    top: "40px",
-    left: "unset",
-    right: "50px",
-    bottom: "unset",
-    overflow: "visible",
-    padding: "5px",
-    color: "black",
-  },
+      <OutsideClickDetector
+        onOutsideClick={handleCloseModal}
+      >
+        <AnimatePresence>
+          {showModal && (
+            <motion.div
+              className="absolute top-full right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[400px]"
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h5 className="text-xl font-semibold text-gray-800">Operation history</h5>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleClear()}
+                      className="px-2 py-0.5 text-base border-2 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
+                    >
+                      Clear History
+                    </button>
+                    <button
+                      onClick={handleCloseModal}
+                      className="px-2 py-0.5 text-base border-2 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {renderHistory()}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </OutsideClickDetector>
+    </div>
+  );
 };
 
 export default History;

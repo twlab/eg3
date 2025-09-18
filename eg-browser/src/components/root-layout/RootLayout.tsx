@@ -98,7 +98,7 @@ export default function RootLayout(props: RootLayoutProps) {
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
 
-
+  console.log(sessionId)
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
@@ -199,7 +199,7 @@ export default function RootLayout(props: RootLayoutProps) {
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
               }}
             >
-              {sessionId !== null ? (
+              {sessionId ? (
                 <motion.div
                   className="flex flex-col w-screen pb-20"
                   key="genome-view"

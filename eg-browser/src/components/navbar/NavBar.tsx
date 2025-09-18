@@ -176,15 +176,7 @@ export default function NavBar() {
                 >
                   <ArrowUturnLeftIcon className="h-5 w-5" />
                 </IconButton>
-                {/* <History
-                  state={{
-                    past: currentState ? currentState.past : [],
-                    future: currentState ? currentState.future : [],
-                  }}
-                  jumpToPast={jumpToPast}
-                  jumpToFuture={jumpToFuture}
-                  clearHistory={clearHistory}
-                /> */}
+
                 <IconButton
                   onClick={redo}
                   disabled={!canRedo}
@@ -193,7 +185,16 @@ export default function NavBar() {
                 >
                   <ArrowUturnRightIcon className="h-5 w-5" />
                 </IconButton>
-
+                <History
+                  state={{
+                    past: currentState ? currentState.past : [],
+                    future: currentState ? currentState.future : [],
+                  }}
+                  jumpToPast={jumpToPast}
+                  jumpToFuture={jumpToFuture}
+                  clearHistory={clearHistory}
+                />
+                <div className="h-5 border-r border-gray-400" />
                 <Button
                   onClick={() =>
                     dispatch(

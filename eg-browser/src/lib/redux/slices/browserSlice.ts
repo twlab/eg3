@@ -199,8 +199,9 @@ export const {
   clearAllSessions,
 } = browserSlice.actions;
 
-export const selectCurrentSessionId = (state: RootState) =>
-  state.browser.present.currentSession;
+export const selectCurrentSessionId = (state: RootState) => {
+  return state.browser.present.currentSession;
+}
 
 const browserSessionSelectors = browserSessionAdapter.getSelectors(
   (state: RootState) => state.browser.present.sessions

@@ -236,6 +236,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
   const fetchInstances = useRef<{ [key: string]: any }>({});
   const isMouseInsideRef = useRef(false);
+  const stateSize = useRef(currentState.limit)
   const stateIdx = useRef(currentState.index);
   const globalTrackConfig = useRef<{ [key: string]: any }>({
     viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
@@ -3416,15 +3417,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [viewRegion]);
 
   useEffect(() => {
-    if (currentState && !initialLoad.current) {
+    // when we change states through history or redoundo, the currentState.limit is should be the same size
+    // if size is different then new state are being added when not changed directly by the user
+    if (currentState && !initialLoad.current && stateSize.current === currentState.limit) {
+      // this check current index of the state, should only change when its different from the prev index
+      if (currentState.index !== stateIdx.current) {
 
-
-      // for cases where we undo and then  redo back to the most recent state
-      if (currentState.index !== currentState.limit - 1) {
-        stateIdx.current = currentState.index;
-      }
-      if ((currentState.limit - 1 - stateIdx.current) > 0) {
-        stateIdx.current = currentState.index;
         genomeConfig.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
@@ -3435,6 +3433,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         initializeTracks();
       }
     }
+    stateSize.current = currentState.limit
+    stateIdx.current = currentState.index
   }, [currentState]);
 
   useEffect(() => {
