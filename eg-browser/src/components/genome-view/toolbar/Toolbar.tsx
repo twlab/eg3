@@ -10,13 +10,15 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon,
   ArrowsUpDownIcon,
-
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import SearchBar from "./SearchBar";
-import { Tool } from "wuepgg3-track";
-import HighlightMenu, { HighlightInterval } from "./HighlightMenu";
+import { GenomeSerializer, Tool } from "wuepgg3-track";
+import HighlightMenu from "./HighlightMenu";
+import useCurrentGenome from "../../../lib/hooks/useCurrentGenome";
+import ReorderMany from "./ReorderMany";
+import { selectCurrentSession } from "../../../lib/redux/slices/browserSlice";
 
 enum MagnifyingDirection {
   In,
@@ -33,7 +35,6 @@ interface ToolbarProps {
   gapSize?: number;
   fontSize?: number;
   viewRegion?: any;
-
 }
 const Toolbar: React.FC<ToolbarProps> = ({
   onNewRegionSelect,
@@ -44,6 +45,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
 }) => {
   const tool = useAppSelector(selectTool);
   const dispatch = useAppDispatch();
+  const currentSession = useAppSelector(selectCurrentSession);
+  const _genomeConfig = useCurrentGenome();
+  const genomeConfig = useMemo(() => {
+    return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
+  }, [_genomeConfig]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [hoveredMagnifyingDirection, setHoveredMagnifyingDirection] =
     useState<MagnifyingDirection | null>(null);
@@ -59,14 +65,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
-      }`;
+    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${
+      tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
+    }`;
   };
 
   const getButtonStyle = () => ({
     padding: `${buttonPadding}px`,
   });
-
 
   const handleToolClick = (selectedTool: Tool): any => {
     if (tool === selectedTool) {
@@ -75,7 +81,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       dispatch(setTool(selectedTool));
     }
   };
-
 
   return (
     <div className="flex flex-row ">
@@ -114,17 +119,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
           gapSize={gapSize}
         />
 
-
         <div className="h-5 border-r border-gray-400" />
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-          style={{ gap: gapSize }}
-          animate={{
-            opacity: isSearchFocused ? 0.5 : 1,
-            scale: isSearchFocused ? 0.95 : 1,
-          }}
-          transition={{ duration: 0.2 }}
+          // animate={{
+          //   opacity: isSearchFocused ? 0.5 : 1,
+          //   scale: isSearchFocused ? 0.95 : 1,
+          // }}
+          // transition={{ duration: 0.2 }}
         >
           <motion.div
             className="flex flex-row items-center"
@@ -215,14 +218,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 hoveredMagnifyingDirection === MagnifyingDirection.Out
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0
-                    : 1,
+                  ? 0
+                  : 1,
               scale:
                 hoveredMagnifyingDirection === MagnifyingDirection.Out
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0.95
-                    : 1,
+                  ? 0.95
+                  : 1,
             }}
             transition={{ duration: 0.2 }}
             onMouseEnter={() =>
@@ -233,9 +236,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               className={
                 getButtonClass() +
-                ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.Out
-                  ? "z-20"
-                  : ""
+                ` relative rounded-none ${
+                  hoveredMagnifyingDirection === MagnifyingDirection.Out
+                    ? "z-20"
+                    : ""
                 }`
               }
               style={getButtonStyle()}
@@ -296,14 +300,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 hoveredMagnifyingDirection === MagnifyingDirection.In
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0
-                    : 1,
+                  ? 0
+                  : 1,
               scale:
                 hoveredMagnifyingDirection === MagnifyingDirection.In
                   ? 1
                   : hoveredMagnifyingDirection !== null
-                    ? 0.95
-                    : 1,
+                  ? 0.95
+                  : 1,
             }}
             transition={{ duration: 0.2 }}
             onMouseEnter={() =>
@@ -314,9 +318,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <button
               className={
                 getButtonClass() +
-                ` relative rounded-none ${hoveredMagnifyingDirection === MagnifyingDirection.In
-                  ? "z-20"
-                  : ""
+                ` relative rounded-none ${
+                  hoveredMagnifyingDirection === MagnifyingDirection.In
+                    ? "z-20"
+                    : ""
                 }`
               }
               style={getButtonStyle()}
@@ -331,7 +336,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <AnimatePresence>
               {hoveredMagnifyingDirection === MagnifyingDirection.In && (
                 <motion.div
-                  className="absolute top-0 left-0 h-full border border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
+                  className="absolute top-0 left-0 h-full border
+                   border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: "300%", opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
@@ -416,7 +422,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <div className="relative">
               <button
                 className={getButtonClass(Tool.highlightMenu)}
-                style={getButtonStyle()}
+                style={{
+                  ...getButtonStyle(),
+                  display: "flex",
+                  alignItems: "center",
+                }}
                 onClick={() => handleToolClick(Tool.highlightMenu)}
                 title="Highlight list"
               >
@@ -425,15 +435,28 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   style={iconSizeStyle}
                 />
               </button>
-              {tool === Tool.highlightMenu ? <HighlightMenu
-
-                selectedTool={tool}
-                onNewRegion={onNewRegionSelect}
-                handleToolClick={handleToolClick}
-              /> : ""}
-
             </div>
           </motion.div>
+
+          {tool === Tool.highlightMenu ? (
+            <HighlightMenu
+              selectedTool={tool}
+              onNewRegion={onNewRegionSelect}
+              handleToolClick={handleToolClick}
+              genomeConfig={genomeConfig}
+              windowWidth={windowWidth ? windowWidth : 400}
+            />
+          ) : null}
+
+          {tool === Tool.ReorderMany ? (
+            <ReorderMany
+              tracks={currentSession ? currentSession.tracks : []}
+              handleToolClick={handleToolClick}
+              windowWidth={windowWidth ? windowWidth : 400}
+            />
+          ) : (
+            ""
+          )}
         </motion.div>
       </motion.div>
     </div>

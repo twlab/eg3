@@ -1,9 +1,12 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ColorPicker, DisplayedRegionModel } from "wuepgg3-track";
 import "./HighlightMenu.css";
-import { selectCurrentSession, updateCurrentSession } from "@/lib/redux/slices/browserSlice";
+import {
+  selectCurrentSession,
+  updateCurrentSession,
+} from "@/lib/redux/slices/browserSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { ColorPicker } from "wuepgg3-track";
 
 export class HighlightInterval {
   start: number;
@@ -27,17 +30,18 @@ export class HighlightInterval {
 }
 
 interface HighlightMenuProps {
-  viewRegion: DisplayedRegionModel;
+  genomeConfig: any;
   selectedTool: any;
-  onNewRegion: (start: number, end: number,) => void;
+  onNewRegion: (start: number, end: number) => void;
   handleToolClick: (tool: any) => void;
+  windowWidth: number;
 }
 
 const HighlightMenu: React.FC<HighlightMenuProps> = ({
-
-
   onNewRegion,
   handleToolClick,
+  genomeConfig,
+  windowWidth,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -53,11 +57,13 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
     if (doDelete) {
       const newIntervals = [
         ...currentSession.highlights.slice(0, index),
-        ...currentSession.highlights.slice(index + 1, currentSession.highlights.length),
+        ...currentSession.highlights.slice(
+          index + 1,
+          currentSession.highlights.length
+        ),
       ];
 
       dispatch(updateCurrentSession({ highlights: newIntervals }));
-
     } else {
       const newIntervals: any = [...currentSession.highlights];
       newIntervals.splice(index, 1, interval);
@@ -66,35 +72,39 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
     }
   };
 
-
-
-
   const handleViewRegionJump = (interval: HighlightInterval): void => {
     const { start, end } = interval;
     onNewRegion(start, end);
   };
 
   const handleCloseModal = () => {
-    handleToolClick(null)
+    handleToolClick(null);
   };
-  const highlightElements = currentSession?.highlights?.length ? (
-    currentSession.highlights.map((item: HighlightInterval, index: number) => (
-      <div key={index} style={{ margin: "1em" }}>
-        <HighlightItem
-          interval={item}
-          index={index}
-          onHandleHighlightIntervalUpdate={handleHighlightIntervalUpdate}
-          onHandleViewRegionJump={handleViewRegionJump}
 
-        />
-      </div>
-    ))
+  const highlightElements = currentSession?.highlights?.length ? (
+    <ol style={{ display: "flex", flexDirection: "column", gap: "0.2em" }}>
+      {currentSession.highlights.map(
+        (item: HighlightInterval, index: number) => (
+          <HighlightItem
+            key={index}
+            interval={item}
+            index={index}
+            onHandleHighlightIntervalUpdate={handleHighlightIntervalUpdate}
+            onHandleViewRegionJump={handleViewRegionJump}
+            genomeConfig={genomeConfig}
+          />
+        )
+      )}
+    </ol>
   ) : (
     <div
       style={{
         textAlign: "center",
-        marginTop: "clamp(60px, 8vw, 120px)",
         color: "#3c4043",
+        display: "flex", // Added flexbox for centering
+        flexDirection: "column", // Ensure vertical alignment
+        alignItems: "center", // Center horizontally
+        justifyContent: "center", // Center vertically
       }}
     >
       <img
@@ -123,21 +133,31 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   return (
     <div className="relative">
       <AnimatePresence>
-
         <motion.div
-          className="absolute top-full right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[600px] max-w-[800px]"
+          className="absolute top-full left-0 mt-4 bg-white border border-gray-300 rounded-lg shadow-lg z-50 overflow-y-auto"
+          style={{
+            left: `-${windowWidth / 2.5}px`,
+            // width: `${windowWidth / 2}px`,
+            maxHeight: "500px",
+            maxWidth: `${windowWidth}px`,
+          }} // Adjusted left alignment
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.2 }}
         >
           <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h5 className="text-xl font-semibold text-gray-800">Highlights</h5>
+            <div
+              className="flex items-center justify-between mb-3"
+              style={{ width: `${windowWidth / 2}px`, fontSize: "16px" }}
+            >
+              <h5 className="font-semibold text-gray-800">Highlights</h5>
               <div className="flex gap-2">
                 {(currentSession?.highlights?.length ?? 0) > 0 && (
                   <button
-                    onClick={() => dispatch(updateCurrentSession({ highlights: [] }))}
+                    onClick={() =>
+                      dispatch(updateCurrentSession({ highlights: [] }))
+                    }
                     className="px-3 py-1 text-sm border-2 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
                   >
                     Remove all
@@ -152,28 +172,9 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
               </div>
             </div>
 
-            <div className="max-h-80 overflow-y-auto">
-              {(currentSession?.highlights?.length ?? 0) > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {highlightElements}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <img
-                    src="/browser/img/favicon-144.png"
-                    alt="Browser Icon"
-                    className="h-20 w-auto mx-auto mb-4"
-                  />
-                  <h4 className="text-lg font-medium text-gray-700 mb-2">No highlights</h4>
-                  <p className="text-sm text-gray-600 max-w-md mx-auto">
-                    Select a region with the highlight tool and it will show up here.
-                  </p>
-                </div>
-              )}
-            </div>
+            <div>{highlightElements}</div>
           </div>
         </motion.div>
-
       </AnimatePresence>
     </div>
   );
@@ -189,7 +190,7 @@ interface HighlightItemProps {
   onHandleViewRegionJump: (interval: HighlightInterval) => void;
   index: number;
 
-  viewRegion: DisplayedRegionModel;
+  genomeConfig: any;
 }
 
 const HighlightItem: React.FC<HighlightItemProps> = ({
@@ -197,82 +198,46 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
   index,
   onHandleHighlightIntervalUpdate,
   onHandleViewRegionJump,
-  viewRegion,
+  genomeConfig,
 }) => {
-  // const navContext = viewRegion.getNavigationContext();
+  const navContext = genomeConfig.navContext;
 
   return (
-    <div
+    <li
       style={{
         border: `2px solid ${interval.color}`,
-        borderRadius: "clamp(8px, 1vw, 16px)",
+        borderRadius: "clamp(4px, 0.5vw, 8px)",
         padding: "clamp(0.5em, 1vw, 1.5em)",
         fontSize: "clamp(10px, 0.9vw, 14px)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        // gap: "clamp(4px, 0.5vw, 8px)",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <input
-          type="text"
-          value={interval.tag}
-          onChange={(e) => {
+      <span>
+        {navContext.getLociInInterval(interval.start, interval.end).toString()}
+      </span>
+      <div style={{ display: "flex", gap: "clamp(4px, 0.5vw, 8px)" }}>
+        <ColorPicker
+          color={interval.color}
+          disableAlpha={false}
+          onChange={(color: any) => {
+            const newColor = `rgba(${color.rgb.r}, ${color.rgb.g},
+              color.rgb.b
+            }, ${0.15})`;
             const newInterval = new HighlightInterval(
               interval.start,
               interval.end,
-              e.target.value,
-              interval.color
+              interval.tag,
+              newColor
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}
-          style={{
-            flex: 1,
-            marginRight: "clamp(0.5em, 1vw, 1.5em)",
-            fontSize: "clamp(10px, 0.8vw, 14px)",
-            padding: "clamp(2px, 0.3vw, 6px)",
-          }}
         />
-        <div className="highlight-item-buttons-group">
-          <ColorPicker
-            color={interval.color}
-            disableAlpha={false}
-            onChange={(color: any) => {
-              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b
-                }, ${0.15})`;
-              const newInterval = new HighlightInterval(
-                interval.start,
-                interval.end,
-                interval.tag,
-                newColor
-              );
-              onHandleHighlightIntervalUpdate(false, index, newInterval);
-            }}
-          />
-        </div>
-      </div>
-      <div>
-        <h5 style={{ fontSize: "clamp(12px, 1vw, 16px)" }}>
-          {interval.start}, {interval.end}
-        </h5>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: "clamp(0.5em, 1vw, 1.5em)",
-          gap: "clamp(4px, 0.5vw, 8px)",
-        }}
-      >
         <button
           onClick={() => onHandleHighlightIntervalUpdate(true, index)}
-          style={{
-            fontSize: "clamp(10px, 0.8vw, 14px)",
-            padding: "clamp(2px, 0.3vw, 6px)",
-          }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
         >
           Delete
         </button>
@@ -287,24 +252,18 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             );
             onHandleHighlightIntervalUpdate(false, index, newInterval);
           }}
-          style={{
-            fontSize: "clamp(10px, 0.8vw, 14px)",
-            padding: "clamp(2px, 0.3vw, 6px)",
-          }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
         >
           {interval.display ? "Hide" : "Show"}
         </button>
         <button
           onClick={() => onHandleViewRegionJump(interval)}
-          style={{
-            fontSize: "clamp(10px, 0.8vw, 14px)",
-            padding: "clamp(2px, 0.3vw, 6px)",
-          }}
+          style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
         >
           Jump
         </button>
       </div>
-    </div>
+    </li>
   );
 };
 

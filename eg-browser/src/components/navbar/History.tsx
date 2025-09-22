@@ -64,6 +64,7 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
     );
   };
 
+  // Updated History component to match the style of HighlightMenu
   const makeItemList = (
     stateList: any[],
     callback: (index: number) => void,
@@ -80,8 +81,22 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
       }
 
       return (
-        <li key={index} onClick={() => callback(index)}>
-          <button className="btn btn-sm btn-warning w-full text-left">
+        <li
+          key={index}
+          onClick={() => callback(index)}
+          style={{
+            border: "2px solid #ccc",
+            borderRadius: "clamp(8px, 1vw, 16px)",
+            padding: "clamp(0.5em, 1vw, 1.5em)",
+            fontSize: "clamp(10px, 0.9vw, 14px)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "clamp(4px, 0.5vw, 8px)",
+            marginBottom: "0.1em",
+          }}
+        >
+          <span>
             Region:{" "}
             {stateData && stateData.userViewRegion
               ? stateData.userViewRegion
@@ -90,11 +105,21 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
               : "(None)"}
             , # of tracks:{" "}
             {stateData && stateData.tracks ? stateData.tracks.length : 0}
+          </span>
+          <button
+            className="btn btn-sm btn-warning"
+            style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+          >
+            Jump
           </button>
         </li>
       );
     });
-    return <ol>{items}</ol>;
+    return (
+      <ol style={{ display: "flex", flexDirection: "column", gap: "0.1em" }}>
+        {items}
+      </ol>
+    );
   };
   useEffect(() => {
     setCheckStateEmpty(false);
