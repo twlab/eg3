@@ -47,6 +47,9 @@ interface SearchBarProps {
     highlightSearch?: boolean
   ) => void;
   windowWidth?: number;
+  fontSize?: number;
+  buttonPadding?: number;
+  gapSize?: number;
 }
 
 type CommandType = "gene" | "snp";

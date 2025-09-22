@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
-import ReactModal from "react-modal";
-import DisplayedRegionModel from "../../../models/DisplayedRegionModel";
-import ColorPicker from "../../../trackConfigs/config-menu-components.tsx/ColorPicker";
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ColorPicker, DisplayedRegionModel } from "wuepgg3-track";
 import "./HighlightMenu.css";
+import { selectCurrentSession, updateCurrentSession } from "@/lib/redux/slices/browserSlice";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 
 export class HighlightInterval {
   start: number;
@@ -26,63 +27,65 @@ export class HighlightInterval {
 }
 
 interface HighlightMenuProps {
-  highlights: HighlightInterval[];
   viewRegion: DisplayedRegionModel;
-  showHighlightMenuModal: boolean;
-  onNewRegion: (start: number, end: number, toolTitle: number | string) => void;
-  onSetHighlights: any;
   selectedTool: any;
+  onNewRegion: (start: number, end: number,) => void;
+  handleToolClick: (tool: any) => void;
 }
 
 const HighlightMenu: React.FC<HighlightMenuProps> = ({
-  highlights,
-  viewRegion,
-  showHighlightMenuModal,
+
+
   onNewRegion,
-  onSetHighlights,
-  selectedTool,
+  handleToolClick,
 }) => {
+  const dispatch = useAppDispatch();
+
+  const currentSession = useAppSelector(selectCurrentSession);
+
   const handleHighlightIntervalUpdate = (
     doDelete: boolean,
     index: number,
     interval?: HighlightInterval
   ): void => {
+    if (!currentSession) return;
+
     if (doDelete) {
       const newIntervals = [
-        ...highlights.slice(0, index),
-        ...highlights.slice(index + 1, highlights.length),
+        ...currentSession.highlights.slice(0, index),
+        ...currentSession.highlights.slice(index + 1, currentSession.highlights.length),
       ];
-      onSetHighlights(newIntervals);
+
+      dispatch(updateCurrentSession({ highlights: newIntervals }));
+
     } else {
-      const newIntervals: any = [...highlights];
+      const newIntervals: any = [...currentSession.highlights];
       newIntervals.splice(index, 1, interval);
 
-      onSetHighlights(newIntervals);
+      dispatch(updateCurrentSession({ highlights: newIntervals }));
     }
   };
-  const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    if (selectedTool.title === 12) {
-      setShowModal(true);
-    }
-  }, [selectedTool]);
+
+
+
   const handleViewRegionJump = (interval: HighlightInterval): void => {
     const { start, end } = interval;
-    onNewRegion(start, end, "isJump");
+    onNewRegion(start, end);
   };
+
   const handleCloseModal = () => {
-    setShowModal(false);
+    handleToolClick(null)
   };
-  const highlightElements = highlights.length ? (
-    highlights.map((item: HighlightInterval, index: number) => (
+  const highlightElements = currentSession?.highlights?.length ? (
+    currentSession.highlights.map((item: HighlightInterval, index: number) => (
       <div key={index} style={{ margin: "1em" }}>
         <HighlightItem
           interval={item}
           index={index}
           onHandleHighlightIntervalUpdate={handleHighlightIntervalUpdate}
           onHandleViewRegionJump={handleViewRegionJump}
-          viewRegion={viewRegion}
+
         />
       </div>
     ))
@@ -118,64 +121,61 @@ const HighlightMenu: React.FC<HighlightMenuProps> = ({
   );
 
   return (
-    <>
-      <ReactModal
-        isOpen={showModal}
-        onRequestClose={handleCloseModal}
-        contentLabel="HighlightMenu"
-        ariaHideApp={false}
-        shouldCloseOnOverlayClick={true}
-        style={{
-          overlay: { backgroundColor: "rgba(111,107,101,0.3)", zIndex: 4 },
-        }}
-      >
-        <div
-          className="HighlightMenu"
-          style={{ fontSize: "clamp(10px, 0.9vw, 16px)" }}
+    <div className="relative">
+      <AnimatePresence>
+
+        <motion.div
+          className="absolute top-full right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[600px] max-w-[800px]"
+          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
         >
-          <h5 style={{ margin: "clamp(10px, 1vw, 20px)" }}>Highlights</h5>
-          {highlights.length ? (
-            <div style={{ paddingBottom: "clamp(3px, 0.4vw, 8px)" }}>
-              <button
-                onClick={() => {}}
-                style={{
-                  fontSize: "clamp(10px, 0.8vw, 14px)",
-                  padding: "clamp(2px, 0.3vw, 6px)",
-                }}
-              >
-                Remove all
-              </button>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h5 className="text-xl font-semibold text-gray-800">Highlights</h5>
+              <div className="flex gap-2">
+                {(currentSession?.highlights?.length ?? 0) > 0 && (
+                  <button
+                    onClick={() => dispatch(updateCurrentSession({ highlights: [] }))}
+                    className="px-3 py-1 text-sm border-2 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
+                  >
+                    Remove all
+                  </button>
+                )}
+                <button
+                  onClick={handleCloseModal}
+                  className="px-3 py-1 text-sm border-2 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
-          ) : null}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
-            {highlightElements}
+
+            <div className="max-h-80 overflow-y-auto">
+              {(currentSession?.highlights?.length ?? 0) > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {highlightElements}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <img
+                    src="/browser/img/favicon-144.png"
+                    alt="Browser Icon"
+                    className="h-20 w-auto mx-auto mb-4"
+                  />
+                  <h4 className="text-lg font-medium text-gray-700 mb-2">No highlights</h4>
+                  <p className="text-sm text-gray-600 max-w-md mx-auto">
+                    Select a region with the highlight tool and it will show up here.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-          <span
-            className="text-right"
-            style={{
-              cursor: "pointer",
-              color: "red",
-              fontSize: "clamp(1.5em, 1.8vw, 2.5em)",
-              position: "absolute",
-              top: "clamp(-8px, -0.5vw, -3px)",
-              right: "clamp(10px, 1vw, 20px)",
-              zIndex: 2,
-            }}
-            onClick={() => {
-              handleCloseModal();
-            }}
-          >
-            ×
-          </span>
-        </div>
-      </ReactModal>
-    </>
+        </motion.div>
+
+      </AnimatePresence>
+    </div>
   );
 };
 
@@ -199,7 +199,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
   onHandleViewRegionJump,
   viewRegion,
 }) => {
-  const navContext = viewRegion.getNavigationContext();
+  // const navContext = viewRegion.getNavigationContext();
 
   return (
     <div
@@ -241,9 +241,8 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
             color={interval.color}
             disableAlpha={false}
             onChange={(color: any) => {
-              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${
-                color.rgb.b
-              }, ${0.15})`;
+              const newColor = `rgba(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b
+                }, ${0.15})`;
               const newInterval = new HighlightInterval(
                 interval.start,
                 interval.end,
@@ -257,9 +256,7 @@ const HighlightItem: React.FC<HighlightItemProps> = ({
       </div>
       <div>
         <h5 style={{ fontSize: "clamp(12px, 1vw, 16px)" }}>
-          {navContext
-            .getLociInInterval(interval.start, interval.end)
-            .toString()}
+          {interval.start}, {interval.end}
         </h5>
       </div>
       <div

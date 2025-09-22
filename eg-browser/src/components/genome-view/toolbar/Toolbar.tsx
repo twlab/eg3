@@ -16,6 +16,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchBar from "./SearchBar";
 import { Tool } from "wuepgg3-track";
+import HighlightMenu, { HighlightInterval } from "./HighlightMenu";
 
 enum MagnifyingDirection {
   In,
@@ -31,6 +32,8 @@ interface ToolbarProps {
   buttonPadding?: number;
   gapSize?: number;
   fontSize?: number;
+  viewRegion?: any;
+
 }
 const Toolbar: React.FC<ToolbarProps> = ({
   onNewRegionSelect,
@@ -72,6 +75,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       dispatch(setTool(selectedTool));
     }
   };
+
 
   return (
     <div className="flex flex-row ">
@@ -162,6 +166,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
               className={getButtonClass(Tool.Reorder)}
               style={getButtonStyle()}
               title="Re-order"
+            >
+              <ArrowsUpDownIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
+            </button>
+            <button
+              onClick={() => handleToolClick(Tool.ReorderMany)}
+              className={getButtonClass(Tool.ReorderMany)}
+              style={getButtonStyle()}
+              title="Re-order Many"
             >
               <ArrowsUpDownIcon
                 className="text-gray-600 dark:text-dark-primary"
@@ -379,7 +394,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </motion.div>
 
           <motion.div
-            className="flex flex-row items-center"
+            className="flex flex-row items-center relative"
             style={{ gap: gapSize }}
             animate={{
               opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
@@ -398,17 +413,26 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 style={iconSizeStyle}
               />
             </button>
-            <button
-              className={getButtonClass()}
-              style={getButtonStyle()}
-              onClick={() => handleToolClick(Tool.highlightMenu)}
-              title="Highlight list"
-            >
-              <LightBulbIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
-            </button>
+            <div className="relative">
+              <button
+                className={getButtonClass(Tool.highlightMenu)}
+                style={getButtonStyle()}
+                onClick={() => handleToolClick(Tool.highlightMenu)}
+                title="Highlight list"
+              >
+                <LightBulbIcon
+                  className="text-gray-600 dark:text-dark-primary"
+                  style={iconSizeStyle}
+                />
+              </button>
+              {tool === Tool.highlightMenu ? <HighlightMenu
+
+                selectedTool={tool}
+                onNewRegion={onNewRegionSelect}
+                handleToolClick={handleToolClick}
+              /> : ""}
+
+            </div>
           </motion.div>
         </motion.div>
       </motion.div>
