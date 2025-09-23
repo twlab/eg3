@@ -10,20 +10,16 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon,
   ArrowsUpDownIcon,
+  ArrowPathRoundedSquareIcon
 } from "@heroicons/react/24/outline";
-import { useMemo, useState } from "react";
-import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { useMemo, useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import SearchBar from "./SearchBar";
 import { GenomeSerializer, Tool } from "wuepgg3-track";
 import HighlightMenu from "./HighlightMenu";
 import useCurrentGenome from "../../../lib/hooks/useCurrentGenome";
 import ReorderMany from "./ReorderMany";
 import { selectCurrentSession } from "../../../lib/redux/slices/browserSlice";
-
-enum MagnifyingDirection {
-  In,
-  Out,
-}
 interface ToolbarProps {
   onNewRegionSelect: (
     start: number,
@@ -51,8 +47,40 @@ const Toolbar: React.FC<ToolbarProps> = ({
     return _genomeConfig ? GenomeSerializer.deserialize(_genomeConfig) : null;
   }, [_genomeConfig]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [hoveredMagnifyingDirection, setHoveredMagnifyingDirection] =
-    useState<MagnifyingDirection | null>(null);
+
+  // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey) {
+        switch (event.key.toLowerCase()) {
+          case 'h':
+          case 'd':
+            event.preventDefault();
+            handleToolClick(Tool.Drag);
+            break;
+          case 'r':
+          case 's':
+            event.preventDefault();
+            handleToolClick(Tool.Reorder);
+            break;
+          case 'm':
+            event.preventDefault();
+            handleToolClick(Tool.Zoom);
+            break;
+          case 'n':
+            event.preventDefault();
+            handleToolClick(Tool.Highlight);
+            break;
+        }
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        handleToolClick(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [tool, dispatch]);
 
   // Helper functions for responsive sizing
   const getIconSize = () => {
@@ -65,16 +93,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${
-      tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
-    }`;
+    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
+      }`;
   };
 
   const getButtonStyle = () => ({
     padding: `${buttonPadding}px`,
   });
 
-  const handleToolClick = (selectedTool: Tool): any => {
+  const handleToolClick = (selectedTool: Tool | null): any => {
     if (tool === selectedTool) {
       dispatch(setTool(null));
     } else {
@@ -123,26 +150,22 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-          // animate={{
-          //   opacity: isSearchFocused ? 0.5 : 1,
-          //   scale: isSearchFocused ? 0.95 : 1,
-          // }}
-          // transition={{ duration: 0.2 }}
+        // animate={{
+        //   opacity: isSearchFocused ? 0.5 : 1,
+        //   scale: isSearchFocused ? 0.95 : 1,
+        // }}
+        // transition={{ duration: 0.2 }}
         >
           <motion.div
             className="flex flex-row items-center"
             style={{ gap: gapSize }}
-            animate={{
-              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-            }}
-            transition={{ duration: 0.2 }}
           >
             <button
               onClick={() => handleToolClick(Tool.Drag)}
               className={getButtonClass(Tool.Drag)}
               style={getButtonStyle()}
-              title="Drag"
+              title="Drag tool
+(Alt+H or Alt+D)"
             >
               <HandRaisedIcon
                 className="text-gray-600 dark:text-dark-primary"
@@ -154,11 +177,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
               onClick={() => handleToolClick(Tool.Zoom)}
               className={getButtonClass(Tool.Zoom)}
               style={getButtonStyle()}
-              title="Zoom in Selected Area"
+              title="Zoom-in tool
+(Alt+M)"
             >
               <span
                 className="flex flex-row items-center justify-center text-gray-600 dark:text-dark-primary"
-                style={{ fontSize: fontSize }}
+                style={iconSizeStyle}
               >
                 <span>⬚</span>
                 <span>+</span>
@@ -168,7 +192,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
               onClick={() => handleToolClick(Tool.Reorder)}
               className={getButtonClass(Tool.Reorder)}
               style={getButtonStyle()}
-              title="Re-order"
+              title="Reorder tool
+(Alt+R or Alt+S)"
             >
               <ArrowsUpDownIcon
                 className="text-gray-600 dark:text-dark-primary"
@@ -181,24 +206,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
               style={getButtonStyle()}
               title="Re-order Many"
             >
-              <ArrowsUpDownIcon
+              <ArrowPathRoundedSquareIcon
                 className="text-gray-600 dark:text-dark-primary"
                 style={iconSizeStyle}
               />
             </button>
 
             <div className="h-full border-r border-gray-400" />
-          </motion.div>
 
-          <motion.div
-            className="flex flex-row items-center"
-            style={{ gap: gapSize }}
-            animate={{
-              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-            }}
-            transition={{ duration: 0.2 }}
-          >
             <button
               onClick={() => handleToolClick(Tool.PanLeft)}
               className={getButtonClass(Tool.PanLeft)}
@@ -210,182 +225,87 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 style={iconSizeStyle}
               />
             </button>
-          </motion.div>
-          <motion.div
-            className="relative"
-            animate={{
-              opacity:
-                hoveredMagnifyingDirection === MagnifyingDirection.Out
-                  ? 1
-                  : hoveredMagnifyingDirection !== null
-                  ? 0
-                  : 1,
-              scale:
-                hoveredMagnifyingDirection === MagnifyingDirection.Out
-                  ? 1
-                  : hoveredMagnifyingDirection !== null
-                  ? 0.95
-                  : 1,
-            }}
-            transition={{ duration: 0.2 }}
-            onMouseEnter={() =>
-              setHoveredMagnifyingDirection(MagnifyingDirection.Out)
-            }
-            onMouseLeave={() => setHoveredMagnifyingDirection(null)}
-          >
+
             <button
-              className={
-                getButtonClass() +
-                ` relative rounded-none ${
-                  hoveredMagnifyingDirection === MagnifyingDirection.Out
-                    ? "z-20"
-                    : ""
-                }`
-              }
+              onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
+              className={getButtonClass(Tool.ZoomOutFiveFold)}
               style={getButtonStyle()}
+              title="Zoom out 5x"
+            >
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                -5
+              </span>
+            </button>
+            <button
               onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
-              title="Zoom out"
-            >
-              <MagnifyingGlassMinusIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
-            </button>
-            <AnimatePresence>
-              {hoveredMagnifyingDirection === MagnifyingDirection.Out && (
-                <motion.div
-                  className="absolute top-0 left-0 h-full border border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "300%", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  style={{ translateX: "-100%" }}
-                >
-                  <button
-                    onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
-                    className={
-                      getButtonClass() +
-                      " text-gray-600 dark:text-dark-primary rounded-l-full pr-1 -mr-1 w-[33%] text-xs"
-                    }
-                  >
-                    -⅓
-                  </button>
-                  <button
-                    onClick={() => handleToolClick(Tool.ZoomOutOneFold)}
-                    className={
-                      getButtonClass() +
-                      " text-gray-600 dark:text-dark-primary rounded-l-full pr-1 -mr-1 w-[33%] text-xs"
-                    }
-                  >
-                    -1
-                  </button>
-                  <button
-                    onClick={() => handleToolClick(Tool.ZoomOutFiveFold)}
-                    className={
-                      getButtonClass() +
-                      " text-gray-600 dark:text-dark-primary rounded-r-full pl-1 -ml-1 w-[33%] text-xs"
-                    }
-                  >
-                    -5
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          <motion.div
-            className="relative"
-            animate={{
-              opacity:
-                hoveredMagnifyingDirection === MagnifyingDirection.In
-                  ? 1
-                  : hoveredMagnifyingDirection !== null
-                  ? 0
-                  : 1,
-              scale:
-                hoveredMagnifyingDirection === MagnifyingDirection.In
-                  ? 1
-                  : hoveredMagnifyingDirection !== null
-                  ? 0.95
-                  : 1,
-            }}
-            transition={{ duration: 0.2 }}
-            onMouseEnter={() =>
-              setHoveredMagnifyingDirection(MagnifyingDirection.In)
-            }
-            onMouseLeave={() => setHoveredMagnifyingDirection(null)}
-          >
-            <button
-              className={
-                getButtonClass() +
-                ` relative rounded-none ${
-                  hoveredMagnifyingDirection === MagnifyingDirection.In
-                    ? "z-20"
-                    : ""
-                }`
-              }
+              className={getButtonClass(Tool.ZoomOutOneFold)}
               style={getButtonStyle()}
-              onClick={() => handleToolClick(Tool.ZoomInOneFold)}
-              title="Zoom in"
+              title="Zoom out 1x"
             >
-              <MagnifyingGlassPlusIcon
-                className="text-gray-600 dark:text-dark-primary"
-                style={iconSizeStyle}
-              />
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                -1
+              </span>
             </button>
-            <AnimatePresence>
-              {hoveredMagnifyingDirection === MagnifyingDirection.In && (
-                <motion.div
-                  className="absolute top-0 left-0 h-full border
-                   border-gray-secondary rounded-full flex flex-row justify-between items-center z-10"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "300%", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  style={{ translateX: "30%" }}
-                >
-                  <button
-                    onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
-                    className={
-                      getButtonClass() +
-                      " text-gray-600 dark:text-dark-primary rounded-l-full pr-1 -mr-1 w-[33%] text-xs"
-                    }
-                  >
-                    +⅓
-                  </button>
-                  <button
-                    onClick={() => handleToolClick(Tool.ZoomInOneFold)}
-                    className={
-                      getButtonClass() +
-                      " text-gray-600 dark:text-dark-primary rounded-r-full pr-1 -mr-1 w-[33%] text-xs"
-                    }
-                  >
-                    +1
-                  </button>
-                  <button
-                    onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
-                    className={
-                      getButtonClass() +
-                      " text-gray-600 dark:text-dark-primary rounded-r-full pl-1 -ml-1 w-[33%] text-xs"
-                    }
-                  >
-                    +5
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
 
-          {/* Navigation and tools */}
-          <motion.div
-            className="flex flex-row items-center"
-            style={{ gap: gapSize }}
-            animate={{
-              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-            }}
-            transition={{ duration: 0.2 }}
-          >
+            <button
+              onClick={() => handleToolClick(Tool.ZoomOutOneThirdFold)}
+              className={getButtonClass(Tool.ZoomOutOneThirdFold)}
+              style={getButtonStyle()}
+              title="Zoom out ⅓"
+            >
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                -⅓
+              </span>
+            </button>
+            <button
+              onClick={() => handleToolClick(Tool.ZoomInOneThirdFold)}
+              className={getButtonClass(Tool.ZoomInOneThirdFold)}
+              style={getButtonStyle()}
+              title="Zoom in ⅓"
+            >
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                +⅓
+              </span>
+            </button>
+            <button
+              onClick={() => handleToolClick(Tool.ZoomInOneFold)}
+              className={getButtonClass(Tool.ZoomInOneFold)}
+              style={getButtonStyle()}
+              title="Zoom in 1x"
+            >
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                +1
+              </span>
+            </button>
+            <button
+              onClick={() => handleToolClick(Tool.ZoomInFiveFold)}
+              className={getButtonClass(Tool.ZoomInFiveFold)}
+              style={getButtonStyle()}
+              title="Zoom in 5x"
+            >
+              <span
+                className="text-gray-600 dark:text-dark-primary flex items-center justify-center"
+                style={{ ...iconSizeStyle, fontSize: `${fontSize}px` }}
+              >
+                +5
+              </span>
+            </button>
+
             <button
               onClick={() => handleToolClick(Tool.PanRight)}
               className={getButtonClass(Tool.PanRight)}
@@ -397,46 +317,38 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 style={iconSizeStyle}
               />
             </button>
-          </motion.div>
 
-          <motion.div
-            className="flex flex-row items-center relative"
-            style={{ gap: gapSize }}
-            animate={{
-              opacity: hoveredMagnifyingDirection !== null ? 0 : 1,
-              scale: hoveredMagnifyingDirection !== null ? 0.95 : 1,
-            }}
-            transition={{ duration: 0.2 }}
-          >
+
             <button
               onClick={() => handleToolClick(Tool.Highlight)}
               className={getButtonClass(Tool.Highlight)}
               style={getButtonStyle()}
-              title="Highlight"
+              title="Highlight tool
+(Alt+N)"
             >
               <BoltIcon
                 className="text-gray-600 dark:text-dark-primary"
                 style={iconSizeStyle}
               />
             </button>
-            <div className="relative">
-              <button
-                className={getButtonClass(Tool.highlightMenu)}
-                style={{
-                  ...getButtonStyle(),
-                  display: "flex",
-                  alignItems: "center",
-                }}
-                onClick={() => handleToolClick(Tool.highlightMenu)}
-                title="Highlight list"
-              >
-                <LightBulbIcon
-                  className="text-gray-600 dark:text-dark-primary"
-                  style={iconSizeStyle}
-                />
-              </button>
-            </div>
+
+            <button
+              className={getButtonClass(Tool.highlightMenu)}
+              style={{
+                ...getButtonStyle(),
+                display: "flex",
+                alignItems: "center",
+              }}
+              onClick={() => handleToolClick(Tool.highlightMenu)}
+              title="Highlight list"
+            >
+              <LightBulbIcon
+                className="text-gray-600 dark:text-dark-primary"
+                style={iconSizeStyle}
+              />
+            </button>
           </motion.div>
+
 
           {tool === Tool.highlightMenu ? (
             <HighlightMenu

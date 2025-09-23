@@ -114,19 +114,19 @@ export default function ImportSession() {
         onFileChange={handleFileChange}
         dragMessage="Drag and drop a session file here"
       />
-      <h1 className="text-xl">Import by Bundle ID</h1>
+      <h1 className="text-xl">Import by Session Bundle ID</h1>
       <div className="flex flex-row gap-2 w-full">
         <input
           type="text"
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter bundle ID"
+          placeholder="Enter Session bundle Id"
           value={bundleId}
           onChange={(e) => setBundleId(e.target.value)}
         />
         <Button
           onClick={async () => {
             if (!bundleId.trim()) {
-              setError("Please enter a bundle ID");
+              setError("Please enter a Session Bundle ID");
               return;
             }
             setError(null);
@@ -136,7 +136,7 @@ export default function ImportSession() {
               navigation.pop();
             } catch (e) {
               setError(
-                "Failed to import session bundle. Please check the bundle ID."
+                "Failed to import session bundle. Please check the Session Bundle ID."
               );
             } finally {
               setIsLoading(false);

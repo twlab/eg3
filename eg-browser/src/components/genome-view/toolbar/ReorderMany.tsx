@@ -210,7 +210,7 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
         <motion.div
           className="absolute top-full left-0 mt-4 bg-white border border-gray-300 rounded-lg shadow-lg z-50 overflow-y-auto"
           style={{
-            left: `-${windowWidth / 2.5}px`,
+            left: `-${windowWidth / 3.2}px`,
             // width: `${windowWidth / 2}px`,
             maxHeight: "500px",
             maxWidth: `${windowWidth}px`,

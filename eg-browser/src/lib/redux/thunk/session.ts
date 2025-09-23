@@ -3,6 +3,8 @@ import {
   ITrackModel,
   restoreLegacyViewRegion,
   DisplayedRegionModel,
+  GenomeSerializer,
+  getGenomeConfig,
 } from "wuepgg3-track";
 import { setCurrentSession, upsertSession } from "../slices/browserSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
@@ -10,6 +12,8 @@ import { BrowserSession } from "../slices/browserSlice";
 import { onRetrieveSession } from "@/components/root-layout/tabs/apps/destinations/SessionUI";
 import { updateBundle } from "../slices/hubSlice";
 import { generateUUID } from "wuepgg3-track";
+import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
+import { addCustomGenomeRemote } from "./genome-hub";
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",
   async (
@@ -23,12 +27,36 @@ export const importOneSession = createAsyncThunk(
     thunkApi
   ) => {
     if (session.genomeName) {
-      let parsedViewRegion = restoreLegacyViewRegion(
-        session,
-        null
-      ) as DisplayedRegionModel | null;
+      let newGenomeConfig: GenomeConfig | null = null;
+      let coordinate: GenomeCoordinate | null = null;
 
-      if (!parsedViewRegion) {
+      if (session.chromosomes && session.chromosomes.length > 0) {
+        const _newGenomeConfig = {
+          id: session.genomeId,
+          name: session.genomeId,
+          chromosomes: session.chromosomes,
+          defaultTracks: session.tracks.map((item: any) => ({
+            ...item,
+            waitToUpdate: true,
+          })),
+        };
+
+        addCustomGenomeRemote(_newGenomeConfig);
+        newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
+      } else if (getGenomeConfig(session.genomeId)) {
+        newGenomeConfig = getGenomeConfig(session.genomeId);
+      }
+
+      if (newGenomeConfig && session.viewRegion !== undefined) {
+        coordinate = session.viewRegion;
+      } else if (newGenomeConfig && session.viewInterval) {
+        coordinate = new DisplayedRegionModel(
+          newGenomeConfig?.navContext,
+          session.viewInterval.start,
+          session.viewInterval.end
+        ).currentRegionAsString() as GenomeCoordinate | null;
+      }
+      if (!newGenomeConfig) {
         throw new Error(
           "Invalid session file format, could not parse view region"
         );
@@ -46,22 +74,19 @@ export const importOneSession = createAsyncThunk(
       session = {
         id: generateUUID(),
         genomeId: session.genomeName,
+        customGenome: session.customGenome,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "",
-        viewRegion:
-          parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
-        userViewRegion: session.viewInterval
-          ? {
-            start: parsedViewRegion._startBase,
-            end: parsedViewRegion._endBase,
-          }
-          : null,
+        viewRegion: coordinate,
+        userViewRegion: coordinate,
         tracks: mappedTracks,
         highlights: session.highlights ?? [],
         metadataTerms: session.metadataTerms ?? [],
         bundleId: session.bundleId ? session.bundleId : null,
         regionSets: [],
+        selectedRegionSet: session.regionSetView ?? null,
+        overrideViewRegion: null
       } satisfies BrowserSession;
     }
 
@@ -88,7 +113,7 @@ export const addSessionsFromBundleId = createAsyncThunk(
   async (sessionId: string, thunkApi) => {
     const response = await fetch(
       `https://eg-session.firebaseio.com/sessions/${sessionId}.json`
-    ).then((r) => r.json() as Promise<ISessionBundle>);
+    ).then((r) => r.json() as Promise<Isession>);
 
     const sessions = Object.values(response.sessionsInBundle).map(
       (session) => session.state
@@ -119,7 +144,7 @@ export const fetchBundle = createAsyncThunk(
     }
   }
 );
-interface ISessionBundle {
+interface Isession {
   bundleId: string;
   currentId: string;
   sessionsInBundle: {
