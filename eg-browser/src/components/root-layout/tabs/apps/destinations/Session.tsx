@@ -23,10 +23,12 @@ import {
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
+import { selectTool } from "@/lib/redux/slices/utilitySlice";
 
 const Session: React.FC = () => {
   useExpandedNavigationTab();
   const dispatch = useAppDispatch();
+  const tool = useAppSelector(selectTool);
   const customTracksPool = useAppSelector(selectCustomTracksPool);
   const currentSession = useAppSelector(selectCurrentSession);
   const bundle = useAppSelector(selectBundle);
