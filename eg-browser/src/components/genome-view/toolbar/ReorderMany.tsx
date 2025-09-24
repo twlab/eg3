@@ -153,7 +153,9 @@ const Grid: React.FC<GridProps> = ({ items, colNum }) => {
     <div style={gridStyles}>
       {items.map((track, index) => (
         <SortableItem
-          key={`item-${index}`}
+          key={
+            track.id || `track-${track.type}-${track.options?.label || index}`
+          }
           id={`item-${index}`}
           track={track}
           index={index}
@@ -170,7 +172,7 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [items, setItems] = useState<ITrackModel[]>([]);
-  const [columnCount, setColumnCount] = useState<number>(4);
+  const [columnCount, setColumnCount] = useState<number>(1);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {

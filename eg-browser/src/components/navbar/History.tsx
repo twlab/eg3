@@ -85,9 +85,9 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
           key={index}
           onClick={() => callback(index)}
           style={{
-            border: "2px solid #ccc",
-            borderRadius: "clamp(8px, 1vw, 16px)",
-            padding: "clamp(0.5em, 1vw, 1.5em)",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            padding: "clamp(0.4em, 0.5vw, 0.4em)",
             fontSize: "clamp(10px, 0.9vw, 14px)",
             display: "flex",
             justifyContent: "space-between",
@@ -107,10 +107,26 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
             {stateData && stateData.tracks ? stateData.tracks.length : 0}
           </span>
           <button
-            className="btn btn-sm btn-warning"
-            style={{ fontSize: "clamp(10px, 0.8vw, 14px)" }}
+            style={{
+              fontSize: "clamp(10px, 0.8vw, 14px)",
+              marginRight: "4px",
+              fontStyle: "italic",
+              textDecoration: "underline",
+              padding: "2px 6px",
+              border: "1px solid transparent",
+              borderRadius: "3px",
+              transition: "background-color 0.2s, border-color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#f3f4f6";
+              e.currentTarget.style.borderColor = "#d1d5db";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
           >
-            Jump
+            Select
           </button>
         </li>
       );

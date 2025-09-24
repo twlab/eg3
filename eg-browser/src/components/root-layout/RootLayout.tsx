@@ -86,8 +86,6 @@ export interface RootLayoutProps {
 export default function RootLayout(props: RootLayoutProps) {
   useBrowserInitialization();
 
-
-
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
   const currentSession = useAppSelector(selectCurrentSession);
@@ -109,7 +107,7 @@ export default function RootLayout(props: RootLayoutProps) {
   // Keyboard handler for Escape key
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         if (showModal || expandNavigationTab || showRightTab) {
           // Close expanded navigation, modal, or right tab
           dispatch(setNavigationTab(null));
@@ -117,8 +115,8 @@ export default function RootLayout(props: RootLayoutProps) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showModal, expandNavigationTab, showRightTab, dispatch]);
 
   // Get tool name for indicator
@@ -162,64 +160,47 @@ export default function RootLayout(props: RootLayoutProps) {
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
     >
-      {/* Layout State Indicator - always visible when tabs are open */}
-      {(showRightTab || showModal || expandNavigationTab) && (
+      {/* Layout State Indicator - tab-like indicator at top center */}
+      {showRightTab || showModal || expandNavigationTab ? (
         <div
-          className={`fixed z-40 flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-1 text-xs text-center transition-all duration-200 ${(!cookieConsentStatus || cookieConsentStatus === 'pending')
-            ? tool ? 'bottom-32' : 'bottom-20' // Above tool indicator and GoogleAnalytics
-            : tool ? 'bottom-12' : 'bottom-0'  // Above tool indicator or at bottom
-            }`}
+          className="fixed z-40 flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-2 text-xs text-center transition-all duration-200 top-0 left-1/2 transform -translate-x-1/2 rounded-b-lg shadow-lg"
           style={{
-            left: isSmallScreen
-              ? '0'
-              : showRightTab && expandNavigationTab
-                ? '0'
-                : '0',
-            right: isSmallScreen
-              ? '0'
-              : showRightTab && !expandNavigationTab
-                ? '35vw'
-                : showRightTab && expandNavigationTab
-                  ? '75vw'
-                  : '0',
+            width: "33.33%",
+            minWidth: "200px",
+            maxWidth: "400px",
           }}
         >
           {showModal && <span>📱 Mobile View</span>}
           {expandNavigationTab && !showModal && <span>📏 Expanded View</span>}
-          {showRightTab && !expandNavigationTab && !showModal && <span>📋 Right Tab Open</span>}
+          {showRightTab && !expandNavigationTab && !showModal && (
+            <span>📋 Right Tab Open</span>
+          )}
           <span>(Press Esc to close)</span>
         </div>
+      ) : (
+        ""
       )}
 
-      {/* Tool Indicator Tab - positioned dynamically with responsive width */}
-      {tool && (
+      {/* Tool Indicator Tab - tab-like indicator at top center */}
+      {tool && getToolName(tool) && getToolName(tool) !== "Drag Tool" ? (
         <div
-          className={`fixed z-50 flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 text-center transition-all duration-200 ${(!cookieConsentStatus || cookieConsentStatus === 'pending')
-            ? 'bottom-20' // Above GoogleAnalytics banner when it's visible
-            : 'bottom-0'  // At the very bottom when banner is dismissed
-            }`}
+          className="fixed z-40 flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 text-center transition-all duration-200 top-0 left-1/2 transform -translate-x-1/2 rounded-b-lg shadow-lg"
           style={{
-            // Responsive positioning and width based on layout state
-            left: isSmallScreen
-              ? '0'
-              : showRightTab && expandNavigationTab
-                ? '0'    // When expanded, tool indicator stays on left side
-                : '0',   // Default to left edge
-            right: isSmallScreen
-              ? '0'
-              : showRightTab && !expandNavigationTab
-                ? '35vw'  // Account for right tab taking 35vw
-                : showRightTab && expandNavigationTab
-                  ? '75vw'  // Account for expanded tab taking 75vw
-                  : '0',
-            fontSize: isSmallScreen ? '12px' : '14px',
+            width: "33.33%",
+            minWidth: "250px",
+            maxWidth: "450px",
+            fontSize: isSmallScreen ? "12px" : "14px",
           }}
         >
           <span className="font-medium">🔧</span>
           {!isSmallScreen && <span className="font-medium">Current Tool:</span>}
           <span className="font-bold">{getToolName(tool)}</span>
-          {!isSmallScreen && <span className="text-blue-200">(Press Esc to deselect)</span>}
+          {!isSmallScreen && (
+            <span className="text-blue-200">(Press Esc to deselect)</span>
+          )}
         </div>
+      ) : (
+        ""
       )}
 
       {/* {import.meta.env.VITE_PACKAGE === "false" ?  */}
