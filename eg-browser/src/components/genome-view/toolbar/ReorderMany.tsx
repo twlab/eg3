@@ -236,13 +236,13 @@ const ReorderMany: React.FC<ReorderManyProps> = ({
                   onClick={() =>
                     dispatch(updateCurrentSession({ tracks: items }))
                   }
-                  className="px-3 py-1 text-sm border-2 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
+                  className="px-3 py-1 text-sm border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
                 >
                   Apply
                 </button>
                 <button
                   onClick={handleCloseModal}
-                  className="px-3 py-1 text-sm border-2 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
+                  className="px-3 py-1 text-sm border-1 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
                 >
                   Close
                 </button>

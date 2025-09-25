@@ -1,7 +1,6 @@
 import {
   GenomeCoordinate,
   ITrackModel,
-  restoreLegacyViewRegion,
   DisplayedRegionModel,
   GenomeSerializer,
   getGenomeConfig,
@@ -14,6 +13,86 @@ import { updateBundle } from "../slices/hubSlice";
 import { generateUUID } from "wuepgg3-track";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import { addCustomGenomeRemote } from "./genome-hub";
+import useGenome from "../../hooks/useGenome";
+
+export function convertSession(session: any) {
+  let newGenomeConfig: GenomeConfig | null = null;
+  let coordinate: GenomeCoordinate | null = null;
+  const curGenomeName = session["genomeName"]
+    ? session["genomeName"]
+    : session["genomeId"]
+    ? session["genomeId"]
+    : session["name"]
+    ? session["name"]
+    : session["id"]
+    ? session["id"]
+    : null;
+  const tracks = session.tracks
+    ? session.tracks
+    : session.defaultTracks
+    ? session.defaultTracks
+    : [];
+  if (session.chromosomes && session.chromosomes.length > 0) {
+    const _newGenomeConfig = {
+      id: curGenomeName,
+      name: curGenomeName,
+      chromosomes: session.chromosomes,
+      defaultTracks: tracks.map((item: any) => ({
+        ...item,
+        waitToUpdate: true,
+      })),
+    };
+
+    addCustomGenomeRemote(_newGenomeConfig);
+    newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
+  } else if (getGenomeConfig(curGenomeName)) {
+    newGenomeConfig = getGenomeConfig(curGenomeName);
+  }
+
+  if (newGenomeConfig && session.viewRegion !== undefined) {
+    coordinate = session.viewRegion;
+  } else if (newGenomeConfig && session.viewInterval) {
+    coordinate = new DisplayedRegionModel(
+      newGenomeConfig?.navContext,
+      session.viewInterval.start,
+      session.viewInterval.end
+    ).currentRegionAsString() as GenomeCoordinate | null;
+  } else if (newGenomeConfig && session.defaultRegion) {
+    coordinate = session.defaultRegion;
+  }
+  if (!newGenomeConfig) {
+    throw new Error("Invalid session file format, could not parse view region");
+  }
+
+  const mappedTracks = tracks.map((track: any) => {
+    return {
+      ...track,
+      id: generateUUID(),
+      genome: curGenomeName,
+      isSelected: false,
+    } satisfies ITrackModel;
+  });
+
+  session = {
+    id: generateUUID(),
+    genomeId: curGenomeName,
+    customGenome: session.customGenome,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    title: "",
+    viewRegion: coordinate,
+    userViewRegion: coordinate,
+    tracks: mappedTracks,
+    highlights: session.highlights ?? [],
+    metadataTerms: session.metadataTerms ?? [],
+    bundleId: session.bundleId ? session.bundleId : null,
+    regionSets: [],
+    selectedRegionSet: session.regionSetView ?? null,
+    overrideViewRegion: null,
+  } satisfies BrowserSession;
+  return session;
+}
+
 export const importOneSession = createAsyncThunk(
   "session/importOneSession",
   async (
@@ -26,71 +105,9 @@ export const importOneSession = createAsyncThunk(
     },
     thunkApi
   ) => {
-    if (session.genomeName) {
-      let newGenomeConfig: GenomeConfig | null = null;
-      let coordinate: GenomeCoordinate | null = null;
+    session = convertSession(session);
 
-      if (session.chromosomes && session.chromosomes.length > 0) {
-        const _newGenomeConfig = {
-          id: session.genomeId,
-          name: session.genomeId,
-          chromosomes: session.chromosomes,
-          defaultTracks: session.tracks.map((item: any) => ({
-            ...item,
-            waitToUpdate: true,
-          })),
-        };
-
-        addCustomGenomeRemote(_newGenomeConfig);
-        newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
-      } else if (getGenomeConfig(session.genomeId)) {
-        newGenomeConfig = getGenomeConfig(session.genomeId);
-      }
-
-      if (newGenomeConfig && session.viewRegion !== undefined) {
-        coordinate = session.viewRegion;
-      } else if (newGenomeConfig && session.viewInterval) {
-        coordinate = new DisplayedRegionModel(
-          newGenomeConfig?.navContext,
-          session.viewInterval.start,
-          session.viewInterval.end
-        ).currentRegionAsString() as GenomeCoordinate | null;
-      }
-      if (!newGenomeConfig) {
-        throw new Error(
-          "Invalid session file format, could not parse view region"
-        );
-      }
-
-      const mappedTracks = session.tracks.map((track: any) => {
-        return {
-          ...track,
-          id: generateUUID(),
-          genome: session.genomeName,
-          isSelected: false,
-        } satisfies ITrackModel;
-      });
-
-      session = {
-        id: generateUUID(),
-        genomeId: session.genomeName,
-        customGenome: session.customGenome,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        title: "",
-        viewRegion: coordinate,
-        userViewRegion: coordinate,
-        tracks: mappedTracks,
-        highlights: session.highlights ?? [],
-        metadataTerms: session.metadataTerms ?? [],
-        bundleId: session.bundleId ? session.bundleId : null,
-        regionSets: [],
-        selectedRegionSet: session.regionSetView ?? null,
-        overrideViewRegion: null
-      } satisfies BrowserSession;
-    }
-
-    if (!session.id || !session.genomeId || !session.viewRegion) {
+    if (!session.id || !curGenomeName || !session.viewRegion) {
       console.error("Invalid session file format", session);
       throw new Error("Invalid session file format");
     }

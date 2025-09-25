@@ -175,13 +175,13 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleClear()}
-                      className="px-2 py-0.5 text-base border-2 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
+                      className="px-2 py-0.5 text-base border-1 border-blue-500 text-blue-500 bg-transparent rounded hover:bg-blue-50 transition-colors"
                     >
                       Clear History
                     </button>
                     <button
                       onClick={handleCloseModal}
-                      className="px-2 py-0.5 text-base border-2 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
+                      className="px-2 py-0.5 text-base border-1 border-red-500 text-red-500 bg-transparent rounded hover:bg-red-50 transition-colors"
                     >
                       Close
                     </button>

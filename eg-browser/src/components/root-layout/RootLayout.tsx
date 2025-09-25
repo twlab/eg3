@@ -258,13 +258,17 @@ export default function RootLayout(props: RootLayoutProps) {
                   <div className="flex flex-col h-full">
                     {/* Tab Header with close button */}
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-                      <h2 className="text-lg font-semibold text-gray-800 dark:text-white capitalize">
+                      <h2 className="text-2xl  text-gray-800 dark:text-white capitalize">
                         {navigationTab}
                       </h2>
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                           Press Esc to close
                         </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          ||
+                        </span>
+
                         <button
                           onClick={() => dispatch(setNavigationTab(null))}
                           className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -279,7 +283,7 @@ export default function RootLayout(props: RootLayoutProps) {
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              strokeWidth={2}
+                              strokeWidth={1.5}
                               d="M6 18L18 6M6 6l12 12"
                             />
                           </svg>
@@ -312,7 +316,7 @@ export default function RootLayout(props: RootLayoutProps) {
           exit={{ y: "100%" }}
         >
           <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white capitalize">
+            <h2 className="text-lg text-gray-800 dark:text-white capitalize">
               {navigationTab}
             </h2>
             <div className="flex items-center gap-3">

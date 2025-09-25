@@ -32,6 +32,7 @@ export interface BrowserSession {
   selectedRegionSet: RegionSet | null;
   overrideViewRegion: GenomeCoordinate | null;
   customGenome?: boolean | null;
+  chromosomes?: Array<{ name: string; length: number }> | null;
 }
 
 // MARK: - State
@@ -80,6 +81,8 @@ export const browserSlice = createSlice({
         title: "Untitled Session",
         bundleId: null,
         customGenome: genome.customGenome ? genome.customGenome : null,
+        chromosomes:
+          genome.customGenome && genome.chromosomes ? genome.chromosomes : null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
@@ -121,8 +124,12 @@ export const browserSlice = createSlice({
           });
         }
         const currentSession = state.sessions.entities[state.currentSession];
-        if (changes["viewRegion"] && currentSession && changes["viewRegion"] === currentSession.viewRegion) {
-          changes["viewRegion"] = null
+        if (
+          changes["viewRegion"] &&
+          currentSession &&
+          changes["viewRegion"] === currentSession.viewRegion
+        ) {
+          changes["viewRegion"] = null;
         }
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
@@ -201,7 +208,7 @@ export const {
 
 export const selectCurrentSessionId = (state: RootState) => {
   return state.browser.present.currentSession;
-}
+};
 
 const browserSessionSelectors = browserSessionAdapter.getSelectors(
   (state: RootState) => state.browser.present.sessions
@@ -210,9 +217,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-      state,
-      state.browser.present.currentSession
-    )
+        state,
+        state.browser.present.currentSession
+      )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

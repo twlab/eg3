@@ -5,13 +5,11 @@ import { BrowserSession, upsertSession } from "@/lib/redux/slices/browserSlice";
 import Button from "../ui/button/Button";
 import FileInput from "../ui/input/FileInput";
 import { useNavigation } from "../core-navigation/NavigationStack";
+
 import {
-  GenomeCoordinate,
-  ITrackModel,
-  restoreLegacyViewRegion,
-  DisplayedRegionModel,
-} from "wuepgg3-track";
-import { addSessionsFromBundleId } from "@/lib/redux/thunk/session";
+  addSessionsFromBundleId,
+  convertSession,
+} from "@/lib/redux/thunk/session";
 import { generateUUID } from "wuepgg3-track";
 export default function ImportSession() {
   const dispatch = useAppDispatch();
@@ -30,49 +28,7 @@ export default function ImportSession() {
     try {
       const content = await file.text();
       let session = JSON.parse(content);
-
-      if (session.genomeName) {
-        let parsedViewRegion = restoreLegacyViewRegion(
-          session,
-          null
-        ) as DisplayedRegionModel | null;
-
-        if (!parsedViewRegion) {
-          throw new Error(
-            "Invalid session file format, could not parse view region"
-          );
-        }
-
-        const mappedTracks = session.tracks.map((track: any) => {
-          return {
-            ...track,
-            id: generateUUID(),
-            genome: session.genomeName,
-            isSelected: false,
-          } satisfies ITrackModel;
-        });
-
-        session = {
-          id: generateUUID(),
-          genomeId: session.genomeName,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          title: "",
-          viewRegion:
-            parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
-          userViewRegion: session.viewInterval
-            ? parsedViewRegion.currentRegionAsString() as GenomeCoordinate
-            : null,
-          tracks: mappedTracks,
-          highlights: session.highlights ? session.highlights : [],
-          bundleId: session.bundleId ? session.bundleId : null,
-          metadataTerms: session.metadataTerms,
-
-          regionSets: [],
-        } satisfies BrowserSession;
-
-        console.log("Parsed session", session);
-      }
+      session = convertSession(session);
 
       if (!session.id || !session.genomeId || !session.viewRegion) {
         console.error("Invalid session file format", session);
@@ -94,26 +50,6 @@ export default function ImportSession() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <h1 className="text-xl">Import by File</h1>
-      <div className="flex flex-row gap-2 w-full justify-start items-center">
-        <Button
-          leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
-          onClick={() => {
-            const link = document.createElement("a");
-            link.href = import.meta.env.BASE_URL + "/example_session.json";
-            link.download = "example_session.json";
-            link.click();
-          }}
-          outlined
-        >
-          Download Example
-        </Button>
-      </div>
-      <FileInput
-        accept=".json"
-        onFileChange={handleFileChange}
-        dragMessage="Drag and drop a session file here"
-      />
       <h1 className="text-xl">Import by Session Bundle ID</h1>
       <div className="flex flex-row gap-2 w-full">
         <input
@@ -147,6 +83,27 @@ export default function ImportSession() {
           {isLoading ? "Importing..." : "Import"}
         </Button>
       </div>
+      <h1 className="text-xl">Import by File</h1>
+      <div className="flex flex-row gap-2 w-full justify-start items-center">
+        <Button
+          leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
+          onClick={() => {
+            const link = document.createElement("a");
+            link.href = import.meta.env.BASE_URL + "/example_session.json";
+            link.download = "example_session.json";
+            link.click();
+          }}
+          outlined
+        >
+          Download Example
+        </Button>
+      </div>
+      <FileInput
+        accept=".json"
+        onFileChange={handleFileChange}
+        dragMessage="Drag and drop a session file here"
+      />
+
       {error && <div className="text-red-500 text-sm">{error}</div>}
     </div>
   );

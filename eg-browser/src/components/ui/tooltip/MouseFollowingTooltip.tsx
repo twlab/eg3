@@ -87,7 +87,7 @@ const MouseFollowingTooltip: React.FC = () => {
         <motion.div
           className="fixed z-[9999] pointer-events-none select-none"
           style={{
-            left: mousePosition.x + 15,
+            left: mousePosition.x + 16,
             top: mousePosition.y - 10,
           }}
           initial={{ opacity: 0 }}
