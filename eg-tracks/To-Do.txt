@@ -99,3 +99,15 @@ hen scroll back if its fetching the new tracks only that are added
 17. take out local tracks when refreshing
 18. create reorder many tab 
 19. change zoom icon to original 
+
+
+9/25/2025
+1. rework tracks component to not create a new react component drawing new regionselect and instead just 
+    change and redraw based on new data
+2. fix genes search, probably need to rework servers
+3. fix url param for datahub
+4. check sessions in genome picker menu, (finish import) (check: upload for new data format and old session format
+, url params, etc)
+5. legend width setting
+6. check errors 
+7. NEW FEATURE: IMPLEMENT SEPARATE COLUMNS, where user can compare tracks etc. NEED NEW package not flexlayout
