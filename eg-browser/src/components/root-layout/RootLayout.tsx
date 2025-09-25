@@ -120,42 +120,6 @@ export default function RootLayout(props: RootLayoutProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showModal, expandNavigationTab, showRightTab, dispatch]);
 
-  // Get tool name for indicator
-  const getToolName = (tool: Tool | null): string | null => {
-    switch (tool) {
-      case Tool.Drag:
-        return "Drag Tool";
-      case Tool.Zoom:
-        return "Zoom Tool";
-      case Tool.Reorder:
-        return "Reorder Tool";
-      case Tool.ReorderMany:
-        return "Reorder Many Tool";
-      case Tool.PanLeft:
-        return "Pan Left";
-      case Tool.PanRight:
-        return "Pan Right";
-      case Tool.ZoomOutFiveFold:
-        return "Zoom Out 5x";
-      case Tool.ZoomOutOneFold:
-        return "Zoom Out 1x";
-      case Tool.ZoomOutOneThirdFold:
-        return "Zoom Out ⅓";
-      case Tool.ZoomInOneThirdFold:
-        return "Zoom In ⅓";
-      case Tool.ZoomInOneFold:
-        return "Zoom In 1x";
-      case Tool.ZoomInFiveFold:
-        return "Zoom In 5x";
-      case Tool.Highlight:
-        return "Highlight Tool";
-      case Tool.highlightMenu:
-        return "Highlight Menu";
-      default:
-        return null;
-    }
-  };
-
   return (
     <div
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
