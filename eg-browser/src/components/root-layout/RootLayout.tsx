@@ -29,6 +29,7 @@ import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
+import MouseFollowingTooltip from "../ui/tooltip/MouseFollowingTooltip";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
 import {
@@ -160,49 +161,6 @@ export default function RootLayout(props: RootLayoutProps) {
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
     >
-      {/* Layout State Indicator - tab-like indicator at top center */}
-      {showRightTab || showModal || expandNavigationTab ? (
-        <div
-          className="fixed z-40 flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-2 text-xs text-center transition-all duration-200 top-0 left-1/2 transform -translate-x-1/2 rounded-b-lg shadow-lg"
-          style={{
-            width: "33.33%",
-            minWidth: "200px",
-            maxWidth: "400px",
-          }}
-        >
-          {showModal && <span>📱 Mobile View</span>}
-          {expandNavigationTab && !showModal && <span>📏 Expanded View</span>}
-          {showRightTab && !expandNavigationTab && !showModal && (
-            <span>📋 Right Tab Open</span>
-          )}
-          <span>(Press Esc to close)</span>
-        </div>
-      ) : (
-        ""
-      )}
-
-      {/* Tool Indicator Tab - tab-like indicator at top center */}
-      {tool && getToolName(tool) && getToolName(tool) !== "Drag Tool" ? (
-        <div
-          className="fixed z-40 flex items-center justify-center gap-2 bg-blue-500 text-white px-4 py-2 text-center transition-all duration-200 top-0 left-1/2 transform -translate-x-1/2 rounded-b-lg shadow-lg"
-          style={{
-            width: "33.33%",
-            minWidth: "250px",
-            maxWidth: "450px",
-            fontSize: isSmallScreen ? "12px" : "14px",
-          }}
-        >
-          <span className="font-medium">🔧</span>
-          {!isSmallScreen && <span className="font-medium">Current Tool:</span>}
-          <span className="font-bold">{getToolName(tool)}</span>
-          {!isSmallScreen && (
-            <span className="text-blue-200">(Press Esc to deselect)</span>
-          )}
-        </div>
-      ) : (
-        ""
-      )}
-
       {/* {import.meta.env.VITE_PACKAGE === "false" ?  */}
       <GoogleAnalytics />
       {/* : null} */}
@@ -309,7 +267,7 @@ export default function RootLayout(props: RootLayoutProps) {
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {showRightTab && (
                 <motion.div
                   className="h-full overflow-hidden z-10"
@@ -334,48 +292,43 @@ export default function RootLayout(props: RootLayoutProps) {
                   }}
                 >
                   <div className="flex flex-col h-full">
-                    <div className="flex-1 relative">
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "tracks" ? "block" : "none",
-                        }}
-                      >
-                        <TracksTab />
+                    {/* Tab Header with close button */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                      <h2 className="text-lg font-semibold text-gray-800 dark:text-white capitalize">
+                        {navigationTab}
+                      </h2>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Press Esc to close
+                        </span>
+                        <button
+                          onClick={() => dispatch(setNavigationTab(null))}
+                          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                          title="Close tab"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
                       </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "apps" ? "block" : "none",
-                        }}
-                      >
-                        <AppsTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "help" ? "block" : "none",
-                        }}
-                      >
-                        <HelpTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "share" ? "block" : "none",
-                        }}
-                      >
-                        <ShareTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "settings" ? "block" : "none",
-                        }}
-                      >
-                        <SettingsTab />
+                    </div>
+                    <div className="flex-1 relative overflow-hidden">
+                      <div className="h-full">
+                        {navigationTab === "tracks" && <TracksTab />}
+                        {navigationTab === "apps" && <AppsTab />}
+                        {navigationTab === "help" && <HelpTab />}
+                        {navigationTab === "share" && <ShareTab />}
+                        {navigationTab === "settings" && <SettingsTab />}
                       </div>
                     </div>
                   </div>
@@ -386,32 +339,55 @@ export default function RootLayout(props: RootLayoutProps) {
         </div>
       </motion.div>
 
-      <AnimatePresence mode="wait">
-        {showModal && (
-          <motion.div
-            className="absolute top-12 left-0 w-screen h-screen bg-white"
-            style={{ borderRadius: CURL_RADIUS }}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-          >
-            <div className="flex flex-col h-full">
-              {navigationTab === "tracks" && <TracksTab />}
-              {navigationTab === "apps" && <AppsTab />}
-              {navigationTab === "help" && <HelpTab />}
-              {navigationTab === "share" && <ShareTab />}
-              {navigationTab === "settings" && <SettingsTab />}
-
+      {showModal && (
+        <motion.div
+          className="absolute top-12 left-0 w-screen h-screen bg-white"
+          style={{ borderRadius: CURL_RADIUS }}
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white capitalize">
+              {navigationTab}
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Press Esc to close
+              </span>
               <button
-                className="absolute top-4 right-4"
                 onClick={() => dispatch(setNavigationTab(null))}
+                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="Close tab"
               >
-                Done
+                <svg
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+          <div className="flex flex-col h-full">
+            {navigationTab === "tracks" && <TracksTab />}
+            {navigationTab === "apps" && <AppsTab />}
+            {navigationTab === "help" && <HelpTab />}
+            {navigationTab === "share" && <ShareTab />}
+            {navigationTab === "settings" && <SettingsTab />}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Mouse-following tool tooltip */}
+      <MouseFollowingTooltip />
     </div>
   );
 }

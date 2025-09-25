@@ -7,8 +7,6 @@ import {
 } from "react";
 import NotFound from "./NotFound";
 import NavigationToolbar from "./NavigationToolbar";
-import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
-import { motion, AnimatePresence } from "framer-motion";
 
 export interface NavigationPathElement {
   path: string;
@@ -81,8 +79,6 @@ export default function NavigationStack({
   destinations?: NavigationDestination[];
   rootOptions?: NavigationDestinationOptions;
 }) {
-  const { ref, width, height } = useElementGeometry();
-
   const [path, setPath] = useState<NavigationPath>([]);
 
   const destinationMap: Record<string, NavigationDestination> = useMemo(
@@ -107,43 +103,26 @@ export default function NavigationStack({
 
   return (
     <NavigationStackContext.Provider value={{ path, setPath }}>
-      <div
-        className="flex flex-col h-full bg-white dark:bg-dark-background"
-      >
+      <div className="flex flex-col h-full bg-white dark:bg-dark-background">
         <NavigationToolbar options={currentOptions} />
-        <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
-          <motion.div
-            className="px-4 pb-4 absolute overflow-y-scroll"
-            animate={{
-              x: path.length > 0 ? "-33%" : 0,
-              opacity: path.length > 0 ? 0.3 : 1,
-            }}
-            style={{ width, height }}
-          >
+        <div className="relative flex-1 overflow-hidden min-w-[25vw]">
+          <div className="px-4 pb-4 absolute overflow-y-scroll w-full h-full">
             {children}
-          </motion.div>
-          <AnimatePresence mode="popLayout">
-            {path.map((element, idx) => {
-              const destination =
-                destinationMap[element.path] ?? notFoundDestination;
+          </div>
 
-              return (
-                <motion.div
-                  key={element.path}
-                  className="px-4 pb-4 absolute overflow-y-scroll bg-white dark:bg-dark-background"
-                  initial={{ x: "100%" }}
-                  animate={{ x: idx === path.length - 1 ? 0 : "-33%" }}
-                  exit={{ x: "100%" }}
-                  style={{
-                    width,
-                    height,
-                  }}
-                >
-                  <destination.component params={element.params} />
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+          {path.map((element) => {
+            const destination =
+              destinationMap[element.path] ?? notFoundDestination;
+
+            return (
+              <div
+                key={element.path}
+                className="px-4 pb-4 absolute overflow-y-scroll bg-white dark:bg-dark-background w-full h-full"
+              >
+                <destination.component params={element.params} />
+              </div>
+            );
+          })}
         </div>
       </div>
     </NavigationStackContext.Provider>

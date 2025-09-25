@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./History.css";
+
 import { ClockIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import OutsideClickDetector from "wuepgg3-track/src/components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
@@ -55,7 +55,7 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
     );
 
     return (
-      <div className="History">
+      <div>
         {past.length > 0 && <p>Go back:</p>}
         {pastItems}
         {future.length > 0 && <p>Go forward:</p>}
@@ -146,7 +146,7 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
         <button
           onClick={handleToggleModal}
           title="Operation history"
-          className="flex items-center gap-2 border border-gray-300 rounded-md px-3 py-2 mx-2 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1 mx-2 hover:bg-gray-50 transition-colors"
         >
           <ClockIcon className="w-4 h-4" />
           <span className="text-base font-medium">History</span>
