@@ -209,25 +209,32 @@ export default function RootLayout(props: RootLayoutProps) {
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
               }}
             >
-              {sessionId ? (
-                <motion.div
-                  className="flex flex-col w-screen pb-20"
-                  key="genome-view"
-                  exit={{ opacity: 0 }}
-                >
-                  <GenomeErrorBoundary onGoHome={handleGoHome}>
-                    <GenomeView />
-                  </GenomeErrorBoundary>
-                </motion.div>
-              ) : (
-                <motion.div
-                  className="h-full w-full"
-                  key="genome-picker"
-                  exit={{ opacity: 0 }}
-                >
-                  <GenomePicker />
-                </motion.div>
-              )}
+              {/* Keep both components mounted, just hide/show them */}
+              <motion.div
+                className="flex flex-col w-screen pb-20"
+                style={{
+                  display: sessionId ? 'flex' : 'none'
+                }}
+                animate={{
+                  opacity: sessionId ? 1 : 0
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <GenomeErrorBoundary onGoHome={handleGoHome}>
+                  <GenomeView />
+                </GenomeErrorBoundary>
+              </motion.div>
+              {!sessionId ? <motion.div
+                className="h-full w-full"
+
+                animate={{
+                  opacity: 1
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <GenomePicker />
+              </motion.div> : ""}
+
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}

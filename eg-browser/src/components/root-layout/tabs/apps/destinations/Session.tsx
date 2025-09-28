@@ -129,6 +129,7 @@ const Session: React.FC = () => {
     const session = {
       genomeId: sessionBundle.genomeId,
       customGenome: sessionBundle.customGenome,
+      chromosomes: sessionBundle.chromosomes ? sessionBundle.chromosomes : null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       title: "",

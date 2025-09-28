@@ -21,17 +21,17 @@ export function convertSession(session: any) {
   const curGenomeName = session["genomeName"]
     ? session["genomeName"]
     : session["genomeId"]
-    ? session["genomeId"]
-    : session["name"]
-    ? session["name"]
-    : session["id"]
-    ? session["id"]
-    : null;
+      ? session["genomeId"]
+      : session["name"]
+        ? session["name"]
+        : session["id"]
+          ? session["id"]
+          : null;
   const tracks = session.tracks
     ? session.tracks
     : session.defaultTracks
-    ? session.defaultTracks
-    : [];
+      ? session.defaultTracks
+      : [];
   if (session.chromosomes && session.chromosomes.length > 0) {
     const _newGenomeConfig = {
       id: curGenomeName,
@@ -107,7 +107,7 @@ export const importOneSession = createAsyncThunk(
   ) => {
     session = convertSession(session);
 
-    if (!session.id || !curGenomeName || !session.viewRegion) {
+    if (!session.id || !session.genomeId || !session.viewRegion) {
       console.error("Invalid session file format", session);
       throw new Error("Invalid session file format");
     }

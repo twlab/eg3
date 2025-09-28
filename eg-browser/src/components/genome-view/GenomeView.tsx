@@ -44,7 +44,10 @@ export default function GenomeView() {
   const sessionId = currentSession ? currentSession.id : null;
 
   if (lastSessionId.current !== sessionId && sessionId !== null) {
-    dispatch(resetState());
+    if (lastSessionId.current !== null) {
+
+      dispatch(resetState());
+    }
     lastSessionId.current = sessionId;
     if (bundleId) {
       dispatch(fetchBundle(bundleId));
