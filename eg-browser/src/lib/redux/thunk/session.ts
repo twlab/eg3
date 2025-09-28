@@ -13,11 +13,15 @@ import { updateBundle } from "../slices/hubSlice";
 import { generateUUID } from "wuepgg3-track";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import { addCustomGenomeRemote } from "./genome-hub";
-import useGenome from "../../hooks/useGenome";
+import { useAppDispatch } from "../hooks";
 
-export function convertSession(session: any) {
+
+export function convertSession(session: any, dispatch: any) {
+
+
   let newGenomeConfig: GenomeConfig | null = null;
   let coordinate: GenomeCoordinate | null = null;
+
   const curGenomeName = session["genomeName"]
     ? session["genomeName"]
     : session["genomeId"]
@@ -42,8 +46,8 @@ export function convertSession(session: any) {
         waitToUpdate: true,
       })),
     };
-
-    addCustomGenomeRemote(_newGenomeConfig);
+    console.log("Here")
+    dispatch(addCustomGenomeRemote(_newGenomeConfig));
     newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
   } else if (getGenomeConfig(curGenomeName)) {
     newGenomeConfig = getGenomeConfig(curGenomeName);
@@ -105,7 +109,8 @@ export const importOneSession = createAsyncThunk(
     },
     thunkApi
   ) => {
-    session = convertSession(session);
+
+    session = convertSession(session, thunkApi.dispatch);
 
     if (!session.id || !session.genomeId || !session.viewRegion) {
       console.error("Invalid session file format", session);

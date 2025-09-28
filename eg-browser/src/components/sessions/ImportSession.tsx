@@ -28,7 +28,7 @@ export default function ImportSession() {
     try {
       const content = await file.text();
       let session = JSON.parse(content);
-      session = convertSession(session);
+      session = convertSession(session, dispatch);
 
       if (!session.id || !session.genomeId || !session.viewRegion) {
         console.error("Invalid session file format", session);
