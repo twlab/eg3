@@ -80,22 +80,19 @@ export interface RootLayoutProps {
   windowWidth?: number;
   customGenome?: any;
   showGenomeNavigator?: boolean;
-  showNavBar?: boolean;
-  showToolBar?: boolean;
+  // showNavBar?: boolean;
+  // showToolBar?: boolean;
 }
 
-export default function RootLayout(props: RootLayoutProps) {
+export default function RootLayout() {
   useBrowserInitialization();
 
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
-  const currentSession = useAppSelector(selectCurrentSession);
   const navigationTab = useAppSelector(selectNavigationTab);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const tool = useAppSelector(selectTool);
-  const cookieConsentStatus = useAppSelector(selectCookieConsentStatus);
   const isNavigationTabEmpty = !sessionId || navigationTab === null;
   const isSmallScreen = useSmallScreen();
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
