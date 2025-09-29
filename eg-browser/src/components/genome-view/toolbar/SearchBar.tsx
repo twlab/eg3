@@ -749,7 +749,7 @@ export default function SearchBar({
       </AnimatePresence>
       <motion.div
         ref={searchContainerRef}
-        className="flex flex-col relative outline-1 outline-gray-400"
+        className="flex flex-col relative"
         transition={{ duration: 0.2 }}
       >
         <AnimatePresence>
@@ -800,7 +800,7 @@ export default function SearchBar({
               placeholder={
                 activeCommand
                   ? `Search ${activeCommand}s`
-                  : "Search region/gene"
+                  : "Search regions, genes, snps"
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
