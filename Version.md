@@ -1,12 +1,15 @@
 # Version history
 
+## 56.0.8
+
+- fixed the css issue of tool bar
+
 ## 56.0.7
 
 - fixed search bar css 
 - fixed screenshot bug where track crashes
 - fixed bug when tabs open changing state cause crash
 - fixed bug when changing state to the latest do not update tracks
-
 
 ## 56.0.6
 
