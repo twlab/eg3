@@ -749,12 +749,12 @@ export default function SearchBar({
       </AnimatePresence>
       <motion.div
         ref={searchContainerRef}
-        className="flex flex-col relative"
+        className="flex flex-col relative outline-1 outline-gray-400"
         transition={{ duration: 0.2 }}
       >
         <AnimatePresence>
           {isSearchFocused &&
-          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: -10, maxHeight: 0 }}
@@ -800,7 +800,7 @@ export default function SearchBar({
               placeholder={
                 activeCommand
                   ? `Search ${activeCommand}s`
-                  : "Search regions, genes, snps"
+                  : "Search region/gene"
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
