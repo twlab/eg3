@@ -47,6 +47,9 @@ interface SearchBarProps {
     highlightSearch?: boolean
   ) => void;
   windowWidth?: number;
+  fontSize?: number;
+  buttonPadding?: number;
+  gapSize?: number;
 }
 
 type CommandType = "gene" | "snp";
@@ -75,56 +78,125 @@ const typeToEmoji: Record<CommandType, string> = {
   snp: "🔍",
 };
 
-const mockGeneSearch = async (
+// Cache for gene search results to avoid repeated API calls
+const geneSearchCache = new Map<
+  string,
+  { results: GeneResult[]; timestamp: number }
+>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// AbortController to cancel previous requests
+let currentGeneSearchController: AbortController | null = null;
+let currentSnpSearchController: AbortController | null = null;
+
+const geneSearch = async (
   query: string,
   genomeName: string
 ): Promise<GeneResult[]> => {
   if (query.trim().length < MIN_CHARS_FOR_SUGGESTIONS) return [];
 
-  const params: any = {
-    q: query.trim(),
-    getOnlyNames: true,
-  };
-  const url = new URL(`${AWS_API}/${genomeName}/genes/queryName`);
-  Object.keys(params).forEach((key) =>
-    url.searchParams.append(key, params[key])
-  );
-  const response = await fetch(url.toString(), {
-    method: "GET",
-  });
-  const data = await response.json();
-  return data.map((item: any, index: any) => {
-    return { id: index, symbol: item, type: "gene" as const, description: "" };
-  });
+  const cacheKey = `${genomeName}:${query.trim().toLowerCase()}`;
+
+  // Check cache first
+  const cached = geneSearchCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.results;
+  }
+
+  // Cancel previous request if still running
+  if (currentGeneSearchController) {
+    currentGeneSearchController.abort();
+  }
+
+  // Create new AbortController for this request
+  currentGeneSearchController = new AbortController();
+
+  try {
+    const params: any = {
+      q: query.trim(),
+      getOnlyNames: true,
+    };
+    const url = new URL(`${AWS_API}/${genomeName}/genes/queryName`);
+    Object.keys(params).forEach((key) =>
+      url.searchParams.append(key, params[key])
+    );
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      signal: currentGeneSearchController.signal,
+      // Add timeout and better headers
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const results = data.map((item: any, index: any) => {
+      return {
+        id: `${index}`,
+        symbol: item,
+        type: "gene" as const,
+        description: "",
+      };
+    });
+
+    // Cache the results
+    geneSearchCache.set(cacheKey, {
+      results,
+      timestamp: Date.now(),
+    });
+
+    return results;
+  } catch (error) {
+    // Don't throw on abort - that's expected behavior
+    if (error instanceof Error && error.name === "AbortError") {
+      return [];
+    }
+    console.error("Gene search failed:", error);
+    // Return empty array on error to prevent UI breaks
+    return [];
+  } finally {
+    // Clear the controller reference
+    currentGeneSearchController = null;
+  }
 };
 
-const mockSnpSearch = async (
+const snpSearch = async (
   query: string,
   genomeName: string
 ): Promise<SnpResult[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  if (!query) return [];
-  const trimmedInput = query.trim();
-
-  if (trimmedInput.length < 1) {
-    console.log("Please input a valid SNP id.", "error", 2000);
-    return [];
-  }
+  if (!query || query.trim().length < 1) return [];
 
   const endpoint: any = SNP_ENDPOINTS[`${genomeName}`];
-
   if (!endpoint) {
     console.log("This genome is not supported in SNP search.", "error", 2000);
     return [];
   }
 
+  // Cancel previous SNP request
+  if (currentSnpSearchController) {
+    currentSnpSearchController.abort();
+  }
+
+  currentSnpSearchController = new AbortController();
+  const trimmedInput = query.trim();
+
   try {
     const response = await fetch(`${endpoint}/${trimmedInput}`, {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      signal: currentSnpSearchController.signal,
     });
 
     if (!response.ok) {
-      throw new Error("Network response was not ok");
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -139,8 +211,13 @@ const mockSnpSearch = async (
       },
     ];
   } catch (error) {
-    console.log("Error fetching SNP data.", "error", 2000);
+    if (error instanceof Error && error.name === "AbortError") {
+      return [];
+    }
+    console.error("SNP search failed:", error);
     return [];
+  } finally {
+    currentSnpSearchController = null;
   }
 };
 interface SnpMapping {
@@ -188,12 +265,10 @@ function SearchSuggestionDivider(props: any) {
       </div>
       {props.highlightSearch !== undefined ? (
         <div style={{ display: "flex", alignItems: "center" }}>
-
           <label
             htmlFor="highsearch"
             className="text-gray-600 dark:text-dark-primary"
             style={{
-
               fontSize: props.fontSize,
             }}
           >
@@ -226,7 +301,7 @@ function SearchSuggestionBase({
   text: string;
   desc: string;
   onClick: () => void;
-
+  fontSize?: number;
 }) {
   return (
     <div
@@ -263,7 +338,6 @@ export default function SearchBar({
   windowWidth = 1920,
   buttonPadding = 2,
   fontSize = 16,
-  gapSize = 6,
 }: SearchBarProps) {
   const { ref: searchContainerRef } = useElementGeometry({
     shouldRespondToResize: false,
@@ -278,15 +352,12 @@ export default function SearchBar({
   const highlightSearch = useRef(false);
   const [activeCommand, setActiveCommand] = useState<CommandType | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isRegion, setIsRegion] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [selectedInput, setSelectedInput] = useState("");
-  const [snpSelectedInput, setSnpSelectedInput] = useState<{
-    [key: string]: any;
-  } | null>(null);
   const latestUserInput = useRef("");
   const [badInputMessage, setBadInputMessage] = useState("");
-  const [loadingMsg, setLoadingMsg] = useState<string>("");
   const genome = useCurrentGenome();
   const [isShowingIsoforms, setIsShowingIsoforms] = useState(false);
   const [isShowingSNPforms, setIsShowingSNPforms] = useState(false);
@@ -304,9 +375,6 @@ export default function SearchBar({
   const getButtonStyle = () => ({
     padding: `${buttonPadding}px`,
   });
-
-
-
 
   const getRegionButtonSize = () => {
     return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
@@ -387,45 +455,51 @@ export default function SearchBar({
     if (!query) {
       setSearchResults([]);
       setIsRegion(false);
+      setIsSearching(false);
       return;
     }
 
     if (REGION_REGEX.test(query)) {
       setIsRegion(true);
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
     setIsRegion(false);
+    setIsSearching(true);
 
-    if (activeCommand === "gene") {
-      const results = await mockGeneSearch(
-        query,
-        genomeConfig!.genome.getName()
-      );
-      // Compare the ref value with the current query before updating the state:
-      if (latestUserInput.current === query) {
-        setSearchResults(results);
+    try {
+      if (activeCommand === "gene") {
+        const results = await geneSearch(query, genomeConfig!.genome.getName());
+        // Compare the ref value with the current query before updating the state:
+        if (latestUserInput.current === query) {
+          setSearchResults(results);
+        }
+      } else if (activeCommand === "snp") {
+        const results = await snpSearch(query, genomeConfig!.genome.getName());
+        if (latestUserInput.current === query) {
+          setSearchResults(results);
+        }
+      } else {
+        const [geneResults, snpResults] = await Promise.all([
+          geneSearch(query, genomeConfig!.genome.getName()),
+          snpSearchEnabled
+            ? snpSearch(query, genomeConfig!.genome.getName())
+            : Promise.resolve([]),
+        ]);
+        if (latestUserInput.current === query) {
+          setSearchResults([...geneResults, ...snpResults]);
+        }
       }
-    } else if (activeCommand === "snp") {
-      const results = await mockSnpSearch(
-        query,
-        genomeConfig!.genome.getName()
-      );
-      if (latestUserInput.current === query) {
-        setSearchResults(results);
-      }
-    } else {
-      const [geneResults, snpResults] = await Promise.all([
-        mockGeneSearch(query, genomeConfig!.genome.getName()),
-        mockSnpSearch(query, genomeConfig!.genome.getName()),
-      ]);
-      if (latestUserInput.current === query) {
-        setSearchResults([...geneResults, ...snpResults]);
-      }
+    } catch (error) {
+      console.error("Search failed:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  const debouncedSearch = debounce(handleSearch, 100);
+  const debouncedSearch = debounce(handleSearch, 300);
 
   const handleSearchChange = (e: any) => {
     const value = e.target.value;
@@ -444,7 +518,6 @@ export default function SearchBar({
     setIsShowingIsoforms(false);
     setIsShowingSNPforms(false);
     setSelectedInput("");
-    setSnpSelectedInput(null);
     if (value.trim().length < MIN_CHARS_FOR_SUGGESTIONS) {
       setSearchResults([]);
     }
@@ -457,11 +530,12 @@ export default function SearchBar({
       setSelectedInput(result.symbol);
       setIsShowingIsoforms(true);
     } else if (result.type === "snp") {
-      setSnpSelectedInput(result.snpData);
-      setIsShowingSNPforms(true);
+      // Handle SNP selection directly
+      if (result.snpData?.mappings?.[0]) {
+        onSnpSelected(result.snpData.mappings[0]);
+      }
     }
     setSearchResults([]);
-    // setActiveCommand(null);
     setSearchInput("");
   };
 
@@ -476,9 +550,17 @@ export default function SearchBar({
           text={`"${searchInput}"`}
           desc="You're entering coordinates. Press enter or click here to jump to this region."
           onClick={() => parseRegion(searchInput)}
-
-          fontSize={fontSize}
         />
+      );
+      return suggestions;
+    }
+
+    // Show loading indicator
+    if (isSearching && searchInput.trim().length >= MIN_CHARS_FOR_SUGGESTIONS) {
+      suggestions.push(
+        <div key="loading" className="px-3 py-2 text-gray-500 text-center">
+          <span style={{ fontSize: fontSize }}>Searching...</span>
+        </div>
       );
       return suggestions;
     }
@@ -538,16 +620,10 @@ export default function SearchBar({
               onClick={() => handleResultClick(result)}
             >
               <div className="flex items-center gap-1.5">
-                <span
-                  className="font-medium"
-                  style={{ fontSize: fontSize }}
-                >
+                <span className="font-medium" style={{ fontSize: fontSize }}>
                   {result.symbol}
                 </span>
-                <span
-                  className="text-gray-500"
-                  style={{ fontSize: fontSize }}
-                >
+                <span className="text-gray-500" style={{ fontSize: fontSize }}>
                   {result.description}
                 </span>
               </div>
@@ -694,7 +770,7 @@ export default function SearchBar({
         </AnimatePresence>
 
         {/* Outer row for search input + dynamic buttons; increased flex growth & min width */}
-        <div className="flex flex-row items-center w-full h-full flex-grow" >
+        <div className="flex flex-row items-center w-full h-full flex-grow">
           {/* Inner container: give it stronger flex and a minimum width so it claims more horizontal space */}
           <div className="flex flex-row items-center w-full flex-[2] min-w-[227px]">
             {activeCommand ? (

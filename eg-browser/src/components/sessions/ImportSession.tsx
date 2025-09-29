@@ -5,13 +5,11 @@ import { BrowserSession, upsertSession } from "@/lib/redux/slices/browserSlice";
 import Button from "../ui/button/Button";
 import FileInput from "../ui/input/FileInput";
 import { useNavigation } from "../core-navigation/NavigationStack";
+
 import {
-  GenomeCoordinate,
-  ITrackModel,
-  restoreLegacyViewRegion,
-  DisplayedRegionModel,
-} from "wuepgg3-track";
-import { addSessionsFromBundleId } from "@/lib/redux/thunk/session";
+  addSessionsFromBundleId,
+  convertSession,
+} from "@/lib/redux/thunk/session";
 import { generateUUID } from "wuepgg3-track";
 export default function ImportSession() {
   const dispatch = useAppDispatch();
@@ -30,49 +28,7 @@ export default function ImportSession() {
     try {
       const content = await file.text();
       let session = JSON.parse(content);
-
-      if (session.genomeName) {
-        let parsedViewRegion = restoreLegacyViewRegion(
-          session,
-          null
-        ) as DisplayedRegionModel | null;
-
-        if (!parsedViewRegion) {
-          throw new Error(
-            "Invalid session file format, could not parse view region"
-          );
-        }
-
-        const mappedTracks = session.tracks.map((track: any) => {
-          return {
-            ...track,
-            id: generateUUID(),
-            genome: session.genomeName,
-            isSelected: false,
-          } satisfies ITrackModel;
-        });
-
-        session = {
-          id: generateUUID(),
-          genomeId: session.genomeName,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          title: "",
-          viewRegion:
-            parsedViewRegion.currentRegionAsString() as GenomeCoordinate,
-          userViewRegion: session.viewInterval
-            ? parsedViewRegion.currentRegionAsString() as GenomeCoordinate
-            : null,
-          tracks: mappedTracks,
-          highlights: session.highlights ? session.highlights : [],
-          bundleId: session.bundleId ? session.bundleId : null,
-          metadataTerms: session.metadataTerms,
-
-          regionSets: [],
-        } satisfies BrowserSession;
-
-        console.log("Parsed session", session);
-      }
+      session = convertSession(session, dispatch);
 
       if (!session.id || !session.genomeId || !session.viewRegion) {
         console.error("Invalid session file format", session);
@@ -94,6 +50,39 @@ export default function ImportSession() {
 
   return (
     <div className="flex flex-col h-full gap-4">
+      <h1 className="text-xl">Import by Session Bundle ID</h1>
+      <div className="flex flex-row gap-2 w-full">
+        <input
+          type="text"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter Session bundle Id"
+          value={bundleId}
+          onChange={(e) => setBundleId(e.target.value)}
+        />
+        <Button
+          onClick={async () => {
+            if (!bundleId.trim()) {
+              setError("Please enter a Session Bundle ID");
+              return;
+            }
+            setError(null);
+            setIsLoading(true);
+            try {
+              await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
+              navigation.pop();
+            } catch (e) {
+              setError(
+                "Failed to import session bundle. Please check the Session Bundle ID."
+              );
+            } finally {
+              setIsLoading(false);
+            }
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? "Importing..." : "Import"}
+        </Button>
+      </div>
       <h1 className="text-xl">Import by File</h1>
       <div className="flex flex-row gap-2 w-full justify-start items-center">
         <Button
@@ -114,39 +103,7 @@ export default function ImportSession() {
         onFileChange={handleFileChange}
         dragMessage="Drag and drop a session file here"
       />
-      <h1 className="text-xl">Import by Bundle ID</h1>
-      <div className="flex flex-row gap-2 w-full">
-        <input
-          type="text"
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter bundle ID"
-          value={bundleId}
-          onChange={(e) => setBundleId(e.target.value)}
-        />
-        <Button
-          onClick={async () => {
-            if (!bundleId.trim()) {
-              setError("Please enter a bundle ID");
-              return;
-            }
-            setError(null);
-            setIsLoading(true);
-            try {
-              await dispatch(addSessionsFromBundleId(bundleId)).unwrap();
-              navigation.pop();
-            } catch (e) {
-              setError(
-                "Failed to import session bundle. Please check the bundle ID."
-              );
-            } finally {
-              setIsLoading(false);
-            }
-          }}
-          disabled={isLoading}
-        >
-          {isLoading ? "Importing..." : "Import"}
-        </Button>
-      </div>
+
       {error && <div className="text-red-500 text-sm">{error}</div>}
     </div>
   );

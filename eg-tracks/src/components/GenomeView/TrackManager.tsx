@@ -13,7 +13,7 @@ import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
 import _, { throttle } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
-import HighlightMenu from "./ToolComponents/HighlightMenu";
+// import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
 import BamSource from "../../getRemoteData/BamSource";
 import { SelectableGenomeArea } from "./genomeNavigator/SelectableGenomeArea";
@@ -47,6 +47,7 @@ import {
 } from "../../util";
 import { generateUUID } from "../../util";
 import { fetchGenomicData } from "../../getRemoteData/fetchFunctions";
+import Track from "./TrackComponents/commonComponents/Track";
 const groupManager = new GroupedTrackManager();
 
 /**
@@ -236,6 +237,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   const trackFetchedDataCache = useRef<{ [key: string]: any }>({});
   const fetchInstances = useRef<{ [key: string]: any }>({});
   const isMouseInsideRef = useRef(false);
+  const stateSize = useRef(currentState.limit);
   const stateIdx = useRef(currentState.index);
   const globalTrackConfig = useRef<{ [key: string]: any }>({
     viewWindow: new OpenInterval(windowWidth, windowWidth * 2),
@@ -989,7 +991,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       );
       if (trackModel) {
         trackModel.options =
-          globalTrackConfig.current[`${config}`].configOptions ??
+          (globalTrackConfig.current[`${config}`] &&
+            globalTrackConfig.current[`${config}`].configOptions) ??
           _.cloneDeep(globalTrackConfig.current[`${config}`].configOptions);
         if (!trackModel.options) {
           trackModel.options = {};
@@ -2215,12 +2218,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         toolTitle
       );
     } else {
-      if (tool && tool !== 0 && tool !== 12) {
+      if (tool && tool !== 0 && tool !== 12 && tool !== 13) {
         newSelectedTool.isSelected = true;
       }
     }
 
-    newSelectedTool["title"] = toolTitle;
+    if (!tool) {
+      newSelectedTool["title"] = 0;
+    } else {
+      newSelectedTool["title"] = toolTitle;
+    }
     isToolSelected.current = newSelectedTool.isSelected;
     return newSelectedTool;
   }
@@ -2966,11 +2973,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         isInitial: 0,
         trackToDrawId,
       });
-      // setNewDrawData({
-      //   curDataIdx: dataIdx.current,
-      //   isInitial: 0,
-      //   trackToDrawId,
-      // });
     }
     let highlightElement = createHighlight(highlights);
     setHighLightElements([...highlightElement]);
@@ -3330,20 +3332,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
-        if (infiniteScrollWorkers.current) {
-          infiniteScrollWorkers.current.worker?.forEach((w) => {
-            if (!w.hasOnMessage) {
-              w.fetchWorker.onmessage = createInfiniteOnMessage;
-              w.hasOnMessage = true;
-            }
-          });
-          infiniteScrollWorkers.current.instance?.forEach((w) => {
-            if (!w.hasOnMessage) {
-              w.fetchWorker.onmessage = createInfiniteOnMessage;
-              w.hasOnMessage = true;
-            }
-          });
-        }
+
       } else {
         const newTrackComponents: Array<any> = [];
 
@@ -3378,6 +3367,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
       addTermToMetaSets(filteredTracks);
+    }
+    if (infiniteScrollWorkers.current) {
+      infiniteScrollWorkers.current.worker?.forEach((w) => {
+        if (!w.hasOnMessage) {
+          w.fetchWorker.onmessage = createInfiniteOnMessage;
+          w.hasOnMessage = true;
+        }
+      });
+      infiniteScrollWorkers.current.instance?.forEach((w) => {
+        if (!w.hasOnMessage) {
+          w.fetchWorker.onmessage = createInfiniteOnMessage;
+          w.hasOnMessage = true;
+        }
+      });
     }
   }, [tracks]);
   // MARK: width, regions
@@ -3416,15 +3419,15 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }, [viewRegion]);
 
   useEffect(() => {
-    if (currentState && !initialLoad.current) {
-
-
-      // for cases where we undo and then  redo back to the most recent state
-      if (currentState.index !== currentState.limit - 1) {
-        stateIdx.current = currentState.index;
-      }
-      if ((currentState.limit - 1 - stateIdx.current) > 0) {
-        stateIdx.current = currentState.index;
+    // when we change states through history or redoundo, the currentState.limit is should be the same size
+    // if size is different then new state are being added when not changed directly by the user
+    if (
+      currentState &&
+      !initialLoad.current &&
+      stateSize.current === currentState.limit
+    ) {
+      // this check current index of the state, should only change when its different from the prev index
+      if (currentState.index !== stateIdx.current) {
         genomeConfig.defaultRegion = new OpenInterval(
           userViewRegion._startBase!,
           userViewRegion._endBase!
@@ -3435,6 +3438,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         initializeTracks();
       }
     }
+    stateSize.current = currentState.limit;
+    stateIdx.current = currentState.index;
   }, [currentState]);
 
   useEffect(() => {
@@ -3484,141 +3489,134 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       )}
 
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-        {showToolBar ? (
+        {/* {showToolBar ? ( */}
+        <div
+          style={{
+            backgroundColor: "var(--bg-color)",
+            width: `${windowWidth + 120}px`,
+            marginTop: getPadding() ? getPadding() / 3 : 2,
+            marginBottom: getPadding() ? getPadding() / 3 : 2,
+            display: "flex",
+            flexDirection: windowWidth <= 1080 ? "column" : "row",
+            alignItems: windowWidth <= 1080 ? "stretch" : "center",
+            justifyContent: "center",
+          }}
+        >
           <div
             style={{
-              backgroundColor: "var(--bg-color)",
-              width: `${windowWidth + 120}px`,
-              marginTop: getPadding() ? getPadding() / 3 : 2,
-              marginBottom: getPadding() ? getPadding() / 3 : 2,
               display: "flex",
-              flexDirection: windowWidth <= 1080 ? "column" : "row",
-              alignItems: windowWidth <= 1080 ? "stretch" : "center",
-              justifyContent: "center",
+              width:
+                windowWidth <= 1080
+                  ? "100%"
+                  : getResponsiveWidths().mainWidth,
+              alignItems: "center",
+              justifyContent: "end",
+              flexWrap: "nowrap",
             }}
           >
-            <HighlightMenu
-              highlights={highlightElements}
-              viewRegion={userViewRegion}
-              showHighlightMenuModal={true}
-              onNewRegion={onRegionSelected}
-              onSetHighlights={getHighlightState}
-              selectedTool={selectedTool}
+            <div
+              style={{
+                display: "flex",
+                position: "relative",
+                zIndex: 999,
+              }}
+            >
+              <div style={{ position: "relative" }}>
+                <Toolbar.toolbar
+                  highlights={highlights}
+                  onNewRegionSelect={
+                    !onNewRegionSelect ? () => { } : onNewRegionSelect
+                  }
+                  windowWidth={windowWidth}
+                  buttonPadding={getPadding() ? getPadding() / 2 : 3}
+                  gapSize={getGapSize()}
+                  fontSize={Math.max(16, getFontSize())}
+                />
+              </div>
+            </div>
+            <div className="h-5 border-r border-gray-400" />
+            {userViewRegion && (
+              <div
+                style={{
+                  display: "flex",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <TrackRegionController
+                  selectedRegion={userViewRegion}
+                  onRegionSelected={onRegionSelected}
+                  contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                  genomeConfig={genomeConfig}
+                  trackManagerState={trackManagerState}
+                  genomeArr={[]}
+                  genomeIdx={0}
+                  addGlobalState={undefined}
+                  windowWidth={windowWidth}
+                  fontSize={Math.max(16, getFontSize())}
+                  padding={getPadding()}
+                />
+              </div>
+            )}
+            <div
+              style={{ paddingLeft: getPadding() ? getPadding() : 5 }}
+              className="h-5 border-r border-gray-400"
             />
             <div
+              className="bg tool-element"
               style={{
                 display: "flex",
-                width:
-                  windowWidth <= 1080
-                    ? "100%"
-                    : getResponsiveWidths().mainWidth,
+                paddingLeft: getPadding() ? getPadding() : 5,
                 alignItems: "center",
-                justifyContent: "end",
-                flexWrap: "nowrap",
+
               }}
             >
-              <div
+              <p
                 style={{
-                  display: "flex",
-                  position: "relative",
-                  zIndex: 999,
+                  backgroundColor: "var(--bg-color)",
+                  color: "var(--font-color)",
+                  fontSize: `${Math.max(16, getFontSize())}px`,
+                  margin: 0,
+                  whiteSpace: "nowrap",
                 }}
               >
-                <div style={{ position: "relative" }}>
-                  <Toolbar.toolbar
-                    highlights={highlights}
-                    onNewRegionSelect={
-                      !onNewRegionSelect ? () => { } : onNewRegionSelect
-                    }
-                    windowWidth={windowWidth}
-                    buttonPadding={getPadding() ? getPadding() / 2 : 3}
-                    gapSize={getGapSize()}
-                    fontSize={Math.max(16, getFontSize())}
-                  />
-                </div>
-              </div>
-              <div className="h-5 border-r border-gray-400" />
-              {userViewRegion && (
-                <div
-                  style={{
-                    display: "flex",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <TrackRegionController
-                    selectedRegion={userViewRegion}
-                    onRegionSelected={onRegionSelected}
-                    contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                    genomeConfig={genomeConfig}
-                    trackManagerState={trackManagerState}
-                    genomeArr={[]}
-                    genomeIdx={0}
-                    addGlobalState={undefined}
-                    windowWidth={windowWidth}
-                    fontSize={Math.max(16, getFontSize())}
-                    padding={getPadding()}
-                  />
-                </div>
-              )}
-              <div
-                style={{ paddingLeft: getPadding() ? getPadding() : 5 }}
-                className="h-5 border-r border-gray-400"
-              />
-              <div
-                className="bg tool-element"
-                style={{
-                  display: "flex",
-                  paddingLeft: getPadding() ? getPadding() : 5,
-                  alignItems: "center",
-                }}
-              >
-                <p
-                  style={{
-                    backgroundColor: "var(--bg-color)",
-                    color: "var(--font-color)",
-                    fontSize: `${Math.max(16, getFontSize())}px`,
-                    margin: 0,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {niceBpCount(trackManagerState.current.viewRegion.getWidth())}{" "}
-                  region in {Math.round(windowWidth)}px, 1px equals{" "}
-                  {niceBpCount(basePerPixel.current, true)}
-                </p>
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent:
-                  windowWidth <= 1080 ? "center" : "space-between",
-                alignItems: "center",
-                width:
-                  windowWidth <= 1080
-                    ? "100%"
-                    : getResponsiveWidths().metaWidth,
-                marginTop:
-                  windowWidth <= 1080
-                    ? getPadding()
-                      ? getPadding() / 2
-                      : 3
-                    : 0,
-              }}
-            >
-              <MetadataHeader
-                terms={metaSets.terms}
-                onNewTerms={onNewTerms}
-                suggestedMetaSets={metaSets.suggestedMetaSets}
-                onRemoveTerm={onRemoveTerm}
-                windowWidth={windowWidth}
-                fontSize={Math.max(16, getFontSize())}
-                padding={getPadding()}
-              />
+                {niceBpCount(trackManagerState.current.viewRegion.getWidth())}{" "}
+                region in {Math.round(windowWidth)}px, 1px equals{" "}
+                {niceBpCount(basePerPixel.current, true)}
+              </p>
             </div>
           </div>
-        ) : (
+          <div
+            style={{
+              display: "flex",
+              justifyContent:
+                windowWidth <= 1080 ? "center" : "space-between",
+              alignItems: "center",
+              width:
+                windowWidth <= 1080
+                  ? "100%"
+                  : getResponsiveWidths().metaWidth,
+              marginTop:
+                windowWidth <= 1080
+                  ? getPadding()
+                    ? getPadding() / 2
+                    : 3
+                  : 0,
+            }}
+          >
+            <MetadataHeader
+              terms={metaSets.terms}
+              onNewTerms={onNewTerms}
+              suggestedMetaSets={metaSets.suggestedMetaSets}
+              onRemoveTerm={onRemoveTerm}
+              windowWidth={windowWidth}
+              fontSize={Math.max(16, getFontSize())}
+              padding={getPadding()}
+            />
+          </div>
+        </div>
+        {/* ) : (
           ""
-        )}
+        )} */}
         <div
           style={{
             display: "flex",

@@ -8,5 +8,6 @@ export default function useCurrentGenome(): IGenome | null {
   const genomeId = session?.genomeId;
 
   const { genome } = useGenome(genomeId ?? "");
+
   return genome;
 }

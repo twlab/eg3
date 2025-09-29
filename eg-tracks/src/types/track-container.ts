@@ -120,4 +120,5 @@ export enum Tool {
   ZoomInOneFold,
   ZoomInFiveFold,
   highlightMenu,
+  ReorderMany,
 }

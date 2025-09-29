@@ -257,8 +257,8 @@ function SessionListItem({
             {session.viewRegion && typeof session.viewRegion === "object"
               ? session.viewRegion.coordinate
               : session.viewRegion
-                ? session.viewRegion
-                : ""}
+              ? session.viewRegion
+              : ""}
           </p>
           <p>Active tracks: {session.tracks ? session.tracks.length : 0}</p>
           <p>

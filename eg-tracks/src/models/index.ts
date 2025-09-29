@@ -14,10 +14,7 @@ export * from "../trackConfigs/config-menu-components.tsx/ColorPicker";
 export { default as Feature, NumericalFeature } from "./Feature";
 export { default as RegionSet } from "./RegionSet";
 export { default as DisplayedRegionModel } from "./DisplayedRegionModel";
-export {
-  default as HighlightMenu,
-  HighlightInterval,
-} from "../components/GenomeView/ToolComponents/HighlightMenu";
+
 export * from "./AppSaveLoad";
 export * from "../components/GenomeView/TrackComponents/displayModeComponentMap";
 export * from "../getRemoteData/fetchTrackData";

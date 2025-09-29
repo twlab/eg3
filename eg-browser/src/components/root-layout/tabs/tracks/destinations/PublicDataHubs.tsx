@@ -117,14 +117,15 @@ export default function PublicDataHubs() {
         <div className="flex-shrink-0 ml-2">
           {isLoading ? (
             <div className="size-6 rounded-md bg-gray-200 flex items-center justify-center">
-              <div className="size-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              <div className="size-4 border-1 border-gray-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <button
-              className={`size-6 rounded-md flex items-center justify-center ${isLoaded
+              className={`size-6 rounded-md flex items-center justify-center ${
+                isLoaded
                   ? "bg-green-200 dark:bg-green-900 hover:bg-green-300 dark:hover:bg-green-800"
                   : "bg-secondary hover:bg-purple-200 dark:bg-dark-secondary"
-                }`}
+              }`}
               onClick={() => loadHub(hub)}
               disabled={isLoaded || isLoading}
             >
@@ -202,7 +203,7 @@ export default function PublicDataHubs() {
             onTracksAdded={onTracksAdded}
             publicTrackSets={undefined}
             addedTrackSets={addedTrackUrls as Set<string>}
-            addTermToMetaSets={() => { }}
+            addTermToMetaSets={() => {}}
             contentColorSetup={{ color: "#222", background: "white" }}
           />
         </div>

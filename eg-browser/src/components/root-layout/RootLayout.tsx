@@ -6,6 +6,8 @@ import {
   selectExpandNavigationTab,
   setSessionPanelOpen,
 } from "../../lib/redux/slices/navigationSlice";
+import { Tool } from "wuepgg3-track";
+import { selectTool } from "../../lib/redux/slices/utilitySlice";
 import GenomePicker from "../genome-picker/GenomePicker";
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
@@ -23,16 +25,17 @@ import {
   setCurrentSession,
   updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
+import MouseFollowingTooltip from "../ui/tooltip/MouseFollowingTooltip";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
 import {
   resetSettings,
   selectDarkTheme,
+  selectCookieConsentStatus,
   setNavBarVisibility,
   setNavigatorVisibility,
   setToolBarVisibility,
@@ -77,32 +80,42 @@ export interface RootLayoutProps {
   windowWidth?: number;
   customGenome?: any;
   showGenomeNavigator?: boolean;
-  showNavBar?: boolean;
-  showToolBar?: boolean;
+  // showNavBar?: boolean;
+  // showToolBar?: boolean;
 }
 
-export default function RootLayout(props: RootLayoutProps) {
+export default function RootLayout() {
   useBrowserInitialization();
-
-  const isSmallScreen = useSmallScreen();
 
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
-  const currentSession = useAppSelector(selectCurrentSession);
   const navigationTab = useAppSelector(selectNavigationTab);
   const expandNavigationTab = useAppSelector(selectExpandNavigationTab);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
   const isNavigationTabEmpty = !sessionId || navigationTab === null;
-
+  const isSmallScreen = useSmallScreen();
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
-
-
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
+
+  // Keyboard handler for Escape key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (showModal || expandNavigationTab || showRightTab) {
+          // Close expanded navigation, modal, or right tab
+          dispatch(setNavigationTab(null));
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showModal, expandNavigationTab, showRightTab, dispatch]);
 
   return (
     <div
@@ -125,10 +138,7 @@ export default function RootLayout(props: RootLayoutProps) {
         {/* {import.meta.env.VITE_PACKAGE === "false" || props.showNavBar ? ( */}
         <NavBar />
         {/* ) : null} */}
-        <div
-          className="flex flex-row flex-1 relative bg-black"
-
-        >
+        <div className="flex flex-row flex-1 relative bg-black">
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
@@ -149,10 +159,7 @@ export default function RootLayout(props: RootLayoutProps) {
                   translateX: "-100%",
                 }}
               >
-                <div
-                  className="flex flex-col"
-
-                >
+                <div className="flex flex-col">
                   <SessionPanel />
                 </div>
               </motion.div>
@@ -199,31 +206,36 @@ export default function RootLayout(props: RootLayoutProps) {
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
               }}
             >
-              {sessionId !== null ? (
-                <motion.div
-                  className="flex flex-col w-screen pb-20"
-                  key="genome-view"
-                  exit={{ opacity: 0 }}
+              {/* Keep both components mounted, just hide/show them */}
+              <motion.div
+                className="flex flex-col w-screen pb-20"
+                style={{
+                  display: sessionId ? 'flex' : 'none'
+                }}
+                animate={{
+                  opacity: sessionId ? 1 : 0
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <GenomeErrorBoundary onGoHome={handleGoHome}>
+                  <GenomeView />
+                </GenomeErrorBoundary>
+              </motion.div>
+              {!sessionId ? <motion.div
+                className="h-full w-full"
 
-                >
-                  <GenomeErrorBoundary onGoHome={handleGoHome}>
-                    <GenomeView />
-                  </GenomeErrorBoundary>
-                </motion.div>
-              ) : (
-                <motion.div
-                  className="h-full w-full"
-                  key="genome-picker"
-                  exit={{ opacity: 0 }}
+                animate={{
+                  opacity: 1
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <GenomePicker />
+              </motion.div> : ""}
 
-                >
-                  <GenomePicker />
-                </motion.div>
-              )}
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {showRightTab && (
                 <motion.div
                   className="h-full overflow-hidden z-10"
@@ -248,48 +260,47 @@ export default function RootLayout(props: RootLayoutProps) {
                   }}
                 >
                   <div className="flex flex-col h-full">
-                    <div className="flex-1 relative">
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "tracks" ? "block" : "none",
-                        }}
-                      >
-                        <TracksTab />
+                    {/* Tab Header with close button */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                      <h2 className="text-2xl  text-gray-800 dark:text-white capitalize">
+                        {navigationTab}
+                      </h2>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Press Esc to close
+                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          ||
+                        </span>
+
+                        <button
+                          onClick={() => dispatch(setNavigationTab(null))}
+                          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                          title="Close tab"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
                       </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "apps" ? "block" : "none",
-                        }}
-                      >
-                        <AppsTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "help" ? "block" : "none",
-                        }}
-                      >
-                        <HelpTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "share" ? "block" : "none",
-                        }}
-                      >
-                        <ShareTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "settings" ? "block" : "none",
-                        }}
-                      >
-                        <SettingsTab />
+                    </div>
+                    <div className="flex-1 relative overflow-hidden">
+                      <div className="h-full">
+                        {navigationTab === "tracks" && <TracksTab />}
+                        {navigationTab === "apps" && <AppsTab />}
+                        {navigationTab === "help" && <HelpTab />}
+                        {navigationTab === "share" && <ShareTab />}
+                        {navigationTab === "settings" && <SettingsTab />}
                       </div>
                     </div>
                   </div>
@@ -300,32 +311,55 @@ export default function RootLayout(props: RootLayoutProps) {
         </div>
       </motion.div>
 
-      <AnimatePresence mode="wait">
-        {showModal && (
-          <motion.div
-            className="absolute top-12 left-0 w-screen h-screen bg-white"
-            style={{ borderRadius: CURL_RADIUS }}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-          >
-            <div className="flex flex-col h-full">
-              {navigationTab === "tracks" && <TracksTab />}
-              {navigationTab === "apps" && <AppsTab />}
-              {navigationTab === "help" && <HelpTab />}
-              {navigationTab === "share" && <ShareTab />}
-              {navigationTab === "settings" && <SettingsTab />}
-
+      {showModal && (
+        <motion.div
+          className="absolute top-12 left-0 w-screen h-screen bg-white"
+          style={{ borderRadius: CURL_RADIUS }}
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+            <h2 className="text-lg text-gray-800 dark:text-white capitalize">
+              {navigationTab}
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Press Esc to close
+              </span>
               <button
-                className="absolute top-4 right-4"
                 onClick={() => dispatch(setNavigationTab(null))}
+                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="Close tab"
               >
-                Done
+                <svg
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+          <div className="flex flex-col h-full">
+            {navigationTab === "tracks" && <TracksTab />}
+            {navigationTab === "apps" && <AppsTab />}
+            {navigationTab === "help" && <HelpTab />}
+            {navigationTab === "share" && <ShareTab />}
+            {navigationTab === "settings" && <SettingsTab />}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Mouse-following tool tooltip */}
+      <MouseFollowingTooltip />
     </div>
   );
 }

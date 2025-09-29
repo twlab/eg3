@@ -67,7 +67,7 @@ interface SessionUIProps extends HasBundleId {
 
 export const onRetrieveSession = async (retrieveId: string) => {
   if (retrieveId.length === 0) {
-    console.log("Session bundle Id cannot be empty.", "error", 2000);
+    console.log("Session bundle ID cannot be empty.", "error", 2000);
     return null;
   }
 
@@ -572,20 +572,20 @@ const SessionUI: React.FC<SessionUIProps> = ({
   return (
     <div style={styles.container}>
       <div style={styles.inputContainer}>
-        <label style={styles.label}>Session bundle Id</label>
+        <label style={styles.label}>Session Bundle ID</label>
         <div style={styles.row}>
           <input
             type="text"
             style={styles.input}
-            placeholder="Session bundle Id"
+            placeholder="Session Bundle ID"
             value={retrieveId}
             onChange={(e) => setRetrieveId(e.target.value.trim())}
           />
           <button
             style={styles.button}
             onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.buttonHover.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -601,12 +601,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
             <button
               style={styles.uploadButton}
               onMouseOver={(e) =>
-                (e.target.style.backgroundColor =
-                  styles.uploadButtonHover.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.uploadButtonHover.backgroundColor)
               }
               onMouseOut={(e) =>
-                (e.target.style.backgroundColor =
-                  styles.uploadButton.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.uploadButton.backgroundColor)
               }
             >
               Upload
@@ -648,8 +648,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                       (e.target.style.backgroundColor = "#EC971F")
                     }
                     onMouseOut={(e) =>
-                      (e.target.style.backgroundColor =
-                        styles.button.backgroundColor)
+                    (e.target.style.backgroundColor =
+                      styles.button.backgroundColor)
                     }
                     onClick={() => setNewSessionLabel(getFunName())}
                   >

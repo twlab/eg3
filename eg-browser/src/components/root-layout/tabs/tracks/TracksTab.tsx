@@ -67,10 +67,7 @@ export default function TracksTab() {
   );
 
   return (
-    <NavigationStack
-      destinations={destinations}
-      rootOptions={{ title: "Tracks" }}
-    >
+    <NavigationStack destinations={destinations}>
       <div className="flex flex-col gap-4">
         <DescriptiveNavigationLink
           path="annotation"

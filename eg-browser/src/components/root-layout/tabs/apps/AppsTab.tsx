@@ -76,10 +76,7 @@ export default function AppsTab() {
   );
 
   return (
-    <NavigationStack
-      destinations={destinations}
-      rootOptions={{ title: "Apps" }}
-    >
+    <NavigationStack destinations={destinations}>
       <div className="flex flex-col gap-4">
         <DescriptiveNavigationLink
           path="region-set-view"

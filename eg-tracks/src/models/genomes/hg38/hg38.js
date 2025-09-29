@@ -44,6 +44,7 @@ const genome = new Genome("hg38", [
 // long range chr7:23208969-31218193
 // for renmora
 // for omer4dn chr5:114534673-136928518
+// url parameter datahub test https://vizhub.wustl.edu/public/tmp/a.json
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 

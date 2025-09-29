@@ -127,6 +127,7 @@ export function TrackContainerRepresentable({
 
   const convertedViewRegion = useMemo(() => {
     try {
+
       if (!viewRegion) {
         if (userViewRegion) {
           const navContext = genomeConfig.navContext as NavigationContext;

@@ -41,7 +41,8 @@ import {
 } from "@/lib/redux/slices/settingsSlice";
 import { version } from "../../../package.json";
 import History from "./History";
-import { RootState } from "../../lib/redux/store";
+
+import { selectCurrentState } from "../../lib/redux/selectors";
 export default function NavBar() {
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -50,9 +51,7 @@ export default function NavBar() {
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
 
-  const currentState = useAppSelector((state: RootState) => {
-    return currentSession ? { ...state.browser } : null;
-  });
+  const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
   const {
@@ -62,7 +61,6 @@ export default function NavBar() {
     canRedo,
     jumpToPast,
     jumpToFuture,
-    clearHistory,
   } = useUndoRedo();
 
   const genome = useCurrentGenome();
@@ -176,15 +174,7 @@ export default function NavBar() {
                 >
                   <ArrowUturnLeftIcon className="h-5 w-5" />
                 </IconButton>
-                {/* <History
-                  state={{
-                    past: currentState ? currentState.past : [],
-                    future: currentState ? currentState.future : [],
-                  }}
-                  jumpToPast={jumpToPast}
-                  jumpToFuture={jumpToFuture}
-                  clearHistory={clearHistory}
-                /> */}
+
                 <IconButton
                   onClick={redo}
                   disabled={!canRedo}
@@ -193,7 +183,15 @@ export default function NavBar() {
                 >
                   <ArrowUturnRightIcon className="h-5 w-5" />
                 </IconButton>
-
+                <History
+                  state={{
+                    past: currentState ? currentState.past : [],
+                    future: currentState ? currentState.future : [],
+                  }}
+                  jumpToPast={jumpToPast}
+                  jumpToFuture={jumpToFuture}
+                />
+                <div className="h-5 border-r border-gray-400" />
                 <Button
                   onClick={() =>
                     dispatch(

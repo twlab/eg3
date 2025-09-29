@@ -83,11 +83,11 @@ hen scroll back if its fetching the new tracks only that are added
 4. add props to genomeHub package
 --5. add saving chromosome in sessions so custom genome can be rebuild 
 -- 6. fix datahub bug
-7. history menu option
+-- 7. history menu option
 --8. fix strictmode, cause ref data not getting deleted after component unmount
 --9. rework viewRegion and userViewRegion
 -- 10. create a contextCoord convert to genomicCoord
-11. move toolbar to the top next to region controller
+-- 11. move toolbar to the top next to region controller
 
 12 create intiial windowWidth before genomeroot and resize from root to manager
 13 delte newdrawdata state in trackmanager
@@ -97,3 +97,17 @@ hen scroll back if its fetching the new tracks only that are added
 
 16. make each track component be able to react to state changes so its not recreated. 
 17. take out local tracks when refreshing
+18. create reorder many tab 
+19. change zoom icon to original 
+
+
+9/25/2025
+1. rework tracks component to not create a new react component drawing new regionselect and instead just 
+    change and redraw based on new data
+2. fix genes search, probably need to rework servers
+3. fix url param for datahub
+4. check sessions in genome picker menu, (finish import) (check: upload for new data format and old session format
+, url params, etc)
+5. legend width setting
+6. check errors 
+7. NEW FEATURE: IMPLEMENT SEPARATE COLUMNS, where user can compare tracks etc. NEED NEW package not flexlayout
