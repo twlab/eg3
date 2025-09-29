@@ -13,7 +13,7 @@ import { updateBundle } from "../slices/hubSlice";
 import { generateUUID } from "wuepgg3-track";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 import { addCustomGenomeRemote } from "./genome-hub";
-import { useAppDispatch } from "../hooks";
+
 
 
 export function convertSession(session: any, dispatch: any) {
@@ -37,6 +37,7 @@ export function convertSession(session: any, dispatch: any) {
       ? session.defaultTracks
       : [];
   if (session.chromosomes && session.chromosomes.length > 0) {
+
     const _newGenomeConfig = {
       id: curGenomeName,
       name: curGenomeName,
@@ -46,14 +47,25 @@ export function convertSession(session: any, dispatch: any) {
         waitToUpdate: true,
       })),
     };
-    console.log("Here")
+
     dispatch(addCustomGenomeRemote(_newGenomeConfig));
     newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
   } else if (getGenomeConfig(curGenomeName)) {
     newGenomeConfig = getGenomeConfig(curGenomeName);
+  } else if (session.viewRegion && typeof session.viewRegion === "object") {
+    newGenomeConfig = getGenomeConfig(session.viewRegion._navContext._name);
+
   }
 
-  if (newGenomeConfig && session.viewRegion !== undefined) {
+  if (newGenomeConfig && session.viewRegion && typeof session.viewRegion === "object") {
+    coordinate = new DisplayedRegionModel(
+      newGenomeConfig?.navContext,
+      session.viewRegion._startBase,
+      session.viewRegion._endBase
+    ).currentRegionAsString() as GenomeCoordinate | null;
+
+  }
+  else if (newGenomeConfig && session.viewRegion !== undefined) {
     coordinate = session.viewRegion;
   } else if (newGenomeConfig && session.viewInterval) {
     coordinate = new DisplayedRegionModel(
@@ -79,7 +91,7 @@ export function convertSession(session: any, dispatch: any) {
 
   session = {
     id: generateUUID(),
-    genomeId: curGenomeName,
+    genomeId: curGenomeName ? curGenomeName : newGenomeConfig ? newGenomeConfig?.genome.getName() : null,
     customGenome: session.customGenome,
     createdAt: Date.now(),
     updatedAt: Date.now(),

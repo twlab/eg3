@@ -115,8 +115,18 @@ const Session: React.FC = () => {
     } else if (getGenomeConfig(sessionBundle.genomeId)) {
       newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
     }
+    else if (sessionBundle.viewRegion && typeof sessionBundle.viewRegion === "object") {
+      newGenomeConfig = getGenomeConfig(sessionBundle.viewRegion._navContext._name);
 
-    if (newGenomeConfig && sessionBundle.viewRegion !== undefined) {
+    }
+    if (newGenomeConfig && sessionBundle.viewRegion && typeof sessionBundle.viewRegion === "object") {
+      coordinate = new DisplayedRegionModel(
+        newGenomeConfig?.navContext,
+        sessionBundle.viewRegion._startBase,
+        sessionBundle.viewRegion._endBase
+      ).currentRegionAsString() as GenomeCoordinate | null;
+
+    } else if (newGenomeConfig && sessionBundle.viewRegion !== undefined) {
       coordinate = sessionBundle.viewRegion;
     } else if (newGenomeConfig && sessionBundle.viewInterval) {
       coordinate = new DisplayedRegionModel(
@@ -127,7 +137,7 @@ const Session: React.FC = () => {
     }
 
     const session = {
-      genomeId: sessionBundle.genomeId,
+      genomeId: newGenomeConfig ? newGenomeConfig?.genome.getName() : sessionBundle.genomeId ? sessionBundle.genomeId : null,
       customGenome: sessionBundle.customGenome,
       chromosomes: sessionBundle.chromosomes ? sessionBundle.chromosomes : null,
       createdAt: Date.now(),
@@ -144,7 +154,7 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
-
+    console.log("Restored session:", session);
     dispatch(resetState());
     dispatch(updateCurrentSession(session));
   }

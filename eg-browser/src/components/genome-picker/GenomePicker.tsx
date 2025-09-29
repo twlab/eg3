@@ -119,7 +119,7 @@ export default function GenomePicker() {
             ]}
           >
             <TabView<"sessions" | "genomes">
-              initialTab={sessions.length > 0 ? "sessions" : "genomes"}
+              initialTab={"sessions"}
               tabs={[
                 {
                   label: "Sessions",

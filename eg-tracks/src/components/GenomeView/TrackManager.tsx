@@ -3332,20 +3332,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         addTermToMetaSets(newAddedTrackModel);
         setTrackComponents(newTrackComponents);
         queueRegionToFetch(dataIdx.current);
-        if (infiniteScrollWorkers.current) {
-          infiniteScrollWorkers.current.worker?.forEach((w) => {
-            if (!w.hasOnMessage) {
-              w.fetchWorker.onmessage = createInfiniteOnMessage;
-              w.hasOnMessage = true;
-            }
-          });
-          infiniteScrollWorkers.current.instance?.forEach((w) => {
-            if (!w.hasOnMessage) {
-              w.fetchWorker.onmessage = createInfiniteOnMessage;
-              w.hasOnMessage = true;
-            }
-          });
-        }
+
       } else {
         const newTrackComponents: Array<any> = [];
 
@@ -3380,6 +3367,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         }
       }
       addTermToMetaSets(filteredTracks);
+    }
+    if (infiniteScrollWorkers.current) {
+      infiniteScrollWorkers.current.worker?.forEach((w) => {
+        if (!w.hasOnMessage) {
+          w.fetchWorker.onmessage = createInfiniteOnMessage;
+          w.hasOnMessage = true;
+        }
+      });
+      infiniteScrollWorkers.current.instance?.forEach((w) => {
+        if (!w.hasOnMessage) {
+          w.fetchWorker.onmessage = createInfiniteOnMessage;
+          w.hasOnMessage = true;
+        }
+      });
     }
   }, [tracks]);
   // MARK: width, regions
@@ -3566,6 +3567,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 display: "flex",
                 paddingLeft: getPadding() ? getPadding() : 5,
                 alignItems: "center",
+
               }}
             >
               <p
