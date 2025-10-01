@@ -53,9 +53,9 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     packageVersion
       ? null
       : {
-          instance: [],
-          worker: [],
-        }
+        instance: [],
+        worker: [],
+      }
   );
   const fetchGenomeAlignWorker = useRef<{
     fetchWorker: Worker;
@@ -197,7 +197,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               (!size.width || size.width - legendWidth <= 0
                 ? window.innerWidth
                 : size.width) -
-              legendWidth -
+              legendWidth
+              -
               40
             }
             userViewRegion={userViewRegion}
@@ -346,8 +347,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             (!size.width || size.width - legendWidth <= 0
               ? window.innerWidth
               : size.width) -
-              legendWidth -
-              40
+            legendWidth -
+            40
           )}
           userViewRegion={userViewRegion}
           highlights={highlights}
