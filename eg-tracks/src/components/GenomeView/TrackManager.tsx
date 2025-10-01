@@ -1981,7 +1981,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       ) {
         curViewWindow = new OpenInterval(0, windowWidth);
       } else {
-        console.log(globalTrackState.current.viewWindow);
+
         curViewWindow = globalTrackState.current.viewWindow;
       }
 
@@ -1991,7 +1991,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ...completedFetchedRegion.current.done,
         ...newDrawData.trackToDrawId,
       };
-      console.log("VIEWWINDOW", curViewWindow);
+   
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,
