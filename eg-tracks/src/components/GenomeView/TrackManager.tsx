@@ -888,10 +888,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       };
     } else {
       dataIdx.current = curDataIdx;
-
       queueRegionToFetch(dataIdx.current);
     }
-    console.log(curViewWindow)
+
 
   }
 
