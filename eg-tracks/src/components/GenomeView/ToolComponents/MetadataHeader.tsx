@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 
 import MetadataSelectionMenu from "./MetadataSelectionMenu";
+import { TagIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 // import MetadataIndicator from "../TrackComponents/commonComponents/MetadataIndicator";
 import "./MetadataHeader.css";
 
@@ -24,6 +26,7 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
   padding,
 }) => {
   const [isShowingEditMenu, setIsShowingEditMenu] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const termWidth = 15;
 
@@ -41,17 +44,27 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
         >
           <button
             onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
-            className={
-              isShowingEditMenu
-                ? "btn btn-sm btn-danger"
-                : "btn btn-sm btn-success"
-            }
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="flex items-center gap-1 px-1"
             style={{
-              width: `${Math.max(80, Math.min(110, windowWidth * 0.09))}px`,
-              fontSize: `${fontSize}px`,
+              outline: isShowingEditMenu
+                ? "1px solid #1e40af"
+                : "1px solid #1d4ed8",
+              backgroundColor: isHovered ? "#eff6ff" : "transparent",
+              color: isShowingEditMenu ? "#1d4ed8" : "#2563eb",
+              transition: "all 0.2s",
+              borderRadius: "2px",
             }}
+            title="Metadata options"
           >
-            Metadata {isShowingEditMenu ? "↩" : "»"}
+            <span className="text-base font-medium">Metadata</span>
+            <motion.div
+              animate={{ rotate: isShowingEditMenu ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRightIcon className="w-4 h-4" />
+            </motion.div>
           </button>
           <div>
             <MetadataSelectionMenu

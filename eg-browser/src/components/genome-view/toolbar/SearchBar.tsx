@@ -749,12 +749,12 @@ export default function SearchBar({
       </AnimatePresence>
       <motion.div
         ref={searchContainerRef}
-        className="flex flex-col relative outline-1 outline-gray-400"
+        className="flex flex-col relative border-1 outline-gray-400 rounded-sm"
         transition={{ duration: 0.2 }}
       >
         <AnimatePresence>
           {isSearchFocused &&
-            ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
+          ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
               className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
               initial={{ opacity: 0, y: -10, maxHeight: 0 }}
@@ -772,7 +772,7 @@ export default function SearchBar({
         {/* Outer row for search input + dynamic buttons; increased flex growth & min width */}
         <div className="flex flex-row items-center w-full h-full flex-grow">
           {/* Inner container: give it stronger flex and a minimum width so it claims more horizontal space */}
-          <div className="flex flex-row items-center w-full flex-[2] min-w-[227px]">
+          <div className="flex flex-row items-center w-full flex-[2] min-w-[175px]">
             {activeCommand ? (
               <div
                 className="flex items-center bg-secondary dark:bg-dark-secondary rounded-md mr-1.5 flex-shrink-0"
@@ -787,7 +787,7 @@ export default function SearchBar({
               </div>
             ) : (
               <MagnifyingGlassIcon
-                className="text-gray-400 flex-shrink-0 mr-1"
+                className="text-gray-400 flex-shrink-0 mx-1"
                 style={iconSizeStyle}
               />
             )}

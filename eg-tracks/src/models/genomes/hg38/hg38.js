@@ -70,6 +70,18 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
+  new TrackModel({
+    type: "bigwig",
+    name: "bigwig nochr",
+    genome: "hg38",
+    url: "https://wangftp.wustl.edu/~dli/test/TW549_2-5-bonemarrow_MRE.CpG.nochr.bigwig",
+  }),
+  new TrackModel({
+    type: "bigwig",
+    name: "bigwig yeschr",
+    genome: "hg38",
+    url: "https://wangftp.wustl.edu/~dli/test/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  }),
   // new TrackModel({
   //   name: "hg38tomm10",
   //   label: "Query mouse mm10 to hg38 blastz",
