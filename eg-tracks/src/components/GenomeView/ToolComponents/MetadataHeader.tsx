@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import MetadataSelectionMenu from "./MetadataSelectionMenu";
 import { TagIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -14,6 +14,7 @@ interface MetadataHeaderProps {
   windowWidth?: number;
   fontSize?: number;
   padding?: number;
+  metaWidth?: number;
 }
 
 const MetadataHeader: React.FC<MetadataHeaderProps> = ({
@@ -24,37 +25,41 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
   windowWidth = 800,
   fontSize,
   padding,
+  metaWidth = 200,
 }) => {
   const [isShowingEditMenu, setIsShowingEditMenu] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
   const termWidth = 15;
+  const buttonWidth = 120; // Approximate width for the Metadata button
+  const totalContentWidth = Math.max(
+    buttonWidth + terms.length * termWidth + (padding ? padding * 2 : 10),
+    windowWidth * 0.2 // Minimum width
+  );
 
   return (
-    <>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        width: `${totalContentWidth}px`,
+        flexShrink: 0,
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center" }}>
-        <div
-          style={{ paddingLeft: padding ? padding : 5 }}
-          className="h-5 border-r border-gray-400"
-        />
-
         <div
           className="MetadataHeader-button"
           style={{ paddingLeft: padding ?? (padding || 5) }}
         >
           <button
             onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            className="flex items-center gap-1 px-1"
+            className="flex items-center gap-2 rounded-sm px-2"
             style={{
-              outline: isShowingEditMenu
+              border: isShowingEditMenu
                 ? "1px solid #1e40af"
                 : "1px solid #1d4ed8",
-              backgroundColor: isHovered ? "#eff6ff" : "transparent",
+              backgroundColor: "#eff6ff",
               color: isShowingEditMenu ? "#1d4ed8" : "#2563eb",
               transition: "all 0.2s",
-              borderRadius: "2px",
             }}
             title="Metadata options"
           >
@@ -90,7 +95,7 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
           ))}
         </ul>
       </div>
-    </>
+    </div>
   );
 };
 

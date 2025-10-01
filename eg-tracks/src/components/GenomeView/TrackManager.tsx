@@ -3496,7 +3496,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
             display: "flex",
             flexDirection: windowWidth <= 1080 ? "column" : "row",
             alignItems: windowWidth <= 1080 ? "stretch" : "center",
-            justifyContent: "center",
+            justifyContent: "end",
           }}
         >
           <div
@@ -3565,6 +3565,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                   style={{
                     display: "flex",
                     paddingLeft: getPadding() ? getPadding() : 5,
+                    paddingRight: getPadding() ? getPadding() : 5,
                     alignItems: "center",
                     flexShrink: 0,
                   }}
@@ -3587,17 +3588,13 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                 </div>
               </div>
             )}
+            <div className="h-5 border-r border-gray-400" />
           </div>
+
           <div
             style={{
               display: "flex",
-              justifyContent:
-                windowWidth <= 1080
-                  ? windowWidth <= 1080
-                    ? "center"
-                    : "space-between"
-                  : "space-between",
-              alignItems: "center",
+              justifyContent: "flex-end",
 
               marginTop:
                 windowWidth <= 1080 ? (getPadding() ? getPadding() / 2 : 3) : 0,
