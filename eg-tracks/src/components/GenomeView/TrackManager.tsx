@@ -3598,8 +3598,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
                     : "space-between"
                   : "space-between",
               alignItems: "center",
-              width:
-                windowWidth <= 1080 ? "100%" : getResponsiveWidths().metaWidth,
+
               marginTop:
                 windowWidth <= 1080 ? (getPadding() ? getPadding() / 2 : 3) : 0,
             }}

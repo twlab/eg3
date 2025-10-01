@@ -770,9 +770,9 @@ export default function SearchBar({
         </AnimatePresence>
 
         {/* Outer row for search input + dynamic buttons; increased flex growth & min width */}
-        <div className="flex flex-row items-center w-full h-full flex-grow">
+        <div className="flex flex-row items-center w-full h-full flex-grow ">
           {/* Inner container: give it stronger flex and a minimum width so it claims more horizontal space */}
-          <div className="flex flex-row items-center w-full flex-[2] min-w-[175px]">
+          <div className="flex flex-row items-center w-full flex-[2]">
             {activeCommand ? (
               <div
                 className="flex items-center bg-secondary dark:bg-dark-secondary rounded-md mr-1.5 flex-shrink-0"
