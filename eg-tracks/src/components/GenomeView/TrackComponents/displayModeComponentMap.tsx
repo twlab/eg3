@@ -131,17 +131,17 @@ export const displayModeComponentMap: { [key: string]: any } = {
       if (configOptions.forceSvg || configOptions.packageVersion) {
         let curParentStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
+              position: "relative",
 
-            overflow: "hidden",
-            width: width / 3,
-          }
+              overflow: "hidden",
+              width: width / 3,
+            }
           : {};
         let curEleStyle: any = configOptions.forceSvg
           ? {
-            position: "relative",
-            transform: `translateX(${-trackState.viewWindow.start}px)`,
-          }
+              position: "relative",
+              transform: `translateX(${-trackState.viewWindow.start}px)`,
+            }
           : {};
 
         return (
@@ -211,7 +211,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           y={y}
           isMinimal={isLastRow}
           options={configOptions}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
         >
           {placedGroup.placedFeatures.map((placedGene, i) => (
             <GeneAnnotation
@@ -236,7 +236,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           color={configOptions.color}
           reverseStrandColor={configOptions.color2}
           isInvertArrowDirection={placement.isReverse}
-          onClick={renderTooltip ? renderTooltip : () => { }}
+          onClick={renderTooltip ? renderTooltip : () => {}}
           alwaysDrawLabel={configOptions.alwaysDrawLabel}
           hiddenPixels={configOptions.hiddenPixels}
         />
@@ -309,7 +309,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
             opacity={scoreScale(placement.feature.score)}
@@ -334,7 +334,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             color2={configOptions.color2}
             rowHeight={configOptions.rowHeight}
-            renderTooltip={renderTooltip ? renderTooltip : () => { }}
+            renderTooltip={renderTooltip ? renderTooltip : () => {}}
             onHideTooltip={onClose}
             hiddenPixels={configOptions.hiddenPixels}
             hideMinimalItems={configOptions.hideMinimalItems}
@@ -457,7 +457,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
               y={y}
               isMinimal={false}
               color={color}
-              onClick={renderTooltip ? renderTooltip : () => { }}
+              onClick={renderTooltip ? renderTooltip : () => {}}
               category={configOptions.category}
               height={configOptions.height}
               alwaysDrawLabel={configOptions.alwaysDrawLabel}
@@ -483,7 +483,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             color={configOptions.color}
             reverseStrandColor={configOptions.color2}
             isInvertArrowDirection={placement.isReverse}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             alwaysDrawLabel={configOptions.alwaysDrawLabel}
             hiddenPixels={configOptions.hiddenPixels}
           />
@@ -502,7 +502,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
             key={i}
             placedRecord={placement}
             y={y}
-            onClick={renderTooltip ? renderTooltip : () => { }}
+            onClick={renderTooltip ? renderTooltip : () => {}}
             options={configOptions}
           />
         ));
@@ -522,8 +522,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
         const totalImageWidth = Math.max(
           (configOptions.imageHeight[0] * configOptions.imageAspectRatio +
             THUMBNAIL_PADDING) *
-          imgCount -
-          THUMBNAIL_PADDING,
+            imgCount -
+            THUMBNAIL_PADDING,
           0
         );
         const screenWidth = viewWindow.end - viewWindow.start;
@@ -547,8 +547,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
               configOptions.label
                 ? configOptions.label
                 : trackModel.options.label
-                  ? trackModel.options.label
-                  : ""
+                ? trackModel.options.label
+                : ""
             }
           />
         );
@@ -567,7 +567,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
           width={0}
           layoutModel={Model.fromJson(initialLayout)}
           isThereG3dTrack={false}
-          onSetImageInfo={() => { }}
+          onSetImageInfo={() => {}}
           heightObj={heightObj}
         />
       );
@@ -648,8 +648,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
           configOptions.label
             ? configOptions.label
             : trackModel.options.label
-              ? trackModel.options.label
-              : ""
+            ? trackModel.options.label
+            : ""
         }
         forceSvg={configOptions.forceSvg}
       />
@@ -713,8 +713,6 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
-
-
 
   vcf: function getVcf({
     formattedData,
@@ -1148,9 +1146,9 @@ export const displayModeComponentMap: { [key: string]: any } = {
         selectedRegion={
           trackState.genomicFetchCoord
             ? objToInstanceAlign(
-              trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
-                .viewWindowRegion
-            )
+                trackState.genomicFetchCoord[`${genomeName}`].primaryVisData
+                  .viewWindowRegion
+              )
             : trackState.visRegion
         }
         viewWindow={
@@ -1184,8 +1182,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             drawData.configOptions.label
               ? drawData.configOptions.label
               : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
+              ? drawData.trackModel.options.label
+              : ""
           }
           forceSvg={drawData.configOptions.forceSvg}
         />
@@ -1281,8 +1279,8 @@ export const displayModeComponentMap: { [key: string]: any } = {
             drawData.configOptions.label
               ? drawData.configOptions.label
               : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
+              ? drawData.trackModel.options.label
+              : ""
           }
           forceSvg={drawData.configOptions.forceSvg}
         />
@@ -1372,7 +1370,69 @@ export const displayModeComponentMap: { [key: string]: any } = {
 };
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
-  if (drawData.trackModel.type === "ruler") {
+  if (drawData.isError) {
+    if (drawData.updatedLegend) {
+
+      drawData.updatedLegend.current = (
+        <TrackLegend
+          height={40}
+          trackModel={drawData.trackModel}
+          label={
+            drawData.configOptions.label
+              ? drawData.configOptions.label
+              : drawData.trackModel.options.label
+              ? drawData.trackModel.options.label
+              : ""
+          }
+        />
+      );
+    }
+    return (
+      <div
+        style={{
+          width: drawData.trackState.visWidth,
+          height: 40,
+          backgroundColor: "#fef7f0",
+          textAlign: "center",
+          lineHeight: "40px",
+
+          fontFamily:
+            "Google Sans, Roboto, -apple-system, BlinkMacSystemFont, sans-serif",
+          fontSize: "16px",
+          fontWeight: "400",
+          color: "#d93025",
+          position: "relative",
+        }}
+      >
+        <span style={{ marginRight: "6px" }}>⚠️</span>
+        {Array.isArray(drawData.genesArr)
+          ? drawData.genesArr.filter((gene) => typeof gene === "string")[0] ||
+            "Error occurred"
+          : "Error occurred"}
+        <button
+          onClick={() => {
+            if (drawData.onRetry) {
+              drawData.onRetry();
+            } else if (drawData.trackModel && drawData.trackModel.refresh) {
+              drawData.trackModel.refresh();
+            }
+          }}
+          style={{
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            padding: "2px 6px",
+            fontSize: "12px",
+            fontWeight: "500",
+            cursor: "pointer",
+            marginLeft: "8px",
+          }}
+        >
+          🔄
+        </button>
+      </div>
+    );
+  } else if (drawData.trackModel.type === "ruler") {
     return displayModeComponentMap["ruler"]({
       trackState: drawData.trackState,
       configOptions: drawData.configOptions,
@@ -1985,9 +2045,16 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   // Add additional type-function mappings here
 };
 export function formatDataByType(genesArr: any[], type: string) {
-  if (typeof genesArr === "object" && "error" in genesArr) {
+  // Check if genesArr is falsy
+  if (!genesArr) {
+    return { error: "No data available" };
+  }
+
+  // Check if genesArr has an error property (cast to any to avoid TypeScript error)
+  if (typeof genesArr === "object" && (genesArr as any).error) {
     return genesArr;
   }
+
   const formatter = formatFunctions[type];
   if (formatter) {
     return formatter(genesArr);
