@@ -1172,22 +1172,23 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (drawData.svgHeight) {
       drawData.svgHeight.current = drawData.configOptions.height;
     }
+    let legend = (
+      <TrackLegend
+        height={drawData.configOptions.height}
+        trackModel={drawData.trackModel}
+        label={
+          drawData.configOptions.label
+            ? drawData.configOptions.label
+            : drawData.trackModel.options.label
+              ? drawData.trackModel.options.label
+              : ""
+        }
+        forceSvg={drawData.configOptions.forceSvg}
+      />
+    );
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
-      let legend = (
-        <TrackLegend
-          height={drawData.configOptions.height}
-          trackModel={drawData.trackModel}
-          label={
-            drawData.configOptions.label
-              ? drawData.configOptions.label
-              : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
-          }
-          forceSvg={drawData.configOptions.forceSvg}
-        />
-      );
+
       if (drawData.updatedLegend) {
         drawData.updatedLegend.current = legend;
       }
@@ -1271,20 +1272,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       return element;
     } else {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
-      drawData.updatedLegend.current = (
-        <TrackLegend
-          height={drawData.configOptions.height}
-          trackModel={drawData.trackModel}
-          label={
-            drawData.configOptions.label
-              ? drawData.configOptions.label
-              : drawData.trackModel.options.label
-                ? drawData.trackModel.options.label
-                : ""
-          }
-          forceSvg={drawData.configOptions.forceSvg}
-        />
-      );
+
+      if (drawData.updatedLegend) {
+        drawData.updatedLegend.current = legend
+      }
       const strand = result.plotStrand;
       const targetGenome = result.primaryGenome;
       const queryGenome = result.queryGenome;
@@ -1313,25 +1304,51 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
       svgElements.push(primaryArrows);
       let element;
-      if (drawData.configOptions.forceSvg) {
-        let start =
-          drawData.trackState.viewWindow.start +
-          drawData.trackState.visWidth / 3;
 
-        let end =
-          drawData.trackState.viewWindow.end - drawData.trackState.visWidth / 3;
-        let svgWidth = end - start;
-        element = (
-          <svg
-            width={drawData.trackState.visWidth / 3}
-            viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
-            height={drawData.configOptions.height}
-            display={"block"}
-          >
-            {svgElements}
-          </svg>
-        );
-      } else {
+
+      if (drawData.configOptions.forceSvg) {
+
+        let curParentStyle: any = drawData.configOptions.forceSvg
+          ? {
+            position: "relative",
+
+            overflow: "hidden",
+            width: drawData.trackState.visWidth / 3,
+          }
+          : {};
+        let curEleStyle: any = drawData.configOptions.forceSvg
+          ? {
+            position: "relative",
+            transform: `translateX(${-drawData.trackState.viewWindow.start}px)`,
+          }
+          : {};
+
+        element = <React.Fragment>
+          <div style={{ display: "flex", ...curParentStyle }}>
+            {drawData.configOptions.forceSvg || drawData.configOptions.packageVersion
+              ? legend
+              : ""}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                ...curEleStyle,
+              }}
+            >
+              <svg
+                width={drawData.trackState.visWidth}
+                height={drawData.configOptions.height}
+                display={"block"}
+              >
+                {svgElements}
+              </svg>
+
+            </div>
+          </div>
+        </React.Fragment>
+
+      }
+      else {
         element = (
           <React.Fragment>
             <div

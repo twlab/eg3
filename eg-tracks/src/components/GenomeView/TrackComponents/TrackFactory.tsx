@@ -290,13 +290,16 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         if (!hasError) {
           if (dynamicMatplotTracks.has(trackModel.type)) {
-            if (combinedData[1].xvalues) {
+            if (cacheTrackData[`${dataIdx}`] && cacheTrackData[`${dataIdx}`]["xvalues"]) {
               combinedData = [];
             } else {
               combinedData = groupTracksArrMatPlot(combinedData);
             }
           } else {
-            if (!combinedData[1].xvalues) {
+            if (cacheTrackData[`${dataIdx}`] && cacheTrackData[`${dataIdx}`]["xvalues"] || !combinedData) {
+              combinedData = [];
+            }
+            else {
               combinedData = combinedData
                 .map((item) => {
                   if (item && "dataCache" in item && item.dataCache) {
@@ -306,8 +309,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                   }
                 })
                 .flat(1);
-            } else {
-              combinedData = [];
             }
           }
         }
@@ -341,7 +342,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           if (newDrawData.viewWindow) {
             trackState["viewWindow"] = newDrawData.viewWindow;
           }
-          console.log(combinedData)
+
           createSVGOrCanvas(
             trackState,
             combinedData,
@@ -521,13 +522,16 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           if (!hasError) {
             if (dynamicMatplotTracks.has(trackModel.type)) {
-              if (combinedData[1].xvalues) {
+              if (cacheTrackData[`${dataIdx}`] && cacheTrackData[`${dataIdx}`]["xvalues"]) {
                 combinedData = [];
               } else {
                 combinedData = groupTracksArrMatPlot(combinedData);
               }
             } else {
-              if (!combinedData[1].xvalues) {
+              if (cacheTrackData[`${dataIdx}`] && cacheTrackData[`${dataIdx}`]["xvalues"] || !combinedData) {
+                combinedData = [];
+              }
+              else {
                 combinedData = combinedData
                   .map((item) => {
                     if (item && "dataCache" in item && item.dataCache) {
@@ -537,8 +541,6 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
                     }
                   })
                   .flat(1);
-              } else {
-                combinedData = [];
               }
             }
           }
@@ -617,6 +619,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               trackModel,
               basesByPixel: basePerPixel,
               genomeConfig,
+              xvaluesData: cacheTrackData[dataIdx].xvalues
+                ? cacheTrackData[dataIdx].xvalues
+                : null
             },
             trackId: id,
           });
