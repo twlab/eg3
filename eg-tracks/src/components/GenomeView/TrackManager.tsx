@@ -1574,73 +1574,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           )
         );
 
-        const browserMemorySize: { [key: string]: any } = window.performance;
 
-        // Check memory usage and free up if necessary
-        if (
-          browserMemorySize["memory"] &&
-          browserMemorySize["memory"].usedJSHeapSize >
-          browserMemorySize["memory"].jsHeapSizeLimit * 0.7
-        ) {
-          // Old cache deletion loop (round-robin style)
-
-          for (const key in trackFetchedDataCache.current) {
-            const curTrack = trackFetchedDataCache.current[key];
-            for (const cacheDataIdx in curTrack) {
-              if (
-                curTrack.trackType in trackUsingExpandedLoci &&
-                isInteger(cacheDataIdx)
-              ) {
-                if (Number(cacheDataIdx) !== regionDrawIdx) {
-                  delete trackFetchedDataCache.current[key][cacheDataIdx]
-                    .dataCache;
-                  if (
-                    "records" in
-                    trackFetchedDataCache.current[key][cacheDataIdx]
-                  ) {
-                    delete trackFetchedDataCache.current[key][cacheDataIdx]
-                      .records;
-                  }
-                  if (
-                    "xvalues" in
-                    trackFetchedDataCache.current[key][cacheDataIdx]
-                  ) {
-                    delete trackFetchedDataCache.current[key][cacheDataIdx]
-                      .xvalues;
-                  }
-                }
-              }
-            }
-          }
-        }
-        for (const key in trackFetchedDataCache.current) {
-          const curTrack = trackFetchedDataCache.current[key];
-          const cacheKeys = Object.keys(curTrack)
-            .filter((k) => isInteger(k))
-            .map(Number)
-            .sort((a, b) => a - b);
-          const minIdx = regionDrawIdx - 2;
-          const maxIdx = regionDrawIdx + 2;
-          for (const cacheDataIdx of cacheKeys) {
-            if (
-              curTrack.trackType in trackUsingExpandedLoci &&
-              (cacheDataIdx < minIdx || cacheDataIdx > maxIdx)
-            ) {
-              // Remove all data for keys outside the 5-element window
-              delete trackFetchedDataCache.current[key][cacheDataIdx].dataCache;
-              if (
-                "records" in trackFetchedDataCache.current[key][cacheDataIdx]
-              ) {
-                delete trackFetchedDataCache.current[key][cacheDataIdx].records;
-              }
-              if (
-                "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
-              ) {
-                delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
-              }
-            }
-          }
-        }
         const drawData = {
           trackDataIdx: dataItem.trackDataIdx,
           initial: dataItem.initial,
@@ -1777,6 +1711,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
           enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
         } else {
+
           checkDrawData({
             curDataIdx: curTrackState.trackDataIdx,
             isInitial: 0,
@@ -1785,6 +1720,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           });
         }
       } else {
+
         enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
       }
     } catch (error) {
@@ -1792,22 +1728,35 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         "An error occurred when trying to fetch genomealign track:",
         error
       );
-
-      curTrackState["genomicFetchCoord"] = null;
-      let trackToDrawId = {};
-      for (let track of curTrackState.trackModelArr) {
-        trackFetchedDataCache.current[`${track.id}`][
-          `${curTrackState.missingIdx}`
-        ]["dataCache"] = { error: ["error fetching genomealign tracks"] };
-        trackToDrawId[`${track.id}`] = "";
+      const trackToDrawId: { [key: string]: any } = {};
+      for (const key in trackFetchedDataCache.current) {
+        trackToDrawId[key] = false;
       }
-      checkDrawData({
-        curDataIdx: curTrackState.trackDataIdx,
-        isInitial: 0,
-        trackToDrawId,
-        missingIdx: curTrackState.missingIdx,
-      });
-      enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+      if (curTrackState.fetchAfterGenAlignTracks.length > 0) {
+
+
+        for (const dataForFetch of curTrackState.fetchAfterGenAlignTracks) {
+          dataForFetch["trackToDrawId"] = trackToDrawId;
+        }
+
+        curTrackState["genomicFetchCoord"] = null;
+
+        for (const key in trackFetchedDataCache.current) {
+          trackToDrawId[key] = false;
+        }
+
+
+        enqueueMessage(curTrackState.fetchAfterGenAlignTracks);
+      }
+      else {
+        checkDrawData({
+          curDataIdx: curTrackState.trackDataIdx,
+          isInitial: 0,
+          trackToDrawId,
+          missingIdx: curTrackState.missingIdx,
+        });
+      }
+
     }
   };
   // MARK: queueRegion
@@ -1848,6 +1797,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           const dataCacheKeyMissing = !("dataCache" in curTrackCache[idx]);
 
           if (curIdx === idx && isGenomeAlignTrack && dataCacheKeyMissing) {
+            console.log(curIdx === idx, isGenomeAlignTrack, dataCacheKeyMissing, curTrackCache, idx)
             needToFetchGenAlign = true;
             hasAllRegionData = false;
             needToFetch = true;
@@ -1956,12 +1906,16 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         enqueueMessage(dataToFetchArr);
       }
     }
+
+    console.log(dataIdx.current, "data Idx", completedFetchedRegion.current.key, trackToDrawId, needToFetchGenAlign, trackFetchedDataCache.current);
     if (
       Object.keys(trackToDrawId).length > 0 &&
       !needToFetchGenAlign &&
       !initialLoad.current
     ) {
+
       if (dataIdx.current !== completedFetchedRegion.current.key) {
+
         completedFetchedRegion.current.done = {};
         completedFetchedRegion.current.key = dataIdx.current;
         checkDrawData({
@@ -1981,7 +1935,78 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   // MARK: checkDrawData
   function checkDrawData(newDrawData) {
-    console.log("1", newDrawData, dataIdx.current);
+    const browserMemorySize: { [key: string]: any } = window.performance;
+
+    // Check memory usage and free up if necessary
+    if (
+      browserMemorySize["memory"] &&
+      browserMemorySize["memory"].usedJSHeapSize >
+      browserMemorySize["memory"].jsHeapSizeLimit * 0.7
+    ) {
+      // Old cache deletion loop (round-robin style)
+
+      for (const key in trackFetchedDataCache.current) {
+        const curTrack = trackFetchedDataCache.current[key];
+        for (const cacheDataIdx in curTrack) {
+          if (
+            curTrack.trackType in trackUsingExpandedLoci &&
+            isInteger(cacheDataIdx)
+          ) {
+            if (Number(cacheDataIdx) !== dataIdx.current) {
+              delete trackFetchedDataCache.current[key][cacheDataIdx]
+                .dataCache;
+              if (
+                "records" in
+                trackFetchedDataCache.current[key][cacheDataIdx]
+              ) {
+                delete trackFetchedDataCache.current[key][cacheDataIdx]
+                  .records;
+              }
+              if (
+                "xvalues" in
+                trackFetchedDataCache.current[key][cacheDataIdx]
+              ) {
+                delete trackFetchedDataCache.current[key][cacheDataIdx]
+                  .xvalues;
+              }
+            }
+          }
+        }
+      }
+    }
+    for (const key in trackFetchedDataCache.current) {
+      const curTrack = trackFetchedDataCache.current[key];
+      const cacheKeys = Object.keys(curTrack)
+        .filter((k) => isInteger(k))
+        .map(Number)
+        .sort((a, b) => a - b);
+      let minIdx, maxIdx;
+      if (curTrack.trackType in trackUsingExpandedLoci) {
+        minIdx = dataIdx.current - 3;
+        maxIdx = dataIdx.current + 3;
+      }
+      else {
+        minIdx = dataIdx.current - 2;
+        maxIdx = dataIdx.current + 2;
+      }
+      for (const cacheDataIdx of cacheKeys) {
+        if (
+          (cacheDataIdx < minIdx || cacheDataIdx > maxIdx)
+        ) {
+
+          if (
+            "records" in trackFetchedDataCache.current[key][cacheDataIdx]
+          ) {
+            delete trackFetchedDataCache.current[key][cacheDataIdx].records;
+          }
+          if (
+            "xvalues" in trackFetchedDataCache.current[key][cacheDataIdx]
+          ) {
+            delete trackFetchedDataCache.current[key][cacheDataIdx].xvalues;
+          }
+        }
+      }
+    }
     if (newDrawData && Object.keys(newDrawData.trackToDrawId).length > 0) {
       let curViewWindow;
       const genomeName = genomeConfig.genome.getName();
@@ -2028,7 +2053,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         ...completedFetchedRegion.current.done,
         ...newDrawData.trackToDrawId,
       };
-      console.log("2", newDrawData, dataIdx.current, completedFetchedRegion.current);
+
       setDraw({
         trackToDrawId: { ...completedFetchedRegion.current.done },
         viewWindow: curViewWindow,

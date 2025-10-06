@@ -97,12 +97,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     cacheDataIdx,
     xvalues = null
   ) {
-
-    let curXPos = getTrackXOffset(trackState, windowWidth);
+    fetchError.current = isError;
+    const curXPos = getTrackXOffset(trackState, windowWidth);
 
     trackState["viewWindow"] = trackState.viewWindow;
 
-    let res = getDisplayModeFunction({
+    const res = getDisplayModeFunction({
       basesByPixel: basePerPixel,
       genesArr,
       genomeConfig,
@@ -121,11 +121,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       groupScale: trackState.groupScale,
       xvaluesData: xvalues,
       onClose,
-      isError: isError,
+      isError: fetchError.current,
       handleRetryFetchTrack: handleRetryFetchTrack,
     });
 
     if (cacheDataIdx === dataIdx) {
+
       signalTrackLoadComplete(id);
       updateSide.current = side;
       let result;
@@ -213,12 +214,12 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
-    console.log("3", newDrawData, dataIdx, newDrawData.completedFetchedRegion);
+
     if (
       newDrawData.completedFetchedRegion &&
       newDrawData.completedFetchedRegion.current["done"][id] === false
     ) {
-      console.log("4", newDrawData, dataIdx, newDrawData.completedFetchedRegion.current);
+
       if (dataIdx === newDrawData.completedFetchedRegion.current["key"]) {
         newDrawData.completedFetchedRegion.current["done"][id] = true;
       } else {
@@ -319,7 +320,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
             globalTrackState.current.trackStates[dataIdx].trackState[
             "groupScale"
             ];
-          console.log(hasError, combinedData)
+
           createSVGOrCanvas(
             trackState,
             combinedData,
@@ -340,10 +341,10 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
           if (newDrawData.viewWindow) {
             trackState["viewWindow"] = newDrawData.viewWindow;
           }
-
+          console.log(combinedData)
           createSVGOrCanvas(
             trackState,
-            "error" in combinedData ? combinedData.error : combinedData,
+            combinedData,
             "error" in combinedData ? true : false,
             dataIdx,
             cacheTrackData[dataIdx].xvalues

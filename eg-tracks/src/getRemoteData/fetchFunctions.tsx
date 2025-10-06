@@ -546,8 +546,8 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
               trackToDrawId[`${item.id}`] = "";
             } catch (error) {
               rawRecords = {
-                error: `Error processing genome align track with id ${item.id
-                  }: ${"Error"}`,
+                error: `Error fetching genome align track with id ${item.id
+                  }`,
               };
             }
           })

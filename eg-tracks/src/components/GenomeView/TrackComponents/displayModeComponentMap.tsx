@@ -1371,7 +1371,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
   if (drawData.isError) {
-    console.log(drawData)
+
     if (drawData.updatedLegend) {
 
       drawData.updatedLegend.current = (
@@ -1409,7 +1409,7 @@ export function getDisplayModeFunction(drawData: { [key: string]: any }) {
         {Array.isArray(drawData.genesArr)
           ? drawData.genesArr.filter((gene) => typeof gene === "string")[0] ||
           "Error occurred"
-          : "Error occurred"}
+          : typeof drawData.genesArr === "object" && drawData.genesArr["error"] ? drawData.genesArr["error"] : "Error occurred"}
         <button
           onClick={() => drawData.handleRetryFetchTrack(drawData.trackModel.id)}
           style={{
