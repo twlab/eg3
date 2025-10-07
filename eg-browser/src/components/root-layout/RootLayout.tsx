@@ -210,10 +210,10 @@ export default function RootLayout() {
               <motion.div
                 className="flex flex-col w-screen pb-20"
                 style={{
-                  display: sessionId ? 'flex' : 'none'
+                  display: sessionId ? "flex" : "none",
                 }}
                 animate={{
-                  opacity: sessionId ? 1 : 0
+                  opacity: sessionId ? 1 : 0,
                 }}
                 transition={{ duration: 0.2 }}
               >
@@ -221,17 +221,19 @@ export default function RootLayout() {
                   <GenomeView />
                 </GenomeErrorBoundary>
               </motion.div>
-              {!sessionId ? <motion.div
-                className="h-full w-full"
-
-                animate={{
-                  opacity: 1
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                <GenomePicker />
-              </motion.div> : ""}
-
+              {!sessionId ? (
+                <motion.div
+                  className="h-full w-full"
+                  animate={{
+                    opacity: 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <GenomePicker />
+                </motion.div>
+              ) : (
+                ""
+              )}
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}
