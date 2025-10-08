@@ -26,7 +26,6 @@ export const hubSlice = createSlice({
       state.publicTracksPool = action.payload;
     },
     addCustomTracksPool: (state, action: PayloadAction<ITrackModel[]>) => {
-
       state.customTracksPool = action.payload;
     },
     updateScreenShotData: (

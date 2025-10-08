@@ -45,7 +45,6 @@ export default function GenomeView() {
 
   if (lastSessionId.current !== sessionId && sessionId !== null) {
     if (lastSessionId.current !== null) {
-
       dispatch(resetState());
     }
     lastSessionId.current = sessionId;

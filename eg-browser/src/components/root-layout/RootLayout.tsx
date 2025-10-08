@@ -264,7 +264,7 @@ export default function RootLayout() {
                   <div className="flex flex-col h-full">
                     {/* Tab Header with close button */}
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-                      <h2 className="text-2xl  text-gray-800 dark:text-white capitalize">
+                      <h2 className="text-xl  text-gray-800 dark:text-white capitalize">
                         {navigationTab}
                       </h2>
                       <div className="flex items-center gap-3">

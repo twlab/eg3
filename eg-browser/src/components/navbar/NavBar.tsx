@@ -54,20 +54,14 @@ export default function NavBar() {
   const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const {
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    jumpToPast,
-    jumpToFuture,
-  } = useUndoRedo();
+  const { undo, redo, canUndo, canRedo, jumpToPast, jumpToFuture } =
+    useUndoRedo();
 
   const genome = useCurrentGenome();
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-    versionToLogoUrl[genome.name]?.logoUrl
+      versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
@@ -106,9 +100,9 @@ export default function NavBar() {
               {currentSession.title.length > 0 && genome?.name && (
                 //replaced text-primary with var font color
                 <>
-                  <p className="text-2xl  font-medium">{genome?.name}</p>
+                  <p className="text-xl  font-medium">{genome?.name}</p>
 
-                  <p className="text-2xl font-light">/</p>
+                  <p className="text-xl font-light">/</p>
                 </>
               )}
               <InlineEditable
@@ -120,8 +114,9 @@ export default function NavBar() {
                 onChange={(value) =>
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-2xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                  }`}
+                style={`text-xl font-light border border-blue-500 px-2 ${
+                  currentSession.title.length > 0 ? "" : "font-medium"
+                }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"
@@ -130,7 +125,7 @@ export default function NavBar() {
               />
             </div>
           ) : (
-            <h1 className="text-2xl font-light">
+            <h1 className="text-xl font-light">
               <span className="font-medium">WashU </span> Epigenome Browser
             </h1>
           ))}

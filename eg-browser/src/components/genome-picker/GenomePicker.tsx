@@ -149,9 +149,9 @@ export default function GenomePicker() {
           marginLeft: !isSmallScreen ? 5 : 0,
         }}
       >
-        <div className="max-w-2xl mx-auto py-4 h-full">
+        <div className="max-w-xl mx-auto py-4 h-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-            <h2 className="text-3xl">Select a Genome</h2>
+            <h2 className="text-2xl">Select a Genome</h2>
             <div className="relative mt-2 sm:mt-0 flex-1 w-full">
               <input
                 type="text"
@@ -164,85 +164,87 @@ export default function GenomePicker() {
             </div>
           </div>
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${selectedPath !== null ? "items-center" : ""
-              }`}
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${
+              selectedPath !== null ? "items-center" : ""
+            }`}
           >
-            {(
+            {filteredGenomes
               // selectedPath === null
               // ?
-              filteredGenomes
               // : filteredGenomes.filter((g) => g.name === selectedPath[0])
-            ).map((genome) => (
-              <motion.div
-                key={genome.name}
-                className={`rounded-2xl shadow-md dark:bg-dark-surface ${selectedPath !== null ? "col-start-2" : ""
+              .map((genome) => (
+                <motion.div
+                  key={genome.name}
+                  className={`rounded-xl shadow-md dark:bg-dark-surface ${
+                    selectedPath !== null ? "col-start-2" : ""
                   }`}
-                layout
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: 1,
-                }}
-                exit={{ opacity: 0 }}
-              >
-                <motion.img
                   layout
-                  src={
-                    !import.meta || !import.meta.env
-                      ? "/browser/"
-                      : import.meta.env.BASE_URL +
-                      (genome.logoUrl ?? placeholder)
-                  }
-                  alt={genome.name}
-                  className="rounded-2xl h-28 w-full object-cover object-top"
-                />
-                <motion.div className="p-4 pb-6">
-                  <motion.h2
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: 1,
+                  }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.img
                     layout
-                    className={`mb-2`}
-                    initial={{
-                      textAlign: "left",
-                      fontSize: "24px",
-                      lineHeight: "32px",
-                    }}
-                    animate={{
-                      textAlign: selectedPath !== null ? "center" : "left",
-                      fontSize: selectedPath !== null ? "30px" : "24px",
-                      lineHeight: selectedPath !== null ? "36px" : "32px",
-                    }}
-                  >
-                    {genome.name}
-                  </motion.h2>
-                  {(selectedPath === null
-                    ? genome.versions
-                    : genome.versions.filter((v) => v === selectedPath[1])
-                  ).map((version) => (
-                    <motion.div
+                    src={
+                      !import.meta || !import.meta.env
+                        ? "/browser/"
+                        : import.meta.env.BASE_URL +
+                          (genome.logoUrl ?? placeholder)
+                    }
+                    alt={genome.name}
+                    className="rounded-xl h-28 w-full object-cover object-top"
+                  />
+                  <motion.div className="p-4 pb-6">
+                    <motion.h2
                       layout
-                      key={version}
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => setSelectedPath([genome.name, version])}
+                      className={`mb-2`}
+                      initial={{
+                        textAlign: "left",
+                        fontSize: "24px",
+                        lineHeight: "32px",
+                      }}
+                      animate={{
+                        textAlign: selectedPath !== null ? "center" : "left",
+                        fontSize: selectedPath !== null ? "30px" : "24px",
+                        lineHeight: selectedPath !== null ? "36px" : "32px",
+                      }}
                     >
-                      {selectedPath === null && (
-                        <ChevronRightIcon className="w-4 h-4" />
-                      )}
-                      <motion.p
-                        className={`${selectedPath !== null
-                          ? "text-center text-xl w-full"
-                          : ""
-                          }`}
+                      {genome.name}
+                    </motion.h2>
+                    {(selectedPath === null
+                      ? genome.versions
+                      : genome.versions.filter((v) => v === selectedPath[1])
+                    ).map((version) => (
+                      <motion.div
+                        layout
+                        key={version}
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => setSelectedPath([genome.name, version])}
                       >
-                        {version}
-                      </motion.p>
-                    </motion.div>
-                  ))}
-                  {/* {selectedPath !== null && (
+                        {selectedPath === null && (
+                          <ChevronRightIcon className="w-4 h-4" />
+                        )}
+                        <motion.p
+                          className={`${
+                            selectedPath !== null
+                              ? "text-center text-xl w-full"
+                              : ""
+                          }`}
+                        >
+                          {version}
+                        </motion.p>
+                      </motion.div>
+                    ))}
+                    {/* {selectedPath !== null && (
                     <div className="flex justify-center pt-4">
                       <Progress size={36} />
                     </div>
                   )} */}
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            ))}
+              ))}
           </div>
           {/* {selectedPath && (
             <motion.button

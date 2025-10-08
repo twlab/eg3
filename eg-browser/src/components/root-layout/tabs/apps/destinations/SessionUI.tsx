@@ -1,4 +1,5 @@
 import React, { useState, ChangeEvent } from "react";
+import { BookmarkIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
 import JSZip from "jszip";
 import _ from "lodash";
@@ -37,6 +38,7 @@ export interface BundleProps {
   customGenome: any | null;
   genomeId: string | null;
   viewInterval: { start: number; end: number } | null;
+  title: string;
 }
 
 interface SessionBundle {
@@ -113,6 +115,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
             highlights: object.highlights || [],
             darkTheme: object.darkTheme || false,
             viewRegion: object.viewRegion,
+            title: object.title ? object.title : "Untitled Session",
           };
 
           // Replace the state key with the newBundle in the session.
@@ -140,7 +143,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   curBundle,
   bundleId,
 }) => {
-  const [newSessionLabel, setNewSessionLabel] = useState<string>(getFunName());
+  const [newSessionLabel, setNewSessionLabel] = useState<string>("");
   const [retrieveId, setRetrieveId] = useState<string>("");
   const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
   const [sortSession, setSortSession] = useState<string>("date"); // or label
@@ -149,7 +152,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   );
   const saveSession = async () => {
     const newSessionObj = {
-      label: newSessionLabel,
+      label: newSessionLabel ? newSessionLabel : "Untitled Session",
       date: Date.now(),
       state: state ? state : {},
     };
@@ -180,7 +183,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       console.log("Error while saving session", "error", 2000);
     }
 
-    setRandomLabel();
+    setNewSessionLabel("");
     setLastBundleId(bundle.bundleId);
   };
 
@@ -295,7 +298,49 @@ const SessionUI: React.FC<SessionUIProps> = ({
     if (bundle) {
       const sessions = Object.entries(bundle.sessionsInBundle || {});
       if (!sessions.length) {
-        return null;
+        return (
+          <div
+            style={{
+              border: "1px dashed #ccc",
+              borderRadius: "8px",
+              padding: "24px",
+              textAlign: "center",
+              backgroundColor: "#f9f9f9",
+              marginTop: "16px",
+              color: "#666",
+            }}
+          >
+            {/* <div style={{ fontSize: "48px", marginBottom: "12px" }}>📝</div> */}
+            <h3
+              style={{
+                margin: "0 0 8px 0",
+                fontSize: "18px",
+                color: "#333",
+                fontWeight: "600",
+              }}
+            >
+              No Sessions Saved
+            </h3>
+            <p
+              style={{
+                margin: "0 0 16px 0",
+                fontSize: "14px",
+                lineHeight: "1.4",
+              }}
+            >
+              Save your sessions and restore them with the "Session Bundle ID".
+            </p>
+            <div
+              style={{
+                fontSize: "12px",
+                fontStyle: "italic",
+                opacity: 0.8,
+              }}
+            >
+              Each session saves your current browser state and view.
+            </div>
+          </div>
+        );
       }
       if (sortSession === "date") {
         sessions.sort(([, a]: any, [, b]: any) => b.date - a.date);
@@ -306,53 +351,162 @@ const SessionUI: React.FC<SessionUIProps> = ({
         );
       }
       const buttons = sessions.map(([id, session]: any) => (
-        <li key={id}>
-          <span style={{ marginRight: "1ch" }}>{session.label}</span>(
-          {new Date(session.date).toLocaleString()})
-          {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
-            <button className="SessionUI btn btn-secondary btn-sm" disabled>
-              Restored
-            </button>
-          ) : (
+        <li
+          key={id}
+          style={{
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            padding: "clamp(0.4em, 0.5vw, 0.4em)",
+            fontSize: "clamp(10px, 0.9vw, 14px)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "clamp(4px, 0.5vw, 8px)",
+            marginBottom: "0.1em",
+          }}
+        >
+          <span>
+            <strong>{session.label}</strong> -{" "}
+            {new Date(session.date).toLocaleString()}
+          </span>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {lastBundleId === bundle.bundleId && id === bundle.currentId ? (
+              <button
+                disabled
+                style={{
+                  fontSize: "clamp(10px, 0.8vw, 14px)",
+                  padding: "2px 6px",
+                  border: "1px solid #6c757d",
+                  borderRadius: "3px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  cursor: "not-allowed",
+                }}
+              >
+                Restored
+              </button>
+            ) : (
+              <button
+                onClick={() => restoreSession(id)}
+                style={{
+                  fontSize: "clamp(10px, 0.8vw, 14px)",
+                  padding: "2px 6px",
+                  border: "1px solid #28a745",
+                  borderRadius: "3px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s, border-color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#218838";
+                  e.currentTarget.style.borderColor = "#1e7e34";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#28a745";
+                  e.currentTarget.style.borderColor = "#28a745";
+                }}
+              >
+                Restore
+              </button>
+            )}
             <button
-              className="SessionUI btn btn-success btn-sm"
-              onClick={() => restoreSession(id)}
+              onClick={() => deleteSession(id)}
+              style={{
+                fontSize: "clamp(10px, 0.8vw, 14px)",
+                padding: "2px 6px",
+                border: "1px solid #dc3545",
+                borderRadius: "3px",
+                backgroundColor: "#dc3545",
+                color: "white",
+                cursor: "pointer",
+                transition: "background-color 0.2s, border-color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#c82333";
+                e.currentTarget.style.borderColor = "#bd2130";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc3545";
+                e.currentTarget.style.borderColor = "#dc3545";
+              }}
             >
-              Restore
+              Delete
             </button>
-          )}
-          <button
-            onClick={() => deleteSession(id)}
-            className="SessionUI btn btn-danger btn-sm"
-          >
-            Delete
-          </button>
+          </div>
         </li>
       ));
       return (
-        <div className="SessionUI-sessionlist">
-          Sort session by:
-          <label>
-            <input
-              type="radio"
-              value="date"
-              name="sort"
-              checked={sortSession === "date"}
-              onChange={(e) => setSortSession(e.target.value)}
-            />
-            <span>Date</span>
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="sort"
-              value="label"
-              checked={sortSession === "label"}
-              onChange={(e) => setSortSession(e.target.value)}
-            />
-            <span>Label</span>
-          </label>
-          <ol>{buttons}</ol>
+        <div>
+          {/* Table Header */}
+          <div
+            style={{
+              ...styles.label,
+              display: "grid",
+              gridTemplateColumns: "1fr auto auto",
+              gap: "12px",
+            }}
+          >
+            <span>Saved Sessions ({sessions.length}):</span>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Sort by:
+              </span>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                <input
+                  type="radio"
+                  value="date"
+                  name="sort"
+                  checked={sortSession === "date"}
+                  onChange={(e) => setSortSession(e.target.value)}
+                />
+                <span>Date</span>
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="sort"
+                  value="label"
+                  checked={sortSession === "label"}
+                  onChange={(e) => setSortSession(e.target.value)}
+                />
+                <span>Name</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Table Body */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {buttons}
+          </div>
         </div>
       );
     }
@@ -393,9 +547,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
   };
 
-  const setRandomLabel = () => {
-    setNewSessionLabel(getFunName());
-  };
   function _restoreViewRegion(object: any, regionSetView: RegionSet) {
     const genomeConfig = getGenomeConfig(object.genomeName);
     if (!genomeConfig) {
@@ -572,7 +723,6 @@ const SessionUI: React.FC<SessionUIProps> = ({
   return (
     <div style={styles.container}>
       <div style={styles.inputContainer}>
-        <label style={styles.label}>Session Bundle ID</label>
         <div style={styles.row}>
           <input
             type="text"
@@ -584,8 +734,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-            (e.target.style.backgroundColor =
-              styles.buttonHover.backgroundColor)
+              (e.target.style.backgroundColor =
+                styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -594,90 +744,172 @@ const SessionUI: React.FC<SessionUIProps> = ({
           >
             Retrieve
           </button>
-        </div>
-        <div style={styles.uploadContainer}>
-          <span>Or use a session file:</span>
-          <div style={styles.uploadButtonWrapper}>
-            <button
-              style={styles.uploadButton}
-              onMouseOver={(e) =>
+          <button
+            style={{
+              ...styles.uploadButton,
+              position: "relative",
+              overflow: "hidden",
+            }}
+            onMouseOver={(e) =>
               (e.target.style.backgroundColor =
                 styles.uploadButtonHover.backgroundColor)
-              }
-              onMouseOut={(e) =>
+            }
+            onMouseOut={(e) =>
               (e.target.style.backgroundColor =
                 styles.uploadButton.backgroundColor)
-              }
-            >
-              Upload
-              <input
-                type="file"
-                style={styles.uploadInput}
-                onChange={uploadSession}
-              />
-            </button>
-          </div>
+            }
+          >
+            Upload
+            <input
+              type="file"
+              onChange={uploadSession}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                width: "100%",
+                height: "100%",
+                opacity: 0,
+                cursor: "pointer",
+              }}
+            />
+          </button>
+        </div>
+        <div
+          style={{
+            fontSize: "12px",
+            fontStyle: "italic",
+            opacity: 0.8,
+            textAlign: "center",
+            marginTop: "8px",
+          }}
+        >
+          Retrieving or uploading a new bundle will replace the current bundle.
         </div>
         <div style={styles.separator}></div>
         {!withGenomePicker && (
           <>
+            {/* Session Bundle Info */}
             <div style={styles.inputContainer}>
-              <div style={styles.row}>
-                <p style={styles.label}>
-                  Session bundle Id:{" "}
-                  {bundle && bundle.bundleId ? bundle.bundleId : ""}{" "}
+              <div style={styles.label}>
+                <span>Session Bundle ID:</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginTop: "4px",
+                    padding: "8px",
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "4px",
+                    border: "1px solid #e9ecef",
+                  }}
+                >
+                  <code
+                    style={{
+                      flex: "1",
+                      fontSize: "14px",
+                      color: "#495057",
+                      backgroundColor: "transparent",
+                    }}
+                  >
+                    {bundle && bundle.bundleId
+                      ? bundle.bundleId
+                      : "No bundle loaded"}
+                  </code>
                   <CopyToClip
                     value={bundle && bundle.bundleId ? bundle.bundleId : ""}
                   />
-                </p>
+                </div>
               </div>
+            </div>
+
+            {/* Create New Session */}
+            <div style={styles.inputContainer}>
               <div style={styles.label}>
-                <span>Name your session</span>
+                <span>Create New Session:</span>
                 <div style={styles.row}>
-                  <input
-                    type="text"
-                    value={newSessionLabel}
-                    style={{ ...styles.input, width: "auto", flex: "1" }}
-                    onChange={(e) => setNewSessionLabel(e.target.value.trim())}
-                  />
-                  <span>or use a</span>
+                  <div style={{ position: "relative", flex: "1" }}>
+                    <input
+                      type="text"
+                      value={newSessionLabel}
+                      style={{
+                        ...styles.input,
+                        width: "100%",
+                        paddingRight: "40px",
+                        fontWeight: "normal",
+                      }}
+                      placeholder="Untitled Session"
+                      onChange={(e) =>
+                        setNewSessionLabel(e.target.value.trim())
+                      }
+                    />
+                    <button
+                      type="button"
+                      style={{
+                        position: "absolute",
+                        right: "8px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#F0AD4E",
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      onMouseOver={(e) => (e.target.style.color = "#EC971F")}
+                      onMouseOut={(e) => (e.target.style.color = "#F0AD4E")}
+                      onClick={() => setNewSessionLabel(getFunName())}
+                      title="Generate random name"
+                    >
+                      <ArrowPathIcon
+                        className="w-4 h-4"
+                        style={{
+                          backgroundColor: "transparent",
+                          border: "none",
+                          outline: "none",
+                        }}
+                      />
+                    </button>
+                  </div>
                   <button
-                    type="button"
-                    style={{ ...styles.button, backgroundColor: "#F0AD4E" }}
-                    onMouseOver={(e) =>
-                      (e.target.style.backgroundColor = "#EC971F")
-                    }
-                    onMouseOut={(e) =>
-                    (e.target.style.backgroundColor =
-                      styles.button.backgroundColor)
-                    }
-                    onClick={() => setNewSessionLabel(getFunName())}
+                    style={{
+                      ...styles.actionButton,
+                      ...styles.actionButtonColors.save,
+                    }}
+                    onMouseOver={(e) => (
+                      (e.currentTarget.style.backgroundColor =
+                        styles.actionButtonColors.save.hover.backgroundColor),
+                      (e.currentTarget.style.color =
+                        styles.actionButtonColors.save.hover.color)
+                    )}
+                    onMouseOut={(e) => (
+                      (e.currentTarget.style.backgroundColor = "white"),
+                      (e.currentTarget.style.color =
+                        styles.actionButtonColors.save.color)
+                    )}
+                    onClick={saveSession}
                   >
-                    Random name
+                    <BookmarkIcon
+                      className="w-4 h-4"
+                      style={{
+                        backgroundColor: "transparent",
+                        border: "none",
+                        outline: "none",
+                      }}
+                    />
+                    Save session
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* Saved Sessions */}
+            {renderSavedSessions()}
             <div style={styles.additionalActions}>
-              <button
-                style={{
-                  ...styles.actionButton,
-                  ...styles.actionButtonColors.save,
-                }}
-                onMouseOver={(e) => (
-                  (e.target.style.backgroundColor =
-                    styles.actionButtonColors.save.hover.backgroundColor),
-                  (e.target.style.color =
-                    styles.actionButtonColors.save.hover.color)
-                )}
-                onMouseOut={(e) => (
-                  (e.target.style.backgroundColor = "white"),
-                  (e.target.style.color = styles.actionButtonColors.save.color)
-                )}
-                onClick={saveSession}
-              >
-                💾 Save session
-              </button>
               <button
                 style={{
                   ...styles.actionButton,
@@ -741,7 +973,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
             </div>
           </>
         )}
-        {renderSavedSessions()}
+
         <div style={styles.disclaimer}>
           Disclaimer: please use{" "}
           <span style={styles.emphasis}>sessionFile</span> or{" "}
