@@ -71,7 +71,7 @@ const Session: React.FC = () => {
 
     curUserState = {
       bundleId: bundle.bundleId,
-      title: currentSession.title ? currentSession.title : "Untitled Session",
+
       customTracksPool,
       customGenome: currentSession.customGenome,
       darkTheme: false,
@@ -146,8 +146,8 @@ const Session: React.FC = () => {
       genomeId: newGenomeConfig
         ? newGenomeConfig?.genome.getName()
         : sessionBundle.genomeId
-        ? sessionBundle.genomeId
-        : null,
+          ? sessionBundle.genomeId
+          : null,
       customGenome: sessionBundle.customGenome,
       chromosomes: sessionBundle.chromosomes ? sessionBundle.chromosomes : null,
       createdAt: Date.now(),
@@ -185,8 +185,12 @@ const Session: React.FC = () => {
 
   //add or delete session from bundle
   function onUpdateBundle(bundle: any) {
+    let title = "Untitled Session";
+    if (bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
+      title = bundle.sessionsInBundle[`${bundle.currentId}`].label
+    }
     dispatch(updateBundle(bundle));
-    dispatch(updateCurrentSession({ bundleId: bundle.bundleId }));
+    dispatch(updateCurrentSession({ bundleId: bundle.bundleId, title }));
   }
   return (
     <SessionUI

@@ -14,11 +14,11 @@ export const hubSlice = createSlice({
     bundle: {
       bundleId: generateUUID(),
       currentId: null,
-      sessionInBundle: null,
+      sessionsInBundle: null,
     } as {
       bundleId: string;
       currentId: string | null;
-      sessionInBundle: { [key: string]: any } | null;
+      sessionsInBundle: { [key: string]: any } | null;
     },
   },
   reducers: {
@@ -40,7 +40,7 @@ export const hubSlice = createSlice({
       action: PayloadAction<{
         bundleId: string;
         currentId: string | null;
-        sessionInBundle: { [key: string]: any } | null;
+        sessionsInBundle: { [key: string]: any } | null;
       }>
     ) => {
       state.bundle = action.payload;
@@ -70,7 +70,7 @@ export const hubSlice = createSlice({
       state.bundle = {
         bundleId: generateUUID(),
         currentId: null,
-        sessionInBundle: null,
+        sessionsInBundle: null,
       };
     },
   },

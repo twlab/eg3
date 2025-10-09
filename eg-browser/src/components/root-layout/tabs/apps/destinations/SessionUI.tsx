@@ -143,7 +143,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
   curBundle,
   bundleId,
 }) => {
-  const [newSessionLabel, setNewSessionLabel] = useState<string>("");
+  const [newSessionLabel, setNewSessionLabel] = useState<string>(curBundle.title && curBundle.title !== "Untitled Session" ? curBundle.title : "");
   const [retrieveId, setRetrieveId] = useState<string>("");
   const [lastBundleId, setLastBundleId] = useState<string>(bundleId);
   const [sortSession, setSortSession] = useState<string>("date"); // or label
@@ -176,7 +176,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
         ref(db, `sessions/${bundle.bundleId}`),
         JSON.parse(JSON.stringify(newBundle))
       );
-      setNewSessionLabel(getFunName());
+
       console.log("Session saved!", "success", 2000);
     } catch (error) {
       console.error(error);
@@ -249,7 +249,9 @@ const SessionUI: React.FC<SessionUIProps> = ({
       setLastBundleId(bundle.bundleId);
 
       const curSessionId = newBundle.currentId;
-      const sessionBundle = newBundle.sessionsInBundle[`${curSessionId}`].state;
+      const sessionBundle = { ...newBundle.sessionsInBundle[`${curSessionId}`].state };
+
+      sessionBundle["title"] = newBundle.sessionsInBundle[curSessionId].label
 
       onRestoreSession(sessionBundle);
       onRetrieveBundle(newBundle);
@@ -260,7 +262,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
           JSON.parse(JSON.stringify(newBundle))
         );
 
-        setNewSessionLabel(getFunName());
+        setNewSessionLabel("");
 
         console.log("Session restored.", "success", 2000);
       } catch (error) {
@@ -734,8 +736,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
           <button
             style={styles.button}
             onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.buttonHover.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.buttonHover.backgroundColor)
             }
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
@@ -751,12 +753,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
               overflow: "hidden",
             }}
             onMouseOver={(e) =>
-              (e.target.style.backgroundColor =
-                styles.uploadButtonHover.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.uploadButtonHover.backgroundColor)
             }
             onMouseOut={(e) =>
-              (e.target.style.backgroundColor =
-                styles.uploadButton.backgroundColor)
+            (e.target.style.backgroundColor =
+              styles.uploadButton.backgroundColor)
             }
           >
             Upload

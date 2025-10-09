@@ -43,7 +43,11 @@ import { version } from "../../../package.json";
 import History from "./History";
 
 import { selectCurrentState } from "../../lib/redux/selectors";
+import { selectBundle, updateBundle } from "@/lib/redux/slices/hubSlice";
+import { getDatabase, ref, set } from "firebase/database";
 export default function NavBar() {
+  const bundle = useAppSelector(selectBundle);
+
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -61,7 +65,7 @@ export default function NavBar() {
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-      versionToLogoUrl[genome.name]?.logoUrl
+    versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
@@ -109,14 +113,39 @@ export default function NavBar() {
                 value={
                   currentSession.title.length > 0
                     ? currentSession.title
-                    : genome?.name ?? "Untitled"
+                    : genome?.name ?? "Untitled Session"
                 }
-                onChange={(value) =>
+                onChange={async (value) => {
+
+                  if (bundle.currentId && bundle.sessionsInBundle) {
+
+                    const newSessionObj = { ...bundle.sessionsInBundle[`${bundle.currentId}`], label: value };
+
+                    const newBundle = { ...bundle, sessionsInBundle: { ...bundle.sessionsInBundle, [bundle.currentId]: newSessionObj } };
+
+                    dispatch(updateBundle(newBundle));
+
+                    const db = getDatabase();
+                    try {
+                      await set(
+                        ref(db, `sessions/${bundle.bundleId}`),
+                        JSON.parse(JSON.stringify(newBundle))
+                      );
+
+                      console.log("Session saved!", "success", 2000);
+                    } catch (error) {
+                      console.error(error);
+                      console.log("Error while saving session", "error", 2000);
+                    }
+
+                  }
+
                   dispatch(updateCurrentSession({ title: value }))
                 }
-                style={`text-xl font-light border border-blue-500 px-2 ${
-                  currentSession.title.length > 0 ? "" : "font-medium"
-                }`}
+
+                }
+                style={`text-xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
+                  }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"

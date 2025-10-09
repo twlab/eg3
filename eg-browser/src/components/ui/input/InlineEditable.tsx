@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Session from "../../root-layout/tabs/apps/destinations/Session";
 
+
 /**
  * A component that allows inline editing of text.
  * @author Shane Liu (original)
@@ -15,8 +16,10 @@ interface InlineEditableProps {
 }
 
 function InlineEditable(props: InlineEditableProps) {
+
+
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(props.value);
+  const [value, setValue] = useState("");
   const [hovering, setHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +27,9 @@ function InlineEditable(props: InlineEditableProps) {
     setValue(props.value);
     setEditing(true);
   };
-
+  useEffect(() => {
+    setValue(props.value);
+  }, [props.value]);
   // Handle clicks outside the component to close editing
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,6 +65,7 @@ function InlineEditable(props: InlineEditableProps) {
       return;
     }
     props.onChange(value);
+
     setHovering(false);
   };
 
@@ -86,6 +92,8 @@ function InlineEditable(props: InlineEditableProps) {
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             handleFinish();
+
+
           } else if (e.key === "Escape") {
             setEditing(false);
           }
@@ -108,9 +116,8 @@ function InlineEditable(props: InlineEditableProps) {
     return (
       <div
         ref={containerRef}
-        className={`relative inline-block ${
-          hovering && !editing ? "outline outline-1 outline-gray-300" : ""
-        }`}
+        className={`relative inline-block ${hovering && !editing ? "outline outline-1 outline-gray-300" : ""
+          }`}
       >
         {body}
         <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-gray-200 shadow-lg rounded">
@@ -127,9 +134,8 @@ function InlineEditable(props: InlineEditableProps) {
       >
         <div
           onClick={handleClick}
-          className={`inline-block cursor-pointer ${
-            hovering ? "outline outline-1 outline-gray-300" : ""
-          }`}
+          className={`inline-block cursor-pointer ${hovering ? "outline outline-1 outline-gray-300" : ""
+            }`}
         >
           {body}
           <div className="absolute invisible group-hover:visible top-full mt-1 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10 before:content-[''] before:absolute before:bottom-full before:left-1/2 before:-ml-1 before:border-4 before:border-transparent before:border-b-gray-800">
