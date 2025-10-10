@@ -6,8 +6,7 @@ import {
   selectExpandNavigationTab,
   setSessionPanelOpen,
 } from "../../lib/redux/slices/navigationSlice";
-import { Tool } from "wuepgg3-track";
-import { selectTool } from "../../lib/redux/slices/utilitySlice";
+
 import GenomePicker from "../genome-picker/GenomePicker";
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
@@ -39,6 +38,9 @@ import {
   setNavBarVisibility,
   setNavigatorVisibility,
   setToolBarVisibility,
+  selectIsNavigatorVisible,
+  selectIsNavBarVisible,
+  selectIsToolBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
 import { useEffect } from "react";
 
@@ -48,7 +50,10 @@ import {
   IGenome,
   ITrackModel,
   generateUUID,
+  Genome,
+  GenomeCoordinate,
 } from "wuepgg3-track";
+import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 
 // const firebaseConfig = {
 //   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
@@ -84,7 +89,27 @@ export interface RootLayoutProps {
   // showToolBar?: boolean;
 }
 
-export default function RootLayout() {
+export interface TracksProps {
+  url?: string;
+  name?: string;
+  options?: { [key: string]: any };
+  type: string;
+  showOnHubLoad?: boolean;
+  metadata?: { [key: string]: any };
+}
+
+export interface GenomeHubProps {
+  viewRegion?: string | null | undefined;
+  genomeName?: string;
+  tracks?: TracksProps[] | ITrackModel[];
+  windowWidth?: number;
+  customGenome?: any;
+  showGenomeNavigator?: boolean;
+  showNavBar?: boolean;
+  showToolBar?: boolean;
+}
+
+export default function RootLayout(props: GenomeHubProps) {
   useBrowserInitialization();
 
   const dispatch = useAppDispatch();
@@ -98,9 +123,115 @@ export default function RootLayout() {
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
 
+  // Check if running in package mode (props explicitly passed) or web mode
+  const isPackageMode =
+    props.showGenomeNavigator !== undefined ||
+    props.showNavBar !== undefined ||
+    props.showToolBar !== undefined;
+
+  // For package mode: use Redux state (controlled by props)
+  // For web mode: default to true (ignore persisted state)
+  const showNavBar = isPackageMode
+    ? useAppSelector(selectIsNavBarVisible)
+    : true;
+
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
+
+  function getConfig() {
+    if (props.customGenome) {
+      try {
+        return GenomeSerializer.deserialize(props.customGenome);
+      } catch {
+        return null;
+      }
+    }
+    if (props.genomeName) {
+      return getGenomeConfig(props.genomeName);
+    }
+    return null;
+  }
+  useEffect(() => {
+    // Only apply visibility props in package mode
+
+    if (isPackageMode) {
+      if (typeof props.showGenomeNavigator === "boolean") {
+        dispatch(setNavigatorVisibility(props.showGenomeNavigator));
+      }
+      if (typeof props.showNavBar === "boolean") {
+        dispatch(setNavBarVisibility(props.showNavBar));
+      }
+      if (typeof props.showToolBar === "boolean") {
+        dispatch(setToolBarVisibility(props.showToolBar));
+      }
+    }
+    // In web mode, ensure defaults are set to true (override any persisted false values)
+    else {
+      dispatch(setNavigatorVisibility(true));
+      dispatch(setNavBarVisibility(true));
+      dispatch(setToolBarVisibility(true));
+    }
+  }, [
+    isPackageMode,
+    props.showGenomeNavigator,
+    props.showNavBar,
+    props.showToolBar,
+  ]);
+
+  useEffect(() => {
+    if (
+      (props.genomeName && props.tracks && props.viewRegion) ||
+      props.customGenome
+    ) {
+      const genomeConfig: GenomeConfig | null = getConfig();
+      if (genomeConfig) {
+        if (!sessionId) {
+          if (genomeConfig?.genome) {
+            const genome = GenomeSerializer.serialize(genomeConfig);
+
+            let additionalTracks: ITrackModel[] = props.tracks as ITrackModel[];
+
+            dispatch(
+              createSession({
+                genome,
+                viewRegion:
+                  typeof props.viewRegion === "string" ||
+                  props.viewRegion === null
+                    ? undefined
+                    : props.viewRegion,
+                additionalTracks,
+              })
+            );
+          }
+        } else {
+          dispatch(
+            updateCurrentSession({
+              tracks: props.tracks as ITrackModel[],
+              viewRegion:
+                typeof props.viewRegion !== "string" ||
+                props.viewRegion === null
+                  ? undefined
+                  : (props.viewRegion as GenomeCoordinate),
+              userViewRegion:
+                typeof props.viewRegion !== "string" ||
+                props.viewRegion === null
+                  ? undefined
+                  : (props.viewRegion as GenomeCoordinate),
+              genomeId: props.genomeName,
+              customGenome: props.customGenome,
+            })
+          );
+        }
+      }
+    }
+  }, [
+    props.genomeName,
+    props.tracks,
+    props.viewRegion,
+    props.customGenome,
+    sessionId,
+  ]);
 
   // Keyboard handler for Escape key
   useEffect(() => {
@@ -136,7 +267,7 @@ export default function RootLayout() {
         }}
       >
         {/* {import.meta.env.VITE_PACKAGE === "false" || props.showNavBar ? ( */}
-        <NavBar />
+        {showNavBar === false ? "" : <NavBar />}
         {/* ) : null} */}
         <div className="flex flex-row flex-1 relative bg-black">
           <AnimatePresence mode="wait">

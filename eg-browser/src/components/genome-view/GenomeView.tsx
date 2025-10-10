@@ -38,6 +38,8 @@ export default function GenomeView() {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const isToolBarVisible = useAppSelector(selectIsToolBarVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
+  const showToolbar = useAppSelector(selectIsToolBarVisible);
+
   const lastSessionId = useRef<null | string>(null);
   const bundleId = currentSession ? currentSession.bundleId : null;
 
@@ -117,7 +119,10 @@ export default function GenomeView() {
       viewRegion={currentSession?.viewRegion}
       userViewRegion={currentSession.userViewRegion}
       tool={tool}
-      Toolbar={{ toolbar: Toolbar, skeleton: TrackPlaceHolder }}
+      Toolbar={{
+        toolbar: showToolbar === false ? "" : Toolbar,
+        skeleton: TrackPlaceHolder,
+      }}
       selectedRegionSet={currentSession?.selectedRegionSet}
       setScreenshotData={setScreenshotData}
       isScreenShotOpen={isScreenShotOpen}

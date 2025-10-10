@@ -65,12 +65,12 @@ export default function NavBar() {
 
   const genomeLogoUrl: string | null = genome?.name
     ? versionToLogoUrl[genome.name]?.croppedUrl ??
-    versionToLogoUrl[genome.name]?.logoUrl
+      versionToLogoUrl[genome.name]?.logoUrl
     : null;
   // const genomeLogoUrl: string | null = null;
 
   return (
-    <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
+    <div className="flex flex-row justify-between items-center p-1 border-b border-gray-300 bg-white dark:bg-dark-background relative">
       <div className="flex flex-row items-center gap-3 relative">
         {currentSession && (
           <BackspaceIcon
@@ -116,12 +116,19 @@ export default function NavBar() {
                     : genome?.name ?? "Untitled Session"
                 }
                 onChange={async (value) => {
-
                   if (bundle.currentId && bundle.sessionsInBundle) {
+                    const newSessionObj = {
+                      ...bundle.sessionsInBundle[`${bundle.currentId}`],
+                      label: value,
+                    };
 
-                    const newSessionObj = { ...bundle.sessionsInBundle[`${bundle.currentId}`], label: value };
-
-                    const newBundle = { ...bundle, sessionsInBundle: { ...bundle.sessionsInBundle, [bundle.currentId]: newSessionObj } };
+                    const newBundle = {
+                      ...bundle,
+                      sessionsInBundle: {
+                        ...bundle.sessionsInBundle,
+                        [bundle.currentId]: newSessionObj,
+                      },
+                    };
 
                     dispatch(updateBundle(newBundle));
 
@@ -137,15 +144,13 @@ export default function NavBar() {
                       console.error(error);
                       console.log("Error while saving session", "error", 2000);
                     }
-
                   }
 
-                  dispatch(updateCurrentSession({ title: value }))
-                }
-
-                }
-                style={`text-xl font-light border border-blue-500 px-2 ${currentSession.title.length > 0 ? "" : "font-medium"
-                  }`}
+                  dispatch(updateCurrentSession({ title: value }));
+                }}
+                style={`text-xl font-light border border-blue-500 px-2 ${
+                  currentSession.title.length > 0 ? "" : "font-medium"
+                }`}
                 tooltip={
                   currentSession.title.length > 0
                     ? "Click to edit"

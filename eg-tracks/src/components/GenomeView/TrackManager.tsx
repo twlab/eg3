@@ -2682,6 +2682,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
     if (genomeConfig) {
       prevWindowWidth.current = windowWidth;
+
       genomeConfig.defaultRegion = new OpenInterval(
         userViewRegion._startBase!,
         userViewRegion._endBase!
@@ -3560,16 +3561,20 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               }}
             >
               <div style={{ position: "relative" }}>
-                <Toolbar.toolbar
-                  highlights={highlights}
-                  onNewRegionSelect={
-                    !onNewRegionSelect ? () => {} : onNewRegionSelect
-                  }
-                  windowWidth={windowWidth}
-                  buttonPadding={getPadding() ? getPadding() / 2 : 3}
-                  gapSize={getGapSize()}
-                  fontSize={Math.max(16, getFontSize())}
-                />
+                {Toolbar.toolbar ? (
+                  <Toolbar.toolbar
+                    highlights={highlights}
+                    onNewRegionSelect={
+                      !onNewRegionSelect ? () => {} : onNewRegionSelect
+                    }
+                    windowWidth={windowWidth}
+                    buttonPadding={getPadding() ? getPadding() / 2 : 3}
+                    gapSize={getGapSize()}
+                    fontSize={Math.max(16, getFontSize())}
+                  />
+                ) : (
+                  ""
+                )}
               </div>
             </div>
             <div className="h-5 border-r border-gray-400" />

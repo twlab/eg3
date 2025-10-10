@@ -1,14 +1,19 @@
 import { MotionConfig } from "framer-motion";
-import RootLayout, {
-  RootLayoutProps,
-} from "./components/root-layout/RootLayout";
+import RootLayout from "./components/root-layout/RootLayout";
+import RootLayoutTest from "./components/root-layout/RootLayoutTest";
 import ReduxProvider from "./lib/redux/provider";
 
-export default function App(props: RootLayoutProps = {}) {
+// const USE_TEST_COMPONENT = false; // Toggle this to switch between test and normal mode
+
+export default function App() {
   return (
     <MotionConfig transition={snappyTransition}>
       <ReduxProvider>
-        <RootLayout {...props} />
+        {/* {USE_TEST_COMPONENT ? (
+          <RootLayoutTest />
+        ) : ( */}
+        <RootLayout />
+        {/* )} */}
       </ReduxProvider>
     </MotionConfig>
   );
