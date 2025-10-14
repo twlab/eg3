@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import MetadataSelectionMenu from "./MetadataSelectionMenu";
+import { TagIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 // import MetadataIndicator from "../TrackComponents/commonComponents/MetadataIndicator";
 import "./MetadataHeader.css";
 
@@ -12,6 +14,7 @@ interface MetadataHeaderProps {
   windowWidth?: number;
   fontSize?: number;
   padding?: number;
+  metaWidth?: number;
 }
 
 const MetadataHeader: React.FC<MetadataHeaderProps> = ({
@@ -22,36 +25,51 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
   windowWidth = 800,
   fontSize,
   padding,
+  metaWidth = 200,
 }) => {
   const [isShowingEditMenu, setIsShowingEditMenu] = useState(false);
-
   const termWidth = 15;
+  const buttonWidth = 120; // Approximate width for the Metadata button
+  const totalContentWidth = Math.max(
+    buttonWidth + terms.length * termWidth + (padding ? padding * 2 : 10),
+    windowWidth * 0.2 // Minimum width
+  );
 
   return (
-    <>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center",
+        width: `${totalContentWidth}px`,
+        flexShrink: 0,
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center" }}>
-        <div
-          style={{ paddingLeft: padding ? padding : 5 }}
-          className="h-5 border-r border-gray-400"
-        />
-
         <div
           className="MetadataHeader-button"
           style={{ paddingLeft: padding ?? (padding || 5) }}
         >
           <button
             onClick={() => setIsShowingEditMenu(!isShowingEditMenu)}
-            className={
-              isShowingEditMenu
-                ? "btn btn-sm btn-danger"
-                : "btn btn-sm btn-success"
-            }
+            className="flex items-center gap-2 rounded-sm px-2"
             style={{
-              width: `${Math.max(80, Math.min(110, windowWidth * 0.09))}px`,
-              fontSize: `${fontSize}px`,
+              border: isShowingEditMenu
+                ? "1px solid #1e40af"
+                : "1px solid #1d4ed8",
+              backgroundColor: "#eff6ff",
+              color: isShowingEditMenu ? "#1d4ed8" : "#2563eb",
+              transition: "all 0.2s",
             }}
+            title="Metadata options"
           >
-            Metadata {isShowingEditMenu ? "↩" : "»"}
+            <span className="text-base font-medium">Metadata</span>
+            <motion.div
+              animate={{ rotate: isShowingEditMenu ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRightIcon className="w-4 h-4" />
+            </motion.div>
           </button>
           <div>
             <MetadataSelectionMenu
@@ -77,7 +95,7 @@ const MetadataHeader: React.FC<MetadataHeaderProps> = ({
           ))}
         </ul>
       </div>
-    </>
+    </div>
   );
 };
 

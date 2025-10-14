@@ -1,5 +1,5 @@
-import { getDeDupeArrMatPlot } from "./cacheFetchedData";
-import { trackUsingExpandedLoci } from "./cacheFetchedData";
+
+import { groupTracksArrMatPlot, trackUsingExpandedLoci } from "./cacheFetchedData";
 
 interface GetConfigChangeDataParams {
   fetchedDataCache: any;
@@ -43,7 +43,7 @@ export function getConfigChangeData({
     ];
 
     if (trackType in { matplot: "", dynamic: "", dynamicbed: "" }) {
-      viewData = getDeDupeArrMatPlot(viewData, false);
+      viewData = groupTracksArrMatPlot(viewData);
     } else {
       viewData = viewData.map((item) => item.dataCache).flat(1);
     }

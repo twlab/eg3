@@ -190,7 +190,9 @@ class MatplotTrackComponent extends React.PureComponent<MatplotTrackProps> {
       this.aggregateFeatures(d, viewRegion, width, aggregateMethod)
     );
 
-    this.xToValue =
+    this.xToValue = this.props.xvaluesData
+      ? this.props.xvaluesData
+      :
       smooth === 0
         ? aggreagatedData
         : aggreagatedData.map((d) => Smooth(d, smooth));
@@ -298,7 +300,7 @@ class LinePlot extends React.PureComponent<LinePlotTrackProps> {
         }
       })
       .filter((value) => value); // removes null from original
-
+    console.log(trackModel.tracks, trackIndex)
     const color = trackModel.tracks![trackIndex].options.color || "blue";
     return (
       <polyline

@@ -102,12 +102,45 @@ hen scroll back if its fetching the new tracks only that are added
 
 
 9/25/2025
-1. rework tracks component to not create a new react component drawing new regionselect and instead just 
+--1. rework tracks component to not create a new react component drawing new regionselect and instead just 
     change and redraw based on new data
+
 2. fix genes search, probably need to rework servers
-3. fix url param for datahub
-4. check sessions in genome picker menu, (finish import) (check: upload for new data format and old session format
+
+--3. fix url param for datahub
+--4. check sessions in genome picker menu, (finish import) (check: upload for new data format and old session format
 , url params, etc)
+
 5. legend width setting
 6. check errors 
 7. NEW FEATURE: IMPLEMENT SEPARATE COLUMNS, where user can compare tracks etc. NEED NEW package not flexlayout
+
+--8. retryFetch track
+--9. instance fetch fix(bug was not using await in createcache)
+--10. reworked looking for dupe elements, checking while converting other elements/
+--11. screenshot fix for new algo dupe
+--12. tracklegend for error track
+--13. reworked tool bar 
+--14. toolbar css, search bar, reorder many, highlight
+--15. escape to close, toolbar and menu
+--16. history menu
+--17. rework metadata menu
+
+18. rework import in genome picker getMenuComponents
+19. rework trackregioncontroller
+20. check retry
+
+--21. FIXED clearing memory cache
+22 trackmanager line 1532
+
+
+checking-
+
+- Implemented a way for users to retry fetching a track if there is an error  (finish)
+- Implemented History menu, allow user to change to past or future states (finish)
+- Implemented URL param for datahub  (finish)
+- Implemented shortcut keys for tools (finish)
+- Allow users to import session in Genome picker menu  (finish)
+- Pressing Escape now allow users to exit out of sub menus (finish)
+- Reworked toolbar to fit screen when user zoom in and out (finish)
+- fixed memory deleting memory caching (finish)

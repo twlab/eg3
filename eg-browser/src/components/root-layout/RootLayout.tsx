@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
+import { useAppDispatch, useAppSelector, useUndoRedo } from "../../lib/redux/hooks";
 import {
   selectNavigationTab,
   setNavigationTab,
@@ -49,6 +49,7 @@ import {
   ITrackModel,
   generateUUID,
 } from "wuepgg3-track";
+import { resetState } from "@/lib/redux/slices/hubSlice";
 
 // const firebaseConfig = {
 //   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
@@ -97,10 +98,17 @@ export default function RootLayout() {
   const isSmallScreen = useSmallScreen();
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
-
+  const { clearHistory } = useUndoRedo();
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
+
+  // Reset state when session is cleared
+  useEffect(() => {
+
+    dispatch(resetState());
+    clearHistory()
+  }, [sessionId]);
 
   // Keyboard handler for Escape key
   useEffect(() => {
@@ -210,10 +218,10 @@ export default function RootLayout() {
               <motion.div
                 className="flex flex-col w-screen pb-20"
                 style={{
-                  display: sessionId ? 'flex' : 'none'
+                  display: sessionId ? "flex" : "none",
                 }}
                 animate={{
-                  opacity: sessionId ? 1 : 0
+                  opacity: sessionId ? 1 : 0,
                 }}
                 transition={{ duration: 0.2 }}
               >
@@ -221,17 +229,19 @@ export default function RootLayout() {
                   <GenomeView />
                 </GenomeErrorBoundary>
               </motion.div>
-              {!sessionId ? <motion.div
-                className="h-full w-full"
-
-                animate={{
-                  opacity: 1
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                <GenomePicker />
-              </motion.div> : ""}
-
+              {!sessionId ? (
+                <motion.div
+                  className="h-full w-full"
+                  animate={{
+                    opacity: 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <GenomePicker />
+                </motion.div>
+              ) : (
+                ""
+              )}
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}
@@ -262,7 +272,7 @@ export default function RootLayout() {
                   <div className="flex flex-col h-full">
                     {/* Tab Header with close button */}
                     <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-                      <h2 className="text-2xl  text-gray-800 dark:text-white capitalize">
+                      <h2 className="text-xl  text-gray-800 dark:text-white capitalize">
                         {navigationTab}
                       </h2>
                       <div className="flex items-center gap-3">

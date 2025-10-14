@@ -15,9 +15,10 @@ type Props = {
     future: any[];
   };
   jumpToPast: (index: number) => void;
+  clearHistory: () => void;
   jumpToFuture: (index: number) => void;
 };
-const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
+const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture, clearHistory }) => {
   const [showModal, setShowModal] = useState(false);
   const [checkStateEmpty, setCheckStateEmpty] = useState(false);
   const handleOpenModal = () => {
@@ -39,6 +40,7 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
   function handleClear() {
     setCheckStateEmpty(true);
     renderHistory();
+    clearHistory()
   }
   const renderHistory = () => {
     const { past, future } = state;
@@ -101,8 +103,8 @@ const History: React.FC<Props> = ({ state, jumpToPast, jumpToFuture }) => {
             {stateData && stateData.userViewRegion
               ? stateData.userViewRegion
               : stateData && stateData.viewRegion
-              ? stateData.viewRegion
-              : "(None)"}
+                ? stateData.viewRegion
+                : "(None)"}
             , # of tracks:{" "}
             {stateData && stateData.tracks ? stateData.tracks.length : 0}
           </span>

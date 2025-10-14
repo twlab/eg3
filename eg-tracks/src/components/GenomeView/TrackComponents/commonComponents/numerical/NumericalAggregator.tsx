@@ -39,10 +39,30 @@ export class NumericalAggregator {
       xToValue2,
       hasReverse = false;
     if (data) {
-      const dataForward = data.filter(
-        (feature) => feature.value === undefined || feature.value >= 0
-      ); // bed track to density mode
-      const dataReverse = data.filter((feature) => feature.value < 0);
+      // Use a single loop to separate data and remove duplicates based on locus
+      const seenLoci = new Set<string>();
+      const dataForward: typeof data = [];
+      const dataReverse: typeof data = [];
+
+      for (const feature of data) {
+        // Create unique identifier from locus start and end
+        const locusId = `${feature.locus.start}-${feature.locus.end}`;
+
+        // Skip if we've already seen this locus
+        if (seenLoci.has(locusId)) {
+          continue;
+        }
+
+        seenLoci.add(locusId);
+
+        // Separate into forward and reverse based on value
+        if (feature.value === undefined || feature.value >= 0) {
+          dataForward.push(feature); // bed track to density mode
+        } else {
+          dataReverse.push(feature);
+        }
+      }
+
       if (dataReverse.length) {
         xToValue2BeforeSmooth = this.aggregateFeatures(
           dataReverse,

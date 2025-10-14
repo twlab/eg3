@@ -207,6 +207,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             !(item.metadata.genome in genomicFetchCoord)) ||
           !(item.type in componentMap)
         ) {
+
           foundInvalidTrack = true;
         }
         if (foundInvalidTrack) {
@@ -333,9 +334,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
 
       const isLocalFetch = trackModel.fileObj instanceof File;
       if (isLocalFetch && trackModel.url === "") {
-
         for (let i = 0; i < curFetchNav.length; i++) {
-
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
               basesPerPixel: bpRegionSize / windowWidth,
@@ -357,7 +356,6 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               error: curRespond.message,
             });
           } else {
-
             responses.push(curRespond);
           }
         }
@@ -401,7 +399,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
               error
             );
             responses.push({
-              error: "Data fetch failed. Reload page or change view to retry",
+              error: "Data fetch failed.",
             });
           }
         }
@@ -546,8 +544,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
               trackToDrawId[`${item.id}`] = "";
             } catch (error) {
               rawRecords = {
-                error: `Error processing genome align track with id ${item.id
-                  }: ${"Error"}`,
+                error: `Error fetching genome align track with id ${item.id}`,
               };
             }
           })

@@ -19,7 +19,6 @@ export const AWS_API = "https://lambda.epigenomegateway.org/v2";
 import "./track.css";
 import TrackModel from "../../models/TrackModel";
 
-
 // import GenomeViewerTest from "../testComp";
 // import GenomeViewerTest from "./testComp";
 
@@ -63,7 +62,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
     hasOnMessage: boolean;
   } | null>(null);
 
-  const prevViewRegion = useRef({ genomeName: "", start: 0, end: 1 });
   const layout = useRef(_.cloneDeep(initialLayout));
   const [model, setModel] = useState(FlexLayout.Model.fromJson(layout.current));
   const [show3dGene, setShow3dGene] = useState();
@@ -199,7 +197,8 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
               (!size.width || size.width - legendWidth <= 0
                 ? window.innerWidth
                 : size.width) -
-              legendWidth -
+              legendWidth
+              -
               40
             }
             userViewRegion={userViewRegion}
@@ -294,7 +293,6 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
 
       // Clear all other refs
 
-      prevViewRegion.current = { genomeName: "", start: 0, end: 1 };
       layout.current = _.cloneDeep(initialLayout);
       g3dTracks.current = [];
 
@@ -345,13 +343,13 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
         <TrackManager
           tracks={nonG3dTracks}
           legendWidth={legendWidth}
-          windowWidth={
+          windowWidth={Math.round(
             (!size.width || size.width - legendWidth <= 0
               ? window.innerWidth
               : size.width) -
             legendWidth -
             40
-          }
+          )}
           userViewRegion={userViewRegion}
           highlights={highlights}
           genomeConfig={genomeConfig}

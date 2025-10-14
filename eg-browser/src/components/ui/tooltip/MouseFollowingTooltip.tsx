@@ -77,9 +77,19 @@ const MouseFollowingTooltip: React.FC = () => {
 
   const toolName = getToolName(selectedTool);
 
-  // Only show tooltip when a tool is selected (and not the default Drag tool)
+  // Only show tooltip when a tool is selected (excluding certain tools that shouldn't show tooltips)
   const shouldShow =
-    selectedTool !== null && selectedTool !== Tool.Drag && toolName;
+    selectedTool !== null &&
+    selectedTool !== Tool.Drag &&
+    selectedTool !== Tool.PanLeft &&
+    selectedTool !== Tool.PanRight &&
+    selectedTool !== Tool.ZoomOutFiveFold &&
+    selectedTool !== Tool.ZoomOutOneFold &&
+    selectedTool !== Tool.ZoomOutOneThirdFold &&
+    selectedTool !== Tool.ZoomInOneThirdFold &&
+    selectedTool !== Tool.ZoomInOneFold &&
+    selectedTool !== Tool.ZoomInFiveFold &&
+    toolName;
 
   return (
     <AnimatePresence>

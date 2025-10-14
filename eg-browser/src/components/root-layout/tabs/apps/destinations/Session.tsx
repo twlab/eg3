@@ -23,7 +23,6 @@ import {
 import useExpandedNavigationTab from "../../../../../lib/hooks/useExpandedNavigationTab";
 import NavigationContext from "wuepgg3-track/src/models/NavigationContext";
 import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
-import { selectTool } from "@/lib/redux/slices/utilitySlice";
 
 const Session: React.FC = () => {
   useExpandedNavigationTab();
@@ -72,6 +71,7 @@ const Session: React.FC = () => {
 
     curUserState = {
       bundleId: bundle.bundleId,
+
       customTracksPool,
       customGenome: currentSession.customGenome,
       darkTheme: false,
@@ -114,18 +114,24 @@ const Session: React.FC = () => {
       newGenomeConfig = GenomeSerializer.deserialize(_newGenomeConfig);
     } else if (getGenomeConfig(sessionBundle.genomeId)) {
       newGenomeConfig = getGenomeConfig(sessionBundle.genomeId);
+    } else if (
+      sessionBundle.viewRegion &&
+      typeof sessionBundle.viewRegion === "object"
+    ) {
+      newGenomeConfig = getGenomeConfig(
+        sessionBundle.viewRegion._navContext._name
+      );
     }
-    else if (sessionBundle.viewRegion && typeof sessionBundle.viewRegion === "object") {
-      newGenomeConfig = getGenomeConfig(sessionBundle.viewRegion._navContext._name);
-
-    }
-    if (newGenomeConfig && sessionBundle.viewRegion && typeof sessionBundle.viewRegion === "object") {
+    if (
+      newGenomeConfig &&
+      sessionBundle.viewRegion &&
+      typeof sessionBundle.viewRegion === "object"
+    ) {
       coordinate = new DisplayedRegionModel(
         newGenomeConfig?.navContext,
         sessionBundle.viewRegion._startBase,
         sessionBundle.viewRegion._endBase
       ).currentRegionAsString() as GenomeCoordinate | null;
-
     } else if (newGenomeConfig && sessionBundle.viewRegion !== undefined) {
       coordinate = sessionBundle.viewRegion;
     } else if (newGenomeConfig && sessionBundle.viewInterval) {
@@ -137,12 +143,16 @@ const Session: React.FC = () => {
     }
 
     const session = {
-      genomeId: newGenomeConfig ? newGenomeConfig?.genome.getName() : sessionBundle.genomeId ? sessionBundle.genomeId : null,
+      genomeId: newGenomeConfig
+        ? newGenomeConfig?.genome.getName()
+        : sessionBundle.genomeId
+          ? sessionBundle.genomeId
+          : null,
       customGenome: sessionBundle.customGenome,
       chromosomes: sessionBundle.chromosomes ? sessionBundle.chromosomes : null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      title: "",
+      title: sessionBundle.title ? sessionBundle.title : "Untitled Session",
       viewRegion: coordinate,
       userViewRegion: coordinate,
       tracks: sessionBundle.tracks.map((item: any) => ({
@@ -154,7 +164,7 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
-    console.log("Restored session:", session);
+
     dispatch(resetState());
     dispatch(updateCurrentSession(session));
   }
@@ -175,12 +185,17 @@ const Session: React.FC = () => {
 
   //add or delete session from bundle
   function onUpdateBundle(bundle: any) {
+    let title = "Untitled Session";
+    if (bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
+      title = bundle.sessionsInBundle[`${bundle.currentId}`].label
+    }
     dispatch(updateBundle(bundle));
-    dispatch(updateCurrentSession({ bundleId: bundle.bundleId }));
+    dispatch(updateCurrentSession({ bundleId: bundle.bundleId, title }));
   }
   return (
     <SessionUI
       onRestoreSession={onRestoreSession}
+
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
       bundleId={bundle.bundleId ? bundle.bundleId : ""}

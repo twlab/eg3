@@ -95,7 +95,7 @@ export function convertSession(session: any, dispatch: any) {
     customGenome: session.customGenome,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    title: "",
+    title: session.title ? session.title : "",
     viewRegion: coordinate,
     userViewRegion: coordinate,
     tracks: mappedTracks,
@@ -149,12 +149,28 @@ export const addSessionsFromBundleId = createAsyncThunk(
       `https://eg-session.firebaseio.com/sessions/${sessionId}.json`
     ).then((r) => r.json() as Promise<Isession>);
 
-    const sessions = Object.values(response.sessionsInBundle).map(
-      (session) => session.state
-    );
+    let sessionInView: any = null
+    if (response && response.currentId) {
+      sessionInView = response.sessionsInBundle[response.currentId].state
+      sessionInView["title"] = response.sessionsInBundle[response.currentId].label
+    }
+    else if (response && !response.currentId) {
+      const keys = Object.keys(response.sessionsInBundle)
+      if (keys.length > 0) {
+        sessionInView = response.sessionsInBundle[keys[0]].state
+        sessionInView["title"] = response.sessionsInBundle[keys[0]].label
+      }
+    }
+    // const sessions = Object.values(response.sessionsInBundle).map(
+    //   (session) => session.state
+    // );
 
-    for (const session of sessions) {
-      thunkApi.dispatch(importOneSession({ session }));
+    // for (const session of sessions) {
+    //   thunkApi.dispatch(importOneSession({ session }));
+    // }
+
+    if (sessionInView) {
+      thunkApi.dispatch(importOneSession({ session: sessionInView }));
     }
 
     thunkApi.dispatch(setCurrentSession(null));

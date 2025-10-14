@@ -10,7 +10,7 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon,
   ArrowsUpDownIcon,
-  ArrowPathRoundedSquareIcon
+  ArrowPathRoundedSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -53,33 +53,33 @@ const Toolbar: React.FC<ToolbarProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.altKey) {
         switch (event.key.toLowerCase()) {
-          case 'h':
-          case 'd':
+          case "h":
+          case "d":
             event.preventDefault();
             handleToolClick(Tool.Drag);
             break;
-          case 'r':
-          case 's':
+          case "r":
+          case "s":
             event.preventDefault();
             handleToolClick(Tool.Reorder);
             break;
-          case 'm':
+          case "m":
             event.preventDefault();
             handleToolClick(Tool.Zoom);
             break;
-          case 'n':
+          case "n":
             event.preventDefault();
             handleToolClick(Tool.Highlight);
             break;
         }
-      } else if (event.key === 'Escape') {
+      } else if (event.key === "Escape") {
         event.preventDefault();
         handleToolClick(null);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [tool, dispatch]);
 
   // Helper functions for responsive sizing
@@ -93,8 +93,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const getButtonClass = (buttonTool?: Tool) => {
-    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
-      }`;
+    return `hover:bg-gray-200 dark:hover:bg-dark-secondary rounded-md ${
+      tool === buttonTool ? "bg-secondary dark:bg-dark-secondary" : ""
+    }`;
   };
 
   const getButtonStyle = () => ({
@@ -119,11 +120,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
             30,
             Math.min(15, (windowWidth || 1920) * 0.01)
           )}px`,
-          gap: `${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
-          padding: `${Math.max(
-            6,
-            Math.min(12, (windowWidth || 1920) * 0.006)
-          )}px ${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
+          // gap: `${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
+          // padding: `${Math.max(
+          //   6,
+          //   Math.min(12, (windowWidth || 1920) * 0.006)
+          // )}px ${Math.max(8, Math.min(16, (windowWidth || 1920) * 0.008))}px`,
           borderRadius: `${Math.max(
             6,
             Math.min(10, (windowWidth || 1920) * 0.005)
@@ -146,15 +147,18 @@ const Toolbar: React.FC<ToolbarProps> = ({
           gapSize={gapSize}
         />
 
-        <div className="h-5 border-r border-gray-400" />
+        <div
+          className="h-5 border-r border-gray-400"
+          style={{ paddingLeft: buttonPadding * 2, marginRight: buttonPadding }}
+        />
         {/* Toolbar Buttons */}
         <motion.div
           className="flex flex-row items-center"
-        // animate={{
-        //   opacity: isSearchFocused ? 0.5 : 1,
-        //   scale: isSearchFocused ? 0.95 : 1,
-        // }}
-        // transition={{ duration: 0.2 }}
+          // animate={{
+          //   opacity: isSearchFocused ? 0.5 : 1,
+          //   scale: isSearchFocused ? 0.95 : 1,
+          // }}
+          // transition={{ duration: 0.2 }}
         >
           <motion.div
             className="flex flex-row items-center"
@@ -318,7 +322,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
               />
             </button>
 
-
             <button
               onClick={() => handleToolClick(Tool.Highlight)}
               className={getButtonClass(Tool.Highlight)}
@@ -348,7 +351,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
               />
             </button>
           </motion.div>
-
 
           {tool === Tool.highlightMenu ? (
             <HighlightMenu

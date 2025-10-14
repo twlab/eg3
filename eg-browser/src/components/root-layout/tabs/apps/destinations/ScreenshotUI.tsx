@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import _ from "lodash";
+import _, { create } from "lodash";
 
 import { ClipLoader } from "react-spinners";
 import {
@@ -204,9 +204,8 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
         const div = document.createElement("div");
         div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
-        div.style.cssText = `width: ${
-          legendWidth - 42
-        }px; font-size: 9px; white-space: normal; word-wrap: break-word; color: ${fg};`;
+        div.style.cssText = `width: ${legendWidth - 42
+          }px; font-size: 9px; white-space: normal; word-wrap: break-word; color: ${fg};`;
         div.textContent = trackLabelText;
 
         labelSvg.appendChild(div);
@@ -392,6 +391,7 @@ const ScreenshotUI: React.FC<Props> = (props) => {
 
         const newTrackState = { ...createSVGData.trackState };
         newTrackState["viewWindow"] = viewWindow;
+
         let svgResult = getDisplayModeFunction({
           genomeName: createSVGData.genomeName,
           genesArr: createSVGData.genesArr,
@@ -404,6 +404,10 @@ const ScreenshotUI: React.FC<Props> = (props) => {
           ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
           genomeConfig: createSVGData.genomeConfig,
           groupScale: newTrackState.groupScale,
+          xvaluesData: createSVGData.xvaluesData
+            ? createSVGData.xvaluesData
+            : null,
+          isError: createSVGData.isError
         });
 
         return (
@@ -417,36 +421,36 @@ const ScreenshotUI: React.FC<Props> = (props) => {
             }}
           >
             {typeof svgResult === "object" &&
-            Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
+              Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
               ? svgResult.component
               : svgResult}
             {highlights.length > 0
               ? highlights.map((item, index) => {
-                  return (
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      position: "absolute",
+                      top: 0, // Adjust this accordingly to place above the track, e.g., '-10px'
+                      left: item.start + 120,
+                      width: item.end - item.start,
+                      height: "100%",
+                    }}
+                  >
                     <div
                       key={index}
                       style={{
-                        display: "flex",
-                        position: "absolute",
-                        top: 0, // Adjust this accordingly to place above the track, e.g., '-10px'
-                        left: item.start + 120,
-                        width: item.end - item.start,
+                        backgroundColor: item.color,
+                        top: "0",
                         height: "100%",
+                        width: item.end - item.start,
+                        pointerEvents: "none", // This makes the highlighted area non-interactive
                       }}
-                    >
-                      <div
-                        key={index}
-                        style={{
-                          backgroundColor: item.color,
-                          top: "0",
-                          height: "100%",
-                          width: item.end - item.start,
-                          pointerEvents: "none", // This makes the highlighted area non-interactive
-                        }}
-                      ></div>
-                    </div>
-                  );
-                })
+                    ></div>
+                  </div>
+                );
+              })
               : ""}
           </div>
         );
