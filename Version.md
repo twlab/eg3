@@ -4,10 +4,16 @@
 - Implemented History menu, allow user to change to past or future states
 - Implemented URL param for datahub
 - Implemented shortcut keys for tools
+- implemented auto detect if file is ensembl and displays them
 - Allow users to import session in Genome picker menu 
 - Pressing Escape now allow users to exit out of sub menus
+- Redesign Sessions, history, toolbar and genome picker
+- refactor gene search
 - Reworked toolbar to fit screen when user zoom in and out
 - fixed memory deleting memory caching 
+- fixed issues between sessions
+- fixed issues with custom genome saving them in session
+- increase overall stability and increase error checks 
 
 ## 56.0.8
 

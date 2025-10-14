@@ -635,6 +635,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               xvaluesData: cacheTrackData[dataIdx].xvalues
                 ? cacheTrackData[dataIdx].xvalues
                 : null,
+              isError: fetchError.current,
             },
             trackId: id,
           });

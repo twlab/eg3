@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from "../../lib/redux/hooks";
+import { useAppDispatch, useAppSelector, useUndoRedo } from "../../lib/redux/hooks";
 import {
   selectNavigationTab,
   setNavigationTab,
@@ -98,7 +98,7 @@ export default function RootLayout() {
   const isSmallScreen = useSmallScreen();
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
-
+  const { clearHistory } = useUndoRedo();
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
@@ -107,7 +107,7 @@ export default function RootLayout() {
   useEffect(() => {
 
     dispatch(resetState());
-
+    clearHistory()
   }, [sessionId]);
 
   // Keyboard handler for Escape key
