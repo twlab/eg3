@@ -2,9 +2,9 @@ import {
   createSession,
   upsertSession,
   setCurrentSession,
-  selectCurrentSession,
+
 } from "../redux/slices/browserSlice";
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { useAppDispatch } from "../redux/hooks";
 import { useEffect } from "react";
 import {
   GenomeCoordinate,
@@ -18,14 +18,14 @@ import {
 } from "../redux/thunk/session";
 import { generateUUID } from "wuepgg3-track";
 
-import { addCustomTracksPool, selectCustomTracksPool } from "../redux/slices/hubSlice";
+import { addCustomTracksPool } from "../redux/slices/hubSlice";
 const IDEMPOTENCY_STORAGE_KEY = "_eg-query-idempotency-key";
 
 export default function useBrowserInitialization() {
   const dispatch = useAppDispatch();
 
-  const customTracksPool = useAppSelector(selectCustomTracksPool);
-  const currentSession = useAppSelector(selectCurrentSession);
+  // const customTracksPool = useAppSelector(selectCustomTracksPool);
+  // const currentSession = useAppSelector(selectCurrentSession);
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const genome = searchParams.get("genome");
@@ -145,7 +145,7 @@ export default function useBrowserInitialization() {
             JSON.parse(JSON.stringify(t))
           );
 
-          dispatch(addCustomTracksPool([...customTracksPool, ...additionalTracks]));
+          dispatch(addCustomTracksPool([...additionalTracks]));
           dispatch(
             createSession({
               genome,

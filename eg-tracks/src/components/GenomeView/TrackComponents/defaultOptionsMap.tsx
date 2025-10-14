@@ -167,7 +167,7 @@ export const trackOptionMap: { [key: string]: any } = {
     defaultOptions: {
       ...defaultOmeroTrack,
       ...defaultNumericalTrack,
-      aggregateMethod: DefaultAggregators.types.IMAGECOUNT,
+      aggregateMethod: "IMAGECOUNT",
     },
     getGenePadding: function getGenePadding(gene) {
       return gene.getName().length * 9;

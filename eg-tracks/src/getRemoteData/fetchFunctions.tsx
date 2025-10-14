@@ -207,6 +207,7 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
             !(item.metadata.genome in genomicFetchCoord)) ||
           !(item.type in componentMap)
         ) {
+
           foundInvalidTrack = true;
         }
         if (foundInvalidTrack) {
@@ -336,15 +337,15 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
         for (let i = 0; i < curFetchNav.length; i++) {
           const curRespond = trackModel.isText
             ? await textFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              })
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            })
             : await localTrackFetchFunction[trackModel.type]({
-                basesPerPixel: bpRegionSize / windowWidth,
-                nav: curFetchNav[i],
-                trackModel,
-              });
+              basesPerPixel: bpRegionSize / windowWidth,
+              nav: curFetchNav[i],
+              trackModel,
+            });
 
           if (
             curRespond &&
@@ -370,8 +371,8 @@ export async function fetchGenomicData(data: any[]): Promise<any> {
                       "genome" in trackModel.metadata
                         ? trackModel.metadata.genome
                         : trackModel.genome
-                        ? trackModel.genome
-                        : primaryGenName,
+                          ? trackModel.genome
+                          : primaryGenName,
                     name: trackModel.name,
                     chr: nav.chr,
                     start: nav.start,
@@ -721,7 +722,7 @@ export async function fetchGenomeAlignData(data: any): Promise<any> {
       trackToDrawId,
       regionSetStartBp:
         data.visData.visRegion._endBase - data.visData.visRegion._startBase ===
-        data.bpRegionSize
+          data.bpRegionSize
           ? 0
           : null,
     },

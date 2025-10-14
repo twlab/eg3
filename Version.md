@@ -1,4 +1,13 @@
 # Version history
+## 57.0.0
+- Implemented a way for users to retry fetching a track if there is an error 
+- Implemented History menu, allow user to change to past or future states
+- Implemented URL param for datahub
+- Implemented shortcut keys for tools
+- Allow users to import session in Genome picker menu 
+- Pressing Escape now allow users to exit out of sub menus
+- Reworked toolbar to fit screen when user zoom in and out
+- fixed memory deleting memory caching 
 
 ## 56.0.8
 

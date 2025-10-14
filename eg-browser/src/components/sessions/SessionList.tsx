@@ -218,23 +218,22 @@ function SessionListItem({
     >
       <div className="text-primary dark:text-dark-primary flex flex-row justify-between items-center">
         <div className="flex flex-col gap-2">
+
           {session.title.length > 0 ? (
             <>
               <h1 className="text-l">{session.title}</h1>
-              <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
             </>
-          ) : (
-            <h1 className="text-l">Genome: {genome?.name ?? "..."}</h1>
-          )}
+          ) : ""}
           {session.bundleId ? (
-            <p className="text-sm">{`Bundle ID: ${session.bundleId}`}</p>
+            <p className="text-sm">{`Session Bundle ID: ${session.bundleId}`}</p>
           ) : (
             ""
           )}
+          <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
           <p className="text-sm">
             {sortPreference === "updatedAt"
-              ? `Updated: ${new Date(session.updatedAt).toLocaleDateString()}`
-              : `Created: ${new Date(session.createdAt).toLocaleDateString()}`}
+              ? `Updated: ${new Date(session.updatedAt).toLocaleString()}`
+              : `Created: ${new Date(session.createdAt).toLocaleString()}`}
           </p>
         </div>
         <motion.div

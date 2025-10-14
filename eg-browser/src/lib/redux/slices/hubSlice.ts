@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { ITrackModel } from "wuepgg3-track";
-import { generateUUID } from "wuepgg3-track";
+
 export const hubSlice = createSlice({
   name: "hub",
   initialState: {
@@ -12,7 +12,7 @@ export const hubSlice = createSlice({
     screenShotOpen: false as boolean,
     loadedPublicHub: {} as { [key: string]: boolean },
     bundle: {
-      bundleId: generateUUID(),
+      bundleId: "",
       currentId: null,
       sessionsInBundle: null,
     } as {
@@ -68,7 +68,7 @@ export const hubSlice = createSlice({
       state.screenShotOpen = false;
       state.loadedPublicHub = {};
       state.bundle = {
-        bundleId: generateUUID(),
+        bundleId: "",
         currentId: null,
         sessionsInBundle: null,
       };

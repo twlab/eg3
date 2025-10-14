@@ -132,3 +132,15 @@ hen scroll back if its fetching the new tracks only that are added
 
 --21. FIXED clearing memory cache
 22 trackmanager line 1532
+
+
+checking-
+
+- Implemented a way for users to retry fetching a track if there is an error  (finish)
+- Implemented History menu, allow user to change to past or future states (finish)
+- Implemented URL param for datahub  (finish)
+- Implemented shortcut keys for tools (finish)
+- Allow users to import session in Genome picker menu  (finish)
+- Pressing Escape now allow users to exit out of sub menus (finish)
+- Reworked toolbar to fit screen when user zoom in and out (finish)
+- fixed memory deleting memory caching (finish)

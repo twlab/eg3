@@ -195,6 +195,7 @@ const Session: React.FC = () => {
   return (
     <SessionUI
       onRestoreSession={onRestoreSession}
+
       onRetrieveBundle={onRetrieveBundle}
       updateBundle={onUpdateBundle}
       bundleId={bundle.bundleId ? bundle.bundleId : ""}

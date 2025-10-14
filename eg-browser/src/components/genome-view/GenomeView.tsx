@@ -38,19 +38,23 @@ export default function GenomeView() {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const isToolBarVisible = useAppSelector(selectIsToolBarVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
-  const lastSessionId = useRef<null | string>(null);
-  const bundleId = currentSession ? currentSession.bundleId : null;
 
-  const sessionId = currentSession ? currentSession.id : null;
+  const bundleId = currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
-  if (lastSessionId.current !== sessionId && sessionId !== null) {
-    if (lastSessionId.current !== null) {
-      dispatch(resetState());
-    }
-    lastSessionId.current = sessionId;
-    if (bundleId) {
-      dispatch(fetchBundle(bundleId));
-    }
+
+
+  // if (lastSessionId.current !== sessionId && sessionId !== null) {
+  //   if (lastSessionId.current !== null) {
+  //     dispatch(resetSt ate());
+  //   }
+  //   lastSessionId.current = sessionId;
+  //   if (bundleId) {
+  //     dispatch(fetchBundle(bundleId));
+  //   }
+  // }
+
+  if (bundleId) {
+    dispatch(fetchBundle(bundleId));
   }
 
   // const bundleId = currentSession.bundleId;

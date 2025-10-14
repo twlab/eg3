@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent } from "react";
-import { BookmarkIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { BookmarkIcon, ArrowPathIcon, ArrowTurnDownLeftIcon } from "@heroicons/react/24/outline";
 
 import JSZip from "jszip";
 import _ from "lodash";
@@ -68,6 +68,7 @@ interface SessionUIProps extends HasBundleId {
 }
 
 export const onRetrieveSession = async (retrieveId: string) => {
+
   if (retrieveId.length === 0) {
     console.log("Session bundle ID cannot be empty.", "error", 2000);
     return null;
@@ -125,6 +126,7 @@ export const onRetrieveSession = async (retrieveId: string) => {
 
       return res;
     } else {
+      console.log("No data available for the provided Session Bundle ID.", "error", 2000);
       return null;
     }
   } catch (error) {
@@ -158,9 +160,15 @@ const SessionUI: React.FC<SessionUIProps> = ({
     };
 
     const sessionId = generateUUID();
-
+    let curBundleId;
+    if (!bundle || !bundle.bundleId) {
+      curBundleId = generateUUID();
+    }
+    else {
+      curBundleId = bundle.bundleId
+    }
     let newBundle = {
-      bundleId: bundle.bundleId,
+      bundleId: curBundleId,
       currentId: sessionId,
       sessionsInBundle: {
         ...bundle.sessionsInBundle,
@@ -172,8 +180,9 @@ const SessionUI: React.FC<SessionUIProps> = ({
     updateBundle(newBundle);
     const db = getDatabase();
     try {
+
       await set(
-        ref(db, `sessions/${bundle.bundleId}`),
+        ref(db, `sessions/${curBundleId}`),
         JSON.parse(JSON.stringify(newBundle))
       );
 
@@ -184,7 +193,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
 
     setNewSessionLabel("");
-    setLastBundleId(bundle.bundleId);
+    setLastBundleId(curBundleId);
   };
 
   const downloadSession = (asHub = false) => {
@@ -571,9 +580,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
   }
 
-  const retrieveSession = async (retrieveId: string) => {
-    const bundleRes = await onRetrieveSession(retrieveId);
+  const retrieveBundle = async (retrieveBundleId: string) => {
+    const bundleRes = await onRetrieveSession(retrieveBundleId);
+
     if (bundleRes) {
+      bundleRes["currentId"] = null
+      setLastBundleId(bundleRes.bundleId);
       setBundle(bundleRes);
       onRetrieveBundle(bundleRes);
     }
@@ -651,7 +663,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
       cursor: "pointer",
     },
     separator: {
-      borderTop: "1px solid #eee",
+      borderTop: "1px solid #ccc",
       margin: "20px 0",
     },
     additionalActions: {
@@ -675,8 +687,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
         borderColor: "#4285F4",
         color: "#4285F4",
         hover: {
-          backgroundColor: "#4285F4",
-          color: "white",
+          backgroundColor: "#E8F0FE",
+          color: "black",
         },
       },
       downloadSession: {
@@ -725,7 +737,10 @@ const SessionUI: React.FC<SessionUIProps> = ({
   return (
     <div style={styles.container}>
       <div style={styles.inputContainer}>
+        <div style={styles.label}><span>Load Saved Bundle:</span></div>
+
         <div style={styles.row}>
+
           <input
             type="text"
             style={styles.input}
@@ -742,7 +757,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
             onMouseOut={(e) =>
               (e.target.style.backgroundColor = styles.button.backgroundColor)
             }
-            onClick={() => retrieveSession(retrieveId)}
+            onClick={() => retrieveBundle(retrieveId)}
           >
             Retrieve
           </button>
@@ -794,6 +809,7 @@ const SessionUI: React.FC<SessionUIProps> = ({
             {/* Session Bundle Info */}
             <div style={styles.inputContainer}>
               <div style={styles.label}>
+
                 <span>Session Bundle ID:</span>
                 <div
                   style={{
@@ -811,13 +827,13 @@ const SessionUI: React.FC<SessionUIProps> = ({
                     style={{
                       flex: "1",
                       fontSize: "14px",
-                      color: "#495057",
+                      color: "blue",
                       backgroundColor: "transparent",
                     }}
                   >
                     {bundle && bundle.bundleId
                       ? bundle.bundleId
-                      : "No bundle loaded"}
+                      : "ID will generate after saving a session"}
                   </code>
                   <CopyToClip
                     value={bundle && bundle.bundleId ? bundle.bundleId : ""}
@@ -838,13 +854,59 @@ const SessionUI: React.FC<SessionUIProps> = ({
                       style={{
                         ...styles.input,
                         width: "100%",
-                        paddingRight: "40px",
+                        paddingRight: "80px",
                         fontWeight: "normal",
                       }}
                       placeholder="Untitled Session"
                       onChange={(e) =>
                         setNewSessionLabel(e.target.value.trim())
                       }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          saveSession();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      style={{
+                        position: "absolute",
+                        right: "48px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "black",
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.color = "grey")}
+                      onMouseOut={(e) => (e.currentTarget.style.color = "black")}
+                      onClick={saveSession}
+                      title="Save session (Enter)"
+                    >
+                      <ArrowTurnDownLeftIcon
+                        className="w-4 h-4"
+                        style={{
+                          backgroundColor: "transparent",
+                          border: "none",
+                          outline: "none",
+                        }}
+                      />
+                    </button>
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: "38px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: "1px",
+                        height: "60%",
+                        backgroundColor: "#ccc",
+                      }}
                     />
                     <button
                       type="button"
@@ -862,8 +924,8 @@ const SessionUI: React.FC<SessionUIProps> = ({
                         alignItems: "center",
                         justifyContent: "center",
                       }}
-                      onMouseOver={(e) => (e.target.style.color = "#EC971F")}
-                      onMouseOut={(e) => (e.target.style.color = "#F0AD4E")}
+                      onMouseOver={(e) => (e.currentTarget.style.color = "#EC971F")}
+                      onMouseOut={(e) => (e.currentTarget.style.color = "#F0AD4E")}
                       onClick={() => setNewSessionLabel(getFunName())}
                       title="Generate random name"
                     >
@@ -881,17 +943,16 @@ const SessionUI: React.FC<SessionUIProps> = ({
                     style={{
                       ...styles.actionButton,
                       ...styles.actionButtonColors.save,
+                      backgroundColor: "#E8F0FE",
+                      color: "black",
                     }}
                     onMouseOver={(e) => (
-                      (e.currentTarget.style.backgroundColor =
-                        styles.actionButtonColors.save.hover.backgroundColor),
-                      (e.currentTarget.style.color =
-                        styles.actionButtonColors.save.hover.color)
+                      (e.currentTarget.style.backgroundColor = "#D2E3FC"),
+                      (e.currentTarget.style.color = "black")
                     )}
                     onMouseOut={(e) => (
-                      (e.currentTarget.style.backgroundColor = "white"),
-                      (e.currentTarget.style.color =
-                        styles.actionButtonColors.save.color)
+                      (e.currentTarget.style.backgroundColor = "#E8F0FE"),
+                      (e.currentTarget.style.color = "black")
                     )}
                     onClick={saveSession}
                   >

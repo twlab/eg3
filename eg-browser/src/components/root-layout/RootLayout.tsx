@@ -49,6 +49,7 @@ import {
   ITrackModel,
   generateUUID,
 } from "wuepgg3-track";
+import { resetState } from "@/lib/redux/slices/hubSlice";
 
 // const firebaseConfig = {
 //   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
@@ -101,6 +102,13 @@ export default function RootLayout() {
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
+
+  // Reset state when session is cleared
+  useEffect(() => {
+
+    dispatch(resetState());
+
+  }, [sessionId]);
 
   // Keyboard handler for Escape key
   useEffect(() => {

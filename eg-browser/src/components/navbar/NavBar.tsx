@@ -113,7 +113,7 @@ export default function NavBar() {
                 value={
                   currentSession.title.length > 0
                     ? currentSession.title
-                    : genome?.name ?? "Untitled Session"
+                    : "Untitled Session"
                 }
                 onChange={async (value) => {
 
