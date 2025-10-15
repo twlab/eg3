@@ -1,4 +1,10 @@
 # Version history
+
+## 57.0.1
+- added more error checking for saving sessions 
+- removed unused session tab 
+- small changes to session picker css, clearer import and move icon to top
+
 ## 57.0.0
 - Implemented a way for users to retry fetching a track if there is an error 
 - Implemented History menu, allow user to change to past or future states

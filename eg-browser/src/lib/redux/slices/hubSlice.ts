@@ -12,11 +12,11 @@ export const hubSlice = createSlice({
     screenShotOpen: false as boolean,
     loadedPublicHub: {} as { [key: string]: boolean },
     bundle: {
-      bundleId: "",
+      bundleId: null,
       currentId: null,
       sessionsInBundle: null,
     } as {
-      bundleId: string;
+      bundleId: string | null;
       currentId: string | null;
       sessionsInBundle: { [key: string]: any } | null;
     },
@@ -38,7 +38,7 @@ export const hubSlice = createSlice({
     updateBundle: (
       state,
       action: PayloadAction<{
-        bundleId: string;
+        bundleId: string | null;
         currentId: string | null;
         sessionsInBundle: { [key: string]: any } | null;
       }>
@@ -68,7 +68,7 @@ export const hubSlice = createSlice({
       state.screenShotOpen = false;
       state.loadedPublicHub = {};
       state.bundle = {
-        bundleId: "",
+        bundleId: null,
         currentId: null,
         sessionsInBundle: null,
       };
