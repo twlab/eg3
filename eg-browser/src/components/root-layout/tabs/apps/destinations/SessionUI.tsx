@@ -69,7 +69,7 @@ interface SessionUIProps extends HasBundleId {
 
 export const onRetrieveSession = async (retrieveId: string) => {
 
-  if (retrieveId.length === 0) {
+  if (!retrieveId || retrieveId.length === 0) {
     console.log("Session bundle ID cannot be empty.", "error", 2000);
     return null;
   }
@@ -166,6 +166,11 @@ const SessionUI: React.FC<SessionUIProps> = ({
     }
     else {
       curBundleId = bundle.bundleId
+    }
+
+    if (!curBundleId || curBundleId.length === 0) {
+      console.log("Session bundle ID cannot be empty.", "error", 2000);
+      return null;
     }
     let newBundle = {
       bundleId: curBundleId,
@@ -265,7 +270,12 @@ const SessionUI: React.FC<SessionUIProps> = ({
       onRestoreSession(sessionBundle);
       onRetrieveBundle(newBundle);
       const db = getDatabase();
+      if (!bundle.bundleId || bundle.bundleId.length === 0) {
+        console.log("Session bundle ID cannot be empty.", "error", 2000);
+        return null;
+      }
       try {
+
         await set(
           ref(db, `sessions/${bundle.bundleId}`),
           JSON.parse(JSON.stringify(newBundle))
@@ -293,16 +303,21 @@ const SessionUI: React.FC<SessionUIProps> = ({
       setBundle(newBundle);
     }
 
-    if (bundle)
-      try {
-        await remove(
-          ref(db, `sessions/${bundle.bundleId}/sessionsInBundle/${sessionId}`)
-        );
-        console.log("Session deleted.", "success", 2000);
-      } catch (error) {
-        console.error(error);
-        console.log("Error while deleting session", "error", 2000);
+    if (bundle) {
+      if (!bundle.bundleId || bundle.bundleId.length === 0) {
+        console.log("Session bundle ID cannot be empty.", "error", 2000);
+        return null;
       }
+    }
+    try {
+      await remove(
+        ref(db, `sessions/${bundle.bundleId}/sessionsInBundle/${sessionId}`)
+      );
+      console.log("Session deleted.", "success", 2000);
+    } catch (error) {
+      console.error(error);
+      console.log("Error while deleting session", "error", 2000);
+    }
   };
 
   const renderSavedSessions = () => {

@@ -125,9 +125,8 @@ export default function NavBar() {
               genomeLogoUrl && !sessionPanelOpen ? "outline outline-gray-200" : ""
             )}
             onClick={() => {
-              if (currentSession) {
-                dispatch(setSessionPanelOpen(!sessionPanelOpen));
-              }
+              dispatch(setSessionPanelOpen(false));
+              dispatch(setCurrentSession(null));
             }}
           />
           {!isSmallScreen &&
@@ -149,7 +148,7 @@ export default function NavBar() {
                   }
                   onChange={async (value) => {
                     try {
-                      if (bundle.currentId && bundle.sessionsInBundle) {
+                      if (bundle && bundle.bundleId && bundle.currentId && bundle.sessionsInBundle && bundle.sessionsInBundle[`${bundle.currentId}`]) {
 
                         const newSessionObj = { ...bundle.sessionsInBundle[`${bundle.currentId}`], label: value };
 

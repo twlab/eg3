@@ -65,7 +65,7 @@ export default function SessionList({
               });
             }}
           >
-            Import Session
+            Import by Session Bundle ID or File
           </Button>
         </div>
       )}
