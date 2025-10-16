@@ -5,7 +5,7 @@ import ReactDOM from "react-dom";
 import { getTrackXOffset } from "./CommonTrackStateChangeFunctions.tsx/getTrackPixelXOffset";
 import { getConfigChangeData } from "./CommonTrackStateChangeFunctions.tsx/getDataAfterConfigChange";
 import OpenInterval from "../../../models/OpenInterval";
-import { getDeDupeArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
+
 import {
   anchorTracks,
   dynamicMatplotTracks,
@@ -21,6 +21,7 @@ import Loading from "./commonComponents/Loading";
 import "./commonComponents/loading.css";
 import { geneClickToolTipMap } from "./renderClickTooltipMap";
 import HiddenIndicator from "./commonComponents/HiddenIndicator";
+import { groupTracksArrMatPlot } from "./CommonTrackStateChangeFunctions.tsx/cacheFetchedData";
 const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   trackManagerRef,
   basePerPixel,
@@ -50,6 +51,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
   onColorBoxClick,
   messageData,
   Toolbar,
+  handleRetryFetchTrack,
 }) {
   const configOptions = useRef(
     trackOptionMap[trackModel.type]
@@ -95,47 +97,33 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
     cacheDataIdx,
     xvalues = null
   ) {
-    let curXPos = getTrackXOffset(trackState, windowWidth);
-    if (isError) {
-      fetchError.current = true;
-    }
+    fetchError.current = isError;
+    const curXPos = getTrackXOffset(trackState, windowWidth);
 
     trackState["viewWindow"] = trackState.viewWindow;
 
-    let res = fetchError.current ? (
-      <div
-        style={{
-          width: trackState.visWidth,
-          height: 40,
-          backgroundColor: "#F37199",
-          textAlign: "center",
-          lineHeight: "40px",
-        }}
-      >
-        {genesArr.filter((gene) => typeof gene === "string").join(", ")}
-      </div>
-    ) : (
-      getDisplayModeFunction({
-        basesByPixel: basePerPixel,
-        genesArr,
-        genomeConfig,
-        genomeName: genomeConfig.genome.getName(),
-        trackState,
-        windowWidth,
-        configOptions: configOptions.current,
-        renderTooltip:
-          trackModel.type === "modbed" ? renderTooltipModbed : renderTooltip,
-        svgHeight,
-        updatedLegend,
-        trackModel,
-        getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
-        getHeight,
-        ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
-        groupScale: trackState.groupScale,
-        xvaluesData: xvalues,
-        onClose,
-      })
-    );
+    const res = getDisplayModeFunction({
+      basesByPixel: basePerPixel,
+      genesArr,
+      genomeConfig,
+      genomeName: genomeConfig.genome.getName(),
+      trackState,
+      windowWidth,
+      configOptions: configOptions.current,
+      renderTooltip:
+        trackModel.type === "modbed" ? renderTooltipModbed : renderTooltip,
+      svgHeight,
+      updatedLegend,
+      trackModel,
+      getGenePadding: trackOptionMap[`${trackModel.type}`].getGenePadding,
+      getHeight,
+      ROW_HEIGHT: trackOptionMap[`${trackModel.type}`].ROW_HEIGHT,
+      groupScale: trackState.groupScale,
+      xvaluesData: xvalues,
+      onClose,
+      isError: fetchError.current,
+      handleRetryFetchTrack: handleRetryFetchTrack,
+    });
 
     if (cacheDataIdx === dataIdx) {
       signalTrackLoadComplete(id);
@@ -225,12 +213,20 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
   // MARK:[newDrawDat
   useEffect(() => {
-    if (newDrawData.trackToDrawId && id in newDrawData.trackToDrawId) {
+    if (
+      newDrawData.completedFetchedRegion &&
+      newDrawData.completedFetchedRegion.current["done"][id] === false
+    ) {
+      if (dataIdx === newDrawData.completedFetchedRegion.current["key"]) {
+        newDrawData.completedFetchedRegion.current["done"][id] = true;
+      } else {
+        return;
+      }
       const cacheTrackData = trackFetchedDataCache.current[`${id}`];
       let trackState = {
         ...globalTrackState.current.trackStates[dataIdx].trackState,
       };
-  
+
       const primaryVisData =
         trackState.genomicFetchCoord[trackState.primaryGenName].primaryVisData;
       if (cacheTrackData.trackType !== "genomealign") {
@@ -292,17 +288,32 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         if (!hasError) {
           if (dynamicMatplotTracks.has(trackModel.type)) {
-            combinedData = getDeDupeArrMatPlot(combinedData, false);
+            if (
+              cacheTrackData[`${dataIdx}`] &&
+              cacheTrackData[`${dataIdx}`]["xvalues"]
+            ) {
+              combinedData = [];
+            } else {
+              combinedData = groupTracksArrMatPlot(combinedData);
+            }
           } else {
-            combinedData = combinedData
-              .map((item) => {
-                if (item && "dataCache" in item && item.dataCache) {
-                  return item.dataCache;
-                } else {
-                  noData = true;
-                }
-              })
-              .flat(1);
+            if (
+              (cacheTrackData[`${dataIdx}`] &&
+                cacheTrackData[`${dataIdx}`]["xvalues"]) ||
+              !combinedData
+            ) {
+              combinedData = [];
+            } else {
+              combinedData = combinedData
+                .map((item) => {
+                  if (item && "dataCache" in item && item.dataCache) {
+                    return item.dataCache;
+                  } else {
+                    noData = true;
+                  }
+                })
+                .flat(1);
+            }
           }
         }
 
@@ -337,7 +348,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
           createSVGOrCanvas(
             trackState,
-            "error" in combinedData ? combinedData.error : combinedData,
+            combinedData,
             "error" in combinedData ? true : false,
             dataIdx,
             cacheTrackData[dataIdx].xvalues
@@ -484,109 +495,124 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
 
         let cacheTrackData = trackFetchedDataCache.current[`${id}`];
         let combinedData: any = [];
-        let hasError = false;
-        let currIdx = dataIdx + 1;
         let trackState = _.cloneDeep(
           globalTrackState.current.trackStates[cacheDataIdx].trackState
         );
-        if (trackModel.type !== "genomealign") {
-          if (!interactionTracks.has(trackModel.type)) {
-            for (let i = 0; i < 3; i++) {
-              if (!cacheTrackData[currIdx].dataCache) {
-                continue;
-              }
-              if (
-                cacheTrackData[currIdx].dataCache &&
-                "error" in cacheTrackData[currIdx].dataCache
-              ) {
-                hasError = true;
-                combinedData.push(cacheTrackData[currIdx].dataCache.error);
-              } else {
-                combinedData.push(cacheTrackData[currIdx]);
-              }
-
-              currIdx--;
+        if (!cacheTrackData.useExpandedLoci) {
+          let hasError = false;
+          let currIdx = dataIdx + 1;
+          var noData = false;
+          for (let i = 0; i < 3; i++) {
+            if (
+              !cacheTrackData[currIdx] ||
+              !cacheTrackData[currIdx].dataCache
+            ) {
+              noData = true;
+              continue;
             }
-          } else {
-            combinedData = cacheTrackData[dataIdx].dataCache;
-
-            if (!combinedData) {
+            if (
+              cacheTrackData[currIdx].dataCache &&
+              "error" in cacheTrackData[currIdx].dataCache
+            ) {
               hasError = true;
+              combinedData.push(cacheTrackData[currIdx].dataCache.error);
+            } else {
+              combinedData.push(cacheTrackData[currIdx]);
             }
+
+            currIdx--;
           }
 
-          var noData = false;
           if (!hasError) {
             if (dynamicMatplotTracks.has(trackModel.type)) {
-              combinedData = getDeDupeArrMatPlot(combinedData, false);
-            } else if (!interactionTracks.has(trackModel.type)) {
-              combinedData = combinedData
-                .map((item) => {
-                  if (item && "dataCache" in item) {
-                    return item.dataCache;
-                  } else {
-                    noData = true;
-                  }
-                })
-                .flat(1);
-            } else if (combinedData && "error" in combinedData) {
-              noData = true;
+              if (
+                cacheTrackData[`${dataIdx}`] &&
+                cacheTrackData[`${dataIdx}`]["xvalues"]
+              ) {
+                combinedData = [];
+              } else {
+                combinedData = groupTracksArrMatPlot(combinedData);
+              }
+            } else {
+              if (
+                (cacheTrackData[`${dataIdx}`] &&
+                  cacheTrackData[`${dataIdx}`]["xvalues"]) ||
+                !combinedData
+              ) {
+                combinedData = [];
+              } else {
+                combinedData = combinedData
+                  .map((item) => {
+                    if (item && "dataCache" in item && item.dataCache) {
+                      return item.dataCache;
+                    } else {
+                      noData = true;
+                    }
+                  })
+                  .flat(1);
+              }
             }
           }
-          if (noData || !combinedData) {
-            return;
-          }
 
-          const primaryVisData =
-            trackState.genomicFetchCoord[trackState.primaryGenName]
-              .primaryVisData;
-          let visRegion = !cacheTrackData.usePrimaryNav
-            ? trackState.genomicFetchCoord[
-                trackFetchedDataCache.current[`${id}`].queryGenome
-              ].queryRegion
-            : primaryVisData.visRegion;
-          trackState["visRegion"] = visRegion;
-
-          const width = primaryVisData.visWidth
-            ? primaryVisData.visWidth
-            : windowWidth * 3;
-
-          const expandedViewWindow =
-            updateSide.current === "right"
-              ? new OpenInterval(
-                  -(dragX! + (xPos.current + windowWidth)),
-                  windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
-                )
-              : new OpenInterval(
-                  -(dragX! - (xPos.current + windowWidth)) + windowWidth,
-                  windowWidth * 3 -
-                    (dragX! - (xPos.current + windowWidth)) +
-                    windowWidth
-                );
-          let start = expandedViewWindow.start + width / 3;
-
-          let end = expandedViewWindow.end - width / 3;
-
-          trackState["viewWindow"] = new OpenInterval(start, end);
-        } else {
-          const tmpCombinedData = cacheTrackData[dataIdx]
-            ? cacheTrackData[dataIdx].dataCache
-            : null;
-
-          if (tmpCombinedData) {
+          if (!noData) {
             if (newDrawData.viewWindow) {
               trackState["viewWindow"] = newDrawData.viewWindow;
             }
-            combinedData = tmpCombinedData;
+            trackState["groupScale"] =
+              globalTrackState.current.trackStates[dataIdx].trackState[
+                "groupScale"
+              ];
+          }
+        } else {
+          combinedData = cacheTrackData[dataIdx]
+            ? cacheTrackData[dataIdx].dataCache
+            : null;
+
+          if (combinedData) {
+            if (newDrawData.viewWindow) {
+              trackState["viewWindow"] = newDrawData.viewWindow;
+            }
           }
         }
+        const primaryVisData =
+          trackState.genomicFetchCoord[trackState.primaryGenName]
+            .primaryVisData;
+        let visRegion = !cacheTrackData.usePrimaryNav
+          ? trackState.genomicFetchCoord[
+              trackFetchedDataCache.current[`${id}`].queryGenome
+            ].queryRegion
+          : primaryVisData.visRegion;
+        // need to create visRegion to use for draw because trackState doesn't globaltrackState don't keep it
+        trackState["visRegion"] = visRegion;
 
+        const width = primaryVisData.visWidth
+          ? primaryVisData.visWidth
+          : windowWidth * 3;
+
+        const expandedViewWindow =
+          updateSide.current === "right"
+            ? new OpenInterval(
+                -(dragX! + (xPos.current + windowWidth)),
+                windowWidth * 3 + -(dragX! + (xPos.current + windowWidth))
+              )
+            : new OpenInterval(
+                -(dragX! - (xPos.current + windowWidth)) + windowWidth,
+                windowWidth * 3 -
+                  (dragX! - (xPos.current + windowWidth)) +
+                  windowWidth
+              );
+        let start = expandedViewWindow.start + width / 3;
+
+        let end = expandedViewWindow.end - width / 3;
+
+        trackState["viewWindow"] = new OpenInterval(start, end);
         let drawOptions = { ...configOptions.current };
         drawOptions["forceSvg"] = true;
         trackState["groupScale"] =
           globalTrackState.current.trackStates[dataIdx].trackState[
             "groupScale"
           ];
+
         if (combinedData) {
           sentScreenshotData({
             fetchData: {
@@ -602,6 +628,9 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
               trackModel,
               basesByPixel: basePerPixel,
               genomeConfig,
+              xvaluesData: cacheTrackData[dataIdx].xvalues
+                ? cacheTrackData[dataIdx].xvalues
+                : null,
             },
             trackId: id,
           });

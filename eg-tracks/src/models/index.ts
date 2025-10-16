@@ -7,17 +7,14 @@ export {
 export { default as DataHubParser } from "./DataHubParser";
 export { default as FlankingStrategy } from "./FlankingStrategy";
 export { default as Json5Fetcher } from "./Json5Fetcher";
-export * from "../components/GenomeView/ToolComponents/Tools";
+
 export { COLORS } from "../components/GenomeView/TrackComponents/commonComponents/MetadataIndicator";
 export { getTrackConfig } from "../trackConfigs/config-menu-models.tsx/getTrackConfig";
 export * from "../trackConfigs/config-menu-components.tsx/ColorPicker";
 export { default as Feature, NumericalFeature } from "./Feature";
 export { default as RegionSet } from "./RegionSet";
 export { default as DisplayedRegionModel } from "./DisplayedRegionModel";
-export {
-  default as HighlightMenu,
-  HighlightInterval,
-} from "../components/GenomeView/ToolComponents/HighlightMenu";
+
 export * from "./AppSaveLoad";
 export * from "../components/GenomeView/TrackComponents/displayModeComponentMap";
 export * from "../getRemoteData/fetchTrackData";

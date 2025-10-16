@@ -3,13 +3,14 @@ export interface IGenome {
   name: string;
   group?: string;
   chromosomes: { name: string; length: number }[];
-  cytobands: any;
+  cytobands?: any;
   defaultRegion?: any;
   defaultTracks?: any[];
   publicHubList?: any[];
   publicHubData?: any;
   annotationTracks?: any;
   twoBitURL?: string;
+  customGenome?: boolean | null;
 }
 
 export interface IGenomeHubSource {

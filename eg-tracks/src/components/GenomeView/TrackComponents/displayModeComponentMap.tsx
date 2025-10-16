@@ -713,6 +713,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     );
     return canvasElements;
   },
+
   vcf: function getVcf({
     formattedData,
     trackState,
@@ -1010,6 +1011,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
         xvaluesData={xvaluesData}
       />
     );
+
     return canvasElements;
   },
 
@@ -1170,22 +1172,23 @@ export const displayModeComponentMap: { [key: string]: any } = {
     if (drawData.svgHeight) {
       drawData.svgHeight.current = drawData.configOptions.height;
     }
+    let legend = (
+      <TrackLegend
+        height={drawData.configOptions.height}
+        trackModel={drawData.trackModel}
+        label={
+          drawData.configOptions.label
+            ? drawData.configOptions.label
+            : drawData.trackModel.options.label
+            ? drawData.trackModel.options.label
+            : ""
+        }
+        forceSvg={drawData.configOptions.forceSvg}
+      />
+    );
     if (drawData.basesByPixel <= 10) {
       const drawDatas = result.drawData as PlacedAlignment[];
-      let legend = (
-        <TrackLegend
-          height={drawData.configOptions.height}
-          trackModel={drawData.trackModel}
-          label={
-            drawData.configOptions.label
-              ? drawData.configOptions.label
-              : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
-          }
-          forceSvg={drawData.configOptions.forceSvg}
-        />
-      );
+
       if (drawData.updatedLegend) {
         drawData.updatedLegend.current = legend;
       }
@@ -1269,20 +1272,10 @@ export const displayModeComponentMap: { [key: string]: any } = {
       return element;
     } else {
       const drawDatas = result.drawData as PlacedMergedAlignment[];
-      drawData.updatedLegend.current = (
-        <TrackLegend
-          height={drawData.configOptions.height}
-          trackModel={drawData.trackModel}
-          label={
-            drawData.configOptions.label
-              ? drawData.configOptions.label
-              : drawData.trackModel.options.label
-              ? drawData.trackModel.options.label
-              : ""
-          }
-          forceSvg={drawData.configOptions.forceSvg}
-        />
-      );
+
+      if (drawData.updatedLegend) {
+        drawData.updatedLegend.current = legend;
+      }
       const strand = result.plotStrand;
       const targetGenome = result.primaryGenome;
       const queryGenome = result.queryGenome;
@@ -1311,23 +1304,48 @@ export const displayModeComponentMap: { [key: string]: any } = {
       );
       svgElements.push(primaryArrows);
       let element;
-      if (drawData.configOptions.forceSvg) {
-        let start =
-          drawData.trackState.viewWindow.start +
-          drawData.trackState.visWidth / 3;
 
-        let end =
-          drawData.trackState.viewWindow.end - drawData.trackState.visWidth / 3;
-        let svgWidth = end - start;
+      if (drawData.configOptions.forceSvg) {
+        let curParentStyle: any = drawData.configOptions.forceSvg
+          ? {
+              position: "relative",
+
+              overflow: "hidden",
+              width: drawData.trackState.visWidth / 3,
+            }
+          : {};
+        let curEleStyle: any = drawData.configOptions.forceSvg
+          ? {
+              position: "relative",
+              transform: `translateX(${-drawData.trackState.viewWindow
+                .start}px)`,
+            }
+          : {};
+
         element = (
-          <svg
-            width={drawData.trackState.visWidth / 3}
-            viewBox={`${start} 0 ${svgWidth} ${drawData.configOptions.height}`}
-            height={drawData.configOptions.height}
-            display={"block"}
-          >
-            {svgElements}
-          </svg>
+          <React.Fragment>
+            <div style={{ display: "flex", ...curParentStyle }}>
+              {drawData.configOptions.forceSvg ||
+              drawData.configOptions.packageVersion
+                ? legend
+                : ""}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  ...curEleStyle,
+                }}
+              >
+                <svg
+                  width={drawData.trackState.visWidth}
+                  height={drawData.configOptions.height}
+                  display={"block"}
+                >
+                  {svgElements}
+                </svg>
+              </div>
+            </div>
+          </React.Fragment>
         );
       } else {
         element = (
@@ -1365,267 +1383,240 @@ export const displayModeComponentMap: { [key: string]: any } = {
       return element;
     }
   },
+
+  error: function getError({
+    trackState,
+    configOptions,
+    updatedLegend,
+    trackModel,
+    genesArr,
+    handleRetryFetchTrack,
+  }) {
+    function getErrorLegend(legend: ReactNode) {
+      if (updatedLegend) {
+        updatedLegend.current = legend;
+      }
+    }
+
+    const legend = (
+      <TrackLegend
+        height={40}
+        trackModel={trackModel}
+        label={
+          configOptions.label
+            ? configOptions.label
+            : trackModel.options.label
+            ? trackModel.options.label
+            : ""
+        }
+      />
+    );
+
+    getErrorLegend(legend);
+
+    return (
+      <div
+        onClick={() => handleRetryFetchTrack(trackModel.id)}
+        style={{
+          width: trackState.visWidth,
+          height: 40,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          backgroundColor: "#fdf2f2",
+          border: "1px solid #f5c6cb",
+          borderRadius: "8px",
+          fontFamily: "Google Sans, Roboto, sans-serif",
+          fontSize: "14px",
+          color: "#721c24",
+          cursor: "pointer",
+          transition: "background-color 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          (e.target as HTMLDivElement).style.backgroundColor = "#f8d7da";
+        }}
+        onMouseLeave={(e) => {
+          (e.target as HTMLDivElement).style.backgroundColor = "#fdf2f2";
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "2px",
+          }}
+        >
+          <span>
+            {Array.isArray(genesArr)
+              ? genesArr.filter((gene) => typeof gene === "string")[0] ||
+                "Something went wrong"
+              : typeof genesArr === "object" && genesArr["error"]
+              ? genesArr["error"]
+              : "Something went wrong"}{" "}
+          </span>
+          <span>Refresh page or click track to try again.</span>
+          <span
+            style={{
+              marginLeft: "4px",
+              color: "#dc3545",
+              fontSize: "16px",
+              transform: "rotate(90deg)",
+            }}
+          >
+            ↻
+          </span>
+        </div>
+      </div>
+    );
+  },
 };
 // MARK: use draw function
 export function getDisplayModeFunction(drawData: { [key: string]: any }) {
-  if (drawData.trackModel.type === "ruler") {
-    return displayModeComponentMap["ruler"]({
-      trackState: drawData.trackState,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      genomeName: drawData.genomeName,
-      genomeConfig: drawData.genomeConfig,
-    });
-  } else if (drawData.trackModel.type === "vcf") {
-    let formattedData = drawData.genesArr;
+  const { trackModel, configOptions, genesArr } = drawData;
+  const trackType = trackModel.type;
 
-    return displayModeComponentMap["vcf"]({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      renderTooltip: drawData.renderTooltip,
-      svgHeight: drawData.svgHeight,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      getGenePadding: drawData.getGenePadding,
-      getHeight: drawData.getHeight,
-      xvaluesData: drawData.xvaluesData,
-    });
-  } else if (
-    (drawData.configOptions.displayMode === "full" &&
-      !(
-        drawData.trackModel.type in
-        {
-          genomealign: "",
-          dynamicbed: "",
-          dbedgraph: "",
-          dynamic: "",
-          dynamiclongrange: "",
-          dynamichic: "",
-        }
-      )) ||
-    (drawData.trackModel.type === "omeroidr" &&
-      drawData.configOptions.displayMode !== "density")
-  ) {
-    const formattedData = drawData.genesArr;
+  // Helper function to create common parameters
+  const createCommonParams = (extraParams = {}) => ({
+    trackState: drawData.trackState,
+    configOptions: drawData.configOptions,
+    updatedLegend: drawData.updatedLegend,
+    trackModel: drawData.trackModel,
+    ...extraParams,
+  });
 
-    let svgDATA = displayModeComponentMap.full({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      renderTooltip: drawData.renderTooltip,
-      svgHeight: drawData.svgHeight,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      getGenePadding: drawData.getGenePadding,
-      getHeight: drawData.getHeight,
-      ROW_HEIGHT: drawData.configOptions.rowHeight
-        ? drawData.configOptions.rowHeight + 2
-        : drawData.ROW_HEIGHT,
-    });
+  const createFullParams = (extraParams = {}) => ({
+    formattedData: genesArr,
+    windowWidth: drawData.windowWidth,
+    renderTooltip: drawData.renderTooltip,
+    svgHeight: drawData.svgHeight,
+    getGenePadding: drawData.getGenePadding,
+    getHeight: drawData.getHeight,
+    xvaluesData: drawData.xvaluesData,
+    ...createCommonParams(extraParams),
+  });
 
-    return svgDATA;
-  } else if (drawData.trackModel.type === "genomealign") {
-    return displayModeComponentMap.genomealign(drawData);
-  } else if (drawData.trackModel.type === "matplot") {
-    let formattedData = drawData.genesArr;
-
-    let canvasElements = displayModeComponentMap["matplot"]({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      xvaluesData: drawData.xvaluesData,
-    });
-
-    return canvasElements;
-  } else if (drawData.trackModel.type === "modbed") {
-    let formattedData = drawData.genesArr;
-
-    let elements = displayModeComponentMap.modbed({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      renderTooltip: drawData.renderTooltip,
-      svgHeight: drawData.svgHeight,
-      getGenePadding: drawData.getGenePadding,
-      getHeight: drawData.getHeight,
-      ROW_HEIGHT: drawData.configOptions.rowHeight + 2,
-      onHideToolTip: drawData.onHideToolTip,
-      xvaluesData: drawData.xvaluesData,
-      onClose: drawData.onClose,
-    });
-
-    return elements;
-  } else if (interactionTracks.has(drawData.trackModel.type)) {
-    let formattedData: any = [];
-
-    formattedData = drawData.genesArr;
-
-    let canvasElements = displayModeComponentMap.interaction({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-    });
-
-    return canvasElements;
-  } else if (drawData.trackModel.type === "dynamichic") {
-    let formattedData = drawData.genesArr;
-    let canvasElements = displayModeComponentMap["dynamichic"]({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: { ...drawData.configOptions, displayMode: "heatmap" },
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-    });
-
-    return canvasElements;
-  } else if (
-    drawData.trackModel.type in
-    { dynamic: "", dynamicbed: "", dynamiclongrange: "" }
-  ) {
-    const formattedData = drawData.genesArr;
-
-    let canvasElements = displayModeComponentMap[
-      drawData.trackModel.type === "dynamiclongrange"
-        ? "dynamichic"
-        : drawData.trackModel.type
-    ]({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      getGenePadding: drawData.getGenePadding,
-      getHeight: drawData.getHeight,
-      ROW_HEIGHT: drawData.ROW_HEIGHT,
-      svgHeight: drawData.svgHeight,
-    });
-
-    return canvasElements;
-  } else if (
-    drawData.trackModel.type === "methylc" ||
-    drawData.trackModel.type === "dynseq"
-  ) {
-    let formattedData = drawData.genesArr;
-
-    let canvasElements = displayModeComponentMap[drawData.trackModel.type]({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      genomeConfig: drawData.genomeConfig,
-      basesByPixel: drawData.basesByPixel,
-      xvaluesData: drawData.xvaluesData,
-    });
-
-    return canvasElements;
-  } else if (drawData.trackModel.type === "qbed") {
-    let formattedData = drawData.genesArr;
-
-    let canvasElements = displayModeComponentMap.qbed({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-    });
-
-    return canvasElements;
-  } else if (drawData.trackModel.type === "dbedgraph") {
-    let formattedData = drawData.genesArr;
-
-    let canvasElements = displayModeComponentMap.dbedgraph({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-    });
-
-    return canvasElements;
-  } else if (drawData.trackModel.type === "boxplot") {
-    let formattedData = drawData.genesArr;
-    let canvasElements = displayModeComponentMap.boxplot({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: drawData.configOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-    });
-
-    return canvasElements;
-  } else if (
-    densityTracks.has(drawData.trackModel.type) ||
-    drawData.configOptions.displayMode === "density"
-  ) {
-    let formattedData;
-    if (drawData.trackModel.type === "geneannotation") {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "bigbed") {
-      formattedData = drawData.genesArr;
-    } else if (
-      drawData.trackModel.type === "bedgraph" ||
-      drawData.trackModel.filetype === "bedgraph"
-    ) {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "snp") {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "bam") {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "omeroidr") {
-      formattedData = drawData.genesArr;
-    } else if (drawData.trackModel.type === "bigwig") {
-      formattedData = drawData.genesArr;
-    } else {
-      formattedData = drawData.genesArr;
-
-      // formattedData = drawData.genesArr.map((record) => {
-      //   let newChrInt = new ChromosomeInterval(
-      //     record.chr,
-      //     record.start,
-      //     record.end
-      //   );
-      //   return new NumericalFeature("", newChrInt).withValue(record.score);
-      // });
-    }
-
-    let newConfigOptions = { ...drawData.configOptions };
-    // if (drawData.trackModel.type !== "bigwig") {
-    //   newConfigOptions.displayMode = "auto";
-    // }
-
-    let canvasElements = displayModeComponentMap.density({
-      formattedData,
-      trackState: drawData.trackState,
-      windowWidth: drawData.windowWidth,
-      configOptions: newConfigOptions,
-      updatedLegend: drawData.updatedLegend,
-      trackModel: drawData.trackModel,
-      groupScale: drawData.groupScale,
-      xvaluesData: drawData.xvaluesData,
-    });
-
-    return canvasElements;
+  // Error handling
+  if (drawData.isError) {
+    return displayModeComponentMap.error(
+      createCommonParams({
+        genesArr,
+        handleRetryFetchTrack: drawData.handleRetryFetchTrack,
+      })
+    );
   }
+
+  // Special cases with unique parameter patterns
+  if (trackType === "ruler") {
+    return displayModeComponentMap.ruler(
+      createCommonParams({
+        genomeName: drawData.genomeName,
+        genomeConfig: drawData.genomeConfig,
+      })
+    );
+  }
+
+  if (trackType === "genomealign") {
+    return displayModeComponentMap.genomealign(drawData);
+  }
+
+  // Full display mode condition
+  const excludedFromFull = new Set([
+    "genomealign",
+    "dynamicbed",
+    "dbedgraph",
+    "dynamic",
+    "dynamiclongrange",
+    "dynamichic",
+  ]);
+
+  const isFullMode =
+    (configOptions.displayMode === "full" &&
+      !excludedFromFull.has(trackType)) ||
+    (trackType === "omeroidr" && configOptions.displayMode !== "density");
+
+  if (isFullMode) {
+    return displayModeComponentMap.full(
+      createFullParams({
+        ROW_HEIGHT: configOptions.rowHeight
+          ? configOptions.rowHeight + 2
+          : drawData.ROW_HEIGHT,
+      })
+    );
+  }
+
+  // Track types with standard full parameters
+  const standardFullTracks = ["vcf", "matplot"];
+  if (standardFullTracks.includes(trackType)) {
+    return displayModeComponentMap[trackType](createFullParams());
+  }
+
+  // Special parameter cases
+  if (trackType === "modbed") {
+    return displayModeComponentMap.modbed(
+      createFullParams({
+        ROW_HEIGHT: configOptions.rowHeight + 2,
+        onHideToolTip: drawData.onHideToolTip,
+        onClose: drawData.onClose,
+      })
+    );
+  }
+
+  if (interactionTracks.has(trackType)) {
+    return displayModeComponentMap.interaction(createFullParams());
+  }
+
+  if (trackType === "dynamichic") {
+    return displayModeComponentMap.dynamichic(
+      createFullParams({
+        configOptions: { ...configOptions, displayMode: "heatmap" },
+      })
+    );
+  }
+
+  // Dynamic track types
+  const dynamicTracks = new Set(["dynamic", "dynamicbed", "dynamiclongrange"]);
+  if (dynamicTracks.has(trackType)) {
+    const displayType =
+      trackType === "dynamiclongrange" ? "dynamichic" : trackType;
+    return displayModeComponentMap[displayType](
+      createFullParams({
+        ROW_HEIGHT: drawData.ROW_HEIGHT,
+      })
+    );
+  }
+
+  // Genome-specific tracks
+  if (trackType === "methylc" || trackType === "dynseq") {
+    return displayModeComponentMap[trackType](
+      createFullParams({
+        genomeConfig: drawData.genomeConfig,
+        basesByPixel: drawData.basesByPixel,
+      })
+    );
+  }
+
+  // Simple track types with standard parameters
+  const simpleTracks = ["qbed", "dbedgraph", "boxplot"];
+  if (simpleTracks.includes(trackType)) {
+    return displayModeComponentMap[trackType](createFullParams());
+  }
+
+  // Density tracks (fallback)
+  if (densityTracks.has(trackType) || configOptions.displayMode === "density") {
+    // All density track types use the same formatted data (genesArr)
+    return displayModeComponentMap.density(
+      createFullParams({
+        formattedData: genesArr, // Override since all cases use genesArr directly
+        configOptions: { ...configOptions }, // Copy to avoid mutation
+        groupScale: drawData.groupScale,
+      })
+    );
+  }
+
+  // Fallback (should not reach here in normal operation)
+  return null;
 }
 // MARK: FORMAT
 function formatGeneAnnotationData(genesArr: any[]) {
@@ -1981,9 +1972,16 @@ const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   // Add additional type-function mappings here
 };
 export function formatDataByType(genesArr: any[], type: string) {
-  if (typeof genesArr === "object" && "error" in genesArr) {
+  // Check if genesArr is falsy
+  if (!genesArr) {
+    return { error: "No data available" };
+  }
+
+  // Check if genesArr has an error property (cast to any to avoid TypeScript error)
+  if (typeof genesArr === "object" && (genesArr as any).error) {
     return genesArr;
   }
+
   const formatter = formatFunctions[type];
   if (formatter) {
     return formatter(genesArr);

@@ -42,4 +42,5 @@ export interface TrackProps {
   onColorBoxClick: any;
   messageData: any;
   Toolbar: { [key: string]: any };
+  handleRetryFetchTrack: (trackIdx: number) => void;
 }

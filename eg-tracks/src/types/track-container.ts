@@ -8,18 +8,19 @@ export interface ITrackContainerState {
   highlights: Array<any>;
   genomeConfig?: any;
   legendWidth: number;
-  showGenomeNav: boolean;
+  showGenomeNav?: boolean;
+  showToolBar?: boolean;
   onNewRegion: (startbase: number, endbase: number) => void;
   onNewHighlight: (highlightState: Array<any>) => void;
   onTracksChange: (trackSelected: TrackModel[]) => void;
-  onSetSelected: (set: any) => void;
+  onSetSelected: (set: any, genomeCoordinate: GenomeCoordinate | null) => void;
   onNewRegionSelect: (
     startbase: number,
     endbase: number,
     highlightSearch?: boolean
   ) => void;
-  viewRegion: DisplayedRegionModel | undefined;
-  userViewRegion: DisplayedRegionModel;
+  viewRegion: DisplayedRegionModel | undefined | null;
+  userViewRegion: DisplayedRegionModel | undefined | null;
   tool: Tool | null | string;
   Toolbar: { [key: string]: any };
   selectedRegionSet: any;
@@ -35,17 +36,19 @@ export interface ITrackContainerRepresentableProps {
   genomeConfig: IGenome;
   legendWidth: number;
   showGenomeNav: boolean;
-  onNewRegion: (startbase: number, endbase: number) => void | null | undefined;
+  showToolBar: boolean;
+  onNewRegion: (genomeCoordinate: GenomeCoordinate) => void | null | undefined;
   onNewHighlight: (highlightState: Array<any>) => void | null | undefined;
   onTracksChange: (trackSelected: ITrackModel[]) => void | null | undefined;
-  onSetSelected: (set: any) => void | null | undefined;
+  onSetSelected: (
+    set: any,
+    genomeCoordinate: GenomeCoordinate | null
+  ) => void | null | undefined;
   onNewRegionSelect: (
-    startbase: number,
-    endbase: number,
-    coordinate: GenomeCoordinate
+    genomeCoordinate: GenomeCoordinate
   ) => void | null | undefined;
   viewRegion: GenomeCoordinate | null;
-  userViewRegion: { start: number; end: number } | null;
+  userViewRegion: GenomeCoordinate | null;
   tool: Tool | null;
   Toolbar?: any;
   selectedRegionSet: any;
@@ -86,6 +89,7 @@ export interface ITrackModel {
   indexUrl?: string;
   metadata: ITrackModelMetadata;
   fileObj?: Blob;
+  files?: Blob;
   queryEndpoint?: QueryEndpoint;
   querygenome?: string;
   id: number | string;
@@ -116,4 +120,5 @@ export enum Tool {
   ZoomInOneFold,
   ZoomInFiveFold,
   highlightMenu,
+  ReorderMany,
 }

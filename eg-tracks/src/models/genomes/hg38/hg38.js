@@ -44,6 +44,7 @@ const genome = new Genome("hg38", [
 // long range chr7:23208969-31218193
 // for renmora
 // for omer4dn chr5:114534673-136928518
+// url parameter datahub test https://vizhub.wustl.edu/public/tmp/a.json
 const navContext = genome.makeNavContext();
 const defaultRegion = navContext.parse("chr7:27053397-27373765");
 
@@ -69,6 +70,18 @@ const defaultTracks = [
     name: "gencodeV47",
     genome: "hg38",
   }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig nochr",
+  //   genome: "hg38",
+  //   url: "https://wangftp.wustl.edu/~dli/test/TW549_2-5-bonemarrow_MRE.CpG.nochr.bigwig",
+  // }),
+  // new TrackModel({
+  //   type: "bigwig",
+  //   name: "bigwig yeschr",
+  //   genome: "hg38",
+  //   url: "https://wangftp.wustl.edu/~dli/test/TW551_20-5-bonemarrow_MRE.CpG.bigWig",
+  // }),
   // new TrackModel({
   //   name: "hg38tomm10",
   //   label: "Query mouse mm10 to hg38 blastz",
@@ -449,7 +462,7 @@ const defaultTracks = [
   // new TrackModel({
   //   type: "hic",
   //   name: "test hic",
-  //   url: "https://epgg-test.wustl.edu/dli/long-range-test/test.hic",
+  //   url: "https://hicfiles.s3.amazonaws.com/hiseq/gm12878/in-situ/combined.hic",
   //   // "options": {
   //   //     "displayMode": "arc"
   //   // }

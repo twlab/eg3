@@ -1,4 +1,4 @@
-import _, { padEnd } from "lodash";
+import _ from "lodash";
 import JSON5 from "json5";
 import { SequenceSegment } from "../models/AlignmentStringUtils";
 import AlignmentRecord from "../models/AlignmentRecord";
@@ -12,10 +12,7 @@ import { ViewExpansion } from "../models/RegionExpander";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import { MultiAlignmentViewCalculator } from "../components/GenomeView/TrackComponents/GenomeAlignComponents/MultiAlignmentViewCalculator";
 import trackFetchFunction from "./fetchTrackData";
-import {
-  localTrackFetchFunction,
-  textFetchFunction,
-} from "../getLocalData/localFetchData";
+
 import { niceBpCount } from "../models/util";
 
 export interface PlacedAlignment {
@@ -205,11 +202,11 @@ self.onmessage = async (event: MessageEvent) => {
             } catch (error) {
               fetchRes.push({
                 result: {
-                  error: `Error processing genome align track with id ${item.id
-                    }: ${"Error"}`,
+                  error: `Error fetching genome align track with id ${item.id
+                    }`,
                 },
-                error: `Error processing genome align track with id ${item.id
-                  }: ${"Error"}`,
+                error: `Error fetching genome align track with id ${item.id
+                  }`,
               });
             }
           })

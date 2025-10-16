@@ -107,16 +107,16 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
     const defaults = trackOptionMap[type]?.defaultOptions || {};
     return userOptions
       ? {
-          ...defaults,
-          ...userOptions,
-          packageVersion: true,
-          trackManagerRef: interactionTracks.has(type) ? block : null,
-        }
+        ...defaults,
+        ...userOptions,
+        packageVersion: true,
+        trackManagerRef: interactionTracks.has(type) ? block : null,
+      }
       : {
-          ...defaults,
-          packageVersion: true,
-          trackManagerRef: interactionTracks.has(type) ? block : null,
-        };
+        ...defaults,
+        packageVersion: true,
+        trackManagerRef: interactionTracks.has(type) ? block : null,
+      };
   }
   function getTrackModels(genomeConfig: any, genomeViewId: string) {
     let trackModelArr: TrackModel[] = [];
@@ -144,8 +144,8 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
             name: track.name
               ? track.name
               : track.type === "ruler"
-              ? "ruler"
-              : `track ${idx + 1}`,
+                ? "ruler"
+                : `track ${idx + 1}`,
             url: track.url,
             options: getOptions(track.type, track.options),
             id: generateUUID(),
@@ -189,14 +189,9 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
     const parsedRegion = genomeConfig.navContext.parse(
       region as GenomeCoordinate
     );
-    const userViewRegion = new DisplayedRegionModel(
-      navContext,
-      ...parsedRegion
-    );
 
     return {
       genomeConfig,
-      userViewRegion,
       primaryGenName: genomeConfig.genome?.getName?.() || genomeName,
       basesByPixel: width / (parsedRegion.end - parsedRegion.start),
       genomicLoci: [ChromosomeInterval.parse(region)],
@@ -376,7 +371,7 @@ const GenomeViewer: React.FC<GenomeViewerProps> = memo(function GenomeViewer({
           }}
         >
           {typeof svgResult === "object" &&
-          Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
+            Object.prototype.hasOwnProperty.call(svgResult, "numHidden")
             ? svgResult.component
             : svgResult}
         </div>

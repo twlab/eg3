@@ -1,43 +1,16 @@
 import {
   GenomeCoordinate,
   ITrackContainerRepresentableProps,
-  ITrackContainerState,
   ITrackModel,
 } from "../types";
 import GenomeRoot from "../components/GenomeView/GenomeRoot";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { TrackModel } from "../models/TrackModel";
 import NavigationContext from "../models/NavigationContext";
 import DisplayedRegionModel from "../models/DisplayedRegionModel";
 import GenomeSerializer from "../genome-hub/GenomeSerializer";
-import OpenInterval, { IOpenInterval } from "../models/OpenInterval";
 import RegionSet from "../models/RegionSet";
-import { getGenomeConfig } from "../util";
-
-export function TrackContainer(props: ITrackContainerState) {
-  return (
-    <GenomeRoot
-      tracks={props.tracks}
-      genomeConfig={props.genomeConfig}
-      highlights={props.highlights}
-      legendWidth={props.legendWidth}
-      showGenomeNav={props.showGenomeNav}
-      onNewRegion={props.onNewRegion}
-      onNewHighlight={props.onNewHighlight}
-      onTracksChange={props.onTracksChange}
-      onNewRegionSelect={props.onNewRegionSelect}
-      onSetSelected={props.onSetSelected}
-      viewRegion={props.viewRegion}
-      userViewRegion={props.userViewRegion}
-      tool={props.tool}
-      Toolbar={props.Toolbar}
-      selectedRegionSet={props.selectedRegionSet}
-      setScreenshotData={props.setScreenshotData}
-      isScreenShotOpen={props.isScreenShotOpen}
-      currentState={props.currentState}
-    />
-  );
-}
+import { FeatureSegment } from "../models/FeatureSegment";
 
 /**
  * TrackContainerRepresentable serves as the boundary between the new serializable TrackModel and the previous
@@ -51,6 +24,7 @@ export function TrackContainerRepresentable({
   genomeConfig: _genomeConfig,
   legendWidth,
   showGenomeNav,
+  showToolBar,
   onNewRegion,
   onNewHighlight,
   onTracksChange,
@@ -67,7 +41,7 @@ export function TrackContainerRepresentable({
   overrideViewRegion,
   currentState,
 }: ITrackContainerRepresentableProps) {
-  const lastViewRegion = useRef<DisplayedRegionModel | null>(null);
+  // const [forceViewRegionUpdate, setForceViewRegionUpdate] = useState(0);
 
   // MARK: Genome Config
 
@@ -91,6 +65,8 @@ export function TrackContainerRepresentable({
       querygenome: track.querygenome,
       id: track.id,
       isSelected: track.isSelected,
+      fileObj: track.fileObj,
+      files: track.files,
     }),
     []
   );
@@ -111,6 +87,8 @@ export function TrackContainerRepresentable({
         querygenome: track.querygenome,
         id: track.id,
         isSelected: track.isSelected,
+        fileObj: track.fileObj,
+        files: track.files,
       });
     };
 
@@ -134,7 +112,15 @@ export function TrackContainerRepresentable({
     }
     return result;
   }, [tracks]);
-  genomeConfig["defaultTracks"] = convertedTracks;
+
+  // Create a modified genomeConfig with updated defaultTracks
+  const modifiedGenomeConfig = useMemo(() => {
+    if (!genomeConfig) return genomeConfig;
+    return {
+      ...genomeConfig,
+      defaultTracks: convertedTracks,
+    };
+  }, [genomeConfig, convertedTracks]);
 
   // MARK: View Region
 
@@ -142,72 +128,41 @@ export function TrackContainerRepresentable({
     try {
       if (!viewRegion) {
         if (userViewRegion) {
-          const start = userViewRegion.start;
-
-          const end = userViewRegion.end;
-
+          const navContext = genomeConfig.navContext as NavigationContext;
+          const parsed = navContext.parse(userViewRegion);
+          const { start, end } = parsed;
           return new DisplayedRegionModel(genomeConfig.navContext, start, end);
+        } else {
+          return new DisplayedRegionModel(
+            genomeConfig.navContext,
+            ...genomeConfig.defaultRegion
+          );
         }
-      } else if (lastViewRegion.current) {
-        const navContext = lastViewRegion.current.getNavigationContext();
-
-        const parsed = navContext.parse(viewRegion);
-
-        const { start, end } = parsed;
-
-        const newRegion = lastViewRegion.current.clone();
-        newRegion.setRegion(start, end);
-        lastViewRegion.current = newRegion;
-        return newRegion;
       } else {
         const navContext = genomeConfig.navContext as NavigationContext;
-        const startViewRegion = new DisplayedRegionModel(
-          navContext,
-          ...genomeConfig.defaultRegion
-        );
-
-        // const parsed = navContext.parse(viewRegion);
-        // let { start, end } = parsed;
-
-        // startViewRegion.setRegion(start, end);
-        // lastViewRegion.current = startViewRegion;
-        return startViewRegion;
+        const parsed = navContext.parse(viewRegion);
+        const { start, end } = parsed;
+        return new DisplayedRegionModel(genomeConfig.navContext, start, end);
       }
     } catch (e) {
       // console.error(e);
-
-      return (
-        lastViewRegion.current ||
-        new DisplayedRegionModel(
-          genomeConfig.navContext,
-          ...genomeConfig.defaultRegion
-        )
+      return new DisplayedRegionModel(
+        genomeConfig.navContext,
+        ...genomeConfig.defaultRegion
       );
     }
   }, [viewRegion, genomeConfig, selectedRegionSet]);
 
   const convertedUserViewRegion = useMemo(() => {
     try {
-      let genomeConfig;
-
-      if (_genomeConfig) {
-        genomeConfig = GenomeSerializer.deserialize(_genomeConfig);
-      } else {
-        genomeConfig = getGenomeConfig(genomeName);
-      }
-
       let newViewRegion;
       if (userViewRegion) {
-        newViewRegion = OpenInterval.deserialize(
-          userViewRegion as IOpenInterval
+        newViewRegion = genomeConfig.navContext.parse(
+          userViewRegion as GenomeCoordinate
         );
       } else if (overrideViewRegion) {
         newViewRegion = genomeConfig.navContext.parse(
           overrideViewRegion as GenomeCoordinate
-        );
-      } else {
-        newViewRegion = genomeConfig.navContext.parse(
-          viewRegion as GenomeCoordinate
         );
       }
 
@@ -215,9 +170,6 @@ export function TrackContainerRepresentable({
         let setNavContext;
         if (typeof selectedRegionSet === "object") {
           const newRegionSet = RegionSet.deserialize(selectedRegionSet);
-          newRegionSet.genome = genomeConfig.genome;
-          newRegionSet.genomeName = genomeConfig.genome.getName();
-
           setNavContext = newRegionSet.makeNavContext();
         } else {
           setNavContext = selectedRegionSet.makeNavContext();
@@ -225,19 +177,20 @@ export function TrackContainerRepresentable({
 
         return new DisplayedRegionModel(setNavContext, ...newViewRegion);
       } else {
-        return new DisplayedRegionModel(
-          genomeConfig.navContext,
-          ...newViewRegion
-        );
+        if (newViewRegion) {
+          return new DisplayedRegionModel(
+            genomeConfig.navContext,
+            ...newViewRegion
+          );
+        }
       }
     } catch (e) {
-      console.error(e);
       return new DisplayedRegionModel(
         genomeConfig.navContext,
         ...genomeConfig.defaultRegion
       );
     }
-  }, [userViewRegion, _genomeConfig, overrideViewRegion, selectedRegionSet]);
+  }, [userViewRegion, genomeConfig, overrideViewRegion, selectedRegionSet]);
 
   const handleTracksChange = useCallback(
     (selectedTracks: TrackModel[]) => {
@@ -250,6 +203,7 @@ export function TrackContainerRepresentable({
               convertTrackModelToITrackModel
             );
           }
+
           return newITrackModel;
         })
       );
@@ -257,29 +211,58 @@ export function TrackContainerRepresentable({
 
     [onTracksChange, convertTrackModelToITrackModel]
   );
+  function currentRegionAsString(segments: FeatureSegment[]): string {
+    if (segments.length === 1) {
+      return segments[0].toString();
+    } else {
+      const first = segments[0];
+      const last = segments[segments.length - 1];
 
+      return first.toStringWithOther(last);
+    }
+  }
   const handleNewRegion = useCallback(
     (startbase: number, endbase: number) => {
-      onNewRegion(startbase, endbase);
+      const genomeFeatureSegment: Array<FeatureSegment> =
+        genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
+      const coordinate = currentRegionAsString(
+        genomeFeatureSegment
+      ) as GenomeCoordinate;
+      onNewRegion(coordinate);
     },
     [onNewRegion]
   );
-
+  const handleSetRegion = useCallback(
+    (set: RegionSet | null) => {
+      let coordinate: GenomeCoordinate | null = null;
+      if (set) {
+        const newVisData: any = new DisplayedRegionModel(set.makeNavContext());
+        coordinate =
+          newVisData.currentRegionAsString() as GenomeCoordinate | null;
+      } else {
+        const navContext = genomeConfig.navContext;
+        coordinate = new DisplayedRegionModel(
+          navContext,
+          genomeConfig.defaultRegion.start,
+          genomeConfig.defaultRegion.end
+        ).currentRegionAsString() as GenomeCoordinate | null;
+      }
+      onSetSelected(set, coordinate);
+    },
+    [onNewRegion]
+  );
   const handleNewRegionSelect = (
     startbase: number,
     endbase: number,
     highlightSearch: boolean = false
   ) => {
-    const newRegion = new DisplayedRegionModel(
-      genomeConfig.navContext,
-      startbase,
-      endbase
-    );
-    onNewRegionSelect(
-      startbase,
-      endbase,
-      newRegion.currentRegionAsString() as GenomeCoordinate
-    );
+    const genomeFeatureSegment: Array<FeatureSegment> =
+      genomeConfig.navContext.getFeaturesInInterval(startbase, endbase);
+    const newCoordinate = currentRegionAsString(
+      genomeFeatureSegment
+    ) as GenomeCoordinate;
+
+    onNewRegionSelect(newCoordinate as GenomeCoordinate);
 
     if (highlightSearch) {
       const newHightlight = {
@@ -296,21 +279,26 @@ export function TrackContainerRepresentable({
 
   return (
     <div>
-      <TrackContainer
+      <GenomeRoot
         tracks={convertedTracks}
         highlights={highlights}
-        genomeConfig={genomeConfig}
+        genomeConfig={modifiedGenomeConfig}
         legendWidth={legendWidth}
         showGenomeNav={showGenomeNav}
+        showToolBar={showToolBar}
         onNewRegion={!onNewRegion ? () => {} : handleNewRegion}
         onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
         onTracksChange={!onTracksChange ? () => {} : handleTracksChange}
         onNewRegionSelect={
           !onNewRegionSelect ? () => {} : handleNewRegionSelect
         }
-        onSetSelected={!onSetSelected ? () => {} : onSetSelected}
+        onSetSelected={!onSetSelected ? () => {} : handleSetRegion}
         viewRegion={convertedViewRegion}
-        userViewRegion={convertedUserViewRegion}
+        userViewRegion={
+          convertedUserViewRegion
+            ? convertedUserViewRegion
+            : convertedViewRegion
+        }
         tool={tool}
         Toolbar={Toolbar}
         selectedRegionSet={selectedRegionSet}
@@ -318,28 +306,6 @@ export function TrackContainerRepresentable({
         isScreenShotOpen={isScreenShotOpen}
         currentState={currentState}
       />
-      {Toolbar.toolbar ? (
-        <div
-          id="toolbar-container"
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 50,
-          }}
-        >
-          <Toolbar.toolbar
-            highlights={highlights}
-            onNewHighlight={!onNewHighlight ? () => {} : onNewHighlight}
-            onNewRegionSelect={
-              !onNewRegionSelect ? () => {} : handleNewRegionSelect
-            }
-          />
-        </div>
-      ) : (
-        ""
-      )}
     </div>
   );
 }

@@ -38,7 +38,7 @@ const OutsideClickDetector: React.FC<OutsideClickDetectorProps> = ({
   }, []);
 
   return (
-    <div style={{ position: "relative", zIndex: 0 }} ref={handleRef}>
+    <div style={{ position: "relative", zIndex: 10000 }} ref={handleRef}>
       {children}
     </div>
   );

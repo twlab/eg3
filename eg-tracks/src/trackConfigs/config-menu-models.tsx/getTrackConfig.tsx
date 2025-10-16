@@ -33,7 +33,6 @@ import { DynamicLongrangeTrackConfig } from "./DynamicLongrangeTrackConfig";
 import { OmeroidrTrackConfig } from "./OmeroidrTrackConfig";
 // import { Omero4dnTrackConfig } from "./Omero4dnTrackConfig";
 import { DynseqTrackConfig } from "./DynseqTrackConfig";
-
 // import { RgbpeakTrackConfig } from "./RgbpeakTrackConfig";
 import { VcfTrackConfig } from "./VcfTrackConfig";
 import { BoxplotTrackConfig } from "./BoxplotTrackConfig";

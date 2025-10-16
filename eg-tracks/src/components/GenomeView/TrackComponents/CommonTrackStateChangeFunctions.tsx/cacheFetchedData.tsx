@@ -6,28 +6,35 @@ import {
 } from "../commonComponents/check-obj-dupe";
 import { dynamicMatplotTracks } from "../displayModeComponentMap";
 
-export function getDeDupeArrMatPlot(data: Array<any>, isError) {
-  if (isError) {
-    return;
+export function groupTracksArrMatPlot(data: Array<any>) {
+
+
+  // Pre-determine the size to avoid dynamic resizing
+  const maxIndex = data.length > 0 ? Math.max(...data.map(d => d.dataCache?.length || 0)) : 0;
+  const groupedArrays: any[][] = new Array(maxIndex);
+
+  // Initialize arrays once
+  for (let i = 0; i < maxIndex; i++) {
+    groupedArrays[i] = [];
   }
-  let tempMap = new Map<number, any[]>();
 
-  data.forEach((data) => {
-    data.dataCache.forEach((featArr, j) => {
-      if (tempMap.has(j)) {
-        tempMap.get(j)!.push(featArr);
+  // Use for loops for better performance and flatten during grouping
+  for (let i = 0; i < data.length; i++) {
+    const dataItem = data[i];
+    const dataCache = dataItem.dataCache;
+
+    for (let j = 0; j < dataCache.length; j++) {
+      const featArr = dataCache[j];
+      // Flatten immediately instead of using flat(1) later
+      if (Array.isArray(featArr)) {
+        groupedArrays[j].push(...featArr);
       } else {
-        tempMap.set(j, [featArr]);
+        groupedArrays[j].push(featArr);
       }
-    });
-  });
+    }
+  }
 
-  let deDupcacheDataArr: Array<any> = [];
-  tempMap.forEach((value, key) => {
-    deDupcacheDataArr.push(removeDuplicatesWithoutId(value.flat(1)));
-  });
-
-  return deDupcacheDataArr;
+  return groupedArrays;
 }
 function isObject(variable) {
   return variable !== null && typeof variable === "object";
@@ -105,8 +112,8 @@ export function cacheFetchedData({
           }
             ? trackData
             : trackType === "genomealign"
-            ? trackData
-            : trackData.flat(1),
+              ? trackData
+              : trackData.flat(1),
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
     }
@@ -118,8 +125,8 @@ export function cacheFetchedData({
       ] = {
         dataCache: dynamicMatplotTracks.has(trackType)
           ? trackData.map((item: any, index: number) => {
-              return item[0];
-            })
+            return item[0];
+          })
           : trackData[0],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["leftIdx"]++;
@@ -129,8 +136,8 @@ export function cacheFetchedData({
       ] = {
         dataCache: dynamicMatplotTracks.has(trackType)
           ? trackData.map((item: any, index: number) => {
-              return item[1];
-            })
+            return item[1];
+          })
           : trackData[1],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
@@ -139,8 +146,8 @@ export function cacheFetchedData({
       ] = {
         dataCache: dynamicMatplotTracks.has(trackType)
           ? trackData.map((item: any, index: number) => {
-              return item[2];
-            })
+            return item[2];
+          })
           : trackData[2],
       };
       trackFetchedDataCache.current[`${id}`].cacheDataIdx["rightIdx"]--;
