@@ -2,8 +2,9 @@ import {
   createSession,
   upsertSession,
   setCurrentSession,
+  selectCurrentSession,
 } from "../redux/slices/browserSlice";
-import { useAppDispatch } from "../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { useEffect } from "react";
 import {
   GenomeCoordinate,
@@ -15,12 +16,16 @@ import {
   addSessionsFromBundleId,
   importOneSession,
 } from "../redux/thunk/session";
+import { generateUUID } from "wuepgg3-track";
 
+import { addCustomTracksPool, selectCustomTracksPool } from "../redux/slices/hubSlice";
 const IDEMPOTENCY_STORAGE_KEY = "_eg-query-idempotency-key";
 
 export default function useBrowserInitialization() {
   const dispatch = useAppDispatch();
 
+  const customTracksPool = useAppSelector(selectCustomTracksPool);
+  const currentSession = useAppSelector(selectCurrentSession);
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const genome = searchParams.get("genome");
@@ -86,7 +91,7 @@ export default function useBrowserInitialization() {
         const decompressed = decompressString(blob);
         const sessionData = JSON.parse(decompressed);
 
-        sessionData.id = crypto.randomUUID();
+        sessionData.id = generateUUID();
 
         dispatch(upsertSession(sessionData));
         dispatch(setCurrentSession(sessionData.id));
@@ -118,21 +123,21 @@ export default function useBrowserInitialization() {
             try {
               const hubData = await fetch(hub)
                 .then((r) => r.json())
-                .then((tracks) =>
-                  tracks.filter((t: any) => t.showOnHubLoad === true)
+                .then((tracks) => tracks
                 );
+
+
 
               additionalTracks = hubData.map((t: any) => ({
                 ...t,
-                id: crypto.randomUUID(),
-                genome: genome,
+                id: generateUUID(),
+
                 isSelected: false,
               }));
+
             } catch (error) {
               console.error("Failed to load hub data:", error);
-              alert(
-                "Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead."
-              );
+              alert("Error: Unable to load hub data. The hub file appears to be malformed or inaccessible. Loading default tracks instead.");
             }
           }
 
@@ -140,6 +145,7 @@ export default function useBrowserInitialization() {
             JSON.parse(JSON.stringify(t))
           );
 
+          dispatch(addCustomTracksPool([...customTracksPool, ...additionalTracks]));
           dispatch(
             createSession({
               genome,
@@ -169,13 +175,26 @@ function decompressString(compressed: string): string {
 }
 
 function generateAndSetIdempotencyToken() {
-  const idempotencyToken = crypto.randomUUID();
+  const idempotencyToken = generateUUID();
   localStorage.setItem(IDEMPOTENCY_STORAGE_KEY, idempotencyToken);
-  const searchParams = new URLSearchParams(window.location.search);
-  searchParams.set("idempotencyToken", idempotencyToken);
-  const newUrl = searchParams.toString()
-    ? `${window.location.pathname}?${searchParams.toString()}`
+
+  // Get current URL parameters without automatic encoding
+  const currentUrl = new URL(window.location.href);
+  currentUrl.searchParams.set("idempotencyToken", idempotencyToken);
+
+  // Manually construct URL to avoid encoding existing parameters
+  const params = new URLSearchParams();
+  for (const [key, value] of currentUrl.searchParams.entries()) {
+    params.append(key, value);
+  }
+
+  // Build URL string manually to preserve original parameter formatting
+  const paramString = params.toString().replace(/https%3A%2F%2F/g, 'https://').replace(/%2F/g, '/').replace(/%3A/g, ':');
+
+  const newUrl = paramString
+    ? `${window.location.pathname}?${paramString}`
     : window.location.pathname;
+
   window.history.replaceState({}, "", newUrl);
   return idempotencyToken;
 }

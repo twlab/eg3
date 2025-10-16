@@ -107,9 +107,7 @@ export default function NavigationStack({
 
   return (
     <NavigationStackContext.Provider value={{ path, setPath }}>
-      <div
-        className="flex flex-col h-full bg-white dark:bg-dark-background"
-      >
+      <div className="flex flex-col h-full bg-white dark:bg-dark-background">
         <NavigationToolbar options={currentOptions} />
         <div className="relative flex-1 overflow-hidden min-w-[25vw]" ref={ref}>
           <motion.div

@@ -199,8 +199,8 @@ function SessionListItem({
 
   if (error) {
     return (
-      <div className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden">
-        <h1 className="text-2xl">Genome ID: {session.genomeId}</h1>
+      <div className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-xl cursor-pointer overflow-hidden">
+        <h1 className="text-l">Genome ID: {session.genomeId}</h1>
         <p className="text-sm">Error loading genome: {error.message}</p>
       </div>
     );
@@ -211,7 +211,7 @@ function SessionListItem({
       onClick={onClick}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden"
+      className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-xl cursor-pointer overflow-hidden"
       initial={{ height: "auto" }}
       animate={{ height: isHovered ? "auto" : "auto" }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
@@ -220,11 +220,16 @@ function SessionListItem({
         <div className="flex flex-col gap-2">
           {session.title.length > 0 ? (
             <>
-              <h1 className="text-2xl">{session.title}</h1>
+              <h1 className="text-l">{session.title}</h1>
               <p className="text-sm">Genome: {genome?.name ?? "..."}</p>
             </>
           ) : (
-            <h1 className="text-2xl">Genome: {genome?.name ?? "..."}</h1>
+            <h1 className="text-l">Genome: {genome?.name ?? "..."}</h1>
+          )}
+          {session.bundleId ? (
+            <p className="text-sm">{`Bundle ID: ${session.bundleId}`}</p>
+          ) : (
+            ""
           )}
           <p className="text-sm">
             {sortPreference === "updatedAt"

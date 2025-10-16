@@ -40,17 +40,26 @@ import {
   setDarkTheme,
 } from "@/lib/redux/slices/settingsSlice";
 import { version } from "../../../package.json";
+import History from "./History";
 
+import { selectCurrentState } from "../../lib/redux/selectors";
+import { selectBundle, updateBundle } from "@/lib/redux/slices/hubSlice";
+import { getDatabase, ref, set } from "firebase/database";
 export default function NavBar() {
+  const bundle = useAppSelector(selectBundle);
+
   const isSmallScreen = useSmallScreen();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const dispatch = useAppDispatch();
   const currentTab = useAppSelector(selectNavigationTab);
   const currentSession = useAppSelector(selectCurrentSession);
+
+  const currentState = useAppSelector(selectCurrentState);
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
-  const { undo, redo, canUndo, canRedo } = useUndoRedo();
+  const { undo, redo, canUndo, canRedo, jumpToPast, jumpToFuture } =
+    useUndoRedo();
 
   const genome = useCurrentGenome();
 
@@ -61,7 +70,7 @@ export default function NavBar() {
   // const genomeLogoUrl: string | null = null;
 
   return (
-    <div className="flex flex-row justify-between items-center p-2 border-b border-gray-300 bg-white dark:bg-dark-background relative">
+    <div className="flex flex-row justify-between items-center p-1 border-b border-gray-300 bg-white dark:bg-dark-background relative">
       <div className="flex flex-row items-center gap-3 relative">
         {currentSession && (
           <BackspaceIcon
@@ -95,21 +104,51 @@ export default function NavBar() {
               {currentSession.title.length > 0 && genome?.name && (
                 //replaced text-primary with var font color
                 <>
-                  <p className="text-2xl  font-medium">{genome?.name}</p>
+                  <p className="text-xl  font-medium">{genome?.name}</p>
 
-                  <p className="text-2xl font-light">/</p>
+                  <p className="text-xl font-light">/</p>
                 </>
               )}
               <InlineEditable
                 value={
                   currentSession.title.length > 0
                     ? currentSession.title
-                    : genome?.name ?? "Untitled"
+                    : genome?.name ?? "Untitled Session"
                 }
-                onChange={(value) =>
-                  dispatch(updateCurrentSession({ title: value }))
-                }
-                style={`text-2xl font-light border border-blue-500 px-2 ${
+                onChange={async (value) => {
+                  if (bundle.currentId && bundle.sessionsInBundle) {
+                    const newSessionObj = {
+                      ...bundle.sessionsInBundle[`${bundle.currentId}`],
+                      label: value,
+                    };
+
+                    const newBundle = {
+                      ...bundle,
+                      sessionsInBundle: {
+                        ...bundle.sessionsInBundle,
+                        [bundle.currentId]: newSessionObj,
+                      },
+                    };
+
+                    dispatch(updateBundle(newBundle));
+
+                    const db = getDatabase();
+                    try {
+                      await set(
+                        ref(db, `sessions/${bundle.bundleId}`),
+                        JSON.parse(JSON.stringify(newBundle))
+                      );
+
+                      console.log("Session saved!", "success", 2000);
+                    } catch (error) {
+                      console.error(error);
+                      console.log("Error while saving session", "error", 2000);
+                    }
+                  }
+
+                  dispatch(updateCurrentSession({ title: value }));
+                }}
+                style={`text-xl font-light border border-blue-500 px-2 ${
                   currentSession.title.length > 0 ? "" : "font-medium"
                 }`}
                 tooltip={
@@ -120,7 +159,7 @@ export default function NavBar() {
               />
             </div>
           ) : (
-            <h1 className="text-2xl font-light">
+            <h1 className="text-xl font-light">
               <span className="font-medium">WashU </span> Epigenome Browser
             </h1>
           ))}
@@ -164,6 +203,7 @@ export default function NavBar() {
                 >
                   <ArrowUturnLeftIcon className="h-5 w-5" />
                 </IconButton>
+
                 <IconButton
                   onClick={redo}
                   disabled={!canRedo}
@@ -172,7 +212,15 @@ export default function NavBar() {
                 >
                   <ArrowUturnRightIcon className="h-5 w-5" />
                 </IconButton>
-
+                <History
+                  state={{
+                    past: currentState ? currentState.past : [],
+                    future: currentState ? currentState.future : [],
+                  }}
+                  jumpToPast={jumpToPast}
+                  jumpToFuture={jumpToFuture}
+                />
+                <div className="h-5 border-r border-gray-400" />
                 <Button
                   onClick={() =>
                     dispatch(

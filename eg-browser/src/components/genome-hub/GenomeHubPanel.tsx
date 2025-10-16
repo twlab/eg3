@@ -120,7 +120,6 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
   const dispatch = useAppDispatch();
   const [isHovered, setIsHovered] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const handleClick = () => {
     setLoading(true);
     setTimeout(() => {
@@ -136,14 +135,14 @@ function GenomeHubItem({ genome }: { genome: IGenome }) {
       onClick={handleClick}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-2xl cursor-pointer overflow-hidden"
+      className="flex flex-col bg-secondary dark:bg-dark-secondary p-4 rounded-xl cursor-pointer overflow-hidden"
       initial={{ height: "auto" }}
       animate={{ height: shouldExpand ? "auto" : "auto" }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <div className="flex flex-row justify-between items-center">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl">{genome.name}</h1>
+          <h1 className="text-xl">{genome.name}</h1>
           <p className="text-sm">
             Chromosomes:{" "}
             {genome.chromosomes.length > 0

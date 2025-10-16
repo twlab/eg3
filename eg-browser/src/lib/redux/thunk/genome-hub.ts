@@ -1,4 +1,4 @@
-import { GenomeHubManager } from "wuepgg3-track";
+import { GenomeHubManager, IGenome } from "wuepgg3-track";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   setCustomGenomes,
@@ -36,6 +36,17 @@ export const addCustomGenome = createAsyncThunk(
   }
 );
 
+export const addCustomGenomeRemote = createAsyncThunk(
+  "genome-hub/add",
+  async (iGenome: IGenome, thunkApi) => {
+    const genomeHubManager = GenomeHubManager.getInstance();
+    const genomeData = iGenome;
+
+    await genomeHubManager.putGenome(genomeData);
+
+    thunkApi.dispatch(refreshLocalGenomes());
+  }
+);
 export const clearAllGenomes = createAsyncThunk(
   "genome-hub/clear-all",
   async (_, thunkApi) => {

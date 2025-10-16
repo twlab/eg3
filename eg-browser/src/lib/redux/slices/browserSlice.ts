@@ -12,7 +12,7 @@ import {
 } from "@reduxjs/toolkit";
 
 import { RootState } from "../store";
-
+import { generateUUID } from "wuepgg3-track";
 export type uuid = string;
 
 export interface BrowserSession {
@@ -23,7 +23,7 @@ export interface BrowserSession {
   title: string;
   genomeId: uuid;
   viewRegion: GenomeCoordinate | null;
-  userViewRegion: { start: number; end: number } | null;
+  userViewRegion: GenomeCoordinate | null;
   tracks: ITrackModel[];
   customTracksPool?: ITrackModel[];
   highlights: IHighlightInterval[];
@@ -31,6 +31,8 @@ export interface BrowserSession {
   regionSets: Array<any>;
   selectedRegionSet: RegionSet | null;
   overrideViewRegion: GenomeCoordinate | null;
+  customGenome?: boolean | null;
+  chromosomes?: Array<{ name: string; length: number }> | null;
 }
 
 // MARK: - State
@@ -68,16 +70,19 @@ export const browserSlice = createSlice({
       const initializedTracks =
         allTracks?.map((track) => ({
           ...track,
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           isSelected: false,
         })) || [];
 
       const nextSession: BrowserSession = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         createdAt: Date.now(),
         updatedAt: Date.now(),
         title: "Untitled Session",
         bundleId: null,
+        customGenome: genome.customGenome ? genome.customGenome : null,
+        chromosomes:
+          genome.customGenome && genome.chromosomes ? genome.chromosomes : null,
         viewRegion: overrideViewRegion ?? defaultRegion,
         overrideViewRegion: overrideViewRegion ? overrideViewRegion : null,
         userViewRegion: null,
@@ -110,19 +115,27 @@ export const browserSlice = createSlice({
     ) => {
       if (state.currentSession) {
         const changes = { ...action.payload };
-        if ("tracks" in changes) {
+        if (changes["tracks"]) {
           changes.tracks = changes.tracks!.map((track) => {
             if (!("id" in track) || !track["id"]) {
-              (track as ITrackModel).id = crypto.randomUUID();
+              (track as ITrackModel).id = generateUUID();
             }
             return track;
           });
         }
-
+        const currentSession = state.sessions.entities[state.currentSession];
+        if (
+          changes["viewRegion"] &&
+          currentSession &&
+          changes["viewRegion"] === currentSession.viewRegion
+        ) {
+          changes["viewRegion"] = null;
+        }
         browserSessionAdapter.updateOne(state.sessions, {
           id: state.currentSession,
           changes: {
             ...changes,
+
             updatedAt: Date.now(),
           },
         });
@@ -140,7 +153,7 @@ export const browserSlice = createSlice({
             if (!("id" in track) || !track["id"]) {
               return {
                 ...(track as object),
-                id: crypto.randomUUID(),
+                id: generateUUID(),
               } as ITrackModel;
             }
             return track;
@@ -193,8 +206,9 @@ export const {
   clearAllSessions,
 } = browserSlice.actions;
 
-export const selectCurrentSessionId = (state: RootState) =>
-  state.browser.present.currentSession;
+export const selectCurrentSessionId = (state: RootState) => {
+  return state.browser.present.currentSession;
+};
 
 const browserSessionSelectors = browserSessionAdapter.getSelectors(
   (state: RootState) => state.browser.present.sessions
@@ -203,9 +217,9 @@ const browserSessionSelectors = browserSessionAdapter.getSelectors(
 export const selectCurrentSession = (state: RootState) =>
   state.browser.present.currentSession
     ? browserSessionSelectors.selectById(
-        state,
-        state.browser.present.currentSession
-      )
+      state,
+      state.browser.present.currentSession
+    )
     : null;
 export const selectSessions = browserSessionSelectors.selectAll;
 export const selectSessionById = browserSessionSelectors.selectById;

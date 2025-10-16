@@ -6,6 +6,7 @@ import {
   selectExpandNavigationTab,
   setSessionPanelOpen,
 } from "../../lib/redux/slices/navigationSlice";
+
 import GenomePicker from "../genome-picker/GenomePicker";
 import GenomeView from "../genome-view/GenomeView";
 import NavBar from "../navbar/NavBar";
@@ -17,17 +18,42 @@ import ShareTab from "./tabs/ShareTab";
 import SettingsTab from "./tabs/SettingsTab";
 import useSmallScreen from "../../lib/hooks/useSmallScreen";
 import {
+  createSession,
+  selectCurrentSession,
   selectCurrentSessionId,
   setCurrentSession,
+  updateCurrentSession,
 } from "@/lib/redux/slices/browserSlice";
-import { useElementGeometry } from "@/lib/hooks/useElementGeometry";
 import SessionPanel from "../sessions/SessionPanel";
 import GoogleAnalytics from "./GoogleAnalytics";
 import useBrowserInitialization from "@/lib/hooks/useBrowserInitialization";
 import GenomeErrorBoundary from "../genome-view/GenomeErrorBoundary";
+import MouseFollowingTooltip from "../ui/tooltip/MouseFollowingTooltip";
 const CURL_RADIUS = 15;
 import * as firebase from "firebase/app";
-import { selectDarkTheme } from "@/lib/redux/slices/settingsSlice";
+import {
+  resetSettings,
+  selectDarkTheme,
+  selectCookieConsentStatus,
+  setNavBarVisibility,
+  setNavigatorVisibility,
+  setToolBarVisibility,
+  selectIsNavigatorVisible,
+  selectIsNavBarVisible,
+  selectIsToolBarVisible,
+} from "@/lib/redux/slices/settingsSlice";
+import { useEffect } from "react";
+
+import {
+  GenomeSerializer,
+  getGenomeConfig,
+  IGenome,
+  ITrackModel,
+  generateUUID,
+  Genome,
+  GenomeCoordinate,
+} from "wuepgg3-track";
+import { GenomeConfig } from "wuepgg3-track/src/models/genomes/GenomeConfig";
 
 // const firebaseConfig = {
 //   apiKey: "AIzaSyBvzikxx1wSAoVp_4Ra2IlktJFCwq8NAnk",
@@ -43,10 +69,48 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-export default function RootLayout() {
-  useBrowserInitialization();
 
-  const isSmallScreen = useSmallScreen();
+export interface TracksProps {
+  url?: string;
+  name?: string;
+  options?: { [key: string]: any };
+  type: string;
+  showOnHubLoad?: boolean;
+  metadata?: { [key: string]: any };
+}
+export interface RootLayoutProps {
+  viewRegion?: string | null | undefined;
+  genomeName?: string;
+  tracks?: TracksProps[] | ITrackModel[];
+  windowWidth?: number;
+  customGenome?: any;
+  showGenomeNavigator?: boolean;
+  // showNavBar?: boolean;
+  // showToolBar?: boolean;
+}
+
+export interface TracksProps {
+  url?: string;
+  name?: string;
+  options?: { [key: string]: any };
+  type: string;
+  showOnHubLoad?: boolean;
+  metadata?: { [key: string]: any };
+}
+
+export interface GenomeHubProps {
+  viewRegion?: string | null | undefined;
+  genomeName?: string;
+  tracks?: TracksProps[] | ITrackModel[];
+  windowWidth?: number;
+  customGenome?: any;
+  showGenomeNavigator?: boolean;
+  showNavBar?: boolean;
+  showToolBar?: boolean;
+}
+
+export default function RootLayout(props: GenomeHubProps) {
+  useBrowserInitialization();
 
   const dispatch = useAppDispatch();
   const sessionId = useAppSelector(selectCurrentSessionId);
@@ -55,26 +119,145 @@ export default function RootLayout() {
   const sessionPanelOpen = useAppSelector(selectSessionPanelOpen);
   const darkTheme = useAppSelector(selectDarkTheme);
   const isNavigationTabEmpty = !sessionId || navigationTab === null;
-
+  const isSmallScreen = useSmallScreen();
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
 
-  const {
-    ref: contentRef,
-    width: contentWidth,
-    height: contentHeight,
-  } = useElementGeometry();
+  // Check if running in package mode (props explicitly passed) or web mode
+  const isPackageMode =
+    props.showGenomeNavigator !== undefined ||
+    props.showNavBar !== undefined ||
+    props.showToolBar !== undefined;
+
+  // For package mode: use Redux state (controlled by props)
+  // For web mode: default to true (ignore persisted state)
+  const showNavBar = isPackageMode
+    ? useAppSelector(selectIsNavBarVisible)
+    : true;
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
   };
+
+  function getConfig() {
+    if (props.customGenome) {
+      try {
+        return GenomeSerializer.deserialize(props.customGenome);
+      } catch {
+        return null;
+      }
+    }
+    if (props.genomeName) {
+      return getGenomeConfig(props.genomeName);
+    }
+    return null;
+  }
+  useEffect(() => {
+    // Only apply visibility props in package mode
+
+    if (isPackageMode) {
+      if (typeof props.showGenomeNavigator === "boolean") {
+        dispatch(setNavigatorVisibility(props.showGenomeNavigator));
+      }
+      if (typeof props.showNavBar === "boolean") {
+        dispatch(setNavBarVisibility(props.showNavBar));
+      }
+      if (typeof props.showToolBar === "boolean") {
+        dispatch(setToolBarVisibility(props.showToolBar));
+      }
+    }
+    // In web mode, ensure defaults are set to true (override any persisted false values)
+    else {
+      dispatch(setNavigatorVisibility(true));
+      dispatch(setNavBarVisibility(true));
+      dispatch(setToolBarVisibility(true));
+    }
+  }, [
+    isPackageMode,
+    props.showGenomeNavigator,
+    props.showNavBar,
+    props.showToolBar,
+  ]);
+
+  useEffect(() => {
+    if (
+      (props.genomeName && props.tracks && props.viewRegion) ||
+      props.customGenome
+    ) {
+      const genomeConfig: GenomeConfig | null = getConfig();
+      if (genomeConfig) {
+        if (!sessionId) {
+          console.log("HUH")
+          if (genomeConfig?.genome) {
+            const genome = GenomeSerializer.serialize(genomeConfig);
+
+            let additionalTracks: ITrackModel[] = props.tracks as ITrackModel[];
+
+            dispatch(
+              createSession({
+                genome,
+                viewRegion:
+                  typeof props.viewRegion === "string" ||
+                  props.viewRegion === null
+                    ? undefined
+                    : props.viewRegion,
+                additionalTracks,
+              })
+            );
+          }
+        } else {
+                console.log("HUH22")
+          dispatch(
+            updateCurrentSession({
+              tracks: props.tracks as ITrackModel[],
+              viewRegion:
+                typeof props.viewRegion !== "string" ||
+                props.viewRegion === null
+                  ? undefined
+                  : (props.viewRegion as GenomeCoordinate),
+              userViewRegion:
+                typeof props.viewRegion !== "string" ||
+                props.viewRegion === null
+                  ? undefined
+                  : (props.viewRegion as GenomeCoordinate),
+              genomeId: props.genomeName,
+              customGenome: props.customGenome,
+            })
+          );
+        }
+      }
+    }
+  }, [
+    props.genomeName,
+    props.tracks,
+    props.viewRegion,
+    props.customGenome,
+    sessionId,
+  ]);
+
+  // Keyboard handler for Escape key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (showModal || expandNavigationTab || showRightTab) {
+          // Close expanded navigation, modal, or right tab
+          dispatch(setNavigationTab(null));
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showModal, expandNavigationTab, showRightTab, dispatch]);
 
   return (
     <div
       className={`h-screen flex flex-col ${darkTheme ? "dark" : ""}`}
       data-theme={darkTheme ? "dark" : "light"}
     >
+      {/* {import.meta.env.VITE_PACKAGE === "false" ?  */}
       <GoogleAnalytics />
+      {/* : null} */}
       <motion.div
         className="flex flex-col h-full text-primary dark:text-white"
         animate={{
@@ -85,11 +268,10 @@ export default function RootLayout() {
           borderRadius: showModal ? 15 : 0,
         }}
       >
-        <NavBar />
-        <div
-          className="flex flex-row flex-1 relative bg-black"
-          ref={contentRef}
-        >
+        {/* {import.meta.env.VITE_PACKAGE === "false" || props.showNavBar ? ( */}
+        {showNavBar === false ? "" : <NavBar />}
+        {/* ) : null} */}
+        <div className="flex flex-row flex-1 relative bg-black">
           <AnimatePresence mode="wait">
             {sessionPanelOpen && (
               <motion.div
@@ -110,10 +292,7 @@ export default function RootLayout() {
                   translateX: "-100%",
                 }}
               >
-                <div
-                  className="flex flex-col"
-                  style={{ height: contentHeight }}
-                >
+                <div className="flex flex-col">
                   <SessionPanel />
                 </div>
               </motion.div>
@@ -160,42 +339,38 @@ export default function RootLayout() {
                 pointerEvents: sessionPanelOpen ? "none" : "auto",
               }}
             >
-              <AnimatePresence mode="wait">
-                {sessionId !== null ? (
-                  <motion.div
-                    className="flex flex-col w-screen pb-20"
-                    key="genome-view"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    style={{
-                      width: contentWidth,
-                      height: "auto",
-                    }}
-                  >
-                    <GenomeErrorBoundary onGoHome={handleGoHome}>
-                      <GenomeView />
-                    </GenomeErrorBoundary>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className="h-full"
-                    key="genome-picker"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    style={{ width: contentWidth, height: contentHeight }}
-                  >
-                    <GenomePicker />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Keep both components mounted, just hide/show them */}
+              <motion.div
+                className="flex flex-col w-screen pb-20"
+                style={{
+                  display: sessionId ? "flex" : "none",
+                }}
+                animate={{
+                  opacity: sessionId ? 1 : 0,
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <GenomeErrorBoundary onGoHome={handleGoHome}>
+                  <GenomeView />
+                </GenomeErrorBoundary>
+              </motion.div>
+              {!sessionId ? (
+                <motion.div
+                  className="h-full w-full"
+                  animate={{
+                    opacity: 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <GenomePicker />
+                </motion.div>
+              ) : (
+                ""
+              )}
             </motion.div>
 
             {/* MARK: - Navigation Tabs */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {showRightTab && (
                 <motion.div
                   className="h-full overflow-hidden z-10"
@@ -220,48 +395,47 @@ export default function RootLayout() {
                   }}
                 >
                   <div className="flex flex-col h-full">
-                    <div className="flex-1 relative">
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "tracks" ? "block" : "none",
-                        }}
-                      >
-                        <TracksTab />
+                    {/* Tab Header with close button */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                      <h2 className="text-xl  text-gray-800 dark:text-white capitalize">
+                        {navigationTab}
+                      </h2>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Press Esc to close
+                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          ||
+                        </span>
+
+                        <button
+                          onClick={() => dispatch(setNavigationTab(null))}
+                          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                          title="Close tab"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
                       </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "apps" ? "block" : "none",
-                        }}
-                      >
-                        <AppsTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "help" ? "block" : "none",
-                        }}
-                      >
-                        <HelpTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display: navigationTab === "share" ? "block" : "none",
-                        }}
-                      >
-                        <ShareTab />
-                      </div>
-                      <div
-                        className="h-full"
-                        style={{
-                          display:
-                            navigationTab === "settings" ? "block" : "none",
-                        }}
-                      >
-                        <SettingsTab />
+                    </div>
+                    <div className="flex-1 relative overflow-hidden">
+                      <div className="h-full">
+                        {navigationTab === "tracks" && <TracksTab />}
+                        {navigationTab === "apps" && <AppsTab />}
+                        {navigationTab === "help" && <HelpTab />}
+                        {navigationTab === "share" && <ShareTab />}
+                        {navigationTab === "settings" && <SettingsTab />}
                       </div>
                     </div>
                   </div>
@@ -272,32 +446,55 @@ export default function RootLayout() {
         </div>
       </motion.div>
 
-      <AnimatePresence mode="wait">
-        {showModal && (
-          <motion.div
-            className="absolute top-12 left-0 w-screen h-screen bg-white"
-            style={{ borderRadius: CURL_RADIUS }}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-          >
-            <div className="flex flex-col h-full">
-              {navigationTab === "tracks" && <TracksTab />}
-              {navigationTab === "apps" && <AppsTab />}
-              {navigationTab === "help" && <HelpTab />}
-              {navigationTab === "share" && <ShareTab />}
-              {navigationTab === "settings" && <SettingsTab />}
-
+      {showModal && (
+        <motion.div
+          className="absolute top-12 left-0 w-screen h-screen bg-white"
+          style={{ borderRadius: CURL_RADIUS }}
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+            <h2 className="text-lg text-gray-800 dark:text-white capitalize">
+              {navigationTab}
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Press Esc to close
+              </span>
               <button
-                className="absolute top-4 right-4"
                 onClick={() => dispatch(setNavigationTab(null))}
+                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="Close tab"
               >
-                Done
+                <svg
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+          <div className="flex flex-col h-full">
+            {navigationTab === "tracks" && <TracksTab />}
+            {navigationTab === "apps" && <AppsTab />}
+            {navigationTab === "help" && <HelpTab />}
+            {navigationTab === "share" && <ShareTab />}
+            {navigationTab === "settings" && <SettingsTab />}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Mouse-following tool tooltip */}
+      <MouseFollowingTooltip />
     </div>
   );
 }

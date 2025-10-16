@@ -46,6 +46,10 @@ interface SearchBarProps {
     end: number,
     highlightSearch?: boolean
   ) => void;
+  windowWidth?: number;
+  fontSize?: number;
+  buttonPadding?: number;
+  gapSize?: number;
 }
 
 type CommandType = "gene" | "snp";
@@ -74,56 +78,125 @@ const typeToEmoji: Record<CommandType, string> = {
   snp: "🔍",
 };
 
-const mockGeneSearch = async (
+// Cache for gene search results to avoid repeated API calls
+const geneSearchCache = new Map<
+  string,
+  { results: GeneResult[]; timestamp: number }
+>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// AbortController to cancel previous requests
+let currentGeneSearchController: AbortController | null = null;
+let currentSnpSearchController: AbortController | null = null;
+
+const geneSearch = async (
   query: string,
   genomeName: string
 ): Promise<GeneResult[]> => {
   if (query.trim().length < MIN_CHARS_FOR_SUGGESTIONS) return [];
 
-  const params: any = {
-    q: query.trim(),
-    getOnlyNames: true,
-  };
-  const url = new URL(`${AWS_API}/${genomeName}/genes/queryName`);
-  Object.keys(params).forEach((key) =>
-    url.searchParams.append(key, params[key])
-  );
-  const response = await fetch(url.toString(), {
-    method: "GET",
-  });
-  const data = await response.json();
-  return data.map((item: any, index: any) => {
-    return { id: index, symbol: item, type: "gene" as const, description: "" };
-  });
+  const cacheKey = `${genomeName}:${query.trim().toLowerCase()}`;
+
+  // Check cache first
+  const cached = geneSearchCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.results;
+  }
+
+  // Cancel previous request if still running
+  if (currentGeneSearchController) {
+    currentGeneSearchController.abort();
+  }
+
+  // Create new AbortController for this request
+  currentGeneSearchController = new AbortController();
+
+  try {
+    const params: any = {
+      q: query.trim(),
+      getOnlyNames: true,
+    };
+    const url = new URL(`${AWS_API}/${genomeName}/genes/queryName`);
+    Object.keys(params).forEach((key) =>
+      url.searchParams.append(key, params[key])
+    );
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      signal: currentGeneSearchController.signal,
+      // Add timeout and better headers
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const results = data.map((item: any, index: any) => {
+      return {
+        id: `${index}`,
+        symbol: item,
+        type: "gene" as const,
+        description: "",
+      };
+    });
+
+    // Cache the results
+    geneSearchCache.set(cacheKey, {
+      results,
+      timestamp: Date.now(),
+    });
+
+    return results;
+  } catch (error) {
+    // Don't throw on abort - that's expected behavior
+    if (error instanceof Error && error.name === "AbortError") {
+      return [];
+    }
+    console.error("Gene search failed:", error);
+    // Return empty array on error to prevent UI breaks
+    return [];
+  } finally {
+    // Clear the controller reference
+    currentGeneSearchController = null;
+  }
 };
 
-const mockSnpSearch = async (
+const snpSearch = async (
   query: string,
   genomeName: string
 ): Promise<SnpResult[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  if (!query) return [];
-  const trimmedInput = query.trim();
-
-  if (trimmedInput.length < 1) {
-    console.log("Please input a valid SNP id.", "error", 2000);
-    return [];
-  }
+  if (!query || query.trim().length < 1) return [];
 
   const endpoint: any = SNP_ENDPOINTS[`${genomeName}`];
-
   if (!endpoint) {
     console.log("This genome is not supported in SNP search.", "error", 2000);
     return [];
   }
 
+  // Cancel previous SNP request
+  if (currentSnpSearchController) {
+    currentSnpSearchController.abort();
+  }
+
+  currentSnpSearchController = new AbortController();
+  const trimmedInput = query.trim();
+
   try {
     const response = await fetch(`${endpoint}/${trimmedInput}`, {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      signal: currentSnpSearchController.signal,
     });
 
     if (!response.ok) {
-      throw new Error("Network response was not ok");
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -138,8 +211,13 @@ const mockSnpSearch = async (
       },
     ];
   } catch (error) {
-    console.log("Error fetching SNP data.", "error", 2000);
+    if (error instanceof Error && error.name === "AbortError") {
+      return [];
+    }
+    console.error("SNP search failed:", error);
     return [];
+  } finally {
+    currentSnpSearchController = null;
   }
 };
 interface SnpMapping {
@@ -173,35 +251,37 @@ function SearchSuggestionDivider(props: any) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        margin: "0.25rem 1rem",
-        padding: "0 1rem",
+        margin: "0.125rem 0.75rem",
+        // padding: "0 0.75rem",
       }}
     >
       <div
         className="text-gray-600 dark:text-dark-primary"
-        style={{ fontSize: "0.875rem" }}
+        style={{
+          fontSize: props.fontSize,
+        }}
       >
         {props.text}
       </div>
       {props.highlightSearch !== undefined ? (
         <div style={{ display: "flex", alignItems: "center" }}>
+          <label
+            htmlFor="highsearch"
+            className="text-gray-600 dark:text-dark-primary"
+            style={{
+              fontSize: props.fontSize,
+            }}
+          >
+            Highlight search
+          </label>
           <input
             type="checkbox"
             id="highsearch"
             name="highsearch"
             checked={isChecked}
             onChange={handleChange}
+            style={{ transform: "scale(0.85)" }}
           />
-          <label
-            htmlFor="highsearch"
-            className="text-gray-600 dark:text-dark-primary"
-            style={{
-              marginLeft: "0.5rem",
-              fontSize: "0.875rem",
-            }}
-          >
-            Highlight search
-          </label>
         </div>
       ) : (
         ""
@@ -215,21 +295,37 @@ function SearchSuggestionBase({
   text,
   desc,
   onClick,
+  fontSize,
 }: {
   icon: React.ReactNode;
   text: string;
   desc: string;
   onClick: () => void;
+  fontSize?: number;
 }) {
   return (
     <div
-      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-background p-2 rounded-lg flex items-center gap-2"
+      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-background p-1.5 rounded-lg flex items-center gap-1.5"
       onClick={onClick}
     >
       <div className="flex-shrink-0">{icon}</div>
       <div>
-        <div className="text-sm font-medium">{text}</div>
-        <div className="text-xs text-gray-500">{desc}</div>
+        <div
+          className="font-medium"
+          style={{
+            fontSize: fontSize,
+          }}
+        >
+          {text}
+        </div>
+        <div
+          className="text-gray-500"
+          style={{
+            fontSize: fontSize,
+          }}
+        >
+          {desc}
+        </div>
       </div>
     </div>
   );
@@ -239,8 +335,11 @@ export default function SearchBar({
   isSearchFocused,
   onSearchFocusChange,
   onNewRegionSelect,
+  windowWidth = 1920,
+  buttonPadding = 2,
+  fontSize = 16,
 }: SearchBarProps) {
-  const { ref: searchContainerRef, height: searchHeight } = useElementGeometry({
+  const { ref: searchContainerRef } = useElementGeometry({
     shouldRespondToResize: false,
   });
 
@@ -253,18 +352,41 @@ export default function SearchBar({
   const highlightSearch = useRef(false);
   const [activeCommand, setActiveCommand] = useState<CommandType | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isRegion, setIsRegion] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [selectedInput, setSelectedInput] = useState("");
-  const [snpSelectedInput, setSnpSelectedInput] = useState<{
-    [key: string]: any;
-  } | null>(null);
   const latestUserInput = useRef("");
   const [badInputMessage, setBadInputMessage] = useState("");
-  const [loadingMsg, setLoadingMsg] = useState<string>("");
   const genome = useCurrentGenome();
   const [isShowingIsoforms, setIsShowingIsoforms] = useState(false);
   const [isShowingSNPforms, setIsShowingSNPforms] = useState(false);
+
+  // Helper functions for responsive sizing (matching Toolbar.tsx)
+  const getIconSize = () => {
+    return Math.max(16, Math.min(24, (windowWidth || 1920) * 0.012));
+  };
+
+  const iconSizeStyle = {
+    width: `${getIconSize()}px`,
+    height: `${getIconSize()}px`,
+  };
+
+  const getButtonStyle = () => ({
+    padding: `${buttonPadding}px`,
+  });
+
+  const getRegionButtonSize = () => {
+    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  };
+
+  const getArrowIconSize = () => {
+    return `${Math.max(10, Math.min(14, (windowWidth || 1920) * 0.007))}px`;
+  };
+
+  const getEmojiSize = () => {
+    return `${Math.max(16, Math.min(20, (windowWidth || 1920) * 0.01))}px`;
+  };
 
   const genomeConfig = useMemo(() => {
     if (genome) {
@@ -333,45 +455,51 @@ export default function SearchBar({
     if (!query) {
       setSearchResults([]);
       setIsRegion(false);
+      setIsSearching(false);
       return;
     }
 
     if (REGION_REGEX.test(query)) {
       setIsRegion(true);
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
     setIsRegion(false);
+    setIsSearching(true);
 
-    if (activeCommand === "gene") {
-      const results = await mockGeneSearch(
-        query,
-        genomeConfig!.genome.getName()
-      );
-      // Compare the ref value with the current query before updating the state:
-      if (latestUserInput.current === query) {
-        setSearchResults(results);
+    try {
+      if (activeCommand === "gene") {
+        const results = await geneSearch(query, genomeConfig!.genome.getName());
+        // Compare the ref value with the current query before updating the state:
+        if (latestUserInput.current === query) {
+          setSearchResults(results);
+        }
+      } else if (activeCommand === "snp") {
+        const results = await snpSearch(query, genomeConfig!.genome.getName());
+        if (latestUserInput.current === query) {
+          setSearchResults(results);
+        }
+      } else {
+        const [geneResults, snpResults] = await Promise.all([
+          geneSearch(query, genomeConfig!.genome.getName()),
+          snpSearchEnabled
+            ? snpSearch(query, genomeConfig!.genome.getName())
+            : Promise.resolve([]),
+        ]);
+        if (latestUserInput.current === query) {
+          setSearchResults([...geneResults, ...snpResults]);
+        }
       }
-    } else if (activeCommand === "snp") {
-      const results = await mockSnpSearch(
-        query,
-        genomeConfig!.genome.getName()
-      );
-      if (latestUserInput.current === query) {
-        setSearchResults(results);
-      }
-    } else {
-      const [geneResults, snpResults] = await Promise.all([
-        mockGeneSearch(query, genomeConfig!.genome.getName()),
-        mockSnpSearch(query, genomeConfig!.genome.getName()),
-      ]);
-      if (latestUserInput.current === query) {
-        setSearchResults([...geneResults, ...snpResults]);
-      }
+    } catch (error) {
+      console.error("Search failed:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  const debouncedSearch = debounce(handleSearch, 50);
+  const debouncedSearch = debounce(handleSearch, 300);
 
   const handleSearchChange = (e: any) => {
     const value = e.target.value;
@@ -390,7 +518,6 @@ export default function SearchBar({
     setIsShowingIsoforms(false);
     setIsShowingSNPforms(false);
     setSelectedInput("");
-    setSnpSelectedInput(null);
     if (value.trim().length < MIN_CHARS_FOR_SUGGESTIONS) {
       setSearchResults([]);
     }
@@ -403,11 +530,12 @@ export default function SearchBar({
       setSelectedInput(result.symbol);
       setIsShowingIsoforms(true);
     } else if (result.type === "snp") {
-      setSnpSelectedInput(result.snpData);
-      setIsShowingSNPforms(true);
+      // Handle SNP selection directly
+      if (result.snpData?.mappings?.[0]) {
+        onSnpSelected(result.snpData.mappings[0]);
+      }
     }
     setSearchResults([]);
-    // setActiveCommand(null);
     setSearchInput("");
   };
 
@@ -418,11 +546,21 @@ export default function SearchBar({
       suggestions.push(
         <SearchSuggestionBase
           key="region-message"
-          icon={<span className="text-xl">🎯</span>}
+          icon={<span style={{ fontSize: getEmojiSize() }}>🎯</span>}
           text={`"${searchInput}"`}
           desc="You're entering coordinates. Press enter or click here to jump to this region."
           onClick={() => parseRegion(searchInput)}
         />
+      );
+      return suggestions;
+    }
+
+    // Show loading indicator
+    if (isSearching && searchInput.trim().length >= MIN_CHARS_FOR_SUGGESTIONS) {
+      suggestions.push(
+        <div key="loading" className="px-3 py-2 text-gray-500 text-center">
+          <span style={{ fontSize: fontSize }}>Searching...</span>
+        </div>
       );
       return suggestions;
     }
@@ -433,17 +571,23 @@ export default function SearchBar({
           key="filters"
           text="Filters"
           highlightSearch={highlightSearch}
+          fontSize={fontSize}
         />
       );
       SLASH_COMMANDS.forEach((command) => {
         suggestions.push(
           <motion.div
             key={`command-${command}`}
-            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-secondary dark:text-dark-primary cursor-pointer flex items-center gap-2"
+            className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-dark-secondary dark:text-dark-primary cursor-pointer flex items-center gap-1.5"
             onClick={() => setActiveCommand(command)}
           >
-            <span className="text-xl">{typeToEmoji[command]}</span>
-            <span className="text-sm text-gray-600 dark:text-dark-primary">
+            <span style={{ fontSize: getEmojiSize() }}>
+              {typeToEmoji[command]}
+            </span>
+            <span
+              className="text-gray-600 dark:text-dark-primary"
+              style={{ fontSize: fontSize }}
+            >
               /{command}
             </span>
           </motion.div>
@@ -460,18 +604,26 @@ export default function SearchBar({
       );
 
       if (geneResults.length > 0) {
-        suggestions.push(<SearchSuggestionDivider key="genes" text="Genes" />);
+        suggestions.push(
+          <SearchSuggestionDivider
+            key="genes"
+            text="Genes"
+            fontSize={fontSize}
+          />
+        );
         geneResults.forEach((result) => {
           suggestions.push(
             <motion.div
               key={`gene-${result.id}`}
-              className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-background cursor-pointer"
+              className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-dark-background cursor-pointer"
               whileHover={{ backgroundColor: "#f3f4f6" }}
               onClick={() => handleResultClick(result)}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">{result.symbol}</span>
-                <span className="text-xs text-gray-500">
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium" style={{ fontSize: fontSize }}>
+                  {result.symbol}
+                </span>
+                <span className="text-gray-500" style={{ fontSize: fontSize }}>
                   {result.description}
                 </span>
               </div>
@@ -482,13 +634,17 @@ export default function SearchBar({
 
       if (snpResults.length > 0) {
         suggestions.push(
-          <SearchSuggestionDivider key="snps" text="Variants" />
+          <SearchSuggestionDivider
+            key="snps"
+            text="Variants"
+            fontSize={fontSize}
+          />
         );
         snpResults.forEach((result) => {
           suggestions.push(
             <motion.div
               key={`snp-${result.id}`}
-              className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-background"
+              className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-dark-background"
               whileHover={{ backgroundColor: "#f3f4f6" }}
             >
               <SnpComponent
@@ -572,10 +728,10 @@ export default function SearchBar({
       <AnimatePresence>
         {isShowingIsoforms ? (
           <motion.div
-            className="absolute bottom-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mb-2 z-50"
-            initial={{ opacity: 0, y: 10, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: "auto" }}
-            exit={{ opacity: 0, y: 10, height: 0 }}
+            className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 z-50"
+            initial={{ opacity: 0, y: -10, maxHeight: 0 }}
+            animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
+            exit={{ opacity: 0, y: -10, maxHeight: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <IsoformSelection
@@ -591,21 +747,19 @@ export default function SearchBar({
           ""
         )}
       </AnimatePresence>
-
       <motion.div
         ref={searchContainerRef}
-        className="flex flex-col relative"
-        animate={{ height: searchHeight }}
+        className="flex flex-col relative border-1 outline-gray-400 rounded-sm"
         transition={{ duration: 0.2 }}
       >
         <AnimatePresence>
           {isSearchFocused &&
           ((!isShowingIsoforms && !isShowingSNPforms) || searchInput === "") ? (
             <motion.div
-              className="absolute bottom-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mb-2 overflow-hidden z-50"
-              initial={{ opacity: 0, y: 10, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, y: 10, height: 0 }}
+              className="absolute top-full left-0 right-0 bg-white dark:bg-dark-background rounded-lg shadow-lg mt-2 overflow-hidden z-50"
+              initial={{ opacity: 0, y: -10, maxHeight: 0 }}
+              animate={{ opacity: 1, y: 0, maxHeight: "400px" }}
+              exit={{ opacity: 0, y: -10, maxHeight: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {renderSearchSuggestions()}
@@ -615,23 +769,38 @@ export default function SearchBar({
           )}
         </AnimatePresence>
 
-        <div className="flex flex-row items-center">
-          <div className="flex flex-row items-center px-2 py-2 pb-3.5 w-full">
+        {/* Outer row for search input + dynamic buttons; increased flex growth & min width */}
+        <div className="flex flex-row items-center w-full h-full flex-grow ">
+          {/* Inner container: give it stronger flex and a minimum width so it claims more horizontal space */}
+          <div className="flex flex-row items-center w-full flex-[2]">
             {activeCommand ? (
-              <div className="flex items-center bg-secondary dark:bg-dark-secondary px-2 py-1 rounded-lg -ml-1">
-                <span className="text-sm text-tint dark:text-dark-primary">
+              <div
+                className="flex items-center bg-secondary dark:bg-dark-secondary rounded-md mr-1.5 flex-shrink-0"
+                style={getButtonStyle()}
+              >
+                <span
+                  className="text-tint dark:text-dark-primary leading-none"
+                  style={{ fontSize: fontSize }}
+                >
                   /{activeCommand}
                 </span>
               </div>
             ) : (
-              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              <MagnifyingGlassIcon
+                className="text-gray-400 flex-shrink-0 mx-1"
+                style={iconSizeStyle}
+              />
             )}
             <input
-              className="flex-1 outline-none bg-transparent ml-2 text-base"
+              className="flex-1 outline-none bg-transparent min-w-0 w-full leading-tight py-1"
+              style={{
+                minWidth: fontSize,
+                fontSize: fontSize,
+              }}
               placeholder={
                 activeCommand
-                  ? `Search ${activeCommand}s...`
-                  : "Search genes, variants, or regions..."
+                  ? `Search ${activeCommand}s`
+                  : "Search region/gene"
               }
               onFocus={() => onSearchFocusChange(true)}
               // onBlur={() => onSearchFocusChange(false)}
@@ -656,19 +825,29 @@ export default function SearchBar({
                 onClick={() =>
                   parseRegion(document.querySelector("input")?.value || "")
                 }
-                className="flex items-center justify-center w-6 h-6 rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
+                className="flex items-center justify-center rounded-full bg-secondary hover:bg-opacity-80 transition-colors dark:bg-dark-secondary dark:hover:bg-dark-secondary"
+                style={{
+                  width: getRegionButtonSize(),
+                  height: getRegionButtonSize(),
+                }}
               >
-                <ArrowRightIcon className="w-4 h-4 text-tint" />
+                <ArrowRightIcon
+                  className="text-tint"
+                  style={{
+                    width: getArrowIconSize(),
+                    height: getArrowIconSize(),
+                  }}
+                />
               </button>
             )}
           </div>
-          <motion.div
-            className="w-full absolute bottom-0 border-b border-gray-300"
-            animate={{ opacity: isSearchFocused ? 0 : 1 }}
-            transition={{ duration: 0.2 }}
-          />
         </div>
-      </motion.div>
+      </motion.div>{" "}
+      {/* <motion.div
+        className="w-full absolute bottom-0 border-b border-gray-300"
+        animate={{ opacity: isSearchFocused ? 0 : 1 }}
+        transition={{ duration: 0.2 }}
+      /> */}
     </OutsideClickDetector>
   );
 }

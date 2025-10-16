@@ -48,6 +48,7 @@ export default function AddCustomGenome() {
 
   useEffect(() => {
     if (file && validationErrors?.valid) {
+
       dispatch(addCustomGenome(file));
       navigation.pop();
     }
