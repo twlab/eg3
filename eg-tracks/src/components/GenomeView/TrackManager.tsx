@@ -1573,7 +1573,9 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
           ? dataItem.trackToDrawId
           : {};
         const regionDrawIdx = dataItem.trackDataIdx;
-
+        if (globalTrackState.current.trackStates[regionDrawIdx] === undefined) {
+          return;
+        }
         const curTrackState = {
           ...globalTrackState.current.trackStates[regionDrawIdx].trackState,
           primaryGenName: genomeConfig.genome.getName(),
@@ -2723,7 +2725,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
-
+    console.log("what1");
     const parentElement = block.current;
 
     if (parentElement) {
@@ -2786,6 +2788,27 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       document.removeEventListener("mouseup", handleMouseUp);
 
       console.log("trackmanager terminate");
+
+      // Reset hasOnMessage flags when workers terminate
+      if (infiniteScrollWorkers.current) {
+        infiniteScrollWorkers.current.worker?.forEach((w) => {
+          if (w.hasOnMessage) {
+            w.hasOnMessage = false;
+          }
+        });
+        infiniteScrollWorkers.current.instance?.forEach((w) => {
+          if (w.hasOnMessage) {
+            w.hasOnMessage = false;
+          }
+        });
+      }
+      if (
+        hasGenomeAlign.current &&
+        fetchGenomeAlignWorker.current &&
+        fetchGenomeAlignWorker.current.hasOnMessage
+      ) {
+        fetchGenomeAlignWorker.current.hasOnMessage = false;
+      }
     };
   }, []);
 
