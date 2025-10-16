@@ -33,11 +33,13 @@ export default function ShareTab() {
 
   const json = JSON.stringify(session);
   const compressed = compressString(json);
-  const url = window.location.href.replace(/\/$/, "");
-  const fullUrl = `${url}/?blob=${compressed}`;
+  const baseUrl = window.location.origin + window.location.pathname;
+  const url = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+  const fullUrl = `${url}?blob=${compressed}`;
 
   const generateShortLink = async () => {
     setIsGenerating(true);
+
     try {
       const response = await fetch("https://api.tinyurl.com/create", {
         method: "POST",

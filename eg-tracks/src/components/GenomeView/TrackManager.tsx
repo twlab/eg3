@@ -2725,7 +2725,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   //_________________________________________________________________________________________________________________________________
   useEffect(() => {
     // terminate the worker and listener when TrackManager  is unmounted
-    console.log("what1");
+
     const parentElement = block.current;
 
     if (parentElement) {
