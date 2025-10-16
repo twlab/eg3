@@ -144,3 +144,14 @@ checking-
 - Pressing Escape now allow users to exit out of sub menus (finish)
 - Reworked toolbar to fit screen when user zoom in and out (finish)
 - fixed memory deleting memory caching (finish)
+
+
+
+
+To: Do 10/15/2025
+
+- legendwidth option 
+- show toolbar, and metameta, trackregioncontroller for setting option
+- error checking 
+- new algo, store draw data not raw data, this reduces memory usage 
+- gene search speed fix 
