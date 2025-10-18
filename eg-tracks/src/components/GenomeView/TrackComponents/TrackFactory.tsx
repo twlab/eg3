@@ -131,6 +131,7 @@ const TrackFactory: React.FC<TrackProps> = memo(function TrackFactory({
       updateSide.current = side;
       let result;
       let numHidden = 0;
+
       if (
         typeof res === "object" &&
         Object.prototype.hasOwnProperty.call(res, "numHidden")

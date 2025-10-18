@@ -7,6 +7,7 @@ import Feature, {
   NumericalArrayFeature,
   NumericalFeature,
 } from "../../../models/Feature";
+import { Rmskv2Feature } from "../../../models/Rmskv2Feature";
 import FeatureArranger, {
   PlacedFeatureGroup,
 } from "../../../models/FeatureArranger";
@@ -70,9 +71,10 @@ import VcfAnnotation from "./VcfComponents/VcfAnnotation";
 import Vcf from "./VcfComponents/Vcf";
 import VcfTrack from "./VcfComponents/VcfTrack";
 import Bedcolor from "./bedComponents/Bedcolor";
+
 import { generateUUID } from "../../../util";
 export const interactionTracks = new Set(["hic", "biginteract", "longrange"]);
-export const bigWithNavTracks = new Set(["repeat", "jaspar", "bigbed"]);
+export const bigWithNavTracks = new Set(["repeat", "jaspar", "bigbed", "rmskv2"]);
 export const instanceFetchTracks = new Set(["hic", "dynamichic", "bam"]);
 export const dynamicMatplotTracks = new Set([
   "matplot",
@@ -87,6 +89,7 @@ enum BedColumnIndex {
   CATEGORY = 3,
 }
 const TOP_PADDING = 2;
+export const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
 
 export const displayModeComponentMap: { [key: string]: any } = {
   full: function getFull({
@@ -370,7 +373,102 @@ export const displayModeComponentMap: { [key: string]: any } = {
           let scale = scaleLinear()
             .domain([1, 0])
             .range([TOP_PADDING, configOptions.height]);
+
           let y = scale(feature.repeatValue);
+          const drawHeight = configOptions.height - y;
+
+          const width = xSpan.getLength();
+          if (drawHeight <= 0) {
+            return null;
+          }
+          const mainBody = (
+            <rect
+              x={xSpan.start}
+              y={y}
+              width={width}
+              height={drawHeight}
+              fill={color}
+              fillOpacity={0.75}
+            />
+          );
+          let label;
+          const labelText = feature.getName();
+          const estimatedLabelWidth = labelText.length * TEXT_HEIGHT;
+          if (estimatedLabelWidth < 0.9 * width) {
+            const centerX = xSpan.start + 0.5 * width;
+            const centerY = height - TEXT_HEIGHT * 2;
+
+            label = (
+              <BackgroundedText
+                x={centerX}
+                y={centerY}
+                height={TEXT_HEIGHT - 1}
+                fill={contrastColor}
+                dominantBaseline="hanging"
+                textAnchor="middle"
+              >
+                {labelText}
+              </BackgroundedText>
+            );
+          }
+          const arrows = (
+            <AnnotationArrows
+              startX={xSpan.start}
+              endX={xSpan.end}
+              y={height - TEXT_HEIGHT}
+              height={TEXT_HEIGHT}
+              opacity={0.75}
+              isToRight={isReverse === (feature.strand === "-")}
+              color="white"
+            />
+          );
+
+          return (
+            <TranslatableG
+              onClick={(event) => {
+                if (renderTooltip) {
+                  renderTooltip(event, feature);
+                }
+              }}
+              key={i}
+            >
+              {mainBody}
+              {arrows}
+              {label}
+            </TranslatableG>
+          );
+        });
+      },
+
+      rmskv2: function getAnnotationElement(
+        placedGroup,
+        y,
+        isLastRow,
+        index,
+        height
+      ) {
+        const { categoryColors } = configOptions;
+        const TEXT_HEIGHT = 9; // height for both text label and arrows.
+        return placedGroup.placedFeatures.map((placement, i) => {
+          const { xSpan, feature, isReverse } = placement;
+          if (placement.xSpan.getLength <= 0) {
+            return null;
+          }
+          let color;
+
+          if (feature.rgb) {
+            color = `rgb(${feature.rgb})`;
+          } else {
+            const categoryId = feature.getCategoryId();
+            color = categoryColors[categoryId];
+          }
+
+          const contrastColor = getContrastingColor(color);
+          let scale = scaleLinear()
+            .domain([1, 0])
+            .range([TOP_PADDING, configOptions.height]);
+          let y = scale(feature.repeatValue);
+
           const drawHeight = configOptions.height - y;
 
           const width = xSpan.getLength();
@@ -636,7 +734,7 @@ export const displayModeComponentMap: { [key: string]: any } = {
     let height;
 
     height =
-      trackModel.type === "repeatmasker"
+      trackModel.type === "repeatmasker" || trackModel.type === "rmskv2"
         ? configOptions.height
         : getHeight(placeFeatureData.numRowsAssigned);
 
@@ -1625,30 +1723,15 @@ function formatGeneAnnotationData(genesArr: any[]) {
 function formatRepeatMasker(genesArr: any[]) {
   const filteredArray: Array<any> = [];
   for (const record of genesArr) {
-    const restValues = record.rest.split("\t");
-
-    const output: RepeatDASFeature = {
-      genoLeft: restValues[7],
-      label: restValues[0],
-      max: record.end,
-      milliDel: restValues[5],
-      milliDiv: restValues[4],
-      milliIns: restValues[6],
-      min: record.start,
-      orientation: restValues[2],
-      repClass: restValues[8],
-      repEnd: restValues[11],
-      repFamily: restValues[9],
-      repLeft: restValues[12],
-      repStart: restValues[10],
-      score: Number(restValues[1]),
-      segment: record.chr,
-      swScore: restValues[3],
-      type: "bigbed",
-      _chromId: record.chromId,
-    };
-
+    const output: RepeatDASFeature = record as RepeatDASFeature;
     filteredArray.push(new RepeatMaskerFeature(output));
+  }
+  return filteredArray;
+}
+function formatRmskv2Masker(genesArr: any[]) {
+  const filteredArray: Array<any> = [];
+  for (const record of genesArr) {
+    filteredArray.push(new Rmskv2Feature(record));
   }
   return filteredArray;
 }
@@ -1944,7 +2027,7 @@ export const twoDataTypeTracks = {
 const formatFunctions: { [key: string]: (genesArr: any[]) => any[] } = {
   geneannotation: formatGeneAnnotationData,
   repeatmasker: formatRepeatMasker,
-
+  rmskv2: formatRmskv2Masker,
   refbed: formatRefBedData,
   bed: formatBedData,
   bedcolor: formatBedColorData,

@@ -1,10 +1,9 @@
 import { MotionConfig } from "framer-motion";
-import RootLayout, {
-  RootLayoutProps,
-} from "./components/root-layout/RootLayout";
+import RootLayout from "./components/root-layout/RootLayout";
 import ReduxProvider from "./lib/redux/provider";
+import "./index.css"
 
-export default function App(props: RootLayoutProps = {}) {
+export default function App(props: any) {
   return (
     <MotionConfig transition={snappyTransition}>
       <ReduxProvider>

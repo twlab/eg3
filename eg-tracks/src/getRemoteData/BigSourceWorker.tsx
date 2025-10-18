@@ -51,6 +51,7 @@ class BigSourceWorker {
      * @override
      */
     async getData(loci: any, basesPerPixel: any, options: any): Promise<any[]> {
+
         const bigWigObj = await this.bigWigPromise;
         const zoomLevel =
             options.zoomLevel === undefined || options.zoomLevel === BigWigZoomLevels.AUTO

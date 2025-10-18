@@ -30,3 +30,5 @@ export { default as ColorPicker } from "../trackConfigs/config-menu-components.t
 export { default as IsoformSelection } from "../components/GenomeView/genomeNavigator/IsoformSelection";
 export { default as OutsideClickDetector } from "../components/GenomeView/TrackComponents/commonComponents/OutsideClickDetector";
 export { default as TwoBitSource } from "../getRemoteData/TwoBitSource";
+export * from "./genomes/GenomeConfig";
+export * from "../components"

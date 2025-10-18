@@ -2889,7 +2889,7 @@ InfBlocks.prototype.proc = function (z, r) {
           this.write = q;
           return this.inflate_flush(z, r);
         }
-        mode = DONE;
+        this.mode = DONE;
       case IB_DONE:
         r = Z_STREAM_END;
 
