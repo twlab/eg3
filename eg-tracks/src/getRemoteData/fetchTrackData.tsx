@@ -6,6 +6,7 @@ import RepeatSource from "./RepeatSource";
 import JasparSource from "./JasparSource";
 import VcfSource from "./VcfSource";
 import BigSourceWorker from "./BigSourceWorker";
+import Rmskv2Source from "./Rmskv2Source";
 
 let cachedFetchInstance: { [key: string]: any } = {};
 const apiConfigMap = { WashU: "https://lambda.epigenomegateway.org/v3" };
@@ -62,9 +63,8 @@ export const trackFetchFunction: { [key: string]: any } = {
     };
 
     if (regionData.end - regionData.start <= 30000) {
-      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${
-        regionData.end + "?content-type=application%2Fjson&feature=variation"
-      }`;
+      const url = `${api}/${regionData.chr.substr(3)}:${regionData.start}-${regionData.end + "?content-type=application%2Fjson&feature=variation"
+        }`;
 
       return fetch(url, { headers })
         .then((response) => {
@@ -137,6 +137,10 @@ export const trackFetchFunction: { [key: string]: any } = {
   repeatmasker: async function repeatmaskerFetch(regionData: any) {
     return getRemoteData(regionData, "repeat");
   },
+
+  rmskv2: async function rmskv2Fetch(regionData: any) {
+    return getRemoteData(regionData, "rmskv2");
+  },
   biginteract: async function biginteractFetch(regionData: any) {
     return getRemoteData(regionData, "big");
   },
@@ -180,6 +184,11 @@ function getRemoteData(regionData: any, trackType: string) {
       cachedFetchInstance[`${regionData.trackModel.id}`] = new RepeatSource(
         regionData.trackModel.url
       );
+    }
+    else if (trackType === "rmskv2") {
+      cachedFetchInstance[`${regionData.trackModel.id}`] = new Rmskv2Source(
+        regionData.trackModel.url
+      );
     } else if (trackType === "jaspar") {
       cachedFetchInstance[`${regionData.trackModel.id}`] = new JasparSource(
         regionData.trackModel.url
@@ -188,7 +197,8 @@ function getRemoteData(regionData: any, trackType: string) {
   }
   let fetchInstance = cachedFetchInstance[`${regionData.trackModel.id}`];
 
-  if (trackType in { repeat: "", jaspar: "", bigbed: "" }) {
+  if (trackType in { repeat: "", jaspar: "", bigbed: "", rmskv2: "" }) {
+
     return fetchInstance.getData(
       regionData.nav,
       regionData.basesPerPixel,

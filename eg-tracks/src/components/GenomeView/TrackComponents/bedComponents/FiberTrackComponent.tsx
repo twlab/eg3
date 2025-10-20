@@ -3,7 +3,7 @@ import memoizeOne from "memoize-one";
 import _ from "lodash";
 import { scaleLinear } from "d3-scale";
 // import FiberAnnotation from "./FiberAnnotation";
-import Track, { PropsFromTrackContainer } from "../commonComponents/Track";
+
 
 import { Fiber } from "../../../../models/Feature";
 import { PlacedFeatureGroup } from "../../../../models/FeatureArranger";
@@ -19,7 +19,7 @@ import HoverToolTip from "../commonComponents/HoverToolTips/HoverToolTip";
 const ROW_VERTICAL_PADDING = 2;
 export const FIBER_DENSITY_CUTOFF_LENGTH = 300000;
 
-interface FiberTrackProps extends PropsFromTrackContainer {
+interface FiberTrackProps {
   data: Fiber[];
   options: {
     color?: string; // methylated color
@@ -38,8 +38,11 @@ interface FiberTrackProps extends PropsFromTrackContainer {
   getAnnotationTrack: any;
   trackState: any;
   renderTooltip: any;
-
+  width: number;
+  trackModel: any;
+  viewWindow: OpenInterval;
   svgHeight: any;
+  isLoading: boolean;
   updatedLegend: any;
   getGenePadding: any;
   getHeight: any;

@@ -105,6 +105,7 @@ const componentMap: { [key: string]: any } = {
   longrange: "",
   biginteract: "",
   repeatmasker: "",
+  rmskv2: "",
   bigbed: "",
   refbed: "",
   matplot: "",
@@ -123,6 +124,7 @@ const componentMap: { [key: string]: any } = {
   bam: "",
   omeroidr: "",
   error: "",
+
 };
 export interface PlacedMergedAlignment extends QueryGenomePiece {
   segments: PlacedAlignment[];
