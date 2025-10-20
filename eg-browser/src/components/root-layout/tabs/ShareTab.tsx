@@ -28,7 +28,9 @@ export default function ShareTab() {
   const shortLink = useAppSelector(selectShortLink);
   const storedFullUrl = useAppSelector(selectFullUrlForShortLink);
   const dispatch = useAppDispatch();
-  const [copied, setCopied] = useState(false);
+  const [copiedShortLink, setCopiedShortLink] = useState(false);
+  const [copiedFullLink, setCopiedFullLink] = useState(false);
+  const [copiedEmbed, setCopiedEmbed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const json = JSON.stringify(session);
@@ -77,16 +79,20 @@ export default function ShareTab() {
 
   const isLinkOutdated = shortLink && storedFullUrl !== fullUrl;
   const linkToShare = shortLink || fullUrl;
+  const fullLinkToShare = fullUrl;
   const emailLink = `mailto:?subject=Browser%20View&body=${encodeURIComponent(
     linkToShare
   )}`;
   const iframeContent = `<iframe src="${linkToShare}" width="100%" height="1200" frameborder="0" style="border:0" allowfullscreen></iframe>`;
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (
+    text: string,
+    setStateFn: (val: boolean) => void
+  ) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setStateFn(true);
+      setTimeout(() => setStateFn(false), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -115,46 +121,115 @@ export default function ShareTab() {
       </div>
     ) : null;
 
-  const EmailTab = () => (
-    <div className="flex flex-col gap-4 p-4">
+  const UrlTab = () => (
+    <div className="flex flex-col gap-6 p-4">
       <OutdatedLinkWarning />
-      <p>
-        <a
-          href={emailLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:text-blue-700"
-        >
-          Click here
-        </a>{" "}
-        to email current browser view.
-      </p>
-      <div className="flex items-center gap-2">
-        <p>Or copy the {isLinkOutdated ? "outdated " : ""}shortened link:</p>
-        <Button
-          style={{ border: "1px solid #3b82f6", borderRadius: "0.25rem" }}
-          onClick={() => copyToClipboard(linkToShare)}
-        >
-          {copied ? "Copied!" : "Copy Link"}
-        </Button>
+
+      {/* Shortened Link Section */}
+      <div className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Shortened Link{" "}
+          {isLinkOutdated && (
+            <span className="text-yellow-600">(outdated)</span>
+          )}
+        </h3>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={linkToShare}
+            readOnly
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+          />
+          <Button
+            style={{
+              border: "1px solid #3b82f6",
+              borderRadius: "0.375rem",
+              padding: "0.5rem 1rem",
+              minWidth: "100px",
+            }}
+            onClick={() => copyToClipboard(linkToShare, setCopiedShortLink)}
+          >
+            {copiedShortLink ? "✓ Copied!" : "Copy"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Full Link Section */}
+      <div className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Full Link{" "}
+          {isLinkOutdated && (
+            <span className="text-yellow-600">(outdated)</span>
+          )}
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Use this if the shortened link doesn't work
+        </p>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={fullLinkToShare}
+            readOnly
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+          />
+          <Button
+            style={{
+              border: "1px solid #3b82f6",
+              borderRadius: "0.375rem",
+              padding: "0.5rem 1rem",
+              minWidth: "100px",
+            }}
+            onClick={() => copyToClipboard(fullLinkToShare, setCopiedFullLink)}
+          >
+            {copiedFullLink ? "✓ Copied!" : "Copy"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Email Section */}
+      <div className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Email Link
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          <a
+            href={emailLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+          >
+            Click here
+          </a>{" "}
+          to email the current browser view.
+        </p>
       </div>
     </div>
   );
 
   const EmbedTab = () => (
-    <div className="text-primary flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-4 p-4">
       <OutdatedLinkWarning />
-      <textarea
-        className="w-full h-32 p-2 border rounded bg-gray-50"
-        value={iframeContent}
-        readOnly
-      />
-      <Button
-        style={{ border: "1px solid #3b82f6", borderRadius: "0.25rem" }}
-        onClick={() => copyToClipboard(iframeContent)}
-      >
-        {copied ? "Copied!" : "Copy Embed Code"}
-      </Button>
+      <div className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Embed Code
+        </h3>
+        <textarea
+          className="w-full h-32 p-3 text-sm border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 font-mono"
+          value={iframeContent}
+          readOnly
+        />
+        <Button
+          style={{
+            border: "1px solid #3b82f6",
+            borderRadius: "0.375rem",
+            padding: "0.5rem 1rem",
+            alignSelf: "flex-start",
+          }}
+          onClick={() => copyToClipboard(iframeContent, setCopiedEmbed)}
+        >
+          {copiedEmbed ? "✓ Copied!" : "Copy Embed Code"}
+        </Button>
+      </div>
     </div>
   );
 
@@ -166,7 +241,7 @@ export default function ShareTab() {
   );
 
   const tabs = [
-    { label: "Email", value: "email", component: <EmailTab /> },
+    { label: "URL", value: "url", component: <UrlTab /> },
     { label: "Embed", value: "embed", component: <EmbedTab /> },
     { label: "QR Code", value: "qr", component: <QRTab /> },
   ];
