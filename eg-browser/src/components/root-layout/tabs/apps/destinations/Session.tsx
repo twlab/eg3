@@ -164,8 +164,6 @@ const Session: React.FC = () => {
       selectedRegionSet: sessionBundle.regionSetView ?? null,
       regionSets: sessionBundle.regionSets ?? [],
     };
-
-    dispatch(resetState());
     dispatch(updateCurrentSession(session));
   }
 

@@ -8,7 +8,6 @@ import {
 } from "@/lib/redux/slices/settingsSlice";
 import { selectTool } from "@/lib/redux/slices/utilitySlice";
 import {
-  resetState,
   selectScreenShotOpen,
   updateScreenShotData,
 } from "@/lib/redux/slices/hubSlice";
@@ -39,18 +38,6 @@ export default function GenomeView() {
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
 
   const bundleId = currentSession && currentSession.bundleId ? currentSession.bundleId : null;
-
-
-
-  // if (lastSessionId.current !== sessionId && sessionId !== null) {
-  //   if (lastSessionId.current !== null) {
-  //     dispatch(resetSt ate());
-  //   }
-  //   lastSessionId.current = sessionId;
-  //   if (bundleId) {
-  //     dispatch(fetchBundle(bundleId));
-  //   }
-  // }
 
   if (bundleId) {
     dispatch(fetchBundle(bundleId));

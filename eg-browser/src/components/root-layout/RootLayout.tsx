@@ -108,7 +108,6 @@ export default function RootLayout(props: GenomeHubProps) {
 
   // Reset state when session is cleared
   useEffect(() => {
-
     dispatch(resetState());
     clearHistory()
   }, [sessionId]);
