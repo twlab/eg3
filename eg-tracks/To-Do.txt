@@ -155,3 +155,21 @@ To: Do 10/15/2025
 - error checking 
 - new algo, store draw data not raw data, this reduces memory usage 
 - gene search speed fix 
+
+
+
+to do: 10/21/2025
+- update version document 
+- update readme docunmentation for eg3 
+- update readme for embeded 
+- update readme for package  on npm 
+- add legendwidth setting 
+- optimized a way to save draw data and find a way to process data and convert so it would take less space,
+     ie: stream local or remote data and actively convert then deleted
+    the chunk so it make space for incoming chunks 
+- add view columns for tracks and have multi tabs 
+- error checks 
+- update package again 
+- (maybe replace flexlayout)
+
+

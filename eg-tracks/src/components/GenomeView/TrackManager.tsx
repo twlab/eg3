@@ -3603,8 +3603,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       )}
 
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-        {/* {showToolBar ? ( */}
-        <div
+      {showToolBar === true ?     <div
           style={{
             backgroundColor: "var(--bg-color)",
             width: `${windowWidth + 120}px`,
@@ -3731,7 +3730,8 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
               padding={getPadding()}
             />
           </div>
-        </div>
+        </div>  :"" }
+    
         {/* ) : (
           ""
         )} */}
