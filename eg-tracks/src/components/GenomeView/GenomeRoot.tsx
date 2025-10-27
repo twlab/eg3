@@ -43,6 +43,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
   setScreenshotData,
   isScreenShotOpen,
   selectedRegionSet,
+  darkTheme,
 }) {
   const [resizeRef, size] = useResizeObserver();
 
@@ -220,6 +221,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
             infiniteScrollWorkers={infiniteScrollWorkers}
             fetchGenomeAlignWorker={fetchGenomeAlignWorker}
             currentState={currentState}
+            darkTheme={darkTheme}
           />
         );
       } else {
@@ -369,6 +371,7 @@ const GenomeRoot: React.FC<ITrackContainerState> = memo(function GenomeRoot({
           infiniteScrollWorkers={infiniteScrollWorkers}
           fetchGenomeAlignWorker={fetchGenomeAlignWorker}
           currentState={currentState}
+          darkTheme={darkTheme}
         />
       ) : (
         <div style={{ width: size.width, height: 900 }}>

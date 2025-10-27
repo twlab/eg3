@@ -168,6 +168,7 @@ interface TrackManagerProps {
   } | null>;
   isThereG3dTrack: boolean;
   currentState?: any;
+  darkTheme: boolean;
 }
 const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   windowWidth,
@@ -193,6 +194,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   infiniteScrollWorkers,
   fetchGenomeAlignWorker,
   currentState,
+  darkTheme,
 }) {
   const getPadding = () => {
     const basePadding = 8;
@@ -3603,135 +3605,145 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
       )}
 
       <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-      {showToolBar === true ?     <div
-          style={{
-            backgroundColor: "var(--bg-color)",
-            width: `${windowWidth + 120}px`,
-            marginTop: getPadding() ? getPadding() / 3 : 2,
-            marginBottom: getPadding() ? getPadding() / 3 : 2,
-            display: "flex",
-            flexDirection: windowWidth <= 1080 ? "column" : "row",
-            alignItems: windowWidth <= 1080 ? "stretch" : "center",
-            justifyContent: "end",
-          }}
-        >
+        {showToolBar === true ? (
           <div
             style={{
+              backgroundColor: "var(--bg-color)",
+              width: `${windowWidth + 120}px`,
+              marginTop: getPadding() ? getPadding() / 3 : 2,
+              marginBottom: getPadding() ? getPadding() / 3 : 2,
               display: "flex",
-              width:
-                windowWidth <= 1080 ? "100%" : getResponsiveWidths().mainWidth,
-              alignItems: "center",
-              justifyContent: windowWidth <= 1080 ? "center" : "end",
-              flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
+              flexDirection: windowWidth <= 1080 ? "column" : "row",
+              alignItems: windowWidth <= 1080 ? "stretch" : "center",
+              justifyContent: "end",
             }}
           >
             <div
               style={{
                 display: "flex",
-                position: "relative",
-                zIndex: 999,
-                marginRight: getPadding() ? getPadding() : 5,
+                width:
+                  windowWidth <= 1080
+                    ? "100%"
+                    : getResponsiveWidths().mainWidth,
+                alignItems: "center",
+                justifyContent: windowWidth <= 1080 ? "center" : "end",
+                flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
               }}
             >
-              <div style={{ position: "relative" }}>
-                {Toolbar.toolbar ? (
-                  <Toolbar.toolbar
-                    highlights={highlights}
-                    onNewRegionSelect={
-                      !onNewRegionSelect ? () => {} : onNewRegionSelect
-                    }
-                    windowWidth={windowWidth}
-                    buttonPadding={getPadding() ? getPadding() / 2 : 3}
-                    gapSize={getGapSize()}
-                    fontSize={Math.max(16, getFontSize())}
-                  />
-                ) : (
-                  ""
-                )}
-              </div>
-            </div>
-            <div className="h-5 border-r border-gray-400" />
-            {userViewRegion && (
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
+                  position: "relative",
+                  zIndex: 999,
+                  marginRight: getPadding() ? getPadding() : 5,
                 }}
               >
-                <TrackRegionController
-                  selectedRegion={userViewRegion}
-                  onRegionSelected={onRegionSelected}
-                  contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                  genomeConfig={genomeConfig}
-                  trackManagerState={trackManagerState}
-                  genomeArr={[]}
-                  genomeIdx={0}
-                  addGlobalState={undefined}
-                  windowWidth={windowWidth}
-                  fontSize={Math.max(16, getFontSize())}
-                  padding={getPadding()}
-                />
+                <div style={{ position: "relative" }}>
+                  {Toolbar.toolbar ? (
+                    <Toolbar.toolbar
+                      highlights={highlights}
+                      onNewRegionSelect={
+                        !onNewRegionSelect ? () => {} : onNewRegionSelect
+                      }
+                      windowWidth={windowWidth}
+                      buttonPadding={getPadding() ? getPadding() / 2 : 3}
+                      gapSize={getGapSize()}
+                      fontSize={Math.max(16, getFontSize())}
+                    />
+                  ) : (
+                    ""
+                  )}
+                </div>
+              </div>
+              <div className="h-5 border-r border-gray-400" />
+              {userViewRegion && (
                 <div
-                  style={{
-                    paddingLeft: getPadding() ? getPadding() : 5,
-                    flexShrink: 0,
-                  }}
-                  className="h-5 border-r border-gray-400"
-                />
-                <div
-                  className="bg tool-element"
                   style={{
                     display: "flex",
-                    paddingLeft: getPadding() ? getPadding() : 5,
-                    paddingRight: getPadding() ? getPadding() : 5,
                     alignItems: "center",
+                    whiteSpace: "nowrap",
                     flexShrink: 0,
                   }}
                 >
-                  <p
+                  <TrackRegionController
+                    selectedRegion={userViewRegion}
+                    onRegionSelected={onRegionSelected}
+                    contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                    genomeConfig={genomeConfig}
+                    trackManagerState={trackManagerState}
+                    genomeArr={[]}
+                    genomeIdx={0}
+                    addGlobalState={undefined}
+                    windowWidth={windowWidth}
+                    fontSize={Math.max(16, getFontSize())}
+                    padding={getPadding()}
+                  />
+                  <div
                     style={{
-                      backgroundColor: "var(--bg-color)",
-                      color: "var(--font-color)",
-                      fontSize: `${Math.max(16, getFontSize())}px`,
-                      margin: 0,
-                      whiteSpace: "nowrap",
+                      paddingLeft: getPadding() ? getPadding() : 5,
+                      flexShrink: 0,
+                    }}
+                    className="h-5 border-r border-gray-400"
+                  />
+                  <div
+                    className="bg tool-element"
+                    style={{
+                      display: "flex",
+                      paddingLeft: getPadding() ? getPadding() : 5,
+                      paddingRight: getPadding() ? getPadding() : 5,
+                      alignItems: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    {niceBpCount(
-                      trackManagerState.current.viewRegion.getWidth()
-                    )}{" "}
-                    in {Math.round(windowWidth)}px, 1px equals{" "}
-                    {niceBpCount(basePerPixel.current, true)}
-                  </p>
+                    <p
+                      style={{
+                        backgroundColor: "var(--bg-color)",
+                        color: "var(--font-color)",
+                        fontSize: `${Math.max(16, getFontSize())}px`,
+                        margin: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {niceBpCount(
+                        trackManagerState.current.viewRegion.getWidth()
+                      )}{" "}
+                      in {Math.round(windowWidth)}px, 1px equals{" "}
+                      {niceBpCount(basePerPixel.current, true)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-            <div className="h-5 border-r border-gray-400" />
-          </div>
+              )}
+              <div className="h-5 border-r border-gray-400" />
+            </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
 
-              marginTop:
-                windowWidth <= 1080 ? (getPadding() ? getPadding() / 2 : 3) : 0,
-            }}
-          >
-            <MetadataHeader
-              terms={metaSets.terms}
-              onNewTerms={onNewTerms}
-              suggestedMetaSets={metaSets.suggestedMetaSets}
-              onRemoveTerm={onRemoveTerm}
-              windowWidth={windowWidth}
-              fontSize={Math.max(16, getFontSize())}
-              padding={getPadding()}
-            />
+                marginTop:
+                  windowWidth <= 1080
+                    ? getPadding()
+                      ? getPadding() / 2
+                      : 3
+                    : 0,
+              }}
+            >
+              <MetadataHeader
+                terms={metaSets.terms}
+                onNewTerms={onNewTerms}
+                suggestedMetaSets={metaSets.suggestedMetaSets}
+                onRemoveTerm={onRemoveTerm}
+                windowWidth={windowWidth}
+                fontSize={Math.max(16, getFontSize())}
+                padding={getPadding()}
+              />
+            </div>
           </div>
-        </div>  :"" }
-    
+        ) : (
+          ""
+        )}
+
         {/* ) : (
           ""
         )} */}
@@ -3886,14 +3898,18 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         {configMenu ? (
           <div
             style={{
-              position: "fixed",
+              position: "relative",
               zIndex: 1000,
               flexDirection: "column",
-              whiteSpace: "nowrap",
-              overflow: "visible",
+
+              backgroundColor: "white",
             }}
           >
-            <ConfigMenuComponent key={configMenu.key} menuData={configMenu} />
+            <ConfigMenuComponent
+              key={configMenu.key}
+              menuData={configMenu}
+              darkTheme={darkTheme}
+            />
           </div>
         ) : (
           ""

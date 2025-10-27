@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { selectCurrentSession } from "@/lib/redux/slices/browserSlice";
 import { updateCurrentSession } from "@/lib/redux/slices/browserSlice";
 import {
+  selectDarkTheme,
   selectIsNavigatorVisible,
   selectIsToolBarVisible,
 } from "@/lib/redux/slices/settingsSlice";
@@ -36,8 +37,9 @@ export default function GenomeView() {
   const isNavigatorVisible = useAppSelector(selectIsNavigatorVisible);
   const isToolBarVisible = useAppSelector(selectIsToolBarVisible);
   const isScreenShotOpen = useAppSelector(selectScreenShotOpen);
-
-  const bundleId = currentSession && currentSession.bundleId ? currentSession.bundleId : null;
+  const darkTheme = useAppSelector(selectDarkTheme);
+  const bundleId =
+    currentSession && currentSession.bundleId ? currentSession.bundleId : null;
 
   if (bundleId) {
     dispatch(fetchBundle(bundleId));
@@ -113,6 +115,7 @@ export default function GenomeView() {
       isScreenShotOpen={isScreenShotOpen}
       overrideViewRegion={currentSession?.overrideViewRegion}
       currentState={currentState}
+      darkTheme={darkTheme}
     />
   ) : null;
 }
