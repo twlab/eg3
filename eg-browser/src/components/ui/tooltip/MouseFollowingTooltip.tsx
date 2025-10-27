@@ -5,6 +5,7 @@ import { selectTool, setTool } from "@/lib/redux/slices/utilitySlice";
 import { Tool } from "wuepgg3-track";
 import {
   selectCurrentSession,
+  selectCurrentSessionId,
   updateCurrentSession,
 } from "../../../lib/redux/slices/browserSlice";
 
@@ -20,6 +21,7 @@ const MouseFollowingTooltip: React.FC = () => {
   });
 
   const currentSession = useAppSelector(selectCurrentSession);
+  const sessionId = useAppSelector(selectCurrentSessionId);
   const selectedTool = useAppSelector(selectTool);
   const dispatch = useAppDispatch();
 
@@ -87,7 +89,11 @@ const MouseFollowingTooltip: React.FC = () => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedTool, dispatch]);
-
+  useEffect(() => {
+    if (!sessionId) {
+      dispatch(setTool(null));
+    }
+  }, [sessionId]);
   const toolName = getToolName(selectedTool);
 
   // Count selected tracks
@@ -110,7 +116,7 @@ const MouseFollowingTooltip: React.FC = () => {
 
   return (
     <AnimatePresence>
-      {shouldShow && (
+      {shouldShow && sessionId && (
         <motion.div
           className="fixed z-[9999] pointer-events-none select-none"
           style={{
@@ -132,7 +138,7 @@ const MouseFollowingTooltip: React.FC = () => {
       )}
 
       {/* Indicator for selected tracks */}
-      {hasSelectedTracks && (
+      {hasSelectedTracks && sessionId && (
         <motion.div
           className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[9999] pointer-events-auto select-none cursor-pointer"
           initial={{ opacity: 0, y: 10 }}
@@ -163,26 +169,54 @@ const MouseFollowingTooltip: React.FC = () => {
               border: "2px solid var(--foreground)",
             }}
           >
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium">
-                {selectedTracksCount} track
-                {selectedTracksCount !== 1 ? "s" : ""} selected
-              </span>
-              <span style={{ opacity: 0.5 }}>•</span>
-              <span className="text-xs" style={{ opacity: 0.75 }}>
-                Press{" "}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">
+                  {selectedTracksCount} track
+                  {selectedTracksCount !== 1 ? "s" : ""} selected
+                </span>
+                <span style={{ opacity: 0.5 }}>•</span>
+
+                <span className="text-xs" style={{ opacity: 0.75 }}>
+                  Press{" "}
+                  <kbd
+                    className="px-1.5 py-0.5 font-mono"
+                    style={{
+                      backgroundColor: "var(--foreground)",
+                      color: "var(--background)",
+                      opacity: 0.9,
+                    }}
+                  >
+                    Esc
+                  </kbd>{" "}
+                  or click to clear
+                </span>
+              </div>
+              <div className="text-xs" style={{ opacity: 0.6 }}>
+                Hold{" "}
                 <kbd
-                  className="px-1.5 py-0.5 font-mono"
+                  className="px-1 py-0.5 font-mono"
                   style={{
                     backgroundColor: "var(--foreground)",
                     color: "var(--background)",
-                    opacity: 0.9,
+                    opacity: 0.7,
                   }}
                 >
-                  Esc
+                  Shift
                 </kbd>{" "}
-                or click to clear
-              </span>
+                +{" "}
+                <kbd
+                  className="px-1 py-0.5 font-mono"
+                  style={{
+                    backgroundColor: "var(--foreground)",
+                    color: "var(--background)",
+                    opacity: 0.7,
+                  }}
+                >
+                  Left Click
+                </kbd>{" "}
+                a track to select multiple
+              </div>
             </div>
           </div>
         </motion.div>
