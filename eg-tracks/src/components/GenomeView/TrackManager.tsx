@@ -3604,317 +3604,308 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         />
       )}
 
-      <OutsideClickDetector onOutsideClick={onTrackUnSelect}>
-        {showToolBar === true ? (
-          <div
-            style={{
-              backgroundColor: "var(--bg-color)",
-              width: `${windowWidth + 120}px`,
-              marginTop: getPadding() ? getPadding() / 3 : 2,
-              marginBottom: getPadding() ? getPadding() / 3 : 2,
-              display: "flex",
-              flexDirection: windowWidth <= 1080 ? "column" : "row",
-              alignItems: windowWidth <= 1080 ? "stretch" : "center",
-              justifyContent: "end",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                width:
-                  windowWidth <= 1080
-                    ? "100%"
-                    : getResponsiveWidths().mainWidth,
-                alignItems: "center",
-                justifyContent: windowWidth <= 1080 ? "center" : "end",
-                flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  position: "relative",
-                  zIndex: 999,
-                  marginRight: getPadding() ? getPadding() : 5,
-                }}
-              >
-                <div style={{ position: "relative" }}>
-                  {Toolbar.toolbar ? (
-                    <Toolbar.toolbar
-                      highlights={highlights}
-                      onNewRegionSelect={
-                        !onNewRegionSelect ? () => {} : onNewRegionSelect
-                      }
-                      windowWidth={windowWidth}
-                      buttonPadding={getPadding() ? getPadding() / 2 : 3}
-                      gapSize={getGapSize()}
-                      fontSize={Math.max(16, getFontSize())}
-                    />
-                  ) : (
-                    ""
-                  )}
-                </div>
-              </div>
-              <div className="h-5 border-r border-gray-400" />
-              {userViewRegion && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                >
-                  <TrackRegionController
-                    selectedRegion={userViewRegion}
-                    onRegionSelected={onRegionSelected}
-                    contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
-                    genomeConfig={genomeConfig}
-                    trackManagerState={trackManagerState}
-                    genomeArr={[]}
-                    genomeIdx={0}
-                    addGlobalState={undefined}
-                    windowWidth={windowWidth}
-                    fontSize={Math.max(16, getFontSize())}
-                    padding={getPadding()}
-                  />
-                  <div
-                    style={{
-                      paddingLeft: getPadding() ? getPadding() : 5,
-                      flexShrink: 0,
-                    }}
-                    className="h-5 border-r border-gray-400"
-                  />
-                  <div
-                    className="bg tool-element"
-                    style={{
-                      display: "flex",
-                      paddingLeft: getPadding() ? getPadding() : 5,
-                      paddingRight: getPadding() ? getPadding() : 5,
-                      alignItems: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <p
-                      style={{
-                        backgroundColor: "var(--bg-color)",
-                        color: "var(--font-color)",
-                        fontSize: `${Math.max(16, getFontSize())}px`,
-                        margin: 0,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {niceBpCount(
-                        trackManagerState.current.viewRegion.getWidth()
-                      )}{" "}
-                      in {Math.round(windowWidth)}px, 1px equals{" "}
-                      {niceBpCount(basePerPixel.current, true)}
-                    </p>
-                  </div>
-                </div>
-              )}
-              <div className="h-5 border-r border-gray-400" />
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-
-                marginTop:
-                  windowWidth <= 1080
-                    ? getPadding()
-                      ? getPadding() / 2
-                      : 3
-                    : 0,
-              }}
-            >
-              <MetadataHeader
-                terms={metaSets.terms}
-                onNewTerms={onNewTerms}
-                suggestedMetaSets={metaSets.suggestedMetaSets}
-                onRemoveTerm={onRemoveTerm}
-                windowWidth={windowWidth}
-                fontSize={Math.max(16, getFontSize())}
-                padding={getPadding()}
-              />
-            </div>
-          </div>
-        ) : (
-          ""
-        )}
-
-        {/* ) : (
-          ""
-        )} */}
+      {showToolBar === true ? (
         <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            outline: "1px solid #9AA6B2",
+            backgroundColor: "var(--bg-color)",
             width: `${windowWidth + 120}px`,
-            overflowX: "hidden",
-            overflowY: "hidden",
+            marginTop: getPadding() ? getPadding() / 3 : 2,
+            marginBottom: getPadding() ? getPadding() / 3 : 2,
+            display: "flex",
+            flexDirection: windowWidth <= 1080 ? "column" : "row",
+            alignItems: windowWidth <= 1080 ? "stretch" : "center",
+            justifyContent: "end",
           }}
         >
           <div
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleTouchStart}
-            ref={block}
             style={{
               display: "flex",
-              flexDirection: "column",
-              position: "relative",
-              cursor: (() => {
-                switch (tool) {
-                  case Tool.Drag:
-                    return "pointer";
-                  case Tool.Reorder:
-                    return "ns-resize";
-                  case Tool.Highlight:
-                    return "ew-resize";
-                  case Tool.Zoom:
-                    return "zoom-in";
-                  default:
-                    return "crosshair";
-                }
-              })(),
+              width:
+                windowWidth <= 1080 ? "100%" : getResponsiveWidths().mainWidth,
+              alignItems: "center",
+              justifyContent: windowWidth <= 1080 ? "center" : "end",
+              flexWrap: windowWidth <= 1080 ? "wrap" : "nowrap",
             }}
           >
-            <div ref={horizontalLineRef} className="horizontal-line" />
-            <div ref={verticalLineRef} className="vertical-line" />
-
             <div
               style={{
                 display: "flex",
-                flexDirection: "row",
-
-                width: `${windowWidth + 120}px`,
+                position: "relative",
+                zIndex: 999,
+                marginRight: getPadding() ? getPadding() : 5,
               }}
             >
-              {trackComponents ? (
-                <SortableList
-                  items={trackComponents}
-                  onChange={handleReorder}
-                  renderItem={(item) => (
-                    <SortableList.Item
-                      id={item.id}
-                      onMouseDown={(event) => handleShiftSelect(event, item.id)}
-                      onContextMenu={(event) => handleRightClick(event, item)}
-                      selectedTool={selectedTool}
-                    >
-                      <div
-                        key={item.id}
-                        style={{
-                          width: `${windowWidth + 120}px`,
-                          position: "relative",
-                        }}
-                      >
-                        {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
-                  track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing error.
-                   */}
-                        {item.trackModel.isSelected ? (
-                          <div className="Track-border-container Track-selected-border"></div>
-                        ) : (
-                          <div className="Track-border-container"></div>
-                        )}
-                        <item.component
-                          id={item.trackModel.id}
-                          trackModel={item.trackModel}
-                          posRef={item.posRef}
-                          bpRegionSize={bpRegionSize.current}
-                          useFineModeNav={useFineModeNav.current}
-                          basePerPixel={basePerPixel.current}
-                          side={side.current}
-                          windowWidth={windowWidth}
-                          genomeConfig={genomeConfig}
-                          dataIdx={dataIdx.current}
-                          trackManagerRef={block}
-                          setShow3dGene={setShow3dGene}
-                          isThereG3dTrack={isThereG3dTrack}
-                          updateGlobalTrackConfig={updateGlobalTrackConfig}
-                          applyTrackConfigChange={applyTrackConfigChange}
-                          dragX={dragX.current}
-                          signalTrackLoadComplete={signalTrackLoadComplete}
-                          sentScreenshotData={sentScreenshotData}
-                          newDrawData={draw}
-                          trackFetchedDataCache={trackFetchedDataCache}
-                          globalTrackState={globalTrackState}
-                          isScreenShotOpen={isScreenShotOpen}
-                          highlightElements={highlightElements}
-                          viewWindowConfigData={viewWindowConfigData}
-                          viewWindowConfigChange={viewWindowConfigChange}
-                          metaSets={metaSets}
-                          onColorBoxClick={onColorBoxClick}
-                          userViewRegion={userViewRegion}
-                          messageData={messageData}
-                          Toolbar={Toolbar}
-                          handleRetryFetchTrack={handleRetryFetchTrack}
-                        />
-                      </div>
-                    </SortableList.Item>
-                  )}
-                />
-              ) : (
-                ""
-              )}
-
-              <div
-                style={{
-                  display: "flex",
-                  position: "absolute",
-                  width: `${windowWidth}px`,
-                  zIndex: 10,
-                }}
-              >
-                {selectedTool &&
-                selectedTool.isSelected &&
-                selectedTool.title !== 1 ? (
-                  <SelectableGenomeArea
-                    selectableRegion={userViewRegion}
-                    dragLimits={
-                      new OpenInterval(legendWidth, windowWidth + 120)
+              <div style={{ position: "relative" }}>
+                {Toolbar.toolbar ? (
+                  <Toolbar.toolbar
+                    highlights={highlights}
+                    onNewRegionSelect={
+                      !onNewRegionSelect ? () => {} : onNewRegionSelect
                     }
-                    onRegionSelected={onRegionSelected}
-                    selectedTool={selectedTool}
-                  >
-                    <div
-                      style={{
-                        height: block.current
-                          ? block.current?.getBoundingClientRect().height
-                          : 0,
-                        zIndex: 3,
-                        width: `${windowWidth + 120}px`,
-                      }}
-                    ></div>
-                  </SelectableGenomeArea>
+                    windowWidth={windowWidth}
+                    buttonPadding={getPadding() ? getPadding() / 2 : 3}
+                    gapSize={getGapSize()}
+                    fontSize={Math.max(16, getFontSize())}
+                  />
                 ) : (
                   ""
                 )}
               </div>
             </div>
+            <div className="h-5 border-r border-gray-400" />
+            {userViewRegion && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                <TrackRegionController
+                  selectedRegion={userViewRegion}
+                  onRegionSelected={onRegionSelected}
+                  contentColorSetup={{ background: "#F8FAFC", color: "#222" }}
+                  genomeConfig={genomeConfig}
+                  trackManagerState={trackManagerState}
+                  genomeArr={[]}
+                  genomeIdx={0}
+                  addGlobalState={undefined}
+                  windowWidth={windowWidth}
+                  fontSize={Math.max(16, getFontSize())}
+                  padding={getPadding()}
+                />
+                <div
+                  style={{
+                    paddingLeft: getPadding() ? getPadding() : 5,
+                    flexShrink: 0,
+                  }}
+                  className="h-5 border-r border-gray-400"
+                />
+                <div
+                  className="bg tool-element"
+                  style={{
+                    display: "flex",
+                    paddingLeft: getPadding() ? getPadding() : 5,
+                    paddingRight: getPadding() ? getPadding() : 5,
+                    alignItems: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <p
+                    style={{
+                      backgroundColor: "var(--bg-color)",
+                      color: "var(--font-color)",
+                      fontSize: `${Math.max(16, getFontSize())}px`,
+                      margin: 0,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {niceBpCount(
+                      trackManagerState.current.viewRegion.getWidth()
+                    )}{" "}
+                    in {Math.round(windowWidth)}px, 1px equals{" "}
+                    {niceBpCount(basePerPixel.current, true)}
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="h-5 border-r border-gray-400" />
           </div>
-        </div>
-        {configMenu ? (
+
           <div
             style={{
-              position: "relative",
-              zIndex: 1000,
-              flexDirection: "column",
+              display: "flex",
+              justifyContent: "flex-end",
 
-              backgroundColor: "white",
+              marginTop:
+                windowWidth <= 1080 ? (getPadding() ? getPadding() / 2 : 3) : 0,
             }}
           >
-            <ConfigMenuComponent
-              key={configMenu.key}
-              menuData={configMenu}
-              darkTheme={darkTheme}
+            <MetadataHeader
+              terms={metaSets.terms}
+              onNewTerms={onNewTerms}
+              suggestedMetaSets={metaSets.suggestedMetaSets}
+              onRemoveTerm={onRemoveTerm}
+              windowWidth={windowWidth}
+              fontSize={Math.max(16, getFontSize())}
+              padding={getPadding()}
             />
           </div>
-        ) : (
+        </div>
+      ) : (
+        ""
+      )}
+
+      {/* ) : (
           ""
-        )}
-      </OutsideClickDetector>
+        )} */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          outline: "1px solid #9AA6B2",
+          width: `${windowWidth + 120}px`,
+          overflowX: "hidden",
+          overflowY: "hidden",
+        }}
+      >
+        <div
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          ref={block}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+            cursor: (() => {
+              switch (tool) {
+                case Tool.Drag:
+                  return "pointer";
+                case Tool.Reorder:
+                  return "ns-resize";
+                case Tool.Highlight:
+                  return "ew-resize";
+                case Tool.Zoom:
+                  return "zoom-in";
+                default:
+                  return "crosshair";
+              }
+            })(),
+          }}
+        >
+          <div ref={horizontalLineRef} className="horizontal-line" />
+          <div ref={verticalLineRef} className="vertical-line" />
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+
+              width: `${windowWidth + 120}px`,
+            }}
+          >
+            {trackComponents ? (
+              <SortableList
+                items={trackComponents}
+                onChange={handleReorder}
+                renderItem={(item) => (
+                  <SortableList.Item
+                    id={item.id}
+                    onMouseDown={(event) => handleShiftSelect(event, item.id)}
+                    onContextMenu={(event) => handleRightClick(event, item)}
+                    selectedTool={selectedTool}
+                  >
+                    <div
+                      key={item.id}
+                      style={{
+                        width: `${windowWidth + 120}px`,
+                        position: "relative",
+                      }}
+                    >
+                      {/* when selected we want to display an animated border, to do this we have a empty, noninteractable component above our 
+                  track component, if we dont do this, the border will try to align with the track which has a difererent width from the view causing error.
+                   */}
+                      {item.trackModel.isSelected ? (
+                        <div className="Track-border-container Track-selected-border"></div>
+                      ) : (
+                        <div className="Track-border-container"></div>
+                      )}
+                      <item.component
+                        id={item.trackModel.id}
+                        trackModel={item.trackModel}
+                        posRef={item.posRef}
+                        bpRegionSize={bpRegionSize.current}
+                        useFineModeNav={useFineModeNav.current}
+                        basePerPixel={basePerPixel.current}
+                        side={side.current}
+                        windowWidth={windowWidth}
+                        genomeConfig={genomeConfig}
+                        dataIdx={dataIdx.current}
+                        trackManagerRef={block}
+                        setShow3dGene={setShow3dGene}
+                        isThereG3dTrack={isThereG3dTrack}
+                        updateGlobalTrackConfig={updateGlobalTrackConfig}
+                        applyTrackConfigChange={applyTrackConfigChange}
+                        dragX={dragX.current}
+                        signalTrackLoadComplete={signalTrackLoadComplete}
+                        sentScreenshotData={sentScreenshotData}
+                        newDrawData={draw}
+                        trackFetchedDataCache={trackFetchedDataCache}
+                        globalTrackState={globalTrackState}
+                        isScreenShotOpen={isScreenShotOpen}
+                        highlightElements={highlightElements}
+                        viewWindowConfigData={viewWindowConfigData}
+                        viewWindowConfigChange={viewWindowConfigChange}
+                        metaSets={metaSets}
+                        onColorBoxClick={onColorBoxClick}
+                        userViewRegion={userViewRegion}
+                        messageData={messageData}
+                        Toolbar={Toolbar}
+                        handleRetryFetchTrack={handleRetryFetchTrack}
+                      />
+                    </div>
+                  </SortableList.Item>
+                )}
+              />
+            ) : (
+              ""
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                position: "absolute",
+                width: `${windowWidth}px`,
+                zIndex: 10,
+              }}
+            >
+              {selectedTool &&
+              selectedTool.isSelected &&
+              selectedTool.title !== 1 ? (
+                <SelectableGenomeArea
+                  selectableRegion={userViewRegion}
+                  dragLimits={new OpenInterval(legendWidth, windowWidth + 120)}
+                  onRegionSelected={onRegionSelected}
+                  selectedTool={selectedTool}
+                >
+                  <div
+                    style={{
+                      height: block.current
+                        ? block.current?.getBoundingClientRect().height
+                        : 0,
+                      zIndex: 3,
+                      width: `${windowWidth + 120}px`,
+                    }}
+                  ></div>
+                </SelectableGenomeArea>
+              ) : (
+                ""
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {configMenu ? (
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1000,
+            flexDirection: "column",
+
+            backgroundColor: "white",
+          }}
+        >
+          <ConfigMenuComponent
+            key={configMenu.key}
+            menuData={configMenu}
+            darkTheme={darkTheme}
+          />
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 });
