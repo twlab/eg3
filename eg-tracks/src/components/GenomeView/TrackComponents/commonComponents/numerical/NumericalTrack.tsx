@@ -55,7 +55,7 @@ const THRESHOLD_HEIGHT = 3; // the bar tip height which represet value above max
 /**
  * Track specialized in showing numerical data.
  *
- * @author Silas Hsu
+ * @author Silas Hsu, Chanrung Seng
  */
 const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
   const {

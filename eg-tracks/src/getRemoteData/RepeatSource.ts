@@ -1,5 +1,5 @@
 const MAX_BASES_PER_PIXEL = 1000; // The higher this number, the more zooming out we support
-import BigSourceWorker from "./BigSourceWorker"
+import BigSourceWorker from "./BigSourceWorker";
 
 class RepeatSource {
   maxBasesPerPixel: any;
@@ -13,7 +13,6 @@ class RepeatSource {
     if (basesPerPixel > this.maxBasesPerPixel) {
       return Promise.resolve([]);
     } else {
-      console.log("HUHUHu")
       return this.workerSource.getData(region, basesPerPixel, options);
     }
   }

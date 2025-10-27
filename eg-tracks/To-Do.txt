@@ -176,5 +176,6 @@ to do: 10/21/2025
 - fixed not being able to delete every track and adding when tracks are empty
 - fixed configmenu position using react modal 
 - added indicators for unSelecting tracks to rootlayout
+- remove indicator when going to genomepicker
 
 
