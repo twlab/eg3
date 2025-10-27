@@ -172,4 +172,9 @@ to do: 10/21/2025
 - update package again 
 - (maybe replace flexlayout)
 
+- fixed numerical when there are only negative values 
+- fixed not being able to delete every track and adding when tracks are empty
+- fixed configmenu position using react modal 
+- added indicators for unSelecting tracks to rootlayout
+
 

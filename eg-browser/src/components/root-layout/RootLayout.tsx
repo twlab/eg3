@@ -1,4 +1,8 @@
-import { useAppDispatch, useAppSelector, useUndoRedo } from "../../lib/redux/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+  useUndoRedo,
+} from "../../lib/redux/hooks";
 import {
   selectNavigationTab,
   setNavigationTab,
@@ -43,7 +47,8 @@ import {
   GenomeSerializer,
   getGenomeConfig,
   ITrackModel,
-  GenomeCoordinate, GenomeConfig
+  GenomeCoordinate,
+  GenomeConfig,
 } from "wuepgg3-track";
 
 import { resetState } from "@/lib/redux/slices/hubSlice";
@@ -69,7 +74,6 @@ export interface RootLayoutProps {
   // showToolBar?: boolean;
 }
 
-
 export interface GenomeHubProps {
   viewRegion?: string | null | undefined;
   genomeName?: string;
@@ -94,13 +98,13 @@ export default function RootLayout(props: GenomeHubProps) {
   const isSmallScreen = useSmallScreen();
   const showRightTab = !isSmallScreen && !isNavigationTabEmpty;
   const showModal = isSmallScreen && !isNavigationTabEmpty;
+
   const { clearHistory } = useUndoRedo();
   // Check if running in package mode (props explicitly passed) or web mode
   const isPackageMode =
     props.showGenomeNavigator !== undefined ||
     props.showNavBar !== undefined ||
     props.showToolBar !== undefined;
-
 
   const handleGoHome = () => {
     dispatch(setCurrentSession(null));
@@ -109,10 +113,8 @@ export default function RootLayout(props: GenomeHubProps) {
   // Reset state when session is cleared
   useEffect(() => {
     dispatch(resetState());
-    clearHistory()
+    clearHistory();
   }, [sessionId]);
-
-
 
   // For package mode: use Redux state (controlled by props)
   // For web mode: default to true (ignore persisted state)
@@ -178,7 +180,7 @@ export default function RootLayout(props: GenomeHubProps) {
                 genome,
                 viewRegion:
                   typeof props.viewRegion === "string" ||
-                    props.viewRegion === null
+                  props.viewRegion === null
                     ? undefined
                     : props.viewRegion,
                 additionalTracks,
@@ -191,12 +193,12 @@ export default function RootLayout(props: GenomeHubProps) {
               tracks: props.tracks as ITrackModel[],
               viewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               userViewRegion:
                 typeof props.viewRegion !== "string" ||
-                  props.viewRegion === null
+                props.viewRegion === null
                   ? undefined
                   : (props.viewRegion as GenomeCoordinate),
               genomeId: props.genomeName,

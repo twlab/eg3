@@ -3262,7 +3262,6 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
 
   useEffect(() => {
     if (!initialLoad.current && tracks && tracks.length === 0) {
-      console.log("check1", tracks);
       setTrackComponents([]);
     } else if (
       !initialLoad.current &&

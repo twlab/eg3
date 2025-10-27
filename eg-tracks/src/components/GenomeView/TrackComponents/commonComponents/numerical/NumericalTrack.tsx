@@ -104,11 +104,6 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           props.viewWindow.start,
           props.viewWindow.end
         );
-        // TO- DO implement when dragX changes then the legend also changings with viewWindow values
-        // const visibleValues = xToValue.slice(
-        //   props.viewWindow.start + props.width / 3,
-        //   props.viewWindow.end - props.width / 3
-        // );
 
         max = _.max(visibleValues) || 1;
         xValues2 = xToValue2.filter((x) => x);
@@ -137,7 +132,10 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
           : xToValue && xToValue.length > 0
           ? height
           : 0;
-      if (!xToValue || xToValue.length === 0) {
+      if (
+        (!xToValue || xToValue.length === 0) &&
+        (!xToValue2 || xToValue2.length === 0)
+      ) {
         max = 0;
       }
       if (
