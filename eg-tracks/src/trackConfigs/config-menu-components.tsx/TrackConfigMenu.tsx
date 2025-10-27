@@ -49,15 +49,15 @@ function ConfigMenuComponent(props: any) {
           <div
             ref={ref}
             style={{
-              position: "absolute", // Use fixed so it's relative to the viewport
+              position: "absolute",
               left: Math.abs(left),
-              top: top / 2,
+              top: top,
               color: darkTheme ? "white" : "black",
               zIndex: 1000,
             }}
           >
             <Popper
-              placement="bottom-start"
+              placement="auto"
               modifiers={[{ name: "flip", enabled: false }]}
             >
               {({ ref, style }) => (

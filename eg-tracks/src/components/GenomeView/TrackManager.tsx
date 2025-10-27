@@ -11,7 +11,7 @@ import { HicSource } from "../../getRemoteData/hicSource";
 import { trackOptionMap } from "./TrackComponents/defaultOptionsMap";
 import ThreedmolContainer from "./TrackComponents/3dmol/ThreedmolContainer";
 import TrackModel from "../../models/TrackModel";
-import _, { throttle } from "lodash";
+import _, { set, throttle } from "lodash";
 import ConfigMenuComponent from "../../trackConfigs/config-menu-components.tsx/TrackConfigMenu";
 // import HighlightMenu from "./ToolComponents/HighlightMenu";
 import TrackFactory from "./TrackComponents/TrackFactory";
@@ -1294,7 +1294,7 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         return !id.includes(String(item.id));
       }
     );
-
+    console.log(trackManagerState.current.tracks);
     onTracksChange(_.cloneDeep(trackManagerState.current.tracks));
 
     if (id.length > 0) {
@@ -3261,7 +3261,10 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
   }
 
   useEffect(() => {
-    if (
+    if (!initialLoad.current && tracks && tracks.length === 0) {
+      console.log("check1", tracks);
+      setTrackComponents([]);
+    } else if (
       !initialLoad.current &&
       tracks &&
       !tracks.every((item) => item.waitToUpdate)
@@ -3480,6 +3483,12 @@ const TrackManager: React.FC<TrackManagerProps> = memo(function TrackManager({
         if (needToToUpdate) {
           trackManagerState.current.tracks = filteredTracks;
           setTrackComponents(newTrackComponents);
+        }
+        console.log(tracks, filteredTracks, trackComponents);
+        if (filteredTracks.length === 0) {
+          setTrackComponents([]);
+          trackManagerState.current.tracks = [];
+          return;
         }
       }
       addTermToMetaSets(filteredTracks);

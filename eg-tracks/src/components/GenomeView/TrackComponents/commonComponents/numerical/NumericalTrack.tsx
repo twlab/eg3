@@ -132,10 +132,14 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       }
 
       const zeroLine =
-        min < 0
+        min < 0 && xToValue && xToValue.length > 0
           ? TOP_PADDING + ((height - 2 * TOP_PADDING) * max) / (max - min)
-          : height;
-
+          : xToValue && xToValue.length > 0
+          ? height
+          : 0;
+      if (!xToValue || xToValue.length === 0) {
+        max = 0;
+      }
       if (
         xValues2.length &&
         (yScale === ScaleChoices.AUTO ||
@@ -169,7 +173,7 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
       } else {
         return {
           axisScale: scaleLinear()
-            .domain([max, min])
+            .domain([0, min])
             .range([TOP_PADDING, height])
             .clamp(true),
           valueToY: scaleLinear()
@@ -274,18 +278,24 @@ const NumericalTrack: React.FC<NumericalTrackProps> = (props) => {
         <div
           style={{ display: "flex", flexDirection: "column", ...curEleStyle }}
         >
-          <ValuePlot
-            xToValue={xToValue}
-            scales={scales}
-            height={scales.zeroLine}
-            color={color}
-            colorOut={colorAboveMax}
-            isDrawingBars={isDrawingBars}
-            forceSvg={forceSvg}
-            width={width}
-            viewWindow={props.viewWindow}
-          />
-          <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+          {xToValue && xToValue.length > 0 ? (
+            <>
+              <ValuePlot
+                xToValue={xToValue}
+                scales={scales}
+                height={scales.zeroLine}
+                color={color}
+                colorOut={colorAboveMax}
+                isDrawingBars={isDrawingBars}
+                forceSvg={forceSvg}
+                width={width}
+                viewWindow={props.viewWindow}
+              />
+              <hr style={{ marginTop: 0, marginBottom: 0, padding: 0 }} />
+            </>
+          ) : (
+            ""
+          )}
 
           <ValuePlot
             xToValue={xToValue2}
